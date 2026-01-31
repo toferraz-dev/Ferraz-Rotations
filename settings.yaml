@@ -1,0 +1,65 @@
+Key: 32C7D1D29800014-SM
+GameFolder: C:\Games\World of Warcraft
+AddonName: WeakAurasModule
+Debug: false
+DebugAura: false
+DebugSpell: false
+DebugPower: false
+InputDelay: 25
+IconOverlayEnabled: false
+IconOverlayX: 100
+IconOverlayY: 100
+IconOverlaySize: 64
+rotation_config:
+  256:
+    OOC_flash_heal_treshold: 80
+    MO_pain_suppression: false
+    MO_penance: false
+    MO_enabled: false
+    MO_flash_heal: false
+    pain_suppression_threshold: 55
+    auto_fade: true
+    SWD_usage_treshhold: 30
+    ultimate_penitence_members: 2
+    angelic_feather_usage: 3
+    desperate_prayer_threshold: 45
+    pain_suppression_usage: 3
+    mo_flash_heal_threshold: 50
+    ooc_flash_heal_threshold: 70
+    trinket_usage: 0
+  105:
+    catweave_group_hp: 80
+    skull_bash_delay: 200
+    catweave_enabled: true
+    allow_pull_with_mo: false
+    wild_growth_members: 2
+    ironbark_threshold: 60
+    use_innervate_mana: 80
+    rip_combo_points: 5
+    ferocious_bite_combo_points: 5
+    wild_growth_health_pct: 90
+    regrowth_threshold: 80
+    barkskin_threshold: 70
+    swiftmend_threshold: 85
+    tank_health_threshold: 75
+    lifebloom_refresh_time: 3
+    tranquility_members: 2
+    catweave_health_threshold: 90
+    adaptive_swarm_targets: 2
+    mo_remove_corruption: false
+  104:
+    skull_bash_delay: 250
+    ironfur_stacks_min: 3
+    auto_targeting: false
+    trinket_usage: 3
+    ironfur_stacks_max: 5
+shared_config:
+  healthpotion: 50
+  interrupt_pct: 20
+  healthstone: 60
+  interrupt_all: true
+  auto_combat:
+    []
+selected_rotation:
+  256: C:\Games\Slack\GodMode_V3.yaml
+  104: C:\Games\Slack\FerrazGuardian.yaml

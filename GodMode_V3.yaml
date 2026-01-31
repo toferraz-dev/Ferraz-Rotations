@@ -1,0 +1,615 @@
+version: 1.2
+author: Alegr0n
+spec: 256
+name: Discipline
+description: |
+  Discipline Priest Oracle rotation for Midnight Pre-Patch.
+  Optimized for M+ dungeons.
+  V6 - Added TWW S3 dangerous spell database + reactive shielding.
+
+entry: main
+
+morphs:
+  shadow_word_pain: purge_the_wicked
+
+config:
+
+  # DEFENSIVE COOLDOWNS
+
+  pain_suppression_threshold:
+    label: "Pain Suppression HP %"
+    type: slider
+    min: 10
+    max: 60
+    default: 40
+
+  pain_suppression_usage:
+    label: "Pain Suppression Targets"
+    type: dropdown
+    options:
+      - label: "Tank Only"
+        value: 1
+      - label: "Tank & Healer"
+        value: 2
+      - label: "Everyone"
+        value: 3
+      - label: "Disabled"
+        value: 0
+    default: 2
+
+  desperate_prayer_threshold:
+    label: "Desperate Prayer HP %"
+    type: slider
+    min: 10
+    max: 70
+    default: 35
+
+  power_word_barrier_members:
+    label: "PW:Barrier - below 60%"
+    type: slider
+    min: 2
+    max: 5
+    default: 3
+
+  auto_fade:
+    label: "Auto Fade"
+    type: checkbox
+    default: false
+
+  auto_pi:
+    label: "Auto PI [Beta]"
+    type: checkbox
+    default: true
+
+
+  # INTERRUPTS / CC
+
+  use_psychic_scream:
+    label: "Use Psychic Scream"
+    type: checkbox
+    default: true
+
+  # MAJOR COOLDOWNS
+
+  evangelism_members:
+    label: "Evangelism - below 80%"
+    type: slider
+    min: 1
+    max: 5
+    default: 3
+
+  ultimate_penitence_members:
+    label: "Ultimate Penit. - below 60%"
+    type: slider
+    min: 1
+    max: 5
+    default: 3
+
+  shadowfiend_usage:
+    label: "Shadowfiend Usage"
+    type: dropdown
+    options:
+      - label: "On Cooldown"
+        value: 1
+      - label: "2+ members below 80%"
+        value: 2
+      - label: "3+ members below 70%"
+        value: 3
+      - label: "Manual Only"
+        value: 0
+    default: 2
+
+
+  # HEALING
+
+  penance_healing_threshold:
+    label: "Penance Healing HP %"
+    type: slider
+    min: 40
+    max: 90
+    default: 70
+
+  flash_heal_threshold:
+    label: "Flash Heal HP %"
+    type: slider
+    min: 30
+    max: 80
+    default: 60
+
+  pws_hp_threshold:
+    label: "PW:Shield HP threshold %"
+    type: slider
+    min: 50
+    max: 90
+    default: 80
+
+  radiance_members:
+    label: "PWR - Members below 85%"
+    type: slider
+    min: 2
+    max: 5
+    default: 3
+
+
+  # DOT AND DAMAGE
+
+  maintain_dot:
+    label: "Purge the Wicked/SWP"
+    type: checkbox
+    default: true
+
+  use_shadow_word_death:
+    label: "Use SW:Death"
+    type: checkbox
+    default: true
+
+  # WEAL AND WOE
+
+  weal_and_woe_min_stacks:
+    label: "Min WaW stacks for PW:S"
+    type: slider
+    min: 0
+    max: 10
+    default: 5
+
+
+  # OUT OF COMBAT
+
+  ooc_penance_threshold:
+    label: "OOC Penance HP %"
+    type: slider
+    min: 70
+    max: 100
+    default: 90
+
+  ooc_flash_heal_threshold:
+    label: "OOC Flash Heal HP %"
+    type: slider
+    min: 50
+    max: 90
+    default: 80
+
+  auto_fortitude:
+    label: "Power Word: Fortitude"
+    type: checkbox
+    default: true
+
+
+  # MOUSEOVER
+
+  mouseover_enabled:
+    label: "Enable Mouseover Healing"
+    type: checkbox
+    default: true
+
+  mo_pain_suppression:
+    label: "MO: Pain Suppression"
+    type: checkbox
+    default: true
+
+  mo_penance:
+    label: "MO: Penance"
+    type: checkbox
+    default: true
+
+  mo_penance_threshold:
+    label: "MO Penance HP %"
+    type: slider
+    min: 40
+    max: 90
+    default: 65
+
+  mo_flash_heal:
+    label: "MO: Flash Heal"
+    type: checkbox
+    default: true
+
+  mo_flash_heal_threshold:
+    label: "MO Flash Heal HP %"
+    type: slider
+    min: 30
+    max: 90
+    default: 75
+
+  mo_purify:
+    label: "MO: Dispel (Purify)"
+    type: checkbox
+    default: true
+
+
+  # MOVEMENT
+
+  angelic_feather_usage:
+    label: "Angelic Feather Usage"
+    type: dropdown
+    options:
+      - label: "Disabled"
+        value: 0
+      - label: "Only in combat"
+        value: 1
+      - label: "Only out of combat"
+        value: 2
+      - label: "Always when moving"
+        value: 3
+    default: 2
+
+  angelic_feather_movement_time:
+    label: "Feather after moving"
+    type: slider
+    min: 0
+    max: 4
+    default: 2
+
+
+  # TRINKETS
+
+  trinket_usage:
+    label: "Trinket Usage"
+    type: dropdown
+    options:
+      - label: "On Cooldown"
+        value: 1
+      - label: "With Evangelism"
+        value: 2
+      - label: "When group damaged"
+        value: 3
+      - label: "Manual Only"
+        value: 0
+    default: 1
+
+  living_silk_members:
+    label: "Living Silk - Members"
+    type: slider
+    min: 1
+    max: 5
+    default: 3
+
+  living_silk_hp:
+    label: "Living Silk HP %"
+    type: slider
+    min: 30
+    max: 80
+    default: 70
+
+  # REACTIVE SHIELDS
+  
+  reactive_shields_enabled:
+    label: "Reactive Shields"
+    type: checkbox
+    default: true
+
+  preemptive_shield_enabled:
+    label: "Pre-Shield (cast on me)"
+    type: checkbox
+    default: true
+
+variables:
+
+  power_of_dark_side: buff.power_of_the_dark_side.up
+  evangelism_window: buff.evangelism.up
+  surge_of_light_active: buff.surge_of_light.up
+
+  weal_and_woe_stacks: buff.weal_and_woe.stack
+  weal_and_woe_ready: var.weal_and_woe_stacks>=config.weal_and_woe_min_stacks
+
+  hold_penance: cooldown.penance.charges<2&cooldown.penance.full_recharge_time>4&group.lowest.health.pct>=config.penance_healing_threshold
+  penance_ready: cooldown.penance.charges>=1&!var.hold_penance
+
+  mo_friendly_valid: mouseover.exists&mouseover.alive&mouseover.friendly&mouseover.range>0&mouseover.range<=40
+  mo_enemy_valid: mouseover.exists&mouseover.alive&mouseover.enemy
+
+  use_feather: moving.time>=config.angelic_feather_movement_time&buff.angelic_feather.down&((config.angelic_feather_usage=1&player.combat)|(config.angelic_feather_usage=2&!player.combat)|(config.angelic_feather_usage=3))
+
+  trinket1_living_silk: trinket_1.id=242393
+  trinket2_living_silk: trinket_2.id=242393
+  has_living_silk: var.trinket1_living_silk|var.trinket2_living_silk
+
+  racial_defensive_hp: 50
+  racial_emergency_hp: 35
+  racial_heal_ally_hp: 60
+
+  group_needs_healing: group.count(cycle.health.pct<70)>=2
+  group_heavy_damage: group.count(cycle.health.pct<50)>=2
+
+
+  # --- ARA-KARA, City of Echoes ---
+  spell_bleeding_jab: 438599              # Bleed - single target
+  spell_web_wrap: 436614                  # Magic - targeted player, summons webs
+  spell_cultivated_poisons: 461487        # Poison - Boss Ki'katal waves
+  spell_cultivated_poisons_dot: 461507    # Poison - DoT from waves
+  spell_poison_bolt: 436322               # Poison - Interruptible, miniboss Atik
+  spell_revolting_volley: 448248          # Poison - Interruptible
+  spell_venom_volley: 433841              # Poison - Interruptible
+  spell_venomous_spit: 438618             # Poison - targeted
+  spell_tainted_blood: 1241785            # Magic - stacking tank debuff
+  
+  # --- ECO-DOME Al'dani ---
+  spell_rift_claws: 1219535               # Bleed - tank debuff, boss A'wazj
+  spell_arcing_energy: 1221483            # Magic - targeted
+  spell_hungering_rage: 1221133           # Enrage
+  spell_alacrity: 1231608                 # Purge
+  spell_embrace_of_karesh: 1223000        # Purge
+
+  # --- HALLS OF ATONEMENT ---
+  spell_ankle_bite: 1235245               # Bleed - Stonefiend dash, stacking
+  spell_gushing_wound: 1237602            # Bleed - tank stacking debuff
+  spell_mark_of_obliteration: 325876      # Magic - PRIORITY DISPEL on squishy!
+  spell_turn_to_stone: 1235762            # Magic - stuns player
+  spell_unstable_anima: 1236513           # Magic - spread mechanic, boss Aleez
+  spell_anima_tainted_armor: 1235060      # Magic - tank stacking debuff
+  spell_siphon_life: 325701               # Magic - channel, stop to break
+  spell_sinlight_visions: 339237          # Magic - fear if outside circle
+  spell_loyal_beasts: 326450              # Enrage - interruptible
+
+  # --- OPERATION: FLOODGATE ---
+  spell_harpoon: 468631                   # Bleed - GRIPS player!
+  spell_nailed: 1213803                   # Bleed - roots player
+  spell_black_blood_wound: 462737         # Magic - tank stacking debuff
+  spell_overcharge: 469799                # Magic - STUNS if not dispelled!
+  spell_kinetic_explosive_gel: 473713     # Magic - explodes
+  spell_lethargic_venom: 465813           # Poison
+  spell_bloodthirsty_cackle: 463061       # Enrage - interruptible
+  spell_restorative_algae: 471733         # Purge - interruptible
+
+  # --- PRIORY OF THE SACRED FLAME ---
+  spell_grievous_rip: 427635              # Bleed - cat jump, DANGEROUS
+  spell_lunging_strike: 424426            # Bleed - PREFERS NON-TANKS!
+  spell_impale: 427621                    # Bleed
+  spell_pierce_armor: 424414              # Bleed - tank buster
+  spell_caltrops: 453461                  # Bleed - avoidable ground
+  spell_blazing_strike: 435148            # Magic - tank buster
+  spell_blinding_light: 428170            # Magic - CC + damage
+  spell_divine_judgment: 448515           # Magic - tank buster
+  spell_heat_wave: 427897                 # Magic
+  spell_holy_flame: 451606                # Magic
+  spell_repentance: 427583                # Magic - interruptible
+  spell_battle_cry: 424419                # Enrage - interruptible even shielded
+  spell_inner_fire: 427346                # Purge - stuns on removal
+  spell_templars_wrath: 444728            # Purge - spellstealable
+  spell_defend: 427342                    # Purge - reflect 50% when stopped
+
+  # --- TAZAVESH: So'leah's Gambit ---
+  spell_shuriken_blitz: 351119            # Bleed - interruptible
+  spell_time_bomb: 1240097                # Magic - NEW MECHANIC, explodes
+  spell_cry_of_mrrggllrrgg: 355057        # Enrage
+  spell_super_saison: 356133              # Enrage
+  spell_double_time: 1240214              # Purge
+
+  # --- TAZAVESH: Streets of Wonder ---
+  spell_chains_of_damnation: 350101       # Bleed - boss Venza, can freedom
+  spell_frantic_rip: 357827               # Bleed - Nightclaw jump
+  spell_letter_opener: 347716             # Bleed - TANK BUSTER dangerous!
+  spell_phase_slash: 1248211              # Bleed - NEW party-wide mechanic!
+  spell_quickblade: 355832                # Bleed
+  spell_ancient_dread: 356407             # Curse - needs 2 players to kick
+  spell_empowered_glyph_of_restraint: 356324  # Magic - can be LoS'd
+  spell_glyph_of_restraint: 355915        # Magic
+  spell_alchemical_residue: 346844        # Magic - soak zones
+  spell_hard_light_barrier: 355934        # Magic
+  spell_hard_light_baton: 355888          # Magic
+  spell_hyperlight_bomb: 357029           # Magic
+  spell_lockdown: 356943                  # Magic - positional
+  spell_purification_protocol: 349954     # Magic - Achillite
+  spell_scintillate: 355641               # Magic
+  spell_static_cling: 351960              # Magic
+  spell_force_multiplier: 1244446         # Enrage
+  spell_rowdy: 353706                     # Enrage
+  spell_flagellation_protocol: 349933     # Purge
+  spell_refraction_shield: 355980         # Purge
+  spell_spam_filter: 347775               # Purge
+
+  # --- THE DAWNBREAKER ---
+  spell_tainted_slash: 431491             # Bleed
+  spell_ensnaring_shadows: 431309         # Curse
+  spell_burning_shadows: 426735           # Magic
+  spell_stygian_seed: 432448              # Magic
+  spell_intensifying_aggression: 1242074  # Enrage - stacks
+  spell_tacticians_rage: 451112           # Enrage
+  spell_abyssal_howl: 450756              # Purge - no longer interruptible
+
+  dangerous_magic_debuff: cycle.debuff.spell_325876.up|cycle.debuff.spell_469799.up|cycle.debuff.spell_1240097.up|cycle.debuff.spell_1235762.up|cycle.debuff.spell_1236513.up|cycle.debuff.spell_432448.up|cycle.debuff.spell_428170.up|cycle.debuff.spell_356324.up|cycle.debuff.spell_473713.up
+  dangerous_bleed_debuff: cycle.debuff.spell_427635.up|cycle.debuff.spell_424426.up|cycle.debuff.spell_357827.up|cycle.debuff.spell_1248211.up|cycle.debuff.spell_468631.up|cycle.debuff.spell_347716.up|cycle.debuff.spell_438599.up|cycle.debuff.spell_1235245.up|cycle.debuff.spell_1213803.up|cycle.debuff.spell_350101.up|cycle.debuff.spell_431491.up
+  dangerous_poison_debuff: cycle.debuff.spell_461487.up|cycle.debuff.spell_461507.up|cycle.debuff.spell_438618.up|cycle.debuff.spell_465813.up
+  dangerous_curse_debuff: cycle.debuff.spell_431309.up
+  dangerous_nondispelable: var.dangerous_bleed_debuff|var.dangerous_poison_debuff|var.dangerous_curse_debuff
+  has_dangerous_debuff: var.dangerous_magic_debuff|var.dangerous_nondispelable
+
+
+lists:
+
+  spell_queue:
+    - queue_spell
+
+  sanity_checks:
+    - return,if=player.dead
+    - return,if=mounted
+    - return,if=!state.rotation
+    - return,if=state.blocked_inputs
+
+  interrupts:
+    - psychic_scream,if=config.use_psychic_scream&(interrupts.8y.count>=2|interrupts.8y.stun.count>=2)
+
+  out_of_combat:
+    - power_word_fortitude.player,if=config.auto_fortitude&group.count(cycle.buff.power_word_fortitude.down.any&cycle.range>0&cycle.range<=40)>0
+    - penance,cycle=members,if=cycle.health.pct<config.ooc_penance_threshold&!player.combat&var.penance_ready&cycle.range>0&cycle.range<=40
+    - flash_heal,cycle=members,if=cycle.health.pct<config.ooc_flash_heal_threshold&!player.combat&var.surge_of_light_active&cycle.range>0&cycle.range<=40
+    - flash_heal,cycle=members,if=cycle.health.pct<config.ooc_flash_heal_threshold&!player.combat&cycle.range>0&cycle.range<=40
+
+  pain_suppression_logic:
+    - pain_suppression,cycle=tanks,if=config.pain_suppression_usage>=1&cycle.health.pct<config.pain_suppression_threshold&cycle.buff.pain_suppression.down&cycle.range>0&cycle.range<=40
+    - pain_suppression,cycle=healers,if=config.pain_suppression_usage>=2&cycle.health.pct<config.pain_suppression_threshold&cycle.buff.pain_suppression.down&cycle.range>0&cycle.range<=40
+    - pain_suppression,cycle=members,if=config.pain_suppression_usage=3&cycle.health.pct<config.pain_suppression_threshold&cycle.buff.pain_suppression.down&cycle.range>0&cycle.range<=40
+
+  major_cooldowns:
+    - evangelism,if=group.count(cycle.health.pct<80)>=config.evangelism_members
+    - power_infusion.player,if=config.auto_pi&group.count(cycle.health.pct<=60)>=2
+    - power_infusion,cycle=dps,if=config.auto_pi&(buff.bloodlust.up|var.evangelism_window)
+    - power_infusion,cycle=dps,if=config.auto_pi&cycle.buff.power_infusion.down&cycle.range>0&cycle.range<=40&((cycle.buff.avatar.remains>15)|(cycle.buff.recklessness.remains>8)|((cycle.buff.demonic_art_overlord.up|cycle.buff.demonic_art_mother_of_chaos.up|cycle.buff.demonic_art_pitlord.up)&cycle.buff.malevolence.remains>10)|(cycle.buff.tyrants_oblation.remains>10)|(cycle.buff.malevolence.remains>15)|(cycle.buff.ascendance.remains>10)|(cycle.buff.shadow_blades.remains>12)|(cycle.buff.adrenaline_rush.remains>10)|(cycle.buff.deathmark.remains>10&cycle.buff.kingsbane.remains>10)|(cycle.buff.voidform.remains>15)|(cycle.buff.avenging_wrath.remains>15)|(cycle.buff.courage_of_the_white_tiger.remains>29)|(cycle.buff.combustion.remains>8)|(cycle.buff.arcane_surge.remains>14)|(cycle.buff.takedown.remains>6)|(cycle.buff.trueshot.remains>10)|(cycle.buff.bestial_wrath.remains>10|cycle.buff.bloodshed.remains>10)|(cycle.buff.dragonrage.remains>10)|(cycle.buff.incarnation_avatar_of_ashamane.remains>10|cycle.buff.berserk.remains>10)|(cycle.buff.incarnation_chosen_of_elune.remains>10|cycle.buff.celestial_alignment.remains>10)|(cycle.buff.void_metamorphosis.remains>10)|(cycle.buff.metamorphosis.remains>10)|(cycle.buff.army_of_the_dead.remains>10)|(cycle.buff.pillar_of_frost.remains>10|cycle.buff.breath_of_sindragosa.remains>7))
+    - shadowfiend,if=config.shadowfiend_usage!=0&((config.shadowfiend_usage=1)|(config.shadowfiend_usage=2&group.count(cycle.health.pct<80)>=2)|(config.shadowfiend_usage=3&group.count(cycle.health.pct<70)>=3))
+    - power_word_barrier,if=group.count(cycle.health.pct<60)>=config.power_word_barrier_members
+    - ultimate_penitence,if=group.count(cycle.health.pct<60)>=config.ultimate_penitence_members&group.count(cycle.buff.atonement.up)>=4
+
+  high_priority_healing:
+    - desperate_prayer,if=health.pct<config.desperate_prayer_threshold
+    - power_word_shield.player,if=health.pct<55&buff.power_word_shield.down
+    - fade,if=target.threat>=3|config.auto_fade
+    - penance.player,if=health.pct<50&var.penance_ready
+    - flash_heal.player,if=health.pct<55&var.surge_of_light_active
+    - penance,cycle=members,if=cycle.health.pct<55&var.penance_ready&cycle.range>0&cycle.range<=40
+    - flash_heal,cycle=members,if=cycle.health.pct<config.flash_heal_threshold&var.surge_of_light_active&cycle.range>0&cycle.range<=40
+    - power_word_shield,cycle=members,if=cycle.health.pct<40&!var.penance_ready&!var.surge_of_light_active&cycle.buff.power_word_shield.down&cycle.range>0&cycle.range<=40
+    - flash_heal.player,if=health.pct<45
+    - flash_heal,cycle=members,if=cycle.health.pct<30&cycle.range>0&cycle.range<=40
+
+  dispel:
+    - purify,cycle=members,if=cycle.dispelable.list&cycle.range>0&cycle.range<=40
+    - purify.player,if=player.dispelable.list
+
+  preemptive_shield:
+
+    - power_word_shield.player,if=config.preemptive_shield_enabled&target.casting.targeting_me&buff.power_word_shield.down
+
+  reactive_shields:
+    - power_word_shield,cycle=members,if=config.reactive_shields_enabled&cycle.debuff.spell_438599.up&cycle.debuff.spell_438599.remains>2&cycle.buff.power_word_shield.down&cycle.range>0&cycle.range<=40
+    - power_word_shield,cycle=members,if=config.reactive_shields_enabled&cycle.debuff.spell_1235245.up&cycle.debuff.spell_1235245.remains>2&cycle.buff.power_word_shield.down&cycle.range>0&cycle.range<=40
+    - power_word_shield,cycle=members,if=config.reactive_shields_enabled&cycle.debuff.spell_468631.up&cycle.debuff.spell_468631.remains>2&cycle.buff.power_word_shield.down&cycle.range>0&cycle.range<=40
+    - power_word_shield,cycle=members,if=config.reactive_shields_enabled&cycle.debuff.spell_1213803.up&cycle.debuff.spell_1213803.remains>2&cycle.buff.power_word_shield.down&cycle.range>0&cycle.range<=40
+    - power_word_shield,cycle=members,if=config.reactive_shields_enabled&cycle.debuff.spell_427635.up&cycle.debuff.spell_427635.remains>2&cycle.buff.power_word_shield.down&cycle.range>0&cycle.range<=40
+    - power_word_shield,cycle=members,if=config.reactive_shields_enabled&cycle.debuff.spell_424426.up&cycle.debuff.spell_424426.remains>2&cycle.buff.power_word_shield.down&cycle.range>0&cycle.range<=40
+    - power_word_shield,cycle=members,if=config.reactive_shields_enabled&cycle.debuff.spell_357827.up&cycle.debuff.spell_357827.remains>2&cycle.buff.power_word_shield.down&cycle.range>0&cycle.range<=40
+    - power_word_shield,cycle=members,if=config.reactive_shields_enabled&cycle.debuff.spell_1248211.up&cycle.debuff.spell_1248211.remains>2&cycle.buff.power_word_shield.down&cycle.range>0&cycle.range<=40
+    - power_word_shield,cycle=members,if=config.reactive_shields_enabled&cycle.debuff.spell_347716.up&cycle.debuff.spell_347716.remains>2&cycle.buff.power_word_shield.down&cycle.range>0&cycle.range<=40
+    - power_word_shield,cycle=members,if=config.reactive_shields_enabled&cycle.debuff.spell_350101.up&cycle.debuff.spell_350101.remains>2&cycle.buff.power_word_shield.down&cycle.range>0&cycle.range<=40
+    - power_word_shield,cycle=members,if=config.reactive_shields_enabled&cycle.debuff.spell_431491.up&cycle.debuff.spell_431491.remains>2&cycle.buff.power_word_shield.down&cycle.range>0&cycle.range<=40
+    - power_word_shield,cycle=members,if=config.reactive_shields_enabled&cycle.debuff.spell_461487.up&cycle.debuff.spell_461487.remains>2&cycle.buff.power_word_shield.down&cycle.range>0&cycle.range<=40
+    - power_word_shield,cycle=members,if=config.reactive_shields_enabled&cycle.debuff.spell_461507.up&cycle.debuff.spell_461507.remains>2&cycle.buff.power_word_shield.down&cycle.range>0&cycle.range<=40
+    - power_word_shield,cycle=members,if=config.reactive_shields_enabled&cycle.debuff.spell_438618.up&cycle.debuff.spell_438618.remains>2&cycle.buff.power_word_shield.down&cycle.range>0&cycle.range<=40
+    - power_word_shield,cycle=members,if=config.reactive_shields_enabled&cycle.debuff.spell_465813.up&cycle.debuff.spell_465813.remains>2&cycle.buff.power_word_shield.down&cycle.range>0&cycle.range<=40
+    - power_word_shield,cycle=members,if=config.reactive_shields_enabled&cycle.debuff.spell_431309.up&cycle.debuff.spell_431309.remains>2&cycle.buff.power_word_shield.down&cycle.range>0&cycle.range<=40
+    - power_word_shield,cycle=members,if=config.reactive_shields_enabled&cycle.debuff.spell_325876.up&cycle.debuff.spell_325876.remains>2&cycle.buff.power_word_shield.down&cycle.range>0&cycle.range<=40
+    - power_word_shield,cycle=members,if=config.reactive_shields_enabled&cycle.debuff.spell_1235762.up&cycle.debuff.spell_1235762.remains>2&cycle.buff.power_word_shield.down&cycle.range>0&cycle.range<=40
+    - power_word_shield,cycle=members,if=config.reactive_shields_enabled&cycle.debuff.spell_1236513.up&cycle.debuff.spell_1236513.remains>2&cycle.buff.power_word_shield.down&cycle.range>0&cycle.range<=40
+    - power_word_shield,cycle=members,if=config.reactive_shields_enabled&cycle.debuff.spell_469799.up&cycle.debuff.spell_469799.remains>2&cycle.buff.power_word_shield.down&cycle.range>0&cycle.range<=40
+    - power_word_shield,cycle=members,if=config.reactive_shields_enabled&cycle.debuff.spell_473713.up&cycle.debuff.spell_473713.remains>2&cycle.buff.power_word_shield.down&cycle.range>0&cycle.range<=40
+    - power_word_shield,cycle=members,if=config.reactive_shields_enabled&cycle.debuff.spell_1240097.up&cycle.debuff.spell_1240097.remains>2&cycle.buff.power_word_shield.down&cycle.range>0&cycle.range<=40
+    - power_word_shield,cycle=members,if=config.reactive_shields_enabled&cycle.debuff.spell_356324.up&cycle.debuff.spell_356324.remains>2&cycle.buff.power_word_shield.down&cycle.range>0&cycle.range<=40
+    - power_word_shield,cycle=members,if=config.reactive_shields_enabled&cycle.debuff.spell_432448.up&cycle.debuff.spell_432448.remains>2&cycle.buff.power_word_shield.down&cycle.range>0&cycle.range<=40
+    - power_word_shield,cycle=members,if=config.reactive_shields_enabled&cycle.debuff.spell_428170.up&cycle.debuff.spell_428170.remains>2&cycle.buff.power_word_shield.down&cycle.range>0&cycle.range<=40
+
+  evangelism_burst:
+    - power_word_radiance,if=var.evangelism_window&group.count(cycle.health.pct<90)>=2
+    - power_word_radiance,if=var.evangelism_window&cooldown.power_word_radiance.charges>=1&group.count(cycle.health.pct<75)>=2
+    - penance,if=var.evangelism_window&var.penance_ready
+    - mind_blast,if=var.evangelism_window
+
+  penance_shield_combo:
+    - power_word_shield,cycle=members,if=var.weal_and_woe_ready&cycle.health.pct<config.pws_hp_threshold&cycle.buff.atonement.up&cycle.buff.power_word_shield.down&cycle.range>0&cycle.range<=40
+    - power_word_shield,target=lowest,if=var.weal_and_woe_ready&group.lowest.health.pct<config.pws_hp_threshold&group.lowest.buff.remains(power_word_shield)=0&group.lowest.range>0&group.lowest.range<=40
+
+  atonement_spread:
+    - power_word_radiance,if=cooldown.power_word_radiance.charges>=2&group.count(cycle.health.pct<85&cycle.range>0&cycle.range<=40)>=config.radiance_members
+    - power_word_radiance,if=!cooldown.evangelism.ready&group.count(cycle.health.pct<85&cycle.range>0&cycle.range<=40)>=config.radiance_members
+    - penance,cycle=members,if=cycle.buff.atonement.down&var.penance_ready&cycle.range>0&cycle.range<=40
+    - power_word_shield,cycle=members,if=cycle.buff.power_word_shield.down&cycle.buff.atonement.down&cycle.range>0&cycle.range<=40
+    - flash_heal,cycle=members,if=cycle.buff.atonement.down&var.surge_of_light_active&cycle.range>0&cycle.range<=40
+    - plea,cycle=members,if=cycle.buff.atonement.down&cycle.range>0&cycle.range<=40
+
+  offensive:
+    - interrupt_self,if=player.casting&group.count(cycle.health.pct<50)>=1&(var.penance_ready|var.surge_of_light_active)
+    - shadow_word_pain,if=config.maintain_dot&debuff.shadow_word_pain.remains<3
+    - mind_blast
+    - penance,if=var.power_of_dark_side&var.penance_ready
+    - penance,if=cooldown.penance.charges>=2
+    - shadow_word_death,if=config.use_shadow_word_death&target.health.pct<=20
+    - smite
+
+  mouseover_friendly:
+    - pain_suppression.mouseover,if=config.mo_pain_suppression&mouseover.health.pct<config.pain_suppression_threshold&mouseover.buff.remains(pain_suppression)=0
+    - penance.mouseover,if=config.mo_penance&mouseover.health.pct<config.mo_penance_threshold&var.penance_ready
+    - flash_heal.mouseover,if=config.mo_flash_heal&mouseover.health.pct<config.mo_flash_heal_threshold
+    - purify.mouseover,if=config.mo_purify&mouseover.dispelable.list
+
+  mouseover_enemy:
+    # ADD WHEN MOUSEOVERS WORK
+    # - shadow_word_pain.mouseover,if=config.mo_dot&mouseover.debuff.remains(shadow_word_pain)=0
+
+  moving:
+    - penance,cycle=members,if=cycle.health.pct<config.penance_healing_threshold&var.penance_ready&cycle.range>0&cycle.range<=40
+    - power_word_shield,cycle=members,if=var.weal_and_woe_ready&cycle.health.pct<config.pws_hp_threshold&cycle.buff.power_word_shield.down&cycle.range>0&cycle.range<=40
+    - power_word_shield,cycle=members,if=cycle.buff.power_word_shield.down&cycle.buff.atonement.down&cycle.range>0&cycle.range<=40
+    - power_word_shield,target=lowest,if=group.lowest.buff.remains(power_word_shield)=0&group.lowest.range>0&group.lowest.range<=40
+    - flash_heal,cycle=members,if=var.surge_of_light_active&cycle.health.pct<config.pws_hp_threshold&cycle.range>0&cycle.range<=40
+    - plea,cycle=members,if=cycle.buff.atonement.down&cycle.health.pct<90&cycle.range>0&cycle.range<=40
+    - shadow_word_pain,if=config.maintain_dot&debuff.shadow_word_pain.remains<5
+
+  trinkets:
+    - trinket_1,if=var.trinket1_living_silk&trinket_1.ready&config.trinket_usage!=0&((config.trinket_usage=1)|(config.trinket_usage=2&var.evangelism_window)|(config.trinket_usage=3&group.count(cycle.health.pct<config.living_silk_hp)>=config.living_silk_members))
+    - trinket_2,if=var.trinket2_living_silk&trinket_2.ready&config.trinket_usage!=0&((config.trinket_usage=1)|(config.trinket_usage=2&var.evangelism_window)|(config.trinket_usage=3&group.count(cycle.health.pct<config.living_silk_hp)>=config.living_silk_members))
+    - trinket_1,if=!var.trinket1_living_silk&trinket_1.ready&config.trinket_usage=1
+    - trinket_2,if=!var.trinket2_living_silk&trinket_2.ready&config.trinket_usage=1
+
+  racial_defensive:
+
+    - stoneform,if=player.dispelable.list
+    - fireblood,if=player.dispelable.list
+    - will_of_the_forsaken,if=player.feared|player.charmed
+    - escape_artist,if=player.rooted
+    - will_to_survive,if=player.stunned
+    - gift_of_the_naaru.player,if=health.pct<var.racial_emergency_hp
+    - regeneratin,if=health.pct<var.racial_emergency_hp&!player.combat
+    - stoneform,if=health.pct<var.racial_defensive_hp
+    - fireblood,if=health.pct<var.racial_defensive_hp
+
+  racial_offensive:
+
+    - berserking,if=var.evangelism_window
+    - blood_fury,if=var.evangelism_window
+    - ancestral_call,if=var.evangelism_window
+    - fireblood,if=var.evangelism_window&!player.dispelable.list
+    - azerite_surge,if=var.evangelism_window
+
+  racial_cc:
+
+    - war_stomp,if=interrupts.8y.stun.count>=1
+    - quaking_palm,if=target.casting.interruptible
+    - haymaker,if=target.casting.interruptible
+    - bull_rush,if=target.casting.interruptible
+    - wing_buffet,if=target.casting.interruptible
+    - arcane_pulse,if=enemies.8y.count>=3
+
+  racial_utility:
+
+    - arcane_torrent,if=mana.pct<=90
+    - gift_of_the_naaru,target=lowest,if=group.lowest.health.pct<var.racial_heal_ally_hp
+    - bag_of_tricks,target=lowest,if=group.lowest.health.pct<var.racial_heal_ally_hp
+    - shadowmeld,if=target.threat>=3&!player.casting
+    - holo,if=health.pct<30
+
+  main:
+
+    - call_action_list,name=sanity_checks
+    - call_action_list,name=spell_queue
+    - call_action_list,name=auto_target_ranged
+    - call_action_list,name=out_of_combat
+    - return,if=!player.combat
+    - return,if=player.channeling
+    - call_action_list,name=interrupts
+    - call_action_list,name=racial_cc
+    - call_action_list,name=pain_suppression_logic
+    - call_action_list,name=racial_defensive
+    - call_action_list,name=dispel
+    - call_action_list,name=reactive_shields
+    - call_action_list,name=preemptive_shield
+    - call_action_list,name=major_cooldowns
+    - call_action_list,name=racial_offensive,if=var.evangelism_window
+    - call_action_list,name=high_priority_healing
+    - call_action_list,name=evangelism_burst,if=var.evangelism_window
+    - call_action_list,name=penance_shield_combo,if=var.weal_and_woe_ready
+    - angelic_feather.player,if=var.use_feather&config.angelic_feather_usage!=0
+    - call_action_list,name=moving,if=player.moving
+    - call_action_list,name=mouseover_friendly,if=config.mouseover_enabled&var.mo_friendly_valid&!player.casting&!player.channeling
+    - call_action_list,name=mouseover_enemy,if=config.mouseover_enabled&var.mo_enemy_valid&!player.casting&!player.channeling
+    - call_action_list,name=racial_utility
+    - call_action_list,name=trinkets
+    - call_action_list,name=atonement_spread,if=group.count(cycle.health.pct<90)>=2|group.count(cycle.buff.atonement.down)>=2
+    - call_action_list,name=offensive,if=target.valid

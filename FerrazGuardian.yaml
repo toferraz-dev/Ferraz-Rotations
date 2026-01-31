@@ -1,0 +1,351 @@
+﻿version: 3.2
+author: Ferraz
+spec: 104
+name: Guardian
+description: |
+  Guardian Druid Elunes Chosen for Mythic Plus 20+.
+  V3 - Otimizado para high keys
+
+entry: main
+
+config:
+
+  # CONFIG
+  allow_pull_with_mo:
+    label: "Pull with Moonfire"
+    type: checkbox
+    default: true
+  survival_instincts_threshold:
+    label: Survival Instincts %
+    type: slider
+    min: 10
+    max: 70
+    default: 50
+  frenzied_regen_threshold:
+    label: Frenzied Regeneration %
+    type: slider
+    min: 30
+    max: 80
+    default: 65
+  barkskin_threshold:
+    label: Barkskin %
+    type: slider
+    min: 30
+    max: 90
+    default: 65
+  ironfur_stacks_min:
+    label: "Min Ironfur Stacks to maintain"
+    type: slider
+    min: 1
+    max: 7
+    default: 3
+  ironfur_stacks_max:
+    label: "Max Ironfur Stacks (heavy damage)"
+    type: slider
+    min: 3
+    max: 10
+    default: 5
+  ironfur_rage_threshold:
+    label: "Min Rage for Ironfur"
+    type: slider
+    min: 30
+    max: 80
+    default: 40
+  rage_cap_threshold:
+    label: "Rage Cap Threshold (dump)"
+    type: slider
+    min: 60
+    max: 100
+    default: 80
+
+  # MAJOR COOLDOWNS
+  incarnation_enemies:
+    label: "Min enemies for Incarnation"
+    type: slider
+    min: 1
+    max: 10
+    default: 3
+  rage_of_sleeper_threshold:
+    label: "HP% for Rage of the Sleeper"
+    type: slider
+    min: 30
+    max: 90
+    default: 70
+
+  # ROTATION
+  thrash_stacks_target:
+    label: "Thrash Stacks to maintain"
+    type: slider
+    min: 1
+    max: 3
+    default: 3
+  raze_targets:
+    label: "Min targets for Raze (instead of Maul)"
+    type: slider
+    min: 2
+    max: 5
+    default: 2
+
+  # INTERRUPTS
+  use_skull_bash:
+    label: "Auto Interrupt"
+    type: checkbox
+    default: true
+  skull_bash_delay:
+    label: "Interrupt Delay (ms)"
+    type: slider
+    min: 0
+    max: 2000
+    default: 250
+
+  # MOVEMENT
+  stampeding_roar_usage:
+    label: "Stampeding Roar Usage"
+    type: dropdown
+    options:
+      - label: "Disabled"
+        value: 0
+      - label: "Only in combat"
+        value: 1
+      - label: "Only out of combat"
+        value: 2
+      - label: "Always when moving"
+        value: 3
+    default: 2
+  stampeding_roar_movement_time:
+    label: "Roar after moving (seconds)"
+    type: slider
+    min: 0
+    max: 4
+    default: 2
+
+  # TRINKETS
+  trinket_usage:
+    label: "Trinket Usage"
+    type: dropdown
+    options:
+      - label: "On Cooldown"
+        value: 1
+      - label: "With Incarnation"
+        value: 2
+      - label: "When taking damage"
+        value: 3
+      - label: "Manual Only"
+        value: 0
+    default: 1
+
+variables:
+  # FORM AND RESOURCES
+  missing_motw: group.count(buff.mark_of_the_wild.down&range<=40)>0
+  in_bear_form: buff.bear_form.up
+  rage: player.rage
+  rage_deficit: player.rage.max-player.rage
+  rage_overcap: var.rage>=config.rage_cap_threshold
+  rage_for_harnessed: var.rage>=80
+
+  # DEFENSIVE BUFFS
+  ironfur_stacks: buff.ironfur.stack
+  need_ironfur: var.ironfur_stacks<config.ironfur_stacks_min&var.rage>=config.ironfur_rage_threshold
+  heavy_damage: health.pct<70&var.ironfur_stacks<config.ironfur_stacks_max
+  dangerous_situation: health.pct<50&!buff.survival_instincts.up
+  emergency_situation: health.pct<30
+  barkskin_up: buff.barkskin.up
+  survival_up: buff.survival_instincts.up
+  any_major_defensive: var.barkskin_up|var.survival_up|buff.rage_of_the_sleeper.up
+  after_avenger_up: buff.after_avenger.up
+
+  # OFFENSIVE PROCS
+  galactic_guardian_up: buff.galactic_guardian.up
+  tooth_and_claw_up: buff.tooth_and_claw.up
+  gore_up: buff.gore.up
+  harnessed_rage: talent.harnessed_rage
+  mangle_charges: cooldown.mangle.charges
+
+  # DOT TRACKING
+  thrash_stacks: debuff.thrash.stack
+  thrash_needs_refresh: debuff.thrash.remains<4.5|debuff.thrash.stack<config.thrash_stacks_target
+  moonfire_needs_refresh: debuff.moonfire.remains<4.8
+
+  # COOLDOWN STATES
+  lunar_beam_active: buff.lunar_beam.up
+  lunar_beam_soon: cooldown.lunar_beam.remains<15
+  lunar_beam_ready: cooldown.lunar_beam.ready
+  incarnation_active: buff.incarnation_guardian_of_ursoc.up
+  combat_start: player.combat&player.combat.time<3
+  
+  # ELUNE'S CHOSEN SYNERGY
+  use_lunar_beam: var.lunar_beam_ready&(active_enemies>=2|health.pct<70|target.boss)
+
+  # TARGETING
+  use_raze: active_enemies>=config.raze_targets
+  can_interrupt: target.casting&!target.casting.interruptible=false
+
+  # MOVEMENT
+  use_stampeding_roar: moving.time>=config.stampeding_roar_movement_time&buff.stampeding_roar.down&((config.stampeding_roar_usage=1&player.combat)|(config.stampeding_roar_usage=2&!player.combat)|(config.stampeding_roar_usage=3))
+
+  # RACIAL THRESHOLDS
+  racial_defensive_hp: 50
+  racial_emergency_hp: 35
+
+lists:
+
+  spell_queue:
+    - queue_spell
+
+  sanity_checks:
+    - return,if=player.dead
+    - return,if=mounted
+    - return,if=!state.rotation
+    - return,if=state.blocked_inputs
+
+  defensives:
+    # EMERGENCY - Usar tudo quando muito baixo
+    - survival_instincts,if=var.emergency_situation&!var.survival_up
+    - rage_of_the_sleeper,if=var.emergency_situation&!var.survival_up
+    - frenzied_regeneration,if=var.emergency_situation&var.rage>=10
+    - barkskin,if=var.emergency_situation&!var.survival_up
+    # DANGEROUS - Sobrevivência prioritária
+    - survival_instincts,if=var.dangerous_situation&!var.barkskin_up
+    - frenzied_regeneration,if=var.dangerous_situation&var.rage>=20
+    - ironfur,if=var.dangerous_situation&var.rage>=40
+    # THRESHOLD BASED - Uso normal
+    - survival_instincts,if=health.pct<config.survival_instincts_threshold&cooldown.frenzied_regeneration.remains>2&!var.any_major_defensive
+    - frenzied_regeneration,if=health.pct<config.frenzied_regen_threshold
+    - barkskin,if=health.pct<config.barkskin_threshold&!var.survival_up
+    # IRONFUR MANAGEMENT
+    - ironfur,if=var.after_avenger_up&var.ironfur_stacks<config.ironfur_stacks_max
+    - ironfur,if=var.heavy_damage&var.rage>=40
+    - ironfur,if=var.incarnation_active&var.ironfur_stacks<config.ironfur_stacks_max&var.rage>=45
+      
+  cooldowns:
+    - lunar_beam,if=var.use_lunar_beam
+    - incarnation_guardian_of_ursoc,if=active_enemies>=config.incarnation_enemies|(target.boss&target.time_to_die>20)
+    - rage_of_the_sleeper,if=health.pct<config.rage_of_sleeper_threshold|active_enemies>=4|(var.incarnation_active&active_enemies>=3)
+    - berserk_ravage,if=talent.berserk&(active_enemies>=3|target.boss)
+    - heart_of_the_wild,if=var.in_bear_form&active_enemies>=4
+  
+  interrupts:
+    - skull_bash,if=config.use_skull_bash&var.can_interrupt,delay=config.skull_bash_delay
+    - incapacitating_roar,if=active_enemies>=3&talent.incapacitating_roar
+
+  taunt:
+    # Growl em inimigos que nao estao atacando voce
+    - growl,target=mouseover,if=target.threat<3&target.range<=30&target.alive&target.enemy
+    - growl,if=target.threat<3&target.range<=30
+  
+  rage_management:
+    - ironfur,if=var.need_ironfur
+    - ironfur,if=var.ironfur_stacks<config.ironfur_stacks_max&var.rage>=60&buff.ironfur.remains<3
+    - maul,if=var.tooth_and_claw_up&var.rage>=35&!var.use_raze
+    - raze,if=var.use_raze&var.rage_for_harnessed
+    - raze,if=var.use_raze&var.rage_overcap
+    - maul,if=var.incarnation_active&var.rage>=50&!var.use_raze
+    - maul,if=!var.use_raze&var.rage_overcap
+  
+  moonfire_spread:
+    # Spread inicial
+    - moonfire,if=var.combat_start&debuff.moonfire.down&range<=40
+    # Spread agressivo durante Incarnation
+    - moonfire,if=var.incarnation_active&debuff.moonfire.down&range<=40
+    # Galactic Guardian
+    - moonfire,if=var.galactic_guardian_up
+    # Lunar Beam prep
+    - moonfire,if=var.lunar_beam_soon&var.moonfire_needs_refresh
+    # Manutenção normal
+    - moonfire,if=debuff.moonfire.down
+    - moonfire,if=var.moonfire_needs_refresh
+    # Mouseover para facilitar spread manual
+    - moonfire,target=mouseover,if=debuff.moonfire.down&range<=40&target.alive&target.enemy
+  
+  rotation_st:
+    - mangle,if=var.gore_up
+    - mangle,if=var.harnessed_rage&var.mangle_charges>=2
+    - mangle
+    - thrash
+    - moonfire,if=var.galactic_guardian_up
+    - moonfire,if=var.lunar_beam_soon&var.moonfire_needs_refresh
+    - moonfire,if=var.moonfire_needs_refresh
+    - raze,if=active_enemies=1&var.rage>=90
+    - raze,if=var.use_raze&var.rage>=config.rage_cap_threshold
+    - maul,if=var.rage>=config.rage_cap_threshold&var.tooth_and_claw_up
+    - maul,if=var.rage>=config.rage_cap_threshold
+    - swipe
+  
+  rotation_aoe:
+    # AoE - Thrash primeiro para threat e redução de dano
+    - thrash,if=var.thrash_needs_refresh
+    - mangle,if=var.gore_up
+    - mangle,if=var.harnessed_rage&var.mangle_charges>=2
+    - thrash
+    - mangle
+    - call_action_list,name=moonfire_spread
+    # Raze prioridade durante Lunar Beam (Fury of Nature)
+    - raze,if=var.lunar_beam_active&var.rage>=30
+    - raze,if=var.rage_for_harnessed
+    - raze,if=var.rage>=config.rage_cap_threshold
+    - maul,if=var.tooth_and_claw_up&var.rage>=60
+    - raze,if=var.rage>=40
+    - swipe
+
+  # RACIAL ABILITIES
+
+  racial_defensive:
+    - stoneform,if=player.dispelable.list
+    - fireblood,if=player.dispelable.list
+    - will_of_the_forsaken,if=player.feared|player.charmed
+    - escape_artist,if=player.rooted
+    - will_to_survive,if=player.stunned
+    - gift_of_the_naaru.player,if=health.pct<var.racial_emergency_hp
+    - regeneratin,if=health.pct<var.racial_emergency_hp&!player.combat
+    - stoneform,if=health.pct<var.racial_defensive_hp
+    - fireblood,if=health.pct<var.racial_defensive_hp
+
+  racial_offensive:
+    - berserking,if=var.incarnation_active
+    - blood_fury,if=var.incarnation_active
+    - ancestral_call,if=var.incarnation_active
+    - fireblood,if=var.incarnation_active&!player.dispelable.list
+    - azerite_surge,if=var.incarnation_active
+
+  racial_cc:
+    - war_stomp,if=interrupts.8y.stun.count>=1
+    - quaking_palm,if=target.casting.interruptible
+    - haymaker,if=target.casting.interruptible
+    - bull_rush,if=target.casting.interruptible
+    - wing_buffet,if=target.casting.interruptible
+    - arcane_pulse,if=enemies.8y.count>=3
+
+  racial_utility:
+    - arcane_torrent,if=var.rage<50
+    - gift_of_the_naaru,cycle=members,if=cycle.health.pct<60&cycle.range>0&cycle.range<=40
+    
+  trinkets:
+    - trinket_1,if=trinket_1.ready&config.trinket_usage!=0&((config.trinket_usage=1)|(config.trinket_usage=2&var.incarnation_active)|(config.trinket_usage=3&health.pct<70))
+    - trinket_2,if=trinket_2.ready&config.trinket_usage!=0&((config.trinket_usage=1)|(config.trinket_usage=2&var.incarnation_active)|(config.trinket_usage=3&health.pct<70))
+
+  movement:
+    - stampeding_roar,if=var.use_stampeding_roar&config.stampeding_roar_usage!=0
+    - wild_charge,if=target.range>=10&target.range<=25&player.combat
+  
+  main:
+    - call_action_list,name=sanity_checks
+    - call_action_list,name=spell_queue
+    - bear_form,if=!var.in_bear_form&player.combat&!mounted.flying&!mounted.ground
+    - mark_of_the_wild.player,if=var.missing_motw
+    - moonfire,if=config.allow_pull_with_mo&!player.combat&target.enemy&target.alive&debuff.moonfire.down
+    - return,if=!player.combat&active_enemies=0
+    - return,if=player.channeling
+    - call_action_list,name=taunt
+    - call_action_list,name=interrupts
+    - call_action_list,name=racial_cc
+    - call_action_list,name=racial_defensive
+    - call_action_list,name=defensives
+    - call_action_list,name=cooldowns
+    - call_action_list,name=racial_offensive,if=var.incarnation_active
+    - call_action_list,name=rage_management
+    - call_action_list,name=movement,if=player.moving
+    - call_action_list,name=racial_utility
+    - call_action_list,name=trinkets
+    - call_action_list,name=rotation_aoe,if=active_enemies>=3
+    - call_action_list,name=rotation_st
+
