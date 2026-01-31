@@ -4,7 +4,6 @@ spec: 104
 name: Guardian
 description: |
   Guardian Druid Elunes Chosen for Mythic Plus 20+.
-  V4 - Otimizado para high keys
 
 entry: main
 
@@ -199,20 +198,16 @@ lists:
     - return,if=state.blocked_inputs
 
   defensives:
-    # EMERGENCY - Usar tudo quando muito baixo
     - survival_instincts,if=var.emergency_situation&!var.survival_up
     - rage_of_the_sleeper,if=var.emergency_situation&!var.survival_up
     - frenzied_regeneration,if=var.emergency_situation&var.rage>=10
     - barkskin,if=var.emergency_situation&!var.survival_up
-    # DANGEROUS - Sobrevivência prioritária
     - survival_instincts,if=var.dangerous_situation&!var.barkskin_up
     - frenzied_regeneration,if=var.dangerous_situation&var.rage>=20
     - ironfur,if=var.dangerous_situation&var.rage>=40
-    # THRESHOLD BASED - Uso normal
     - survival_instincts,if=health.pct<config.survival_instincts_threshold&cooldown.frenzied_regeneration.remains>2&!var.any_major_defensive
     - frenzied_regeneration,if=health.pct<config.frenzied_regen_threshold
     - barkskin,if=health.pct<config.barkskin_threshold&!var.survival_up
-    # IRONFUR MANAGEMENT
     - ironfur,if=var.after_avenger_up&var.ironfur_stacks<config.ironfur_stacks_max
     - ironfur,if=var.heavy_damage&var.rage>=40
     - ironfur,if=var.incarnation_active&var.ironfur_stacks<config.ironfur_stacks_max&var.rage>=45
@@ -229,7 +224,6 @@ lists:
     - incapacitating_roar,if=active_enemies>=3&talent.incapacitating_roar
 
   taunt:
-    # Growl em inimigos que nao estao atacando voce
     - growl,target=mouseover,if=target.threat<3&target.range<=30&target.alive&target.enemy
     - growl,if=target.threat<3&target.range<=30
   
@@ -243,18 +237,12 @@ lists:
     - maul,if=!var.use_raze&var.rage_overcap
   
   moonfire_spread:
-    # Spread inicial
     - moonfire,if=var.combat_start&debuff.moonfire.down&range<=40
-    # Spread agressivo durante Incarnation
     - moonfire,if=var.incarnation_active&debuff.moonfire.down&range<=40
-    # Galactic Guardian
     - moonfire,if=var.galactic_guardian_up
-    # Lunar Beam prep
     - moonfire,if=var.lunar_beam_soon&var.moonfire_needs_refresh
-    # Manutenção normal
     - moonfire,if=debuff.moonfire.down
     - moonfire,if=var.moonfire_needs_refresh
-    # Mouseover para facilitar spread manual
     - moonfire,target=mouseover,if=debuff.moonfire.down&range<=40&target.alive&target.enemy
   
   rotation_st:
@@ -272,14 +260,12 @@ lists:
     - swipe
   
   rotation_aoe:
-    # AoE - Thrash primeiro para threat e redução de dano
     - thrash,if=var.thrash_needs_refresh
     - mangle,if=var.gore_up
     - mangle,if=var.harnessed_rage&var.mangle_charges>=2
     - thrash
     - mangle
     - call_action_list,name=moonfire_spread
-    # Raze prioridade durante Lunar Beam (Fury of Nature)
     - raze,if=var.lunar_beam_active&var.rage>=30
     - raze,if=var.rage_for_harnessed
     - raze,if=var.rage>=config.rage_cap_threshold
