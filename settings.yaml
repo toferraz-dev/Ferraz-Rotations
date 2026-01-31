@@ -1,0 +1,14 @@
+Key: 32C7D1D29800014-SM
+GameFolder: C:\Games\World of Warcraft
+AddonName: WeakAurasModule
+Debug: false
+DebugAura: false
+DebugSpell: false
+DebugPower: false
+InputDelay: 25
+IconOverlayEnabled: true
+IconOverlayX: 1368
+IconOverlayY: 929
+IconOverlaySize: 40
+selected_rotation:
+  104: C:\Games\Slack\FerrazGuardian.yaml

@@ -325,7 +325,6 @@ lists:
 
   movement:
     - stampeding_roar,if=var.use_stampeding_roar&config.stampeding_roar_usage!=0
-    - wild_charge,if=target.range>=10&target.range<=25&player.combat
   
   main:
     - call_action_list,name=sanity_checks
