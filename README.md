@@ -1,6 +1,6 @@
 # 🐻 Ferraz Guardian: Rotation for Elite Guardians
 
-**Dominate Mythic+ 20 (and beyond) with the security of Intelligent Automation.**
+**Dominate Mythic+ with the security of Intelligent Automation.**
 
 `FerrazGuardian.yaml` is not just a rotation script; it is your trusted co-pilot for tanking the highest keys in World of Warcraft. Specifically designed for the **Elune's Chosen** build, this profile combines unbreakable survivability with optimized damage, allowing you to focus on what truly matters: **leading your group.**
 
