@@ -1,0 +1,276 @@
+version: 3.0
+author: Ferraz
+class: Druid
+spec: Restoration
+name: Resto Wildstalker
+description: Restoration Druid Wildstalker
+entry: main
+
+config:
+  auto_targeting:
+    label: "Auto-target if no target"
+    type: checkbox
+    default: true
+  tranquility_members:
+    label: "Min members for Tranquility"
+    type: slider
+    min: 2
+    max: 5
+    default: 3
+  tranquility_health_pct:
+    label: "Health % for Tranquility"
+    type: slider
+    min: 30
+    max: 70
+    default: 50
+  tank_health_threshold:
+    label: "Tank Health Threshold"
+    type: slider
+    min: 50
+    max: 95
+    default: 85
+  lifebloom_refresh_time:
+    label: "Lifebloom refresh time (sec)"
+    type: slider
+    min: 3
+    max: 6
+    default: 4.5
+  rejuv_health_threshold:
+    label: "Rejuvenation HP %"
+    type: slider
+    min: 70
+    max: 98
+    default: 95
+  wild_growth_members:
+    label: "Min members for Wild Growth"
+    type: slider
+    min: 2
+    max: 5
+    default: 3
+  wild_growth_health_pct:
+    label: "Wild Growth HP %"
+    type: slider
+    min: 60
+    max: 90
+    default: 85
+  regrowth_threshold:
+    label: "Regrowth HP %"
+    type: slider
+    min: 40
+    max: 80
+    default: 70
+  ironbark_threshold:
+    label: "Ironbark HP %"
+    type: slider
+    min: 30
+    max: 70
+    default: 50
+  barkskin_threshold:
+    label: "Barkskin HP %"
+    type: slider
+    min: 30
+    max: 80
+    default: 60
+  swiftmend_threshold:
+    label: "Swiftmend HP %"
+    type: slider
+    min: 50
+    max: 90
+    default: 80
+  use_innervate_mana:
+    label: "Innervate at mana %"
+    type: slider
+    min: 20
+    max: 80
+    default: 50
+  catweave_enabled:
+    label: "Enable Catweaving"
+    type: checkbox
+    default: true
+  catweave_health_threshold:
+    label: "Catweave when group HP above %"
+    type: slider
+    min: 70
+    max: 100
+    default: 85
+  rip_combo_points:
+    label: "Min CP for Rip"
+    type: slider
+    min: 4
+    max: 5
+    default: 5
+  ferocious_bite_combo_points:
+    label: "Min CP for Ferocious Bite"
+    type: slider
+    min: 4
+    max: 5
+    default: 4
+  use_skull_bash:
+    label: "Auto Interrupt"
+    type: checkbox
+    default: true
+  skull_bash_delay:
+    label: "Interrupt Delay (ms)"
+    type: slider
+    min: 0
+    max: 2000
+    default: 500
+  adaptive_swarm_targets:
+    label: "Max Adaptive Swarm targets"
+    type: slider
+    min: 1
+    max: 5
+    default: 3
+  mo_enabled:
+    label: "Enable Mouseover"
+    type: checkbox
+    default: true
+  mo_regrowth:
+    label: "Regrowth on MO"
+    type: checkbox
+    default: true
+  mo_ironbark:
+    label: "Ironbark on MO"
+    type: checkbox
+    default: true
+  mo_swiftmend:
+    label: "Swiftmend on MO"
+    type: checkbox
+    default: true
+  mo_remove_corruption:
+    label: "Dispel on MO"
+    type: checkbox
+    default: true
+  combo_point_waste_threshold:
+    label: "CP Waste Threshold"
+    type: slider
+    min: 3
+    max: 5
+    default: 4
+    description: "Consider combo point waste when at above this value"
+
+variables:
+  missing_motw: group.count(buff.mark_of_the_wild.down&range<=40)>0
+  in_cat_form: buff.cat_form.up
+  in_bear_form: buff.bear_form.up
+  # Combo Points Control System
+  combo_points_capped: combo_points>=5
+  combo_points_for_finisher: combo_points>=5
+  combo_points_for_rip: combo_points>=config.rip_combo_points
+  combo_points_for_bite: combo_points>=config.ferocious_bite_combo_points
+  combo_points_low: combo_points<=2
+  combo_points_empty: combo_points=0
+  combo_point_waste_threshold: combo_points>=config.combo_point_waste_threshold
+  combo_generation_needed: combo_points<3
+  need_combo_points: combo_points<config.ferocious_bite_combo_points
+  lifebloom_remains: buff.lifebloom.remains
+  lifebloom_on_tank: group.any(tank&buff.lifebloom.up)
+  need_lifebloom_refresh: var.lifebloom_remains<config.lifebloom_refresh_time
+  efflorescence_up: buff.efflorescence.up
+  wild_growth_cd: cooldown.wild_growth.on_cooldown
+  swiftmend_cd: cooldown.swiftmend.on_cooldown
+  members_low_health: group.under_pct_85>=config.wild_growth_members
+  group_healthy: group.under_pct_85<2
+  can_catweave: config.catweave_enabled&var.group_healthy&player.combat
+  omen_of_clarity: buff.omen_of_clarity.up
+  clearcasting: buff.clearcasting.up
+  soul_of_forest: buff.soul_of_the_forest.up
+  incarnation_active: buff.incarnation_tree_of_life.up
+  low_mana: mana.pct<config.use_innervate_mana
+  can_interrupt: target.casting&target.casting.interruptible
+  rake_up: debuff.rake.up
+  rake_remains: debuff.rake.remains
+  rip_up: debuff.rip.up
+  rip_remains: debuff.rip.remains
+  thrash_up: debuff.thrash_cat.up
+  adaptive_swarm_count: active_enemies.debuff.adaptive_swarm
+  tank_needs_healing: group.any(tank&health.pct<config.tank_health_threshold)
+  emergency_healing: group.under_pct(config.tranquility_health_pct)>=config.tranquility_members
+  convoke_cd: cooldown.convoke_the_spirits.on_cooldown
+  hotw_cd: cooldown.heart_of_the_wild.on_cooldown
+  rip_targets_missing: active_enemies - active_dot.rip
+  rake_targets_missing: active_enemies - active_dot.rake
+
+lists:
+  spell_queue:
+    # Placeholder for queued spells
+
+  emergency_healing:
+    - tranquility.player,if=var.emergency_healing&!player.moving
+    - natures_swiftness,if=!buff.natures_swiftness.up&group.count(health.pct<75)>=1
+    - regrowth,cycle=members,if=buff.natures_swiftness.up&health.pct<75
+    - ironbark,cycle=members,if=health.pct<config.ironbark_threshold
+    - barkskin,if=health.pct<config.barkskin_threshold
+
+  defensives:
+    - call_action_list,name=emergency_healing
+    - ironbark,cycle=tanks,if=health.pct<config.ironbark_threshold
+    - barkskin,if=health.pct<config.barkskin_threshold
+  
+  interrupts:
+    - skull_bash,if=config.use_skull_bash&var.can_interrupt,delay=config.skull_bash_delay
+    - mighty_bash,if=var.can_interrupt&!cooldown.skull_bash.ready
+  
+  cooldowns:
+    - incarnation_tree_of_life,if=var.emergency_healing|var.members_low_health
+    - convoke_the_spirits,if=var.members_low_health
+    - flourish,if=var.members_low_health
+    - heart_of_the_wild,if=var.can_catweave&!var.hotw_cd
+  
+  maintenance:
+    - efflorescence.player,if=!var.efflorescence_up
+    - lifebloom,cycle=tanks,if=!var.lifebloom_on_tank|var.need_lifebloom_refresh
+    - adaptive_swarm,if=var.adaptive_swarm_count<config.adaptive_swarm_targets
+    - adaptive_swarm,cycle=enemies,if=var.adaptive_swarm_count<config.adaptive_swarm_targets&range<=40
+  
+  active_healing:
+    - swiftmend,cycle=members,if=!var.swiftmend_cd&health.pct<config.swiftmend_threshold
+    - wild_growth,if=!var.wild_growth_cd&var.members_low_health
+    - regrowth,cycle=members,if=(var.omen_of_clarity|var.clearcasting)&health.pct<config.regrowth_threshold
+    - regrowth,cycle=members,if=health.pct<90
+    - regrowth,cycle=members,if=var.soul_of_forest&health.pct<config.regrowth_threshold
+    - rejuvenation,cycle=members,if=!buff.rejuvenation.up&health.pct<config.rejuv_health_threshold&range<=40
+    - rejuvenation,cycle=members,if=buff.rejuvenation.remains<3&health.pct<config.rejuv_health_threshold&range<=40
+  
+  catweave_st:
+    - cat_form,if=!var.in_cat_form&!var.in_bear_form
+    - heart_of_the_wild,if=!var.hotw_cd&buff.heart_of_the_wild.down
+    - rake,if=!var.rake_up|var.rake_remains<4.8
+    - rip,if=var.combo_points_for_rip&(!var.rip_up|var.rip_remains<7.2)
+    - ferocious_bite,if=var.combo_points_for_bite&var.rip_targets_missing=0
+    - shred,if=player.energy>=40
+  
+  catweave_multitarget:
+    - cat_form,if=!var.in_cat_form&!var.in_bear_form
+    - heart_of_the_wild,if=!var.hotw_cd&buff.heart_of_the_wild.down
+    - rake,cycle=enemies,if=!debuff.rake.up&range<=8
+    - thrash,if=!var.thrash_up|debuff.thrash_cat.remains<4.5
+    - rip,if=var.combo_points_for_rip&!var.rip_up
+    - ferocious_bite,if=var.combo_points_for_bite&var.rip_targets_missing=0
+    - swipe,if=active_enemies>=3&player.energy>=40
+    - shred,if=player.energy>=40
+  
+  mouseover_friendly:
+    - ironbark.mouseover,if=config.mo_ironbark&mouseover.health.pct<config.ironbark_threshold
+    - swiftmend.mouseover,if=config.mo_swiftmend&mouseover.health.pct<config.swiftmend_threshold&!var.swiftmend_cd
+    - regrowth.mouseover,if=config.mo_regrowth&mouseover.health.pct<config.regrowth_threshold
+    - remove_corruption.mouseover,if=config.mo_remove_corruption&mouseover.dispellable
+  
+  mana_management:
+    - innervate,if=var.low_mana&player.player.combat
+  
+  main:
+    - return,if=mounted|!rotation_enabled|state.blocked_inputs
+    - call_action_list,name=spell_queue
+    - mark_of_the_wild,if=var.missing_motw
+    - return,if=!player.combat&active_enemies=0
+    - target_enemy,if=!target.exists&config.auto_targeting
+    - call_action_list,name=defensives
+    - call_action_list,name=interrupts
+    - call_action_list,name=cooldowns
+    - call_action_list,name=mana_management
+    - call_action_list,name=mouseover_friendly,if=config.mo_enabled&mouseover.exists&mouseover.alive&mouseover.friendly
+    - call_action_list,name=maintenance
+    - call_action_list,name=active_healing
+    - call_action_list,name=catweave_multitarget,if=var.can_catweave&active_enemies>=3
+    - call_action_list,name=catweave_st,if=var.can_catweave&active_enemies<3
