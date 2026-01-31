@@ -1,4 +1,4 @@
-# 🐻 FerrazGuardian: Rotation for Elite Guardians
+# 🐻 Ferraz Guardian: Rotation for Elite Guardians
 
 **Dominate Mythic+ 20 (and beyond) with the security of Intelligent Automation.**
 
