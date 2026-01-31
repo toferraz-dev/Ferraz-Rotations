@@ -6,7 +6,7 @@
 
 ---
 
-## 🚀 Why Choose FerrazGuardian?
+## 🚀 Why Choose Ferraz Guardian?
 
 ### 🛡️ **Automated & Intelligent Survivability**
 Stop guessing when to use your defensives. FerrazGuardian monitors your health and damage intake in real-time to make critical decisions for you:
@@ -47,4 +47,4 @@ Despite all the automation, **you are in command**. The profile comes with a com
 2. Adjust the options in the config menu to match your preference (Safety vs. Aggression).
 3. Enter the dungeon, pull everything, and watch the magic happen.
 
-**FerrazGuardian V4** - *Made by a tank, for those who want to tank like a God.*
+**Ferraz Guardian** - *Made by a tank, for those who want to tank like a God.*
