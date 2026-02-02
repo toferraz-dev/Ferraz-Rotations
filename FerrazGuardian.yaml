@@ -224,6 +224,9 @@ lists:
     - soothe,if=target.purgeable.enrage  
     - incapacitating_roar,if=active_enemies>=3&talent.incapacitating_roar
 
+  dispel:
+    - remove_corruption,cycle=members,if=cycle.dispelable.list&cycle.range>0&cycle.range<=40
+
   taunt:
     - growl,target=mouseover,if=target.threat<3&target.range<=30&target.alive&target.enemy
     - growl,if=target.threat<3&target.range<=30
@@ -324,6 +327,7 @@ lists:
     - call_action_list,name=interrupts
     - call_action_list,name=racial_cc
     - call_action_list,name=racial_defensive
+    - call_action_list,name=dispel
     - call_action_list,name=defensives
     - call_action_list,name=cooldowns
     - call_action_list,name=racial_offensive,if=var.incarnation_active
