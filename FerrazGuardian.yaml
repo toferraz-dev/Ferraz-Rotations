@@ -135,7 +135,6 @@ config:
 
 variables:
   # FORM AND RESOURCES
-  missing_motw: group.count(buff.mark_of_the_wild.down&range<=40)>0
   in_bear_form: buff.bear_form.up
   rage: player.rage
   rage_deficit: player.rage.max-player.rage
@@ -190,6 +189,9 @@ lists:
 
   spell_queue:
     - queue_spell
+
+  out_of_combat:
+    - mark_of_the_wild,if=group.count(cycle.buff.mark_of_the_wild.down.any&cycle.range>0&cycle.range<=40)>0
 
   sanity_checks:
     - return,if=player.dead
@@ -320,6 +322,7 @@ lists:
     - call_action_list,name=sanity_checks
     - call_action_list,name=spell_queue
     - bear_form,if=!var.in_bear_form&player.combat&!mounted.flying&!mounted.ground
+    - call_action_list,name=out_of_combat,if=!player.combat
     - moonfire,if=config.allow_pull_with_mo&!player.combat&target.enemy&target.alive&debuff.moonfire.down
     - return,if=!player.combat&active_enemies=0
     - return,if=player.channeling
