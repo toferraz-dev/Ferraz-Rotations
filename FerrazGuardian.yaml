@@ -1,9 +1,9 @@
-﻿version: 3.3
+﻿version: 3.4
 author: Ferraz
 spec: 104
 name: Guardian
 description: |
-  Guardian Druid Elunes Chosen for Mythic Plus 20+.
+  Guardian Druid Elunes Chosen for Mythic+.
 
 entry: main
 
