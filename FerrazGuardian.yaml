@@ -1,13 +1,25 @@
-﻿version: 3.4
+﻿version: 3.5
 author: Ferraz
 spec: 104
 name: Guardian
 description: |
   Guardian Druid Elunes Chosen for Mythic+.
+  Supports Wowhead (aggressive DPS) Alternative (balanced) rotation styles.
 
 entry: main
 
 config:
+
+  # ROTATION STYLE
+  rotation_source:
+    label: "Rotation Style"
+    type: dropdown
+    options:
+      - label: "Wowhead (Aggressive DPS)"
+        value: 1
+      - label: "Alternative (Balanced)"
+        value: 2
+    default: 2
 
   # CONFIG
   allow_pull_with_mo:
@@ -161,7 +173,8 @@ variables:
 
   # DOT TRACKING
   thrash_stacks: debuff.thrash.stack
-  thrash_needs_refresh: debuff.thrash.remains<4.5|debuff.thrash.stack<config.thrash_stacks_target
+  thrash_target_stacks: config.rotation_source=1?5:config.thrash_stacks_target
+  thrash_needs_refresh: debuff.thrash.remains<4.5|debuff.thrash.stack<var.thrash_target_stacks
   moonfire_needs_refresh: debuff.moonfire.remains<4.8
 
   # COOLDOWN STATES
@@ -251,7 +264,18 @@ lists:
     - moonfire,if=var.moonfire_needs_refresh
     - moonfire,target=mouseover,if=debuff.moonfire.down&range<=40&target.alive&target.enemy
   
-  rotation_st:
+  rotation_st_wowhead:
+    - moonfire,if=var.moonfire_needs_refresh
+    - thrash,if=debuff.thrash.stack<5
+    - barkskin
+    - maul,if=var.rage>=40&var.ironfur_stacks>=1
+    - mangle
+    - thrash
+    - moonfire,if=var.galactic_guardian_up
+    - incarnation_guardian_of_ursoc
+    - swipe
+
+  rotation_st_alternative:
     - mangle,if=var.gore_up
     - mangle,if=var.harnessed_rage&var.mangle_charges>=2
     - mangle
@@ -265,7 +289,17 @@ lists:
     - maul,if=var.rage>=config.rage_cap_threshold
     - swipe
   
-  rotation_aoe:
+  rotation_aoe_wowhead:
+    - thrash,if=debuff.thrash.stack<5
+    - barkskin
+    - raze,if=var.rage>=40&var.ironfur_stacks>=1
+    - thrash
+    - mangle
+    - incarnation_guardian_of_ursoc
+    - moonfire
+    - swipe
+
+  rotation_aoe_alternative:
     - thrash,if=var.thrash_needs_refresh
     - mangle,if=var.gore_up
     - mangle,if=var.harnessed_rage&var.mangle_charges>=2
@@ -338,6 +372,8 @@ lists:
     - call_action_list,name=movement,if=player.moving
     - call_action_list,name=racial_utility
     - call_action_list,name=trinkets
-    - call_action_list,name=rotation_aoe,if=active_enemies>=3
-    - call_action_list,name=rotation_st
+    - call_action_list,name=rotation_aoe_wowhead,if=config.rotation_source=1&active_enemies>=3
+    - call_action_list,name=rotation_st_wowhead,if=config.rotation_source=1
+    - call_action_list,name=rotation_aoe_alternative,if=config.rotation_source=2&active_enemies>=3
+    - call_action_list,name=rotation_st_alternative,if=config.rotation_source=2
 
