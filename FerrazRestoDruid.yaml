@@ -8,7 +8,27 @@ description: |
 
 entry: main
 
+morphs:
+  swipe: 106785
+  heart_of_the_wild: 1261868
+
 config:
+  # DEFENSIVE COOLDOWNS
+  ironbark_threshold:
+    label: "Ironbark HP %"
+    type: slider
+    min: 10
+    max: 99
+    default: 99
+
+  barkskin_threshold:
+    label: "Barkskin HP %"
+    type: slider
+    min: 30
+    max: 80
+    default: 60
+
+  # TRINKETS
   living_silk_members:
     label: "Living Silk - Members"
     type: slider
@@ -50,10 +70,8 @@ lists:
     - regrowth,cycle=members,if=cycle.health.pct<95&!player.combat&cycle.range>0&cycle.range<=40
 
   defensives:
-    - ironbark,cycle=tanks,if=cycle.health.pct<50&cycle.range>0&cycle.range<=40
-    - ironbark,cycle=healers,if=cycle.health.pct<60&cycle.range>0&cycle.range<=40
-    - ironbark,cycle=members,if=cycle.health.pct<60&cycle.range>0&cycle.range<=40    
-    - barkskin,if=health.pct<70
+    - ironbark,cycle=members,if=config.ironbark_usage=3&cycle.health.pct<config.ironbark_threshold&cycle.buff.ironbark.down&cycle.range>0&cycle.range<=40
+    - barkskin,if=health.pct<config.barkskin_threshold
 
   racials:
     - shadowmeld,if=target.threat>=3&!player.casting
@@ -109,7 +127,7 @@ lists:
   mouseover_friendly:
     - rejuvenation.mouseover,mouseover.health.pct<=99&mouseover.buff.remains(rejuvenation)=0
     - regrowth.mouseover,mouseover.health.pct<=95
-    - purify.mouseover,if=mouseover.dispelable.list
+    - natures_cure.mouseover,if=mouseover.dispelable.list
 
   main:
     - call_action_list,name=sanity_checks
