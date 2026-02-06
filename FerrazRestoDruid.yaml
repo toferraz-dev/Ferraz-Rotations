@@ -50,9 +50,9 @@ lists:
     - regrowth,cycle=members,if=cycle.health.pct<95&!player.combat&cycle.range>0&cycle.range<=40
 
   defensives:
-    - ironbark,cycle=tanks,&cycle.health.pct<50&cycle.range>0&cycle.range<=40
-    - ironbark,cycle=healers,&cycle.health.pct<60&cycle.range>0&cycle.range<=40
-    - ironbark,cycle=members,&cycle.health.pct<c60&cycle.range>0&cycle.range<=40    
+    - ironbark,cycle=tanks,if=cycle.health.pct<50&cycle.range>0&cycle.range<=40
+    - ironbark,cycle=healers,if=cycle.health.pct<60&cycle.range>0&cycle.range<=40
+    - ironbark,cycle=members,if=cycle.health.pct<60&cycle.range>0&cycle.range<=40    
     - barkskin,if=health.pct<70
 
   racials:
@@ -71,17 +71,16 @@ lists:
 
   active_healing:
     - lifebloom,cycle=tanks,if=cycle.buff.lifebloom.remains<4.5
-    - lifebloom.player,if=talent.photosynthesis&buff.lifebloom.remains<4.5&!talent.undergrowth
     - wild_growth,if=group.count(cycle.health.pct<85)>=3
     - swiftmend,cycle=members,if=cycle.health.pct<70
     - regrowth,cycle=members,if=cycle.health.pct<80
-    - efflorescence.cursor
     - rejuvenation,cycle=members,if=cycle.buff.rejuvenation.remains<3&cycle.health.pct<90
     - rejuvenation,cycle=tanks,if=cycle.buff.rejuvenation.down
     - natures_cure,cycle=members,if=cycle.dispelable.list
+    - efflorescence,if=buff.efflorescence.remains<3
 
   utility:
-    - innervate,mana.pct<60&player.combat
+    - innervate,if=mana.pct<60&player.combat
 
   catweave_st:
     - moonfire,if=debuff.moonfire.remains<3&debuff.moonfire.refreshable
@@ -124,7 +123,7 @@ lists:
     - call_action_list,name=defensives
     - call_action_list,name=utility
     - call_action_list,name=cooldowns
-    - call_action_list,name=mouseover_friendly,var.mo_friendly_valid&!player.casting&!player.channeling    
+    #- call_action_list,name=mouseover_friendly,var.mo_friendly_valid&!player.casting&!player.channeling    
     - call_action_list,name=trinkets
     - call_action_list,name=moving,if=player.moving
     - call_action_list,name=active_healing
