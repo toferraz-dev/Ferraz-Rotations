@@ -60,13 +60,13 @@ lists:
     - incapacitating_roar,if=active_enemies>=2&target.casting.interruptible
   
   out_of_combat:
-    - mark_of_the_wild,if=group.count(cycle.buff.mark_of_the_wild.down.any&cycle.range>0&cycle.range<=40)>0
-    - lifebloom,cycle=tanks&!player.combat&cycle.range>0&cycle.range<=40
-    - rejuvenation,cycle=members,if=cycle.buff.rejuvenation.down&!player.combat&cycle.range>0&cycle.range<=40
-    - regrowth,cycle=members,if=cycle.health.pct<95&!player.combat&cycle.range>0&cycle.range<=40
+    - mark_of_the_wild,if=group.count(cycle.buff.mark_of_the_wild.down.any&cycle.range>=0&cycle.range<=40)>0
+    - lifebloom,cycle=tanks&!player.combat&cycle.range>=0&cycle.range<=40
+    - rejuvenation,cycle=members,if=cycle.buff.rejuvenation.down&!player.combat&cycle.range>=0&cycle.range<=40
+    - regrowth,cycle=members,if=cycle.health.pct<95&!player.combat&cycle.range>=0&cycle.range<=40
 
   defensives:
-    - ironbark,cycle=members,if=cycle.health.pct<config.ironbark_threshold&cycle.buff.ironbark.down&cycle.range>0&cycle.range<=40
+    - ironbark,cycle=members,if=cycle.health.pct<config.ironbark_threshold&cycle.buff.ironbark.down&cycle.range>=0&cycle.range<=40
     - barkskin,if=health.pct<config.barkskin_threshold
 
   racials:
@@ -86,11 +86,10 @@ lists:
   active_healing:
     - lifebloom,cycle=tanks,if=cycle.buff.lifebloom.remains<4.5
     - wild_growth,if=group.count(cycle.health.pct<85)>=3
-    - swiftmend,cycle=members,if=cycle.health.pct<70
-    - regrowth,cycle=members,if=cycle.health.pct<80
-    - rejuvenation,cycle=members,if=cycle.buff.rejuvenation.remains<3&cycle.health.pct<90
-    - rejuvenation,cycle=tanks,if=cycle.buff.rejuvenation.down
-    - natures_cure,cycle=members,if=cycle.dispelable.list
+    - swiftmend,cycle=members,if=cycle.health.pct<70&cycle.range>=0&cycle.range<=40
+    - regrowth,cycle=members,if=cycle.health.pct<80&cycle.range>=0&cycle.range<=40
+    - rejuvenation,cycle=members,if=cycle.buff.rejuvenation.remains<3&cycle.health.pct<90&cycle.range>=0&cycle.range<=40
+    - natures_cure,cycle=members,if=cycle.dispelable.list&cycle.range>=0&cycle.range<=40
     - efflorescence,if=buff.efflorescence.remains<3
 
   utility:
@@ -112,18 +111,18 @@ lists:
     - shred
 
   catweave:
-    - 1261868,override=heart_of_the_wild
+    - heart_of_the_wild
     - call_action_list,name=catweave_aoe,if=active_enemies>=3
     - call_action_list,name=catweave_st
 
   moving:
-    - lifebloom,cycle=tanks
-    - rejuvenation,cycle=members,if=cycle.buff.rejuvenation.down&cycle.health.pct<95
+    - lifebloom,cycle=tanks,if=cycle.range>=0&cycle.range<=40
+    - rejuvenation,cycle=members,if=cycle.buff.rejuvenation.down&cycle.health.pct<95&cycle.range>=0&cycle.range<=40
 
   mouseover_friendly:
-    - rejuvenation.mouseover,mouseover.health.pct<=99&mouseover.buff.remains(rejuvenation)=0
-    - regrowth.mouseover,mouseover.health.pct<=95
-    - natures_cure.mouseover,if=mouseover.dispelable.list
+    - rejuvenation.mouseover,mouseover.health.pct<=99&mouseover.buff.remains(rejuvenation)=0&mouseover.range>=0&mouseover.range<=40
+    - regrowth.mouseover,mouseover.health.pct<=95&mouseover.range>=0&mouseover.range<=40
+    - natures_cure.mouseover,if=mouseover.dispelable.list&mouseover.range>=0&mouseover.range<=40
 
   main:
     - call_action_list,name=sanity_checks
