@@ -11,6 +11,8 @@
 | **Version** | 3.5 |
 | **Spec** | 104 |
 | **Build** | Elune's Chosen |
+| **Talent Tree** | CgGAOB00+EWim5ji+N0ScDXt8DAAAAAAAAAAAgZmZmlZmZMWMLeg5BmZZZAbGGNRzMzyYmZmlxMAAAAAAMmNDYxMDYMAmCAAAshZAsYGMYwyGgZGA |
+
 
 ### ✨ Features
 
@@ -42,6 +44,7 @@
 | **Version** | 2 |
 | **Spec** | 105 |
 | **Build** | Wildstalker |
+| **Talent Tree** | CkGAOB00+EWim5ji+N0ScDXt8PMmxsNjZmxsN8AMzsMmFbzAAAAAAAAAAgtBNbw0MMjHwsYmZmZZGegZAAAAAAAMGAACAAY2GbNLG2YMDwsAaGAgZGA |
 
 ### ✨ Features
 
@@ -74,16 +77,4 @@
 
 ---
 
-<<<<<<< HEAD
-## 📁 Files
-
-| Spec | File |
-|------|------|
-| 🛡️ Guardian | [FerrazGuardian.yaml]
-| 💚 Restoration | [FerrazRestoDruid.yaml]
-
----
-
-=======
->>>>>>> 9fa0db5d2de8a70a795c37c880cb6df5361e4c4d
 *Made with 💜 by Ferraz*
