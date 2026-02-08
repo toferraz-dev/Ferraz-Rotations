@@ -164,9 +164,8 @@ lists:
   
   out_of_combat:
     - mark_of_the_wild,if=group.count(cycle.buff.mark_of_the_wild.down.any&cycle.range>=0&cycle.range<=40)>0
-    - lifebloom,cycle=tanks&!player.combat&cycle.range>=0&cycle.range<=40
-    - rejuvenation,cycle=members,if=cycle.buff.rejuvenation.down&!player.combat&cycle.range>=0&cycle.range<=40
     - regrowth,cycle=members,if=cycle.health.pct<95&!player.combat&cycle.range>=0&cycle.range<=40
+    - rejuvenation,cycle=members,if=cycle.health.pct<95&!player.combat&cycle.range>=0&cycle.range<=40    
 
   defensives:
     - ironbark,cycle=members,if=cycle.health.pct<config.ironbark_threshold&cycle.buff.ironbark.down&cycle.range>=0&cycle.range<=40
@@ -187,7 +186,7 @@ lists:
     - trinket_2,if=!var.trinket2_living_silk&trinket_2.ready
 
   active_healing:
-    - lifebloom,cycle=tanks,if=cycle.buff.lifebloom.remains<4.5
+    - lifebloom,cycle=tanks,if=cycle.buff.lifebloom.down
     - wild_growth,if=group.count(cycle.health.pct<config.wild_growth_threshold)>=config.wild_growth_members
     - swiftmend,cycle=members,if=cycle.health.pct<config.swiftmend_threshold&cycle.range>=0&cycle.range<=40
     - regrowth,cycle=members,if=cycle.health.pct<config.regrowth_threshold&cycle.range>=0&cycle.range<=40
@@ -214,12 +213,14 @@ lists:
     - shred
 
   catweave:
+    - cat_form,if=!buff.cat_form.up
+    - return,if=!buff.cat_form.up
     - heart_of_the_wild
     - call_action_list,name=catweave_aoe,if=active_enemies>=config.aoe_threshold
     - call_action_list,name=catweave_st
 
   moving:
-    - lifebloom,cycle=tanks,if=cycle.range>=0&cycle.range<=40
+    - lifebloom,cycle=tanks,if=cycle.buff.lifebloom.down
     - rejuvenation,cycle=members,if=cycle.buff.rejuvenation.down&cycle.health.pct<95&cycle.range>=0&cycle.range<=40
 
   mouseover_friendly:
