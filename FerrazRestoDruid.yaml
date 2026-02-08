@@ -24,6 +24,108 @@ config:
     max: 80
     default: 60
 
+  # MAJOR COOLDOWNS
+  convoke_threshold:
+    label: "Convoke HP %"
+    type: slider
+    min: 50
+    max: 95
+    default: 80
+
+  convoke_members:
+    label: "Convoke - Members"
+    type: slider
+    min: 1
+    max: 5
+    default: 3
+
+  tranquility_threshold:
+    label: "Tranquility HP %"
+    type: slider
+    min: 50
+    max: 95
+    default: 80
+
+  tranquility_members:
+    label: "Tranquility - Members"
+    type: slider
+    min: 1
+    max: 5
+    default: 3
+
+  ns_threshold:
+    label: "Nature's Swiftness HP %"
+    type: slider
+    min: 30
+    max: 80
+    default: 60
+
+  # HEALING THRESHOLDS
+  wild_growth_threshold:
+    label: "Wild Growth HP %"
+    type: slider
+    min: 60
+    max: 95
+    default: 85
+
+  wild_growth_members:
+    label: "Wild Growth - Members"
+    type: slider
+    min: 1
+    max: 5
+    default: 3
+
+  swiftmend_threshold:
+    label: "Swiftmend HP %"
+    type: slider
+    min: 40
+    max: 90
+    default: 70
+
+  regrowth_threshold:
+    label: "Regrowth HP %"
+    type: slider
+    min: 50
+    max: 95
+    default: 80
+
+  rejuvenation_threshold:
+    label: "Rejuvenation HP %"
+    type: slider
+    min: 70
+    max: 99
+    default: 90
+
+  # CATWEAVING
+  catweave_group_hp:
+    label: "Catweave - Group HP %"
+    type: slider
+    min: 70
+    max: 99
+    default: 90
+
+  catweave_injured_max:
+    label: "Catweave - Max Injured"
+    type: slider
+    min: 0
+    max: 4
+    default: 2
+
+  aoe_threshold:
+    label: "AoE - Enemies"
+    type: slider
+    min: 2
+    max: 5
+    default: 3
+
+  # UTILITY
+  innervate_threshold:
+    label: "Innervate Mana %"
+    type: slider
+    min: 30
+    max: 80
+    default: 60
+
   # TRINKETS
   living_silk_members:
     label: "Living Silk - Members"
@@ -31,6 +133,7 @@ config:
     min: 1
     max: 5
     default: 3
+
   living_silk_hp:
     label: "Living Silk HP %"
     type: slider
@@ -40,7 +143,7 @@ config:
 
 variables:
   mo_friendly_valid: mouseover.exists&mouseover.alive&mouseover.friendly&mouseover.range>0&mouseover.range<=40
-  group_healthy: group.count(cycle.health.pct<90)<2
+  group_healthy: group.count(cycle.health.pct<config.catweave_group_hp)<config.catweave_injured_max
   can_catweave: var.group_healthy&player.combat
   trinket1_living_silk: trinket_1.id=242393
   trinket2_living_silk: trinket_2.id=242393
@@ -57,7 +160,7 @@ lists:
     - return,if=state.blocked_inputs
   
   interrupts:
-    - incapacitating_roar,if=active_enemies>=2&target.casting.interruptible
+    - incapacitating_roar,if=active_enemies>=config.aoe_threshold&target.casting.interruptible
   
   out_of_combat:
     - mark_of_the_wild,if=group.count(cycle.buff.mark_of_the_wild.down.any&cycle.range>=0&cycle.range<=40)>0
@@ -73,9 +176,9 @@ lists:
     - shadowmeld,if=target.threat>=3&!player.casting
 
   cooldowns:
-    - convoke_the_spirits,if=group.count(cycle.health.pct<80)>=3
-    - tranquility,if=group.count(cycle.health.pct<80)>=3&!player.moving
-    - natures_swiftness,if=group.count(cycle.health.pct<60)>=1
+    - convoke_the_spirits,if=group.count(cycle.health.pct<config.convoke_threshold)>=config.convoke_members
+    - tranquility,if=group.count(cycle.health.pct<config.tranquility_threshold)>=config.tranquility_members&!player.moving
+    - natures_swiftness,if=group.count(cycle.health.pct<config.ns_threshold)>=1
 
   trinkets:
     - trinket_1,if=var.trinket1_living_silk&trinket_1.ready&group.count(cycle.health.pct<config.living_silk_hp)>=config.living_silk_members
@@ -85,15 +188,15 @@ lists:
 
   active_healing:
     - lifebloom,cycle=tanks,if=cycle.buff.lifebloom.remains<4.5
-    - wild_growth,if=group.count(cycle.health.pct<85)>=3
-    - swiftmend,cycle=members,if=cycle.health.pct<70&cycle.range>=0&cycle.range<=40
-    - regrowth,cycle=members,if=cycle.health.pct<80&cycle.range>=0&cycle.range<=40
-    - rejuvenation,cycle=members,if=cycle.buff.rejuvenation.remains<3&cycle.health.pct<90&cycle.range>=0&cycle.range<=40
+    - wild_growth,if=group.count(cycle.health.pct<config.wild_growth_threshold)>=config.wild_growth_members
+    - swiftmend,cycle=members,if=cycle.health.pct<config.swiftmend_threshold&cycle.range>=0&cycle.range<=40
+    - regrowth,cycle=members,if=cycle.health.pct<config.regrowth_threshold&cycle.range>=0&cycle.range<=40
+    - rejuvenation,cycle=members,if=cycle.buff.rejuvenation.remains<3&cycle.health.pct<config.rejuvenation_threshold&cycle.range>=0&cycle.range<=40
     - natures_cure,cycle=members,if=cycle.dispelable.list&cycle.range>=0&cycle.range<=40
     - efflorescence,if=buff.efflorescence.remains<3
 
   utility:
-    - innervate,if=mana.pct<60&player.combat
+    - innervate,if=mana.pct<config.innervate_threshold&player.combat
 
   catweave_st:
     - moonfire,if=debuff.moonfire.remains<3&debuff.moonfire.refreshable
@@ -103,16 +206,16 @@ lists:
     - shred,if=combo_points<5
 
   catweave_aoe:
-    - moonfire,if=debuff.moonfire.remains<3&active_enemies>=2
+    - moonfire,if=debuff.moonfire.remains<3&active_enemies>=config.aoe_threshold
     - rip,if=combo_points>=5&debuff.rip.refreshable
-    - thrash,if=active_enemies>=3
-    - swipe,if=active_enemies>=2
+    - thrash,if=active_enemies>=config.aoe_threshold
+    - swipe,if=active_enemies>=config.aoe_threshold
     - rake,if=debuff.rake.refreshable&combo_points<=3
     - shred
 
   catweave:
     - heart_of_the_wild
-    - call_action_list,name=catweave_aoe,if=active_enemies>=3
+    - call_action_list,name=catweave_aoe,if=active_enemies>=config.aoe_threshold
     - call_action_list,name=catweave_st
 
   moving:
