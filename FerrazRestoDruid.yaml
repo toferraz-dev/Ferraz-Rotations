@@ -8,10 +8,6 @@ description: |
 
 entry: main
 
-morphs:
-  swipe: 106785
-  heart_of_the_wild: 1261868
-
 config:
   # DEFENSIVE COOLDOWNS
   ironbark_threshold:
@@ -70,7 +66,7 @@ lists:
     - regrowth,cycle=members,if=cycle.health.pct<95&!player.combat&cycle.range>0&cycle.range<=40
 
   defensives:
-    - ironbark,cycle=members,if=config.ironbark_usage=3&cycle.health.pct<config.ironbark_threshold&cycle.buff.ironbark.down&cycle.range>0&cycle.range<=40
+    - ironbark,cycle=members,if=cycle.health.pct<config.ironbark_threshold&cycle.buff.ironbark.down&cycle.range>0&cycle.range<=40
     - barkskin,if=health.pct<config.barkskin_threshold
 
   racials:
@@ -116,7 +112,7 @@ lists:
     - shred
 
   catweave:
-    - heart_of_the_wild,if=active_enemies>=2
+    - 1261868,override=heart_of_the_wild
     - call_action_list,name=catweave_aoe,if=active_enemies>=3
     - call_action_list,name=catweave_st
 
