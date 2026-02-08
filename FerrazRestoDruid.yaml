@@ -1,10 +1,9 @@
-version: 1.02
+version: 2
 author: Ferraz
 spec: 105
-name: Restoration (Beta)
+name: Restoration 
 description: |
   Restoration Druid
-  Beta Teste
 
 entry: main
 
@@ -161,6 +160,7 @@ lists:
   
   interrupts:
     - incapacitating_roar,if=active_enemies>=config.aoe_threshold&target.casting.interruptible
+- soothe,if=target.purgeable.enrage    
   
   out_of_combat:
     - mark_of_the_wild,if=group.count(cycle.buff.mark_of_the_wild.down.any&cycle.range>=0&cycle.range<=40)>0
@@ -175,7 +175,7 @@ lists:
     - shadowmeld,if=target.threat>=3&!player.casting
 
   cooldowns:
-    - convoke_the_spirits,if=group.count(cycle.health.pct<config.convoke_threshold)>=config.convoke_members
+    - convoke_the_spirits,if=group.count(cycle.health.pct<config.convoke_threshold)>=config.convoke_members&!buff.cat_form.up&!buff.bear_form.up
     - tranquility,if=group.count(cycle.health.pct<config.tranquility_threshold)>=config.tranquility_members&!player.moving
     - natures_swiftness,if=group.count(cycle.health.pct<config.ns_threshold)>=1
 
