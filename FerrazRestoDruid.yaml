@@ -1,10 +1,10 @@
 version: 2
 author: Ferraz
 spec: 105
-name: Restoration 
+name: Restoration Druid
 description: |
-  Restoration Druid
-
+  Restoration Druid - Wildstalker for Mythic+.
+  
 entry: main
 
 config:
