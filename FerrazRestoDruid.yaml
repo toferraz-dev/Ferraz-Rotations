@@ -13,23 +13,23 @@ config:
   ironbark_threshold:
     label: "Ironbark HP %"
     type: slider
-    min: 10
+    min: 25
     max: 99
     default: 99
 
   barkskin_threshold:
     label: "Barkskin HP %"
     type: slider
-    min: 30
-    max: 80
+    min: 25
+    max: 99
     default: 60
 
   # MAJOR COOLDOWNS
   convoke_threshold:
     label: "Convoke HP %"
     type: slider
-    min: 50
-    max: 95
+    min: 25
+    max: 99
     default: 80
 
   convoke_members:
@@ -42,8 +42,8 @@ config:
   tranquility_threshold:
     label: "Tranquility HP %"
     type: slider
-    min: 50
-    max: 95
+    min: 25
+    max: 99
     default: 80
 
   tranquility_members:
@@ -56,16 +56,16 @@ config:
   ns_threshold:
     label: "Nature's Swiftness HP %"
     type: slider
-    min: 30
-    max: 80
+    min: 25
+    max: 99
     default: 60
 
   # HEALING THRESHOLDS
   wild_growth_threshold:
     label: "Wild Growth HP %"
     type: slider
-    min: 60
-    max: 95
+    min: 25
+    max: 99
     default: 85
 
   wild_growth_members:
@@ -78,21 +78,21 @@ config:
   swiftmend_threshold:
     label: "Swiftmend HP %"
     type: slider
-    min: 40
-    max: 90
+    min: 25
+    max: 99
     default: 70
 
   regrowth_threshold:
     label: "Regrowth HP %"
     type: slider
-    min: 50
-    max: 95
+    min: 25
+    max: 99
     default: 80
 
   rejuvenation_threshold:
     label: "Rejuvenation HP %"
     type: slider
-    min: 70
+    min: 25
     max: 99
     default: 90
 
@@ -100,7 +100,7 @@ config:
   catweave_group_hp:
     label: "Catweave - Group HP %"
     type: slider
-    min: 70
+    min: 25
     max: 99
     default: 90
 
@@ -108,7 +108,7 @@ config:
     label: "Catweave - Max Injured"
     type: slider
     min: 0
-    max: 4
+    max: 5
     default: 2
 
   aoe_threshold:
@@ -122,8 +122,8 @@ config:
   innervate_threshold:
     label: "Innervate Mana %"
     type: slider
-    min: 30
-    max: 80
+    min: 25
+    max: 99
     default: 60
 
   # TRINKETS
@@ -137,8 +137,8 @@ config:
   living_silk_hp:
     label: "Living Silk HP %"
     type: slider
-    min: 30
-    max: 80
+    min: 25
+    max: 99
     default: 70
 
 variables:
