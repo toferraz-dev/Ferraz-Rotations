@@ -74,6 +74,7 @@
 
 ---
 
+<<<<<<< HEAD
 ## 📁 Files
 
 | Spec | File |
@@ -83,4 +84,6 @@
 
 ---
 
+=======
+>>>>>>> 9fa0db5d2de8a70a795c37c880cb6df5361e4c4d
 *Made with 💜 by Ferraz*
