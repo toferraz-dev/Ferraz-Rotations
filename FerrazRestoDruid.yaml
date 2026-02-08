@@ -1,4 +1,4 @@
-version: 1.01
+version: 1.02
 author: Ferraz
 spec: 105
 name: Restoration (Beta)
@@ -15,7 +15,7 @@ config:
     type: slider
     min: 25
     max: 99
-    default: 99
+    default: 60
 
   barkskin_threshold:
     label: "Barkskin HP %"
@@ -30,7 +30,7 @@ config:
     type: slider
     min: 25
     max: 99
-    default: 80
+    default: 70
 
   convoke_members:
     label: "Convoke - Members"
@@ -66,7 +66,7 @@ config:
     type: slider
     min: 25
     max: 99
-    default: 85
+    default: 80
 
   wild_growth_members:
     label: "Wild Growth - Members"
@@ -80,21 +80,21 @@ config:
     type: slider
     min: 25
     max: 99
-    default: 70
+    default: 60
 
   regrowth_threshold:
     label: "Regrowth HP %"
     type: slider
     min: 25
     max: 99
-    default: 80
+    default: 75
 
   rejuvenation_threshold:
     label: "Rejuvenation HP %"
     type: slider
     min: 25
     max: 99
-    default: 90
+    default: 85
 
   # CATWEAVING
   catweave_group_hp:
@@ -102,7 +102,7 @@ config:
     type: slider
     min: 25
     max: 99
-    default: 90
+    default: 60
 
   catweave_injured_max:
     label: "Catweave - Max Injured"
@@ -166,8 +166,7 @@ lists:
     - mark_of_the_wild,if=group.count(cycle.buff.mark_of_the_wild.down.any&cycle.range>=0&cycle.range<=40)>0
     - regrowth,cycle=members,if=cycle.health.pct<95&cycle.buff.regrowth.remains<1.5&!player.combat&cycle.range>=0&cycle.range<=40
     - rejuvenation,cycle=members,if=cycle.health.pct<95&cycle.buff.rejuvenation.remains<1.5&!player.combat&cycle.range>=0&cycle.range<=40    
-    - lifebloom,cycle=tanks,if=cycle.buff.lifebloom.down&cycle.range>=0&cycle.range<=40
-
+    
   defensives:
     - ironbark,cycle=members,if=cycle.health.pct<config.ironbark_threshold&cycle.buff.ironbark.down&cycle.range>=0&cycle.range<=40
     - barkskin,if=health.pct<config.barkskin_threshold
