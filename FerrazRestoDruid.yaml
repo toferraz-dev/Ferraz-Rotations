@@ -197,21 +197,21 @@ lists:
 
   catweave_st:
     - moonfire,if=debuff.moonfire.remains<2&debuff.moonfire.refreshable
-    - rip,if=combo_points>=5&debuff.rip.refreshable
-    - ferocious_bite,if=combo_points>=4&debuff.rip.remains>10
-    - rake,if=debuff.rake.refreshable&combo_points<=3
-    - shred,if=combo_points<5
+    - rip,if=combo_points>=5&debuff.rip.refreshable&target.range<=8
+    - ferocious_bite,if=combo_points>=4&debuff.rip.remains>10&target.range<=8
+    - rake,if=debuff.rake.refreshable&combo_points<=3&target.range<=8
+    - shred,if=combo_points<5&target.range<=8
 
   catweave_aoe:
     - moonfire,if=debuff.moonfire.remains<2&active_enemies>=config.aoe_threshold
-    - rip,if=combo_points>=5&debuff.rip.refreshable
-    - thrash,if=active_enemies>=config.aoe_threshold
-    - swipe,if=active_enemies>=config.aoe_threshold
-    - rake,if=debuff.rake.refreshable&combo_points<=3
-    - shred
+    - rip,if=combo_points>=5&debuff.rip.refreshable&target.range<=8
+    - thrash,if=active_enemies>=config.aoe_threshold&target.range<=8
+    - swipe,if=active_enemies>=config.aoe_threshold&target.range<=8
+    - rake,if=debuff.rake.refreshable&combo_points<=3&target.range<=8
+    - shred,if=target.range<=8
 
   catweave:
-    - cat_form,if=!buff.cat_form.up
+    - cat_form,if=!buff.cat_form.up&target.range<=8
     - return,if=!buff.cat_form.up
     - heart_of_the_wild
     - call_action_list,name=catweave_aoe,if=active_enemies>=config.aoe_threshold
