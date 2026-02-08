@@ -141,12 +141,10 @@ config:
     default: 70
 
 variables:
-  mo_friendly_valid: mouseover.exists&mouseover.alive&mouseover.friendly&mouseover.range>0&mouseover.range<=40
   group_healthy: group.count(cycle.health.pct<config.catweave_group_hp)<config.catweave_injured_max
   can_catweave: var.group_healthy&player.combat
   trinket1_living_silk: trinket_1.id=242393
   trinket2_living_silk: trinket_2.id=242393
-  has_living_silk: var.trinket1_living_silk|var.trinket2_living_silk
 
 lists:
   spell_queue:
@@ -160,7 +158,7 @@ lists:
   
   interrupts:
     - incapacitating_roar,if=active_enemies>=config.aoe_threshold&target.casting.interruptible
-- soothe,if=target.purgeable.enrage    
+    - soothe,if=target.purgeable.enrage    
   
   out_of_combat:
     - mark_of_the_wild,if=group.count(cycle.buff.mark_of_the_wild.down.any&cycle.range>=0&cycle.range<=40)>0
@@ -220,13 +218,8 @@ lists:
     - call_action_list,name=catweave_st
 
   moving:
-    - lifebloom,cycle=tanks,if=cycle.buff.lifebloom.down
+    - lifebloom,cycle=tanks,if=cycle.buff.lifebloom.down&cycle.range>=0&cycle.range<=40
     - rejuvenation,cycle=members,if=cycle.buff.rejuvenation.down&cycle.health.pct<95&cycle.range>=0&cycle.range<=40
-
-  mouseover_friendly:
-    - rejuvenation.mouseover,mouseover.health.pct<=99&mouseover.buff.remains(rejuvenation)=0&mouseover.range>=0&mouseover.range<=40
-    - regrowth.mouseover,mouseover.health.pct<=95&mouseover.range>=0&mouseover.range<=40
-    - natures_cure.mouseover,if=mouseover.dispelable.list&mouseover.range>=0&mouseover.range<=40
 
   main:
     - call_action_list,name=sanity_checks
@@ -240,7 +233,6 @@ lists:
     - call_action_list,name=defensives
     - call_action_list,name=utility
     - call_action_list,name=cooldowns
-    #- call_action_list,name=mouseover_friendly,var.mo_friendly_valid&!player.casting&!player.channeling    
     - call_action_list,name=trinkets
     - call_action_list,name=moving,if=player.moving
     - call_action_list,name=active_healing
