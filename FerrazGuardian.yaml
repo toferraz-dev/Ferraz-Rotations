@@ -236,7 +236,7 @@ lists:
   
   interrupts:
     - skull_bash,if=config.use_skull_bash&var.can_interrupt,delay=config.skull_bash_delay
-    - soothe,if=target.purgeable.enrage  
+    - soothe,if=target.purgeable.enrage
     - incapacitating_roar,if=active_enemies>=3&talent.incapacitating_roar
 
   dispel:
