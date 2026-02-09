@@ -21,21 +21,7 @@ config:
     type: slider
     min: 25
     max: 99
-    default: 60
-
-  healthstone_threshold:
-    label: "Healthstone HP %"
-    type: slider
-    min: 25
-    max: 99
     default: 65
-
-  health_potion_threshold:
-    label: "Health Potion HP %"
-    type: slider
-    min: 25
-    max: 99
-    default: 50
 
   # MAJOR COOLDOWNS
   convoke_threshold:
@@ -43,7 +29,7 @@ config:
     type: slider
     min: 25
     max: 99
-    default: 70
+    default: 75
 
   convoke_members:
     label: "Convoke - Members"
@@ -57,7 +43,7 @@ config:
     type: slider
     min: 25
     max: 99
-    default: 80
+    default: 70
 
   tranquility_members:
     label: "Tranquility - Members"
@@ -93,7 +79,7 @@ config:
     type: slider
     min: 25
     max: 99
-    default: 60
+    default: 65
 
   regrowth_threshold:
     label: "Regrowth HP %"
@@ -107,7 +93,7 @@ config:
     type: slider
     min: 25
     max: 99
-    default: 85
+    default: 95
 
   # CATWEAVING
   catweave_group_hp:
