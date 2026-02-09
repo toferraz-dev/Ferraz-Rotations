@@ -176,10 +176,13 @@ lists:
   
   out_of_combat:
     - mark_of_the_wild,if=group.count(cycle.buff.mark_of_the_wild.down.any&cycle.range>=0&cycle.range<=40)>0
+    - symbiotic_relationship,cycle=tanks,if=cycle.buff.symbiotic_relationship.down&cycle.range>=0&cycle.range<=40
     - regrowth,cycle=members,if=cycle.health.pct<95&cycle.buff.regrowth.remains<1.5&!player.combat&cycle.range>=0&cycle.range<=40
     - rejuvenation,cycle=members,if=cycle.health.pct<95&cycle.buff.rejuvenation.remains<1.5&!player.combat&cycle.range>=0&cycle.range<=40    
     
   defensives:
+    - natures_cure,cycle=members,if=cycle.debuff.426735.up&cycle.range>=0&cycle.range<=40
+    - natures_cure,cycle=members,if=cycle.dispelable.list&cycle.range>=0&cycle.range<=40
     - healthstone,if=health.pct<=config.healthstone_threshold&item.healthstone.usable
     - health_potion,if=health.pct<=config.health_potion_threshold
     - ironbark,cycle=members,if=cycle.health.pct<config.ironbark_threshold&cycle.buff.ironbark.down&cycle.range>=0&cycle.range<=40
@@ -205,8 +208,7 @@ lists:
     - swiftmend,cycle=members,if=cycle.health.pct<config.swiftmend_threshold&cycle.range>=0&cycle.range<=40
     - regrowth,cycle=members,if=cycle.health.pct<config.regrowth_threshold&cycle.range>=0&cycle.range<=40
     - rejuvenation,cycle=members,if=cycle.buff.rejuvenation.remains<1.5&cycle.health.pct<config.rejuvenation_threshold&cycle.range>=0&cycle.range<=40
-    - natures_cure,cycle=members,if=cycle.dispelable.list&cycle.range>=0&cycle.range<=40
-    - efflorescence,if=buff.efflorescence.remains<2
+    - efflorescence,if=buff.efflorescence.remains<1
 
   utility:
     - innervate,if=mana.pct<config.innervate_threshold&player.combat
