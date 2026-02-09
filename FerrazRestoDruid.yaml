@@ -182,7 +182,7 @@ lists:
     
   defensives:
     - natures_cure,cycle=members,if=cycle.dispelable.list&cycle.range>=0&cycle.range<=40
-    - healthstone,if=health.pct<=config.healthstone_threshold
+    #- healthstone,if=health.pct<=config.healthstone_threshold
     - health_potion,if=health.pct<=config.health_potion_threshold
     - ironbark,cycle=members,if=cycle.health.pct<config.ironbark_threshold&cycle.buff.ironbark.down&cycle.range>=0&cycle.range<=40
     - barkskin,if=health.pct<config.barkskin_threshold
