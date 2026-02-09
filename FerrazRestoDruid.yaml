@@ -28,14 +28,14 @@ config:
     type: slider
     min: 25
     max: 99
-    default: 75
+    default: 65
 
   health_potion_threshold:
     label: "Health Potion HP %"
     type: slider
     min: 25
     max: 99
-    default: 60
+    default: 50
 
   # MAJOR COOLDOWNS
   convoke_threshold:
@@ -180,7 +180,7 @@ lists:
     - rejuvenation,cycle=members,if=cycle.health.pct<95&cycle.buff.rejuvenation.remains<1.5&!player.combat&cycle.range>=0&cycle.range<=40    
     
   defensives:
-    - healthstone,if=health.pct<=config.healthstone_threshold
+    - healthstone,if=health.pct<=config.healthstone_threshold&item.healthstone.usable
     - health_potion,if=health.pct<=config.health_potion_threshold
     - ironbark,cycle=members,if=cycle.health.pct<config.ironbark_threshold&cycle.buff.ironbark.down&cycle.range>=0&cycle.range<=40
     - barkskin,if=health.pct<config.barkskin_threshold
