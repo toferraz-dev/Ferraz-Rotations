@@ -314,7 +314,6 @@ lists:
     - swipe
 
   # RACIAL ABILITIES
-
   racial_defensive:
     - stoneform,if=player.dispelable.list
     - fireblood,if=player.dispelable.list
@@ -378,4 +377,3 @@ lists:
     - call_action_list,name=rotation_st_wowhead,if=config.rotation_source=1
     - call_action_list,name=rotation_aoe_alternative,if=config.rotation_source=2&active_enemies>=3
     - call_action_list,name=rotation_st_alternative,if=config.rotation_source=2
-
