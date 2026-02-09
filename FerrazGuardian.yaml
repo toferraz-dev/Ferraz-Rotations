@@ -360,6 +360,7 @@ lists:
     - moonfire,if=config.allow_pull_with_mo&!player.combat&target.enemy&target.alive&debuff.moonfire.down
     - return,if=!player.combat&active_enemies=0
     - return,if=player.channeling
+    - call_action_list,name=auto_target
     - call_action_list,name=auto_heal    
     - call_action_list,name=taunt
     - call_action_list,name=interrupts
