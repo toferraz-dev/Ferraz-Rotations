@@ -181,9 +181,8 @@ lists:
     - rejuvenation,cycle=members,if=cycle.health.pct<95&cycle.buff.rejuvenation.remains<1.5&!player.combat&cycle.range>=0&cycle.range<=40    
     
   defensives:
-    - natures_cure,cycle=members,if=cycle.debuff.426735.up&cycle.range>=0&cycle.range<=40
     - natures_cure,cycle=members,if=cycle.dispelable.list&cycle.range>=0&cycle.range<=40
-    - healthstone,if=health.pct<=config.healthstone_threshold&item.healthstone.usable
+    - healthstone,if=health.pct<=config.healthstone_threshold
     - health_potion,if=health.pct<=config.health_potion_threshold
     - ironbark,cycle=members,if=cycle.health.pct<config.ironbark_threshold&cycle.buff.ironbark.down&cycle.range>=0&cycle.range<=40
     - barkskin,if=health.pct<config.barkskin_threshold
