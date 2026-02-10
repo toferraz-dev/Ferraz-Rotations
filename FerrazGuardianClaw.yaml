@@ -4,7 +4,7 @@ spec: 104
 name: Guardian Claw
 description: |
   Guardian Druid - Druid of the Claw for Mythic+.
-  Supports Wowhead (aggressive DPS) and Method.gg (balanced) rotation styles.
+  Supports Wowhead (aggressive DPS) / Method.gg (balanced) rotation styles.
   Talent Build: CgGAOB00+EWim5ji+N0ScDXt8DAAAAAAAAAAAgZmxswMMziZZegZmZZZAbzwoJyMziZmZmlhhBAAAAwgZsNDAAAAlxsMjZAAsgZAsYGMgFLGAMzG
 
 entry: main
