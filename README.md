@@ -4,76 +4,92 @@
 
 ---
 
-## 🛡️ Guardian Druid
-
-| | |
-|---|---|
-| **Version** | 3.5 |
-| **Spec** | 104 |
-| **Build** | Elune's Chosen |
-| **Talent Tree** | CgGAOB00+EWim5ji+N0ScDXt8DAAAAAAAAAAAgZmZmlZmZMWMLeg5BmZZZAbGGNRzMzyYmZmlxMAAAAAAMmNDYxMDYMAmCAAAshZAsYGMYwyGgZGA |
-
-
-### ✨ Features
+## 🛡️ Guardian — Elune's Chosen (`FerrazGuardian.yaml` v3.6)
 
 | Feature | Description |
 |---------|-------------|
-| ⚔️ **Dual Rotation Styles** | Wowhead (Aggressive DPS) or Alternative (Balanced) |
-| 🛡️ **Smart Defensives** | Tiered usage: Emergency → Dangerous → Heavy Damage |
-| 💢 **Rage Management** | Auto Ironfur stacking with configurable thresholds |
-| 🔇 **Interrupt System** | Auto-interrupt + Incapacitating Roar for AoE |
-| 🌍 **Full Racial Support** | Defensive, offensive, CC, and utility for all races |
-| 🌙 **Moonfire Spreading** | Galactic Guardian procs + Lunar Beam synergy |
+| ⚔️ **Dual Rotation** | Wowhead (Aggressive) / Alternative (Balanced) |
+| 🛡️ **Smart Defensives** | Emergency → Dangerous → Heavy Damage tiers |
+| 💢 **Rage Management** | Ironfur stacking + Raze/Maul + Lunar Beam |
+| 🔇 **Interrupts** | Skull Bash + Incap Roar + Soothe |
+| 🌍 **Full Racials** | Defensive, offensive, CC, utility |
 
-### ⚙️ Configuration
-
-| Setting | Default | Description |
-|---------|:-------:|-------------|
-| 💔 Survival Instincts | 50% | Emergency defensive |
-| 💚 Frenzied Regeneration | 65% | Self-heal threshold |
-| 🔰 Ironfur Stacks | 3-5 | Min/max maintenance |
-| 🐻 Incarnation | 3+ enemies | Major cooldown |
-| 🔇 Auto Interrupt | ✅ On | 250ms delay |
+| Setting | Default |
+|---------|:-------:|
+| Survival Instincts | 50% |
+| Frenzied Regen | 65% |
+| Ironfur Stacks | 3–5 |
+| Incarnation | 3+ enemies |
+| Rage of the Sleeper | 70% |
 
 ---
 
-## 💚 Restoration Druid
-
-| | |
-|---|---|
-| **Version** | 2 |
-| **Spec** | 105 |
-| **Build** | Wildstalker |
-| **Talent Tree** | CkGAOB00+EWim5ji+N0ScDXt8PMmxsNjZmxsN8AMzsMmFbzAAAAAAAAAAgtBNbw0MMjHwsYmZmZZGegZAAAAAAAMGAACAAY2GbNLG2YMDwsAaGAgZGA |
-
-### ✨ Features
+## 🛡️ Guardian — Druid of the Claw (`FerrazGuardianClaw.yaml` v1.0)
 
 | Feature | Description |
 |---------|-------------|
-| 💚 **Proactive Healing** | Lifebloom on tanks, HoT maintenance |
-| ⏰ **Smart Cooldowns** | Convoke (caster only), Tranquility, Nature's Swiftness |
+| ⚔️ **Dual Rotation** | Wowhead (Aggressive) / Method.gg (Balanced) |
+| 🛡️ **Smart Defensives** | Tiered: Emergency → Threshold → Maintenance |
+| 💢 **Rage Management** | Ironfur + Ravage procs + Maul dumps |
+| 🔇 **Interrupts** | Skull Bash + Incap Roar + Soothe |
+| 🐾 **Ravage & Berserk** | Ravage proc priority + Berserk support |
+
+| Setting | Default |
+|---------|:-------:|
+| Survival Instincts | 50% |
+| Frenzied Regen | 65% |
+| Ironfur Stacks | 3–5 |
+| Incarnation | 3+ enemies |
+| Thrash Stacks | 3 |
+
+---
+
+## 🌙 Balance — Elune's Chosen (`FerrazBalance.yaml` v1.0)
+
+| Feature | Description |
+|---------|-------------|
+| ⚔️ **Dual Rotation** | Wowhead (Aggressive) / Method.gg (Balanced) |
+| 🌟 **Astral Power** | Starsurge dumps, Star-Lord, overcap prevention |
+| ☀️ **Eclipse System** | Lunar Eclipse + Incarnation burst windows |
+| 🌠 **AoE Starfall** | Configurable enemy threshold |
+| 🔇 **Interrupts** | Solar Beam + Typhoon + Incap Roar |
+|  **Heal Support** | Heart of the Wild for party healing |
+
+| Setting | Default |
+|---------|:-------:|
+| Starfall Threshold | 2+ enemies |
+| AP Dump | 80 |
+| Incarnation | 3+ enemies |
+| Solar Beam | ✅ 250ms |
+| Heart of the Wild | 80% party HP |
+| Shadowmeld | Threat 3 |
+
+**ST:** Fury of Elune → Lunar Eclipse → DoTs → Starsurge → Starfire → Wrath
+**AoE:** Fury of Elune → Lunar Eclipse → Starfall → DoTs → Starfire → Wrath
+
+---
+
+## 💚 Restoration — Wildstalker (`FerrazRestoDruid.yaml` v2.5)
+
+| Feature | Description |
+|---------|-------------|
+| 💚 **Proactive Healing** | Lifebloom on tanks, HoTs, Efflorescence |
+| ⏰ **Smart Cooldowns** | Convoke, Tranquility, Nature's Swiftness |
 | 🐱 **Catweaving** | Auto Cat Form when group is healthy |
 | 🛡️ **Externals** | Ironbark & Barkskin with thresholds |
-| 💧 **Utility** | Innervate + Nature's Cure dispels |
-| 🔇 **Interrupt** | Incapacitating Roar + Soothe |
+| 💧 **Utility** | Innervate + Nature's Cure + Symbiotic |
 
-### ⚙️ Configuration
+| Setting | Default |
+|---------|:-------:|
+| Ironbark | 60% |
+| Convoke | 75% / 3 |
+| Wild Growth | 80% / 3 |
+| Swiftmend | 65% |
+| Catweave | 60% group |
+| Innervate | 60% mana |
 
-| Setting | Default | Description |
-|---------|:-------:|-------------|
-| 🌳 Ironbark | 60% | External on party |
-| 🌀 Convoke | 70% / 3 | Caster form healing CD |
-| 🌿 Wild Growth | 80% / 3 | AoE heal trigger |
-| ⚡ Swiftmend | 60% | Emergency heal |
-| 🐱 Catweave | 60% group | DPS when healthy |
-
-### 🐱 Catweaving Rotation
-
-**Single Target:**
-> 🌙 Moonfire → 🩸 Rip → 🦷 Ferocious Bite → 🐾 Rake → ⚔️ Shred
-
-**AoE (3+ targets):**
-> 🌙 Moonfire → 🌀 Thrash → 🐾 Swipe → 🐾 Rake → ⚔️ Shred
+**Cat ST:** Moonfire → Rip → Ferocious Bite → Rake → Shred
+**Cat AoE:** Moonfire → Thrash → Swipe → Rake → Shred
 
 ---
 
