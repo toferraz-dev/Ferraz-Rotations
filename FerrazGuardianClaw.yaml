@@ -5,14 +5,16 @@ name: Guardian Claw
 description: |
   Guardian Druid - Druid of the Claw for Mythic+.
   Supports Wowhead (aggressive DPS) and Method.gg (balanced) rotation styles.
-  Optional catweaving for extra DPS when safe.
-  Talent Build: CgGAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAgZmxswMMziZZegZmZZZAbzwoJyMziZmZmlhhBAAAAwgZsNDAAAAGjZZGzAAYBzAYxMYALWMAYmN
+  Talent Build: CgGAOB00+EWim5ji+N0ScDXt8DAAAAAAAAAAAgZmxswMMziZZegZmZZZAbzwoJyMziZmZmlhhBAAAAwgZsNDAAAAlxsMjZAAsgZAsYGMgFLGAMzG
 
 entry: main
 
+# ============================================================
+#  CONFIGURATION
+# ============================================================
 config:
 
-  # ROTATION STYLE
+  # --- Rotation Style ---
   rotation_source:
     label: "Rotation Style"
     type: dropdown
@@ -23,23 +25,13 @@ config:
         value: 2
     default: 2
 
-  # CATWEAVING
-  enable_catweaving:
-    label: "Enable Catweaving"
-    type: checkbox
-    default: false
-  catweave_hp_threshold:
-    label: "Min HP% to Catweave"
-    type: slider
-    min: 40
-    max: 90
-    default: 70
-
-  # CONFIG
+  # --- General ---
   allow_pull_with_mo:
     label: "Pull with Moonfire"
     type: checkbox
     default: true
+
+  # --- Defensive Thresholds ---
   survival_instincts_threshold:
     label: Survival Instincts %
     type: slider
@@ -58,6 +50,8 @@ config:
     min: 30
     max: 90
     default: 65
+
+  # --- Ironfur ---
   ironfur_stacks_min:
     label: "Min Ironfur Stacks to maintain"
     type: slider
@@ -76,6 +70,8 @@ config:
     min: 30
     max: 80
     default: 40
+
+  # --- Rage ---
   rage_cap_threshold:
     label: "Rage Cap Threshold (dump)"
     type: slider
@@ -83,35 +79,23 @@ config:
     max: 100
     default: 80
 
-  # MAJOR COOLDOWNS
+  # --- Cooldowns ---
   incarnation_enemies:
     label: "Min enemies for Incarnation"
     type: slider
     min: 1
     max: 10
     default: 3
-  rage_of_sleeper_threshold:
-    label: "HP% for Rage of the Sleeper"
-    type: slider
-    min: 30
-    max: 90
-    default: 70
 
-  # ROTATION
+  # --- Rotation ---
   thrash_stacks_target:
     label: "Thrash Stacks to maintain"
     type: slider
     min: 1
     max: 5
     default: 3
-  raze_targets:
-    label: "Min targets for Raze (instead of Maul)"
-    type: slider
-    min: 2
-    max: 5
-    default: 2
 
-  # INTERRUPTS
+  # --- Interrupts ---
   use_skull_bash:
     label: "Auto Interrupt"
     type: checkbox
@@ -123,7 +107,7 @@ config:
     max: 2000
     default: 250
 
-  # MOVEMENT
+  # --- Movement ---
   stampeding_roar_usage:
     label: "Stampeding Roar Usage"
     type: dropdown
@@ -144,7 +128,7 @@ config:
     max: 4
     default: 2
 
-  # TRINKETS
+  # --- Trinkets ---
   trinket_usage:
     label: "Trinket Usage"
     type: dropdown
@@ -159,13 +143,17 @@ config:
         value: 0
     default: 1
 
+# ============================================================
+#  ACTION LISTS
+# ============================================================
 lists:
+
+  # ----------------------------------------------------------
+  #  SYSTEM
+  # ----------------------------------------------------------
 
   spell_queue:
     - queue_spell
-
-  buff_mark_of_the_wild:
-    - mark_of_the_wild,if=group.count(cycle.buff.mark_of_the_wild.down.any&cycle.range>0&cycle.range<=40)>0
 
   sanity_checks:
     - return,if=player.dead
@@ -173,46 +161,73 @@ lists:
     - return,if=!state.rotation
     - return,if=state.blocked_inputs
 
+  # ----------------------------------------------------------
+  #  BUFFS
+  # ----------------------------------------------------------
+
+  buff_mark_of_the_wild:
+    - mark_of_the_wild,if=group.count(cycle.buff.mark_of_the_wild.down.any&cycle.range>0&cycle.range<=40)>0
+
+  # ----------------------------------------------------------
+  #  DEFENSIVES (priority: emergency > dangerous > threshold > maintenance)
+  # ----------------------------------------------------------
+
   defensives:
+    # Emergency (HP < 30%)
     - survival_instincts,if=health.pct<30&!buff.survival_instincts.up
-    - rage_of_the_sleeper,if=health.pct<30&!buff.survival_instincts.up
     - frenzied_regeneration,if=health.pct<30&player.rage>=10
     - barkskin,if=health.pct<30&!buff.survival_instincts.up
+    # Dangerous (HP < 50%)
     - survival_instincts,if=health.pct<50&!buff.survival_instincts.up&!buff.barkskin.up
     - frenzied_regeneration,if=health.pct<50&!buff.survival_instincts.up&player.rage>=20
     - ironfur,if=health.pct<50&!buff.survival_instincts.up&player.rage>=40
-    - survival_instincts,if=health.pct<config.survival_instincts_threshold&cooldown.frenzied_regeneration.remains>2&!(buff.barkskin.up|buff.survival_instincts.up|buff.rage_of_the_sleeper.up)
+    # Threshold-based
+    - survival_instincts,if=health.pct<config.survival_instincts_threshold&cooldown.frenzied_regeneration.remains>2&!(buff.barkskin.up|buff.survival_instincts.up)
     - frenzied_regeneration,if=health.pct<config.frenzied_regen_threshold
     - barkskin,if=health.pct<config.barkskin_threshold&!buff.survival_instincts.up
+    # Maintenance
     - ironfur,if=buff.after_the_wildfire.up&buff.ironfur.stack<config.ironfur_stacks_max
     - ironfur,if=health.pct<70&buff.ironfur.stack<config.ironfur_stacks_max&player.rage>=40
     - ironfur,if=(buff.incarnation_guardian_of_ursoc.up|buff.berserk.up)&buff.ironfur.stack<config.ironfur_stacks_max&player.rage>=45
 
+  # ----------------------------------------------------------
+  #  COOLDOWNS
+  # ----------------------------------------------------------
+
   cooldowns:
     - incarnation_guardian_of_ursoc,if=active_enemies>=config.incarnation_enemies|(target.boss&target.time_to_die>20)
-    - rage_of_the_sleeper,if=health.pct<config.rage_of_sleeper_threshold|active_enemies>=4|((buff.incarnation_guardian_of_ursoc.up|buff.berserk.up)&active_enemies>=3)
     - berserk_ravage,if=talent.berserk_ravage&(active_enemies>=3|target.boss)
+
+  # ----------------------------------------------------------
+  #  INTERRUPTS & UTILITY
+  # ----------------------------------------------------------
 
   interrupts:
     - skull_bash,if=config.use_skull_bash&target.casting&!target.casting.interruptible=false,delay=config.skull_bash_delay
     - soothe,if=target.purgeable.enrage
     - incapacitating_roar,if=active_enemies>=3&talent.incapacitating_roar
 
-  dispel:
-    - remove_corruption,cycle=members,if=cycle.dispelable.list&cycle.range>0&cycle.range<=40
-
   taunt:
     - growl,if=target.threat<3&target.range<=30
 
+  # ----------------------------------------------------------
+  #  RAGE MANAGEMENT
+  # ----------------------------------------------------------
+
   rage_management:
+    # Ironfur upkeep
     - ironfur,if=buff.ironfur.stack<config.ironfur_stacks_min&player.rage>=config.ironfur_rage_threshold
     - ironfur,if=buff.ironfur.stack<config.ironfur_stacks_max&player.rage>=60&buff.ironfur.remains<3
-    - ravage,if=buff.ravage.up&active_enemies>=config.raze_targets
-    - ravage,if=buff.ravage.up&active_enemies<config.raze_targets
-    - maul,if=buff.tooth_and_claw.up&player.rage>=35&active_enemies<config.raze_targets
-    - raze,if=active_enemies>=config.raze_targets&player.rage>=config.rage_cap_threshold
-    - maul,if=(buff.incarnation_guardian_of_ursoc.up|buff.berserk.up)&player.rage>=50&active_enemies<config.raze_targets
-    - maul,if=active_enemies<config.raze_targets&player.rage>=config.rage_cap_threshold
+    # Ravage proc (highest priority spender)
+    - ravage,if=buff.ravage.up
+    # Maul (rage dump)
+    - maul,if=buff.tooth_and_claw.up&player.rage>=35
+    - maul,if=(buff.incarnation_guardian_of_ursoc.up|buff.berserk.up)&player.rage>=50
+    - maul,if=player.rage>=config.rage_cap_threshold
+
+  # ----------------------------------------------------------
+  #  MOONFIRE
+  # ----------------------------------------------------------
 
   moonfire_spread:
     - moonfire,if=player.combat&player.combat.time<3&debuff.moonfire.down&range<=40
@@ -220,15 +235,25 @@ lists:
     - moonfire,if=buff.galactic_guardian.up
     - moonfire,if=debuff.moonfire.remains<4.8
     - moonfire,if=debuff.moonfire.down
-    
-  catweaving:
-    - rake,if=config.enable_catweaving&buff.feline_potential.stack>=6&health.pct>=config.catweave_hp_threshold&buff.bear_form.up&health.pct>=config.catweave_hp_threshold&buff.ironfur.stack>=2
-    - heart_of_the_wild,if=buff.cat_form.up
-    - rip,if=buff.cat_form.up&combo_points>=4
-    - ferocious_bite,if=buff.cat_form.up&combo_points>=4&debuff.rip.up
-    - bear_form,if=buff.cat_form.up
 
-  # WOWHEAD ROTATIONS (Aggressive DPS)
+  # ----------------------------------------------------------
+  #  TRINKETS & MOVEMENT
+  # ----------------------------------------------------------
+
+  trinkets:
+    - trinket_1,if=trinket_1.ready&config.trinket_usage!=0&((config.trinket_usage=1)|(config.trinket_usage=2&(buff.incarnation_guardian_of_ursoc.up|buff.berserk.up))|(config.trinket_usage=3&health.pct<70))
+    - trinket_2,if=trinket_2.ready&config.trinket_usage!=0&((config.trinket_usage=1)|(config.trinket_usage=2&(buff.incarnation_guardian_of_ursoc.up|buff.berserk.up))|(config.trinket_usage=3&health.pct<70))
+
+  movement:
+    - stampeding_roar,if=moving.time>=config.stampeding_roar_movement_time&buff.stampeding_roar.down&((config.stampeding_roar_usage=1&player.combat)|(config.stampeding_roar_usage=2&!player.combat)|(config.stampeding_roar_usage=3))&config.stampeding_roar_usage!=0
+
+  # ==========================================================
+  #  ROTATIONS
+  # ==========================================================
+
+  # ----------------------------------------------------------
+  #  WOWHEAD — Aggressive DPS
+  # ----------------------------------------------------------
 
   rotation_st_wowhead:
     - ravage,if=buff.ravage.up
@@ -245,14 +270,16 @@ lists:
   rotation_aoe_wowhead:
     - ravage,if=buff.ravage.up
     - thrash,if=debuff.thrash.stack<config.thrash_stacks_target
-    - raze,if=player.rage>=40&buff.ironfur.stack>=1
+    - maul,if=player.rage>=40&buff.ironfur.stack>=1
     - thrash
     - mangle,if=buff.gore.up
     - mangle
     - call_action_list,name=moonfire_spread
     - swipe
 
-  # METHOD.GG ROTATIONS (Balanced)
+  # ----------------------------------------------------------
+  #  METHOD.GG — Balanced
+  # ----------------------------------------------------------
 
   rotation_st_method:
     - ravage,if=buff.ravage.up
@@ -275,39 +302,37 @@ lists:
     - thrash
     - mangle
     - call_action_list,name=moonfire_spread
-    - raze,if=player.rage>=config.rage_cap_threshold
-    - raze,if=player.rage>=40&buff.tooth_and_claw.up
-    - raze,if=player.rage>=40
+    - maul,if=player.rage>=config.rage_cap_threshold
+    - maul,if=player.rage>=40&buff.tooth_and_claw.up
+    - maul,if=player.rage>=40
     - swipe
 
-  trinkets:
-    - trinket_1,if=trinket_1.ready&config.trinket_usage!=0&((config.trinket_usage=1)|(config.trinket_usage=2&(buff.incarnation_guardian_of_ursoc.up|buff.berserk.up))|(config.trinket_usage=3&health.pct<70))
-    - trinket_2,if=trinket_2.ready&config.trinket_usage!=0&((config.trinket_usage=1)|(config.trinket_usage=2&(buff.incarnation_guardian_of_ursoc.up|buff.berserk.up))|(config.trinket_usage=3&health.pct<70))
-
-  movement:
-    - stampeding_roar,if=moving.time>=config.stampeding_roar_movement_time&buff.stampeding_roar.down&((config.stampeding_roar_usage=1&player.combat)|(config.stampeding_roar_usage=2&!player.combat)|(config.stampeding_roar_usage=3))&config.stampeding_roar_usage!=0
+  # ==========================================================
+  #  MAIN ENTRY POINT
+  # ==========================================================
 
   main:
+    # Pre-combat
     - call_action_list,name=sanity_checks
     - call_action_list,name=spell_queue
     - call_action_list,name=buff_mark_of_the_wild
-    - bear_form,if=!buff.bear_form.up&!buff.cat_form.up&player.combat&!mounted.flying&!mounted.ground
+    - bear_form,if=!buff.bear_form.up&player.combat&!mounted.flying&!mounted.ground
     - moonfire,if=config.allow_pull_with_mo&!player.combat&target.enemy&target.alive&debuff.moonfire.down
     - return,if=!player.combat&active_enemies=0
     - return,if=player.channeling
+    # Targeting & utility
     - call_action_list,name=auto_target
     - call_action_list,name=auto_heal
     - call_action_list,name=taunt
     - call_action_list,name=interrupts
-    - call_action_list,name=dispel
-    - call_action_list,name=catweaving,if=config.enable_catweaving&buff.cat_form.up
-    - bear_form,if=buff.cat_form.up&(health.pct<config.catweave_hp_threshold|!config.enable_catweaving)
+    # Survival & cooldowns
     - call_action_list,name=defensives,if=buff.bear_form.up
     - call_action_list,name=cooldowns,if=buff.bear_form.up
     - call_action_list,name=rage_management,if=buff.bear_form.up
+    # Misc
     - call_action_list,name=movement,if=player.moving
     - call_action_list,name=trinkets
-    - call_action_list,name=catweaving,if=config.enable_catweaving&buff.feline_potential.stack>=6&health.pct>=config.catweave_hp_threshold&buff.bear_form.up
+    # Rotation (style-dependent)
     - call_action_list,name=rotation_aoe_wowhead,if=config.rotation_source=1&active_enemies>=3&buff.bear_form.up
     - call_action_list,name=rotation_st_wowhead,if=config.rotation_source=1&buff.bear_form.up
     - call_action_list,name=rotation_aoe_method,if=config.rotation_source=2&active_enemies>=3&buff.bear_form.up
