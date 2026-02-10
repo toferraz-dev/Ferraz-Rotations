@@ -77,6 +77,34 @@ config:
     max: 80
     default: 50
 
+  # --- Heal Support ---
+  enable_heart_of_the_wild:
+    label: "Heart of the Wild (heal party)"
+    type: checkbox
+    default: true
+  hotw_party_hp_threshold:
+    label: "Party HP% to trigger HotW"
+    type: slider
+    min: 30
+    max: 90
+    default: 80
+
+  # --- Utility ---
+  use_shadowmeld:
+    label: "Shadowmeld (aggro drop)"
+    type: checkbox
+    default: true
+  shadowmeld_threat:
+    label: "Threat level for Shadowmeld"
+    type: slider
+    min: 2
+    max: 3
+    default: 3
+  use_incapacitating_roar:
+    label: "Incapacitating Roar (AoE CC)"
+    type: checkbox
+    default: false
+
   # --- Movement ---
   stampeding_roar_usage:
     label: "Stampeding Roar Usage"
@@ -140,38 +168,32 @@ lists:
     - moonkin_form,if=!buff.moonkin_form.up&!mounted.flying&!mounted.ground
 
   # ----------------------------------------------------------
-  #  ECLIPSE MANAGEMENT
-  # ----------------------------------------------------------
-
-  eclipse_management:
-    # If not in any Eclipse and not in Incarnation, cast Wrath to enter Lunar Eclipse
-    - wrath,if=!buff.eclipse_lunar.up&!buff.eclipse_solar.up&!(buff.incarnation_chosen_of_elune.up|buff.celestial_alignment.up)
-
-  # ----------------------------------------------------------
-  #  DOTS (maintain on targets)
+  #  DOTS (maintain on current target)
   # ----------------------------------------------------------
 
   dots:
-    - sunfire,if=debuff.sunfire.remains<3.6
     - sunfire,if=debuff.sunfire.down
-    - moonfire,if=debuff.moonfire.remains<4.8
+    - sunfire,if=debuff.sunfire.remains<3.6
     - moonfire,if=debuff.moonfire.down
+    - moonfire,if=debuff.moonfire.remains<4.8
 
   dot_spread:
-    - sunfire,if=debuff.sunfire.down&active_enemies>=2&range<=40
-    - moonfire,if=debuff.moonfire.down&active_enemies>=2&range<=40
+    - sunfire,if=debuff.sunfire.down
+    - moonfire,if=debuff.moonfire.down
 
   # ----------------------------------------------------------
   #  COOLDOWNS
   # ----------------------------------------------------------
 
   cooldowns:
-    # Major cooldown (both eclipses + crit buff)
+    # Incarnation: Chosen of Elune (major CD — both eclipses + crit)
     - incarnation_chosen_of_elune,if=active_enemies>=config.incarnation_enemies|(target.boss&target.time_to_die>20)
-    # Celestial Alignment fallback (if not using Incarnation)
+    # Celestial Alignment fallback
     - celestial_alignment,if=!talent.incarnation_chosen_of_elune&(active_enemies>=config.incarnation_enemies|(target.boss&target.time_to_die>20))
-    # Fury of Elune — use on cooldown
+    # Fury of Elune on cooldown
     - fury_of_elune,if=active_enemies>=config.fury_of_elune_enemies
+    # Lunar Eclipse — activate Eclipse when available and not already in Eclipse
+    - lunar_eclipse,if=cooldown.lunar_eclipse.ready&!buff.eclipse_lunar.up&!buff.eclipse_solar.up&!(buff.incarnation_chosen_of_elune.up|buff.celestial_alignment.up)
 
   # ----------------------------------------------------------
   #  DEFENSIVES
@@ -179,6 +201,15 @@ lists:
 
   defensives:
     - barkskin,if=health.pct<config.barkskin_threshold&!buff.barkskin.up
+    - shadowmeld,if=config.use_shadowmeld&target.threat>=config.shadowmeld_threat&!target.boss
+
+  # ----------------------------------------------------------
+  #  HEAL SUPPORT (Heart of the Wild)
+  # ----------------------------------------------------------
+
+  heal_support:
+    - heart_of_the_wild,if=config.enable_heart_of_the_wild&group.lowest.health.pct<config.hotw_party_hp_threshold&!buff.heart_of_the_wild.up&cooldown.heart_of_the_wild.ready
+    - regrowth,target=lowest,if=buff.heart_of_the_wild.up&group.lowest.health.pct<config.hotw_party_hp_threshold
 
   # ----------------------------------------------------------
   #  INTERRUPTS & UTILITY
@@ -187,6 +218,7 @@ lists:
   interrupts:
     - solar_beam,if=config.use_solar_beam&target.casting&target.casting.interruptible,delay=config.solar_beam_delay
     - typhoon,if=config.use_typhoon&target.casting&target.casting.interruptible&target.range<=15
+    - incapacitating_roar,if=config.use_incapacitating_roar&active_enemies>=3&target.casting&target.casting.interruptible
     - soothe,if=target.purgeable.enrage
 
   dispel:
@@ -214,19 +246,24 @@ lists:
   rotation_st_wowhead:
     # Fury of Elune on CD
     - fury_of_elune,if=cooldown.fury_of_elune.ready
-    # Warrior of Elune for instant Starfires
-    - warrior_of_elune,if=buff.eclipse_lunar.up&cooldown.warrior_of_elune.ready
-    # Enter Lunar Eclipse if not in Eclipse
-    - wrath,if=!buff.eclipse_lunar.up&!buff.eclipse_solar.up&!(buff.incarnation_chosen_of_elune.up|buff.celestial_alignment.up)
+    # Activate Lunar Eclipse if available and not in any Eclipse
+    - lunar_eclipse,if=cooldown.lunar_eclipse.ready&!buff.eclipse_lunar.up&!buff.eclipse_solar.up&!(buff.incarnation_chosen_of_elune.up|buff.celestial_alignment.up)
     # Maintain DoTs
-    - call_action_list,name=dots
-    # Starsurge — high priority to maintain Star-Lord and dump AP
+    - sunfire,if=debuff.sunfire.down
+    - sunfire,if=debuff.sunfire.remains<3.6
+    - moonfire,if=debuff.moonfire.down
+    - moonfire,if=debuff.moonfire.remains<4.8
+    # Starsurge — dump AP to avoid overcap
     - starsurge,if=astral_power>=config.astral_power_dump_threshold
-    - starsurge,if=buff.starlord.stack<3
+    # Starsurge — maintain Star-Lord stacks
+    - starsurge,if=buff.starlord.stack<3&astral_power>=30
+    # Starsurge — burst during Incarnation
     - starsurge,if=(buff.incarnation_chosen_of_elune.up|buff.celestial_alignment.up)&astral_power>=30
-    # Starfire in Lunar Eclipse
+    # Starfire in Lunar Eclipse (main filler during Eclipse window)
     - starfire,if=buff.eclipse_lunar.up|buff.incarnation_chosen_of_elune.up|buff.celestial_alignment.up
-    # Wrath as filler
+    # Starfire to set up next Lunar Eclipse (cast before pressing Eclipse button)
+    - starfire,if=cooldown.lunar_eclipse.remains<3&!buff.eclipse_lunar.up
+    # Wrath as default filler (outside Eclipse)
     - wrath
 
   # ----------------------------------------------------------
@@ -234,23 +271,25 @@ lists:
   # ----------------------------------------------------------
 
   rotation_aoe_wowhead:
-    # Fury of Elune on CD
+    # Fury of Elune on CD (high AoE priority)
     - fury_of_elune,if=cooldown.fury_of_elune.ready
-    # Starfall uptime (main AoE spender)
+    # Activate Lunar Eclipse if available
+    - lunar_eclipse,if=cooldown.lunar_eclipse.ready&!buff.eclipse_lunar.up&!buff.eclipse_solar.up&!(buff.incarnation_chosen_of_elune.up|buff.celestial_alignment.up)
+    # Starfall uptime — main AoE spender
     - starfall,if=!buff.starfall.up&astral_power>=50
     - starfall,if=astral_power>=config.astral_power_dump_threshold
-    # Warrior of Elune for instant Starfires
-    - warrior_of_elune,if=buff.eclipse_lunar.up&cooldown.warrior_of_elune.ready
-    # Enter Lunar Eclipse if not in Eclipse
-    - wrath,if=!buff.eclipse_lunar.up&!buff.eclipse_solar.up&!(buff.incarnation_chosen_of_elune.up|buff.celestial_alignment.up)
     # Maintain DoTs on all targets
-    - call_action_list,name=dot_spread
-    - call_action_list,name=dots
-    # Starsurge to maintain Star-Lord during Incarnation
-    - starsurge,if=buff.starlord.stack<3&(buff.incarnation_chosen_of_elune.up|buff.celestial_alignment.up)
-    # Starfire — AoE filler in Lunar Eclipse
+    - sunfire,if=debuff.sunfire.down
+    - sunfire,if=debuff.sunfire.remains<3.6
+    - moonfire,if=debuff.moonfire.down
+    - moonfire,if=debuff.moonfire.remains<4.8
+    # Starsurge to maintain Star-Lord during burst
+    - starsurge,if=buff.starlord.stack<3&(buff.incarnation_chosen_of_elune.up|buff.celestial_alignment.up)&astral_power>=30
+    # Starfire — AoE filler in Lunar Eclipse (cleaves with Starfall)
     - starfire,if=buff.eclipse_lunar.up|buff.incarnation_chosen_of_elune.up|buff.celestial_alignment.up
-    # Wrath as filler
+    # Starfire to set up next Lunar Eclipse
+    - starfire,if=cooldown.lunar_eclipse.remains<3&!buff.eclipse_lunar.up
+    # Wrath as default filler
     - wrath
 
   # ----------------------------------------------------------
@@ -258,21 +297,26 @@ lists:
   # ----------------------------------------------------------
 
   rotation_st_method:
-    # Maintain DoTs first
-    - call_action_list,name=dots
+    # Activate Lunar Eclipse if available
+    - lunar_eclipse,if=cooldown.lunar_eclipse.ready&!buff.eclipse_lunar.up&!buff.eclipse_solar.up&!(buff.incarnation_chosen_of_elune.up|buff.celestial_alignment.up)
+    # Maintain DoTs first (Method prioritizes uptime)
+    - sunfire,if=debuff.sunfire.down
+    - sunfire,if=debuff.sunfire.remains<3.6
+    - moonfire,if=debuff.moonfire.down
+    - moonfire,if=debuff.moonfire.remains<4.8
     # Fury of Elune on CD
     - fury_of_elune,if=cooldown.fury_of_elune.ready
-    # Warrior of Elune for instant Starfires
-    - warrior_of_elune,if=buff.eclipse_lunar.up&cooldown.warrior_of_elune.ready
-    # Enter Lunar Eclipse if not in Eclipse
-    - wrath,if=!buff.eclipse_lunar.up&!buff.eclipse_solar.up&!(buff.incarnation_chosen_of_elune.up|buff.celestial_alignment.up)
-    # Starsurge — maintain Star-Lord + avoid overcap
-    - starsurge,if=buff.starlord.stack<3
+    # Starsurge — maintain Star-Lord
+    - starsurge,if=buff.starlord.stack<3&astral_power>=30
+    # Starsurge — avoid overcap
     - starsurge,if=astral_power>=config.astral_power_dump_threshold
+    # Starsurge — burst during Incarnation
     - starsurge,if=(buff.incarnation_chosen_of_elune.up|buff.celestial_alignment.up)&astral_power>=30
     # Starfire in Lunar Eclipse
     - starfire,if=buff.eclipse_lunar.up|buff.incarnation_chosen_of_elune.up|buff.celestial_alignment.up
-    # Wrath as filler
+    # Starfire to set up next Lunar Eclipse
+    - starfire,if=cooldown.lunar_eclipse.remains<3&!buff.eclipse_lunar.up
+    # Wrath as default filler
     - wrath
 
   # ----------------------------------------------------------
@@ -280,23 +324,25 @@ lists:
   # ----------------------------------------------------------
 
   rotation_aoe_method:
+    # Activate Lunar Eclipse if available
+    - lunar_eclipse,if=cooldown.lunar_eclipse.ready&!buff.eclipse_lunar.up&!buff.eclipse_solar.up&!(buff.incarnation_chosen_of_elune.up|buff.celestial_alignment.up)
     # Maintain DoTs on all targets first
-    - call_action_list,name=dot_spread
-    - call_action_list,name=dots
+    - sunfire,if=debuff.sunfire.down
+    - sunfire,if=debuff.sunfire.remains<3.6
+    - moonfire,if=debuff.moonfire.down
+    - moonfire,if=debuff.moonfire.remains<4.8
     # Fury of Elune on CD
     - fury_of_elune,if=cooldown.fury_of_elune.ready
-    # Starfall uptime (main AoE spender)
+    # Starfall uptime — main AoE spender
     - starfall,if=!buff.starfall.up&astral_power>=50
     - starfall,if=astral_power>=config.astral_power_dump_threshold
-    # Warrior of Elune for instant Starfires
-    - warrior_of_elune,if=buff.eclipse_lunar.up&cooldown.warrior_of_elune.ready
-    # Enter Lunar Eclipse if not in Eclipse
-    - wrath,if=!buff.eclipse_lunar.up&!buff.eclipse_solar.up&!(buff.incarnation_chosen_of_elune.up|buff.celestial_alignment.up)
-    # Starsurge to maintain Star-Lord during Incarnation
-    - starsurge,if=buff.starlord.stack<3&(buff.incarnation_chosen_of_elune.up|buff.celestial_alignment.up)
+    # Starsurge to maintain Star-Lord during burst
+    - starsurge,if=buff.starlord.stack<3&(buff.incarnation_chosen_of_elune.up|buff.celestial_alignment.up)&astral_power>=30
     # Starfire — AoE filler in Lunar Eclipse
     - starfire,if=buff.eclipse_lunar.up|buff.incarnation_chosen_of_elune.up|buff.celestial_alignment.up
-    # Wrath as filler
+    # Starfire to set up next Lunar Eclipse
+    - starfire,if=cooldown.lunar_eclipse.remains<3&!buff.eclipse_lunar.up
+    # Wrath as default filler
     - wrath
 
   # ==========================================================
@@ -304,26 +350,21 @@ lists:
   # ==========================================================
 
   main:
-    # Pre-combat
     - call_action_list,name=sanity_checks
     - call_action_list,name=spell_queue
     - call_action_list,name=buff_mark_of_the_wild
     - call_action_list,name=moonkin_form
     - return,if=!player.combat&active_enemies=0
     - return,if=player.channeling
-    # Targeting & utility
     - call_action_list,name=auto_target
+    - call_action_list,name=auto_heal
     - call_action_list,name=interrupts
     - call_action_list,name=dispel
-    # Eclipse entry (ensure we are in Lunar Eclipse)
-    - call_action_list,name=eclipse_management,if=!buff.eclipse_lunar.up&!buff.eclipse_solar.up&!(buff.incarnation_chosen_of_elune.up|buff.celestial_alignment.up)
-    # Cooldowns
-    - call_action_list,name=cooldowns,if=buff.moonkin_form.up
-    # Misc
-    - call_action_list,name=movement,if=player.moving
     - call_action_list,name=defensives
+    - call_action_list,name=cooldowns,if=buff.moonkin_form.up
+    - call_action_list,name=movement,if=player.moving
     - call_action_list,name=trinkets
-    # Rotation (style-dependent)
+    - call_action_list,name=heal_support,if=config.enable_heart_of_the_wild
     - call_action_list,name=rotation_aoe_wowhead,if=config.rotation_source=1&active_enemies>=config.starfall_aoe_threshold&buff.moonkin_form.up
     - call_action_list,name=rotation_st_wowhead,if=config.rotation_source=1&buff.moonkin_form.up
     - call_action_list,name=rotation_aoe_method,if=config.rotation_source=2&active_enemies>=config.starfall_aoe_threshold&buff.moonkin_form.up
