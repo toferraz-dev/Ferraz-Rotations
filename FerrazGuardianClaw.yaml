@@ -159,65 +159,6 @@ config:
         value: 0
     default: 1
 
-variables:
-  # FORM AND RESOURCES
-  in_bear_form: buff.bear_form.up
-  in_cat_form: buff.cat_form.up
-  rage: player.rage
-  rage_deficit: player.rage.max-player.rage
-  rage_overcap: var.rage>=config.rage_cap_threshold
-  rage_for_maul: var.rage>=40
-
-  # DEFENSIVE BUFFS
-  ironfur_stacks: buff.ironfur.stack
-  need_ironfur: var.ironfur_stacks<config.ironfur_stacks_min&var.rage>=config.ironfur_rage_threshold
-  heavy_damage: health.pct<70&var.ironfur_stacks<config.ironfur_stacks_max
-  dangerous_situation: health.pct<50&!buff.survival_instincts.up
-  emergency_situation: health.pct<30
-  barkskin_up: buff.barkskin.up
-  survival_up: buff.survival_instincts.up
-  any_major_defensive: var.barkskin_up|var.survival_up|buff.rage_of_the_sleeper.up
-  after_avenger_up: buff.after_the_wildfire.up
-
-  # DRUID OF THE CLAW PROCS
-  ravage_ready: buff.ravage.up
-  dreadful_wound_up: debuff.dreadful_wound.up
-  dreadful_wound_needs_refresh: debuff.dreadful_wound.remains<3
-
-  # OFFENSIVE PROCS
-  galactic_guardian_up: buff.galactic_guardian.up
-  tooth_and_claw_up: buff.tooth_and_claw.up
-  gore_up: buff.gore.up
-  mangle_charges: cooldown.mangle.charges
-
-  # CATWEAVING
-  feline_potential_stacks: buff.feline_potential.stack
-  catweave_ready: config.enable_catweaving&var.feline_potential_stacks>=6&health.pct>=config.catweave_hp_threshold&var.in_bear_form
-  catweave_safe: health.pct>=config.catweave_hp_threshold&var.ironfur_stacks>=2
-
-  # DOT TRACKING
-  thrash_stacks: debuff.thrash.stack
-  thrash_target_stacks: config.thrash_stacks_target
-  thrash_needs_refresh: debuff.thrash.remains<4.5|debuff.thrash.stack<var.thrash_target_stacks
-  moonfire_needs_refresh: debuff.moonfire.remains<4.8
-
-  # COOLDOWN STATES
-  incarnation_active: buff.incarnation_guardian_of_ursoc.up
-  berserk_active: buff.berserk.up
-  burst_active: var.incarnation_active|var.berserk_active
-  combat_start: player.combat&player.combat.time<3
-
-  # TARGETING
-  use_raze: active_enemies>=config.raze_targets
-  can_interrupt: target.casting&!target.casting.interruptible=false
-
-  # MOVEMENT
-  use_stampeding_roar: moving.time>=config.stampeding_roar_movement_time&buff.stampeding_roar.down&((config.stampeding_roar_usage=1&player.combat)|(config.stampeding_roar_usage=2&!player.combat)|(config.stampeding_roar_usage=3))
-
-  # RACIAL THRESHOLDS
-  racial_defensive_hp: 50
-  racial_emergency_hp: 35
-
 lists:
 
   spell_queue:
@@ -233,28 +174,28 @@ lists:
     - return,if=state.blocked_inputs
 
   defensives:
-    - survival_instincts,if=var.emergency_situation&!var.survival_up
-    - rage_of_the_sleeper,if=var.emergency_situation&!var.survival_up
-    - frenzied_regeneration,if=var.emergency_situation&var.rage>=10
-    - barkskin,if=var.emergency_situation&!var.survival_up
-    - survival_instincts,if=var.dangerous_situation&!var.barkskin_up
-    - frenzied_regeneration,if=var.dangerous_situation&var.rage>=20
-    - ironfur,if=var.dangerous_situation&var.rage>=40
-    - survival_instincts,if=health.pct<config.survival_instincts_threshold&cooldown.frenzied_regeneration.remains>2&!var.any_major_defensive
+    - survival_instincts,if=health.pct<30&!buff.survival_instincts.up
+    - rage_of_the_sleeper,if=health.pct<30&!buff.survival_instincts.up
+    - frenzied_regeneration,if=health.pct<30&player.rage>=10
+    - barkskin,if=health.pct<30&!buff.survival_instincts.up
+    - survival_instincts,if=health.pct<50&!buff.survival_instincts.up&!buff.barkskin.up
+    - frenzied_regeneration,if=health.pct<50&!buff.survival_instincts.up&player.rage>=20
+    - ironfur,if=health.pct<50&!buff.survival_instincts.up&player.rage>=40
+    - survival_instincts,if=health.pct<config.survival_instincts_threshold&cooldown.frenzied_regeneration.remains>2&!(buff.barkskin.up|buff.survival_instincts.up|buff.rage_of_the_sleeper.up)
     - frenzied_regeneration,if=health.pct<config.frenzied_regen_threshold
-    - barkskin,if=health.pct<config.barkskin_threshold&!var.survival_up
-    - ironfur,if=var.after_avenger_up&var.ironfur_stacks<config.ironfur_stacks_max
-    - ironfur,if=var.heavy_damage&var.rage>=40
-    - ironfur,if=var.burst_active&var.ironfur_stacks<config.ironfur_stacks_max&var.rage>=45
+    - barkskin,if=health.pct<config.barkskin_threshold&!buff.survival_instincts.up
+    - ironfur,if=buff.after_the_wildfire.up&buff.ironfur.stack<config.ironfur_stacks_max
+    - ironfur,if=health.pct<70&buff.ironfur.stack<config.ironfur_stacks_max&player.rage>=40
+    - ironfur,if=(buff.incarnation_guardian_of_ursoc.up|buff.berserk.up)&buff.ironfur.stack<config.ironfur_stacks_max&player.rage>=45
 
   cooldowns:
     - incarnation_guardian_of_ursoc,if=active_enemies>=config.incarnation_enemies|(target.boss&target.time_to_die>20)
-    - rage_of_the_sleeper,if=health.pct<config.rage_of_sleeper_threshold|active_enemies>=4|(var.burst_active&active_enemies>=3)
+    - rage_of_the_sleeper,if=health.pct<config.rage_of_sleeper_threshold|active_enemies>=4|((buff.incarnation_guardian_of_ursoc.up|buff.berserk.up)&active_enemies>=3)
     - berserk_ravage,if=talent.berserk_ravage&(active_enemies>=3|target.boss)
-    - heart_of_the_wild,if=var.in_bear_form&active_enemies>=4
+    - heart_of_the_wild,if=buff.bear_form.up&active_enemies>=4
 
   interrupts:
-    - skull_bash,if=config.use_skull_bash&var.can_interrupt,delay=config.skull_bash_delay
+    - skull_bash,if=config.use_skull_bash&target.casting&!target.casting.interruptible=false,delay=config.skull_bash_delay
     - soothe,if=target.purgeable.enrage
     - incapacitating_roar,if=active_enemies>=3&talent.incapacitating_roar
 
@@ -266,49 +207,49 @@ lists:
     - growl,if=target.threat<3&target.range<=30
 
   rage_management:
-    - ironfur,if=var.need_ironfur
-    - ironfur,if=var.ironfur_stacks<config.ironfur_stacks_max&var.rage>=60&buff.ironfur.remains<3
-    - ravage,if=var.ravage_ready&var.use_raze
-    - ravage,if=var.ravage_ready&!var.use_raze
-    - maul,if=var.tooth_and_claw_up&var.rage>=35&!var.use_raze
-    - raze,if=var.use_raze&var.rage_overcap
-    - maul,if=var.burst_active&var.rage>=50&!var.use_raze
-    - maul,if=!var.use_raze&var.rage_overcap
+    - ironfur,if=buff.ironfur.stack<config.ironfur_stacks_min&player.rage>=config.ironfur_rage_threshold
+    - ironfur,if=buff.ironfur.stack<config.ironfur_stacks_max&player.rage>=60&buff.ironfur.remains<3
+    - ravage,if=buff.ravage.up&active_enemies>=config.raze_targets
+    - ravage,if=buff.ravage.up&active_enemies<config.raze_targets
+    - maul,if=buff.tooth_and_claw.up&player.rage>=35&active_enemies<config.raze_targets
+    - raze,if=active_enemies>=config.raze_targets&player.rage>=config.rage_cap_threshold
+    - maul,if=(buff.incarnation_guardian_of_ursoc.up|buff.berserk.up)&player.rage>=50&active_enemies<config.raze_targets
+    - maul,if=active_enemies<config.raze_targets&player.rage>=config.rage_cap_threshold
 
   moonfire_spread:
-    - moonfire,if=var.combat_start&debuff.moonfire.down&range<=40
-    - moonfire,if=var.burst_active&debuff.moonfire.down&range<=40
-    - moonfire,if=var.galactic_guardian_up
-    - moonfire,if=var.moonfire_needs_refresh
+    - moonfire,if=player.combat&player.combat.time<3&debuff.moonfire.down&range<=40
+    - moonfire,if=(buff.incarnation_guardian_of_ursoc.up|buff.berserk.up)&debuff.moonfire.down&range<=40
+    - moonfire,if=buff.galactic_guardian.up
+    - moonfire,if=debuff.moonfire.remains<4.8
     - moonfire,if=debuff.moonfire.down
     - moonfire,target=mouseover,if=debuff.moonfire.down&range<=40&target.alive&target.enemy
 
   catweaving:
-    - rake,if=var.catweave_ready&var.catweave_safe
-    - rip,if=var.in_cat_form&combo_points>=4
-    - ferocious_bite,if=var.in_cat_form&combo_points>=4&debuff.rip.up
-    - bear_form,if=var.in_cat_form
+    - rake,if=config.enable_catweaving&buff.feline_potential.stack>=6&health.pct>=config.catweave_hp_threshold&buff.bear_form.up&health.pct>=config.catweave_hp_threshold&buff.ironfur.stack>=2
+    - rip,if=buff.cat_form.up&combo_points>=4
+    - ferocious_bite,if=buff.cat_form.up&combo_points>=4&debuff.rip.up
+    - bear_form,if=buff.cat_form.up
 
   # WOWHEAD ROTATIONS (Aggressive DPS)
 
   rotation_st_wowhead:
-    - ravage,if=var.ravage_ready
-    - moonfire,if=var.moonfire_needs_refresh
-    - thrash,if=debuff.thrash.stack<var.thrash_target_stacks
-    - mangle,if=var.gore_up
+    - ravage,if=buff.ravage.up
+    - moonfire,if=debuff.moonfire.remains<4.8
+    - thrash,if=debuff.thrash.stack<config.thrash_stacks_target
+    - mangle,if=buff.gore.up
     - mangle
-    - maul,if=var.rage>=40&var.ironfur_stacks>=1&var.tooth_and_claw_up
-    - maul,if=var.rage_overcap&var.ironfur_stacks>=1
+    - maul,if=player.rage>=40&buff.ironfur.stack>=1&buff.tooth_and_claw.up
+    - maul,if=player.rage>=config.rage_cap_threshold&buff.ironfur.stack>=1
     - thrash
-    - moonfire,if=var.galactic_guardian_up
+    - moonfire,if=buff.galactic_guardian.up
     - swipe
 
   rotation_aoe_wowhead:
-    - ravage,if=var.ravage_ready
-    - thrash,if=debuff.thrash.stack<var.thrash_target_stacks
-    - raze,if=var.rage>=40&var.ironfur_stacks>=1
+    - ravage,if=buff.ravage.up
+    - thrash,if=debuff.thrash.stack<config.thrash_stacks_target
+    - raze,if=player.rage>=40&buff.ironfur.stack>=1
     - thrash
-    - mangle,if=var.gore_up
+    - mangle,if=buff.gore.up
     - mangle
     - call_action_list,name=moonfire_spread
     - swipe
@@ -316,75 +257,43 @@ lists:
   # METHOD.GG ROTATIONS (Balanced)
 
   rotation_st_method:
-    - ravage,if=var.ravage_ready
-    - mangle,if=var.gore_up
-    - mangle,if=var.mangle_charges>=2
+    - ravage,if=buff.ravage.up
+    - mangle,if=buff.gore.up
+    - mangle,if=cooldown.mangle.charges>=2
     - mangle
-    - thrash,if=var.thrash_needs_refresh
-    - moonfire,if=var.galactic_guardian_up
-    - moonfire,if=var.moonfire_needs_refresh
-    - maul,if=var.rage_overcap&var.tooth_and_claw_up
-    - maul,if=var.rage_overcap
+    - thrash,if=debuff.thrash.remains<4.5|debuff.thrash.stack<config.thrash_stacks_target
+    - moonfire,if=buff.galactic_guardian.up
+    - moonfire,if=debuff.moonfire.remains<4.8
+    - maul,if=player.rage>=config.rage_cap_threshold&buff.tooth_and_claw.up
+    - maul,if=player.rage>=config.rage_cap_threshold
     - thrash
     - swipe
 
   rotation_aoe_method:
-    - ravage,if=var.ravage_ready
-    - thrash,if=var.thrash_needs_refresh
-    - mangle,if=var.gore_up
-    - mangle,if=var.mangle_charges>=2
+    - ravage,if=buff.ravage.up
+    - thrash,if=debuff.thrash.remains<4.5|debuff.thrash.stack<config.thrash_stacks_target
+    - mangle,if=buff.gore.up
+    - mangle,if=cooldown.mangle.charges>=2
     - thrash
     - mangle
     - call_action_list,name=moonfire_spread
-    - raze,if=var.rage_overcap
-    - raze,if=var.rage>=40&var.tooth_and_claw_up
-    - raze,if=var.rage>=40
+    - raze,if=player.rage>=config.rage_cap_threshold
+    - raze,if=player.rage>=40&buff.tooth_and_claw.up
+    - raze,if=player.rage>=40
     - swipe
 
-  # RACIAL ABILITIES
-
-  racial_defensive:
-    - stoneform,if=player.dispelable.list
-    - fireblood,if=player.dispelable.list
-    - will_of_the_forsaken,if=player.feared|player.charmed
-    - escape_artist,if=player.rooted
-    - will_to_survive,if=player.stunned
-    - gift_of_the_naaru.player,if=health.pct<var.racial_emergency_hp
-    - regeneratin,if=health.pct<var.racial_emergency_hp&!player.combat
-    - stoneform,if=health.pct<var.racial_defensive_hp
-    - fireblood,if=health.pct<var.racial_defensive_hp
-
-  racial_offensive:
-    - berserking,if=var.burst_active
-    - blood_fury,if=var.burst_active
-    - ancestral_call,if=var.burst_active
-    - fireblood,if=var.burst_active&!player.dispelable.list
-    - azerite_surge,if=var.burst_active
-
-  racial_cc:
-    - war_stomp,if=interrupts.8y.stun.count>=1
-    - quaking_palm,if=target.casting.interruptible
-    - haymaker,if=target.casting.interruptible
-    - bull_rush,if=target.casting.interruptible
-    - wing_buffet,if=target.casting.interruptible
-    - arcane_pulse,if=enemies.8y.count>=3
-
-  racial_utility:
-    - arcane_torrent,if=var.rage<50
-    - gift_of_the_naaru,cycle=members,if=cycle.health.pct<60&cycle.range>0&cycle.range<=40
-
   trinkets:
-    - trinket_1,if=trinket_1.ready&config.trinket_usage!=0&((config.trinket_usage=1)|(config.trinket_usage=2&var.burst_active)|(config.trinket_usage=3&health.pct<70))
-    - trinket_2,if=trinket_2.ready&config.trinket_usage!=0&((config.trinket_usage=1)|(config.trinket_usage=2&var.burst_active)|(config.trinket_usage=3&health.pct<70))
+    - trinket_1,if=trinket_1.ready&config.trinket_usage!=0&((config.trinket_usage=1)|(config.trinket_usage=2&(buff.incarnation_guardian_of_ursoc.up|buff.berserk.up))|(config.trinket_usage=3&health.pct<70))
+    - trinket_2,if=trinket_2.ready&config.trinket_usage!=0&((config.trinket_usage=1)|(config.trinket_usage=2&(buff.incarnation_guardian_of_ursoc.up|buff.berserk.up))|(config.trinket_usage=3&health.pct<70))
 
   movement:
-    - stampeding_roar,if=var.use_stampeding_roar&config.stampeding_roar_usage!=0
+    - stampeding_roar,if=moving.time>=config.stampeding_roar_movement_time&buff.stampeding_roar.down&((config.stampeding_roar_usage=1&player.combat)|(config.stampeding_roar_usage=2&!player.combat)|(config.stampeding_roar_usage=3))&config.stampeding_roar_usage!=0
 
   main:
     - call_action_list,name=sanity_checks
     - call_action_list,name=spell_queue
     - call_action_list,name=buff_mark_of_the_wild
-    - bear_form,if=!var.in_bear_form&!var.in_cat_form&player.combat&!mounted.flying&!mounted.ground
+    - bear_form,if=!buff.bear_form.up&!buff.cat_form.up&player.combat&!mounted.flying&!mounted.ground
     - moonfire,if=config.allow_pull_with_mo&!player.combat&target.enemy&target.alive&debuff.moonfire.down
     - return,if=!player.combat&active_enemies=0
     - return,if=player.channeling
@@ -392,20 +301,16 @@ lists:
     - call_action_list,name=auto_heal
     - call_action_list,name=taunt
     - call_action_list,name=interrupts
-    - call_action_list,name=racial_cc
-    - call_action_list,name=racial_defensive
     - call_action_list,name=dispel
-    - call_action_list,name=catweaving,if=config.enable_catweaving&var.in_cat_form
-    - bear_form,if=var.in_cat_form&(health.pct<config.catweave_hp_threshold|!config.enable_catweaving)
-    - call_action_list,name=defensives,if=var.in_bear_form
-    - call_action_list,name=cooldowns,if=var.in_bear_form
-    - call_action_list,name=racial_offensive,if=var.burst_active
-    - call_action_list,name=rage_management,if=var.in_bear_form
+    - call_action_list,name=catweaving,if=config.enable_catweaving&buff.cat_form.up
+    - bear_form,if=buff.cat_form.up&(health.pct<config.catweave_hp_threshold|!config.enable_catweaving)
+    - call_action_list,name=defensives,if=buff.bear_form.up
+    - call_action_list,name=cooldowns,if=buff.bear_form.up
+    - call_action_list,name=rage_management,if=buff.bear_form.up
     - call_action_list,name=movement,if=player.moving
-    - call_action_list,name=racial_utility
     - call_action_list,name=trinkets
-    - call_action_list,name=catweaving,if=var.catweave_ready&var.in_bear_form
-    - call_action_list,name=rotation_aoe_wowhead,if=config.rotation_source=1&active_enemies>=3&var.in_bear_form
-    - call_action_list,name=rotation_st_wowhead,if=config.rotation_source=1&var.in_bear_form
-    - call_action_list,name=rotation_aoe_method,if=config.rotation_source=2&active_enemies>=3&var.in_bear_form
-    - call_action_list,name=rotation_st_method,if=config.rotation_source=2&var.in_bear_form
+    - call_action_list,name=catweaving,if=config.enable_catweaving&buff.feline_potential.stack>=6&health.pct>=config.catweave_hp_threshold&buff.bear_form.up
+    - call_action_list,name=rotation_aoe_wowhead,if=config.rotation_source=1&active_enemies>=3&buff.bear_form.up
+    - call_action_list,name=rotation_st_wowhead,if=config.rotation_source=1&buff.bear_form.up
+    - call_action_list,name=rotation_aoe_method,if=config.rotation_source=2&active_enemies>=3&buff.bear_form.up
+    - call_action_list,name=rotation_st_method,if=config.rotation_source=2&buff.bear_form.up

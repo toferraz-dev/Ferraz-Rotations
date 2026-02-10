@@ -1,7 +1,7 @@
 ﻿version: 3.6
 author: Ferraz
 spec: 104
-name: Guardian
+name: Guardian Elunes
 description: |
   Guardian Druid Elunes Chosen for Mythic+.
   Supports Wowhead (aggressive DPS) Alternative (balanced) rotation styles.
