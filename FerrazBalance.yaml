@@ -25,12 +25,6 @@ config:
         value: 2
     default: 2
 
-  # --- General ---
-  allow_pull_with_mo:
-    label: "Pull with Moonfire"
-    type: checkbox
-    default: true
-
   # --- Astral Power ---
   starfall_aoe_threshold:
     label: "Min enemies for Starfall"
@@ -315,7 +309,6 @@ lists:
     - call_action_list,name=spell_queue
     - call_action_list,name=buff_mark_of_the_wild
     - call_action_list,name=moonkin_form
-    - moonfire,if=config.allow_pull_with_mo&!player.combat&target.enemy&target.alive&debuff.moonfire.down
     - return,if=!player.combat&active_enemies=0
     - return,if=player.channeling
     # Targeting & utility
