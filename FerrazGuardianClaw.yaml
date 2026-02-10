@@ -192,7 +192,6 @@ lists:
     - incarnation_guardian_of_ursoc,if=active_enemies>=config.incarnation_enemies|(target.boss&target.time_to_die>20)
     - rage_of_the_sleeper,if=health.pct<config.rage_of_sleeper_threshold|active_enemies>=4|((buff.incarnation_guardian_of_ursoc.up|buff.berserk.up)&active_enemies>=3)
     - berserk_ravage,if=talent.berserk_ravage&(active_enemies>=3|target.boss)
-    - heart_of_the_wild,if=buff.bear_form.up&active_enemies>=4
 
   interrupts:
     - skull_bash,if=config.use_skull_bash&target.casting&!target.casting.interruptible=false,delay=config.skull_bash_delay
@@ -203,7 +202,6 @@ lists:
     - remove_corruption,cycle=members,if=cycle.dispelable.list&cycle.range>0&cycle.range<=40
 
   taunt:
-    - growl,target=mouseover,if=target.threat<3&target.range<=30&target.alive&target.enemy
     - growl,if=target.threat<3&target.range<=30
 
   rage_management:
@@ -222,10 +220,10 @@ lists:
     - moonfire,if=buff.galactic_guardian.up
     - moonfire,if=debuff.moonfire.remains<4.8
     - moonfire,if=debuff.moonfire.down
-    - moonfire,target=mouseover,if=debuff.moonfire.down&range<=40&target.alive&target.enemy
-
+    
   catweaving:
     - rake,if=config.enable_catweaving&buff.feline_potential.stack>=6&health.pct>=config.catweave_hp_threshold&buff.bear_form.up&health.pct>=config.catweave_hp_threshold&buff.ironfur.stack>=2
+    - heart_of_the_wild,if=buff.cat_form.up
     - rip,if=buff.cat_form.up&combo_points>=4
     - ferocious_bite,if=buff.cat_form.up&combo_points>=4&debuff.rip.up
     - bear_form,if=buff.cat_form.up
