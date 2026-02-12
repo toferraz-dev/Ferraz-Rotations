@@ -314,7 +314,6 @@ lists:
     - swipe
 
   # RACIAL ABILITIES
-
   racial_defensive:
     - stoneform,if=player.dispelable.list
     - fireblood,if=player.dispelable.list
