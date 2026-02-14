@@ -252,13 +252,14 @@ lists:
   mouseover_friendly:
     - natures_cure.mouseover,if=config.use_mouseover&mouseover.dispelable.list&mouseover.range>=0&mouseover.range<=40
     - swiftmend.mouseover,if=config.use_mouseover&mouseover.health.pct<config.swiftmend_threshold&(mouseover.buff.remains(rejuvenation)>0|mouseover.buff.remains(regrowth)>0|mouseover.buff.remains(wild_growth)>0)&mouseover.range>=0&mouseover.range<=40
-    - rejuvenation.mouseover,if=config.use_mouseover&mouseover.buff.remains(rejuvenation)<1.5&!prev_gcd.1.rejuvenation&mouseover.range>=0&mouseover.range<=40
+    - rejuvenation.mouseover,if=config.use_mouseover&mouseover.buff.remains(rejuvenation)=0&!prev_gcd.1.rejuvenation&mouseover.range>=0&mouseover.range<=40
     - regrowth.mouseover,if=config.use_mouseover&mouseover.range>=0&mouseover.range<=40&mouseover.health.pct<config.regrowth_threshold
 
   main:
     - call_action_list,name=sanity_checks
     - call_action_list,name=spell_queue
     - call_action_list,name=out_of_combat,if=!player.combat
+    - call_action_list,name=mouseover_friendly,if=config.use_mouseover&var.mo_friendly_valid&!player.casting&!player.channeling
     - return,if=!player.combat
     - return,if=player.channeling
     - call_action_list,name=auto_target
