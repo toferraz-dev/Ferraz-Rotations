@@ -370,7 +370,6 @@ lists:
     - call_action_list,name=interrupts
     - call_action_list,name=dispel
     - call_action_list,name=defensives
-
     - call_action_list,name=movement,if=player.moving
     - call_action_list,name=trinkets
     - call_action_list,name=heal_support,if=config.enable_heart_of_the_wild
