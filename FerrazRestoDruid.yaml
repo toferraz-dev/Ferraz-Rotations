@@ -250,9 +250,9 @@ lists:
     - rejuvenation,cycle=members,if=cycle.buff.rejuvenation.down&cycle.health.pct<95&cycle.range>=0&cycle.range<=40
 
   mouseover_friendly:
-    - swiftmend.mouseover,if=config.use_mouseover&mouseover.health.pct<config.swiftmend_threshold
-    - regrowth.mouseover,if=config.use_mouseover&mouseover.health.pct<100
-    - rejuvenation.mouseover,if=config.use_mouseover&mouseover.buff.rejuvenation.remains<1.5&mouseover.health.pct<100
+    - swiftmend.mouseover,if=config.use_mouseover
+    - regrowth.mouseover,if=config.use_mouseover
+    - rejuvenation.mouseover,if=config.use_mouseover&mouseover.buff.rejuvenation.remains<1.5
     - natures_cure.mouseover,if=config.use_mouseover&mouseover.dispelable.list    
 
   main:
@@ -263,10 +263,10 @@ lists:
     - return,if=player.channeling
     - call_action_list,name=auto_target
     - call_action_list,name=auto_heal
+    - call_action_list,name=mouseover_friendly,if=config.use_mouseover&var.mo_friendly_valid&!player.casting&!player.channeling    
     - call_action_list,name=interrupts
     - call_action_list,name=racials
     - call_action_list,name=defensives
-    - call_action_list,name=mouseover_friendly,if=config.use_mouseover&var.mo_friendly_valid&!player.casting&!player.channeling
     - call_action_list,name=utility
     - call_action_list,name=cooldowns
     - call_action_list,name=trinkets
