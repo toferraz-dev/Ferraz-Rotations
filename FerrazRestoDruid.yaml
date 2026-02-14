@@ -251,9 +251,9 @@ lists:
 
   mouseover_friendly:
     - swiftmend.mouseover,if=config.use_mouseover
-    - regrowth.mouseover,if=config.use_mouseover
     - rejuvenation.mouseover,if=config.use_mouseover&mouseover.buff.rejuvenation.remains<1.5
-    - natures_cure.mouseover,if=config.use_mouseover&mouseover.dispelable.list    
+    - natures_cure.mouseover,if=config.use_mouseover&mouseover.dispelable.list
+    - regrowth.mouseover,if=config.use_mouseover
 
   main:
     - call_action_list,name=sanity_checks
