@@ -224,14 +224,12 @@ lists:
     - innervate,if=mana.pct<config.innervate_threshold&player.combat
 
   catweave_st:
-    - 1261868,if=target.range<=8
     - rip,if=combo_points>=5&debuff.rip.refreshable&target.range<=8
     - ferocious_bite,if=combo_points>=4&debuff.rip.remains>10&target.range<=8
     - rake,if=debuff.rake.refreshable&combo_points<=3&target.range<=8
     - shred,if=combo_points<5&target.range<=8
 
   catweave_aoe:
-    - 1261868,if=target.range<=8
     - rip,if=combo_points>=5&debuff.rip.refreshable&target.range<=8
     - thrash,if=active_enemies>=config.aoe_threshold&target.range<=8
     - swipe,if=active_enemies>=config.aoe_threshold&target.range<=8
