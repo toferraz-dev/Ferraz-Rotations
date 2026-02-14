@@ -1,96 +1,109 @@
-# 🐻 Ferraz Druid Rotations 🌿
+# Munkey Rotations
+[![Discipline Priest](/Priest/Discipline/banner.jpeg)](/Priest/Discipline)
+Real-life optimized rotations for World of Warcraft that go beyond simple priority lists. Our rotations are designed with extensive customization options and intelligent decision-making to adapt to actual gameplay scenarios.
 
-> Custom rotation profiles for World of Warcraft Druids, optimized for **Mythic+** content.
+*** PLEASE NOTE THAT SOME FEATURES / ROTATIONS MAY REQUIRE THE MUNKEY ROTATIONS ADDON INSIDE THE ADDON FOLDER ***
+*** IF YOU EXPERIENCE ANY ISSUES PLEASE DOWNLOAD THE ADDON AND TRY AGAIN BEFORE REPORTING THEM ***
+
+## Feature Requests and bugs
+Submit bug reports, requests for new toggles / features or supported class here:
+**https://munkey.fdback.io/**
+
+## Quick Links
+- 🚀 [Getting Started](#getting-started)
+- 🐛 [Bug Report Template](BUG_REPORT_EXAMPLE.md)
+- 💡 [Feature Request Template](FEATURE_REQUEST_TEMPLATE.md)
+
+## Philosophy
+Traditional rotations often rely on static priority lists that don't account for the dynamic nature of real encounters. Our rotations feature:
+- **Context-Aware Decision Making**: Rotations that adapt based on fight conditions, movement, and group needs
+- **Extensive Customization**: Granular configuration options to match your playstyle and content type
+- **Real-World Optimization**: Tested in actual gameplay scenarios, not just simulation environments
+- **Intelligent Cooldown Management**: Smart usage of defensive and offensive cooldowns based on fight dynamics
+- **Mouseover Integration**: Full mouseover support for enhanced control and responsiveness
+
+## Supported Specializations
+### ✅ Fully Supported
+| Class | Specialization | Features |
+|-------|---------------|----------|
+| Priest | Discipline | Complete healing rotation with Atonement management, smart cooldowns, mouseover support |
+| Paladin | Holy | Complete healing rotation with smart cooldowns and mouseover support |
+| Paladin | Protection | Complete tank rotation with smart cooldowns and mouseover support |
+
+### 🧪 Testers Needed
+| Class | Specialization | Status | ETA |
+|-------|---------------|--------|-----|
+| Paladin | Retribution | Alpha | 2026-01-30 |
+
+### 🚧 In Development
+| Class | Specialization | Status | ETA |
+|-------|---------------|--------|-----|
+| Druid | Feral | Alpha | 2026-01-30 |
+| Rogue | Outlaw | Alpha | 2026-01-30 |
+
+### 📋 Planned
+| Class | Specialization | Priority |
+|-------|---------------|----------|
+| Priest | Shadow | MEDIUM |
+
+### ❌ Not Planned
+- PvP-specific rotations
+- Leveling rotations
+
+## Key Features
+### Smart Rotation Logic
+- **Conditional Execution**: Actions based on fight state, health levels, and buff/debuff status
+- **Movement Optimization**: Special handling for casting while moving
+- **Resource Management**: Intelligent use of class resources (Holy Power, Mana, etc.)
+- **Proc Utilization**: Automatic detection and usage of beneficial procs
+
+### Extensive Configuration
+- **Threshold Customization**: Adjustable health percentages for all abilities
+- **Targeting Options**: Flexible targeting with mouseover support
+- **Cooldown Management**: Configurable usage of major and minor cooldowns
+- **Content Adaptation**: Settings for different content types (raids, dungeons, solo)
+
+### Quality of Life
+- **Auto-targeting**: Intelligent enemy selection when none exists
+- **Interrupt Management**: Smart interrupt timing with priority systems
+- **Emergency Actions**: Automatic life-saving abilities with safety checks
+- **Utility Integration**: Seamless use of class utility spells
+
+## Getting Started
+1. **Choose your specialization** from the supported list above
+2. **Navigate to the class folder** (e.g., `Priest/Discipline/`)
+3. **Read the README.md** for detailed configuration options
+4. **Import the rotation file** into your rotation addon
+5. **Customize settings** based on your needs and content type
+
+## File Structure
+```
+├── Class/
+│   ├── Specialization/
+│   │   ├── README.md          # Detailed documentation
+│   │   └── rotation_XXX.yaml  # Rotation file
+│   └── ...
+├── reference_guide.yaml       # Technical reference
+└── README.md                  # This file
+```
+
+## Contributing
+We welcome contributions from the community! Whether it's:
+- **Bug reports** for existing rotations
+- **Feature requests** for new functionality
+- **Documentation improvements**
+
+Please ensure any contributions maintain our philosophy of real-world optimization and extensive customization.
+
+## Requirements
+- Compatible rotation addon/framework that supports YAML rotations
+- World of Warcraft retail version
+- Proper keybinds for all abilities used in rotations
+- Mouseover macros recommended for optimal functionality
+
+## Support
+For questions, bug reports, or feature requests, please check the individual specialization README files first, as they contain detailed troubleshooting information and known issues. Preferably reports are done on the github repository to make tracking easier and also public visibility of progress.
 
 ---
 
-## 🛡️ Guardian — Elune's Chosen (`FerrazGuardian.yaml` v3.6)
-
-| Feature | Description |
-|---------|-------------|
-| ⚔️ **Dual Rotation** | Wowhead (Aggressive) / Alternative (Balanced) |
-| 🛡️ **Smart Defensives** | Emergency → Dangerous → Heavy Damage tiers |
-| 💢 **Rage Management** | Ironfur stacking + Raze/Maul + Lunar Beam |
-| 🔇 **Interrupts** | Skull Bash + Incap Roar + Soothe |
-| 🌍 **Full Racials** | Defensive, offensive, CC, utility |
-
-| Setting | Default |
-|---------|:-------:|
-| Survival Instincts | 50% |
-| Frenzied Regen | 65% |
-| Ironfur Stacks | 3–5 |
-| Incarnation | 3+ enemies |
-| Rage of the Sleeper | 70% |
-
----
-
-## 🛡️ Guardian — Druid of the Claw (`FerrazGuardianClaw.yaml` v1.0)
-
-| Feature | Description |
-|---------|-------------|
-| ⚔️ **Dual Rotation** | Wowhead (Aggressive) / Method.gg (Balanced) |
-| 🛡️ **Smart Defensives** | Tiered: Emergency → Threshold → Maintenance |
-| 💢 **Rage Management** | Ironfur + Ravage procs + Maul dumps |
-| 🔇 **Interrupts** | Skull Bash + Incap Roar + Soothe |
-| 🐾 **Ravage & Berserk** | Ravage proc priority + Berserk support |
-
-| Setting | Default |
-|---------|:-------:|
-| Survival Instincts | 50% |
-| Frenzied Regen | 65% |
-| Ironfur Stacks | 3–5 |
-| Incarnation | 3+ enemies |
-| Thrash Stacks | 3 |
-
----
-
-## 🌙 Balance — Elune's Chosen (`FerrazBalance.yaml` v1.0)
-
-| Feature | Description |
-|---------|-------------|
-| ⚔️ **Dual Rotation** | Wowhead (Aggressive) / Method.gg (Balanced) |
-| 🌟 **Astral Power** | Starsurge dumps, Star-Lord, overcap prevention |
-| ☀️ **Eclipse System** | Lunar Eclipse + Incarnation burst windows |
-| 🌠 **AoE Starfall** | Configurable enemy threshold |
-| 🔇 **Interrupts** | Solar Beam + Typhoon + Incap Roar |
-|  **Heal Support** | Heart of the Wild for party healing |
-
-| Setting | Default |
-|---------|:-------:|
-| Starfall Threshold | 2+ enemies |
-| AP Dump | 80 |
-| Incarnation | 3+ enemies |
-| Solar Beam | ✅ 250ms |
-| Heart of the Wild | 80% party HP |
-| Shadowmeld | Threat 3 |
-
-**ST:** Fury of Elune → Lunar Eclipse → DoTs → Starsurge → Starfire → Wrath
-**AoE:** Fury of Elune → Lunar Eclipse → Starfall → DoTs → Starfire → Wrath
-
----
-
-## 💚 Restoration — Wildstalker (`FerrazRestoDruid.yaml` v2.5)
-
-| Feature | Description |
-|---------|-------------|
-| 💚 **Proactive Healing** | Lifebloom on tanks, HoTs, Efflorescence |
-| ⏰ **Smart Cooldowns** | Convoke, Tranquility, Nature's Swiftness |
-| 🐱 **Catweaving** | Auto Cat Form when group is healthy |
-| 🛡️ **Externals** | Ironbark & Barkskin with thresholds |
-| 💧 **Utility** | Innervate + Nature's Cure + Symbiotic |
-
-| Setting | Default |
-|---------|:-------:|
-| Ironbark | 60% |
-| Convoke | 75% / 3 |
-| Wild Growth | 80% / 3 |
-| Swiftmend | 65% |
-| Catweave | 60% group |
-| Innervate | 60% mana |
-
-**Cat ST:** Moonfire → Rip → Ferocious Bite → Rake → Shred
-**Cat AoE:** Moonfire → Thrash → Swipe → Rake → Shred
-
----
-
-*Made with 💜 by Ferraz*
+*Rotations are continuously updated based on game changes, community feedback, and real-world testing.*

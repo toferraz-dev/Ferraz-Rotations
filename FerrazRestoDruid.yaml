@@ -272,4 +272,4 @@ lists:
     - call_action_list,name=trinkets
     - call_action_list,name=moving,if=player.moving
     - call_action_list,name=active_healing
-    - call_action_list,name=catweave,if=var.can_catweave&target.valid
+    - call_action_list,name=catweave,if=var.can_catweave&target.exists&target.alive
