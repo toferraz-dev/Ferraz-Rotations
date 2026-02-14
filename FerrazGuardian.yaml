@@ -211,6 +211,8 @@ lists:
     - return,if=mounted
     - return,if=!state.rotation
     - return,if=state.blocked_inputs
+    - return,if=player.cc
+    - return,if=player.loot_nearby
 
   defensives:
     - survival_instincts,if=var.emergency_situation&!var.survival_up

@@ -1,0 +1,224 @@
+version: 1.0
+author: Ferraz
+spec: 104
+# spec: 102 (Balance), 103 (Feral), 104 (Guardian), 105 (Restoration)
+name: Simia Reference (Documentation)
+description: |
+  A comprehensive guide to Simia rotation syntax and features.
+  Use this file as a copy-paste resource for new rotations.
+
+entry: main
+
+# =================================================================================================
+#     CONFIGURATION UI
+# =================================================================================================
+config:
+  # --- UI Element: Checkbox (Boolean) ---
+  enable_feature_x:
+    label: "Enable Feature X"
+    type: checkbox
+    default: true
+
+  # --- UI Element: Slider (Number Range) ---
+  health_threshold:
+    label: "Health Pct Threshold"
+    type: slider
+    min: 0
+    max: 100
+    default: 50
+
+  # --- UI Element: Dropdown (Selection) ---
+  rotation_mode:
+    label: "Rotation Mode"
+    type: dropdown
+    options:
+      - label: "Standard"
+        value: 1
+      - label: "Aggressive"
+        value: 2
+    default: 1
+
+  # --- Advanced: Separators & Grouping ---
+  # Use comment blocks (like the header above) to separate sections visually in the YAML.
+  # Emoji icons in labels are supported but depend on the renderer.
+
+# =================================================================================================
+#     VARIABLES & LOGIC
+# =================================================================================================
+variables:
+  # --- Boolean Logic ---
+  is_dangerous: health.pct<30
+  has_resource: player.rage>=40
+  can_cast: var.is_dangerous&var.has_resource  # AND operator (&)
+  should_run: var.is_dangerous|!var.has_resource # OR operator (|) and NOT operator (!)
+
+  # --- Math & Comparisons ---
+  # Supported operators: +, -, *, /
+  # Supported comparisons: <, >, =, <=, >=, !=
+  rage_deficit: player.rage.max-player.rage
+  is_capped: var.rage_deficit<=10
+
+  # --- Player State ---
+  in_casting: player.casting
+  in_channeling: player.channeling
+  in_combat: player.combat
+  is_moving: player.moving
+  time_in_combat: player.combat.time
+
+  # --- Target State ---
+  target_health: target.health.pct
+  target_range: target.range
+  target_is_boss: target.boss
+  target_time_to_die: target.time_to_die
+  
+  # --- Environment State ---
+  aoe_active: active_enemies>=3
+  is_dungeon: instance.type=dungeon
+  is_raid: instance.type=raid
+
+  # --- Talents & Totems ---
+  has_talent_x: talent.some_talent_name
+  efflo_up: totem.efflorescence.active
+  efflo_remains: totem.efflorescence.remains
+  
+  # --- Dependencies ---
+  # You can reference other variables defined above using 'var.variable_name'
+
+# =================================================================================================
+#     ACTION LISTS (The Engine)
+# =================================================================================================
+lists:
+  # --- System Lists (Required/Recommended) ---
+  spell_queue:
+    - queue_spell   # Allows spell queueing functionality
+
+  sanity_checks:
+    - return,if=player.dead
+    - return,if=mounted
+    - return,if=!state.rotation
+    - return,if=state.blocked_inputs
+
+  # --- Basic Actions ---
+  basic_rotation:
+    - moonfire,if=target.range<=40&debuff.moonfire.down
+    - shred,if=combo_points<5
+    - rip,if=combo_points>=5
+  
+  # --- Calling Other Lists (Modular Layout) ---
+  main_rotation:
+    - call_action_list,name=basic_rotation,if=target.alive
+    - call_action_list,name=cooldowns,if=toggle.cooldowns
+
+  # --- Targeting & Cycling ---
+  multi_dotting:
+    # 'cycle=enemies' iterates through valid enemies in range
+    - moonfire,cycle=enemies,if=cycle.debuff.moonfire.down&cycle.range<=40
+  
+  healing_cycle:
+    # 'cycle=members' iterates through party/raid members
+    - rejuvenation,cycle=members,if=cycle.buff.rejuvenation.down&cycle.health.pct<90
+  
+  tank_healing:
+    # 'cycle=tanks' iterates specifically through tank role players
+    - lifebloom,cycle=tanks,if=cycle.buff.lifebloom.down
+
+  mouse_over:
+    # Explicitly target mouseover unit
+    - moonfire,target=mouseover,if=target.enemy&target.alive
+
+  # --- Interrupts & Dispels ---
+  interrupts:
+    # 'target.casting.interruptible' checks if cast can be kicked
+    - skull_bash,if=target.casting&target.casting.interruptible
+    # 'delay' adds human-like reaction time (in ms)
+    - kick,if=target.casting&target.casting.interruptible,delay=250
+
+  dispels:
+    # 'cycle.dispelable.list' checks if unit has a dispelable debuff (magic, curse, poison, etc.)
+    - remove_corruption,cycle=members,if=cycle.dispelable.list
+
+  # --- Items & Equipment ---
+  trinkets:
+    # 'trinket_1' and 'trinket_2' refer to equipped slots
+    - trinket_1,if=trinket_1.ready
+    - trinket_2,if=trinket_2.ready&buff.burst_cooldown.up
+    # 'sync' checks if item is ready AND burst conditions are met
+    - trinket_1,if=trinket_1.sync
+
+  # --- Advanced Step Options ---
+  # Add these comma-separated to any action line
+  step_options:
+    # Target specific units for this action
+    - regrowh,target=lowest
+    - regrowth,target=tanks.lowest
+    - regrowth,target=missing.motw.lowest
+    
+    # Range validation overrides
+    - skull_bash,range_check=mouseover
+    
+    # Cast conditions
+    - moonfire,mvoing=1,ignore_movement=true     # Allow casting while moving
+    - regrowh,interrupt=true                     # Allow interrupting current cast
+    - swipe,ignore_usable=true                   # Skip resource/cooldown checks
+    
+    # Timing & Delays
+    - kick,delay=150                             # Wait 150ms before casting (humanize)
+    - solar_beam,cast_remains=0.5                # Only cast during last 0.5s of target cast
+    
+    # Miscellaneous
+    - spell_name,opt_name=step_name              # Name for debug logs
+    - spell_name,hotkey=49                       # Override virtual key code
+
+  # --- Special Actions (Non-Spell) ---
+  special_actions:
+    - stop_casting,if=target.dead                # Cancel current cast
+    - target_enemy,if=!target.exists             # Target nearest enemy
+    - focus_mouseover,if=input.key_down(control) # Set focus to mouseover
+    - run_action_list,name=opener,if=combat.time<5 # Run list and Restart rotation
+    - call_action_list,name=aoe_logic            # Run list and Return to here
+    - loot_a_rang,if=loot_nearby
+    - healthstone,if=health.pct<30
+    - health_potion,if=health.pct<20
+    - auto_attack                                # Start auto attack
+
+  # --- Advanced Variables ---
+  advanced_logic:
+    # Nameplate aggregation (Very powerful for M+)
+    - sunfire,if=nameplates.debuff.sunfire.count<active_enemies
+    
+    # Previous capability
+    - starsurge,if=prev_gcd.1.starsurge          # If last cast was Starsurge
+    - wrath,if=lastcast.starsurge>5              # If Starsurge hasn't been cast in 5s
+    
+    # Config Multi-Select logic
+    # Checks if specific option VALUE is selected in a multi-select dropdown
+    - call_action_list,name=cleave,if=config.rotation_mode.has(2)
+
+  # --- Resources & Buffs/Debuffs ---
+  resource_check:
+    - ferocous_bite,if=energy>=50&combo_points=5
+    - chaotic_energy,if=energy.time_to_max<1.5 # Time until resource caps
+  
+  buff_check:
+    - tiger_fury,if=buff.tiger_fury.down
+    - regrowth,if=buff.predatory_swiftness.up # Instant cast proc
+
+  debuff_check:
+    - rake,if=debuff.rake.refreshable # Simia handles pandemic windows automatically usually
+    - rip,if=active_dot.rip<3         # Count of enemies with your Rip active
+  
+  # --- Misc / Utility ---
+  misc:
+    # Use ground-targeted spells at cursor or player location
+    - efflorescence,target=cursor,if=!totem.efflorescence.active
+    - ursols_vortex,target=cursor
+
+# =================================================================================================
+#     MAIN ENTRY POINT
+# =================================================================================================
+  main:
+    - call_action_list,name=sanity_checks
+    - call_action_list,name=spell_queue
+    - return,if=!player.combat
+    - call_action_list,name=interrupts
+    - call_action_list,name=main_rotation
