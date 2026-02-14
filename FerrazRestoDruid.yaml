@@ -1,29 +1,40 @@
-version: 2.5
+version: 2.6
 author: Ferraz
 spec: 105
 name: Restoration Druid
 description: |
   Restoration Druid - Wildstalker for Mythic+.
-  
+  Talent Tree: CkGA8cL7tpvige+kkmGM9zUPWPMmxYGzMjZb4BYmZhZx2MAAAAAAAAAAYbQzmhpZGzYMLMzMzyMwAAAAAAAYMAAEAAwsN2aWMsxYGYmZB0MAAzMAA
 entry: main
 
 config:
-  # DEFENSIVE COOLDOWNS
-  ironbark_threshold:
-    label: "Ironbark HP %"
-    type: slider
-    min: 25
-    max: 99
-    default: 60
-
+  # =================================================================================================
+  #     DEFENSIVE & SURVIVAL
+  # =================================================================================================
   barkskin_threshold:
     label: "Barkskin HP %"
     type: slider
     min: 25
     max: 99
-    default: 65
+    default: 75
 
-  # MAJOR COOLDOWNS
+  frenzied_regen_threshold:
+    label: "Frenzied Regen HP %"
+    type: slider
+    min: 25
+    max: 99
+    default: 40
+
+  ironbark_threshold:
+    label: "Ironbark HP %"
+    type: slider
+    min: 25
+    max: 99
+    default: 70
+
+  # =================================================================================================
+  #     MAJOR COOLDOWNS
+  # =================================================================================================
   convoke_threshold:
     label: "Convoke HP %"
     type: slider
@@ -32,7 +43,7 @@ config:
     default: 75
 
   convoke_members:
-    label: "Convoke - Members"
+    label: "Convoke - Min Members"
     type: slider
     min: 1
     max: 5
@@ -46,7 +57,7 @@ config:
     default: 70
 
   tranquility_members:
-    label: "Tranquility - Members"
+    label: "Tranquility - Min Members"
     type: slider
     min: 1
     max: 5
@@ -59,34 +70,44 @@ config:
     max: 99
     default: 60
 
-  # HEALING THRESHOLDS
+  # =================================================================================================
+  #     HEALING - AOE & GROUP
+  # =================================================================================================
+  use_mouseover:
+    label: "Enable Mouseover Healing"
+    type: checkbox
+    default: true
+
   wild_growth_threshold:
     label: "Wild Growth HP %"
     type: slider
     min: 25
     max: 99
-    default: 80
+    default: 85
 
   wild_growth_members:
-    label: "Wild Growth - Members"
+    label: "Wild Growth - Min Members"
     type: slider
     min: 1
     max: 5
     default: 3
 
+  # =================================================================================================
+  #     HEALING - SINGLE TARGET
+  # =================================================================================================
   swiftmend_threshold:
     label: "Swiftmend HP %"
     type: slider
     min: 25
     max: 99
-    default: 65
+    default: 75
 
   regrowth_threshold:
     label: "Regrowth HP %"
     type: slider
     min: 25
     max: 99
-    default: 75
+    default: 85
 
   rejuvenation_threshold:
     label: "Rejuvenation HP %"
@@ -95,29 +116,33 @@ config:
     max: 99
     default: 95
 
-  # CATWEAVING
+  # =================================================================================================
+  #     DAMAGE & CATWEAVING
+  # =================================================================================================
   catweave_group_hp:
-    label: "Catweave - Group HP %"
+    label: "Enter Cat - Group HP %"
     type: slider
     min: 25
     max: 99
-    default: 60
+    default: 90
 
   catweave_injured_max:
-    label: "Catweave - Max Injured"
+    label: "Exit Cat - Max Injured"
     type: slider
     min: 0
     max: 5
-    default: 2
+    default: 1
 
   aoe_threshold:
-    label: "AoE - Enemies"
+    label: "AoE - Min Enemies"
     type: slider
     min: 2
     max: 5
     default: 3
 
-  # UTILITY
+  # =================================================================================================
+  #     UTILITY & ITEMS
+  # =================================================================================================
   innervate_threshold:
     label: "Innervate Mana %"
     type: slider
@@ -125,7 +150,6 @@ config:
     max: 99
     default: 60
 
-  # TRINKETS
   living_silk_members:
     label: "Living Silk - Members"
     type: slider
@@ -145,6 +169,7 @@ variables:
   can_catweave: var.group_healthy&player.combat
   trinket1_living_silk: trinket_1.id=242393
   trinket2_living_silk: trinket_2.id=242393
+  mo_friendly_valid: mouseover.exists&mouseover.alive&mouseover.friendly&mouseover.range>0&mouseover.range<=40
 
 lists:
   spell_queue:
@@ -155,9 +180,11 @@ lists:
     - return,if=mounted
     - return,if=!state.rotation
     - return,if=state.blocked_inputs
+    - return,if=player.cc
+    - return,if=player.loot_nearby
   
   interrupts:
-    - incapacitating_roar,if=active_enemies>=config.aoe_threshold&target.casting.interruptible
+    - incapacitating_roar,if=target.casting.interruptible
     - soothe,if=target.purgeable.enrage    
   
   out_of_combat:
@@ -222,6 +249,12 @@ lists:
     - lifebloom,cycle=tanks,if=player.combat&cycle.buff.lifebloom.down&cycle.range>=0&cycle.range<=40
     - rejuvenation,cycle=members,if=cycle.buff.rejuvenation.down&cycle.health.pct<95&cycle.range>=0&cycle.range<=40
 
+  mouseover_friendly:
+    - swiftmend.mouseover,if=config.use_mouseover&mouseover.health.pct<config.swiftmend_threshold
+    - regrowth.mouseover,if=config.use_mouseover&mouseover.health.pct<100
+    - rejuvenation.mouseover,if=config.use_mouseover&mouseover.buff.rejuvenation.remains<1.5&mouseover.health.pct<100
+    - natures_cure.mouseover,if=config.use_mouseover&mouseover.dispelable.list    
+
   main:
     - call_action_list,name=sanity_checks
     - call_action_list,name=spell_queue
@@ -233,6 +266,7 @@ lists:
     - call_action_list,name=interrupts
     - call_action_list,name=racials
     - call_action_list,name=defensives
+    - call_action_list,name=mouseover_friendly,if=config.use_mouseover&var.mo_friendly_valid&!player.casting&!player.channeling
     - call_action_list,name=utility
     - call_action_list,name=cooldowns
     - call_action_list,name=trinkets
