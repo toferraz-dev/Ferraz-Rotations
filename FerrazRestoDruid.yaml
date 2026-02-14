@@ -215,7 +215,7 @@ lists:
   active_healing:
     - lifebloom,cycle=tanks,if=player.combat&cycle.buff.lifebloom.down&cycle.range>=0&cycle.range<=40
     - wild_growth,if=group.count(cycle.health.pct<config.wild_growth_threshold)>=config.wild_growth_members
-    - swiftmend,cycle=members,if=cycle.health.pct<config.swiftmend_threshold&cycle.range>=0&cycle.range<=40
+    - swiftmend,cycle=members,if=cycle.health.pct<config.swiftmend_threshold&(cycle.buff.remains(rejuvenation)>0|cycle.buff.remains(regrowth)>0|cycle.buff.remains(wild_growth)>0)&cycle.range>=0&cycle.range<=40
     - regrowth,cycle=members,if=cycle.health.pct<config.regrowth_threshold&cycle.range>=0&cycle.range<=40
     - rejuvenation,cycle=members,if=cycle.buff.rejuvenation.remains<1.5&cycle.health.pct<config.rejuvenation_threshold&cycle.range>=0&cycle.range<=40
     - efflorescence,if=buff.efflorescence.remains<1
@@ -250,10 +250,10 @@ lists:
     - rejuvenation,cycle=members,if=cycle.buff.rejuvenation.down&cycle.health.pct<95&cycle.range>=0&cycle.range<=40
 
   mouseover_friendly:
-    - swiftmend.mouseover,if=config.use_mouseover
-    - rejuvenation.mouseover,if=config.use_mouseover&mouseover.buff.rejuvenation.remains<1.5
-    - natures_cure.mouseover,if=config.use_mouseover&mouseover.dispelable.list
-    - regrowth.mouseover,if=config.use_mouseover
+    - natures_cure.mouseover,if=config.use_mouseover&mouseover.dispelable.list&mouseover.range>=0&mouseover.range<=40
+    - swiftmend.mouseover,if=config.use_mouseover&mouseover.health.pct<config.swiftmend_threshold&(mouseover.buff.remains(rejuvenation)>0|mouseover.buff.remains(regrowth)>0|mouseover.buff.remains(wild_growth)>0)&mouseover.range>=0&mouseover.range<=40
+    - rejuvenation.mouseover,if=config.use_mouseover&mouseover.buff.remains(rejuvenation)<1.5&mouseover.range>=0&mouseover.range<=40
+    - regrowth.mouseover,if=config.use_mouseover&mouseover.range>=0&mouseover.range<=40
 
   main:
     - call_action_list,name=sanity_checks
@@ -272,4 +272,4 @@ lists:
     - call_action_list,name=trinkets
     - call_action_list,name=moving,if=player.moving
     - call_action_list,name=active_healing
-    - call_action_list,name=catweave,if=var.can_catweave&target.exists&target.alive
+    - call_action_list,name=catweave,if=var.can_catweave&target.exists&target.alive&!target.friendly 
