@@ -261,8 +261,7 @@ lists:
     - call_action_list,name=out_of_combat,if=!player.combat
     - return,if=!player.combat
     - return,if=player.channeling
-    - call_action_list,name=mouseover_friendly,if=config.use_mouseover&var.mo_friendly_valid&!player.casting&!player.channeling
-    - call_action_list,name=auto_target
+        - call_action_list,name=auto_target
     - call_action_list,name=auto_heal
     - call_action_list,name=interrupts
     - call_action_list,name=racials
@@ -272,4 +271,5 @@ lists:
     - call_action_list,name=trinkets
     - call_action_list,name=moving,if=player.moving
     - call_action_list,name=active_healing
+    - call_action_list,name=mouseover_friendly,if=config.use_mouseover&var.mo_friendly_valid&!player.casting&!player.channeling
     - call_action_list,name=catweave,if=var.can_catweave&target.exists&target.alive&!target.friendly 
