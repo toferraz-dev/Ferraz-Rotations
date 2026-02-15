@@ -250,8 +250,7 @@ lists:
   mouseover_friendly:
     - natures_cure.mouseover,if=config.use_mouseover&mouseover.dispelable.list&mouseover.range>=0&mouseover.range<=40
     - swiftmend.mouseover,if=config.use_mouseover&mouseover.health.pct<config.swiftmend_threshold&(mouseover.buff.remains(rejuvenation)>0|mouseover.buff.remains(regrowth)>0|mouseover.buff.remains(wild_growth)>0)&mouseover.range>=0&mouseover.range<=40
-    - rejuvenation.mouseover,if=config.use_mouseover&mouseover.buff.remains(rejuvenation)=0&!prev_gcd.1.rejuvenation&mouseover.range>=0&mouseover.range<=40&mouseover.health.pct<config.rejuvenation_threshold
-    - regrowth.mouseover,if=config.use_mouseover&mouseover.range>=0&mouseover.range<=40&mouseover.health.pct<config.regrowth_threshold
+    - regrowth.mouseover,if=config.use_mouseover&mouseover.range>=0&mouseover.range<=40
 
   main:
     - call_action_list,name=sanity_checks
