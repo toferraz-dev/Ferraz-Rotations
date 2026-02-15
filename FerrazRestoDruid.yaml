@@ -16,7 +16,7 @@ config:
     type: slider
     min: 25
     max: 99
-    default: 75
+    default: 55
 
   frenzied_regen_threshold:
     label: "Frenzied Regen HP %"
@@ -30,7 +30,7 @@ config:
     type: slider
     min: 25
     max: 99
-    default: 70
+    default: 55
 
   # =================================================================================================
   #     MAJOR COOLDOWNS
@@ -40,7 +40,7 @@ config:
     type: slider
     min: 25
     max: 99
-    default: 75
+    default: 65
 
   convoke_members:
     label: "Convoke - Min Members"
@@ -54,7 +54,7 @@ config:
     type: slider
     min: 25
     max: 99
-    default: 70
+    default: 65
 
   tranquility_members:
     label: "Tranquility - Min Members"
@@ -68,7 +68,7 @@ config:
     type: slider
     min: 25
     max: 99
-    default: 60
+    default: 45
 
   # =================================================================================================
   #     HEALING - AOE & GROUP
@@ -100,21 +100,21 @@ config:
     type: slider
     min: 25
     max: 99
-    default: 75
+    default: 70
 
   regrowth_threshold:
     label: "Regrowth HP %"
     type: slider
     min: 25
     max: 99
-    default: 85
+    default: 80
 
   rejuvenation_threshold:
     label: "Rejuvenation HP %"
     type: slider
     min: 25
     max: 99
-    default: 95
+    default: 90
 
   # =================================================================================================
   #     DAMAGE & CATWEAVING
@@ -124,14 +124,14 @@ config:
     type: slider
     min: 25
     max: 99
-    default: 90
+    default: 80
 
   catweave_injured_max:
     label: "Exit Cat - Max Injured"
     type: slider
     min: 0
     max: 5
-    default: 1
+    default: 2
 
   aoe_threshold:
     label: "AoE - Min Enemies"
@@ -216,7 +216,7 @@ lists:
   active_healing:
     - lifebloom,cycle=tanks,if=player.combat&cycle.buff.lifebloom.down&cycle.range>=0&cycle.range<=40
     - wild_growth,if=group.count(cycle.health.pct<config.wild_growth_threshold)>=config.wild_growth_members
-    - swiftmend,cycle=members,if=cycle.health.pct<config.swiftmend_threshold&(cycle.buff.remains(rejuvenation)>0|cycle.buff.remains(regrowth)>0|cycle.buff.remains(wild_growth)>0)&cycle.range>=0&cycle.range<=40
+    - swiftmend,cycle=members,if=cycle.health.pct<config.swiftmend_threshold&cycle.range>=0&cycle.range<=40
     - regrowth,cycle=members,if=cycle.health.pct<config.regrowth_threshold&cycle.range>=0&cycle.range<=40
     - rejuvenation,cycle=members,if=cycle.buff.remains(rejuvenation)<1.5&cycle.health.pct<config.rejuvenation_threshold&cycle.range>=0&cycle.range<=40
 
@@ -260,7 +260,7 @@ lists:
     - return,if=player.channeling
     - call_action_list,name=auto_target
     - call_action_list,name=auto_heal
-    - call_action_list,name=mouseover_friendly,if=config.use_mouseover&var.mo_friendly_valid&!player.casting&!player.channeling
+    #- call_action_list,name=mouseover_friendly,if=config.use_mouseover&var.mo_friendly_valid&!player.casting&!player.channeling
     - call_action_list,name=interrupts
     - call_action_list,name=racials
     - call_action_list,name=defensives
