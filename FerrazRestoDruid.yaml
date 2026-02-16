@@ -266,7 +266,7 @@ lists:
     - call_action_list,name=utility
     - call_action_list,name=cooldowns
     - call_action_list,name=trinkets
-    - call_action_list,name=moving,if=player.moving
     - call_action_list,name=catweave,if=var.can_catweave&target.exists&target.alive&!target.friendly
+    - call_action_list,name=moving,if=player.moving
     - call_action_list,name=active_healing
     
