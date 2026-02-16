@@ -249,7 +249,7 @@ lists:
   mouseover_friendly:
     - natures_cure.mouseover,if=config.use_mouseover&mouseover.dispelable.list&mouseover.range>=0&mouseover.range<=40
     - swiftmend.mouseover,if=config.use_mouseover&mouseover.health.pct<config.swiftmend_threshold&mouseover.range>=0&mouseover.range<=40
-    - rejuvenation.mouseover,if=config.use_mouseover&mouseover.health.pct<config.rejuvenation_threshold&mouseover.buff.rejuvenation.remains<1.5&mouseover.range>=0&mouseover.range<=40
+    - rejuvenation.mouseover,if=config.use_mouseover&mouseover.health.pct<config.rejuvenation_threshold&mouseover.buff.remains(rejuvenation)<1.5&mouseover.range>=0&mouseover.range<=40
     - regrowth.mouseover,if=config.use_mouseover&mouseover.health.pct<config.regrowth_threshold&mouseover.range>=0&mouseover.range<=40
 
   main:
