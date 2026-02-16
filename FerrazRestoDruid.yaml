@@ -164,8 +164,14 @@ config:
     max: 99
     default: 70
 
+  use_dispell:
+    label: "Enable Dispell"
+    type: checkbox
+    default: true
+
 variables:
-  can_catweave: group.count(cycle.health.pct<=config.catweave_group_hp)<config.catweave_injured_max&player.combat
+  group_healthy: group.count(cycle.health.pct<config.catweave_group_hp)<config.catweave_injured_max
+  can_catweave: var.group_healthy&player.combat
   trinket1_living_silk: trinket_1.id=242393
   trinket2_living_silk: trinket_2.id=242393
   mo_friendly_valid: mouseover.exists&mouseover.alive&mouseover.friendly&mouseover.range>0&mouseover.range<=40
@@ -194,7 +200,7 @@ lists:
     
     
   defensives:
-    - natures_cure,cycle=members,if=cycle.dispelable.list&cycle.range>=0&cycle.range<=40
+    - natures_cure,cycle=members,if=config.use_dispell&cycle.dispelable.list&cycle.range>=0&cycle.range<=40
     - ironbark,cycle=members,if=cycle.health.pct<config.ironbark_threshold&cycle.buff.ironbark.down&cycle.range>=0&cycle.range<=40
     - barkskin,if=health.pct<config.barkskin_threshold
 
@@ -244,13 +250,12 @@ lists:
 
   moving:
     - lifebloom,cycle=tanks,if=player.combat&cycle.buff.lifebloom.down&cycle.range>=0&cycle.range<=40
-    - rejuvenation,cycle=members,if=cycle.buff.rejuvenation.down&cycle.health.pct<config.rejuvenation_threshold&cycle.range>=0&cycle.range<=40
+    - rejuvenation,cycle=members,if=cycle.buff.rejuvenation.down&cycle.health.pct<95&cycle.range>=0&cycle.range<=40
 
   mouseover_friendly:
-    - natures_cure.mouseover,if=config.use_mouseover&mouseover.dispelable.list&mouseover.range>=0&mouseover.range<=40
+    - natures_cure.mouseover,if=config.use_dispell&config.use_mouseover&mouseover.dispelable.list&mouseover.range>=0&mouseover.range<=40
     - swiftmend.mouseover,if=config.use_mouseover&mouseover.health.pct<config.swiftmend_threshold&mouseover.range>=0&mouseover.range<=40
-    - rejuvenation.mouseover,if=config.use_mouseover&mouseover.health.pct<config.rejuvenation_threshold&mouseover.buff.remains(rejuvenation)<1.5&mouseover.range>=0&mouseover.range<=40
-    - regrowth.mouseover,if=config.use_mouseover&mouseover.health.pct<config.regrowth_threshold&mouseover.range>=0&mouseover.range<=40
+    - regrowth.mouseover,if=config.use_mouseover&mouseover.range>=0&mouseover.range<=40
 
   main:
     - call_action_list,name=sanity_checks
@@ -258,8 +263,6 @@ lists:
     - call_action_list,name=out_of_combat,if=!player.combat
     - return,if=!player.combat
     - return,if=player.channeling
-    - call_action_list,name=auto_target
-    - call_action_list,name=auto_heal
     - call_action_list,name=mouseover_friendly,if=config.use_mouseover&var.mo_friendly_valid&!player.casting&!player.channeling
     - call_action_list,name=interrupts
     - call_action_list,name=racials
@@ -267,7 +270,6 @@ lists:
     - call_action_list,name=utility
     - call_action_list,name=cooldowns
     - call_action_list,name=trinkets
-    - call_action_list,name=catweave,if=var.can_catweave&target.exists&target.alive&!target.friendly
     - call_action_list,name=moving,if=player.moving
     - call_action_list,name=active_healing
-    
+    - call_action_list,name=catweave,if=var.can_catweave&target.exists&target.alive&!target.friendly 
