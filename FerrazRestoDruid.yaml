@@ -165,8 +165,7 @@ config:
     default: 70
 
 variables:
-  group_healthy: group.count(cycle.health.pct<config.catweave_group_hp)<config.catweave_injured_max
-  can_catweave: var.group_healthy&player.combat
+  can_catweave: group.count(cycle.health.pct<=config.catweave_group_hp)<config.catweave_injured_max&player.combat
   trinket1_living_silk: trinket_1.id=242393
   trinket2_living_silk: trinket_2.id=242393
   mo_friendly_valid: mouseover.exists&mouseover.alive&mouseover.friendly&mouseover.range>0&mouseover.range<=40
