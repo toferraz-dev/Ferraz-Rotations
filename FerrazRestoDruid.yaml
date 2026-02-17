@@ -203,6 +203,8 @@ lists:
     - natures_cure,cycle=members,if=config.use_dispell&cycle.dispelable.list&cycle.range>=0&cycle.range<=40
     - ironbark,cycle=members,if=cycle.health.pct<config.ironbark_threshold&cycle.buff.ironbark.down&cycle.range>=0&cycle.range<=40
     - barkskin,if=health.pct<config.barkskin_threshold
+    - bear_form,if=health.pct<config.frenzied_regen_threshold&!buff.bear_form.up&cooldown.frenzied_regeneration.ready
+    - frenzied_regeneration,if=health.pct<config.frenzied_regen_threshold&buff.bear_form.up
 
   racials:
     - shadowmeld,if=target.threat>=3&!player.casting
@@ -219,6 +221,8 @@ lists:
     - trinket_2,if=!var.trinket2_living_silk&trinket_2.ready
 
   active_healing:
+    # Nature's Swiftness follow-up: instant Regrowth on lowest
+    - regrowth,cycle=members,if=buff.natures_swiftness.up&cycle.health.pct<config.regrowth_threshold&cycle.range>=0&cycle.range<=40
     - lifebloom,cycle=tanks,if=player.combat&cycle.buff.lifebloom.down&cycle.range>=0&cycle.range<=40&cycle.health.pct<95
     - rejuvenation,cycle=members,if=cycle.buff.rejuvenation.remains<1.5&cycle.health.pct<config.rejuvenation_threshold&cycle.range>=0&cycle.range<=40    
     - swiftmend,cycle=members,if=cycle.health.pct<config.swiftmend_threshold&cycle.range>=0&cycle.range<=40
@@ -242,6 +246,9 @@ lists:
     - shred,if=target.range<=8
 
   catweave:
+    # Emergency exit: leave cat if group needs healing
+    - cancel_form,if=!var.group_healthy&buff.cat_form.up
+    - return,if=!var.group_healthy
     - moonfire,if=debuff.moonfire.remains<2&debuff.moonfire.refreshable&!buff.cat_form.up
     - cat_form,if=!buff.cat_form.up&target.range<=8
     - return,if=!buff.cat_form.up
@@ -266,13 +273,13 @@ lists:
     - call_action_list,name=auto_heal
     - call_action_list,name=out_of_combat,if=!player.combat
     - return,if=!player.combat
-    - call_action_list,name=mouseover_friendly,if=config.use_mouseover&var.mo_friendly_valid&!player.casting&!player.channeling
+    - call_action_list,name=interrupts
     - call_action_list,name=racials
     - call_action_list,name=defensives
     - call_action_list,name=utility
     - call_action_list,name=cooldowns
     - call_action_list,name=trinkets
-    - call_action_list,name=interrupts
-    - call_action_list,name=catweave,if=var.can_catweave&target.exists&target.alive&!target.friendly
+    - call_action_list,name=mouseover_friendly,if=config.use_mouseover&var.mo_friendly_valid&!player.casting&!player.channeling
     - call_action_list,name=moving,if=player.moving
     - call_action_list,name=active_healing
+    - call_action_list,name=catweave,if=var.can_catweave&target.exists&target.alive&!target.friendly
