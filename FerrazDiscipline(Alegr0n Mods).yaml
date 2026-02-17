@@ -1,0 +1,309 @@
+version: 1.6
+author: Alegr0n & Ferraz
+spec: 256
+name: Discipline
+description: |
+  Discipline Priest - Oracle for Mythic+.
+  
+entry: main
+
+config:
+  # =================================================================================================
+  #     DEFENSIVE & SURVIVAL
+  # =================================================================================================
+  pain_suppression_threshold:
+    label: "Pain Suppression HP %"
+    type: slider
+    min: 10
+    max: 60
+    default: 40
+
+  pain_suppression_usage:
+    label: "Pain Suppression Targets"
+    type: dropdown
+    options:
+      - label: "Tank Only"
+        value: 1
+      - label: "Tank & Healer"
+        value: 2
+      - label: "Everyone"
+        value: 3
+      - label: "Disabled"
+        value: 0
+    default: 2
+
+  desperate_prayer_threshold:
+    label: "Desperate Prayer HP %"
+    type: slider
+    min: 10
+    max: 70
+    default: 35
+
+  power_word_barrier_members:
+    label: "PW:Barrier - members < 60%"
+    type: slider
+    min: 2
+    max: 5
+    default: 3
+
+  auto_fade:
+    label: "Auto Fade (Aggro)"
+    type: checkbox
+    default: true
+
+  # =================================================================================================
+  #     MAJOR COOLDOWNS
+  # =================================================================================================
+  evangelism_members:
+    label: "Evangelism - members < 80%"
+    type: slider
+    min: 1
+    max: 5
+    default: 3
+
+  ultimate_penitence_members:
+    label: "Ult. Penitence - members < 60%"
+    type: slider
+    min: 1
+    max: 5
+    default: 3
+
+  shadowfiend_usage:
+    label: "Shadowfiend Usage"
+    type: dropdown
+    options:
+      - label: "On Cooldown"
+        value: 1
+      - label: "2+ members < 80%"
+        value: 2
+      - label: "3+ members < 70%"
+        value: 3
+      - label: "Manual Only"
+        value: 0
+    default: 2
+
+  # =================================================================================================
+  #     HEALING
+  # =================================================================================================
+  penance_healing_threshold:
+    label: "Penance Healing HP %"
+    type: slider
+    min: 40
+    max: 90
+    default: 75
+
+  flash_heal_threshold:
+    label: "Flash Heal HP %"
+    type: slider
+    min: 30
+    max: 80
+    default: 65
+
+  pws_hp_threshold:
+    label: "PW:Shield HP threshold %"
+    type: slider
+    min: 50
+    max: 90
+    default: 80
+
+  radiance_members:
+    label: "PWR - Members < 85%"
+    type: slider
+    min: 2
+    max: 5
+    default: 3
+
+  weal_and_woe_min_stacks:
+    label: "Min WaW stacks for PW:S"
+    type: slider
+    min: 0
+    max: 10
+    default: 5
+
+  # =================================================================================================
+  #     OFFENSIVE & UTILITY
+  # =================================================================================================
+  use_dispell:
+    label: "Enable Auto Dispel"
+    type: checkbox
+    default: true
+
+  mouseover_enabled:
+    label: "Enable Mouseover"
+    type: checkbox
+    default: true
+
+  angelic_feather_usage:
+    label: "Angelic Feather Usage"
+    type: dropdown
+    options:
+      - label: "Disabled"
+        value: 0
+      - label: "Only in combat"
+        value: 1
+      - label: "Only out of combat"
+        value: 2
+      - label: "Always when moving"
+        value: 3
+    default: 2
+
+  trinket_usage:
+    label: "Trinket Usage"
+    type: dropdown
+    options:
+      - label: "On Cooldown"
+        value: 1
+      - label: "With Evangelism"
+        value: 2
+      - label: "Low Group HP"
+        value: 3
+      - label: "Manual Only"
+        value: 0
+    default: 1
+    
+  living_silk_hp:
+    label: "Living Silk HP %"
+    type: slider
+    min: 30
+    max: 80
+    default: 70
+
+variables:
+  power_of_dark_side: buff.power_of_the_dark_side.up
+  evangelism_window: buff.evangelism.up
+  surge_of_light_active: buff.surge_of_light.up
+
+  weal_and_woe_stacks: buff.weal_and_woe.stack
+  weal_and_woe_ready: var.weal_and_woe_stacks>=config.weal_and_woe_min_stacks
+
+  hold_penance: cooldown.penance.charges<2&cooldown.penance.full_recharge_time>4&group.lowest.health.pct>=config.penance_healing_threshold
+  penance_ready: cooldown.penance.charges>=1&!var.hold_penance
+
+  mo_friendly_valid: mouseover.exists&mouseover.alive&mouseover.friendly&mouseover.range>0&mouseover.range<=40
+  use_feather: moving.time>=2&buff.angelic_feather.down&((config.angelic_feather_usage=1&player.combat)|(config.angelic_feather_usage=2&!player.combat)|(config.angelic_feather_usage=3))
+
+  trinket1_living_silk: trinket_1.id=242393
+  trinket2_living_silk: trinket_2.id=242393
+  has_living_silk: var.trinket1_living_silk|var.trinket2_living_silk
+
+lists:
+  spell_queue:
+    - queue_spell
+
+  sanity_checks:
+    - return,if=player.dead
+    - return,if=mounted
+    - return,if=!state.rotation
+    - return,if=player.loot_nearby
+
+  interrupts:
+    - psychic_scream,if=interrupts.8y.count>=2|interrupts.8y.stun.count>=2|nameplates.casting.count>=3
+
+  out_of_combat:
+    - power_word_fortitude,if=group.count(cycle.buff.power_word_fortitude.down.any&cycle.range>0&cycle.range<=40)>0
+    - penance,cycle=members,if=cycle.health.pct<90&!player.combat&var.penance_ready&cycle.range>0&cycle.range<=40
+    - flash_heal,cycle=members,if=cycle.health.pct<80&!player.combat&var.surge_of_light_active&cycle.range>0&cycle.range<=40
+    - flash_heal,cycle=members,if=cycle.health.pct<80&!player.combat&cycle.range>0&cycle.range<=40
+
+  defensives:
+    # Pain Suppression
+    - pain_suppression,cycle=tanks,if=config.pain_suppression_usage>=1&cycle.health.pct<config.pain_suppression_threshold&cycle.buff.pain_suppression.down&cycle.range>0&cycle.range<=40
+    - pain_suppression,cycle=healers,if=config.pain_suppression_usage>=2&cycle.health.pct<config.pain_suppression_threshold&cycle.buff.pain_suppression.down&cycle.range>0&cycle.range<=40
+    - pain_suppression,cycle=members,if=config.pain_suppression_usage=3&cycle.health.pct<config.pain_suppression_threshold&cycle.buff.pain_suppression.down&cycle.range>0&cycle.range<=40
+    # Desperate Prayer & Self
+    - desperate_prayer,if=health.pct<config.desperate_prayer_threshold
+    - desperate_prayer,if=health.pct<70&(player.dispelable.list|player.stunned|player.rooted)
+    - fade,if=target.threat>=3|config.auto_fade
+
+  dispel:
+    - purify,cycle=members,if=config.use_dispell&cycle.dispelable.list&cycle.range>0&cycle.range<=40
+
+  cooldowns:
+    - evangelism,if=group.count(cycle.health.pct<80)>=config.evangelism_members
+    - shadowfiend,if=config.shadowfiend_usage!=0&((config.shadowfiend_usage=1)|(config.shadowfiend_usage=2&group.count(cycle.health.pct<80)>=2)|(config.shadowfiend_usage=3&group.count(cycle.health.pct<70)>=3))
+    - power_word_barrier,if=group.count(cycle.health.pct<60)>=config.power_word_barrier_members
+    - ultimate_penitence,if=group.count(cycle.health.pct<60)>=config.ultimate_penitence_members&group.count(cycle.buff.atonement.up)>=4
+
+  high_priority_healing:
+    - power_word_shield,cycle=members,if=cycle.health.pct<55&cycle.buff.power_word_shield.down
+    - penance,cycle=members,interrupt=true,if=cycle.health.pct<50&var.penance_ready
+    - flash_heal,cycle=members,interrupt=true,if=cycle.health.pct<55&var.surge_of_light_active
+    - penance,cycle=members,if=cycle.health.pct<55&var.penance_ready&cycle.range>0&cycle.range<=40
+    - flash_heal,cycle=members,if=cycle.health.pct<config.flash_heal_threshold&var.surge_of_light_active&cycle.range>0&cycle.range<=40
+    - power_word_shield,cycle=members,if=cycle.health.pct<40&!var.penance_ready&!var.surge_of_light_active&cycle.buff.power_word_shield.down&cycle.range>0&cycle.range<=40
+    - flash_heal,cycle=members,if=cycle.health.pct<45&cycle.range>0&cycle.range<=40
+
+  evangelism_burst:
+    - power_word_radiance,if=var.evangelism_window&group.count(cycle.health.pct<85)>=2
+    - power_word_radiance,if=var.evangelism_window&cooldown.power_word_radiance.charges>=1&group.count(cycle.health.pct<75)>=2
+    - penance,if=var.evangelism_window&var.penance_ready
+    - mind_blast,if=var.evangelism_window
+
+  penance_shield_combo:
+    - power_word_shield,cycle=members,if=var.weal_and_woe_ready&cycle.health.pct<config.pws_hp_threshold&cycle.buff.atonement.up&cycle.buff.power_word_shield.down&cycle.range>0&cycle.range<=40
+    - power_word_shield,target=lowest,if=var.weal_and_woe_ready&group.lowest.health.pct<config.pws_hp_threshold&group.lowest.buff.remains(power_word_shield)=0&group.lowest.range>0&group.lowest.range<=40
+
+  active_healing:
+    - power_word_radiance,if=cooldown.power_word_radiance.charges>=2&group.count(cycle.health.pct<85&cycle.range>0&cycle.range<=40)>=config.radiance_members
+    - power_word_radiance,if=!cooldown.evangelism.ready&group.count(cycle.health.pct<85&cycle.range>0&cycle.range<=40)>=config.radiance_members
+    - penance,cycle=members,if=cycle.buff.atonement.down&var.penance_ready&cycle.range>0&cycle.range<=40
+    - power_word_shield,cycle=tanks,if=cycle.buff.power_word_shield.down&cycle.buff.atonement.down&cycle.range>0&cycle.range<=40
+    - power_word_shield,cycle=members,if=cycle.buff.power_word_shield.down&cycle.buff.atonement.down&cycle.health.pct<95&cycle.range>0&cycle.range<=40
+    - flash_heal,cycle=members,if=cycle.buff.atonement.down&var.surge_of_light_active&cycle.range>0&cycle.range<=40
+    - plea,cycle=members,if=cycle.buff.atonement.down&cycle.health.pct<90&cycle.range>0&cycle.range<=40
+
+  auto_heal:
+    - call_action_list,name=high_priority_healing
+    - call_action_list,name=evangelism_burst,if=var.evangelism_window
+    - call_action_list,name=penance_shield_combo,if=var.weal_and_woe_ready
+    - call_action_list,name=active_healing
+
+  offensive:
+    - shadow_word_pain,if=debuff.shadow_word_pain.remains<3
+    - mind_blast
+    - penance,if=var.power_of_dark_side&var.penance_ready
+    - penance,if=cooldown.penance.charges>=2
+    - shadow_word_death,if=target.health.pct<=20
+    - smite
+
+  trinkets:
+    - trinket_1,if=var.trinket1_living_silk&trinket_1.ready&config.trinket_usage!=0&((config.trinket_usage=1)|(config.trinket_usage=2&var.evangelism_window)|(config.trinket_usage=3&group.count(cycle.health.pct<config.living_silk_hp)>=3))
+    - trinket_2,if=var.trinket2_living_silk&trinket_2.ready&config.trinket_usage!=0&((config.trinket_usage=1)|(config.trinket_usage=2&var.evangelism_window)|(config.trinket_usage=3&group.count(cycle.health.pct<config.living_silk_hp)>=3))
+    - trinket_1,if=!var.trinket1_living_silk&trinket_1.ready&config.trinket_usage!=0
+    - trinket_2,if=!var.trinket2_living_silk&trinket_2.ready&config.trinket_usage!=0
+
+  moving:
+    - penance,cycle=members,if=cycle.health.pct<config.penance_healing_threshold&var.penance_ready&cycle.range>0&cycle.range<=40
+    - power_word_shield,cycle=members,if=var.weal_and_woe_ready&cycle.health.pct<config.pws_hp_threshold&cycle.buff.power_word_shield.down&cycle.range>0&cycle.range<=40
+    - power_word_shield,cycle=tanks,if=cycle.buff.power_word_shield.down&cycle.buff.atonement.down&cycle.range>0&cycle.range<=40
+    - power_word_shield,cycle=members,if=cycle.buff.power_word_shield.down&cycle.buff.atonement.down&cycle.health.pct<95&cycle.range>0&cycle.range<=40
+    - power_word_shield,target=lowest,if=group.lowest.buff.remains(power_word_shield)=0&group.lowest.range>0&group.lowest.range<=40
+    - flash_heal,cycle=members,if=var.surge_of_light_active&cycle.health.pct<config.pws_hp_threshold&cycle.range>0&cycle.range<=40
+    - plea,cycle=members,if=cycle.buff.atonement.down&cycle.health.pct<90&cycle.range>0&cycle.range<=40
+    - shadow_word_pain,if=debuff.shadow_word_pain.remains<5
+
+  mouseover_friendly:
+    - pain_suppression.mouseover,if=mouseover.health.pct<config.pain_suppression_threshold&mouseover.buff.remains(pain_suppression)=0
+    - penance.mouseover,if=mouseover.health.pct<config.penance_healing_threshold&var.penance_ready
+    - flash_heal.mouseover,if=mouseover.health.pct<config.flash_heal_threshold
+    - purify.mouseover,if=mouseover.dispelable.list
+
+  main:
+    - return,if=player.channeling
+    - call_action_list,name=sanity_checks
+    - call_action_list,name=spell_queue
+    - call_action_list,name=auto_target
+    - call_action_list,name=out_of_combat,if=!player.combat
+    - return,if=!player.combat
+    - return,if=buff.ultimate_penitence.up
+    - call_action_list,name=interrupts
+    - call_action_list,name=defensives
+    - return,if=player.cc
+    - call_action_list,name=dispel
+    - call_action_list,name=mouseover_friendly,if=config.mouseover_enabled&var.mo_friendly_valid&!player.casting&!player.channeling
+    - call_action_list,name=cooldowns
+    - call_action_list,name=trinkets
+    - call_action_list,name=auto_heal
+    - angelic_feather,if=var.use_feather
+    - call_action_list,name=moving,if=player.moving
+    - call_action_list,name=offensive,if=target.valid
