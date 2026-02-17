@@ -259,18 +259,18 @@ lists:
     - regrowth.mouseover,if=config.use_mouseover&mouseover.range>=0&mouseover.range<=40
 
   main:
+    - return,if=player.channeling
     - call_action_list,name=sanity_checks
+    - call_action_list,name=spell_queue
     - call_action_list,name=out_of_combat,if=!player.combat
     - return,if=!player.combat
-    - return,if=player.channeling
-    - call_action_list,name=spell_queue    
     - call_action_list,name=mouseover_friendly,if=config.use_mouseover&var.mo_friendly_valid&!player.casting&!player.channeling
     - call_action_list,name=racials
     - call_action_list,name=defensives
     - call_action_list,name=utility
     - call_action_list,name=cooldowns
     - call_action_list,name=trinkets
+    - call_action_list,name=interrupts
     - call_action_list,name=catweave,if=var.can_catweave&target.exists&target.alive&!target.friendly
     - call_action_list,name=moving,if=player.moving
     - call_action_list,name=active_healing
-    - call_action_list,name=interrupts    
