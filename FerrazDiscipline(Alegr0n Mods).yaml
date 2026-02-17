@@ -3,7 +3,7 @@ author: Alegr0n & Ferraz
 spec: 256
 name: Discipline
 description: |
-  Discipline Priest - Oracle for Mythic+.
+  Discipline Priest - Oracle for Mythic+ (Midnight Pre-patch).
   
 entry: main
 
@@ -67,20 +67,6 @@ config:
     min: 1
     max: 5
     default: 3
-
-  shadowfiend_usage:
-    label: "Shadowfiend Usage"
-    type: dropdown
-    options:
-      - label: "On Cooldown"
-        value: 1
-      - label: "2+ members < 80%"
-        value: 2
-      - label: "3+ members < 70%"
-        value: 3
-      - label: "Manual Only"
-        value: 0
-    default: 2
 
   # =================================================================================================
   #     HEALING
@@ -186,6 +172,9 @@ variables:
   trinket2_living_silk: trinket_2.id=242393
   has_living_silk: var.trinket1_living_silk|var.trinket2_living_silk
 
+  group_needs_healing: group.count(cycle.health.pct<70)>=2
+  group_heavy_damage: group.count(cycle.health.pct<50)>=2
+
 lists:
   spell_queue:
     - queue_spell
@@ -198,6 +187,10 @@ lists:
 
   interrupts:
     - psychic_scream,if=interrupts.8y.count>=2|interrupts.8y.stun.count>=2|nameplates.casting.count>=3
+
+  auto_target_ranged:
+    - target_enemy,if=target.down|target.friendly
+    - target_enemy,if=target.dead
 
   out_of_combat:
     - power_word_fortitude,if=group.count(cycle.buff.power_word_fortitude.down.any&cycle.range>0&cycle.range<=40)>0
@@ -219,8 +212,9 @@ lists:
     - purify,cycle=members,if=config.use_dispell&cycle.dispelable.list&cycle.range>0&cycle.range<=40
 
   cooldowns:
+    # Evangelism (Midnight): instantly casts PW:R + next 2 PW:R are instant & cheaper
     - evangelism,if=group.count(cycle.health.pct<80)>=config.evangelism_members
-    - shadowfiend,if=config.shadowfiend_usage!=0&((config.shadowfiend_usage=1)|(config.shadowfiend_usage=2&group.count(cycle.health.pct<80)>=2)|(config.shadowfiend_usage=3&group.count(cycle.health.pct<70)>=3))
+    - mindgames,if=target.valid&target.range<=40&!var.evangelism_window
     - power_word_barrier,if=group.count(cycle.health.pct<60)>=config.power_word_barrier_members
     - ultimate_penitence,if=group.count(cycle.health.pct<60)>=config.ultimate_penitence_members&group.count(cycle.buff.atonement.up)>=4
 
@@ -234,16 +228,19 @@ lists:
     - flash_heal,cycle=members,if=cycle.health.pct<45&cycle.range>0&cycle.range<=40
 
   evangelism_burst:
+    # Midnight Evangelism: use PW:R during the buff window (instant + cheaper)
     - power_word_radiance,if=var.evangelism_window&group.count(cycle.health.pct<85)>=2
     - power_word_radiance,if=var.evangelism_window&cooldown.power_word_radiance.charges>=1&group.count(cycle.health.pct<75)>=2
     - penance,if=var.evangelism_window&var.penance_ready
     - mind_blast,if=var.evangelism_window
+    - halo,if=var.evangelism_window&group.count(cycle.health.pct<85)>=3
 
   penance_shield_combo:
     - power_word_shield,cycle=members,if=var.weal_and_woe_ready&cycle.health.pct<config.pws_hp_threshold&cycle.buff.atonement.up&cycle.buff.power_word_shield.down&cycle.range>0&cycle.range<=40
     - power_word_shield,target=lowest,if=var.weal_and_woe_ready&group.lowest.health.pct<config.pws_hp_threshold&group.lowest.buff.remains(power_word_shield)=0&group.lowest.range>0&group.lowest.range<=40
 
   active_healing:
+    - halo,if=group.count(cycle.health.pct<85)>=3
     - power_word_radiance,if=cooldown.power_word_radiance.charges>=2&group.count(cycle.health.pct<85&cycle.range>0&cycle.range<=40)>=config.radiance_members
     - power_word_radiance,if=!cooldown.evangelism.ready&group.count(cycle.health.pct<85&cycle.range>0&cycle.range<=40)>=config.radiance_members
     - penance,cycle=members,if=cycle.buff.atonement.down&var.penance_ready&cycle.range>0&cycle.range<=40
@@ -259,11 +256,13 @@ lists:
     - call_action_list,name=active_healing
 
   offensive:
+    - shadow_word_death,if=target.health.pct<=20
+    - mindgames,if=target.valid&target.range<=40
     - shadow_word_pain,if=debuff.shadow_word_pain.remains<3
     - mind_blast
     - penance,if=var.power_of_dark_side&var.penance_ready
     - penance,if=cooldown.penance.charges>=2
-    - shadow_word_death,if=target.health.pct<=20
+    - halo,if=active_enemies>=3
     - smite
 
   trinkets:
@@ -273,6 +272,7 @@ lists:
     - trinket_2,if=!var.trinket2_living_silk&trinket_2.ready&config.trinket_usage!=0
 
   moving:
+    - angelic_feather,if=var.use_feather
     - penance,cycle=members,if=cycle.health.pct<config.penance_healing_threshold&var.penance_ready&cycle.range>0&cycle.range<=40
     - power_word_shield,cycle=members,if=var.weal_and_woe_ready&cycle.health.pct<config.pws_hp_threshold&cycle.buff.power_word_shield.down&cycle.range>0&cycle.range<=40
     - power_word_shield,cycle=tanks,if=cycle.buff.power_word_shield.down&cycle.buff.atonement.down&cycle.range>0&cycle.range<=40
@@ -281,6 +281,7 @@ lists:
     - flash_heal,cycle=members,if=var.surge_of_light_active&cycle.health.pct<config.pws_hp_threshold&cycle.range>0&cycle.range<=40
     - plea,cycle=members,if=cycle.buff.atonement.down&cycle.health.pct<90&cycle.range>0&cycle.range<=40
     - shadow_word_pain,if=debuff.shadow_word_pain.remains<5
+    - halo,if=active_enemies>=3
 
   mouseover_friendly:
     - pain_suppression.mouseover,if=mouseover.health.pct<config.pain_suppression_threshold&mouseover.buff.remains(pain_suppression)=0
@@ -292,7 +293,7 @@ lists:
     - return,if=player.channeling
     - call_action_list,name=sanity_checks
     - call_action_list,name=spell_queue
-    - call_action_list,name=auto_target
+    - call_action_list,name=auto_target_ranged
     - call_action_list,name=out_of_combat,if=!player.combat
     - return,if=!player.combat
     - return,if=buff.ultimate_penitence.up
@@ -300,10 +301,9 @@ lists:
     - call_action_list,name=defensives
     - return,if=player.cc
     - call_action_list,name=dispel
-    - call_action_list,name=mouseover_friendly,if=config.mouseover_enabled&var.mo_friendly_valid&!player.casting&!player.channeling
     - call_action_list,name=cooldowns
     - call_action_list,name=trinkets
-    - call_action_list,name=auto_heal
-    - angelic_feather,if=var.use_feather
+    - call_action_list,name=mouseover_friendly,if=config.mouseover_enabled&var.mo_friendly_valid&!player.casting&!player.channeling
     - call_action_list,name=moving,if=player.moving
+    - call_action_list,name=auto_heal
     - call_action_list,name=offensive,if=target.valid
