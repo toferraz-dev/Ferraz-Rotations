@@ -172,6 +172,8 @@ variables:
   trinket2_living_silk: trinket_2.id=242393
   has_living_silk: var.trinket1_living_silk|var.trinket2_living_silk
 
+  low_mana: mana.pct<30
+
   group_needs_healing: group.count(cycle.health.pct<70)>=2
   group_heavy_damage: group.count(cycle.health.pct<50)>=2
 
@@ -196,7 +198,7 @@ lists:
     - power_word_fortitude,if=group.count(cycle.buff.power_word_fortitude.down.any&cycle.range>0&cycle.range<=40)>0
     - penance,cycle=members,if=cycle.health.pct<90&!player.combat&var.penance_ready&cycle.range>0&cycle.range<=40
     - flash_heal,cycle=members,if=cycle.health.pct<80&!player.combat&var.surge_of_light_active&cycle.range>0&cycle.range<=40
-    - flash_heal,cycle=members,if=cycle.health.pct<80&!player.combat&cycle.range>0&cycle.range<=40
+    - flash_heal,cycle=members,if=cycle.health.pct<80&!player.combat&mana.pct>=50&cycle.range>0&cycle.range<=40
 
   defensives:
     # Pain Suppression
@@ -225,7 +227,7 @@ lists:
     - penance,cycle=members,if=cycle.health.pct<55&var.penance_ready&cycle.range>0&cycle.range<=40
     - flash_heal,cycle=members,if=cycle.health.pct<config.flash_heal_threshold&var.surge_of_light_active&cycle.range>0&cycle.range<=40
     - power_word_shield,cycle=members,if=cycle.health.pct<40&!var.penance_ready&!var.surge_of_light_active&cycle.buff.power_word_shield.down&cycle.range>0&cycle.range<=40
-    - flash_heal,cycle=members,if=cycle.health.pct<45&cycle.range>0&cycle.range<=40
+    - flash_heal,cycle=members,if=cycle.health.pct<45&!var.low_mana&cycle.range>0&cycle.range<=40
 
   evangelism_burst:
     # Midnight Evangelism: use PW:R during the buff window (instant + cheaper)
@@ -241,13 +243,13 @@ lists:
 
   active_healing:
     - halo,if=group.count(cycle.health.pct<85)>=3
-    - power_word_radiance,if=cooldown.power_word_radiance.charges>=2&group.count(cycle.health.pct<85&cycle.range>0&cycle.range<=40)>=config.radiance_members
-    - power_word_radiance,if=!cooldown.evangelism.ready&group.count(cycle.health.pct<85&cycle.range>0&cycle.range<=40)>=config.radiance_members
+    - power_word_radiance,if=!var.low_mana&cooldown.power_word_radiance.charges>=2&group.count(cycle.health.pct<85&cycle.range>0&cycle.range<=40)>=config.radiance_members
+    - power_word_radiance,if=!var.low_mana&!cooldown.evangelism.ready&group.count(cycle.health.pct<85&cycle.range>0&cycle.range<=40)>=config.radiance_members
     - penance,cycle=members,if=cycle.buff.atonement.down&var.penance_ready&cycle.range>0&cycle.range<=40
     - power_word_shield,cycle=tanks,if=cycle.buff.power_word_shield.down&cycle.buff.atonement.down&cycle.range>0&cycle.range<=40
     - power_word_shield,cycle=members,if=cycle.buff.power_word_shield.down&cycle.buff.atonement.down&cycle.health.pct<95&cycle.range>0&cycle.range<=40
     - flash_heal,cycle=members,if=cycle.buff.atonement.down&var.surge_of_light_active&cycle.range>0&cycle.range<=40
-    - plea,cycle=members,if=cycle.buff.atonement.down&cycle.health.pct<90&cycle.range>0&cycle.range<=40
+    - plea,cycle=members,if=!var.low_mana&cycle.buff.atonement.down&cycle.health.pct<90&cycle.range>0&cycle.range<=40
 
   auto_heal:
     - call_action_list,name=high_priority_healing
@@ -263,7 +265,7 @@ lists:
     - penance,if=var.power_of_dark_side&var.penance_ready
     - penance,if=cooldown.penance.charges>=2
     - halo,if=active_enemies>=3
-    - smite
+    - smite,if=!var.low_mana
 
   trinkets:
     - trinket_1,if=var.trinket1_living_silk&trinket_1.ready&config.trinket_usage!=0&((config.trinket_usage=1)|(config.trinket_usage=2&var.evangelism_window)|(config.trinket_usage=3&group.count(cycle.health.pct<config.living_silk_hp)>=3))
@@ -286,7 +288,7 @@ lists:
   mouseover_friendly:
     - pain_suppression.mouseover,if=mouseover.health.pct<config.pain_suppression_threshold&mouseover.buff.remains(pain_suppression)=0
     - penance.mouseover,if=mouseover.health.pct<config.penance_healing_threshold&var.penance_ready
-    - flash_heal.mouseover,if=mouseover.health.pct<config.flash_heal_threshold
+    - flash_heal.mouseover,if=mouseover.health.pct<config.flash_heal_threshold&var.surge_of_light_active
     - purify.mouseover,if=mouseover.dispelable.list
 
   main:
@@ -301,6 +303,7 @@ lists:
     - call_action_list,name=defensives
     - return,if=player.cc
     - call_action_list,name=dispel
+    - arcane_torrent,if=mana.pct<95
     - call_action_list,name=cooldowns
     - call_action_list,name=trinkets
     - call_action_list,name=mouseover_friendly,if=config.mouseover_enabled&var.mo_friendly_valid&!player.casting&!player.channeling
