@@ -267,11 +267,13 @@ lists:
 
   main:
     - return,if=player.channeling
+    - return,if=buff.tranquility.up
+    - return,if=buff.convoke_the_spirits.up
     - call_action_list,name=sanity_checks
     - call_action_list,name=spell_queue
     - call_action_list,name=auto_target
     - call_action_list,name=auto_heal
-    - call_action_list,name=out_of_combat,if=!player.combat
+    - call_action_list,name=out_of_combat
     - return,if=!player.combat
     - call_action_list,name=interrupts
     - call_action_list,name=racials
