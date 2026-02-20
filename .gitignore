@@ -1,0 +1,11 @@
+# Ignorar todos os arquivos por padrao
+*
+
+# Ignorar pastas (para poder encontrar arquivos dentro delas)
+*/
+
+# Nao ignorar arquivos .yaml
+!Ferraz*.yaml
+
+# Ignorar especificamente este arquivo
+FerrazDiscipline(Alegr0n Mods).yaml
