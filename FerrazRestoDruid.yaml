@@ -272,7 +272,7 @@ lists:
     - regrowth.mouseover,if=buff.natures_swiftness.up&mouseover.range>=0&mouseover.range<=40
     - swiftmend.mouseover,if=mouseover.range>=0&mouseover.range<=40
     - regrowth.mouseover,if=mouseover.range>=0&mouseover.range<=40
-    - rejuvenation.mouseover,if=mouseover.range>=0&mouseover.range<=40
+    - rejuvenation.mouseover,if=mouseover.buff.remains(rejuvenation)<1.5&mouseover.range>=0&mouseover.range<=40
 
   main:
     - return,if=player.channeling
