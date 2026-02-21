@@ -74,7 +74,7 @@ config:
   #     HEALING - AOE & GROUP
   # =================================================================================================
   use_mouseover:
-    label: "Enable Mouseover Healing"
+    label: "Mouseover Healing (Emergency)"
     type: checkbox
     default: true
 
