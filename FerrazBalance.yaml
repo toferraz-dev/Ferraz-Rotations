@@ -1,5 +1,6 @@
 version: 1.0
 author: Ferraz
+patch: "11.0.5"
 spec: 102
 name: Balance Elunes
 description: |

@@ -1,5 +1,6 @@
 ﻿version: 3.6
 author: Ferraz
+patch: "11.0.5"
 spec: 104
 name: Guardian Elunes
 description: |
