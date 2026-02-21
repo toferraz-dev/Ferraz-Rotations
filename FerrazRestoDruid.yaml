@@ -75,12 +75,12 @@ config:
   #     HEALING - AOE & GROUP
   # =================================================================================================
   use_mouseover:
-    label: "Mouseover Healing (Emergency)"
+    label: "MO Healing (Emergency)"
     type: checkbox
     default: true
 
   mouseover_emergency_hp:
-    label: "Mouseover Emergency HP %"
+    label: "MO Emergency HP %"
     type: slider
     min: 10
     max: 99
