@@ -1,5 +1,6 @@
 version: 2.8
 author: Ferraz
+patch: "11.0.5"
 spec: 105
 name: Restoration Druid
 description: |
