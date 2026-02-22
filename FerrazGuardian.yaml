@@ -5,8 +5,8 @@ spec: 104
 name: Guardian Master
 description: |
   Master Guardian Druid Rotation for Mythic+.
-  Supports both Elunes Chosen and Druid of the Claw hero talents.
-  Includes Wowhead (Aggressive DPS) and Alternative / Method.gg (Balanced) rotation styles.
+  Supports both Elunes Chosen / Druid of the Claw hero talents.
+  Includes Wowhead (Aggressive DPS) - Alternative / Method.gg (Balanced) rotation styles.
 
 entry: main
 
