@@ -1,15 +1,27 @@
-﻿version: 3.1
+﻿version: 3.2
 author: Ferraz
 patch: "12.0.1"
 spec: 104
-name: Guardian Elunes
+name: Guardian Master
 description: |
-  Guardian Druid Elunes Chosen for Mythic+.
-  Supports Wowhead (aggressive DPS) Alternative (balanced) rotation styles.
+  Master Guardian Druid Rotation for Mythic+.
+  Supports both Elunes Chosen and Druid of the Claw hero talents.
+  Includes Wowhead (Aggressive DPS) and Alternative / Method.gg (Balanced) rotation styles.
 
 entry: main
 
 config:
+
+  # HERO TALENT TREE
+  hero_tree:
+    label: "Hero Talent Tree"
+    type: dropdown
+    options:
+      - label: "Elune's Chosen"
+        value: 1
+      - label: "Druid of the Claw"
+        value: 2
+    default: 1
 
   # ROTATION STYLE
   rotation_source:
@@ -18,7 +30,7 @@ config:
     options:
       - label: "Wowhead (Aggressive DPS)"
         value: 1
-      - label: "Alternative (Balanced)"
+      - label: "Alternative / Method (Balanced)"
         value: 2
     default: 2
 
@@ -78,7 +90,7 @@ config:
     max: 10
     default: 3
   rage_of_sleeper_threshold:
-    label: "HP% for Rage of the Sleeper"
+    label: "HP% for Rage of the Sleeper (Elune)"
     type: slider
     min: 30
     max: 90
@@ -89,10 +101,10 @@ config:
     label: "Thrash Stacks to maintain"
     type: slider
     min: 1
-    max: 3
+    max: 5
     default: 3
   raze_targets:
-    label: "Min targets for Raze (instead of Maul)"
+    label: "Min targets for Raze (instead of Maul - Elune)"
     type: slider
     min: 2
     max: 5
@@ -163,7 +175,7 @@ variables:
   barkskin_up: buff.barkskin.up
   survival_up: buff.survival_instincts.up
   any_major_defensive: var.barkskin_up|var.survival_up|buff.rage_of_the_sleeper.up
-  after_avenger_up: buff.after_avenger.up
+  after_avenger_up: buff.after_avenger.up|buff.after_the_wildfire.up
 
   # OFFENSIVE PROCS
   galactic_guardian_up: buff.galactic_guardian.up
@@ -182,22 +194,18 @@ variables:
   lunar_beam_active: buff.lunar_beam.up
   lunar_beam_soon: cooldown.lunar_beam.remains<15
   lunar_beam_ready: cooldown.lunar_beam.ready
-  incarnation_active: buff.incarnation_guardian_of_ursoc.up
+  incarnation_active: buff.incarnation_guardian_of_ursoc.up|buff.berserk.up
   combat_start: player.combat&player.combat.time<3
   
   # ELUNE'S CHOSEN SYNERGY
   use_lunar_beam: var.lunar_beam_ready&(active_enemies>=2|health.pct<70|target.boss)
 
   # TARGETING
-  use_raze: active_enemies>=config.raze_targets
+  use_raze: config.hero_tree=1&active_enemies>=config.raze_targets
   can_interrupt: target.casting&!target.casting.interruptible=false
 
   # MOVEMENT
   use_stampeding_roar: moving.time>=config.stampeding_roar_movement_time&buff.stampeding_roar.down&((config.stampeding_roar_usage=1&player.combat)|(config.stampeding_roar_usage=2&!player.combat)|(config.stampeding_roar_usage=3))
-
-  # RACIAL THRESHOLDS
-  racial_defensive_hp: 50
-  racial_emergency_hp: 35
 
 lists:
 
@@ -217,7 +225,7 @@ lists:
 
   defensives:
     - survival_instincts,if=var.emergency_situation&!var.survival_up
-    - rage_of_the_sleeper,if=var.emergency_situation&!var.survival_up
+    - rage_of_the_sleeper,if=config.hero_tree=1&var.emergency_situation&!var.survival_up
     - frenzied_regeneration,if=var.emergency_situation&var.rage>=10
     - barkskin,if=var.emergency_situation&!var.survival_up
     - survival_instincts,if=var.dangerous_situation&!var.barkskin_up
@@ -231,11 +239,12 @@ lists:
     - ironfur,if=var.incarnation_active&var.ironfur_stacks<config.ironfur_stacks_max&var.rage>=45
       
   cooldowns:
-    - lunar_beam,if=var.use_lunar_beam
+    - lunar_beam,if=config.hero_tree=1&var.use_lunar_beam
     - incarnation_guardian_of_ursoc,if=active_enemies>=config.incarnation_enemies|(target.boss&target.time_to_die>20)
-    - rage_of_the_sleeper,if=health.pct<config.rage_of_sleeper_threshold|active_enemies>=4|(var.incarnation_active&active_enemies>=3)
-    - berserk_ravage,if=talent.berserk&(active_enemies>=3|target.boss)
-    - heart_of_the_wild,if=var.in_bear_form&active_enemies>=4
+    - rage_of_the_sleeper,if=config.hero_tree=1&(health.pct<config.rage_of_sleeper_threshold|active_enemies>=4|(var.incarnation_active&active_enemies>=3))
+    - berserk_ravage,if=talent.berserk_ravage&(active_enemies>=3|target.boss)
+    - berserk_ravage,if=config.hero_tree=1&talent.berserk&(active_enemies>=3|target.boss)
+    - heart_of_the_wild,if=config.hero_tree=1&var.in_bear_form&active_enemies>=4
   
   interrupts:
     - skull_bash,if=config.use_skull_bash&var.can_interrupt,delay=config.skull_bash_delay
@@ -252,6 +261,7 @@ lists:
   rage_management:
     - ironfur,if=var.need_ironfur
     - ironfur,if=var.ironfur_stacks<config.ironfur_stacks_max&var.rage>=60&buff.ironfur.remains<3
+    - ravage,if=config.hero_tree=2&buff.ravage.up
     - maul,if=var.tooth_and_claw_up&var.rage>=35&!var.use_raze
     - raze,if=var.use_raze&var.rage_for_harnessed
     - raze,if=var.use_raze&var.rage_overcap
@@ -262,12 +272,16 @@ lists:
     - moonfire,if=var.combat_start&debuff.moonfire.down&range<=40
     - moonfire,if=var.incarnation_active&debuff.moonfire.down&range<=40
     - moonfire,if=var.galactic_guardian_up
-    - moonfire,if=var.lunar_beam_soon&var.moonfire_needs_refresh
+    - moonfire,if=config.hero_tree=1&var.lunar_beam_soon&var.moonfire_needs_refresh
     - moonfire,if=debuff.moonfire.down
     - moonfire,if=var.moonfire_needs_refresh
     - moonfire,target=mouseover,if=debuff.moonfire.down&range<=40&target.alive&target.enemy
+
+  # ----------------------------------------------------------
+  #  ELUNE'S CHOSEN ROTATIONS
+  # ----------------------------------------------------------
   
-  rotation_st_wowhead:
+  rotation_st_elune_wowhead:
     - moonfire,if=var.moonfire_needs_refresh
     - thrash,if=debuff.thrash.stack<5
     - barkskin
@@ -278,7 +292,7 @@ lists:
     - incarnation_guardian_of_ursoc
     - swipe
 
-  rotation_st_alternative:
+  rotation_st_elune_alt:
     - mangle,if=var.gore_up
     - mangle,if=var.harnessed_rage&var.mangle_charges>=2
     - mangle
@@ -292,7 +306,7 @@ lists:
     - maul,if=var.rage>=config.rage_cap_threshold
     - swipe
   
-  rotation_aoe_wowhead:
+  rotation_aoe_elune_wowhead:
     - thrash,if=debuff.thrash.stack<5
     - barkskin
     - raze,if=var.rage>=40&var.ironfur_stacks>=1
@@ -302,7 +316,7 @@ lists:
     - moonfire
     - swipe
 
-  rotation_aoe_alternative:
+  rotation_aoe_elune_alt:
     - thrash,if=var.thrash_needs_refresh
     - mangle,if=var.gore_up
     - mangle,if=var.harnessed_rage&var.mangle_charges>=2
@@ -316,37 +330,62 @@ lists:
     - raze,if=var.rage>=40
     - swipe
 
-  # RACIAL ABILITIES
-  racial_defensive:
-    - stoneform,if=player.dispelable.list
-    - fireblood,if=player.dispelable.list
-    - will_of_the_forsaken,if=player.feared|player.charmed
-    - escape_artist,if=player.rooted
-    - will_to_survive,if=player.stunned
-    - gift_of_the_naaru.player,if=health.pct<var.racial_emergency_hp
-    - regeneratin,if=health.pct<var.racial_emergency_hp&!player.combat
-    - stoneform,if=health.pct<var.racial_defensive_hp
-    - fireblood,if=health.pct<var.racial_defensive_hp
+  # ----------------------------------------------------------
+  #  DRUID OF THE CLAW ROTATIONS
+  # ----------------------------------------------------------
 
-  racial_offensive:
-    - berserking,if=var.incarnation_active
-    - blood_fury,if=var.incarnation_active
-    - ancestral_call,if=var.incarnation_active
-    - fireblood,if=var.incarnation_active&!player.dispelable.list
-    - azerite_surge,if=var.incarnation_active
+  rotation_st_claw_wowhead:
+    - ravage,if=buff.ravage.up
+    - moonfire,if=debuff.moonfire.remains<4.8
+    - thrash,if=debuff.thrash.stack<config.thrash_stacks_target
+    - mangle,if=buff.gore.up
+    - mangle
+    - maul,if=player.rage>=40&buff.ironfur.stack>=1&buff.tooth_and_claw.up
+    - maul,if=player.rage>=config.rage_cap_threshold&buff.ironfur.stack>=1
+    - thrash
+    - moonfire,if=buff.galactic_guardian.up
+    - swipe
 
-  racial_cc:
-    - war_stomp,if=interrupts.8y.stun.count>=1
-    - quaking_palm,if=target.casting.interruptible
-    - haymaker,if=target.casting.interruptible
-    - bull_rush,if=target.casting.interruptible
-    - wing_buffet,if=target.casting.interruptible
-    - arcane_pulse,if=enemies.8y.count>=3
+  rotation_aoe_claw_wowhead:
+    - ravage,if=buff.ravage.up
+    - thrash,if=debuff.thrash.stack<config.thrash_stacks_target
+    - maul,if=player.rage>=40&buff.ironfur.stack>=1
+    - thrash
+    - mangle,if=buff.gore.up
+    - mangle
+    - call_action_list,name=moonfire_spread
+    - swipe
 
-  racial_utility:
-    - arcane_torrent,if=var.rage<50
-    - gift_of_the_naaru,cycle=members,if=cycle.health.pct<60&cycle.range>0&cycle.range<=40
-    
+  rotation_st_claw_method:
+    - ravage,if=buff.ravage.up
+    - mangle,if=buff.gore.up
+    - mangle,if=cooldown.mangle.charges>=2
+    - mangle
+    - thrash,if=debuff.thrash.remains<4.5|debuff.thrash.stack<config.thrash_stacks_target
+    - moonfire,if=buff.galactic_guardian.up
+    - moonfire,if=debuff.moonfire.remains<4.8
+    - maul,if=player.rage>=config.rage_cap_threshold&buff.tooth_and_claw.up
+    - maul,if=player.rage>=config.rage_cap_threshold
+    - thrash
+    - swipe
+
+  rotation_aoe_claw_method:
+    - ravage,if=buff.ravage.up
+    - thrash,if=debuff.thrash.remains<4.5|debuff.thrash.stack<config.thrash_stacks_target
+    - mangle,if=buff.gore.up
+    - mangle,if=cooldown.mangle.charges>=2
+    - thrash
+    - mangle
+    - call_action_list,name=moonfire_spread
+    - maul,if=player.rage>=config.rage_cap_threshold
+    - maul,if=player.rage>=40&buff.tooth_and_claw.up
+    - maul,if=player.rage>=40
+    - swipe
+
+  # ----------------------------------------------------------
+  #  SHARED / MISC
+  # ----------------------------------------------------------
+
   trinkets:
     - trinket_1,if=trinket_1.ready&config.trinket_usage!=0&((config.trinket_usage=1)|(config.trinket_usage=2&var.incarnation_active)|(config.trinket_usage=3&health.pct<70))
     - trinket_2,if=trinket_2.ready&config.trinket_usage!=0&((config.trinket_usage=1)|(config.trinket_usage=2&var.incarnation_active)|(config.trinket_usage=3&health.pct<70))
@@ -354,29 +393,44 @@ lists:
   movement:
     - stampeding_roar,if=var.use_stampeding_roar&config.stampeding_roar_usage!=0
   
+  # ----------------------------------------------------------
+  #  MAIN ENTRY POINT
+  # ----------------------------------------------------------
+  
   main:
     - call_action_list,name=sanity_checks
     - call_action_list,name=spell_queue
     - call_action_list,name=buff_mark_of_the_wild
+    - heart_of_the_wild,if=config.hero_tree=2&!var.in_bear_form&!buff.cat_form.up&player.combat
     - bear_form,if=!var.in_bear_form&player.combat&!mounted.flying&!mounted.ground
     - moonfire,if=config.allow_pull_with_mo&!player.combat&target.enemy&target.alive&debuff.moonfire.down
     - return,if=!player.combat&active_enemies=0
     - return,if=player.channeling
+    
+    # Targeting & utility
     - call_action_list,name=auto_target
     - call_action_list,name=auto_heal    
     - call_action_list,name=taunt
     - call_action_list,name=interrupts
-    - call_action_list,name=racial_cc
-    - call_action_list,name=racial_defensive
     - call_action_list,name=dispel
-    - call_action_list,name=defensives
-    - call_action_list,name=cooldowns
-    - call_action_list,name=racial_offensive,if=var.incarnation_active
-    - call_action_list,name=rage_management
+    
+    # Survival & cooldowns
+    - call_action_list,name=defensives,if=var.in_bear_form
+    - call_action_list,name=cooldowns,if=var.in_bear_form
+    - call_action_list,name=rage_management,if=var.in_bear_form
+    
+    # Movement & Utils
     - call_action_list,name=movement,if=player.moving
-    - call_action_list,name=racial_utility
     - call_action_list,name=trinkets
-    - call_action_list,name=rotation_aoe_wowhead,if=config.rotation_source=1&active_enemies>=3
-    - call_action_list,name=rotation_st_wowhead,if=config.rotation_source=1
-    - call_action_list,name=rotation_aoe_alternative,if=config.rotation_source=2&active_enemies>=3
-    - call_action_list,name=rotation_st_alternative,if=config.rotation_source=2
+    
+    # Elune's Chosen Rotations
+    - call_action_list,name=rotation_aoe_elune_wowhead,if=config.hero_tree=1&config.rotation_source=1&active_enemies>=3&var.in_bear_form
+    - call_action_list,name=rotation_st_elune_wowhead,if=config.hero_tree=1&config.rotation_source=1&var.in_bear_form
+    - call_action_list,name=rotation_aoe_elune_alt,if=config.hero_tree=1&config.rotation_source=2&active_enemies>=3&var.in_bear_form
+    - call_action_list,name=rotation_st_elune_alt,if=config.hero_tree=1&config.rotation_source=2&var.in_bear_form
+
+    # Druid of the Claw Rotations
+    - call_action_list,name=rotation_aoe_claw_wowhead,if=config.hero_tree=2&config.rotation_source=1&active_enemies>=3&var.in_bear_form
+    - call_action_list,name=rotation_st_claw_wowhead,if=config.hero_tree=2&config.rotation_source=1&var.in_bear_form
+    - call_action_list,name=rotation_aoe_claw_method,if=config.hero_tree=2&config.rotation_source=2&active_enemies>=3&var.in_bear_form
+    - call_action_list,name=rotation_st_claw_method,if=config.hero_tree=2&config.rotation_source=2&var.in_bear_form
