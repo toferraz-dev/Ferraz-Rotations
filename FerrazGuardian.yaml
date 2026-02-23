@@ -35,6 +35,10 @@ config:
     default: 2
 
   # CONFIG
+  use_racials:
+    label: "Auto Racials"
+    type: checkbox
+    default: true
   allow_pull_with_mo:
     label: "Pull with Moonfire"
     type: checkbox
@@ -222,6 +226,12 @@ lists:
     - return,if=state.blocked_inputs
     - return,if=player.cc
     - return,if=player.loot_nearby
+
+  racials:
+    - blood_fury,if=var.incarnation_active
+    - berserking,if=var.incarnation_active
+    - fireblood,if=var.incarnation_active
+    - ancestral_call,if=var.incarnation_active
 
   defensives:
     - survival_instincts,if=var.emergency_situation&!var.survival_up
@@ -417,6 +427,7 @@ lists:
     # Survival & cooldowns
     - call_action_list,name=defensives,if=var.in_bear_form
     - call_action_list,name=cooldowns,if=var.in_bear_form
+    - call_action_list,name=racials,if=config.use_racials&var.in_bear_form
     - call_action_list,name=rage_management,if=var.in_bear_form
     
     # Movement & Utils
