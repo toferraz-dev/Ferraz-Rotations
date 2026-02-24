@@ -256,6 +256,7 @@ lists:
   catweave:
     - rejuvenation,cycle=members,if=cycle.buff.rejuvenation.remains<5&buff.cat_form.up&(target.range>9|!var.group_healthy)
     - moonfire,if=debuff.moonfire.remains<2&debuff.moonfire.refreshable&!buff.cat_form.up
+    - wrath,if=mana.pct>=70&!buff.cat_form.up&target.range>9    
     - cat_form,if=!buff.cat_form.up&target.range<=8
     - return,if=!buff.cat_form.up
     - call_action_list,name=catweave_aoe,if=active_enemies>=config.aoe_threshold
