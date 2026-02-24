@@ -84,7 +84,7 @@ config:
     type: slider
     min: 10
     max: 99
-    default: 40
+    default: 70
 
   wild_growth_threshold:
     label: "Wild Growth HP %"
