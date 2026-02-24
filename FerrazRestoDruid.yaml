@@ -254,7 +254,7 @@ lists:
     - shred,if=target.range<=8
 
   catweave:
-    # Emergency exit: leave cat if group needs healing
+    - cancel_form,if=buff.cat_form.up&target.range>8
     - cancel_form,if=!var.group_healthy&buff.cat_form.up
     - return,if=!var.group_healthy
     - moonfire,if=debuff.moonfire.remains<2&debuff.moonfire.refreshable&!buff.cat_form.up
