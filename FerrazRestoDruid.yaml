@@ -254,9 +254,7 @@ lists:
     - shred,if=target.range<=8
 
   catweave:
-    - cancel_form,if=buff.cat_form.up&target.range>8
-    - cancel_form,if=!var.group_healthy&buff.cat_form.up
-    - return,if=!var.group_healthy
+    - rejuvenation,cycle=members,if=cycle.buff.rejuvenation.remains<5&buff.cat_form.up&(target.range>9|!var.group_healthy)
     - moonfire,if=debuff.moonfire.remains<2&debuff.moonfire.refreshable&!buff.cat_form.up
     - cat_form,if=!buff.cat_form.up&target.range<=8
     - return,if=!buff.cat_form.up
