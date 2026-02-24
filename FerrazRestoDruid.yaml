@@ -1,4 +1,4 @@
-version: 3.1
+version: 3.2
 author: Ferraz
 patch: "12.0.1"
 spec: 105
@@ -186,7 +186,7 @@ variables:
 
 lists:
   spell_queue:
-    - queue_spell
+    - queue_spell,if=!buff.cat_form.up&!buff.bear_form.up
 
   sanity_checks:
     - return,if=player.dead
