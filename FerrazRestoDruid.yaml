@@ -1,4 +1,4 @@
-version: 3.2
+version: 3.3
 author: Ferraz
 patch: "12.0.1"
 spec: 105
@@ -84,7 +84,7 @@ config:
     type: slider
     min: 10
     max: 99
-    default: 70
+    default: 65
 
   wild_growth_threshold:
     label: "Wild Growth HP %"
