@@ -1,4 +1,4 @@
-version: 3.3
+version: 3.4
 author: Ferraz
 patch: "12.0.1"
 spec: 105
@@ -254,7 +254,7 @@ lists:
     - shred,if=target.range<=8
 
   catweave:
-    - rejuvenation,cycle=members,if=cycle.buff.rejuvenation.remains<5&buff.cat_form.up&(target.range>9|!var.group_healthy)
+    - rejuvenation,cycle=members,if=cycle.buff.rejuvenation.remains<4&buff.cat_form.up&(target.range>8|!var.group_healthy)
     - moonfire,if=debuff.moonfire.remains<2&debuff.moonfire.refreshable&!buff.cat_form.up
     - wrath,if=mana.pct>=70&!buff.cat_form.up&target.range>9    
     - cat_form,if=!buff.cat_form.up&target.range<=8
