@@ -419,7 +419,7 @@ lists:
     
     # Targeting & utility
     - call_action_list,name=auto_target
-    - call_action_list,name=auto_heal    
+    - call_action_list,name=auto_heal
     - call_action_list,name=taunt
     - call_action_list,name=interrupts
     - call_action_list,name=dispel
