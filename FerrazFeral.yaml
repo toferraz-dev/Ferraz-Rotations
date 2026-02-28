@@ -1,12 +1,14 @@
-version: 1.0
+version: 2.0
 author: Ferraz
 patch: "12.0.1"
 spec: 103
-name: Feral Testing
+name: Feral Master (Teste)
 description: |
-  Master Feral Druid Rotation for Mythic+.
+  Master Feral Druid Rotation for Mythic+ — Midnight (12.0.1).
   Druid of the Claw hero talent build.
-  Includes Wowhead / Method rotation styles for Single Target and AoE.
+  Based on Icy Veins / Wowhead rotation priority.
+  Supports Single Target and AoE with proper snapshotting,
+  Chomp, Ravage, and Apex Predators Craving management.
 entry: main
 
 config:
@@ -15,7 +17,7 @@ config:
     label: "Rotation Style"
     type: dropdown
     options:
-      - label: "Wowhead / Method (Claw)"
+      - label: "Druid of the Claw (M+)"
         value: 1
     default: 1
 
@@ -46,12 +48,17 @@ config:
     label: "Auto Berserk/Incarnation"
     type: checkbox
     default: true
-    
+
   use_convoke:
     label: "Auto Convoke"
     type: checkbox
     default: true
-    
+
+  use_racials:
+    label: "Auto Racials"
+    type: checkbox
+    default: true
+
   # INTERRUPTS
   use_skull_bash:
     label: "Auto Interrupt"
@@ -72,22 +79,71 @@ config:
     max: 5
     default: 3
 
+  # MOVEMENT
+  stampeding_roar_usage:
+    label: "Stampeding Roar Usage"
+    type: dropdown
+    options:
+      - label: "Disabled"
+        value: 0
+      - label: "Only in combat"
+        value: 1
+      - label: "Only out of combat"
+        value: 2
+      - label: "Always when moving"
+        value: 3
+    default: 2
+  stampeding_roar_movement_time:
+    label: "Roar after moving (seconds)"
+    type: slider
+    min: 0
+    max: 4
+    default: 2
+
 variables:
-  emergency_situation: health.pct<35
-  dangerous_situation: health.pct<60
-  
+  # FORM
+  in_cat_form: buff.cat_form.up
+
+  # RESOURCES
   combo_points: player.combo_points
+  energy: player.energy
   energy_deficit: player.energy.max-player.energy
-  
+  cp_max: var.combo_points>=5
+
+  # BUFF TRACKING
   has_apex: buff.apex_predators_craving.up
   has_clearcasting: buff.clearcasting_feral.up
-  
-  rip_refreshable: debuff.rip.remains<4
-  rake_refreshable: debuff.rake.remains<3.5
-  thrash_refreshable: debuff.thrash.remains<3.5
-  
+  has_sudden_ambush: buff.sudden_ambush.up
+  tigers_fury_up: buff.tigers_fury.up
+  berserk_up: buff.berserk.up|buff.incarnation_avatar_of_ashamane.up
+  ravage_up: buff.ravage.up
+  predatory_swiftness_up: buff.predatory_swiftness.up
+
+  # DOT/BLEED TRACKING
+  rip_up: debuff.rip.up
+  rip_refreshable: debuff.rip.refreshable|debuff.rip.remains<4.8
+  rake_refreshable: debuff.rake.refreshable|debuff.rake.remains<4.2
+  thrash_refreshable: debuff.thrash.refreshable|debuff.thrash.remains<4.2
+  moonfire_refreshable: debuff.moonfire.refreshable|debuff.moonfire.remains<4.2
+
+  # SNAPSHOTTING — refresh bleeds when Tiger's Fury is active for better damage
+  rip_needs_tf_snapshot: var.tigers_fury_up&debuff.rip.up&!debuff.rip.remains<8
+  rake_needs_tf_snapshot: var.tigers_fury_up&var.rake_refreshable
+
+  # DEFENSIVE STATES
+  emergency_situation: health.pct<35
+  dangerous_situation: health.pct<60
+
+  # COMBAT
   combat_start: player.combat&player.combat.time<3
   can_interrupt: target.casting&!target.casting.interruptible=false
+
+  # ENERGY MANAGEMENT — always try to have 50+ energy for Ferocious Bite/Ravage
+  energy_for_bite: var.energy>=50
+  energy_for_tf: var.energy_deficit>=50
+
+  # MOVEMENT
+  use_stampeding_roar: moving.time>=config.stampeding_roar_movement_time&buff.stampeding_roar.down&((config.stampeding_roar_usage=1&player.combat)|(config.stampeding_roar_usage=2&!player.combat)|(config.stampeding_roar_usage=3))
 
 lists:
   spell_queue:
@@ -102,18 +158,32 @@ lists:
     - return,if=player.loot_nearby
 
   defensives:
+    # Emergency layer
     - survival_instincts,if=var.emergency_situation&!buff.survival_instincts.up
     - renewal,if=var.emergency_situation
-    - barkskin,if=var.dangerous_situation&!buff.barkskin.up
+    - barkskin,if=var.emergency_situation&!buff.survival_instincts.up
+    # Threshold layer
     - survival_instincts,if=health.pct<config.survival_instincts_threshold&!buff.survival_instincts.up
+    - barkskin,if=var.dangerous_situation&!buff.barkskin.up
     - renewal,if=health.pct<config.renewal_threshold
     - barkskin,if=health.pct<config.barkskin_threshold&!buff.barkskin.up
-    - regrowth,if=buff.predatory_swiftness.up
+    # Predatory Swiftness — free instant Regrowth proc
+    - regrowth,if=var.predatory_swiftness_up&health.pct<80
 
   cooldowns:
-    - berserk,if=config.use_berserk&(target.boss|active_enemies>=config.aoe_threshold)
-    - incarnation_avatar_of_ashamane,if=config.use_berserk&(target.boss|active_enemies>=config.aoe_threshold)
-    - convoke_the_spirits,if=config.use_convoke&var.combo_points<=2&(target.boss|active_enemies>=config.aoe_threshold)
+    # Tiger's Fury — off GCD, use on cooldown when energy is low
+    - tigers_fury,if=var.energy_for_tf|buff.tigers_fury.down
+    # Berserk / Incarnation — major DPS window, sync with Tiger's Fury
+    - berserk,if=config.use_berserk&var.tigers_fury_up&(target.boss|active_enemies>=config.aoe_threshold)
+    - incarnation_avatar_of_ashamane,if=config.use_berserk&var.tigers_fury_up&(target.boss|active_enemies>=config.aoe_threshold)
+    # Convoke — cast inside Berserk + Tiger's Fury window, at low CPs
+    - convoke_the_spirits,if=config.use_convoke&var.berserk_up&var.tigers_fury_up&var.combo_points<=2
+
+  racials:
+    - blood_fury,if=var.berserk_up
+    - berserking,if=var.berserk_up
+    - fireblood,if=var.berserk_up
+    - ancestral_call,if=var.berserk_up
 
   interrupts:
     - skull_bash,if=config.use_skull_bash&var.can_interrupt,delay=config.skull_bash_delay
@@ -129,50 +199,104 @@ lists:
     - prowl,if=!buff.prowl.up&!player.combat
 
   stealth_opener:
+    # Rake from stealth = bonus damage via Pouncing Strikes
     - rake,if=buff.prowl.up|buff.shadowmeld.up
 
   trinkets:
-    - trinket_1,if=trinket_1.ready&(target.boss|active_enemies>=config.aoe_threshold)
-    - trinket_2,if=trinket_2.ready&(target.boss|active_enemies>=config.aoe_threshold)
+    - trinket_1,if=trinket_1.ready&(var.berserk_up|target.boss|active_enemies>=config.aoe_threshold)
+    - trinket_2,if=trinket_2.ready&(var.berserk_up|target.boss|active_enemies>=config.aoe_threshold)
+
+  movement:
+    - stampeding_roar,if=var.use_stampeding_roar&config.stampeding_roar_usage!=0
+    - wild_charge,if=player.moving&range>8&player.combat
 
   # -------------------------------------------------------------------------------------------------
   # DRUID OF THE CLAW - SINGLE TARGET
+  # Based on Icy Veins Midnight 12.0.1 priority
   # -------------------------------------------------------------------------------------------------
   st_rotation:
-    - tigers_fury,if=var.energy_deficit>40|buff.tigers_fury.down
-    - feral_frenzy,if=var.combo_points<=1
-    
-    # Finishers
-    - ravage,if=var.combo_points>=4|buff.ravage.up
-    - ferocious_bite,if=var.has_apex
-    - rip,if=var.combo_points>=4&var.rip_refreshable
-    - ferocious_bite,if=var.combo_points>=4
-    
-    # Builders
+    # 1. Consume Apex Predator's Craving immediately (free max damage Bite/Ravage)
+    - ferocious_bite,if=var.has_apex&var.rip_up
+    - ravage,if=var.has_apex&var.ravage_up&var.rip_up
+
+    # 2. Tiger's Fury on cooldown — energy refill + 15% damage buff
+    - tigers_fury,if=var.energy_for_tf|buff.tigers_fury.down
+
+    # 3. Chomp — new Midnight ability, use on cooldown (no energy cost)
+    - chomp,if=var.energy<30|buff.chomp.up=false
+
+    # 4. Rip — maintain at all times, ideally snapshot with Tiger's Fury
+    - rip,if=var.cp_max&!var.rip_up
+    - rip,if=var.cp_max&var.rip_refreshable&var.tigers_fury_up
+
+    # 5. Ravage — consume procs ASAP with 50+ energy
+    - ravage,if=var.ravage_up&var.cp_max&var.energy_for_bite&var.rip_up
+
+    # 6. Ferocious Bite — spend CPs when Rip is healthy and 50+ energy
+    - ferocious_bite,if=var.cp_max&var.energy_for_bite&var.rip_up
+
+    # 7. Feral Frenzy — on cooldown, sync with Tiger's Fury, at low CPs
+    - feral_frenzy,if=var.combo_points<=2&var.tigers_fury_up
+
+    # 8. Shred with Sudden Ambush — bonus damage, acts as if from stealth
+    - shred,if=var.has_sudden_ambush
+
+    # 9. Rake — maintain with 100% uptime, snapshot with Tiger's Fury
     - rake,if=var.rake_refreshable
-    - moonfire,if=talent.lunar_inspiration&debuff.moonfire.remains<4.2
+
+    # 10. Moonfire (Lunar Inspiration) — maintain like Rake
+    - moonfire,if=talent.lunar_inspiration&var.moonfire_refreshable
+
+    # 11. Thrash — maintain bleed
     - thrash,if=var.thrash_refreshable
+
+    # 12. Brutal Slash — use charges to avoid capping
     - brutal_slash,if=talent.brutal_slash&cooldown.brutal_slash.charges>=2
+
+    # 13. Shred — filler combo point generator
     - shred
 
   # -------------------------------------------------------------------------------------------------
-  # DRUID OF THE CLAW - AOE TARGET
+  # DRUID OF THE CLAW - AOE (3+ targets)
+  # Based on Icy Veins Midnight 12.0.1 priority
   # -------------------------------------------------------------------------------------------------
   aoe_rotation:
-    - tigers_fury,if=var.energy_deficit>40|buff.tigers_fury.down
-    - feral_frenzy,if=var.combo_points<=1
-    
-    # Finishers
-    - ravage,if=var.combo_points>=4|buff.ravage.up
-    - primal_wrath,if=var.combo_points>=4&var.rip_refreshable
-    - ferocious_bite,if=var.has_apex
-    - primal_wrath,if=var.combo_points>=4
-    
-    # Builders
-    - thrash,if=var.thrash_refreshable
+    # 1. Consume Apex Predator's Craving immediately
+    - ferocious_bite,if=var.has_apex&debuff.rip.up
+    - ravage,if=var.has_apex&var.ravage_up&debuff.rip.up
+
+    # 2. Tiger's Fury on cooldown
+    - tigers_fury,if=var.energy_for_tf|buff.tigers_fury.down
+
+    # 3. Primal Wrath — apply/refresh Rip on all targets, snapshot TF
+    - primal_wrath,if=var.cp_max&(debuff.rip.down|var.rip_refreshable)
+    - primal_wrath,if=var.cp_max&var.tigers_fury_up&var.rip_refreshable
+
+    # 4. Ravage — consume procs (AoE cleave makes this extra valuable)
+    - ravage,if=var.ravage_up&var.cp_max&var.energy_for_bite&debuff.rip.up
+
+    # 5. Ferocious Bite — with Rip up triggers Rampant Ferocity AoE
+    - ferocious_bite,if=var.cp_max&var.energy_for_bite&debuff.rip.up
+
+    # 6. Feral Frenzy / Frantic Frenzy — strong AoE burst
+    - feral_frenzy,if=var.combo_points<=2
+
+    # 7. Chomp — on cooldown
+    - chomp,if=var.energy<30|buff.chomp.up=false
+
+    # 8. Rake — cycle between targets to spread bleeds
     - rake,cycle=enemies,if=var.rake_refreshable
-    - moonfire,cycle=enemies,if=talent.lunar_inspiration&debuff.moonfire.remains<4.2
-    - brutal_slash,if=cooldown.brutal_slash.charges>=1
+
+    # 9. Thrash — maintain on all targets
+    - thrash,if=var.thrash_refreshable
+
+    # 10. Moonfire (Lunar Inspiration) — cycle targets, but only on 2-3 count
+    - moonfire,cycle=enemies,if=talent.lunar_inspiration&var.moonfire_refreshable&active_enemies<=4
+
+    # 11. Brutal Slash — use charges, strong AoE builder
+    - brutal_slash,if=talent.brutal_slash&cooldown.brutal_slash.charges>=1
+
+    # 12. Swipe — filler AoE builder
     - swipe
 
   main:
@@ -183,16 +307,24 @@ lists:
     - cat_form,if=!buff.cat_form.up&!buff.bear_form.up
 
     - return,if=!player.combat&active_enemies=0
-    
+
     - call_action_list,name=auto_target
     - call_action_list,name=auto_heal
     - call_action_list,name=interrupts
     - call_action_list,name=dispels
     - call_action_list,name=defensives
-    
+
+    # Stealth opener — Rake from stealth for bonus damage
     - call_action_list,name=stealth_opener,if=buff.prowl.up|buff.shadowmeld.up
+
+    # Cooldowns and burst
     - call_action_list,name=cooldowns,if=player.combat
+    - call_action_list,name=racials,if=config.use_racials&player.combat
     - call_action_list,name=trinkets,if=player.combat
-    
+
+    # Movement
+    - call_action_list,name=movement,if=player.moving
+
+    # Core rotation dispatch
     - call_action_list,name=aoe_rotation,if=active_enemies>=config.aoe_threshold
     - call_action_list,name=st_rotation,if=active_enemies<config.aoe_threshold
