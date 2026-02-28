@@ -104,11 +104,9 @@ variables:
   # FORM
   in_cat_form: buff.cat_form.up
 
-  # RESOURCES
-  combo_points: player.combo_points
-  energy: player.energy
-  energy_deficit: player.energy.max-player.energy
-  cp_max: var.combo_points>=5
+  # RESOURCES — use direct resource names, no variable wrapper
+  cp_max: combo_points>=4
+  cp_full: combo_points>=5
 
   # BUFF TRACKING
   has_apex: buff.apex_predators_craving.up
@@ -138,9 +136,11 @@ variables:
   combat_start: player.combat&player.combat.time<3
   can_interrupt: target.casting&!target.casting.interruptible=false
 
-  # ENERGY MANAGEMENT — always try to have 50+ energy for Ferocious Bite/Ravage
-  energy_for_bite: var.energy>=50
-  energy_for_tf: var.energy_deficit>=50
+  # ENERGY MANAGEMENT
+  # 50+ energy is ideal for max Bite damage, but 25+ is still usable
+  energy_for_bite: energy>=25
+  energy_for_bite_ideal: energy>=50
+  energy_for_tf: energy.deficit>=50
 
   # MOVEMENT
   use_stampeding_roar: moving.time>=config.stampeding_roar_movement_time&buff.stampeding_roar.down&((config.stampeding_roar_usage=1&player.combat)|(config.stampeding_roar_usage=2&!player.combat)|(config.stampeding_roar_usage=3))
@@ -177,7 +177,7 @@ lists:
     - berserk,if=config.use_berserk&var.tigers_fury_up&(target.boss|active_enemies>=config.aoe_threshold)
     - incarnation_avatar_of_ashamane,if=config.use_berserk&var.tigers_fury_up&(target.boss|active_enemies>=config.aoe_threshold)
     # Convoke — cast inside Berserk + Tiger's Fury window, at low CPs
-    - convoke_the_spirits,if=config.use_convoke&var.berserk_up&var.tigers_fury_up&var.combo_points<=2
+    - convoke_the_spirits,if=config.use_convoke&var.berserk_up&var.tigers_fury_up&combo_points<=2
 
   racials:
     - blood_fury,if=var.berserk_up
@@ -216,27 +216,31 @@ lists:
   # -------------------------------------------------------------------------------------------------
   st_rotation:
     # 1. Consume Apex Predator's Craving immediately (free max damage Bite/Ravage)
-    - ferocious_bite,if=var.has_apex&var.rip_up
-    - ravage,if=var.has_apex&var.ravage_up&var.rip_up
+    - ferocious_bite,if=var.has_apex
+    - ravage,if=var.has_apex&var.ravage_up
 
     # 2. Tiger's Fury on cooldown — energy refill + 15% damage buff
     - tigers_fury,if=var.energy_for_tf|buff.tigers_fury.down
 
     # 3. Chomp — new Midnight ability, use on cooldown (no energy cost)
-    - chomp,if=var.energy<30|buff.chomp.up=false
+    - chomp,if=energy<30
 
     # 4. Rip — maintain at all times, ideally snapshot with Tiger's Fury
     - rip,if=var.cp_max&!var.rip_up
     - rip,if=var.cp_max&var.rip_refreshable&var.tigers_fury_up
+    - rip,if=var.cp_full&var.rip_refreshable
 
-    # 5. Ravage — consume procs ASAP with 50+ energy
-    - ravage,if=var.ravage_up&var.cp_max&var.energy_for_bite&var.rip_up
+    # 5. Ravage — consume procs ASAP
+    - ravage,if=var.ravage_up&var.cp_max&var.energy_for_bite
 
-    # 6. Ferocious Bite — spend CPs when Rip is healthy and 50+ energy
-    - ferocious_bite,if=var.cp_max&var.energy_for_bite&var.rip_up
+    # 6. Ferocious Bite — spend CPs when Rip is healthy (ideal: 50+ energy)
+    - ferocious_bite,if=var.cp_max&var.energy_for_bite_ideal&var.rip_up
+    # Fallback: use Bite even at lower energy to avoid wasting CPs
+    - ferocious_bite,if=var.cp_full&var.energy_for_bite&var.rip_up
 
     # 7. Feral Frenzy — on cooldown, sync with Tiger's Fury, at low CPs
-    - feral_frenzy,if=var.combo_points<=2&var.tigers_fury_up
+    - feral_frenzy,if=combo_points<=2&var.tigers_fury_up
+    - feral_frenzy,if=combo_points<=2&cooldown.tigers_fury.remains>10
 
     # 8. Shred with Sudden Ambush — bonus damage, acts as if from stealth
     - shred,if=var.has_sudden_ambush
@@ -253,7 +257,10 @@ lists:
     # 12. Brutal Slash — use charges to avoid capping
     - brutal_slash,if=talent.brutal_slash&cooldown.brutal_slash.charges>=2
 
-    # 13. Shred — filler combo point generator
+    # 13. Ferocious Bite fallback — dump CPs to avoid capping even if Rip isn't ideal
+    - ferocious_bite,if=var.cp_full&var.energy_for_bite
+
+    # 14. Shred — filler combo point generator
     - shred
 
   # -------------------------------------------------------------------------------------------------
@@ -262,35 +269,39 @@ lists:
   # -------------------------------------------------------------------------------------------------
   aoe_rotation:
     # 1. Consume Apex Predator's Craving immediately
-    - ferocious_bite,if=var.has_apex&debuff.rip.up
-    - ravage,if=var.has_apex&var.ravage_up&debuff.rip.up
+    - ferocious_bite,if=var.has_apex
+    - ravage,if=var.has_apex&var.ravage_up
 
     # 2. Tiger's Fury on cooldown
     - tigers_fury,if=var.energy_for_tf|buff.tigers_fury.down
 
-    # 3. Primal Wrath — apply/refresh Rip on all targets, snapshot TF
-    - primal_wrath,if=var.cp_max&(debuff.rip.down|var.rip_refreshable)
-    - primal_wrath,if=var.cp_max&var.tigers_fury_up&var.rip_refreshable
+    # 3. Primal Wrath — main AoE finisher, applies Rip to all targets
+    - primal_wrath,if=var.cp_max&var.tigers_fury_up
+    - primal_wrath,if=var.cp_max&var.rip_refreshable
+    - primal_wrath,if=var.cp_max&debuff.rip.down
+    - primal_wrath,if=var.cp_full
 
     # 4. Ravage — consume procs (AoE cleave makes this extra valuable)
-    - ravage,if=var.ravage_up&var.cp_max&var.energy_for_bite&debuff.rip.up
+    - ravage,if=var.ravage_up&var.cp_max&var.energy_for_bite
 
     # 5. Ferocious Bite — with Rip up triggers Rampant Ferocity AoE
     - ferocious_bite,if=var.cp_max&var.energy_for_bite&debuff.rip.up
+    # Fallback: dump CPs to avoid waste
+    - ferocious_bite,if=var.cp_full&var.energy_for_bite
 
     # 6. Feral Frenzy / Frantic Frenzy — strong AoE burst
-    - feral_frenzy,if=var.combo_points<=2
+    - feral_frenzy,if=combo_points<=2
 
     # 7. Chomp — on cooldown
-    - chomp,if=var.energy<30|buff.chomp.up=false
+    - chomp,if=energy<30
 
-    # 8. Rake — cycle between targets to spread bleeds
-    - rake,cycle=enemies,if=var.rake_refreshable
-
-    # 9. Thrash — maintain on all targets
+    # 8. Thrash — maintain on all targets (higher priority in AoE)
     - thrash,if=var.thrash_refreshable
 
-    # 10. Moonfire (Lunar Inspiration) — cycle targets, but only on 2-3 count
+    # 9. Rake — cycle between targets to spread bleeds
+    - rake,cycle=enemies,if=var.rake_refreshable
+
+    # 10. Moonfire (Lunar Inspiration) — cycle targets, but only on 2-4 count
     - moonfire,cycle=enemies,if=talent.lunar_inspiration&var.moonfire_refreshable&active_enemies<=4
 
     # 11. Brutal Slash — use charges, strong AoE builder
@@ -303,12 +314,13 @@ lists:
     - return,if=player.channeling
     - call_action_list,name=sanity_checks
     - call_action_list,name=spell_queue
-    - call_action_list,name=out_of_combat,if=!player.combat
-    - cat_form,if=!buff.cat_form.up&!buff.bear_form.up
+    - call_action_list,name=out_of_combat,if=!player.combat&!mounted.flying&!mounted.ground
+    - cat_form,if=!buff.cat_form.up&!mounted.flying&!mounted.ground
 
     - return,if=!player.combat&active_enemies=0
+    - return,if=mounted.flying|mounted.ground
 
-    - call_action_list,name=auto_target
+    - call_action_list,name=auto_target,if=player.combat
     - call_action_list,name=auto_heal
     - call_action_list,name=interrupts
     - call_action_list,name=dispels
