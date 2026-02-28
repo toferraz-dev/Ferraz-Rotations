@@ -12,6 +12,17 @@ description: |
 entry: main
 
 config:
+  # GAME MODE
+  game_mode:
+    label: "Game Mode"
+    type: dropdown
+    options:
+      - label: "Mythic+"
+        value: 1
+      - label: "Leveling"
+        value: 2
+    default: 1
+
   # ROTATION STYLE
   rotation_source:
     label: "Rotation Style"
@@ -167,8 +178,12 @@ lists:
     - barkskin,if=var.dangerous_situation&!buff.barkskin.up
     - renewal,if=health.pct<config.renewal_threshold
     - barkskin,if=health.pct<config.barkskin_threshold&!buff.barkskin.up
-    # Predatory Swiftness — free instant Regrowth proc
-    - regrowth,if=var.predatory_swiftness_up&health.pct<80
+    # Predatory Swiftness — free instant Regrowth proc (M+ only below 80%)
+    - regrowth,if=config.game_mode=1&var.predatory_swiftness_up&health.pct<80
+
+  # Leveling: always use Regrowth on Predatory Swiftness proc (free instant heal)
+  leveling_heal:
+    - regrowth,if=var.predatory_swiftness_up
 
   cooldowns:
     # Tiger's Fury — off GCD, use on cooldown when energy is low
@@ -325,6 +340,9 @@ lists:
     - call_action_list,name=interrupts
     - call_action_list,name=dispels
     - call_action_list,name=defensives
+
+    # Leveling: always use free Regrowth proc
+    - call_action_list,name=leveling_heal,if=config.game_mode=2&var.predatory_swiftness_up
 
     # Stealth opener — Rake from stealth for bonus damage
     - call_action_list,name=stealth_opener,if=buff.prowl.up|buff.shadowmeld.up
