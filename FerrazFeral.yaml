@@ -260,9 +260,11 @@ lists:
     # Fallback: use Bite even at lower energy to avoid wasting CPs
     - ferocious_bite,if=var.cp_full&var.energy_for_bite&var.rip_up
 
-    # 7. Feral Frenzy — on cooldown, sync with Tiger's Fury, at low CPs
-    - feral_frenzy,if=combo_points<=2&var.tigers_fury_up
-    - feral_frenzy,if=combo_points<=2&cooldown.tigers_fury.remains>10
+    # 7. Frantic Frenzy / Feral Frenzy — on cooldown, sync with Tiger's Fury, at low CPs
+    - frantic_frenzy,if=talent.frantic_frenzy&combo_points<=2&var.tigers_fury_up
+    - frantic_frenzy,if=talent.frantic_frenzy&combo_points<=2&cooldown.tigers_fury.remains>10
+    - feral_frenzy,if=!talent.frantic_frenzy&combo_points<=2&var.tigers_fury_up
+    - feral_frenzy,if=!talent.frantic_frenzy&combo_points<=2&cooldown.tigers_fury.remains>10
 
     # 8. Shred with Sudden Ambush — bonus damage, acts as if from stealth
     - shred,if=var.has_sudden_ambush
@@ -311,8 +313,9 @@ lists:
     # Fallback: dump CPs to avoid waste
     - ferocious_bite,if=var.cp_full&var.energy_for_bite
 
-    # 6. Feral Frenzy / Frantic Frenzy — strong AoE burst
-    - feral_frenzy,if=combo_points<=2
+    # 6. Frantic Frenzy / Feral Frenzy — strong AoE burst
+    - frantic_frenzy,if=talent.frantic_frenzy&combo_points<=2
+    - feral_frenzy,if=!talent.frantic_frenzy&combo_points<=2
 
     # 7. Chomp — on cooldown
     - chomp,if=energy<30
