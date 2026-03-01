@@ -333,6 +333,10 @@ lists:
     - cat_form,if=!buff.cat_form.up&!mounted.flying&!mounted.ground
 
     - return,if=!player.combat&active_enemies=0
+
+    # Leveling: pull with Moonfire when target is at range
+    - moonfire,if=config.game_mode=2&!player.combat&target.enemy&target.alive&range>8
+
     - return,if=mounted.flying|mounted.ground
 
     - call_action_list,name=auto_target,if=player.combat
