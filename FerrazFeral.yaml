@@ -7,8 +7,8 @@ description: |
   Master Feral Druid Rotation for Mythic+ — Midnight (12.0.1).
   Druid of the Claw hero talent build.
   Based on Icy Veins / Wowhead rotation priority.
-  Supports Single Target and AoE with proper snapshotting,
-  Chomp, Ravage, and Apex Predators Craving management.
+  Supports Single Target / AoE with proper snapshotting,
+  Chomp, Ravage, / Apex Predators Craving management.
 entry: main
 
 config:
@@ -62,6 +62,11 @@ config:
 
   use_convoke:
     label: "Auto Convoke"
+    type: checkbox
+    default: true
+
+  use_heart_of_the_wild:
+    label: "Auto Heart of the Wild"
     type: checkbox
     default: true
 
@@ -179,17 +184,19 @@ lists:
     - renewal,if=health.pct<config.renewal_threshold
     - barkskin,if=health.pct<config.barkskin_threshold&!buff.barkskin.up
     # Predatory Swiftness — free instant Regrowth proc (M+ only below 80%)
-    - regrowth,if=config.game_mode=1&var.predatory_swiftness_up&health.pct<80
+    - regrowth,if=var.predatory_swiftness_up&health.pct<80
 
   # Leveling: always use Regrowth on Predatory Swiftness proc (free instant heal)
   leveling_heal:
     - regrowth,if=var.predatory_swiftness_up
 
   cooldowns:
+    # Heart of the Wild — major utility/burst CD
+    - heart_of_the_wild,if=config.use_heart_of_the_wild&talent.heart_of_the_wild
     # Tiger's Fury — off GCD, use on cooldown when energy is low
     - tigers_fury,if=var.energy_for_tf|buff.tigers_fury.down
     # Berserk / Incarnation — major DPS window, sync with Tiger's Fury
-    - berserk,if=config.use_berserk&var.tigers_fury_up&(target.boss|active_enemies>=config.aoe_threshold)
+    - berserk,if=config.use_berserk&var.tigers_fury_up
     - incarnation_avatar_of_ashamane,if=config.use_berserk&var.tigers_fury_up&(target.boss|active_enemies>=config.aoe_threshold)
     # Convoke — cast inside Berserk + Tiger's Fury window, at low CPs
     - convoke_the_spirits,if=config.use_convoke&var.berserk_up&var.tigers_fury_up&combo_points<=2
