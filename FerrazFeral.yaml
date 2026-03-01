@@ -244,39 +244,38 @@ lists:
     # 2. Tiger's Fury on cooldown — energy refill + 15% damage buff
     - tigers_fury,if=var.energy_for_tf|buff.tigers_fury.down
 
-    # 3. Chomp — new Midnight ability, use on cooldown (no energy cost)
-    - chomp,if=energy<30
-
-    # 4. Rip — maintain at all times, ideally snapshot with Tiger's Fury
+    # 3. Rip — maintain at all times, ideally snapshot with Tiger's Fury
     - rip,if=var.cp_max&!var.rip_up
     - rip,if=var.cp_max&var.rip_refreshable&var.tigers_fury_up
     - rip,if=var.cp_full&var.rip_refreshable
 
-    # 5. Ravage — consume procs ASAP
+    # 4. Ravage — consume procs ASAP
     - ravage,if=var.ravage_up&var.cp_max&var.energy_for_bite
 
-    # 6. Ferocious Bite — spend CPs when Rip is healthy (ideal: 50+ energy)
+    # 5. Ferocious Bite — spend CPs when Rip is healthy (ideal: 50+ energy)
     - ferocious_bite,if=var.cp_max&var.energy_for_bite_ideal&var.rip_up
     # Fallback: use Bite even at lower energy to avoid wasting CPs
     - ferocious_bite,if=var.cp_full&var.energy_for_bite&var.rip_up
 
-    # 7. Frantic Frenzy / Feral Frenzy — on cooldown, sync with Tiger's Fury, at low CPs
-    - frantic_frenzy,if=talent.frantic_frenzy&combo_points<=2&var.tigers_fury_up
-    - frantic_frenzy,if=talent.frantic_frenzy&combo_points<=2&cooldown.tigers_fury.remains>10
-    - feral_frenzy,if=!talent.frantic_frenzy&combo_points<=2&var.tigers_fury_up
-    - feral_frenzy,if=!talent.frantic_frenzy&combo_points<=2&cooldown.tigers_fury.remains>10
+    # 6. Chomp — new Midnight ability, use on cooldown (no energy cost) after finishers
+    - chomp,if=energy<30
 
-    # 8. Shred with Sudden Ambush — bonus damage, acts as if from stealth
-    - shred,if=var.has_sudden_ambush
-
-    # 9. Rake — maintain with 100% uptime, snapshot with Tiger's Fury
+    # 7. Rake — maintain with 100% uptime, give highest priority to Sudden Ambush proc
+    - rake,if=var.has_sudden_ambush&var.rake_refreshable
     - rake,if=var.rake_refreshable
 
-    # 10. Moonfire (Lunar Inspiration) — maintain like Rake
-    - moonfire,if=talent.lunar_inspiration&var.moonfire_refreshable
-
-    # 11. Thrash — maintain bleed
+    # 8. Thrash — maintain bleed before big generators
     - thrash,if=var.thrash_refreshable
+
+    # 9. Frantic Frenzy / Feral Frenzy — on cooldown, sync with Tiger's Fury, at low CPs
+    - frantic_frenzy,if=talent.frantic_frenzy&combo_points<=2&var.tigers_fury_up
+    - feral_frenzy,if=!talent.frantic_frenzy&combo_points<=2&var.tigers_fury_up
+
+    # 10. Shred with Sudden Ambush — bonus damage, acts as if from stealth
+    - shred,if=var.has_sudden_ambush
+
+    # 11. Moonfire (Lunar Inspiration) — maintain like Rake
+    - moonfire,if=talent.lunar_inspiration&var.moonfire_refreshable
 
     # 12. Brutal Slash — use charges to avoid capping
     - brutal_slash,if=talent.brutal_slash&cooldown.brutal_slash.charges>=2
@@ -313,15 +312,15 @@ lists:
     # Fallback: dump CPs to avoid waste
     - ferocious_bite,if=var.cp_full&var.energy_for_bite
 
-    # 6. Frantic Frenzy / Feral Frenzy — strong AoE burst
-    - frantic_frenzy,if=talent.frantic_frenzy&combo_points<=2
-    - feral_frenzy,if=!talent.frantic_frenzy&combo_points<=2
-
-    # 7. Chomp — on cooldown
+    # 6. Chomp — on cooldown after Finishers
     - chomp,if=energy<30
 
-    # 8. Thrash — maintain on all targets (higher priority in AoE)
+    # 7. Thrash — maintain on all targets (higher priority in AoE)
     - thrash,if=var.thrash_refreshable
+
+    # 8. Frantic Frenzy / Feral Frenzy — strong AoE burst
+    - frantic_frenzy,if=talent.frantic_frenzy&combo_points<=2
+    - feral_frenzy,if=!talent.frantic_frenzy&combo_points<=2
 
     # 9. Rake — cycle between targets to spread bleeds
     - rake,cycle=enemies,if=var.rake_refreshable
