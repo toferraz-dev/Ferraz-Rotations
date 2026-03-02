@@ -65,10 +65,6 @@ config:
     min: 0
     max: 2000
     default: 250
-  use_typhoon:
-    label: "Typhoon on Interrupt"
-    type: checkbox
-    default: false
 
   # --- Defensives ---
   barkskin_threshold:
@@ -128,17 +124,10 @@ config:
     default: 2
 
   # --- Trinkets ---
-  trinket_usage:
-    label: "Trinket Usage"
-    type: dropdown
-    options:
-      - label: "On Cooldown"
-        value: 1
-      - label: "With Incarnation"
-        value: 2
-      - label: "Manual Only"
-        value: 0
-    default: 1
+  use_trinkets:
+    label: "Auto Trinkets"
+    type: checkbox
+    default: true
 
 # ============================================================
 #  ACTION LISTS
@@ -215,7 +204,6 @@ lists:
 
   interrupts:
     - solar_beam,if=config.use_solar_beam&target.casting&target.casting.interruptible,delay=config.solar_beam_delay
-    - typhoon,if=config.use_typhoon&target.casting&target.casting.interruptible&target.range<=15
     - incapacitating_roar,if=config.use_incapacitating_roar&active_enemies>=3&target.casting&target.casting.interruptible
     - soothe,if=target.purgeable.enrage
 
@@ -227,8 +215,8 @@ lists:
   # ----------------------------------------------------------
 
   trinkets:
-    - trinket_1,if=trinket_1.ready&config.trinket_usage!=0&((config.trinket_usage=1)|(config.trinket_usage=2&(buff.incarnation_chosen_of_elune.up|buff.celestial_alignment.up)))
-    - trinket_2,if=trinket_2.ready&config.trinket_usage!=0&((config.trinket_usage=1)|(config.trinket_usage=2&(buff.incarnation_chosen_of_elune.up|buff.celestial_alignment.up)))
+    - trinket_1,if=config.use_trinkets&trinket_1.ready&(buff.incarnation_chosen_of_elune.up|buff.celestial_alignment.up|cooldown.incarnation_chosen_of_elune.remains>20)
+    - trinket_2,if=config.use_trinkets&trinket_2.ready&(buff.incarnation_chosen_of_elune.up|buff.celestial_alignment.up|cooldown.incarnation_chosen_of_elune.remains>20)
 
   movement:
     - stampeding_roar,if=moving.time>=config.stampeding_roar_movement_time&buff.stampeding_roar.down&((config.stampeding_roar_usage=1&player.combat)|(config.stampeding_roar_usage=2&!player.combat)|(config.stampeding_roar_usage=3))&config.stampeding_roar_usage!=0

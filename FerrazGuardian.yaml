@@ -148,19 +148,10 @@ config:
     default: 2
 
   # TRINKETS
-  trinket_usage:
-    label: "Trinket Usage"
-    type: dropdown
-    options:
-      - label: "On Cooldown"
-        value: 1
-      - label: "With Incarnation"
-        value: 2
-      - label: "When taking damage"
-        value: 3
-      - label: "Manual Only"
-        value: 0
-    default: 1
+  use_trinkets:
+    label: "Auto Trinkets"
+    type: checkbox
+    default: true
 
 variables:
   # FORM AND RESOURCES
@@ -397,8 +388,8 @@ lists:
   # ----------------------------------------------------------
 
   trinkets:
-    - trinket_1,if=trinket_1.ready&config.trinket_usage!=0&((config.trinket_usage=1)|(config.trinket_usage=2&var.incarnation_active)|(config.trinket_usage=3&health.pct<70))
-    - trinket_2,if=trinket_2.ready&config.trinket_usage!=0&((config.trinket_usage=1)|(config.trinket_usage=2&var.incarnation_active)|(config.trinket_usage=3&health.pct<70))
+    - trinket_1,if=config.use_trinkets&trinket_1.ready&(var.incarnation_active|health.pct<70)
+    - trinket_2,if=config.use_trinkets&trinket_2.ready&(var.incarnation_active|health.pct<70)
 
   movement:
     - stampeding_roar,if=var.use_stampeding_roar&config.stampeding_roar_usage!=0
