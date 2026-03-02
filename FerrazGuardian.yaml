@@ -240,7 +240,7 @@ lists:
     - ironfur,if=var.incarnation_active&var.ironfur_stacks<config.ironfur_stacks_max&var.rage>=45
       
   cooldowns:
-    - lunar_beam,if=config.hero_tree=1&var.use_lunar_beam
+    - lunar_beam,if=config.hero_tree=1&var.use_lunar_beam&target.range<=10
     - incarnation_guardian_of_ursoc,if=active_enemies>=config.incarnation_enemies|(target.boss&target.time_to_die>20)
     - rage_of_the_sleeper,if=config.hero_tree=1&(health.pct<config.rage_of_sleeper_threshold|active_enemies>=4|(var.incarnation_active&active_enemies>=3))
     - berserk_ravage,if=talent.berserk_ravage&(active_enemies>=3|target.boss)
