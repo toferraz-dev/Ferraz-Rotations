@@ -1,4 +1,4 @@
-version: 3.4
+version: 3.5
 author: Ferraz
 patch: "12.0.1"
 spec: 105
@@ -218,9 +218,9 @@ lists:
   active_healing:
     # Nature's Swiftness follow-up: instant Regrowth on lowest
     - regrowth,cycle=members,if=buff.natures_swiftness.up&cycle.health.pct<config.regrowth_threshold&cycle.range>=0&cycle.range<=40
-    - lifebloom,cycle=tanks,if=player.combat&cycle.buff.lifebloom.down&cycle.range>=0&cycle.range<=40&cycle.health.pct<95
     - rejuvenation,cycle=members,if=cycle.buff.rejuvenation.remains<1.5&cycle.health.pct<config.rejuvenation_threshold&cycle.range>=0&cycle.range<=40    
     - swiftmend,cycle=members,if=cycle.health.pct<config.swiftmend_threshold&cycle.range>=0&cycle.range<=40
+    - lifebloom,cycle=tanks,if=player.combat&(cycle.buff.lifebloom.stack<3|cycle.buff.lifebloom.remains<3)&cycle.range>=0&cycle.range<=40&cycle.health.pct<95    
     - wild_growth,if=group.count(cycle.health.pct<config.wild_growth_threshold)>=config.wild_growth_members
     - regrowth,cycle=members,if=cycle.health.pct<config.regrowth_threshold&cycle.range>=0&cycle.range<=40
     
@@ -258,9 +258,9 @@ lists:
     - natures_cure.mouseover,if=config.use_dispell&mouseover.dispelable.list&mouseover.range>=0&mouseover.range<=40
     - regrowth.mouseover,if=buff.natures_swiftness.up&mouseover.range>=0&mouseover.range<=40
     - swiftmend.mouseover,if=mouseover.range>=0&mouseover.range<=40
-    - regrowth.mouseover,if=mouseover.range>=0&mouseover.range<=40
     - rejuvenation.mouseover,if=mouseover.buff.remains(rejuvenation)<1.5&mouseover.range>=0&mouseover.range<=40
-
+    - regrowth.mouseover,if=mouseover.range>=0&mouseover.range<=40
+    
   main:
     - return,if=player.channeling
     - return,if=buff.tranquility.up
