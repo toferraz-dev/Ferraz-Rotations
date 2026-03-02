@@ -75,6 +75,11 @@ config:
     type: checkbox
     default: true
 
+  use_trinkets:
+    label: "Auto Trinkets"
+    type: checkbox
+    default: true
+
   # INTERRUPTS
   use_skull_bash:
     label: "Auto Interrupt"
@@ -211,7 +216,6 @@ lists:
     - skull_bash,if=config.use_skull_bash&var.can_interrupt,delay=config.skull_bash_delay
     - soothe,if=target.purgeable.enrage
     - incapacitating_roar,if=config.use_skull_bash&var.can_interrupt&cooldown.skull_bash.ready=false
-    - typhoon,if=config.use_skull_bash&var.can_interrupt&cooldown.skull_bash.ready=false
 
   dispels:
     - remove_corruption,cycle=members,if=cycle.dispelable.list&cycle.range>0&cycle.range<=40
@@ -225,8 +229,8 @@ lists:
     - rake,if=buff.prowl.up|buff.shadowmeld.up
 
   trinkets:
-    - trinket_1,if=trinket_1.ready&(var.berserk_up|target.boss|active_enemies>=config.aoe_threshold)
-    - trinket_2,if=trinket_2.ready&(var.berserk_up|target.boss|active_enemies>=config.aoe_threshold)
+    - trinket_1,if=config.use_trinkets&trinket_1.ready&(var.berserk_up|target.boss|active_enemies>=config.aoe_threshold)
+    - trinket_2,if=config.use_trinkets&trinket_2.ready&(var.berserk_up|target.boss|active_enemies>=config.aoe_threshold)
 
   movement:
     - stampeding_roar,if=var.use_stampeding_roar&config.stampeding_roar_usage!=0
@@ -363,6 +367,7 @@ lists:
     # Cooldowns and burst
     - call_action_list,name=cooldowns,if=player.combat
     - call_action_list,name=racials,if=config.use_racials&player.combat
+    - call_action_list,name=trinkets,if=player.combat
 
     # Movement
     - call_action_list,name=movement,if=player.moving
