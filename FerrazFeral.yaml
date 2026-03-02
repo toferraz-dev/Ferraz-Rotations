@@ -68,7 +68,7 @@ config:
   use_heart_of_the_wild:
     label: "Auto Heart of the Wild"
     type: checkbox
-    default: true
+    default: false
 
   use_racials:
     label: "Auto Racials"
@@ -363,7 +363,6 @@ lists:
     # Cooldowns and burst
     - call_action_list,name=cooldowns,if=player.combat
     - call_action_list,name=racials,if=config.use_racials&player.combat
-    - call_action_list,name=trinkets,if=player.combat
 
     # Movement
     - call_action_list,name=movement,if=player.moving
