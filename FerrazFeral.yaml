@@ -191,10 +191,6 @@ lists:
     # Predatory Swiftness — free instant Regrowth proc (M+ only below 80%)
     - regrowth,if=var.predatory_swiftness_up&health.pct<80
 
-  # Leveling: always use Regrowth on Predatory Swiftness proc (free instant heal)
-  leveling_heal:
-    - regrowth,if=var.predatory_swiftness_up
-
   cooldowns:
     # Heart of the Wild — major utility/burst CD
     - heart_of_the_wild,if=config.use_heart_of_the_wild&talent.heart_of_the_wild
@@ -344,22 +340,16 @@ lists:
     - call_action_list,name=spell_queue
     - call_action_list,name=out_of_combat,if=!player.combat&!mounted.flying&!mounted.ground
     - cat_form,if=!buff.cat_form.up&!mounted.flying&!mounted.ground
-
     - return,if=!player.combat&active_enemies=0
+    - return,if=mounted.flying|mounted.ground
 
     # Leveling: pull with Moonfire when target is at range
     - moonfire,if=config.game_mode=2&!player.combat&target.enemy&target.alive&range>8
-
-    - return,if=mounted.flying|mounted.ground
-
+    - call_action_list,name=defensives
     - call_action_list,name=auto_target,if=player.combat
     - call_action_list,name=auto_heal
     - call_action_list,name=interrupts
     - call_action_list,name=dispels
-    - call_action_list,name=defensives
-
-    # Leveling: always use free Regrowth proc
-    - call_action_list,name=leveling_heal,if=config.game_mode=2&var.predatory_swiftness_up
 
     # Stealth opener — Rake from stealth for bonus damage
     - call_action_list,name=stealth_opener,if=buff.prowl.up|buff.shadowmeld.up
