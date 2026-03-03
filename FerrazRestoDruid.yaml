@@ -217,7 +217,7 @@ lists:
 
   active_healing:
     # Nature's Swiftness follow-up: instant Regrowth on lowest
-    - lifebloom,cycle=tanks,if=player.combat&(cycle.buff.lifebloom.stack<3|cycle.buff.lifebloom.remains<3)&cycle.range>=0&cycle.range<=40     
+    - lifebloom,cycle=tanks,if=player.combat&(cycle.buff.lifebloom.stack<3|cycle.buff.lifebloom.remains<3)&cycle.range>=0&cycle.range<=40&cycle.health.pct<99
     - regrowth,cycle=members,if=buff.natures_swiftness.up&cycle.health.pct<config.regrowth_threshold&cycle.range>=0&cycle.range<=40
     - rejuvenation,cycle=members,if=cycle.buff.rejuvenation.remains<1.5&cycle.health.pct<config.rejuvenation_threshold&cycle.range>=0&cycle.range<=40    
     - swiftmend,cycle=members,if=cycle.health.pct<config.swiftmend_threshold&cycle.range>=0&cycle.range<=40
