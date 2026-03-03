@@ -242,9 +242,10 @@ lists:
   cooldowns:
     - lunar_beam,if=config.hero_tree=1&var.use_lunar_beam&target.range<=10
     - incarnation_guardian_of_ursoc,if=active_enemies>=config.incarnation_enemies|(target.boss&target.time_to_die>20)
-    - rage_of_the_sleeper,if=config.hero_tree=1&(health.pct<config.rage_of_sleeper_threshold|active_enemies>=4|(var.incarnation_active&active_enemies>=3))
     - berserk_ravage,if=talent.berserk_ravage&(active_enemies>=3|target.boss)
     - berserk_ravage,if=config.hero_tree=1&talent.berserk&(active_enemies>=3|target.boss)
+    - wild_guardian,if=var.incarnation_active
+    - rage_of_the_sleeper,if=config.hero_tree=1&(health.pct<config.rage_of_sleeper_threshold|active_enemies>=4|(var.incarnation_active&active_enemies>=3))
     - heart_of_the_wild,if=config.hero_tree=1&var.in_bear_form&active_enemies>=4
   
   interrupts:
@@ -291,6 +292,7 @@ lists:
     - thrash
     - moonfire,if=var.galactic_guardian_up
     - incarnation_guardian_of_ursoc
+    - wild_guardian,if=var.incarnation_active
     - swipe
 
   rotation_st_elune_alt:
@@ -314,6 +316,7 @@ lists:
     - thrash
     - mangle
     - incarnation_guardian_of_ursoc
+    - wild_guardian,if=var.incarnation_active
     - moonfire
     - swipe
 
