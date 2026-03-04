@@ -244,10 +244,13 @@ lists:
     # 2. Tiger's Fury on cooldown — energy refill + 15% damage buff
     - tigers_fury,if=var.energy_for_tf|buff.tigers_fury.down
 
-    # 3. Rip — maintain at all times, ideally snapshot with Tiger's Fury
-    - rip,if=var.cp_max&!var.rip_up
-    - rip,if=var.cp_max&var.rip_refreshable&var.tigers_fury_up
-    - rip,if=var.cp_full&var.rip_refreshable
+    # 3. Ferocious Bite in Execute Phase (< 25%) — Prioritize Bite over everything else, as it refreshes Rip automatically
+    - ferocious_bite,if=var.cp_max&target.health.pct<25
+
+    # 4. Rip — maintain at all times, ideally snapshot with Tiger's Fury (skip if in execute)
+    - rip,if=var.cp_max&!var.rip_up&target.health.pct>=25
+    - rip,if=var.cp_max&var.rip_refreshable&var.tigers_fury_up&target.health.pct>=25
+    - rip,if=var.cp_full&var.rip_refreshable&target.health.pct>=25
 
     # 4. Ravage — consume procs ASAP
     - ravage,if=var.ravage_up&var.cp_max&var.energy_for_bite
@@ -256,9 +259,6 @@ lists:
     - ferocious_bite,if=var.cp_max&var.energy_for_bite_ideal&var.rip_up
     # Fallback: use Bite even at lower energy to avoid wasting CPs
     - ferocious_bite,if=var.cp_full&var.energy_for_bite&var.rip_up
-
-    # 6. Chomp — new Midnight ability, use on cooldown (no energy cost) after finishers
-    - chomp,if=energy<30
 
     # 7. Rake — maintain with 100% uptime, give highest priority to Sudden Ambush proc
     - rake,if=var.has_sudden_ambush&var.rake_refreshable
@@ -311,9 +311,6 @@ lists:
     - ferocious_bite,if=var.cp_max&var.energy_for_bite&debuff.rip.up
     # Fallback: dump CPs to avoid waste
     - ferocious_bite,if=var.cp_full&var.energy_for_bite
-
-    # 6. Chomp — on cooldown after Finishers
-    - chomp,if=energy<30
 
     # 7. Thrash — maintain on all targets (higher priority in AoE)
     - thrash,if=var.thrash_refreshable
