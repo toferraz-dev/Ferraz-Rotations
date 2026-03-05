@@ -201,6 +201,8 @@ lists:
     - incarnation_avatar_of_ashamane,if=config.use_berserk&var.tigers_fury_up&(target.boss|active_enemies>=config.aoe_threshold)
     # Convoke — cast inside Berserk + Tiger's Fury window, at low CPs
     - convoke_the_spirits,if=config.use_convoke&var.berserk_up&var.tigers_fury_up&combo_points<=2
+    # Convoke — cast outside of Berserk if using 1-minute Convoke (Ashamane's Guidance)
+    - convoke_the_spirits,if=config.use_convoke&talent.ashamanes_guidance&var.tigers_fury_up&combo_points<=2
 
   racials:
     - blood_fury,if=var.berserk_up
