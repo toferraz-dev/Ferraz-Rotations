@@ -296,11 +296,9 @@ lists:
     # 2. Tiger's Fury on cooldown
     - tigers_fury,if=var.energy_for_tf|buff.tigers_fury.down
 
-    # 3. Primal Wrath — main AoE finisher, applies Rip to all targets
-    - primal_wrath,if=var.cp_max&var.tigers_fury_up
-    - primal_wrath,if=var.cp_max&var.rip_refreshable
+    # 3. Primal Wrath — use only to apply or refresh Rip within pandemic window
     - primal_wrath,if=var.cp_max&debuff.rip.down
-    - primal_wrath,if=var.cp_full
+    - primal_wrath,if=var.cp_max&var.rip_refreshable
 
     # 4. Ravage — consume procs (AoE cleave makes this extra valuable)
     - ravage,if=var.ravage_up&var.cp_max&var.energy_for_bite
