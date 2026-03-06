@@ -148,6 +148,11 @@ config:
     max: 5
     default: 3
 
+  force_dps:
+    label: "Force DPS (Ignore Group HP)"
+    type: checkbox
+    default: false
+
   # =================================================================================================
   #     UTILITY & ITEMS
   # =================================================================================================
@@ -170,7 +175,7 @@ config:
 
 variables:
   group_healthy: group.count(cycle.health.pct<config.catweave_group_hp)<config.catweave_injured_max
-  can_catweave: var.group_healthy&player.combat
+  can_catweave: (var.group_healthy|config.force_dps)&player.combat
   mo_friendly_valid: mouseover.exists&mouseover.alive&mouseover.friendly&mouseover.range>0&mouseover.range<=40
 
 lists:
@@ -186,7 +191,7 @@ lists:
     - return,if=player.loot_nearby
   
   interrupts:
-    - incapacitating_roar,if=target.casting.interruptible
+    - incapacitating_roar,if=target.casting.interruptible&target.range<=8
     - soothe,if=target.purgeable.enrage    
   
   out_of_combat:
