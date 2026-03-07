@@ -196,7 +196,7 @@ lists:
   
   out_of_combat:
     - mark_of_the_wild,if=group.count(cycle.buff.mark_of_the_wild.down.any&cycle.range>=0&cycle.range<=40)>0
-    - symbiotic_relationship,cycle=tanks,if=cycle.buff.symbiotic_relationship.down&cycle.range>=0&cycle.range<=40
+    - symbiotic_relationship,cycle=tanks,if=cycle.buff.symbiotic_relationship.down.any&cycle.range>=0&cycle.range<=40
     - rejuvenation,cycle=members,if=cycle.health.pct<config.rejuvenation_threshold&cycle.buff.rejuvenation.remains<1.5&!player.combat&cycle.range>=0&cycle.range<=40
     - regrowth,cycle=members,if=cycle.health.pct<config.regrowth_threshold&cycle.buff.regrowth.remains<1.5&!player.combat&cycle.range>=0&cycle.range<=40
     
