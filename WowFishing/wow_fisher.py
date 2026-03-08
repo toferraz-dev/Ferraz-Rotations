@@ -52,7 +52,7 @@ BOBBER_SETTLE_TIME = 1.0
 RECAST_DELAY = 1.2
 
 # Splash detection sensitivity (0-100). Lower = more sensitive.
-SENSITIVITY = 40
+SENSITIVITY = 35
 
 # Size of the monitoring area around the bobber (pixels)
 BOBBER_REGION_SIZE = 90
