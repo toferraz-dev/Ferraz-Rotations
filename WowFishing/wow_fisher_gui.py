@@ -498,55 +498,64 @@ class App(ctk.CTk):
         self.title_label = ctk.CTkLabel(self.header_frame, text="Ferraz Fishing WoW", font=ctk.CTkFont(size=24, weight="bold"))
         self.title_label.pack(side="left")
 
-        # Settings Frame
-        self.settings_frame = ctk.CTkFrame(self)
-        self.settings_frame.pack(pady=10, padx=20, fill="x")
+        # Settings Card
+        self.settings_frame = ctk.CTkFrame(self, corner_radius=10)
+        self.settings_frame.pack(pady=(5, 10), padx=20, fill="x")
 
-        self.key_label = ctk.CTkLabel(self.settings_frame, text="Fishing Keybind:")
-        self.key_label.grid(row=0, column=0, padx=10, pady=10, sticky="w")
-        self.key_entry = ctk.CTkEntry(self.settings_frame, width=60)
+        self.settings_title = ctk.CTkLabel(self.settings_frame, text="⚙️ Bot Configurations", font=ctk.CTkFont(size=16, weight="bold"))
+        self.settings_title.grid(row=0, column=0, columnspan=3, pady=(15, 10), padx=15, sticky="w")
+
+        self.key_label = ctk.CTkLabel(self.settings_frame, text="Fishing Keybind:", font=ctk.CTkFont(size=13))
+        self.key_label.grid(row=1, column=0, padx=15, pady=5, sticky="w")
+        self.key_entry = ctk.CTkEntry(self.settings_frame, width=70, justify="center")
         self.key_entry.insert(0, FISHING_KEY)
-        self.key_entry.grid(row=0, column=1, padx=10, pady=10, sticky="e")
+        self.key_entry.grid(row=1, column=1, columnspan=2, padx=15, pady=5, sticky="e")
 
-        self.sens_label = ctk.CTkLabel(self.settings_frame, text="Sensitivity:")
-        self.sens_label.grid(row=1, column=0, padx=10, pady=10, sticky="w")
-        self.sens_slider = ctk.CTkSlider(self.settings_frame, from_=10, to=100, command=self.update_sens_label)
+        self.sens_label = ctk.CTkLabel(self.settings_frame, text="Sensitivity:", font=ctk.CTkFont(size=13))
+        self.sens_label.grid(row=2, column=0, padx=15, pady=(5, 20), sticky="w")
+        self.sens_slider = ctk.CTkSlider(self.settings_frame, from_=10, to=100, command=self.update_sens_label, button_color="#3498DB", button_hover_color="#2980B9")
         self.sens_slider.set(SENSITIVITY)
-        self.sens_slider.grid(row=1, column=1, padx=10, pady=10)
+        self.sens_slider.grid(row=2, column=1, padx=5, pady=(5, 20))
         
-        self.sens_val_label = ctk.CTkLabel(self.settings_frame, text=str(SENSITIVITY))
-        self.sens_val_label.grid(row=1, column=2, padx=5, pady=10)
+        self.sens_val_label = ctk.CTkLabel(self.settings_frame, text=str(SENSITIVITY), font=ctk.CTkFont(weight="bold"))
+        self.sens_val_label.grid(row=2, column=2, padx=(5, 15), pady=(5, 20))
 
         # Actions Frame
         self.actions_frame = ctk.CTkFrame(self, fg_color="transparent")
-        self.actions_frame.pack(pady=10, padx=20, fill="x")
+        self.actions_frame.pack(pady=5, padx=20, fill="x")
 
-        self.calibrate_btn = ctk.CTkButton(self.actions_frame, text="Calibrate Area/Color", command=self.start_calibration, fg_color="#F39C12", hover_color="#D68910")
-        self.calibrate_btn.pack(side="left", padx=5, expand=True, fill="x")
+        self.calibrate_btn = ctk.CTkButton(self.actions_frame, text="Calibrate Colors", command=self.start_calibration, font=ctk.CTkFont(weight="bold"), fg_color="#E67E22", hover_color="#D35400", height=40)
+        self.calibrate_btn.pack(side="left", padx=(0, 5), expand=True, fill="x")
 
-        self.start_btn = ctk.CTkButton(self.actions_frame, text="Start Bot", command=self.toggle_bot, fg_color="#27AE60", hover_color="#229954")
+        self.start_btn = ctk.CTkButton(self.actions_frame, text="Start Bot", command=self.toggle_bot, font=ctk.CTkFont(weight="bold"), fg_color="#27AE60", hover_color="#229954", height=40)
         self.start_btn.pack(side="left", padx=5, expand=True, fill="x")
 
-        self.update_btn = ctk.CTkButton(self.actions_frame, text="Update Bot", command=self.update_bot, width=90, fg_color="#3498DB", hover_color="#2980B9")
-        self.update_btn.pack(side="left", padx=5)
+        self.update_btn = ctk.CTkButton(self.actions_frame, text="Update", command=self.update_bot, width=70, font=ctk.CTkFont(weight="bold"), fg_color="#2980B9", hover_color="#1F618D", height=40)
+        self.update_btn.pack(side="left", padx=(5, 0))
 
         # Legend
-        self.legend_label = ctk.CTkLabel(self, text="⌨ Atalhos: [F8] Stop Bot  |  [F9] Pause/Resume", font=ctk.CTkFont(size=12, slant="italic"), text_color="gray")
-        self.legend_label.pack(pady=5)
+        self.legend_label = ctk.CTkLabel(self, text="⌨ Atalhos: [F8] Stop Bot  |  [F9] Pause/Resume", font=ctk.CTkFont(size=11, slant="italic"), text_color="gray")
+        self.legend_label.pack(pady=(5, 10))
 
-        # Stats Frame
-        self.stats_frame = ctk.CTkFrame(self)
-        self.stats_frame.pack(pady=10, padx=20, fill="x")
-        
-        self.casts_label = ctk.CTkLabel(self.stats_frame, text="Casts: 0")
-        self.casts_label.pack(side="left", padx=20, pady=5)
-        
-        self.catches_label = ctk.CTkLabel(self.stats_frame, text="Catches: 0")
-        self.catches_label.pack(side="right", padx=20, pady=5)
+        # Stats Cards
+        self.stats_frame = ctk.CTkFrame(self, fg_color="transparent")
+        self.stats_frame.pack(pady=5, padx=20, fill="x")
+
+        self.card_casts = ctk.CTkFrame(self.stats_frame, corner_radius=10)
+        self.card_casts.pack(side="left", expand=True, fill="x", padx=(0, 5))
+        ctk.CTkLabel(self.card_casts, text="🎣 CASTS", font=ctk.CTkFont(size=12, weight="bold"), text_color="gray").pack(pady=(10, 0))
+        self.casts_label = ctk.CTkLabel(self.card_casts, text="0", font=ctk.CTkFont(size=32, weight="bold"), text_color="#3498DB")
+        self.casts_label.pack(pady=(0, 10))
+
+        self.card_catches = ctk.CTkFrame(self.stats_frame, corner_radius=10)
+        self.card_catches.pack(side="left", expand=True, fill="x", padx=(5, 0))
+        ctk.CTkLabel(self.card_catches, text="🐟 CATCHES", font=ctk.CTkFont(size=12, weight="bold"), text_color="gray").pack(pady=(10, 0))
+        self.catches_label = ctk.CTkLabel(self.card_catches, text="0", font=ctk.CTkFont(size=32, weight="bold"), text_color="#2ECC71")
+        self.catches_label.pack(pady=(0, 10))
 
         # Log Box
-        self.log_box = ctk.CTkTextbox(self, state="disabled", wrap="word", height=200)
-        self.log_box.pack(pady=10, padx=20, fill="both", expand=True)
+        self.log_box = ctk.CTkTextbox(self, state="disabled", wrap="word", height=180, corner_radius=10, font=ctk.CTkFont(family="Consolas", size=12))
+        self.log_box.pack(pady=(15, 20), padx=20, fill="both", expand=True)
 
         self.load_calibration_file()
 
@@ -576,8 +585,8 @@ class App(ctk.CTk):
                 log(f"Failed to load cal: {e}", "ERROR")
 
     def update_stats(self):
-        self.casts_label.configure(text=f"Casts: {total_casts}")
-        self.catches_label.configure(text=f"Catches: {total_catches}")
+        self.casts_label.configure(text=str(total_casts))
+        self.catches_label.configure(text=str(total_catches))
 
     def update_ui_state(self):
         if running:
