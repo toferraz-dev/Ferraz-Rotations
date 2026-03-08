@@ -6,6 +6,7 @@
 
 # Nao ignorar arquivos .yaml
 !Ferraz*.yaml
+!WowFishing
 
 # Ignorar especificamente este arquivo
 FerrazDiscipline.yaml
