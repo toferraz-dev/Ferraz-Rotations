@@ -1,5 +1,5 @@
 @echo off
-title 🎣 WoW Fishing Bot GUI
+title 🎣 Ferraz Fishing WoW GUI
 
 :: Verifica se o Python esta instalado
 python --version >nul 2>&1

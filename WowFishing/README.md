@@ -1,4 +1,4 @@
-# 🎣 WoW Fishing Bot
+# 🎣 Ferraz Fishing WoW
 
 Automated fishing for World of Warcraft using pixel analysis.
 
