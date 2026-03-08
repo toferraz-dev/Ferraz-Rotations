@@ -1,4 +1,4 @@
-# 🎣 Ferraz Fishing WoW
+# 🎣 Ferraz Fishing
 
 Automated fishing for World of Warcraft using pixel analysis and a sleek Dark Mode GUI.
 
