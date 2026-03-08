@@ -534,7 +534,7 @@ class App(ctk.CTk):
         self.update_btn.pack(side="left", padx=(5, 0))
 
         # Legend
-        self.legend_label = ctk.CTkLabel(self, text="⌨ Atalhos: [F8] Stop Bot  |  [F9] Pause/Resume", font=ctk.CTkFont(size=11, slant="italic"), text_color="gray")
+        self.legend_label = ctk.CTkLabel(self, text="⌨ Shortcuts: [F8] Stop Bot  |  [F9] Pause/Resume", font=ctk.CTkFont(size=11, slant="italic"), text_color="gray")
         self.legend_label.pack(pady=(5, 10))
 
         # Stats Cards
@@ -670,6 +670,17 @@ class App(ctk.CTk):
         threading.Thread(target=_update, daemon=True).start()
 
 if __name__ == "__main__":
+    # Ensure single instance
+    mutex_name = "FerrazFishingWoW_Global_Instance_Lock"
+    mutex = ctypes.windll.kernel32.CreateMutexW(None, False, mutex_name)
+    if not mutex or ctypes.windll.kernel32.GetLastError() == 183: # ERROR_ALREADY_EXISTS
+        import tkinter.messagebox
+        import tkinter as tk
+        root = tk.Tk()
+        root.withdraw()
+        tkinter.messagebox.showerror("Error", "The bot is already running! Please check your taskbar.")
+        sys.exit(0)
+
     pyautogui.FAILSAFE = True
     pyautogui.PAUSE = 0.04
     App().mainloop()
