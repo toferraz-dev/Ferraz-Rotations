@@ -366,19 +366,30 @@ def cast_fishing_line():
     total_casts += 1
     log(f"Cast #{total_casts}", "CAST")
     keyboard.send(FISHING_KEY)
-    time.sleep(CAST_SETTLE_TIME)
+    
+    # Humanized casting settle time (e.g. 2.0 to 4.0s)
+    delay = CAST_SETTLE_TIME + random.uniform(-0.5, 1.5)
+    time.sleep(delay)
     if app:
         app.after(0, app.update_stats)
 
-def move_to_bobber(bx: int, by: int):
     # Random delay between 100ms and 2000ms before moving to the bobber
     delay = random.uniform(0.1, 2.0)
     time.sleep(delay)
     
-    # Also add slight randomness to the mouse movement duration
-    move_duration = random.uniform(0.15, 0.4)
-    pyautogui.moveTo(bx, by, duration=move_duration)
-    time.sleep(BOBBER_SETTLE_TIME)
+    # Add slight off-center spatial targeting (humans don't click dead center)
+    off_x = random.randint(-15, 15)
+    off_y = random.randint(-15, 15)
+    target_x = bx + off_x
+    target_y = by + off_y
+    
+    # Randomness to the mouse movement duration (slight curved feel with tweening)
+    move_duration = random.uniform(0.15, 0.5)
+    pyautogui.moveTo(target_x, target_y, duration=move_duration, tween=pyautogui.easeOutQuad)
+    
+    # Randomly pause slightly over the bobber before starting detection
+    settle = BOBBER_SETTLE_TIME + random.uniform(-0.3, 0.5)
+    time.sleep(max(0.1, settle))
 
 def wait_for_bite(region: tuple) -> bool:
     log("Monitoring splash...", "INFO")
@@ -425,8 +436,14 @@ def click_bobber(x: int, y: int):
     click_delay = random.uniform(0.1, 2.0)
     time.sleep(click_delay)
     
-    pyautogui.moveTo(x, y, duration=0.08)
-    pyautogui.rightClick(x, y)
+    # Occasional slight secondary adjustment movement before clicking (micro-adjustment)
+    if random.random() < 0.35:
+        mx, my = pyautogui.position()
+        pyautogui.moveTo(mx + random.randint(-3, 3), my + random.randint(-3, 3), duration=random.uniform(0.05, 0.15))
+
+    pyautogui.mouseDown(button='right')
+    time.sleep(random.uniform(0.03, 0.1)) # Hold click slightly
+    pyautogui.mouseUp(button='right')
     total_catches += 1
     log(f"Fish #{total_catches} caught! 🐟", "CATCH")
     if app:
@@ -463,7 +480,15 @@ def bot_loop():
 
             if bite_detected and running:
                 click_bobber(bx, by)
-                time.sleep(RECAST_DELAY)
+                
+                recast = RECAST_DELAY + random.uniform(-0.2, 1.8)
+                time.sleep(max(0.2, recast))
+                
+                # Human-like micro AFK breaks (3% chance to pause for 5 to 15 seconds)
+                if random.random() < 0.03:
+                    afk_time = random.uniform(5.0, 15.0)
+                    log(f"Taking a quick micro-break for {int(afk_time)}s...", "INFO")
+                    time.sleep(afk_time)
 
     except pyautogui.FailSafeException:
         log("FailSafe activated!", "ERROR")
