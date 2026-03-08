@@ -534,7 +534,7 @@ class App(ctk.CTk):
         self.update_btn.pack(side="left", padx=(5, 0))
 
         # Legend
-        self.legend_label = ctk.CTkLabel(self, text="⌨ Shortcuts: [F8] Stop Bot  |  [F9] Pause/Resume", font=ctk.CTkFont(size=11, slant="italic"), text_color="gray")
+        self.legend_label = ctk.CTkLabel(self, text="⌨ Shortcuts: [F8] Stop Bot  |  [F9] Pause/Resume", font=ctk.CTkFont(size=13, weight="bold"), text_color="#F1C40F")
         self.legend_label.pack(pady=(5, 10))
 
         # Stats Cards
@@ -654,7 +654,17 @@ class App(ctk.CTk):
             try:
                 import urllib.request
                 base_url = "https://raw.githubusercontent.com/toferraz-dev/Ferraz-Rotations/main/WowFishing/"
-                files_to_check = ["wow_fisher_gui.py", "FishGUI.bat", "requirements.txt", "README.md"]
+                files_to_check = [
+                    "wow_fisher_gui.py", 
+                    "FishGUI.bat", 
+                    "requirements.txt", 
+                    "README.md",
+                    "wow_fisher.py",
+                    "Fish.bat",
+                    "Baixar_Python.url",
+                    "icon.ico",
+                    "icon.png"
+                ]
                 updated = False
                 
                 for file_name in files_to_check:
@@ -662,17 +672,25 @@ class App(ctk.CTk):
                         url = base_url + file_name
                         req = urllib.request.Request(url, headers={'Cache-Control': 'no-cache'})
                         with urllib.request.urlopen(req, timeout=7) as response:
-                            remote_text = response.read().decode('utf-8').replace('\r\n', '\n')
+                            remote_data = response.read()
                             
                         local_path = Path(__file__).parent / file_name
-                        if local_path.exists():
-                            local_text = local_path.read_text(encoding='utf-8').replace('\r\n', '\n')
-                            if local_text != remote_text:
-                                local_path.write_text(remote_text, encoding='utf-8')
+                        is_binary = file_name.endswith(('.png', '.ico'))
+                        
+                        if is_binary:
+                            if not local_path.exists() or local_path.read_bytes() != remote_data:
+                                local_path.write_bytes(remote_data)
                                 updated = True
                         else:
-                            local_path.write_text(remote_text, encoding='utf-8')
-                            updated = True
+                            remote_text = remote_data.decode('utf-8').replace('\r\n', '\n')
+                            if local_path.exists():
+                                local_text = local_path.read_text(encoding='utf-8').replace('\r\n', '\n')
+                                if local_text != remote_text:
+                                    local_path.write_text(remote_text, encoding='utf-8')
+                                    updated = True
+                            else:
+                                local_path.write_text(remote_text, encoding='utf-8')
+                                updated = True
                     except Exception:
                         pass # Silently proceed if a single file has issues
                 
