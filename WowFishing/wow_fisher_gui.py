@@ -469,6 +469,13 @@ class App(ctk.CTk):
         global app
         app = self
 
+        # Ensure Taskbar displays the icon properly
+        try:
+            myappid = 'wow.fisher.gui.v3'
+            ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
+        except Exception:
+            pass
+
         self.title("Ferraz Fishing WoW")
         self.geometry("460x720")
         self.resizable(False, False)
@@ -679,13 +686,6 @@ class App(ctk.CTk):
         threading.Thread(target=_update, daemon=True).start()
 
 if __name__ == "__main__":
-    # Ensure Taskbar displays the icon properly
-    try:
-        myappid = 'wow.fisher.gui.v4'
-        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
-    except Exception:
-        pass
-
     # Ensure single instance
     mutex_name = "FerrazFishingWoW_Global_Instance_Lock"
     mutex = ctypes.windll.kernel32.CreateMutexW(None, False, mutex_name)
