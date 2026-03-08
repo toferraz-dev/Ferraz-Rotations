@@ -534,7 +534,7 @@ class App(ctk.CTk):
         self.update_btn.pack(side="left", padx=(5, 0))
 
         # Legend
-        self.legend_label = ctk.CTkLabel(self, text="⌨ Shortcuts: [F8] Stop Bot  |  [F9] Pause/Resume", font=ctk.CTkFont(size=13, weight="bold"), text_color="#F1C40F") # Yellow/Gold color
+        self.legend_label = ctk.CTkLabel(self, text="⌨ Shortcuts: [F8] Stop Bot  |  [F9] Pause/Resume", font=ctk.CTkFont(size=11, slant="italic"), text_color="gray")
         self.legend_label.pack(pady=(5, 10))
 
         # Stats Cards
@@ -653,47 +653,28 @@ class App(ctk.CTk):
             log("Checking for updates from GitHub...", "INFO")
             try:
                 import urllib.request
-                import json
-                
-                api_url = "https://api.github.com/repos/toferraz-dev/Ferraz-Rotations/contents/WowFishing?ref=main"
-                req = urllib.request.Request(api_url, headers={'Cache-Control': 'no-cache'})
-                with urllib.request.urlopen(req, timeout=10) as response:
-                    files_data = json.loads(response.read().decode('utf-8'))
-                
+                base_url = "https://raw.githubusercontent.com/toferraz-dev/Ferraz-Rotations/main/WowFishing/"
+                files_to_check = ["wow_fisher_gui.py", "FishGUI.bat", "requirements.txt", "README.md"]
                 updated = False
-                for item in files_data:
-                    if item.get("type") == "file":
-                        file_name = item.get("name")
-                        download_url = item.get("download_url")
-                        if not download_url: continue
-                        
-                        try:
-                            # Add a query parameter to avoid GitHub raw edge caching
-                            cb_url = f"{download_url}?t={int(time.time())}"
-                            dl_req = urllib.request.Request(cb_url, headers={'Cache-Control': 'no-cache'})
-                            with urllib.request.urlopen(dl_req, timeout=10) as dl_res:
-                                remote_bytes = dl_res.read()
-                                
-                            is_text = file_name.endswith(('.py', '.bat', '.txt', '.md', '.json', '.url'))
-                            if is_text:
-                                remote_bytes = remote_bytes.replace(b'\r\n', b'\n')
+                
+                for file_name in files_to_check:
+                    try:
+                        url = base_url + file_name
+                        req = urllib.request.Request(url, headers={'Cache-Control': 'no-cache'})
+                        with urllib.request.urlopen(req, timeout=7) as response:
+                            remote_text = response.read().decode('utf-8').replace('\r\n', '\n')
                             
-                            local_path = Path(__file__).parent / file_name
-                            if local_path.exists():
-                                local_bytes = local_path.read_bytes()
-                                if is_text:
-                                    local_bytes = local_bytes.replace(b'\r\n', b'\n')
-                                
-                                if local_bytes != remote_bytes:
-                                    local_path.write_bytes(remote_bytes)
-                                    log(f"Updated {file_name}", "OK")
-                                    updated = True
-                            else:
-                                local_path.write_bytes(remote_bytes)
-                                log(f"Downloaded {file_name}", "OK")
+                        local_path = Path(__file__).parent / file_name
+                        if local_path.exists():
+                            local_text = local_path.read_text(encoding='utf-8').replace('\r\n', '\n')
+                            if local_text != remote_text:
+                                local_path.write_text(remote_text, encoding='utf-8')
                                 updated = True
-                        except Exception as e:
-                            log(f"Failed to fetch {file_name}", "WARN")
+                        else:
+                            local_path.write_text(remote_text, encoding='utf-8')
+                            updated = True
+                    except Exception:
+                        pass # Silently proceed if a single file has issues
                 
                 if updated:
                     log("Bot updated successfully! Please re-open the bot.", "OK")
