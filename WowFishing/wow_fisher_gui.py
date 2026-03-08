@@ -534,7 +534,7 @@ class App(ctk.CTk):
         self.update_btn.pack(side="left", padx=(5, 0))
 
         # Legend
-        self.legend_label = ctk.CTkLabel(self, text="⌨ Shortcuts: [F8] Stop Bot  |  [F9] Pause/Resume", font=ctk.CTkFont(size=11, slant="italic"), text_color="gray")
+        self.legend_label = ctk.CTkLabel(self, text="⌨ Shortcuts: [F8] Stop Bot  |  [F9] Pause/Resume", font=ctk.CTkFont(size=13, weight="bold"), text_color="#F1C40F") # Yellow/Gold color
         self.legend_label.pack(pady=(5, 10))
 
         # Stats Cards
