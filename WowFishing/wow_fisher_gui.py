@@ -2,6 +2,7 @@ import time
 import sys
 import json
 import threading
+import random
 from pathlib import Path
 import numpy as np
 import cv2
@@ -370,7 +371,13 @@ def cast_fishing_line():
         app.after(0, app.update_stats)
 
 def move_to_bobber(bx: int, by: int):
-    pyautogui.moveTo(bx, by, duration=0.25)
+    # Random delay between 100ms and 2000ms before moving to the bobber
+    delay = random.uniform(0.1, 2.0)
+    time.sleep(delay)
+    
+    # Also add slight randomness to the mouse movement duration
+    move_duration = random.uniform(0.15, 0.4)
+    pyautogui.moveTo(bx, by, duration=move_duration)
     time.sleep(BOBBER_SETTLE_TIME)
 
 def wait_for_bite(region: tuple) -> bool:
@@ -414,7 +421,10 @@ def wait_for_bite(region: tuple) -> bool:
 
 def click_bobber(x: int, y: int):
     global total_catches
-    time.sleep(CLICK_DELAY_MS / 1000)
+    # Random delay between 100ms and 2000ms before clicking to reel in
+    click_delay = random.uniform(0.1, 2.0)
+    time.sleep(click_delay)
+    
     pyautogui.moveTo(x, y, duration=0.08)
     pyautogui.rightClick(x, y)
     total_catches += 1
