@@ -145,7 +145,7 @@ def hsv_to_ranges(h: int, s: int, v: int) -> list:
 # ─── Calibration Tools ────────────────────────────────────────────────────────
 
 class ColorPicker:
-    WIN = "WoW Fishing Bot - Bobber Color"
+    WIN = "Ferraz Fishing WoW - Bobber Color"
     ZOOM = 6
     PATCH = 24
     PANEL_H = 180
@@ -276,7 +276,7 @@ class RegionSelector:
             cv2.putText(self.display, f"{rw} x {rh} px", (min(x1,x2) + 4, min(y1,y2) - 8),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 60), 2)
 
-        cv2.imshow("WoW Fishing Bot - Calibration", self.display)
+        cv2.imshow("Ferraz Fishing WoW - Calibration", self.display)
 
     def _mouse_cb(self, event, x, y, flags, param):
         if event == cv2.EVENT_LBUTTONDOWN:
@@ -292,9 +292,9 @@ class RegionSelector:
             self._draw()
 
     def run(self) -> tuple | None:
-        cv2.namedWindow("WoW Fishing Bot - Calibration", cv2.WINDOW_NORMAL)
-        cv2.setWindowProperty("WoW Fishing Bot - Calibration", cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
-        cv2.setMouseCallback("WoW Fishing Bot - Calibration", self._mouse_cb)
+        cv2.namedWindow("Ferraz Fishing WoW - Calibration", cv2.WINDOW_NORMAL)
+        cv2.setWindowProperty("Ferraz Fishing WoW - Calibration", cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
+        cv2.setMouseCallback("Ferraz Fishing WoW - Calibration", self._mouse_cb)
         self._draw()
 
         while True:
@@ -476,7 +476,7 @@ class App(ctk.CTk):
         except Exception:
             pass
 
-        self.title("WoW Fishing Bot")
+        self.title("Ferraz Fishing WoW")
         self.geometry("460x720")
         self.resizable(False, False)
 
@@ -495,7 +495,7 @@ class App(ctk.CTk):
             self.logo_label = ctk.CTkLabel(self.header_frame, image=self.logo_image, text="")
             self.logo_label.pack(side="left", padx=10)
 
-        self.title_label = ctk.CTkLabel(self.header_frame, text="WoW Fishing Bot", font=ctk.CTkFont(size=24, weight="bold"))
+        self.title_label = ctk.CTkLabel(self.header_frame, text="Ferraz Fishing WoW", font=ctk.CTkFont(size=24, weight="bold"))
         self.title_label.pack(side="left")
 
         # Settings Frame
