@@ -18,8 +18,7 @@ The bot takes screenshots of the region around the bobber at high frequency (~20
 
 1. Enter WoW in **Windowed** or **Windowed (Fullscreen)** mode.
 2. Go to a spot with water and equip your fishing pole.
-3. Double click the `FishGUI.bat` file to start the bot.
-   *Note: If you don't have Python installed, our smart launcher will detect it and provide you with a pop-up to download it! (Remember to mark "Add Python to PATH" during installation).*
+3. Double click the compiled `Ferraz Fishing.exe` file to start the bot. You do NOT need to install Python.
 4. In the app, verify or change your **Fishing Keybind** (default: `"1"`).
 5. Click **Calibrate Colors**: 
    - Drag a rectangle to define the search area.
