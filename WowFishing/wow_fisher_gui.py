@@ -602,6 +602,7 @@ class App(ctk.CTk):
             global FISHING_KEY
             FISHING_KEY = hk
             self.key_btn.configure(text=hk.upper())
+            self.save_calibration_file()
             popup.grab_release()
             popup.destroy()
             
@@ -617,16 +618,46 @@ class App(ctk.CTk):
         self.log_box.configure(state="disabled")
 
     def load_calibration_file(self):
-        global search_region, BOBBER_COLOR_RANGES
+        global search_region, BOBBER_COLOR_RANGES, FISHING_KEY, SENSITIVITY
         if CALIBRATION_FILE.exists():
             try:
                 data = json.loads(CALIBRATION_FILE.read_text())
-                search_region = tuple(data["region"])
-                hsv = tuple(data["hsv"])
-                BOBBER_COLOR_RANGES = hsv_to_ranges(*hsv)
-                log(f"Loaded calibration. Area: {search_region[2]-search_region[0]}px", "OK")
+                if "region" in data and "hsv" in data:
+                    search_region = tuple(data["region"])
+                    hsv = tuple(data["hsv"])
+                    BOBBER_COLOR_RANGES = hsv_to_ranges(*hsv)
+                    log(f"Loaded area: {search_region[2]-search_region[0]}px", "OK")
+                
+                if "keybind" in data:
+                    FISHING_KEY = data["keybind"]
+                    if hasattr(self, "key_btn"):
+                        self.key_btn.configure(text=FISHING_KEY.upper())
+                
+                if "sensitivity" in data:
+                    SENSITIVITY = int(data["sensitivity"])
+                    if hasattr(self, "sens_slider"):
+                        self.sens_slider.set(SENSITIVITY)
+                        self.sens_val_label.configure(text=str(SENSITIVITY))
             except Exception as e:
                 log(f"Failed to load cal: {e}", "ERROR")
+
+    def save_calibration_file(self, hsv=None):
+        data = {}
+        if CALIBRATION_FILE.exists():
+            try:
+                data = json.loads(CALIBRATION_FILE.read_text())
+            except Exception:
+                pass
+        
+        if search_region:
+            data["region"] = list(search_region)
+        if hsv:
+            data["hsv"] = list(hsv)
+            
+        data["keybind"] = FISHING_KEY
+        data["sensitivity"] = int(self.sens_slider.get() if hasattr(self, "sens_slider") else SENSITIVITY)
+        
+        CALIBRATION_FILE.write_text(json.dumps(data, indent=2))
 
     def update_stats(self):
         self.casts_label.configure(text=str(total_casts))
@@ -656,6 +687,7 @@ class App(ctk.CTk):
                 return
             
             SENSITIVITY = int(self.sens_slider.get())
+            self.save_calibration_file()
             
             running = True
             self.update_ui_state()
@@ -684,8 +716,7 @@ class App(ctk.CTk):
             BOBBER_COLOR_RANGES = hsv_to_ranges(*hsv)
             search_region = region
             
-            data = {"region": list(region), "hsv": list(hsv)}
-            CALIBRATION_FILE.write_text(json.dumps(data, indent=2))
+            self.save_calibration_file(hsv=hsv)
             
             log(f"Calibration successful and saved!", "OK")
             
