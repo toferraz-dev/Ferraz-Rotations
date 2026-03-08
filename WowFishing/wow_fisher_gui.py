@@ -364,7 +364,7 @@ def cast_fishing_line():
     global total_casts
     total_casts += 1
     log(f"Cast #{total_casts}", "CAST")
-    pyautogui.press(FISHING_KEY)
+    keyboard.send(FISHING_KEY)
     time.sleep(CAST_SETTLE_TIME)
     if app:
         app.after(0, app.update_stats)
@@ -513,9 +513,8 @@ class App(ctk.CTk):
 
         self.key_label = ctk.CTkLabel(self.settings_frame, text="Fishing Keybind:", font=ctk.CTkFont(size=13))
         self.key_label.grid(row=1, column=0, padx=15, pady=5, sticky="w")
-        self.key_entry = ctk.CTkEntry(self.settings_frame, width=70, justify="center")
-        self.key_entry.insert(0, FISHING_KEY)
-        self.key_entry.grid(row=1, column=1, columnspan=2, padx=15, pady=5, sticky="e")
+        self.key_btn = ctk.CTkButton(self.settings_frame, text=FISHING_KEY.upper(), width=70, command=self.prompt_keybind, fg_color="#34495E", hover_color="#2C3E50")
+        self.key_btn.grid(row=1, column=1, columnspan=2, padx=15, pady=5, sticky="e")
 
         self.sens_label = ctk.CTkLabel(self.settings_frame, text="Sensitivity:", font=ctk.CTkFont(size=13))
         self.sens_label.grid(row=2, column=0, padx=15, pady=(5, 20), sticky="w")
@@ -569,6 +568,35 @@ class App(ctk.CTk):
         threading.Thread(target=stop_listener, daemon=True).start()
         threading.Thread(target=pause_listener, daemon=True).start()
 
+    def prompt_keybind(self):
+        popup = ctk.CTkToplevel(self)
+        popup.title("Set Keybind")
+        popup.geometry("300x120")
+        popup.attributes("-topmost", True)
+        popup.grab_set()
+        
+        # Center popup relative to main window
+        x = self.winfo_x() + (self.winfo_width() // 2) - 150
+        y = self.winfo_y() + (self.winfo_height() // 2) - 60
+        popup.geometry(f"+{x}+{y}")
+        
+        label = ctk.CTkLabel(popup, text="Press any key (e.g. Ctrl+6)...", font=ctk.CTkFont(size=14, weight="bold"), text_color="#F39C12")
+        label.pack(expand=True)
+        
+        def _read_key():
+            time.sleep(0.1) # Small delay
+            hk = keyboard.read_hotkey(suppress=False)
+            self.after(0, _finish, hk)
+
+        def _finish(hk):
+            global FISHING_KEY
+            FISHING_KEY = hk
+            self.key_btn.configure(text=hk.upper())
+            popup.grab_release()
+            popup.destroy()
+            
+        threading.Thread(target=_read_key, daemon=True).start()
+
     def update_sens_label(self, val):
         self.sens_val_label.configure(text=str(int(val)))
 
@@ -598,12 +626,12 @@ class App(ctk.CTk):
         if running:
             self.start_btn.configure(text="Stop Bot", fg_color="#C0392B", hover_color="#922B21")
             self.calibrate_btn.configure(state="disabled")
-            self.key_entry.configure(state="disabled")
+            self.key_btn.configure(state="disabled")
             self.sens_slider.configure(state="disabled")
         else:
             self.start_btn.configure(text="Start Bot", fg_color="#27AE60", hover_color="#229954")
             self.calibrate_btn.configure(state="normal")
-            self.key_entry.configure(state="normal")
+            self.key_btn.configure(state="normal")
             self.sens_slider.configure(state="normal")
 
     def toggle_bot(self):
@@ -617,7 +645,6 @@ class App(ctk.CTk):
                 log("Please calibrate first!", "ERROR")
                 return
             
-            FISHING_KEY = self.key_entry.get()
             SENSITIVITY = int(self.sens_slider.get())
             
             running = True
