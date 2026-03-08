@@ -7,8 +7,10 @@ import numpy as np
 import cv2
 import pyautogui
 import keyboard
-from PIL import ImageGrab
+from PIL import ImageGrab, Image
 import customtkinter as ctk
+import ctypes
+import subprocess
 
 # ─── Settings ─────────────────────────────────────────────────────────────────
 FISHING_KEY = "1"
@@ -467,17 +469,34 @@ class App(ctk.CTk):
         global app
         app = self
 
+        # Ensure Taskbar displays the icon properly
+        try:
+            myappid = 'wow.fisher.gui.v3'
+            ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
+        except Exception:
+            pass
+
         self.title("WoW Fishing Bot")
-        self.geometry("460x670")
+        self.geometry("460x720")
         self.resizable(False, False)
 
         icon_path = Path(__file__).parent / "icon.ico"
         if icon_path.exists():
             self.iconbitmap(str(icon_path))
 
-        # Title
-        self.title_label = ctk.CTkLabel(self, text="🎣 WoW Fishing Bot", font=ctk.CTkFont(size=24, weight="bold"))
-        self.title_label.pack(pady=15)
+        # Title and Image Icon
+        self.header_frame = ctk.CTkFrame(self, fg_color="transparent")
+        self.header_frame.pack(pady=10)
+
+        img_path = Path(__file__).parent / "icon.png"
+        if img_path.exists():
+            pil_image = Image.open(str(img_path))
+            self.logo_image = ctk.CTkImage(light_image=pil_image, dark_image=pil_image, size=(48, 48))
+            self.logo_label = ctk.CTkLabel(self.header_frame, image=self.logo_image, text="")
+            self.logo_label.pack(side="left", padx=10)
+
+        self.title_label = ctk.CTkLabel(self.header_frame, text="WoW Fishing Bot", font=ctk.CTkFont(size=24, weight="bold"))
+        self.title_label.pack(side="left")
 
         # Settings Frame
         self.settings_frame = ctk.CTkFrame(self)
@@ -507,6 +526,9 @@ class App(ctk.CTk):
 
         self.start_btn = ctk.CTkButton(self.actions_frame, text="Start Bot", command=self.toggle_bot, fg_color="#27AE60", hover_color="#229954")
         self.start_btn.pack(side="left", padx=5, expand=True, fill="x")
+
+        self.update_btn = ctk.CTkButton(self.actions_frame, text="Update Bot", command=self.update_bot, width=90, fg_color="#3498DB", hover_color="#2980B9")
+        self.update_btn.pack(side="left", padx=5)
 
         # Legend
         self.legend_label = ctk.CTkLabel(self, text="⌨ Atalhos: [F8] Stop Bot  |  [F9] Pause/Resume", font=ctk.CTkFont(size=12, slant="italic"), text_color="gray")
@@ -616,6 +638,27 @@ class App(ctk.CTk):
             log(f"Calibration successful and saved!", "OK")
             
         threading.Thread(target=_calib, daemon=True).start()
+
+    def update_bot(self):
+        def _update():
+            log("Checking for updates from GitHub...", "INFO")
+            try:
+                result = subprocess.run(
+                    ["git", "pull"], 
+                    cwd=str(Path(__file__).parent), 
+                    capture_output=True, 
+                    text=True
+                )
+                if result.returncode == 0:
+                    if "Already up to date" in result.stdout:
+                        log("Bot is already up to date!", "OK")
+                    else:
+                        log("Bot updated successfully! Please re-open the bot.", "OK")
+                else:
+                    log(f"Error updating: {result.stderr}", "ERROR")
+            except Exception as e:
+                log(f"Failed to update automatically: {e}", "ERROR")
+        threading.Thread(target=_update, daemon=True).start()
 
 if __name__ == "__main__":
     pyautogui.FAILSAFE = True
