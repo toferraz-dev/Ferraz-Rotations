@@ -652,21 +652,37 @@ class App(ctk.CTk):
         def _update():
             log("Checking for updates from GitHub...", "INFO")
             try:
-                result = subprocess.run(
-                    ["git", "pull"], 
-                    cwd=str(Path(__file__).parent), 
-                    capture_output=True, 
-                    text=True
-                )
-                if result.returncode == 0:
-                    if "Already up to date" in result.stdout:
-                        log("Bot is already up to date!", "OK")
-                    else:
-                        log("Bot updated successfully! Please re-open the bot.", "OK")
+                import urllib.request
+                base_url = "https://raw.githubusercontent.com/toferraz-dev/Ferraz-Rotations/main/WowFishing/"
+                files_to_check = ["wow_fisher_gui.py", "FishGUI.bat", "requirements.txt", "README.md"]
+                updated = False
+                
+                for file_name in files_to_check:
+                    try:
+                        url = base_url + file_name
+                        req = urllib.request.Request(url, headers={'Cache-Control': 'no-cache'})
+                        with urllib.request.urlopen(req, timeout=7) as response:
+                            remote_text = response.read().decode('utf-8').replace('\r\n', '\n')
+                            
+                        local_path = Path(__file__).parent / file_name
+                        if local_path.exists():
+                            local_text = local_path.read_text(encoding='utf-8').replace('\r\n', '\n')
+                            if local_text != remote_text:
+                                local_path.write_text(remote_text, encoding='utf-8')
+                                updated = True
+                        else:
+                            local_path.write_text(remote_text, encoding='utf-8')
+                            updated = True
+                    except Exception:
+                        pass # Silently proceed if a single file has issues
+                
+                if updated:
+                    log("Bot updated successfully! Please re-open the bot.", "OK")
                 else:
-                    log(f"Error updating: {result.stderr}", "ERROR")
+                    log("Bot is already up to date!", "OK")
             except Exception as e:
                 log(f"Failed to update automatically: {e}", "ERROR")
+                
         threading.Thread(target=_update, daemon=True).start()
 
 if __name__ == "__main__":
