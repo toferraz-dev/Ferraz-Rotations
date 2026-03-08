@@ -1,58 +1,63 @@
 # 🎣 WoW Fishing Bot
 
-Automação de pesca para World of Warcraft usando análise de pixels.
+Automated fishing for World of Warcraft using pixel analysis.
 
-## Como Funciona
+## How it Works
 
-O bot captura capturas de tela da região ao redor da boia em alta frequência (~20fps) e compara frames consecutivos. Quando a boia faz o splash (mexe), a diferença entre frames ultrapassa o limiar configurado e o bot clica com botão direito automaticamente.
+The bot takes screenshots of the region around the bobber at high frequency (~20fps) and compares consecutive frames. When the bobber splashes (moves), the difference between frames exceeds the configured threshold, and the bot automatically right-clicks.
 
-## Instalação
+## Installation
 
 ```bash
 pip install -r requirements.txt
 ```
 
-## Uso
+## Usage
 
-1. Abra o WoW em **Modo Janela** ou **Janela Sem Bordas**.
-2. Vá para um local com água e equipe sua vara + isca.
-3. Configure a keybind de pesca no arquivo (padrão: `"1"`).
-4. Rode o script **como Administrador** (necessário para o `keyboard` funcionar):
+1. Open WoW in **Windowed** or **Windowed (Fullscreen)** mode.
+2. Go to a spot with water and equip your fishing pole.
+3. Configure the fishing keybind in the script (default: `"1"`).
+4. Run the script **as Administrator** (required for the `keyboard` module to work):
    ```bash
    python wow_fisher.py
    ```
-5. Quando solicitado, **lance a vara manualmente** e:
-   - **Opção 1:** Mova o mouse até a boia — o script vai capturar a posição em 5 segundos.
-   - **Opção 2:** Deixe o script tentar detectar a boia pela cor (vermelho/laranja).
-6. Pronto! O bot vai pescar automaticamente.
+   *Alternatively, double click the `Fish.bat` file which will handle administrator elevation automatically.*
+5. Follow the on-screen calibration instructions:
+   - **Step 1:** Drag a rectangle to define the search area.
+   - **Step 2:** Choose the default bobber color or precisely click on your bobber's feather color to configure its HSV values.
+6. Done! The bot will cast and fish automatically.
 
-## Parar o Bot
+## Stopping the Bot
 
-- Pressione **F8** a qualquer momento
-- OU mova o mouse rapidamente para o **canto superior esquerdo** da tela (failsafe do pyautogui)
-- OU pressione **Ctrl+C** no terminal
+- Press **F8** at any time.
+- OR move the mouse quickly to the **top-left corner** of the screen (pyautogui failsafe).
+- OR press **Ctrl+C** in the terminal.
 
-## Configurações (`wow_fisher.py`)
+## Pausing the Bot
 
-| Parâmetro           | Padrão | Descrição                                                  |
-|---------------------|--------|------------------------------------------------------------|
-| `FISHING_KEY`       | `"1"`  | Keybind da pesca no WoW                                    |
-| `STOP_KEY`          | `"F8"` | Tecla para parar o bot                                     |
-| `SENSITIVITY`       | `25`   | Sensibilidade (menor = mais sensível ao movimento)         |
-| `BOBBER_REGION_SIZE`| `80`   | Tamanho da área monitorada em pixels                       |
-| `MAX_WAIT`          | `25`   | Tempo máximo esperando peixe antes de relançar (segundos)  |
-| `RECAST_DELAY`      | `1.5`  | Delay após pegar o peixe para relançar (segundos)          |
-| `CLICK_DELAY_MS`    | `120`  | Delay entre detectar splash e clicar (ms)                  |
+- Press **F9** to pause/resume the bot.
 
-## Dicas de Tunagem
+## Settings (`wow_fisher.py`)
 
-- **Clicando cedo demais / falsos positivos?** → Aumente `SENSITIVITY` (tente 35-45)
-- **Não detecta o splash?** → Diminua `SENSITIVITY` (tente 15-20)
-- **Perdendo peixes?** → Diminua `CLICK_DELAY_MS`
-- **A boia some antes de clicar?** → Diminua `BOBBER_REGION_SIZE` para focar melhor
+| Parameter           | Default | Description                                                |
+|---------------------|---------|------------------------------------------------------------|
+| `FISHING_KEY`       | `"1"`   | WoW fishing keybind                                        |
+| `STOP_KEY`          | `"F8"`  | Key to stop the bot                                        |
+| `PAUSE_KEY`         | `"F9"`  | Key to pause/resume the bot                                |
+| `SENSITIVITY`       | `40`    | Sensitivity (lower = more sensitive to movement)           |
+| `BOBBER_REGION_SIZE`| `90`    | Size of the monitored area in pixels                       |
+| `MAX_WAIT`          | `28`    | Max time waiting for a fish before recasting (seconds)     |
+| `RECAST_DELAY`      | `1.2`   | Delay after catching a fish to recast (seconds)            |
+| `CLICK_DELAY_MS`    | `100`   | Delay between detecting a splash and clicking (ms)         |
 
-## Notas
+## Tuning Tips
 
-- Execute como **Administrador** para o `keyboard` funcionar corretamente.
-- O WoW deve estar em modo **janela** (não tela cheia exclusivo).
-- A detecção automática funciona melhor em águas escuras onde a boia vermelha contrasta bem.
+- **Clicking too early / false positives?** → Increase `SENSITIVITY` (try 45-60)
+- **Not detecting the splash?** → Decrease `SENSITIVITY` (try 25-35)
+- **Losing fishes?** → Decrease `CLICK_DELAY_MS`
+- **Bobber gets lost before click?** → Adjust `HUE_TOLERANCE` / `SAT_TOLERANCE` / `VAL_TOLERANCE` or recalibrate the color
+
+## Notes
+
+- Run as **Administrator** so the `keyboard` module works correctly.
+- WoW must be in **windowed** mode (not exclusive fullscreen).
