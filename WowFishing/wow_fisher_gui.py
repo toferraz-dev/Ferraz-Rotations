@@ -375,7 +375,7 @@ def move_to_bobber(bx: int, by: int):
 
 def wait_for_bite(region: tuple) -> bool:
     log("Monitoring splash...", "INFO")
-    ref_frame = capture_region(region)
+    ref_frame = grab_screen_region(region)
     consecutive_hits = 0
     zero_frames = 0
     elapsed = 0.0
@@ -384,13 +384,13 @@ def wait_for_bite(region: tuple) -> bool:
     while elapsed < MAX_WAIT and running:
         time.sleep(interval)
         elapsed += interval
-        new_frame = capture_region(region)
+        new_frame = grab_screen_region(region)
         diff_pct = compute_diff(ref_frame, new_frame)
 
         if paused:
             if not wait_if_paused():
                 return False
-            ref_frame = capture_region(region)
+            ref_frame = grab_screen_region(region)
 
         if elapsed > 1.0:
             if diff_pct < 0.5:
@@ -424,6 +424,12 @@ def click_bobber(x: int, y: int):
 
 def bot_loop():
     global running, start_time
+    
+    for i in range(5, 0, -1):
+        if not running: return
+        log(f"Starting in {i} seconds... switch to WoW!", "WARN")
+        time.sleep(1)
+        
     start_time = time.time()
     try:
         while running:
