@@ -27,7 +27,12 @@ import cv2
 import pyautogui
 import keyboard
 from PIL import ImageGrab
+from rich.console import Console
+from rich.panel import Panel
+from rich.table import Table
+from rich.text import Text
 
+console = Console()
 # ─── Settings ─────────────────────────────────────────────────────────────────
 
 # WoW fishing key (change to your in-game keybind)
@@ -106,17 +111,17 @@ search_region: tuple | None = None
 
 def log(msg: str, level: str = "INFO"):
     ts = time.strftime("%H:%M:%S")
-    icons = {
-        "INFO":  "ℹ ",
-        "OK":    "✅",
-        "WARN":  "⚠ ",
-        "ERROR": "❌",
-        "CAST":  "🎣",
-        "CATCH": "🐟",
-        "FIND":  "🔍",
+    configs = {
+        "INFO":  ("[blue]ℹ[/blue]", "white"),
+        "OK":    ("[green]✅[/green]", "green"),
+        "WARN":  ("[yellow]⚠[/yellow]", "yellow"),
+        "ERROR": ("[red]❌[/red]", "red"),
+        "CAST":  ("[cyan]🎣[/cyan]", "cyan"),
+        "CATCH": ("[magenta]🐟[/magenta]", "magenta"),
+        "FIND":  ("[yellow]🔍[/yellow]", "white"),
     }
-    icon = icons.get(level, "• ")
-    print(f"[{ts}] {icon}  {msg}")
+    icon, color = configs.get(level, ("•", "white"))
+    console.print(f"[[dim]{ts}[/dim]] {icon}  [{color}]{msg}[/{color}]")
 
 
 def stop_listener():
@@ -501,15 +506,16 @@ def calibrate() -> tuple:
     saved_region, saved_hsv = load_calibration()
 
     if saved_region and saved_hsv:
-        print()
-        print("  ┌──────────────────────────────────────────────────────────┐")
-        print("  │  SAVED CALIBRATION FOUND                                 │")
         r = saved_region
         h, s, v = saved_hsv
-        print(f"  │  Area: {r[0]},{r[1]} → {r[2]},{r[3]}  ({r[2]-r[0]}x{r[3]-r[1]}px){'':<12}│")
-        print(f"  │  Bobber color: HSV=({h},{s},{v}){'':<30}│")
-        print("  └──────────────────────────────────────────────────────────┘")
-        print()
+        saved_panel = Panel.fit(
+            f"Area: {r[0]},{r[1]} → {r[2]},{r[3]} ({r[2]-r[0]}x{r[3]-r[1]}px)\n"
+            f"Bobber color: HSV=({h},{s},{v})",
+            title="[green]SAVED CALIBRATION FOUND[/green]",
+            border_style="green"
+        )
+        console.print(saved_panel)
+        console.print()
         resp = input("  Recalibrate? [y/N]: ").strip().lower()
         if resp != "y":
             BOBBER_COLOR_RANGES = hsv_to_ranges(*saved_hsv)
@@ -522,15 +528,16 @@ def calibrate() -> tuple:
     screenshot = grab_full_screen()
 
     # Step 1: search area
-    print()
-    print("  ┌──────────────────────────────────────────────────────────┐")
-    print("  │  STEP 1/2 — SEARCH AREA                                  │")
-    print("  │  A window will open with your screen.                    │")
-    print("  │  DRAG a rectangle over the WATER area                    │")
-    print("  │  where the bobber will spawn.                            │")
-    print("  │  ENTER = confirm selection   ESC = cancel                │")
-    print("  └──────────────────────────────────────────────────────────┘")
-    print()
+    step1_panel = Panel.fit(
+        "A window will open with your screen.\n"
+        "[cyan]DRAG[/cyan] a rectangle over the [cyan]WATER[/cyan] area where the bobber will spawn.\n\n"
+        "[green]ENTER[/green] = confirm selection   [red]ESC[/red] = cancel",
+        title="[yellow]STEP 1/2 — SEARCH AREA[/yellow]",
+        border_style="yellow"
+    )
+    console.print()
+    console.print(step1_panel)
+    console.print()
     input("  Press ENTER to open the calibration window...")
 
     selector = RegionSelector(screenshot)
@@ -542,14 +549,16 @@ def calibrate() -> tuple:
 
     # Step 2: bobber color
     dh, ds, dv = DEFAULT_BOBBER_HSV
-    print()
-    print("  ┌──────────────────────────────────────────────────────────┐")
-    print("  │  STEP 2/2 — BOBBER COLOR                                 │")
-    print(f"  │  Default color: HSV=({dh},{ds},{dv}){'':<28}│")
-    print("  │  Press ENTER to use the default color,                   │")
-    print("  │  or 'c' + ENTER to click on the bobber to calibrate.     │")
-    print("  └──────────────────────────────────────────────────────────┘")
-    print()
+    step2_panel = Panel.fit(
+        f"Default color: HSV=({dh},{ds},{dv})\n\n"
+        "Press [green]ENTER[/green] to use the default color,\n"
+        "or [cyan]'c' + ENTER[/cyan] to click on the bobber to calibrate.",
+        title="[yellow]STEP 2/2 — BOBBER COLOR[/yellow]",
+        border_style="yellow"
+    )
+    console.print()
+    console.print(step2_panel)
+    console.print()
     color_resp = input("  Choose [ENTER=default / c=calibrate]: ").strip().lower()
 
     chosen_hsv = DEFAULT_BOBBER_HSV
@@ -744,14 +753,18 @@ def print_stats():
     mins = int(elapsed // 60)
     secs = int(elapsed % 60)
     rate = (total_catches / (elapsed / 60)) if elapsed > 0 else 0
-    print()
-    print("═" * 45)
-    print(f"  📊 SESSION STATISTICS")
-    print(f"     Time        : {mins}m {secs}s")
-    print(f"     Casts       : {total_casts}")
-    print(f"     Catches     : {total_catches}")
-    print(f"     Rate        : {rate:.1f} fish/min")
-    print("═" * 45)
+    
+    table = Table(title="📊 SESSION STATISTICS", title_style="bold cyan", border_style="cyan")
+    table.add_column("Metric", style="cyan")
+    table.add_column("Value", style="bold white")
+    
+    table.add_row("Time", f"{mins}m {secs}s")
+    table.add_row("Casts", str(total_casts))
+    table.add_row("Catches", str(total_catches))
+    table.add_row("Rate", f"{rate:.1f} fish/min")
+    
+    console.print()
+    console.print(table)
 
 
 # ─── Main Loop ────────────────────────────────────────────────────────────────
@@ -762,21 +775,20 @@ def main():
     pyautogui.FAILSAFE = True
     pyautogui.PAUSE    = 0.04
 
-    print()
-    print("╔══════════════════════════════════════════════╗")
-    print("║      🎣  WoW Fishing Bot  v3.0               ║")
-    print("╠══════════════════════════════════════════════╣")
-    print(f"║  Fishing Key    : {FISHING_KEY:<27}║")
-    print(f"║  Pause/Resume   : {PAUSE_KEY:<27}║")
-    print(f"║  Stop Bot       : {STOP_KEY:<27}║")
-    print(f"║  Sensitivity    : {SENSITIVITY:<27}║")
-    print(f"║  Timeout        : {MAX_WAIT}s{'':<24}║")
-    print("╠══════════════════════════════════════════════╣")
-    print("║  ⚠  Mouse at top-left corner = failsafe     ║")
-    print(f"║  ⚠  {PAUSE_KEY} = pause/resume{'':<21}║")
-    print(f"║  ⚠  {STOP_KEY} = stop the bot{'':<22}║")
-    print("╚══════════════════════════════════════════════╝")
-    print()
+    console.print()
+    title_text = Text("🎣 WoW Fishing Bot v3.0", style="bold cyan")
+    main_panel_text = (
+        f"[bold white]Fishing Key[/bold white]    : [cyan]{FISHING_KEY}[/cyan]\n"
+        f"[bold white]Pause/Resume[/bold white]   : [yellow]{PAUSE_KEY}[/yellow]\n"
+        f"[bold white]Stop Bot[/bold white]       : [red]{STOP_KEY}[/red]\n"
+        f"[bold white]Sensitivity[/bold white]    : [magenta]{SENSITIVITY}[/magenta]\n"
+        f"[bold white]Timeout[/bold white]        : {MAX_WAIT}s\n\n"
+        f"[dim]⚠ Mouse at top-left corner = failsafe[/dim]\n"
+        f"[dim]⚠ {PAUSE_KEY} = pause/resume[/dim]\n"
+        f"[dim]⚠ {STOP_KEY} = stop the bot[/dim]"
+    )
+    console.print(Panel(main_panel_text, title=title_text, border_style="cyan", expand=False))
+    console.print()
 
     # 1. Calibration: defines search region
     search_region = calibrate()
