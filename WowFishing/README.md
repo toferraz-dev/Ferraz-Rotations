@@ -1,63 +1,53 @@
 # 🎣 Ferraz Fishing WoW
 
-Automated fishing for World of Warcraft using pixel analysis.
+Automated fishing for World of Warcraft using pixel analysis and a sleek Dark Mode GUI.
 
 ## How it Works
 
-The bot takes screenshots of the region around the bobber at high frequency (~20fps) and compares consecutive frames. When the bobber splashes (moves), the difference between frames exceeds the configured threshold, and the bot automatically right-clicks.
+The bot takes screenshots of the region around the bobber at high frequency (~20fps) and compares consecutive frames. When the bobber splashes (moves), the difference between frames exceeds the configured threshold, and the bot automatically right-clicks. It does NOT inject into the game or read memory.
 
-## Installation
+## Features
 
-```bash
-pip install -r requirements.txt
-```
+- **Modern Dark Mode UI:** Everything is managed through a beautiful, sleek interface.
+- **Visual Auto-Calibration:** Easily drag and drop to select your fishing area and click the bobber's feather to lock its color.
+- **Live Dashboard:** Watch your *Casts* and *Catches* update in real-time right on the screen.
+- **Auto-Updater:** A single click updates the bot straight from GitHub!
+- **Failsafes & Shortcuts:** Instantly pause with `[F9]`, stop with `[F8]`, or slam your mouse to the top-left corner to trigger the emergency stop.
 
-## Usage
+## Installation & Usage
 
-1. Open WoW in **Windowed** or **Windowed (Fullscreen)** mode.
+1. Enter WoW in **Windowed** or **Windowed (Fullscreen)** mode.
 2. Go to a spot with water and equip your fishing pole.
-3. Configure the fishing keybind in the script (default: `"1"`).
-4. Run the script **as Administrator** (required for the `keyboard` module to work):
-   ```bash
-   python wow_fisher.py
-   ```
-   *Alternatively, double click the `Fish.bat` file which will handle administrator elevation automatically.*
-5. Follow the on-screen calibration instructions:
-   - **Step 1:** Drag a rectangle to define the search area.
-   - **Step 2:** Choose the default bobber color or precisely click on your bobber's feather color to configure its HSV values.
-6. Done! The bot will cast and fish automatically.
+3. Double click the `FishGUI.bat` file to start the bot.
+   *Note: If you don't have Python installed, our smart launcher will detect it and provide you with a pop-up to download it! (Remember to mark "Add Python to PATH" during installation).*
+4. In the app, verify or change your **Fishing Keybind** (default: `"1"`).
+5. Click **Calibrate Colors**: 
+   - Drag a rectangle to define the search area.
+   - Click exactly on your bobber's feather to lock the color (or press Enter for default).
+6. Hit **Start Bot** and let it do the hard work!
 
-## Stopping the Bot
+## Controls & Shortcuts
 
-- Press **F8** at any time.
-- OR move the mouse quickly to the **top-left corner** of the screen (pyautogui failsafe).
-- OR press **Ctrl+C** in the terminal.
+- **Start/Stop Bot:** Click the button in the app, or press **F8** at any time.
+- **Pause/Resume:** Press **F9** to pause/resume the bot temporarily without clearing calibration.
+- **Emergency Stop:** Move the mouse quickly to the **top-left corner** of the screen (pyautogui failsafe).
 
-## Pausing the Bot
-
-- Press **F9** to pause/resume the bot.
-
-## Settings (`wow_fisher.py`)
+## Settings Overview
 
 | Parameter           | Default | Description                                                |
 |---------------------|---------|------------------------------------------------------------|
-| `FISHING_KEY`       | `"1"`   | WoW fishing keybind                                        |
-| `STOP_KEY`          | `"F8"`  | Key to stop the bot                                        |
-| `PAUSE_KEY`         | `"F9"`  | Key to pause/resume the bot                                |
-| `SENSITIVITY`       | `40`    | Sensitivity (lower = more sensitive to movement)           |
-| `BOBBER_REGION_SIZE`| `90`    | Size of the monitored area in pixels                       |
-| `MAX_WAIT`          | `28`    | Max time waiting for a fish before recasting (seconds)     |
-| `RECAST_DELAY`      | `1.2`   | Delay after catching a fish to recast (seconds)            |
-| `CLICK_DELAY_MS`    | `100`   | Delay between detecting a splash and clicking (ms)         |
+| `Fishing Keybind`   | `"1"`   | WoW fishing keybind                                        |
+| `Sensitivity`       | `35`    | Sensitivity slider (lower = more sensitive to movement)    |
+
+*There are other advanced settings inside `wow_fisher_gui.py` if you wish to tweak timers and delays (`MAX_WAIT`, `RECAST_DELAY`, `CLICK_DELAY_MS` etc).*
 
 ## Tuning Tips
 
-- **Clicking too early / false positives?** → Increase `SENSITIVITY` (try 45-60)
-- **Not detecting the splash?** → Decrease `SENSITIVITY` (try 25-35)
-- **Losing fishes?** → Decrease `CLICK_DELAY_MS`
-- **Bobber gets lost before click?** → Adjust `HUE_TOLERANCE` / `SAT_TOLERANCE` / `VAL_TOLERANCE` or recalibrate the color
+- **Clicking too early / false positives?** → Increase `Sensitivity` on the slider (try 45-60)
+- **Not detecting the splash?** → Decrease `Sensitivity` on the slider (try 25-35)
+- **Bobber gets lost before click?** → You might need to recalibrate the color in a different lighting.
 
 ## Notes
 
-- Run as **Administrator** so the `keyboard` module works correctly.
-- WoW must be in **windowed** mode (not exclusive fullscreen).
+- The bot will request **Administrator** privileges automatically so the keyboard shortcuts work correctly even when you are focused on the game.
+- WoW must be in **windowed** mode (not exclusive fullscreen) for the screen capture to work flawlessly.
