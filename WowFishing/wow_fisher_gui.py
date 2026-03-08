@@ -3,6 +3,7 @@ import sys
 import json
 import threading
 import random
+import traceback
 from pathlib import Path
 import numpy as np
 import cv2
@@ -373,6 +374,7 @@ def cast_fishing_line():
     if app:
         app.after(0, app.update_stats)
 
+def move_to_bobber(bx: int, by: int):
     # Random delay between 100ms and 2000ms before moving to the bobber
     delay = random.uniform(0.1, 2.0)
     time.sleep(delay)
@@ -492,6 +494,9 @@ def bot_loop():
 
     except pyautogui.FailSafeException:
         log("FailSafe activated!", "ERROR")
+    except Exception as e:
+        log(f"Crash: {e}", "ERROR")
+        traceback.print_exc()
     finally:
         running = False
         cv2.destroyAllWindows()
