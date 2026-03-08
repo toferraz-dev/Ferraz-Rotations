@@ -34,7 +34,14 @@ VAL_TOLERANCE = 80
 MIN_BOBBER_AREA = 30
 DEFAULT_BOBBER_HSV = (5, 244, 137)
 
-CALIBRATION_FILE = Path(__file__).parent / "calibration.json"
+if getattr(sys, 'frozen', False):
+    APP_DIR = Path(sys.executable).parent
+    ASSET_DIR = Path(sys._MEIPASS)
+else:
+    APP_DIR = Path(__file__).parent
+    ASSET_DIR = Path(__file__).parent
+
+CALIBRATION_FILE = APP_DIR / "calibration.json"
 BOBBER_COLOR_RANGES: list = []
 
 # Global Variables
@@ -526,17 +533,17 @@ class App(ctk.CTk):
         self.geometry("460x720")
         self.resizable(False, False)
 
-        icon_path = Path(__file__).parent / "icon.ico"
+        icon_path = ASSET_DIR / "icon.ico"
         if icon_path.exists():
             self.iconbitmap(str(icon_path))
 
-        # Title and Image Icon
+        # UI Header
         self.header_frame = ctk.CTkFrame(self, fg_color="transparent")
-        self.header_frame.pack(pady=10)
+        self.header_frame.pack(pady=(15, 5))
 
-        img_path = Path(__file__).parent / "icon.png"
-        if img_path.exists():
-            pil_image = Image.open(str(img_path))
+        icon_path = ASSET_DIR / "icon.png"
+        if icon_path.exists():
+            pil_image = Image.open(str(icon_path))
             self.logo_image = ctk.CTkImage(light_image=pil_image, dark_image=pil_image, size=(48, 48))
             self.logo_label = ctk.CTkLabel(self.header_frame, image=self.logo_image, text="")
             self.logo_label.pack(side="left", padx=10)
@@ -575,8 +582,9 @@ class App(ctk.CTk):
         self.start_btn = ctk.CTkButton(self.actions_frame, text="Start Bot", command=self.toggle_bot, font=ctk.CTkFont(weight="bold"), fg_color="#27AE60", hover_color="#229954", height=40)
         self.start_btn.pack(side="left", padx=5, expand=True, fill="x")
 
-        self.update_btn = ctk.CTkButton(self.actions_frame, text="Update", command=self.update_bot, width=70, font=ctk.CTkFont(weight="bold"), fg_color="#2980B9", hover_color="#1F618D", height=40)
-        self.update_btn.pack(side="left", padx=(5, 0))
+        if not getattr(sys, 'frozen', False):
+            self.update_btn = ctk.CTkButton(self.actions_frame, text="Update", command=self.update_bot, width=70, font=ctk.CTkFont(weight="bold"), fg_color="#2980B9", hover_color="#1F618D", height=40)
+            self.update_btn.pack(side="left", padx=(5, 0))
 
         # Legend
         self.legend_label = ctk.CTkLabel(self, text="⌨ Shortcuts: [F8] Stop Bot  |  [F9] Pause/Resume", font=ctk.CTkFont(size=13, weight="bold"), text_color="#F1C40F")
@@ -778,7 +786,7 @@ class App(ctk.CTk):
                         with urllib.request.urlopen(req, timeout=7) as response:
                             remote_data = response.read()
                             
-                        local_path = Path(__file__).parent / file_name
+                        local_path = APP_DIR / file_name
                         is_binary = file_name.endswith(('.png', '.ico'))
                         
                         if is_binary:
