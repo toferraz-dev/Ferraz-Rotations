@@ -11,3 +11,10 @@
 
 # Ignorar especificamente este arquivo
 FerrazDiscipline.yaml
+
+# WowFishing Ignored Files (Manter apenas EXE e README)
+WowFishing/src/
+WowFishing/*.json
+WowFishing/build/
+WowFishing/dist/
+WowFishing/*.spec
