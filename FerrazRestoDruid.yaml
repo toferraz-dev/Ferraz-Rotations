@@ -247,7 +247,7 @@ lists:
 
   catweave_aoe:
     - heart_of_the_wild,if=config.use_heart_of_the_wild&talent.heart_of_the_wild
-    - entangling_roots,if=combo_points>=5&!debuff.rip.refreshable&active_dot.rip<enemies.combat.8y
+    - target_enemy,if=combo_points>=5&!debuff.rip.refreshable&active_dot.rip<enemies.combat.8y
     - rip,if=combo_points>=5&debuff.rip.refreshable&target.range<=8
     - ferocious_bite,if=combo_points>=5&target.range<=8
     - rake,if=debuff.rake.refreshable&target.range<=8
