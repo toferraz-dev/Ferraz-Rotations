@@ -240,23 +240,25 @@ lists:
     - shred,if=target.range<=8
 
   catweave_aoe:
-    - rip,cycle=enemies,if=combo_points>=5&cycle.debuff.rip.refreshable&cycle.range<=8
+    - rip,if=combo_points>=5&(cycle.debuff.rip.down|cycle.debuff.rip.remains<4.8)&cycle.range<=8
     - ferocious_bite,if=combo_points>=5&target.range<=8
     - thrash,if=debuff.thrash.refreshable&target.range<=8
+    - rake,cycle=enemies,if=(cycle.debuff.rake.down|cycle.debuff.rake.remains<4.2)&cycle.range<=8
     - swipe,if=target.range<=8
+    - shred,if=target.range<=8
 
   catweave:
     # With Fluid Form, rake/shred auto-shift inline - no cat_form GCD needed
-    - rejuvenation,cycle=members,if=cycle.buff.rejuvenation.remains<4&(buff.cat_form.up&talent.fluid_form)&(target.range>8|!var.group_healthy)
+    - rejuvenation,cycle=members,if=cycle.buff.rejuvenation.remains<4&(buff.cat_form.up|talent.fluid_form)&(target.range>8|!var.group_healthy)
     - moonfire,if=debuff.moonfire.remains<2&debuff.moonfire.refreshable&!buff.cat_form.up
     - wrath,if=mana.pct>=70&!buff.cat_form.up&target.range>9
     
     # Fluid Form: we MUST cast rake or shred to shift BEFORE accessing catweave_aoe/st
-    - rake,if=talent.fluid_form&!buff.cat_form.up&debuff.rake.refreshable&target.range<=8
+    - rake,cycle=enemies,if=talent.fluid_form&!buff.cat_form.up&debuff.rake.refreshable
     - shred,if=talent.fluid_form&!buff.cat_form.up&target.range<=8
     
-    # Without Fluid Form: explicit shift
-    - cat_form,if=!buff.cat_form.up&target.range<=8&!talent.fluid_form
+    # Explicit shift fallback (for AoE when Shred is bypassed or without Fluid Form)
+    - cat_form,if=!buff.cat_form.up&target.range<=8
     - return,if=!buff.cat_form.up
     
     - call_action_list,name=catweave_aoe,if=active_enemies>=config.aoe_threshold
