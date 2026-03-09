@@ -1,4 +1,4 @@
-version: 3.5
+version: 3.6
 author: Ferraz
 patch: "12.0.1"
 spec: 105
@@ -153,6 +153,11 @@ config:
     type: checkbox
     default: false
 
+  use_heart_of_the_wild:
+    label: "Auto Heart of the Wild"
+    type: checkbox
+    default: true
+
   # =================================================================================================
   #     UTILITY & ITEMS
   # =================================================================================================
@@ -234,18 +239,19 @@ lists:
     - innervate,if=mana.pct<config.innervate_threshold&player.combat
 
   catweave_st:
+    - heart_of_the_wild,if=config.use_heart_of_the_wild&talent.heart_of_the_wild
     - rip,if=combo_points>=5&debuff.rip.refreshable&target.range<=8
     - ferocious_bite,if=combo_points>=4&target.range<=8
     - rake,if=debuff.rake.refreshable&target.range<=8
     - shred,if=target.range<=8
 
   catweave_aoe:
-    - rip,if=combo_points>=5&(debuff.rip.down|debuff.rip.remains<4.8)&target.range<=8
+    - heart_of_the_wild,if=config.use_heart_of_the_wild&talent.heart_of_the_wild
+    - entangling_roots,if=combo_points>=5&!debuff.rip.refreshable&active_dot.rip<enemies.combat.8y
+    - rip,if=combo_points>=5&debuff.rip.refreshable&target.range<=8
     - ferocious_bite,if=combo_points>=5&target.range<=8
-    - thrash,if=debuff.thrash.refreshable&target.range<=8
-    - rake,if=(debuff.rake.down|debuff.rake.remains<4.2)&target.range<=8
+    - rake,if=debuff.rake.refreshable&target.range<=8
     - swipe,if=target.range<=8
-    - shred,if=target.range<=8
 
   catweave:
     # With Fluid Form, rake/shred auto-shift inline - no cat_form GCD needed
@@ -261,8 +267,8 @@ lists:
     - cat_form,if=!buff.cat_form.up&target.range<=8
     - return,if=!buff.cat_form.up
     
-    - call_action_list,name=catweave_aoe,if=active_enemies>=config.aoe_threshold
-    - call_action_list,name=catweave_st,if=active_enemies<config.aoe_threshold
+    - call_action_list,name=catweave_aoe,if=enemies.combat.8y>=config.aoe_threshold
+    - call_action_list,name=catweave_st,if=enemies.combat.8y<config.aoe_threshold
 
   moving:
     - convoke_the_spirits,if=group.count(cycle.health.pct<config.convoke_threshold)>=config.convoke_members&!buff.cat_form.up&!buff.bear_form.up
