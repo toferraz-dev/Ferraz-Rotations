@@ -240,10 +240,10 @@ lists:
     - shred,if=target.range<=8
 
   catweave_aoe:
-    - rip,if=combo_points>=5&(cycle.debuff.rip.down|cycle.debuff.rip.remains<4.8)&cycle.range<=8
+    - rip,if=combo_points>=5&(debuff.rip.down|debuff.rip.remains<4.8)&target.range<=8
     - ferocious_bite,if=combo_points>=5&target.range<=8
     - thrash,if=debuff.thrash.refreshable&target.range<=8
-    - rake,cycle=enemies,if=(cycle.debuff.rake.down|cycle.debuff.rake.remains<4.2)&cycle.range<=8
+    - rake,if=(debuff.rake.down|debuff.rake.remains<4.2)&target.range<=8
     - swipe,if=target.range<=8
     - shred,if=target.range<=8
 
