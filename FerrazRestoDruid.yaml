@@ -240,14 +240,14 @@ lists:
     - shred,if=target.range<=8
 
   catweave_aoe:
-    - rip,if=combo_points>=5&debuff.rip.refreshable&target.range<=8
+    - rip,cycle=enemies,if=combo_points>=5&cycle.debuff.rip.refreshable&cycle.range<=8
     - ferocious_bite,if=combo_points>=5&target.range<=8
     - thrash,if=debuff.thrash.refreshable&target.range<=8
     - swipe,if=target.range<=8
 
   catweave:
     # With Fluid Form, rake/shred auto-shift inline - no cat_form GCD needed
-    - rejuvenation,cycle=members,if=cycle.buff.rejuvenation.remains<4&(buff.cat_form.up|talent.fluid_form)&(target.range>8|!var.group_healthy)
+    - rejuvenation,cycle=members,if=cycle.buff.rejuvenation.remains<4&(buff.cat_form.up&talent.fluid_form)&(target.range>8|!var.group_healthy)
     - moonfire,if=debuff.moonfire.remains<2&debuff.moonfire.refreshable&!buff.cat_form.up
     - wrath,if=mana.pct>=70&!buff.cat_form.up&target.range>9
     
