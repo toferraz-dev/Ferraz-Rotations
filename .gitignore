@@ -1,3 +1,11 @@
-.gitignore
-/src
+# Ignore everything
+*
+
+# But do not ignore directories
+!*/
+
+# Do not ignore yaml files
 !*.yaml
+
+# Explicitly ignore .gitignore itself
+.gitignore
