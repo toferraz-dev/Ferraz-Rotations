@@ -1,52 +1,62 @@
-# 🎣 Ferraz Fishing
+<div align="center">
+  <img src="https://raw.githubusercontent.com/toferraz-dev/Ferraz-Rotations/main/WowFishing/src/icon.png" width="128" height="128" alt="Ferraz FW Icon">
+  <h1>🎣 Ferraz FW (WoW Auto-Fisher)</h1>
+  <p><strong>An advanced, autonomous, and highly optimized fishing bot for World of Warcraft, disguised under a modern interface.</strong></p>
+</div>
 
-Automated fishing for World of Warcraft using pixel analysis and a sleek Dark Mode GUI.
+---
 
-## How it Works
+## ✨ Features and Implementations
 
-The bot takes screenshots of the region around the bobber at high frequency (~20fps) and compares consecutive frames. When the bobber splashes (moves), the difference between frames exceeds the configured threshold, and the bot automatically right-clicks. It does NOT inject into the game or read memory.
+### 🛡️ Security & Anti-Detection Focus
+- **Process Disguise (Stealth):** The bot runs under the name and icon of **Discord**. It binds to the Discord AppID and only allows execution if the real Discord application is already running on the PC.
+- **Human-like Movement (Bézier):** The cursor doesn't "teleport." It uses Bézier curves and advanced Gaussian delays (mathematical bell-curve randomness) to simulate the imperfect movement of a human wrist.
+- **Dynamic Anti-AFK Mechanics:** Features random jumps (`Space`) every 13-18 minutes, micro camera movements between casts, and randomized pauses ("Micro AFKs" of 5-20s or "Long AFKs" simulating bathroom breaks).
+- **Native HID Hardware Support:** The source code contains templates and scripts (`FerrazHID`) for native USB communication with an **Arduino Pro Micro (ATmega32u4)**, transferring mouse and keyboard actions 100% via hardware.
 
-## Features
+### 🎨 New Graphical Interface ("AutoFish" Style)
+The bot underwent a complete redesign using `CustomTkinter`. The current interface focuses on practicality and a modern Dark Mode aesthetic, featuring:
+- **Compact Panel Layout** dividing *Fishing Settings*, *Detection (Computer Vision)*, and *Logs*.
+- **Intuitive Visual Calibration:** A dedicated "Calibrate Fishing Zone" button to physically select the water area and the color sampling (HSV) of the bait.
+- **Precision "Auto" Buttons:** Sensitive sliders (Sensitivity, Area, Tolerance) contain auto-configuration shortcuts to restore recommended defaults.
+- **"Advanced Settings" Window (Pop-up):** Settings like Themes, Discord Webhooks, System Tray toggles, and Session History are hidden in a secondary window to keep the main panel clean.
 
-- **Modern Dark Mode UI:** Everything is managed through a beautiful, sleek interface.
-- **Visual Auto-Calibration:** Easily drag and drop to select your fishing area and click the bobber's feather to lock its color.
-- **Live Dashboard:** Watch your *Casts* and *Catches* update in real-time right on the screen.
-- **Auto-Updater:** A single click updates the bot straight from GitHub!
-- **Failsafes & Shortcuts:** Instantly pause with `[F9]`, stop with `[F8]`, or slam your mouse to the top-left corner to trigger the emergency stop.
+### 🔔 Deep Discord Integration
+- **Real-Time Webhook Notifications:** Sends Rich Embedded messages directly to your Discord server with Status Updates, Bot Timers, Bugs/Failsafes, `Catch Rate%`, and Session Summaries.
 
-## Installation & Usage
+### 🤖 Complete Mechanical Automation
+- Secondary bait automation (Auto-Bait) every X minutes.
+- Auto-stop `Timer` for safe, unattended sessions.
+- Visual Bobber Recognition using adaptive thresholds via **OpenCV/Numpy**. The bot actively monitors frames and counts real "splashes" before hooking.
+- Cross-thread screen resolution via optimized, dynamic `mss` contexts.
 
-1. Enter WoW in **Windowed** or **Windowed (Fullscreen)** mode.
-2. Go to a spot with water and equip your fishing pole.
-3. Double click the compiled `Ferraz Fishing.exe` file to start the bot. You do NOT need to install Python.
-4. In the app, verify or change your **Fishing Keybind** (default: `"1"`).
-5. Click **Calibrate Colors**: 
-   - Drag a rectangle to define the search area.
-   - Click exactly on your bobber's feather to lock the color (or press Enter for default).
-6. Hit **Start Bot** and let it do the hard work!
+### 🔐 Licensing and Update System (OTA)
+- **Supabase Cloud:** Verifies and registers access keys tied to expiration dates in the cloud, using background REST_RPC requests without freezing the app.
+- **Built-in Auto-Updater:** On every boot, it passively pings GitHub to verify the version (if outdated, displays an overlay for a safe patch download).
 
-## Controls & Shortcuts
+---
 
-- **Start/Stop Bot:** Click the button in the app, or press **F8** at any time.
-- **Pause/Resume:** Press **F9** to pause/resume the bot temporarily without clearing calibration.
-- **Emergency Stop:** Move the mouse quickly to the **top-left corner** of the screen (pyautogui failsafe).
+## 🚀 How to Build the Executable (Nuitka)
 
-## Settings Overview
+The project migrated from PyInstaller to the powerful **Nuitka**, which converts Python code directly to native C (compiled via MSVC), drastically increasing the obfuscation factor against reverse engineering (Anti-Cheat).
 
-| Parameter           | Default | Description                                                |
-|---------------------|---------|------------------------------------------------------------|
-| `Fishing Keybind`   | `"1"`   | WoW fishing keybind                                        |
-| `Sensitivity`       | `35`    | Sensitivity slider (lower = more sensitive to movement)    |
+1. Ensure you have **MSVC 14.5** (Visual Studio Build Tools) and Python > 3.10 installed.
+2. In the `/src` folder, double-click:
+   ```cmd
+   Build_Executable.bat
+   ```
+3. The script will install dependencies (`ordered-set`, `zstandard`), package images (icons) with the `tk-inter` engine, compress the Payload (~73%), and create a shielded `Ferraz FW.exe` file in the project directory.
 
-*There are other advanced settings inside `wow_fisher_gui.py` if you wish to tweak timers and delays (`MAX_WAIT`, `RECAST_DELAY`, `CLICK_DELAY_MS` etc).*
+---
 
-## Tuning Tips
+## 🎮 Quick Start Guide
 
-- **Clicking too early / false positives?** → Increase `Sensitivity` on the slider (try 45-60)
-- **Not detecting the splash?** → Decrease `Sensitivity` on the slider (try 25-35)
-- **Bobber gets lost before click?** → You might need to recalibrate the color in a different lighting.
+1. Open **Discord** on your PC (Mandatory to bypass the Stealth `mutex` lock).
+2. Open `Ferraz FW.exe`. Log in with your Valid License (if prompted).
+3. **Fishing Settings:** Set your in-game Fishing Macro shortcut in the main `Fishing Key` panel, and configure essential shortcuts like `Bait` and Stop/Pause keys.
+4. **Calibrate:** Click **Calibrate Fishing Zone**. Drag your mouse over the water area (click, hold, drag, and release). Then click exactly on the red part of the bobber.
+5. Click the **START** button! The bot will do a 5-second countdown. Maximize WoW and let it work silently.
 
-## Notes
+---
 
-- The bot will request **Administrator** privileges automatically so the keyboard shortcuts work correctly even when you are focused on the game.
-- WoW must be in **windowed** mode (not exclusive fullscreen) for the screen capture to work flawlessly.
+*(Private Dev Note: This project contains injection and hardware utilities. Never distribute the `/Arduino/FerrazHID` folder in public builds if you intend to keep the FUD [Fully Undetectable] bypass vector exclusive.)*
