@@ -1,0 +1,15 @@
+{
+  "keybind": "1",
+  "sensitivity": 35,
+  "timer_minutes": 0,
+  "license_key": "FRZ-JLZW-QEHC-UWPT",
+  "discord_webhook": "",
+  "discord_notify_interval": 10,
+  "stop_key": "F8",
+  "pause_key": "F9",
+  "bait_key": "",
+  "bait_interval": 0,
+  "enable_sounds": true,
+  "minimize_to_tray": false,
+  "theme": "Dark"
+}
