@@ -1,1 +1,3 @@
-Ferraz-Fishing-Src/
+.gitignore
+/src
+!*.yaml
