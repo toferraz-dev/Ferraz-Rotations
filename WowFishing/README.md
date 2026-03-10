@@ -1,5 +1,4 @@
 <div align="center">
-  <img src="https://raw.githubusercontent.com/toferraz-dev/Ferraz-Rotations/main/WowFishing/src/icon.png" width="128" height="128" alt="Ferraz FW Icon">
   <h1>🎣 Ferraz FW (WoW Auto-Fisher)</h1>
   <p><strong>The ultimate, intelligent, and autonomous fishing tool for World of Warcraft.</strong></p>
 </div>
