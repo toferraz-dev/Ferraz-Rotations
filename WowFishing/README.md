@@ -1,62 +1,52 @@
 <div align="center">
   <img src="https://raw.githubusercontent.com/toferraz-dev/Ferraz-Rotations/main/WowFishing/src/icon.png" width="128" height="128" alt="Ferraz FW Icon">
   <h1>🎣 Ferraz FW (WoW Auto-Fisher)</h1>
-  <p><strong>An advanced, autonomous, and highly optimized fishing bot for World of Warcraft, disguised under a modern interface.</strong></p>
+  <p><strong>The ultimate, intelligent, and autonomous fishing tool for World of Warcraft.</strong></p>
 </div>
 
 ---
 
-## ✨ Features and Implementations
+## ✨ Why Ferraz FW?
 
-### 🛡️ Security & Anti-Detection Focus
-- **Process Disguise (Stealth):** The bot runs under the name and icon of **Discord**. It binds to the Discord AppID and only allows execution if the real Discord application is already running on the PC.
-- **Human-like Movement (Bézier):** The cursor doesn't "teleport." It uses Bézier curves and advanced Gaussian delays (mathematical bell-curve randomness) to simulate the imperfect movement of a human wrist.
-- **Dynamic Anti-AFK Mechanics:** Features random jumps (`Space`) every 13-18 minutes, micro camera movements between casts, and randomized pauses ("Micro AFKs" of 5-20s or "Long AFKs" simulating bathroom breaks).
-- **Native HID Hardware Support:** The source code contains templates and scripts (`FerrazHID`) for native USB communication with an **Arduino Pro Micro (ATmega32u4)**, transferring mouse and keyboard actions 100% via hardware.
+Ferraz FW was designed from the ground up to offer a completely autonomous, secure, and user-friendly fishing experience. Forget about staring at the screen for hours; let the bot do the hard work while you relax!
 
-### 🎨 New Graphical Interface ("AutoFish" Style)
-The bot underwent a complete redesign using `CustomTkinter`. The current interface focuses on practicality and a modern Dark Mode aesthetic, featuring:
-- **Compact Panel Layout** dividing *Fishing Settings*, *Detection (Computer Vision)*, and *Logs*.
-- **Intuitive Visual Calibration:** A dedicated "Calibrate Fishing Zone" button to physically select the water area and the color sampling (HSV) of the bait.
-- **Precision "Auto" Buttons:** Sensitive sliders (Sensitivity, Area, Tolerance) contain auto-configuration shortcuts to restore recommended defaults.
-- **"Advanced Settings" Window (Pop-up):** Settings like Themes, Discord Webhooks, System Tray toggles, and Session History are hidden in a secondary window to keep the main panel clean.
+### 🛡️ Unmatched Security (FUD)
+- **Human-like Actions:** The bot performs randomized, non-linear mouse movements (Bézier curves). It perfectly simulates how a human player would move their cursor to click on the bobber.
+- **Dynamic Randomization:** Micro-pauses between casts, random idle times, and varied reaction speeds prevent predictable, robotic patterns from being detected by the game's security systems.
+- **Stealth Integration:** The application runs disguised, blending seamlessly with other normal background processes on your PC to ensure your account remains safe.
 
-### 🔔 Deep Discord Integration
-- **Real-Time Webhook Notifications:** Sends Rich Embedded messages directly to your Discord server with Status Updates, Bot Timers, Bugs/Failsafes, `Catch Rate%`, and Session Summaries.
+### 🎮 Complete Automation
+- **Advanced Computer Vision:** The bot "sees" the screen passively. It does not inject into or read the game's memory (which is the main cause of bans). It visually identifies the bobber, tracks it on the water, and reacts instantly to the fish splash.
+- **Auto-Bait System:** Set an interval (e.g., every 10 minutes), and the bot will automatically apply fishing lures or baits to your character without interrupting the fishing cycle.
+- **Session Timer:** Need to go out? Set a running timer (in minutes) and the bot will safely stop itself when the time is up, avoiding suspicious 24-hour fishing sessions.
 
-### 🤖 Complete Mechanical Automation
-- Secondary bait automation (Auto-Bait) every X minutes.
-- Auto-stop `Timer` for safe, unattended sessions.
-- Visual Bobber Recognition using adaptive thresholds via **OpenCV/Numpy**. The bot actively monitors frames and counts real "splashes" before hooking.
-- Cross-thread screen resolution via optimized, dynamic `mss` contexts.
+### 🔔 Remote Discord Notifications
+- Monitor your character's progress right from your phone! The bot connects to your Discord server via Webhook and sends detailed reports including your current status, Casts, Fish Caught, Catch Rate (%), and Uptime.
 
-### 🔐 Licensing and Update System (OTA)
-- **Supabase Cloud:** Verifies and registers access keys tied to expiration dates in the cloud, using background REST_RPC requests without freezing the app.
-- **Built-in Auto-Updater:** On every boot, it passively pings GitHub to verify the version (if outdated, displays an overlay for a safe patch download).
+### 🎨 Premium Interface
+- **Simple 2-Click Calibration:** A clean, modern dashboard where you can easily set your keys. Just click "Calibrate", draw a box over the water, and click the bobber color. The bot adapts instantly, whether it's day or night in the game.
+- **Hassle-Free:** No scripting or coding knowledge required. Enter your License Key and press **START**.
 
 ---
 
-## 🚀 How to Build the Executable (Nuitka)
+## 🚀 Quick Start Guide
 
-The project migrated from PyInstaller to the powerful **Nuitka**, which converts Python code directly to native C (compiled via MSVC), drastically increasing the obfuscation factor against reverse engineering (Anti-Cheat).
-
-1. Ensure you have **MSVC 14.5** (Visual Studio Build Tools) and Python > 3.10 installed.
-2. In the `/src` folder, double-click:
-   ```cmd
-   Build_Executable.bat
-   ```
-3. The script will install dependencies (`ordered-set`, `zstandard`), package images (icons) with the `tk-inter` engine, compress the Payload (~73%), and create a shielded `Ferraz FW.exe` file in the project directory.
-
----
-
-## 🎮 Quick Start Guide
-
-1. Open **Discord** on your PC (Mandatory to bypass the Stealth `mutex` lock).
-2. Open `Ferraz FW.exe`. Log in with your Valid License (if prompted).
-3. **Fishing Settings:** Set your in-game Fishing Macro shortcut in the main `Fishing Key` panel, and configure essential shortcuts like `Bait` and Stop/Pause keys.
-4. **Calibrate:** Click **Calibrate Fishing Zone**. Drag your mouse over the water area (click, hold, drag, and release). Then click exactly on the red part of the bobber.
-5. Click the **START** button! The bot will do a 5-second countdown. Maximize WoW and let it work silently.
+1. **Open Discord** on your computer (The bot requires Discord to be running as part of its stealth security lock).
+2. Open the **`Ferraz FW.exe`** application. If this is your first time, enter the **License Key** provided after your purchase.
+3. On the left side of the panel, configure your in-game shortcuts:
+   - **Fishing Key:** The key you press in WoW to cast your fishing line (e.g., `1`).
+   - **Bait Key (Optional):** The key to apply your fishing lure, and how often to apply it.
+4. Click on **Calibrate Fishing Zone**. 
+   - On the game screen, click, hold, and drag to draw a box around the area of water where your bobber usually lands.
+   - Next, click exactly on the red/colored part of the bobber in the water. That's it! The bot has learned your environment.
+5. Click the giant green **START** button!
+6. Tab back into World of Warcraft, take your hand off the mouse, and enjoy infinite farming!
 
 ---
 
-*(Private Dev Note: This project contains injection and hardware utilities. Never distribute the `/Arduino/FerrazHID` folder in public builds if you intend to keep the FUD [Fully Undetectable] bypass vector exclusive.)*
+### ⚙️ Requirements
+- **Operating System:** Windows 10 or 11 (64-bit).
+- **Game Settings:** World of Warcraft must be running in Windowed or Windowed (Fullscreen) mode.
+- **Visuals:** Ensure your monitor's brightness and gamma are not distorted by third-party filter software, and avoid HDR if possible, as it may interfere with the color calibration.
+
+*(If you have any questions or need support, please open an official ticket in our Discord server.)*
