@@ -31,16 +31,15 @@ Ferraz FW was designed from the ground up to offer a completely autonomous, secu
 
 ## 🚀 Quick Start Guide
 
-1. **Open Discord** on your computer (The bot requires Discord to be running as part of its stealth security lock).
-2. Open the **`Ferraz FW.exe`** application. If this is your first time, enter the **License Key** provided after your purchase.
-3. On the left side of the panel, configure your in-game shortcuts:
+1. Open the **`Ferraz FW.exe`** application. If this is your first time, enter the **License Key** provided after your purchase.
+2. On the left side of the panel, configure your in-game shortcuts:
    - **Fishing Key:** The key you press in WoW to cast your fishing line (e.g., `1`).
    - **Bait Key (Optional):** The key to apply your fishing lure, and how often to apply it.
-4. Click on **Calibrate Fishing Zone**. 
+3. Click on **Calibrate Fishing Zone**. 
    - On the game screen, click, hold, and drag to draw a box around the area of water where your bobber usually lands.
    - Next, click exactly on the red/colored part of the bobber in the water. That's it! The bot has learned your environment.
-5. Click the giant green **START** button!
-6. Tab back into World of Warcraft, take your hand off the mouse, and enjoy infinite farming!
+4. Click the giant green **START** button!
+5. Tab back into World of Warcraft, take your hand off the mouse, and enjoy infinite farming!
 
 ---
 
