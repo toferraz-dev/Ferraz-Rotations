@@ -220,6 +220,7 @@ lists:
     - convoke_the_spirits,if=group.count(cycle.health.pct<config.convoke_threshold)>=config.convoke_members&!buff.cat_form.up&!buff.bear_form.up
     - tranquility,if=group.count(cycle.health.pct<config.tranquility_threshold)>=config.tranquility_members&!player.moving
     - natures_swiftness,if=group.count(cycle.health.pct<config.ns_threshold)>=1
+    - heart_of_the_wild,if=config.use_heart_of_the_wild&talent.heart_of_the_wild&buff.cat_form.up
 
   trinkets:
     - trinket_1,if=config.use_trinkets&trinket_1.ready
@@ -239,14 +240,12 @@ lists:
     - innervate,if=mana.pct<config.innervate_threshold&player.combat
 
   catweave_st:
-    - heart_of_the_wild,if=config.use_heart_of_the_wild&talent.heart_of_the_wild
     - rip,if=combo_points>=5&debuff.rip.refreshable&target.range<=8
     - ferocious_bite,if=combo_points>=4&target.range<=8
     - rake,if=debuff.rake.refreshable&target.range<=8
     - shred,if=target.range<=8
 
   catweave_aoe:
-    - heart_of_the_wild,if=config.use_heart_of_the_wild&talent.heart_of_the_wild
     - target_enemy,if=combo_points>=5&!debuff.rip.refreshable&active_dot.rip<enemies.combat.8y
     - rip,if=combo_points>=5&debuff.rip.refreshable&target.range<=8
     - ferocious_bite,if=combo_points>=5&target.range<=8
@@ -254,6 +253,7 @@ lists:
     - swipe,if=target.range<=8
 
   catweave:
+    - heart_of_the_wild,if=config.use_heart_of_the_wild&talent.heart_of_the_wild&buff.cat_form.up
     # With Fluid Form, rake/shred auto-shift inline - no cat_form GCD needed
     - rejuvenation,cycle=members,if=cycle.buff.rejuvenation.remains<4&(buff.cat_form.up|talent.fluid_form)&(target.range>8|!var.group_healthy)
     - moonfire,if=debuff.moonfire.remains<2&debuff.moonfire.refreshable&!buff.cat_form.up
