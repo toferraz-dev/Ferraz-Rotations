@@ -7,8 +7,8 @@ DebugSpell: false
 DebugPower: false
 InputDelay: 25
 IconOverlayEnabled: true
-IconOverlayX: 1263
-IconOverlayY: 846
+IconOverlayX: 1145
+IconOverlayY: 958
 IconOverlaySize: 40
 IconOverlayLocked: false
 IconOverlayGameOnly: true
