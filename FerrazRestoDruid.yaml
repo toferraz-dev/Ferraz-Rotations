@@ -196,7 +196,9 @@ lists:
     - return,if=player.loot_nearby
   
   interrupts:
-    - incapacitating_roar,if=target.casting.interruptible&target.range<=8
+    # AoE Interrupt
+    - incapacitating_roar,if=interrupt.stun.aoe.check
+    # CC Interrupt
     - soothe,if=target.purgeable.enrage    
   
   out_of_combat:

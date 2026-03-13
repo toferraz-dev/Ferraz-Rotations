@@ -211,9 +211,15 @@ lists:
     - ancestral_call,if=var.berserk_up
 
   interrupts:
-    - skull_bash,if=config.use_skull_bash&var.can_interrupt,delay=config.skull_bash_delay
+    # Interrupts
+    - skull_bash,if=interrupt.target.check
+    - skull_bash.mouseover,if=interrupt.mouseover.check
+    - skull_bash.focus,if=interrupt.focus.check
+    # AoE Interrupt
+    - incapacitating_roar,if=interrupt.stun.aoe.check
+    # CC Interrupt
+    - mighty_bash,if=interrupt.cc.check
     - soothe,if=target.purgeable.enrage
-    - incapacitating_roar,if=config.use_skull_bash&var.can_interrupt&cooldown.skull_bash.ready=false
 
   dispels:
     - remove_corruption,cycle=members,if=cycle.dispelable.list&cycle.range>0&cycle.range<=40

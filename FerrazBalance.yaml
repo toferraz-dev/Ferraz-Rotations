@@ -203,8 +203,14 @@ lists:
   # ----------------------------------------------------------
 
   interrupts:
-    - solar_beam,if=config.use_solar_beam&target.casting&target.casting.interruptible,delay=config.solar_beam_delay
-    - incapacitating_roar,if=config.use_incapacitating_roar&active_enemies>=3&target.casting&target.casting.interruptible
+    # Interrupts
+    - solar_beam,if=interrupt.target.check
+    - solar_beam.mouseover,if=interrupt.mouseover.check
+    - solar_beam.focus,if=interrupt.focus.check
+    # AoE Interrupt
+    - incapacitating_roar,if=interrupt.stun.aoe.check
+    # CC Interrupt
+    - mighty_bash,if=interrupt.cc.check
     - soothe,if=target.purgeable.enrage
 
   dispel:
