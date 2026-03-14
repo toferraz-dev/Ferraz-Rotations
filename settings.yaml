@@ -7,11 +7,14 @@ DebugSpell: false
 DebugPower: false
 InputDelay: 25
 IconOverlayEnabled: true
-IconOverlayX: 100
-IconOverlayY: 100
+IconOverlayX: 1265
+IconOverlayY: 845
 IconOverlaySize: 40
 IconOverlayLocked: false
 IconOverlayGameOnly: true
+rotation_config:
+  103:
+    game_mode: 1
 selected_rotation:
   105: C:\Games\Python\Rotations\FerrazRestoDruid.yaml
   103: C:\Games\Python\Rotations\FerrazFeral.yaml
