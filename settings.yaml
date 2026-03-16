@@ -1,14 +1,15 @@
 Key: 32C7D1D29800014-SM
 GameFolder: C:\Games\World of Warcraft
 AddonName: WeakAurasModule
-Debug: true
+Debug: false
 DebugAura: false
 DebugSpell: false
 DebugPower: false
 InputDelay: 25
+SpellQueueWindow: 400
 IconOverlayEnabled: true
-IconOverlayX: 1265
-IconOverlayY: 845
+IconOverlayX: 100
+IconOverlayY: 100
 IconOverlaySize: 40
 IconOverlayLocked: false
 IconOverlayGameOnly: true
