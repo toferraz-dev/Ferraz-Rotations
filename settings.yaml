@@ -6,7 +6,9 @@ DebugAura: false
 DebugSpell: false
 DebugPower: false
 InputDelay: 25
-SpellQueueWindow: 400
+CastOverlap: 400
+ChannelOverlap: 400
+AutoAdjustOverlap: true
 IconOverlayEnabled: true
 IconOverlayX: 100
 IconOverlayY: 100
