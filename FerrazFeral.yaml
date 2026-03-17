@@ -2,13 +2,12 @@ version: 2.0
 author: Ferraz
 patch: "12.0.1"
 spec: 103
-name: Feral Master (Teste)
+name: Feral Midnight (Teste Beta)
 description: |
-  Master Feral Druid Rotation for Mythic+ — Midnight (12.0.1).
-  Druid of the Claw hero talent build.
-  Based on Icy Veins / Wowhead rotation priority.
-  Supports Single Target / AoE with proper snapshotting,
-  Chomp, Ravage, / Apex Predators Craving management.
+  Feral Druid Rotation for Mythic+ — Midnight (12.0.1).
+  Optimized for simplified 12.0.1 mechanics (Removed Thrash/Brutal Slash).
+  Supports Druid of the Claw & Wildstalker procs.
+  Chomp, Ravage, and Apex Predator management.
 entry: main
 
 config:
@@ -28,9 +27,17 @@ config:
     label: "Rotation Style"
     type: dropdown
     options:
-      - label: "Druid of the Claw (M+)"
+      - label: "Druid of the Claw"
         value: 1
+      - label: "Wildstalker"
+        value: 2
     default: 1
+
+  # --- Talent Config ---
+  use_chomp:
+    label: "Auto Chomp"
+    type: checkbox
+    default: true
 
   # DEFENSIVES
   barkskin_threshold:
@@ -142,7 +149,6 @@ variables:
   rip_up: debuff.rip.up
   rip_refreshable: debuff.rip.refreshable|debuff.rip.remains<4.8
   rake_refreshable: debuff.rake.refreshable|debuff.rake.remains<4.2
-  thrash_refreshable: debuff.thrash.refreshable|debuff.thrash.remains<4.2
   moonfire_refreshable: debuff.moonfire.refreshable|debuff.moonfire.remains<4.2
 
   # SNAPSHOTTING — refresh bleeds when Tiger's Fury is active for better damage
@@ -245,51 +251,47 @@ lists:
   # Based on Icy Veins Midnight 12.0.1 priority
   # -------------------------------------------------------------------------------------------------
   st_rotation:
-    # 1. Consume Apex Predator's Craving immediately (free max damage Bite/Ravage)
+    # 1. Consume Apex Predator's Craving immediately
     - ferocious_bite,if=var.has_apex
     - ravage,if=var.has_apex&var.ravage_up
 
-    # 2. Tiger's Fury on cooldown — energy refill + 15% damage buff
+    # 2. Tiger's Fury on cooldown
     - tigers_fury,if=var.energy_for_tf|buff.tigers_fury.down
 
-    # 3. Ferocious Bite in Execute Phase (< 25%) — Prioritize Bite over everything else, as it refreshes Rip automatically
+    # 3. Chomp (New 12.0.1 Talent - High priority generator)
+    - chomp,if=config.use_chomp&cooldown.chomp.ready&energy>=50
+
+    # 4. Ferocious Bite in Execute Phase (< 25%)
     - ferocious_bite,if=var.cp_full&target.health.pct<25
 
-    # 4. Rip — maintain at all times, ideally snapshot with Tiger's Fury (skip if in execute)
+    # 5. Rip — maintain at all times
     - rip,if=var.cp_max&!var.rip_up&target.health.pct>=25
     - rip,if=var.cp_max&var.rip_refreshable&var.tigers_fury_up&target.health.pct>=25
     - rip,if=var.cp_full&var.rip_refreshable&target.health.pct>=25
 
-    # 4. Ravage — consume procs ASAP
+    # 6. Ravage — consume procs ASAP
     - ravage,if=var.ravage_up&var.cp_max&var.energy_for_bite
 
-    # 5. Ferocious Bite — spend CPs when Rip is healthy (ideal: 50+ energy)
+    # 7. Ferocious Bite — spend CPs when Rip is healthy (ideal: 50+ energy)
     - ferocious_bite,if=var.cp_max&var.energy_for_bite_ideal&var.rip_up
-    # Fallback: use Bite even at lower energy to avoid wasting CPs
     - ferocious_bite,if=var.cp_full&var.energy_for_bite&var.rip_up
 
-    # 7. Rake — maintain with 100% uptime, give highest priority to Sudden Ambush proc (skip manual refresh in execute unless it drops)
+    # 8. Rake — maintain with 100% uptime
     - rake,if=var.has_sudden_ambush&var.rake_refreshable
     - rake,if=var.rake_refreshable&target.health.pct>=25
     - rake,if=!debuff.rake.up&target.health.pct<25
 
-    # 8. Thrash — maintain bleed before big generators (skip in execute)
-    - thrash,if=var.thrash_refreshable&target.health.pct>=25
-
-    # 9. Frantic Frenzy / Feral Frenzy — on cooldown, sync with Tiger's Fury, at low CPs
+    # 9. Frantic Frenzy / Feral Frenzy — on cooldown at low CPs
     - frantic_frenzy,if=talent.frantic_frenzy&combo_points<=2&var.tigers_fury_up
     - feral_frenzy,if=!talent.frantic_frenzy&combo_points<=2&var.tigers_fury_up
 
-    # 10. Shred with Sudden Ambush — bonus damage, acts as if from stealth
+    # 10. Shred with Sudden Ambush
     - shred,if=var.has_sudden_ambush
 
-    # 11. Moonfire (Lunar Inspiration) — maintain like Rake
+    # 11. Moonfire (Lunar Inspiration)
     - moonfire,if=talent.lunar_inspiration&var.moonfire_refreshable
 
-    # 12. Brutal Slash — use charges to avoid capping
-    - brutal_slash,if=talent.brutal_slash&cooldown.brutal_slash.charges>=2
-
-    # 13. Shred — filler combo point generator (primary builder in execute too)
+    # 12. Shred — filler generator
     - shred
 
   # -------------------------------------------------------------------------------------------------
@@ -304,35 +306,29 @@ lists:
     # 2. Tiger's Fury on cooldown
     - tigers_fury,if=var.energy_for_tf|buff.tigers_fury.down
 
-    # 3. Primal Wrath — use only to apply or refresh Rip within pandemic window
+    # 3. Chomp (New 12.0.1 Talent)
+    - chomp,if=config.use_chomp&cooldown.chomp.ready&energy>=50
+
+    # 4. Primal Wrath — main AoE finisher
     - primal_wrath,if=var.cp_max&debuff.rip.down
     - primal_wrath,if=var.cp_max&var.rip_refreshable
 
-    # 4. Ravage — consume procs (AoE cleave makes this extra valuable)
+    # 5. Ravage / Ferocious Bite — cleave with Rampant Ferocity
     - ravage,if=var.ravage_up&var.cp_max&var.energy_for_bite
-
-    # 5. Ferocious Bite — with Rip up triggers Rampant Ferocity AoE
     - ferocious_bite,if=var.cp_max&var.energy_for_bite&debuff.rip.up
-    # Fallback: dump CPs to avoid waste
     - ferocious_bite,if=var.cp_full&var.energy_for_bite
 
-    # 7. Thrash — maintain on all targets (higher priority in AoE)
-    - thrash,if=var.thrash_refreshable
-
-    # 8. Frantic Frenzy / Feral Frenzy — strong AoE burst
+    # 6. Frantic Frenzy / Feral Frenzy
     - frantic_frenzy,if=talent.frantic_frenzy&combo_points<=2
     - feral_frenzy,if=!talent.frantic_frenzy&combo_points<=2
 
-    # 9. Rake — cycle between targets to spread bleeds
+    # 7. Rake — cycle targets
     - rake,cycle=enemies,if=var.rake_refreshable
 
-    # 10. Moonfire (Lunar Inspiration) — cycle targets, but only on 2-4 count
+    # 8. Moonfire — cycle targets (up to 4)
     - moonfire,cycle=enemies,if=talent.lunar_inspiration&var.moonfire_refreshable&active_enemies<=4
 
-    # 11. Brutal Slash — use charges, strong AoE builder
-    - brutal_slash,if=talent.brutal_slash&cooldown.brutal_slash.charges>=1
-
-    # 12. Swipe — filler AoE builder
+    # 9. Swipe — filler AoE builder
     - swipe
 
   main:
