@@ -244,13 +244,13 @@ lists:
   catweave_st:
     - heart_of_the_wild,if=config.use_heart_of_the_wild&talent.heart_of_the_wild&buff.cat_form.up
     - rip,if=combo_points>=5&debuff.rip.refreshable&target.range<=8
-    - ferocious_bite,if=combo_points>=4&target.range<=8
+    - ferocious_bite,if=combo_points>=5&target.range<=8
     - rake,if=debuff.rake.refreshable&target.range<=8
     - shred,if=target.range<=8
 
   catweave_aoe:
     - heart_of_the_wild,if=config.use_heart_of_the_wild&talent.heart_of_the_wild&buff.cat_form.up
-    - target_enemy,if=combo_points>=5&!debuff.rip.refreshable&active_dot.rip<enemies_around_target
+    - target_enemy,if=combo_points>=5&!debuff.rip.refreshable&active_dot.rip<enemies.combat.8y
     - rip,if=combo_points>=5&debuff.rip.refreshable&target.range<=8
     - ferocious_bite,if=combo_points>=5&target.range<=8
     - rake,if=debuff.rake.refreshable&target.range<=8
@@ -258,7 +258,6 @@ lists:
 
   catweave:
     - rejuvenation,cycle=members,if=cycle.buff.rejuvenation.remains<4&(buff.cat_form.up|talent.fluid_form)&(target.range>8|!var.group_healthy)
-    - sunfire,if=debuff.sunfire.refreshable|cluster.debuff.sunfire.count<enemies_around_target
     - moonfire,if=debuff.moonfire.remains<2&debuff.moonfire.refreshable&!buff.cat_form.up
     - wrath,if=mana.pct>=70&!buff.cat_form.up&target.range>9
     
@@ -270,8 +269,8 @@ lists:
     - cat_form,if=!buff.cat_form.up&target.range<=8
     - return,if=!buff.cat_form.up
     
-    - call_action_list,name=catweave_aoe,if=enemies_around_target>=config.aoe_threshold
-    - call_action_list,name=catweave_st,if=enemies_around_target<config.aoe_threshold
+    - call_action_list,name=catweave_aoe,if=enemies.combat.8y>=config.aoe_threshold
+    - call_action_list,name=catweave_st,if=enemies.combat.8y<config.aoe_threshold
 
   moving:
     - convoke_the_spirits,if=group.count(cycle.health.pct<config.convoke_threshold)>=config.convoke_members&!buff.cat_form.up&!buff.bear_form.up
