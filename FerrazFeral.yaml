@@ -128,6 +128,17 @@ config:
     max: 4
     default: 2
 
+  # UTILITY
+  use_prowl:
+    label: "Auto Prowl"
+    type: checkbox
+    default: true
+
+  use_shadowmeld:
+    label: "Auto Shadowmeld"
+    type: checkbox
+    default: true
+
 variables:
   # FORM
   in_cat_form: buff.cat_form.up
@@ -211,6 +222,7 @@ lists:
     - convoke_the_spirits,if=config.use_convoke&talent.ashamanes_guidance&var.tigers_fury_up&combo_points<=2
 
   racials:
+    - shadowmeld,if=config.use_shadowmeld&player.combat&var.berserk_up&combo_points<=2&!buff.sudden_ambush.up
     - blood_fury,if=var.berserk_up
     - berserking,if=var.berserk_up
     - fireblood,if=var.berserk_up
@@ -232,7 +244,7 @@ lists:
 
   out_of_combat:
     - mark_of_the_wild,if=group.count(cycle.buff.mark_of_the_wild.down.any&cycle.range>0&cycle.range<=40)>0
-    - prowl,if=!buff.prowl.up&!player.combat
+    - prowl,if=config.use_prowl&!buff.prowl.up&(!player.combat|buff.shadowmeld.up)
 
   stealth_opener:
     # Rake from stealth = bonus damage via Pouncing Strikes
@@ -243,6 +255,7 @@ lists:
     - trinket_2,if=config.use_trinkets&trinket_2.ready&(var.berserk_up|target.boss|active_enemies>=config.aoe_threshold)
 
   movement:
+    - prowl,if=config.use_prowl&!buff.prowl.up&!player.combat
     - stampeding_roar,if=var.use_stampeding_roar&config.stampeding_roar_usage!=0
     - wild_charge,if=player.moving&range>8&player.combat
 
@@ -333,10 +346,11 @@ lists:
 
   main:
     - return,if=player.channeling
+    - return,if=buff.convoke_the_spirits.up
     - call_action_list,name=sanity_checks
     - call_action_list,name=spell_queue
-    - call_action_list,name=out_of_combat,if=!player.combat&!mounted.flying&!mounted.ground
     - cat_form,if=!buff.cat_form.up&!mounted.flying&!mounted.ground
+    - call_action_list,name=out_of_combat,if=!player.combat&!mounted.flying&!mounted.ground
     - return,if=mounted.flying|mounted.ground
 
     # Stop here if out of combat with no enemy target
