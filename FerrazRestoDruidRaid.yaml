@@ -244,8 +244,8 @@ lists:
     - regrowth,cycle=members,if=buff.natures_swiftness.up&cycle.health.pct<config.regrowth_threshold&cycle.range>=0&cycle.range<=40
     - swiftmend,cycle=members,if=cycle.health.pct<config.swiftmend_threshold&cycle.range>=0&cycle.range<=40
     - wild_growth,if=group.count(cycle.health.pct<config.wild_growth_threshold)>=config.wild_growth_members
-    - rejuvenation,cycle=members,if=cycle.buff.rejuvenation.down&cycle.health.pct<config.rejuvenation_threshold&cycle.range>=0&cycle.range<=40    
-    - regrowth,cycle=members,if=cycle.health.pct<config.regrowth_threshold&cycle.range>=0&cycle.range<=40
+    - rejuvenation,cycle=members,if=cycle.buff.rejuvenation.down&cycle.health.pct<config.rejuvenation_threshold&cycle.range>=0&cycle.range<=40&!var.can_catweave    
+    - regrowth,cycle=members,if=cycle.health.pct<config.regrowth_threshold&cycle.range>=0&cycle.range<=40&!var.can_catweave
     
   utility:
     - innervate,if=mana.pct<config.innervate_threshold&player.combat
@@ -263,7 +263,7 @@ lists:
     - rip,if=combo_points>=5&debuff.rip.refreshable&target.range<=8
     - ferocious_bite,if=combo_points>=5&target.range<=8
     - rake,if=debuff.rake.refreshable&target.range<=8
-    - swipe,if=target.range<=8
+    - shred,if=target.range<=8
 
   catweave:
     - rejuvenation,cycle=members,if=cycle.buff.rejuvenation.remains<4&(buff.cat_form.up|talent.fluid_form)&(target.range>8|!var.group_healthy)
@@ -285,7 +285,7 @@ lists:
   moving:
     - convoke_the_spirits,if=group.count(cycle.health.pct<config.convoke_threshold)>=config.convoke_members&!buff.cat_form.up&!buff.bear_form.up
     - lifebloom,cycle=tanks,if=player.combat&cycle.buff.lifebloom.down&cycle.range>=0&cycle.range<=40
-    - rejuvenation,cycle=members,if=cycle.buff.rejuvenation.down&cycle.health.pct<100&cycle.range>=0&cycle.range<=40
+    - rejuvenation,cycle=members,if=cycle.buff.rejuvenation.down&cycle.health.pct<100&cycle.range>=0&cycle.range<=40&!var.can_catweave
 
   mouseover_healing_emergency:
     - natures_cure.mouseover,if=config.use_dispell&mouseover.dispelable.list&mouseover.range>=0&mouseover.range<=40
