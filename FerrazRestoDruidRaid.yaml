@@ -63,6 +63,20 @@ config:
     max: 20
     default: 8
 
+  tree_of_life_threshold:
+    label: "Tree of Life HP %"
+    type: slider
+    min: 25
+    max: 99
+    default: 70
+
+  tree_of_life_members:
+    label: "Tree of Life - Min Members"
+    type: slider
+    min: 1
+    max: 20
+    default: 8
+
   ns_threshold:
     label: "Nature's Swiftness HP %"
     type: slider
@@ -99,13 +113,7 @@ config:
     max: 20
     default: 5
 
-  grove_guardians_threshold:
-    label: "Grove Guardians HP %"
-    type: slider
-    min: 25
-    max: 99
-    default: 85
-    
+  
   use_efflorescence:
     label: "Auto Efflorescence (@cursor)"
     type: checkbox
@@ -134,6 +142,16 @@ config:
     min: 25
     max: 100
     default: 95
+
+  lifebloom_target:
+    label: "Lifebloom/Symbiosis Target"
+    type: dropdown
+    options:
+      - label: "Tank 1 (Role 1)"
+        value: 1
+      - label: "Tank 2 (Role 2)"
+        value: 2
+    default: 1
 
   # =================================================================================================
   #     DAMAGE & CATWEAVING
@@ -212,7 +230,8 @@ lists:
   
   out_of_combat:
     - mark_of_the_wild,if=group.count(cycle.buff.mark_of_the_wild.down.any&cycle.range>=0&cycle.range<=40)>0
-    - symbiotic_relationship,cycle=tanks,if=cycle.buff.symbiotic_relationship.down.any&cycle.range>=0&cycle.range<=40
+    - symbiotic_relationship.tank1,if=config.lifebloom_target=1&tank1.exists&tank1.buff.symbiotic_relationship.down.any&tank1.range>=0&tank1.range<=40
+    - symbiotic_relationship.tank2,if=config.lifebloom_target=2&tank2.exists&tank2.buff.symbiotic_relationship.down.any&tank2.range>=0&tank2.range<=40
     - rejuvenation,cycle=members,if=cycle.health.pct<100&cycle.buff.rejuvenation.remains<1.5&!player.combat&cycle.range>=0&cycle.range<=40
     - regrowth,cycle=members,if=cycle.health.pct<config.regrowth_threshold&cycle.buff.regrowth.remains<1.5&!player.combat&cycle.range>=0&cycle.range<=40
     
@@ -227,6 +246,7 @@ lists:
     - shadowmeld,if=target.threat>=3&!player.casting
 
   cooldowns:
+    - incarnation_tree_of_life,if=talent.incarnation_tree_of_life&group.count(cycle.health.pct<config.tree_of_life_threshold)>=config.tree_of_life_members
     - convoke_the_spirits,if=group.count(cycle.health.pct<config.convoke_threshold)>=config.convoke_members&!buff.cat_form.up&!buff.bear_form.up
     - tranquility,if=group.count(cycle.health.pct<config.tranquility_threshold)>=config.tranquility_members&!player.moving
     - natures_swiftness,if=group.count(cycle.health.pct<config.ns_threshold)>=1
@@ -238,9 +258,10 @@ lists:
 
   active_healing:
     - efflorescence.cursor,if=config.use_efflorescence&buff.efflorescence.down
-    - grove_guardians,if=charges>=2|group.count(cycle.health.pct<config.grove_guardians_threshold)>=2
-    - lifebloom,cycle=tanks,if=player.combat&talent.everbloom.rank>=1&(cycle.buff.lifebloom.stack<3|cycle.buff.lifebloom.remains<=5)&cycle.range>=0&cycle.range<=40
-    - lifebloom,cycle=tanks,if=player.combat&!talent.everbloom.enabled&cycle.buff.lifebloom.down&cycle.range>=0&cycle.range<=40
+    - lifebloom.tank1,if=config.lifebloom_target=1&tank1.exists&player.combat&talent.everbloom.rank>=1&(tank1.buff.lifebloom.stack<3|tank1.buff.lifebloom.remains<=5)&tank1.range>=0&tank1.range<=40
+    - lifebloom.tank1,if=config.lifebloom_target=1&tank1.exists&player.combat&!talent.everbloom.enabled&tank1.buff.lifebloom.down&tank1.range>=0&tank1.range<=40
+    - lifebloom.tank2,if=config.lifebloom_target=2&tank2.exists&player.combat&talent.everbloom.rank>=1&(tank2.buff.lifebloom.stack<3|tank2.buff.lifebloom.remains<=5)&tank2.range>=0&tank2.range<=40
+    - lifebloom.tank2,if=config.lifebloom_target=2&tank2.exists&player.combat&!talent.everbloom.enabled&tank2.buff.lifebloom.down&tank2.range>=0&tank2.range<=40
     - regrowth,cycle=members,if=buff.natures_swiftness.up&cycle.health.pct<config.regrowth_threshold&cycle.range>=0&cycle.range<=40
     - swiftmend,cycle=members,if=cycle.health.pct<config.swiftmend_threshold&cycle.range>=0&cycle.range<=40
     - wild_growth,if=group.count(cycle.health.pct<config.wild_growth_threshold)>=config.wild_growth_members
@@ -284,7 +305,8 @@ lists:
 
   moving:
     - convoke_the_spirits,if=group.count(cycle.health.pct<config.convoke_threshold)>=config.convoke_members&!buff.cat_form.up&!buff.bear_form.up
-    - lifebloom,cycle=tanks,if=player.combat&cycle.buff.lifebloom.down&cycle.range>=0&cycle.range<=40
+    - lifebloom.tank1,if=config.lifebloom_target=1&tank1.exists&player.combat&tank1.buff.lifebloom.down&tank1.range>=0&tank1.range<=40
+    - lifebloom.tank2,if=config.lifebloom_target=2&tank2.exists&player.combat&tank2.buff.lifebloom.down&tank2.range>=0&tank2.range<=40
     - rejuvenation,cycle=members,if=cycle.buff.rejuvenation.down&cycle.health.pct<100&cycle.range>=0&cycle.range<=40&!var.can_catweave
 
   mouseover_healing_emergency:
