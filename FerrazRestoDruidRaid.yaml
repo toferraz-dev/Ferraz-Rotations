@@ -179,7 +179,7 @@ config:
   symbiotic_unit_select:
     label: "Symbiotic Target (Raid Member)"
     type: unit_select
-    role_filter: all # Allows picking any member
+    role_filter: tanks # Allows picking any member
     max_selections: 1
 
 variables:

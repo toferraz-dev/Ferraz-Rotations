@@ -21,9 +21,6 @@ rotation_config:
     use_heart_of_the_wild: true
   104:
     hero_tree: 1
-  105:
-    symbiotic_unit_select:
-      - Xaosknight
 shared_config:
   interrupt_all: true
   interrupt_pct: 35
