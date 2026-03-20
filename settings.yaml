@@ -23,8 +23,7 @@ rotation_config:
     hero_tree: 1
   105:
     symbiotic_unit_select:
-      - Perthping
-      - Lucien
+      - Xaosknight
 shared_config:
   interrupt_all: true
   interrupt_pct: 35
