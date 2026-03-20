@@ -234,7 +234,7 @@ lists:
     - lifebloom,cycle=tanks,if=!talent.everbloom.enabled&cycle.buff.lifebloom.down&cycle.range>=0&cycle.range<=40
     - regrowth,cycle=members,if=buff.natures_swiftness.up&cycle.health.pct<config.regrowth_threshold&cycle.range>=0&cycle.range<=40
     - rejuvenation,cycle=members,if=cycle.buff.rejuvenation.remains<1.5&cycle.health.pct<config.rejuvenation_threshold&cycle.range>=0&cycle.range<=40    
-    - swiftmend,cycle=members,if=cycle.health.pct<config.swiftmend_threshold&cycle.range>=0&cycle.range<=40
+    - swiftmend,cycle=members,if=cycle.health.pct<config.swiftmend_threshold&(cycle.buff.rejuvenation.up|cycle.buff.regrowth.up|cycle.buff.wild_growth.up)&cycle.range>=0&cycle.range<=40
     - wild_growth,if=group.count(cycle.health.pct<config.wild_growth_threshold)>=config.wild_growth_members
     - regrowth,cycle=members,if=cycle.health.pct<config.regrowth_threshold&cycle.range>=0&cycle.range<=40
     
@@ -280,7 +280,7 @@ lists:
   mouseover_healing_emergency:
     - natures_cure.mouseover,if=config.use_dispell&mouseover.dispelable.list&mouseover.range>=0&mouseover.range<=40
     - regrowth.mouseover,if=buff.natures_swiftness.up&mouseover.range>=0&mouseover.range<=40
-    - swiftmend.mouseover,if=mouseover.range>=0&mouseover.range<=40
+    - swiftmend.mouseover,if=(mouseover.buff.rejuvenation.up|mouseover.buff.regrowth.up|mouseover.buff.wild_growth.up)&mouseover.range>=0&mouseover.range<=40
     - rejuvenation.mouseover,if=mouseover.buff.remains(rejuvenation)<1.5&mouseover.range>=0&mouseover.range<=40
     - regrowth.mouseover,if=mouseover.range>=0&mouseover.range<=40
     
