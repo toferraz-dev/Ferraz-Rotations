@@ -230,8 +230,8 @@ lists:
 
   active_healing:
     # Nature's Swiftness follow-up: instant Regrowth on lowest
-    - lifebloom,cycle=tanks,if=talent.everbloom.rank>=1&(cycle.buff.lifebloom.up|group.count(cycle.buff.lifebloom.up)==0)&(cycle.buff.lifebloom.stack<3|cycle.buff.lifebloom.remains<=5)&cycle.range>=0&cycle.range<=40
-    - lifebloom,cycle=tanks,if=!talent.everbloom.enabled&group.count(cycle.buff.lifebloom.up)==0&cycle.range>=0&cycle.range<=40
+    - lifebloom,cycle=tanks,if=talent.everbloom.rank>=1&(cycle.buff.lifebloom.stack<3|cycle.buff.lifebloom.remains<=5)&cycle.range>=0&cycle.range<=40
+    - lifebloom,cycle=tanks,if=!talent.everbloom.enabled&cycle.buff.lifebloom.down&cycle.range>=0&cycle.range<=40
     - regrowth,cycle=members,if=buff.natures_swiftness.up&cycle.health.pct<config.regrowth_threshold&cycle.range>=0&cycle.range<=40
     - rejuvenation,cycle=members,if=cycle.buff.rejuvenation.remains<1.5&cycle.health.pct<config.rejuvenation_threshold&cycle.range>=0&cycle.range<=40    
     - swiftmend,cycle=members,if=cycle.health.pct<config.swiftmend_threshold&cycle.range>=0&cycle.range<=40
@@ -274,7 +274,7 @@ lists:
 
   moving:
     - convoke_the_spirits,if=group.count(cycle.health.pct<config.convoke_threshold)>=config.convoke_members&!buff.cat_form.up&!buff.bear_form.up
-    - lifebloom,cycle=tanks,if=player.combat&group.count(cycle.buff.lifebloom.up)==0&cycle.range>=0&cycle.range<=40
+    - lifebloom,cycle=tanks,if=player.combat&cycle.buff.lifebloom.down&cycle.range>=0&cycle.range<=40
     - rejuvenation,cycle=members,if=cycle.buff.rejuvenation.down&cycle.health.pct<95&cycle.range>=0&cycle.range<=40
 
   mouseover_healing_emergency:
