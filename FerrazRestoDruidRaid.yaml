@@ -194,7 +194,7 @@ config:
 
 variables:
   group_healthy: group.count(cycle.health.pct<config.catweave_group_hp)<config.catweave_injured_max
-  can_catweave: (var.group_healthy|config.force_dps)&player.combat
+  can_catweave: (var.group_healthy|config.force_dps)
   mo_friendly_valid: mouseover.exists&mouseover.alive&mouseover.friendly&mouseover.range>0&mouseover.range<=40
 
 lists:
@@ -216,8 +216,8 @@ lists:
   out_of_combat:
     - mark_of_the_wild,if=buff.mark_of_the_wild.down
     - symbiotic_relationship,cycle=tanks,if=cycle.buff.symbiotic_relationship.down.any&cycle.range>=0&cycle.range<=40
-    - rejuvenation,cycle=members,if=cycle.health.pct<config.rejuvenation_threshold&cycle.buff.rejuvenation.remains<1.5&!player.combat&cycle.range>=0&cycle.range<=40
-    - regrowth,cycle=members,if=cycle.health.pct<config.regrowth_threshold&cycle.buff.regrowth.remains<1.5&!player.combat&cycle.range>=0&cycle.range<=40
+    - rejuvenation,cycle=members,if=cycle.health.pct<config.rejuvenation_threshold&cycle.buff.rejuvenation.remains<1.5&cycle.range>=0&cycle.range<=40
+    - regrowth,cycle=members,if=cycle.health.pct<config.regrowth_threshold&cycle.buff.regrowth.remains<1.5&cycle.range>=0&cycle.range<=40
     
   defensives:
     - natures_cure,cycle=members,if=config.use_dispell&cycle.dispelable.list&cycle.range>=0&cycle.range<=40
@@ -250,7 +250,7 @@ lists:
     - regrowth,cycle=members,if=cycle.health.pct<config.regrowth_threshold&cycle.range>=0&cycle.range<=40&!var.can_catweave
     
   utility:
-    - innervate,if=mana.pct<config.innervate_threshold&player.combat
+    - innervate,if=mana.pct<config.innervate_threshold
 
   catweave_st:
     - heart_of_the_wild,if=config.use_heart_of_the_wild&talent.heart_of_the_wild&buff.cat_form.up
@@ -274,7 +274,7 @@ lists:
     - wrath,if=mana.pct>=70&!buff.cat_form.up&target.range>9
     
     # Fluid Form: we MUST cast rake or shred to shift BEFORE accessing catweave_aoe/st
-    - rake,cycle=enemies,if=talent.fluid_form&!buff.cat_form.up&debuff.rake.refreshable
+    - rake,if=talent.fluid_form&!buff.cat_form.up&debuff.rake.refreshable
     - shred,if=talent.fluid_form&!buff.cat_form.up&target.range<=8
     
     # Explicit shift fallback (for AoE when Shred is bypassed or without Fluid Form)
@@ -286,7 +286,7 @@ lists:
 
   moving:
     - convoke_the_spirits,if=group.count(cycle.health.pct<config.convoke_threshold)>=config.convoke_members&!buff.cat_form.up&!buff.bear_form.up
-    - lifebloom,cycle=tanks,if=group.count(cycle.buff.lifebloom.stack>=3)==0&player.combat&cycle.buff.lifebloom.down&cycle.range>=0&cycle.range<=40
+    - lifebloom,cycle=tanks,if=group.count(cycle.buff.lifebloom.stack>=3)=0&cycle.buff.lifebloom.down&cycle.range>=0&cycle.range<=40
     - rejuvenation,cycle=members,if=cycle.buff.rejuvenation.down&cycle.health.pct<config.rejuvenation_threshold&cycle.range>=0&cycle.range<=40&!var.can_catweave
 
   mouseover_healing_emergency:
@@ -302,10 +302,10 @@ lists:
     - return,if=buff.convoke_the_spirits.up
     - call_action_list,name=sanity_checks
     - call_action_list,name=spell_queue
-    - call_action_list,name=auto_target,if=player.combat
-    - call_action_list,name=auto_heal,if=player.combat
-    - call_action_list,name=out_of_combat
+    - call_action_list,name=out_of_combat,if=!player.combat
     - return,if=!player.combat
+    - call_action_list,name=auto_target
+    - call_action_list,name=auto_heal
     - call_action_list,name=interrupts
     - call_action_list,name=racials
     - call_action_list,name=defensives

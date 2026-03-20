@@ -262,7 +262,7 @@ lists:
     - wrath,if=mana.pct>=70&!buff.cat_form.up&target.range>9
     
     # Fluid Form: we MUST cast rake or shred to shift BEFORE accessing catweave_aoe/st
-    - rake,cycle=enemies,if=talent.fluid_form&!buff.cat_form.up&debuff.rake.refreshable
+    - rake,if=talent.fluid_form&!buff.cat_form.up&debuff.rake.refreshable
     - shred,if=talent.fluid_form&!buff.cat_form.up&target.range<=8
     
     # Explicit shift fallback (for AoE when Shred is bypassed or without Fluid Form)
