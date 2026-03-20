@@ -18,12 +18,6 @@ config:
     max: 99
     default: 55
 
-  frenzied_regen_threshold:
-    label: "Frenzied Regen HP %"
-    type: slider
-    min: 25
-    max: 99
-    default: 40
 
   ironbark_threshold:
     label: "Ironbark HP %"
@@ -35,19 +29,6 @@ config:
   # =================================================================================================
   #     MAJOR COOLDOWNS
   # =================================================================================================
-  convoke_threshold:
-    label: "Convoke HP %"
-    type: slider
-    min: 25
-    max: 99
-    default: 75
-
-  convoke_members:
-    label: "Convoke - Min Members"
-    type: slider
-    min: 1
-    max: 20
-    default: 6
 
   tranquility_threshold:
     label: "Tranquility HP %"
@@ -210,7 +191,6 @@ lists:
     - return,if=player.loot_nearby
   
   interrupts:
-    - incapacitating_roar,if=interrupt.stun.aoe.check
     - soothe,if=target.purgeable.enrage    
   
   out_of_combat:
@@ -222,15 +202,12 @@ lists:
     - natures_cure,cycle=members,if=config.use_dispell&cycle.dispelable.list&cycle.range>=0&cycle.range<=40
     - ironbark,cycle=members,if=cycle.health.pct<config.ironbark_threshold&cycle.buff.ironbark.down&cycle.range>=0&cycle.range<=40
     - barkskin,if=health.pct<config.barkskin_threshold
-    - bear_form,if=health.pct<config.frenzied_regen_threshold&!buff.bear_form.up&cooldown.frenzied_regeneration.ready
-    - frenzied_regeneration,if=health.pct<config.frenzied_regen_threshold&buff.bear_form.up
 
   racials:
     - shadowmeld,if=target.threat>=3&!player.casting
 
   cooldowns:
     - incarnation_tree_of_life,if=talent.incarnation_tree_of_life&!buff.incarnation_tree_of_life.up&group.count(cycle.health.pct<config.tree_of_life_threshold)>=config.tree_of_life_members
-    - convoke_the_spirits,if=group.count(cycle.health.pct<config.convoke_threshold)>=config.convoke_members&!buff.cat_form.up&!buff.bear_form.up
     - tranquility,if=group.count(cycle.health.pct<config.tranquility_threshold)>=config.tranquility_members&!player.moving
     - natures_swiftness,if=group.count(cycle.health.pct<config.ns_threshold)>=1
     - heart_of_the_wild,if=config.use_heart_of_the_wild&talent.heart_of_the_wild&buff.cat_form.up
@@ -269,7 +246,6 @@ lists:
   catweave:
     - rejuvenation,cycle=members,if=cycle.buff.rejuvenation.remains<4&(buff.cat_form.up|talent.fluid_form)&(target.range>8|!var.group_healthy)
     - moonfire,if=debuff.moonfire.remains<2&debuff.moonfire.refreshable&!buff.cat_form.up
-    - sunfire,if=debuff.sunfire.remains<2&debuff.sunfire.refreshable&!buff.cat_form.up
     - wrath,if=mana.pct>=70&!buff.cat_form.up&target.range>9
     
     # Fluid Form: we MUST cast rake or shred to shift BEFORE accessing catweave_aoe/st
@@ -284,7 +260,6 @@ lists:
     - call_action_list,name=catweave_st,if=enemies.combat.8y<config.aoe_threshold
 
   moving:
-    - convoke_the_spirits,if=group.count(cycle.health.pct<config.convoke_threshold)>=config.convoke_members&!buff.cat_form.up&!buff.bear_form.up
     - lifebloom,cycle=tanks,if=(cycle.buff.lifebloom.up|group.count(cycle.buff.lifebloom.up)=0)&(cycle.buff.lifebloom.stack<3|cycle.buff.lifebloom.remains<=4.5)&cycle.range>=0&cycle.range<=40
     - rejuvenation,cycle=members,if=cycle.buff.rejuvenation.down&cycle.health.pct<config.rejuvenation_threshold&cycle.range>=0&cycle.range<=40&!var.can_catweave
 
