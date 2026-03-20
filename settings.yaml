@@ -24,6 +24,7 @@ rotation_config:
   105:
     symbiotic_unit_select:
       - Perthping
+      - Lucien
 shared_config:
   interrupt_all: true
   interrupt_pct: 35
