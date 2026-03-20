@@ -135,7 +135,7 @@ config:
     type: slider
     min: 25
     max: 100
-    default: 80
+    default: 75
 
   # Removido o target manual para Symbiosis/Lifebloom
   # =================================================================================================
