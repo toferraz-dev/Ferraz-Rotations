@@ -22,12 +22,8 @@ rotation_config:
   104:
     hero_tree: 1
   105:
-    lifebloom_target:
-      - Wilsonn
-    symbiotic_target: 1
-    rejuvenation_threshold: 70
     symbiotic_unit_select:
-      - Serenídad
+      - Perthping
 shared_config:
   interrupt_all: true
   interrupt_pct: 35
