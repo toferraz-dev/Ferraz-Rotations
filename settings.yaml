@@ -24,6 +24,7 @@ rotation_config:
   105:
     lifebloom_target:
       - Wilsonn
+    rejuvenation_threshold: 70
 shared_config:
   interrupt_all: true
   interrupt_pct: 35
