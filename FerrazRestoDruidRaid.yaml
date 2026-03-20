@@ -173,6 +173,19 @@ config:
     type: checkbox
     default: true
 
+  # =================================================================================================
+  #     TARGETING
+  # =================================================================================================
+  symbiotic_target:
+    label: "Symbiotic Target"
+    type: dropdown
+    options:
+      - label: "Tank 1"
+        value: 1
+      - label: "Tank 2"
+        value: 2
+    default: 1
+
 variables:
   group_healthy: group.count(cycle.health.pct<config.catweave_group_hp)<config.catweave_injured_max
   can_catweave: (var.group_healthy|config.force_dps)
@@ -195,6 +208,8 @@ lists:
   
   out_of_combat:
     - mark_of_the_wild,if=buff.mark_of_the_wild.down
+    - symbiotic_relationship,target=tank1,if=config.symbiotic_target=1&!buff.symbiotic_relationship.up&tank1.exists&tank1.range<=40
+    - symbiotic_relationship,target=tank2,if=config.symbiotic_target=2&!buff.symbiotic_relationship.up&tank2.exists&tank2.range<=40
     - rejuvenation,cycle=members,if=cycle.health.pct<config.rejuvenation_threshold&cycle.buff.rejuvenation.remains<1.5&cycle.range>=0&cycle.range<=40&!player.combat
     - regrowth,cycle=members,if=cycle.health.pct<config.regrowth_threshold&cycle.buff.regrowth.remains<1.5&cycle.range>=0&cycle.range<=40&!player.combat
     

@@ -22,6 +22,7 @@ rotation_config:
   104:
     hero_tree: 1
   105:
+    symbiotic_target: 1
     lifebloom_target:
       - Wilsonn
     rejuvenation_threshold: 70
