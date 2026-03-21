@@ -239,14 +239,12 @@ lists:
     - innervate,if=mana.pct<config.innervate_threshold
 
   catweave_st:
-    - heart_of_the_wild,if=config.use_heart_of_the_wild&talent.heart_of_the_wild&buff.cat_form.up
     - rip,if=combo_points>=5&debuff.rip.refreshable&target.range<=8
     - ferocious_bite,if=combo_points>=5&target.range<=8
     - rake,if=debuff.rake.refreshable&target.range<=8
     - shred,if=target.range<=8
 
   catweave_aoe:
-    - heart_of_the_wild,if=config.use_heart_of_the_wild&talent.heart_of_the_wild&buff.cat_form.up
     - target_enemy,if=combo_points>=5&!debuff.rip.refreshable&active_dot.rip<enemies.combat.8y
     - rip,if=combo_points>=5&debuff.rip.refreshable&target.range<=8
     - ferocious_bite,if=combo_points>=5&target.range<=8
@@ -283,7 +281,6 @@ lists:
   main:
     - return,if=player.channeling
     - return,if=buff.tranquility.up
-    - return,if=buff.convoke_the_spirits.up
     - call_action_list,name=sanity_checks
     - call_action_list,name=spell_queue
     - call_action_list,name=out_of_combat
