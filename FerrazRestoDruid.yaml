@@ -239,6 +239,7 @@ lists:
     - regrowth,cycle=members,if=cycle.health.pct<config.regrowth_threshold&cycle.range>=0&cycle.range<=40
     
   utility:
+    - rebirth.mouseover,if=mouseover.exists&mouseover.dead&mouseover.friendly&mouseover.range<=40
     - innervate,if=mana.pct<config.innervate_threshold
 
   catweave_st:

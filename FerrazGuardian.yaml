@@ -410,6 +410,7 @@ lists:
   main:
     - call_action_list,name=sanity_checks
     - call_action_list,name=spell_queue
+    - rebirth.mouseover,if=mouseover.exists&mouseover.dead&mouseover.friendly&mouseover.range<=40
     - call_action_list,name=buff_mark_of_the_wild
     - heart_of_the_wild,if=config.hero_tree=2&!var.in_bear_form&!buff.cat_form.up&player.combat
     - bear_form,if=!var.in_bear_form&player.combat&!mounted.flying&!mounted.ground
