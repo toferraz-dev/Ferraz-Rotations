@@ -223,6 +223,7 @@ lists:
 
   racials:
     - shadowmeld,if=config.use_shadowmeld&player.combat&var.berserk_up&combo_points<=2&!buff.sudden_ambush.up
+    - shadowmeld,if=config.use_shadowmeld&player.combat&(target.threat>=3|player.aggro)&!target.boss
     - blood_fury,if=var.berserk_up
     - berserking,if=var.berserk_up
     - fireblood,if=var.berserk_up

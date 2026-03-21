@@ -216,7 +216,7 @@ lists:
     - frenzied_regeneration,if=health.pct<config.frenzied_regen_threshold&buff.bear_form.up
 
   racials:
-    - shadowmeld,if=target.threat>=3&!player.casting
+    - shadowmeld,if=(target.threat>=3|player.aggro)&!player.casting
 
   cooldowns:
     - convoke_the_spirits,if=group.count(cycle.health.pct<config.convoke_threshold)>=config.convoke_members&!buff.cat_form.up&!buff.bear_form.up

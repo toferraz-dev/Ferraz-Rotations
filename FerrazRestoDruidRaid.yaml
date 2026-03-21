@@ -214,7 +214,7 @@ lists:
     - barkskin,if=health.pct<config.barkskin_threshold
 
   racials:
-    - shadowmeld,if=target.threat>=3&!player.casting
+    - shadowmeld,if=(target.threat>=3|player.aggro)&!player.casting
 
   cooldowns:
     - incarnation_tree_of_life,if=talent.incarnation_tree_of_life&!buff.incarnation_tree_of_life.up&group.count(cycle.health.pct<config.tree_of_life_threshold)>=config.tree_of_life_members
