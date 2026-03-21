@@ -239,6 +239,8 @@ lists:
     - trinket_2,if=config.use_trinkets&trinket_2.ready&(buff.incarnation_chosen_of_elune.up|buff.celestial_alignment.up|cooldown.incarnation_chosen_of_elune.remains>20)
 
   movement:
+    - bear_form,if=player.rooted&!buff.bear_form.up
+    - moonkin_form,if=player.rooted&buff.bear_form.up
     - stampeding_roar,if=moving.time>=config.stampeding_roar_movement_time&buff.stampeding_roar.down&((config.stampeding_roar_usage=1&player.combat)|(config.stampeding_roar_usage=2&!player.combat)|(config.stampeding_roar_usage=3))&config.stampeding_roar_usage!=0
 
   # ==========================================================
