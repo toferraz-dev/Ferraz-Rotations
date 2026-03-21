@@ -401,6 +401,8 @@ lists:
     - trinket_2,if=config.use_trinkets&trinket_2.ready&(var.incarnation_active|health.pct<70)
 
   movement:
+    - cat_form,if=player.rooted&buff.bear_form.up
+    - bear_form,if=player.rooted&!buff.bear_form.up
     - stampeding_roar,if=var.use_stampeding_roar&config.stampeding_roar_usage!=0
   
   # ----------------------------------------------------------

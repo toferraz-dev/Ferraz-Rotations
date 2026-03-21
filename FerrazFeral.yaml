@@ -255,6 +255,8 @@ lists:
     - trinket_2,if=config.use_trinkets&trinket_2.ready&(var.berserk_up|target.boss|active_enemies>=config.aoe_threshold)
 
   movement:
+    - bear_form,if=player.rooted&!buff.bear_form.up
+    - cat_form,if=player.rooted&buff.bear_form.up
     - prowl,if=config.use_prowl&!buff.prowl.up&!player.combat
     - stampeding_roar,if=var.use_stampeding_roar&config.stampeding_roar_usage!=0
     - wild_charge,if=player.moving&range>8&player.combat
