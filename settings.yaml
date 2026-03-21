@@ -24,6 +24,7 @@ rotation_config:
   105:
     symbiotic_unit_select:
       - Glue
+    convoke_members: 2
 shared_config:
   interrupt_all: true
   interrupt_pct: 35
