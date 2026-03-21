@@ -202,7 +202,7 @@ lists:
 
   defensives:
     - barkskin,if=health.pct<config.barkskin_threshold&!buff.barkskin.up
-    - shadowmeld,if=config.use_shadowmeld&target.threat>=config.shadowmeld_threat&!target.boss
+    - shadowmeld,if=config.use_shadowmeld&(target.threat>=config.shadowmeld_threat|player.aggro)&!target.boss
 
   # ----------------------------------------------------------
   #  HEAL SUPPORT (Heart of the Wild)
