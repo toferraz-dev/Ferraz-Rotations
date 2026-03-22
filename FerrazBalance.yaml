@@ -186,12 +186,18 @@ lists:
   # ----------------------------------------------------------
 
   cooldowns:
-    # Force of Nature (AP generation + Treants)
-    - force_of_nature,if=config.use_force_of_nature&cooldown.force_of_nature.ready
-    # Incarnation: Chosen of Elune (major CD — both eclipses + crit)
+    # Force of Nature (AP generation + Treants) - Use if about to enter Eclipse or if in Eclipse
+    - force_of_nature,if=config.use_force_of_nature&cooldown.force_of_nature.ready&(!buff.eclipse_lunar.up&!buff.eclipse_solar.up|buff.incarnation_chosen_of_elune.up)
+    
+    # Incarnation: Chosen of Elune (major CD)
     - incarnation_chosen_of_elune,if=active_enemies>=config.incarnation_enemies&!buff.incarnation_chosen_of_elune.up|(target.boss&target.time_to_die>20&!buff.incarnation_chosen_of_elune.up)
+    
+    # Convoke the Spirits (Optional setup)
+    - convoke_the_spirits,if=talent.convoke_the_spirits&astral_power<50&!buff.incarnation_chosen_of_elune.up&!buff.celestial_alignment.up
+    
     # Celestial Alignment fallback
     - celestial_alignment,if=!talent.incarnation_chosen_of_elune&(active_enemies>=config.incarnation_enemies&!buff.celestial_alignment.up|(target.boss&target.time_to_die>20&!buff.celestial_alignment.up))
+    
     # Warrior of Elune (Instant Starfires)
     - warrior_of_elune,if=config.use_warrior_of_elune&!buff.warrior_of_elune.up&(buff.eclipse_lunar.up|cooldown.lunar_eclipse.ready)
 
@@ -228,7 +234,7 @@ lists:
     - soothe,if=target.purgeable.enrage
 
   dispel:
-    - remove_corruption,cycle=party,if=cycle.dispelable.curse|cycle.dispelable.poison
+    - remove_corruption,cycle=members,if=cycle.dispelable.curse|cycle.dispelable.poison
 
   # ----------------------------------------------------------
   #  TRINKETS & MOVEMENT
@@ -314,23 +320,29 @@ lists:
     - sunfire,if=debuff.sunfire.remains<3.6
     - moonfire,if=debuff.moonfire.down
     - moonfire,if=debuff.moonfire.remains<4.8
-    # Fury of Elune on CD
-    - fury_of_elune,if=cooldown.fury_of_elune.ready
-    # Cooldowns (Force of Nature / Incarnation / CA / Warrior)
+
+    # Fury of Elune - Use if outside Eclipse and about to enter (Method core)
+    - fury_of_elune,if=cooldown.fury_of_elune.ready&!buff.eclipse_lunar.up&!buff.eclipse_solar.up
+
+    # Cooldowns (Force of Nature / Incarnation / CA / Convoke)
     - call_action_list,name=cooldowns
-    # Activate Lunar Eclipse if available
+
+    # Activate Lunar Eclipse if available (Button Press in Midnight)
     - lunar_eclipse,if=cooldown.lunar_eclipse.ready&!buff.eclipse_lunar.up&!buff.eclipse_solar.up&!(buff.incarnation_chosen_of_elune.up|buff.celestial_alignment.up)
-    # Burst Spender (First 6s of Eclipse or Incarnation)
-    - starsurge,if=(buff.eclipse_solar.remains>9|buff.eclipse_lunar.remains>9|buff.incarnation_chosen_of_elune.up|buff.celestial_alignment.up)&astral_power>=30
-    # Starsurge — maintain Star-Lord (Method style)
-    - starsurge,if=buff.starlord.stack<3&astral_power>=30
-    # Starsurge — avoid overcap
-    - starsurge,if=astral_power>=config.astral_power_dump_threshold
-    # Starfire in Lunar Eclipse
+
+    # Spender 1: Ascendant Eclipses or Starweaver (Free/Empowered Spenders)
+    - starsurge,if=(buff.ascendant_eclipses.up|buff.starweavers_weft.up)&astral_power>=30
+    
+    # Spender 2: Maintenance/Burst (Starlord or High AP)
+    - starsurge,if=(buff.starlord.stack<3|astral_power>=config.astral_power_dump_threshold)&astral_power>=30
+    
+    # Starfire - Main filler during Eclipse (Elune's Chosen priority)
     - starfire,if=buff.eclipse_lunar.up|buff.incarnation_chosen_of_elune.up|buff.celestial_alignment.up
-    # Starfire to set up next Lunar Eclipse
+    
+    # Setup - Cast to enable Eclipse button if needed (Legacy fallback check)
     - starfire,if=cooldown.lunar_eclipse.remains<3&!buff.eclipse_lunar.up
-    # Wrath as fallback
+    
+    # Fallback
     - wrath
 
   # ----------------------------------------------------------
@@ -341,25 +353,33 @@ lists:
     # Maintain DoTs on all targets
     - sunfire,if=debuff.sunfire.down
     - sunfire,if=debuff.sunfire.remains<3.6
+    # Spreading Moonfire (Tab-Targeting Style)
+    - target_enemy,if=debuff.moonfire.up&active_dot.moonfire<active_enemies&active_dot.moonfire<8
     - moonfire,if=debuff.moonfire.down
     - moonfire,if=debuff.moonfire.remains<4.8
-    # Starfall — maintain uptime
+
+    # Starfall — maintain uptime (Highest priority in AoE)
     - starfall,if=!buff.starfall.up&astral_power>=50
-    # Fury of Elune on CD
-    - fury_of_elune,if=cooldown.fury_of_elune.ready
+
+    # Fury of Elune - Use if outside Eclipse or for big pull
+    - fury_of_elune,if=cooldown.fury_of_elune.ready&(!buff.eclipse_lunar.up|active_enemies>=5)
+
     # Cooldowns
     - call_action_list,name=cooldowns
+
     # Activate Lunar Eclipse if available
     - lunar_eclipse,if=cooldown.lunar_eclipse.ready&!buff.eclipse_lunar.up
-    # Starfall — dump AP
-    - starfall,if=astral_power>=config.astral_power_dump_threshold
-    # Starsurge to maintain Star-Lord during burst
-    - starsurge,if=buff.starlord.stack<3&(buff.incarnation_chosen_of_elune.up|buff.celestial_alignment.up)&astral_power>=30
+
+    # Spender 1: Starfall for Ascendant Eclipses, Starweaver, or High AP
+    - starfall,if=(buff.ascendant_eclipses.up|buff.starweavers_warp.up|astral_power>=config.astral_power_dump_threshold)&astral_power>=50
+    
+    # Spender 2: Starsurge for Starlord during burst or single target dump
+    - starsurge,if=buff.starlord.stack<3&astral_power>=30
+    
     # Starfire — AoE filler in Lunar Eclipse
     - starfire,if=buff.eclipse_lunar.up|buff.incarnation_chosen_of_elune.up|buff.celestial_alignment.up
-    # Starfire to set up next Lunar Eclipse
-    - starfire,if=cooldown.lunar_eclipse.remains<3&!buff.eclipse_lunar.up
-    # Wrath
+    
+    # Fallback
     - wrath
 
   # ==========================================================
