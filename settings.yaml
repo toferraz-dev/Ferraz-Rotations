@@ -21,14 +21,10 @@ rotation_config:
     use_heart_of_the_wild: true
   104:
     hero_tree: 1
-  105:
-    symbiotic_unit_select:
-      - Glue
-    convoke_members: 2
 shared_config:
   interrupt_all: true
   interrupt_pct: 35
 selected_rotation:
   103: C:\Games\Python\Rotations\FerrazFeral.yaml
   104: C:\Games\Python\Rotations\FerrazGuardian.yaml
-  105: C:\Games\Python\Rotations\FerrazRestoDruid.yaml
+  105: C:\Games\Python\Rotations\FerrazRestoDruidRaid.yaml
