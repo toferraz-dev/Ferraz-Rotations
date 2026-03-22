@@ -220,7 +220,7 @@ lists:
     - frenzied_regeneration,name="Frenzied Regen",if=health.pct<config.frenzied_regen_threshold&buff.bear_form.up
 
   racials:
-    - shadowmeld,name="Shadowmeld",if=(target.threat>=3|player.aggro)&!player.casting
+    - shadowmeld,name="Shadowmeld (Aggro Drop)",if=player.combat&player.aggro&!player.casting
 
   cooldowns:
     - convoke_the_spirits,name="Convoke (Heal)",if=group.count(cycle.health.pct<config.convoke_threshold)>=config.convoke_members&!buff.cat_form.up&!buff.bear_form.up
