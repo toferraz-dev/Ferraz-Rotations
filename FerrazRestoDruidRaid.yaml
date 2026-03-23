@@ -191,14 +191,12 @@ config:
     label: "Symbiosis Target"
     type: dropdown
     options:
-      - label: "Tank 1"
+      - label: "Manual"
         value: 1
-      - label: "Tank 2"
-        value: 2
     default: 1
 
   lifebloom_target:
-    label: "Lifebloom Focus"
+    label: "Lifebloom Target"
     type: dropdown
     options:
       - label: "Tank 1"
@@ -211,7 +209,7 @@ variables:
   is_tree_form: buff.incarnation_tree_of_life.up|buff.reforestation.up
   group_needs_healing: group.count(cycle.health.pct<85)>2
   mo_friendly_valid: mouseover.exists&mouseover.alive&mouseover.friendly&mouseover.range>0&mouseover.range<=40
-  reforestation_ready: buff.reforestation_tracker.stack==3
+  reforestation_ready: buff.reforestation_tracker.stack=3
   emergency_for_tree: group.count(cycle.health.pct<config.reforestation_emergency_hp)>=config.reforestation_emergency_members
 
 lists:
@@ -234,10 +232,6 @@ lists:
   out_of_combat:
     - mark_of_the_wild,name="Mark of the Wild",if=buff.mark_of_the_wild.down
     
-    # Symbiosis Selection Logic
-    - symbiotic_relationship,target=tank1,name="Symbiosis T1",if=config.symbiotic_target==1&!buff.symbiotic_relationship.up&!tank1.buff.symbiotic_relationship.up&tank1.range<=40
-    - symbiotic_relationship,target=tank2,name="Symbiosis T2",if=config.symbiotic_target==2&!buff.symbiotic_relationship.up&!tank2.buff.symbiotic_relationship.up&tank2.range<=40
-
     - rejuvenation,name="OOC Rejuvenation",cycle=members,if=cycle.health.pct<config.rejuvenation_threshold&cycle.buff.rejuvenation.remains<1.5&cycle.range>=0&cycle.range<=40&!player.combat
     - regrowth,name="OOC Regrowth",cycle=members,if=cycle.health.pct<config.regrowth_threshold&cycle.buff.regrowth.remains<1.5&cycle.range>=0&cycle.range<=40&!player.combat
     
@@ -268,8 +262,8 @@ lists:
     - rejuvenation,name="Tree Empowered Rejuv",cycle=members,if=buff.soul_of_the_forest.up&!prev_gcd.rejuvenation&cycle.range<=40
     # 4. Wild Growth
     - wild_growth,name="Tree Wild Growth",if=buff.soul_of_the_forest.up&prev_gcd.rejuvenation
-    # 5. Regrowths as needed
-    - regrowth,name="Tree Regrowth Filler",cycle=members,if=cycle.health.pct<95&cycle.range<=40
+    # 5. Regrowths as needed (locked behind Abundance to save mana)
+    - regrowth,name="Tree Regrowth Filler",cycle=members,if=buff.abundance.stack>=8&cycle.health.pct<85&cycle.range<=40
 
   active_healing:
     # Lifebloom Focus Logic
