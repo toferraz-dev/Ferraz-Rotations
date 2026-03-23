@@ -66,6 +66,23 @@ config:
     default: 45
 
   # =================================================================================================
+  #     REFORESTATION & TREE FORM
+  # =================================================================================================
+  reforestation_emergency_hp:
+    label: "Tree Proc - Emergency HP %"
+    type: slider
+    min: 25
+    max: 99
+    default: 65
+
+  reforestation_emergency_members:
+    label: "Tree Proc - Min Members"
+    type: slider
+    min: 1
+    max: 10
+    default: 3
+
+  # =================================================================================================
   #     HEALING - AOE & GROUP
   # =================================================================================================
   use_mouseover:
@@ -120,29 +137,23 @@ config:
 
   # Removido o target manual para Symbiosis/Lifebloom
   # =================================================================================================
-  #     DAMAGE & CATWEAVING
+  #     HEALING TOGGLES & AUTOMATION
   # =================================================================================================
-  catweave_group_hp:
-    label: "Enter Cat - Group HP %"
-    type: slider
-    min: 25
-    max: 99
-    default: 90
+  spread_rejuvs:
+    label: "Spread Rejuvenations"
+    type: checkbox
+    default: true
 
-  catweave_injured_max:
-    label: "Exit Cat - Max Injured"
+  abundance_regrowth_stacks:
+    label: "Abundance Stacks for Regrowth"
     type: slider
-    min: 0
+    min: 5
     max: 20
-    default: 3
+    default: 10
 
-  aoe_threshold:
-    label: "AoE - Min Enemies"
-    type: slider
-    min: 2
-    max: 5
-    default: 3
-
+  # =================================================================================================
+  #     DAMAGE & REGEN
+  # =================================================================================================
   force_dps:
     label: "Force DPS (Ignore Group HP)"
     type: checkbox
@@ -176,16 +187,32 @@ config:
   # =================================================================================================
   #     TARGETING
   # =================================================================================================
-  symbiotic_unit_select:
-    label: "Symbiotic Target (Raid Member)"
-    type: unit_select
-    role_filter: all # Allows picking any member
-    max_selections: 1
+  symbiotic_target:
+    label: "Symbiosis Target"
+    type: select
+    options:
+      - label: "Tank 1"
+        value: "tank1"
+      - label: "Tank 2"
+        value: "tank2"
+    default: "tank1"
+
+  lifebloom_target:
+    label: "Lifebloom Focus"
+    type: select
+    options:
+      - label: "Tank 1"
+        value: "tank1"
+      - label: "Tank 2"
+        value: "tank2"
+    default: "tank1"
 
 variables:
-  group_healthy: group.count(cycle.health.pct<config.catweave_group_hp)<config.catweave_injured_max
-  can_catweave: (var.group_healthy|config.force_dps)
+  is_tree_form: buff.incarnation_tree_of_life.up|buff.reforestation.up
+  group_needs_healing: group.count(cycle.health.pct<85)>2
   mo_friendly_valid: mouseover.exists&mouseover.alive&mouseover.friendly&mouseover.range>0&mouseover.range<=40
+  reforestation_ready: buff.reforestation_tracker.stack==3
+  emergency_for_tree: group.count(cycle.health.pct<config.reforestation_emergency_hp)>=config.reforestation_emergency_members
 
 lists:
   spell_queue:
@@ -206,7 +233,11 @@ lists:
   
   out_of_combat:
     - mark_of_the_wild,name="Mark of the Wild",if=buff.mark_of_the_wild.down
-    - symbiotic_relationship,name="Symbiosis",cycle=config.symbiotic_unit_select,if=!buff.symbiotic_relationship.up&!cycle.buff.symbiotic_relationship.up&cycle.range<=40
+    
+    # Symbiosis Selection Logic
+    - symbiotic_relationship,target=tank1,name="Symbiosis T1",if=config.symbiotic_target=="tank1"&!buff.symbiotic_relationship.up&!tank1.buff.symbiotic_relationship.up&tank1.range<=40
+    - symbiotic_relationship,target=tank2,name="Symbiosis T2",if=config.symbiotic_target=="tank2"&!buff.symbiotic_relationship.up&!tank2.buff.symbiotic_relationship.up&tank2.range<=40
+
     - rejuvenation,name="OOC Rejuvenation",cycle=members,if=cycle.health.pct<config.rejuvenation_threshold&cycle.buff.rejuvenation.remains<1.5&cycle.range>=0&cycle.range<=40&!player.combat
     - regrowth,name="OOC Regrowth",cycle=members,if=cycle.health.pct<config.regrowth_threshold&cycle.buff.regrowth.remains<1.5&cycle.range>=0&cycle.range<=40&!player.combat
     
@@ -219,61 +250,60 @@ lists:
     - shadowmeld,name="Shadowmeld",if=target.threat>=3&!player.casting
 
   cooldowns:
-    - incarnation_tree_of_life,name="Tree of Life",if=talent.incarnation_tree_of_life&!buff.incarnation_tree_of_life.up&group.count(cycle.health.pct<config.tree_of_life_threshold)>=config.tree_of_life_members
+    - incarnation_tree_of_life,name="Tree of Life",if=talent.incarnation_tree_of_life&!var.is_tree_form&group.count(cycle.health.pct<config.tree_of_life_threshold)>=config.tree_of_life_members
     - tranquility,name="Tranquility",if=group.count(cycle.health.pct<config.tranquility_threshold)>=config.tranquility_members&!player.moving
     - natures_swiftness,name="Nature's Swiftness",if=group.count(cycle.health.pct<config.ns_threshold)>=1
-    - heart_of_the_wild,name="Heart of the Wild",if=config.use_heart_of_the_wild&talent.heart_of_the_wild&buff.cat_form.up
+    - heart_of_the_wild,name="Heart of the Wild",if=config.use_heart_of_the_wild&talent.heart_of_the_wild
 
   trinkets:
     - trinket_1,name="Trinket 1",if=config.use_trinkets&trinket_1.ready
     - trinket_2,name="Trinket 2",if=config.use_trinkets&trinket_2.ready
-    
+
+  tree_of_life_rotation:
+    # 1. Rejuv 10 targets (no matter health)
+    - rejuvenation,name="Tree Rejuv Spread",cycle=members,if=group.count(cycle.buff.rejuvenation.up)<10&cycle.buff.rejuvenation.down&cycle.range<=40
+    # 2. Swiftmend for proc buff (Soul of the Forest usually)
+    - swiftmend,name="Tree Swiftmend",cycle=members,if=group.count(cycle.buff.rejuvenation.up)>=10&!buff.soul_of_the_forest.up&(cycle.buff.rejuvenation.up|cycle.buff.regrowth.up|cycle.buff.wild_growth.up)&cycle.range<=40
+    # 3. Rejuv 1 time for empowered rejuv and 2 stacks of abundance
+    - rejuvenation,name="Tree Empowered Rejuv",cycle=members,if=buff.soul_of_the_forest.up&!prev_gcd.rejuvenation&cycle.range<=40
+    # 4. Wild Growth
+    - wild_growth,name="Tree Wild Growth",if=buff.soul_of_the_forest.up&prev_gcd.rejuvenation
+    # 5. Regrowths as needed
+    - regrowth,name="Tree Regrowth Filler",cycle=members,if=cycle.health.pct<95&cycle.range<=40
+
   active_healing:
-    - lifebloom,name="Lifebloom Tank",cycle=tanks,if=(cycle.buff.lifebloom.up|group.count(cycle.buff.lifebloom.up)=0)&(cycle.buff.lifebloom.stack<3|cycle.buff.lifebloom.remains<=4.5)&cycle.range>=0&cycle.range<=40
+    # Lifebloom Focus Logic
+    - lifebloom,target=tank1,name="LB Tank 1",if=config.lifebloom_target=="tank1"&(tank1.buff.lifebloom.remains<=4.5|tank1.buff.lifebloom.down)&tank1.range<=40
+    - lifebloom,target=tank2,name="LB Tank 2",if=config.lifebloom_target=="tank2"&(tank2.buff.lifebloom.remains<=4.5|tank2.buff.lifebloom.down)&tank2.range<=40
+
     - regrowth,name="NS Regrowth",cycle=members,if=buff.natures_swiftness.up&cycle.health.pct<config.regrowth_threshold&cycle.range>=0&cycle.range<=40
-    - swiftmend,name="Swiftmend",cycle=members,if=cycle.health.pct<config.swiftmend_threshold&(cycle.buff.rejuvenation.up|cycle.buff.regrowth.up|cycle.buff.wild_growth.up)&cycle.range>=0&cycle.range<=40
+    
+    # Reforestation Lock: Don't cast 4th Swiftmend unless emergency
+    - swiftmend,name="Swiftmend",cycle=members,if=cycle.health.pct<config.swiftmend_threshold&(cycle.buff.rejuvenation.up|cycle.buff.regrowth.up|cycle.buff.wild_growth.up)&cycle.range>=0&cycle.range<=40&(!var.reforestation_ready|var.emergency_for_tree)
+    
     - wild_growth,name="Wild Growth",if=group.count(cycle.health.pct<config.wild_growth_threshold)>=config.wild_growth_members
     - regrowth,name="Clearcasting Regrowth",cycle=members,if=buff.clearcasting.up&cycle.health.pct<95&cycle.range>=0&cycle.range<=40
-    - rejuvenation,name="Rejuvenation Filler",cycle=members,if=cycle.buff.rejuvenation.down&cycle.health.pct<config.rejuvenation_threshold&cycle.range>=0&cycle.range<=40&!var.can_catweave    
-    - regrowth,name="Regrowth Filler",cycle=members,if=cycle.health.pct<config.regrowth_threshold&cycle.range>=0&cycle.range<=40&!var.can_catweave
+    
+    # Abundance / Spread Rejuv Logic
+    - rejuvenation,name="Spread Rejuvenation",cycle=members,if=config.spread_rejuvs&cycle.buff.rejuvenation.down&group.count(cycle.buff.rejuvenation.up)<12&cycle.range<=40
+    - regrowth,name="Abundance Regrowth",cycle=members,if=buff.abundance.stack>=config.abundance_regrowth_stacks&cycle.health.pct<95&cycle.range<=40
+    
+    - rejuvenation,name="Rejuvenation Filler",cycle=members,if=cycle.buff.rejuvenation.down&cycle.health.pct<config.rejuvenation_threshold&cycle.range>=0&cycle.range<=40
+    - regrowth,name="Regrowth Filler",cycle=members,if=cycle.health.pct<config.regrowth_threshold&cycle.range>=0&cycle.range<=40
     
   utility:
     - innervate,name="Innervate",if=mana.pct<config.innervate_threshold
 
-  catweave_st:
-    - heart_of_the_wild,name="HotW Cat ST",if=config.use_heart_of_the_wild&talent.heart_of_the_wild&buff.cat_form.up
-    - rip,name="Rip ST",if=combo_points>=5&debuff.rip.refreshable&target.range<=8
-    - ferocious_bite,name="Bite ST",if=combo_points>=5&target.range<=8
-    - rake,name="Rake ST",if=debuff.rake.refreshable&target.range<=8
-    - shred,name="Shred ST",if=target.range<=8
-
-  catweave_aoe:
-    - heart_of_the_wild,name="HotW Cat AoE",if=config.use_heart_of_the_wild&talent.heart_of_the_wild&buff.cat_form.up
-    - target_enemy,name="Search Bleed Target",if=combo_points>=5&!debuff.rip.refreshable&active_dot.rip<enemies.combat.8y
-    - rip,name="Rip AoE",if=combo_points>=5&debuff.rip.refreshable&target.range<=8
-    - ferocious_bite,name="Bite AoE",if=combo_points>=5&target.range<=8
-    - rake,name="Rake AoE",if=debuff.rake.refreshable&target.range<=8
-    - shred,name="Shred filler AoE",if=target.range<=8
-
-  catweave:
-    - rejuvenation,name="Cat Rejuvenation",cycle=members,if=cycle.buff.rejuvenation.remains<4&(buff.cat_form.up|talent.fluid_form)&(target.range>8|!var.group_healthy)
-    - moonfire,name="Cat Moonfire",if=debuff.moonfire.remains<2&debuff.moonfire.refreshable&!buff.cat_form.up
-    - wrath,name="Cat Wrath (Mana Save)",if=mana.pct>=70&!buff.cat_form.up&target.range>9
-    
-    # Fluid Form: we MUST cast rake or shred to shift BEFORE accessing catweave_aoe/st
-    - rake,name="Fluid Rake",if=talent.fluid_form&!buff.cat_form.up&debuff.rake.refreshable
-    - shred,name="Fluid Shred",if=talent.fluid_form&!buff.cat_form.up&target.range<=8
-    
-    # Explicit shift fallback (for AoE when Shred is bypassed or without Fluid Form)
-    - cat_form,name="Manual Cat Shift",if=!buff.cat_form.up&target.range<=8
-    - return,if=!buff.cat_form.up
-    
-    - call_action_list,name=catweave_aoe,if=enemies.combat.8y>=config.aoe_threshold
-    - call_action_list,name=catweave_st,if=enemies.combat.8y<config.aoe_threshold
+  ranged_dps:
+    - starsurge,name="Starsurge",if=talent.starsurge&mana.pct>20
+    - starfire,name="Starfire",if=target.area_enemies>=3|buff.eclipse_solar.up
+    - wrath,name="Wrath",if=target.area_enemies<3
+    - moonfire,name="Moonfire ST",if=debuff.moonfire.refreshable
+    - sunfire,name="Sunfire AoE",if=debuff.sunfire.refreshable
 
   moving:
     - lifebloom,name="Lifebloom (Moving)",cycle=tanks,if=(cycle.buff.lifebloom.up|group.count(cycle.buff.lifebloom.up)=0)&(cycle.buff.lifebloom.stack<3|cycle.buff.lifebloom.remains<=4.5)&cycle.range>=0&cycle.range<=40
-    - rejuvenation,name="Rejuvenation (Moving)",cycle=members,if=cycle.buff.rejuvenation.down&cycle.health.pct<config.rejuvenation_threshold&cycle.range>=0&cycle.range<=40&!var.can_catweave
+    - rejuvenation,name="Rejuvenation (Moving)",cycle=members,if=cycle.buff.rejuvenation.down&cycle.health.pct<config.rejuvenation_threshold&cycle.range>=0&cycle.range<=40
 
   mouseover_healing_emergency:
     - natures_cure.mouseover,name="Cure (MO)",if=config.use_dispell&mouseover.dispelable.list&mouseover.range>=0&mouseover.range<=40
@@ -298,7 +328,8 @@ lists:
     - call_action_list,name=utility
     - call_action_list,name=cooldowns
     - call_action_list,name=trinkets
+    - call_action_list,name=tree_of_life_rotation,if=var.is_tree_form
     - call_action_list,name=mouseover_healing_emergency,if=config.use_mouseover&var.mo_friendly_valid&(mouseover.health.pct<config.mouseover_emergency_hp|mouseover.dispelable.list)&!player.casting&!player.channeling
     - call_action_list,name=moving,if=player.moving
     - call_action_list,name=active_healing,if=!config.force_dps
-    - call_action_list,name=catweave,if=var.can_catweave&target.exists&target.alive&!target.friendly
+    - call_action_list,name=ranged_dps,if=target.exists&target.alive&!target.friendly&!var.group_needs_healing
