@@ -207,7 +207,7 @@ config:
 
 variables:
   is_tree_form: buff.incarnation_tree_of_life.up|buff.reforestation.up
-  group_needs_healing: group.count(cycle.health.pct<85)>2
+  group_needs_healing: group.any(cycle.health.pct<85)
   mo_friendly_valid: mouseover.exists&mouseover.alive&mouseover.friendly&mouseover.range>0&mouseover.range<=40
   reforestation_ready: buff.reforestation_tracker.stack=3
   emergency_for_tree: group.count(cycle.health.pct<config.reforestation_emergency_hp)>=config.reforestation_emergency_members
@@ -291,7 +291,6 @@ lists:
   ranged_dps:
     - starsurge,name="Starsurge",if=talent.starsurge&mana.pct>20
     - starfire,name="Starfire",if=target.area_enemies>=3|buff.eclipse_solar.up
-    - wrath,name="Wrath",if=target.area_enemies<3
     - moonfire,name="Moonfire ST",if=debuff.moonfire.refreshable
     - sunfire,name="Sunfire AoE",if=debuff.sunfire.refreshable
 
@@ -327,4 +326,4 @@ lists:
     - call_action_list,name=mouseover_healing_emergency,if=config.use_mouseover&var.mo_friendly_valid&(mouseover.health.pct<config.mouseover_emergency_hp|mouseover.dispelable.list)&!player.casting&!player.channeling
     - call_action_list,name=moving,if=player.moving
     - call_action_list,name=active_healing,if=!config.force_dps
-    - call_action_list,name=ranged_dps,if=target.exists&target.alive&!target.friendly&!var.group_needs_healing
+    - call_action_list,name=ranged_dps,if=target.exists&target.alive&!target.friendly&!var.group_needs_healing&mana.pct>90
