@@ -262,8 +262,8 @@ lists:
     - rejuvenation,name="Tree Empowered Rejuv",cycle=members,if=buff.soul_of_the_forest.up&!prev_gcd.rejuvenation&cycle.range<=40
     # 4. Wild Growth
     - wild_growth,name="Tree Wild Growth",if=buff.soul_of_the_forest.up&prev_gcd.rejuvenation
-    # 5. Regrowths as needed (locked behind Abundance to save mana)
-    - regrowth,name="Tree Regrowth Filler",cycle=members,if=buff.abundance.stack>=8&cycle.health.pct<85&cycle.range<=40
+    # 5. Regrowths as needed (locked behind 8+ Abundance to save mana)
+    - regrowth,name="Tree Regrowth Filler",cycle=members,if=buff.abundance.stack>=8&cycle.health.pct<80&cycle.range<=40
 
   active_healing:
     # Lifebloom Focus Logic
@@ -283,7 +283,7 @@ lists:
     - regrowth,name="Abundance Regrowth",cycle=members,if=buff.abundance.stack>=config.abundance_regrowth_stacks&cycle.health.pct<95&cycle.range<=40
     
     - rejuvenation,name="Rejuvenation Filler",cycle=members,if=cycle.buff.rejuvenation.down&cycle.health.pct<config.rejuvenation_threshold&cycle.range>=0&cycle.range<=40
-    - regrowth,name="Regrowth Filler",cycle=members,if=cycle.health.pct<config.regrowth_threshold&cycle.range>=0&cycle.range<=40
+    - regrowth,name="Regrowth Filler",cycle=members,if=buff.abundance.stack>=config.abundance_regrowth_stacks&cycle.health.pct<config.regrowth_threshold&cycle.range>=0&cycle.range<=40
     
   utility:
     - innervate,name="Innervate",if=mana.pct<config.innervate_threshold
