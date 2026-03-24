@@ -30,18 +30,6 @@ config:
   # =================================================================================================
   #     HEALING - PVP
   # =================================================================================================
-  lifebloom_friendly_1:
-    label: "Lifebloom Target 1 (Unit Selector)"
-    type: unit_select
-    role_filter: all
-    max_selections: 1
-
-  lifebloom_friendly_2:
-    label: "Lifebloom Target 2 (Unit Selector)"
-    type: unit_select
-    role_filter: all
-    max_selections: 1
-
   rejuvenation_threshold:
     label: "Rejuvenation HP %"
     type: slider
@@ -124,10 +112,11 @@ lists:
     - innervate,name="Innervate",if=mana.pct<config.mana_regrown_threshold
 
   pvp_healing:
-    # 1. Lifebloom maintenance (Undergrowth talent usually keeps 2 targets)
-    - lifebloom,name="LB Target 1",cycle=config.lifebloom_friendly_1,if=(cycle.buff.lifebloom.down|cycle.buff.lifebloom.remains<4.5)&cycle.range<=40
-    - lifebloom,name="LB Target 2",cycle=config.lifebloom_friendly_2,if=(cycle.buff.lifebloom.down|cycle.buff.lifebloom.remains<4.5)&cycle.range<=40
-
+    # 1. Lifebloom maintenance (3 stacks focus)
+    - lifebloom,name="Lifebloom Refresh",cycle=members,if=cycle.buff.lifebloom.up&(cycle.buff.lifebloom.stack<3|cycle.buff.lifebloom.remains<5)&cycle.range<=40
+    # 1b. Lifebloom Starter (if no one has it, pick someone hurt)
+    - lifebloom,name="Lifebloom Start",cycle=members,if=group.count(cycle.buff.lifebloom.up)=0&cycle.health.pct<95&cycle.range<=40
+    
     # 2. Nature's Swiftness for Emergency
     - regrowth,name="NS Regrowth",cycle=members,if=buff.natures_swiftness.up&cycle.health.pct<80&cycle.range<=40
 
