@@ -29,6 +29,7 @@ config:
     min: 25
     max: 99
     default: 55
+    show_if: rotation_mode=1
 
   mplus_frenzied_regen_threshold:
     label: "Frenzied Regen HP %"
@@ -36,6 +37,7 @@ config:
     min: 25
     max: 99
     default: 40
+    show_if: rotation_mode=1
 
   mplus_ironbark_threshold:
     label: "Ironbark HP %"
@@ -43,6 +45,7 @@ config:
     min: 25
     max: 99
     default: 55
+    show_if: rotation_mode=1
 
   # =================================================================================================
   #     MAJOR COOLDOWNS
@@ -53,6 +56,7 @@ config:
     min: 25
     max: 99
     default: 65
+    show_if: rotation_mode=1
 
   mplus_convoke_members:
     label: "Convoke - Min Members"
@@ -60,6 +64,7 @@ config:
     min: 1
     max: 5
     default: 3
+    show_if: rotation_mode=1
 
   mplus_tranquility_threshold:
     label: "Tranquility HP %"
@@ -67,6 +72,7 @@ config:
     min: 25
     max: 99
     default: 65
+    show_if: rotation_mode=1
 
   mplus_tranquility_members:
     label: "Tranquility - Min Members"
@@ -74,6 +80,7 @@ config:
     min: 1
     max: 5
     default: 3
+    show_if: rotation_mode=1
 
   mplus_ns_threshold:
     label: "Nature's Swiftness HP %"
@@ -81,6 +88,7 @@ config:
     min: 25
     max: 99
     default: 45
+    show_if: rotation_mode=1
 
   # =================================================================================================
   #     HEALING - AOE & GROUP
@@ -89,6 +97,7 @@ config:
     label: "MO Healing (Emergency)"
     type: checkbox
     default: true
+    show_if: rotation_mode=1
 
   mplus_mouseover_emergency_hp:
     label: "MO Emergency HP %"
@@ -96,6 +105,7 @@ config:
     min: 10
     max: 99
     default: 65
+    show_if: rotation_mode=1
 
   mplus_wild_growth_threshold:
     label: "Wild Growth HP %"
@@ -103,6 +113,7 @@ config:
     min: 25
     max: 99
     default: 85
+    show_if: rotation_mode=1
 
   mplus_wild_growth_members:
     label: "Wild Growth - Min Members"
@@ -110,6 +121,7 @@ config:
     min: 1
     max: 5
     default: 3
+    show_if: rotation_mode=1
 
   # =================================================================================================
   #     HEALING - SINGLE TARGET
@@ -120,6 +132,7 @@ config:
     min: 25
     max: 99
     default: 70
+    show_if: rotation_mode=1
 
   mplus_regrowth_threshold:
     label: "Regrowth HP %"
@@ -127,6 +140,7 @@ config:
     min: 25
     max: 99
     default: 80
+    show_if: rotation_mode=1
 
   mplus_rejuvenation_threshold:
     label: "Rejuvenation HP %"
@@ -134,6 +148,7 @@ config:
     min: 25
     max: 99
     default: 90
+    show_if: rotation_mode=1
 
   # =================================================================================================
   #     DAMAGE & CATWEAVING
@@ -144,6 +159,7 @@ config:
     min: 25
     max: 99
     default: 80
+    show_if: rotation_mode=1
 
   mplus_catweave_injured_max:
     label: "Exit Cat - Max Injured"
@@ -151,6 +167,7 @@ config:
     min: 0
     max: 5
     default: 2
+    show_if: rotation_mode=1
 
   mplus_aoe_threshold:
     label: "AoE - Min Enemies"
@@ -158,16 +175,19 @@ config:
     min: 2
     max: 5
     default: 3
+    show_if: rotation_mode=1
 
   mplus_force_dps:
     label: "Force DPS (Ignore Group HP)"
     type: checkbox
     default: false
+    show_if: rotation_mode=1
 
   mplus_use_heart_of_the_wild:
     label: "Auto Heart of the Wild"
     type: checkbox
     default: true
+    show_if: rotation_mode=1
 
   # =================================================================================================
   #     UTILITY & ITEMS
@@ -178,16 +198,19 @@ config:
     min: 25
     max: 99
     default: 60
+    show_if: rotation_mode=1
 
   mplus_use_dispell:
     label: "Enable Dispell"
     type: checkbox
     default: true
+    show_if: rotation_mode=1
 
   mplus_use_trinkets:
     label: "Auto Trinkets"
     type: checkbox
     default: true
+    show_if: rotation_mode=1
 
 
   # =================================================================================================
@@ -202,6 +225,7 @@ config:
     min: 25
     max: 99
     default: 55
+    show_if: rotation_mode=2
 
 
   raid_ironbark_threshold:
@@ -210,6 +234,7 @@ config:
     min: 25
     max: 99
     default: 55
+    show_if: rotation_mode=2
 
   # =================================================================================================
   #     MAJOR COOLDOWNS
@@ -221,6 +246,7 @@ config:
     min: 25
     max: 99
     default: 65
+    show_if: rotation_mode=2
 
   raid_tranquility_members:
     label: "Tranquility - Min Members"
@@ -228,6 +254,7 @@ config:
     min: 1
     max: 20
     default: 8
+    show_if: rotation_mode=2
 
   raid_tree_of_life_threshold:
     label: "Tree of Life HP %"
@@ -235,6 +262,7 @@ config:
     min: 25
     max: 99
     default: 70
+    show_if: rotation_mode=2
 
   raid_tree_of_life_members:
     label: "Tree of Life - Min Members"
@@ -242,6 +270,7 @@ config:
     min: 1
     max: 20
     default: 8
+    show_if: rotation_mode=2
 
   raid_ns_threshold:
     label: "Nature's Swiftness HP %"
@@ -249,6 +278,7 @@ config:
     min: 25
     max: 99
     default: 45
+    show_if: rotation_mode=2
 
   # =================================================================================================
   #     REFORESTATION & TREE FORM
@@ -259,6 +289,7 @@ config:
     min: 25
     max: 99
     default: 65
+    show_if: rotation_mode=2
 
   raid_reforestation_emergency_members:
     label: "Tree Proc - Min Members"
@@ -266,6 +297,7 @@ config:
     min: 1
     max: 10
     default: 3
+    show_if: rotation_mode=2
 
   # =================================================================================================
   #     HEALING - AOE & GROUP
@@ -274,6 +306,7 @@ config:
     label: "MO Healing (Emergency)"
     type: checkbox
     default: true
+    show_if: rotation_mode=2
 
   raid_mouseover_emergency_hp:
     label: "MO Emergency HP %"
@@ -281,6 +314,7 @@ config:
     min: 10
     max: 99
     default: 65
+    show_if: rotation_mode=2
 
   raid_wild_growth_threshold:
     label: "Wild Growth HP %"
@@ -288,6 +322,7 @@ config:
     min: 25
     max: 99
     default: 85
+    show_if: rotation_mode=2
 
   raid_wild_growth_members:
     label: "Wild Growth - Min Members"
@@ -295,6 +330,7 @@ config:
     min: 1
     max: 20
     default: 5
+    show_if: rotation_mode=2
 
   # =================================================================================================
   #     HEALING - SINGLE TARGET
@@ -305,6 +341,7 @@ config:
     min: 25
     max: 99
     default: 70
+    show_if: rotation_mode=2
 
   raid_regrowth_threshold:
     label: "Regrowth HP %"
@@ -312,6 +349,7 @@ config:
     min: 25
     max: 99
     default: 80
+    show_if: rotation_mode=2
 
   raid_rejuvenation_threshold:
     label: "Rejuvenation HP %"
@@ -319,6 +357,7 @@ config:
     min: 25
     max: 100
     default: 75
+    show_if: rotation_mode=2
 
   # Removido o target manual para Symbiosis/Lifebloom
   # =================================================================================================
@@ -328,6 +367,7 @@ config:
     label: "Spread Rejuvenations"
     type: checkbox
     default: true
+    show_if: rotation_mode=2
 
   raid_abundance_regrowth_stacks:
     label: "Abundance Stacks for Regrowth"
@@ -335,6 +375,7 @@ config:
     min: 5
     max: 20
     default: 10
+    show_if: rotation_mode=2
 
   # =================================================================================================
   #     DAMAGE & REGEN
@@ -343,11 +384,13 @@ config:
     label: "Force DPS (Ignore Group HP)"
     type: checkbox
     default: false
+    show_if: rotation_mode=2
 
   raid_use_heart_of_the_wild:
     label: "Auto Heart of the Wild"
     type: checkbox
     default: true
+    show_if: rotation_mode=2
 
   # =================================================================================================
   #     UTILITY & ITEMS
@@ -358,16 +401,19 @@ config:
     min: 25
     max: 99
     default: 60
+    show_if: rotation_mode=2
 
   raid_use_dispell:
     label: "Enable Dispell"
     type: checkbox
     default: true
+    show_if: rotation_mode=2
 
   raid_use_trinkets:
     label: "Auto Trinkets"
     type: checkbox
     default: true
+    show_if: rotation_mode=2
 
   # =================================================================================================
   #     TARGETING
@@ -379,6 +425,7 @@ config:
       - label: "Manual"
         value: 1
     default: 1
+    show_if: rotation_mode=2
 
   raid_lifebloom_target:
     label: "Lifebloom Target"
@@ -389,23 +436,33 @@ config:
       - label: "Tank 2"
         value: 2
     default: 1
+    show_if: rotation_mode=2
 
 
 variables:
   mplus_group_healthy: group.count(cycle.health.pct<config.mplus_catweave_group_hp)<config.mplus_catweave_injured_max
+    show_if: rotation_mode=1
   mplus_can_catweave: (var.mplus_group_healthy|config.mplus_force_dps)&player.combat
+    show_if: rotation_mode=1
   mplus_mo_friendly_valid: mouseover.exists&mouseover.alive&mouseover.friendly&mouseover.range>0&mouseover.range<=40
+    show_if: rotation_mode=1
 
   raid_is_tree_form: buff.incarnation_tree_of_life.up|buff.reforestation.up
+    show_if: rotation_mode=2
   raid_group_needs_healing: group.any(cycle.health.pct<85)
+    show_if: rotation_mode=2
   raid_mo_friendly_valid: mouseover.exists&mouseover.alive&mouseover.friendly&mouseover.range>0&mouseover.range<=40
+    show_if: rotation_mode=2
   raid_reforestation_ready: buff.reforestation_tracker.stack=3
+    show_if: rotation_mode=2
   raid_emergency_for_tree: group.count(cycle.health.pct<config.raid_reforestation_emergency_hp)>=config.raid_reforestation_emergency_members
+    show_if: rotation_mode=2
 
 
 lists:
   mplus_spell_queue:
     - queue_spell,name="Spell Queue",if=!buff.cat_form.up&!buff.bear_form.up
+    show_if: rotation_mode=1
 
   mplus_sanity_checks:
     - return,if=player.dead
@@ -415,6 +472,7 @@ lists:
     - return,if=player.cc
     - return,if=player.loot_nearby
   
+    show_if: rotation_mode=1
   mplus_interrupts:
     # Auto Swap Search
     - target_enemy,delay=100,name="Search Soothe",if=!target.purgeable.enrage&enemies.combat.any(cycle.purgeable.enrage)
@@ -424,6 +482,7 @@ lists:
     - incapacitating_roar,name="Roar (AoE CC)",if=interrupt.stun.aoe.check
     - soothe,name="Soothe Enrage",if=target.purgeable.enrage    
   
+    show_if: rotation_mode=1
   mplus_out_of_combat:
     - mark_of_the_wild,name="Mark of the Wild",if=group.count(cycle.buff.mark_of_the_wild.down.any&cycle.range>=0&cycle.range<=40)>0
     - symbiotic_relationship,name="Symbiotic Tank",cycle=tanks,if=!buff.symbiotic_relationship.up&!cycle.buff.symbiotic_relationship.up&cycle.range>=0&cycle.range<=40&!player.casting
@@ -435,25 +494,30 @@ lists:
     - regrowth,name="OOC Regrowth",cycle=members,if=cycle.health.pct<config.mplus_regrowth_threshold&cycle.buff.regrowth.remains<1.5&!player.combat&cycle.range>=0&cycle.range<=40
     
     
+    show_if: rotation_mode=1
   mplus_defensives:
     - natures_cure,name="Nature's Cure",cycle=members,if=config.mplus_use_dispell&cycle.dispelable.list&cycle.range>=0&cycle.range<=40
     - ironbark,name="Ironbark",cycle=members,if=cycle.health.pct<config.mplus_ironbark_threshold&cycle.buff.ironbark.down&cycle.range>=0&cycle.range<=40
     - barkskin,name="Barkskin",if=health.pct<config.mplus_barkskin_threshold
     - bear_form,name="Panic Bear",if=health.pct<config.mplus_frenzied_regen_threshold&!buff.bear_form.up&cooldown.frenzied_regeneration.ready
     - frenzied_regeneration,name="Frenzied Regen",if=health.pct<config.mplus_frenzied_regen_threshold&buff.bear_form.up
+    show_if: rotation_mode=1
 
   mplus_racials:
     - shadowmeld,name="Shadowmeld (Aggro Drop)",if=player.combat&player.aggro&!player.casting
+    show_if: rotation_mode=1
 
   mplus_cooldowns:
     - convoke_the_spirits,name="Convoke (Heal)",if=group.count(cycle.health.pct<config.mplus_convoke_threshold)>=config.mplus_convoke_members&!buff.cat_form.up&!buff.bear_form.up
     - tranquility,name="Tranquility",if=group.count(cycle.health.pct<config.mplus_tranquility_threshold)>=config.mplus_tranquility_members&!player.moving
     - natures_swiftness,name="Nature's Swiftness",if=group.count(cycle.health.pct<config.mplus_ns_threshold)>=1
     - heart_of_the_wild,name="Heart of the Wild",if=config.mplus_use_heart_of_the_wild&talent.heart_of_the_wild&buff.cat_form.up
+    show_if: rotation_mode=1
 
   mplus_trinkets:
     - trinket_1,name="Trinket 1",if=config.mplus_use_trinkets&trinket_1.ready
     - trinket_2,name="Trinket 2",if=config.mplus_use_trinkets&trinket_2.ready
+    show_if: rotation_mode=1
 
   mplus_active_healing:
     # Nature's Swiftness follow-up: instant Regrowth on lowest
@@ -465,11 +529,13 @@ lists:
     - wild_growth,name="Wild Growth",if=group.count(cycle.health.pct<config.mplus_wild_growth_threshold)>=config.mplus_wild_growth_members
     - regrowth,name="Regrowth Filler",cycle=members,if=cycle.health.pct<config.mplus_regrowth_threshold&cycle.range>=0&cycle.range<=40
     
+    show_if: rotation_mode=1
   mplus_utility:
     - bear_form,name="Stay Bear (Rooted)",if=player.rooted&!buff.bear_form.up
     - cat_form,name="Stay Cat (Rooted)",if=player.rooted&buff.bear_form.up
     - rebirth.mouseover,name="Rebirth (MO)",if=mouseover.exists&mouseover.dead&mouseover.friendly&mouseover.range<=40
     - innervate,name="Innervate",if=mana.pct<config.mplus_innervate_threshold
+    show_if: rotation_mode=1
 
   mplus_catweave_st:
     - heart_of_the_wild,name="HotW Cat ST",if=config.mplus_use_heart_of_the_wild&talent.heart_of_the_wild&buff.cat_form.up
@@ -477,6 +543,7 @@ lists:
     - ferocious_bite,name="Bite ST",if=combo_points>=5&target.range<=8
     - rake,name="Rake ST",if=debuff.rake.refreshable&target.range<=8
     - shred,name="Shred ST",if=target.range<=8
+    show_if: rotation_mode=1
 
   mplus_catweave_aoe:
     - heart_of_the_wild,name="HotW Cat AoE",if=config.mplus_use_heart_of_the_wild&talent.heart_of_the_wild&buff.cat_form.up
@@ -485,6 +552,7 @@ lists:
     - ferocious_bite,name="Bite AoE",if=combo_points>=5&target.range<=8
     - rake,name="Rake AoE",if=debuff.rake.refreshable&target.range<=8
     - swipe,name="Swipe AoE",if=target.range<=8
+    show_if: rotation_mode=1
 
   mplus_catweave:
     - rejuvenation,name="Cat Rejuvenation",cycle=members,if=cycle.buff.rejuvenation.remains<4&(buff.cat_form.up|talent.fluid_form)&(target.range>8|!var.mplus_group_healthy)
@@ -501,11 +569,13 @@ lists:
     
     - call_action_list,name=mplus_catweave_aoe,if=enemies.combat.8y>=config.mplus_aoe_threshold
     - call_action_list,name=mplus_catweave_st,if=enemies.combat.8y<config.mplus_aoe_threshold
+    show_if: rotation_mode=1
 
   mplus_moving:
     - convoke_the_spirits,name="Convoke (Moving)",if=group.count(cycle.health.pct<config.mplus_convoke_threshold)>=config.mplus_convoke_members&!buff.cat_form.up&!buff.bear_form.up
     - lifebloom,name="Lifebloom (Moving)",cycle=tanks,if=player.combat&cycle.buff.lifebloom.down&cycle.range>=0&cycle.range<=40
     - rejuvenation,name="Rejuvenation (Moving)",cycle=members,if=cycle.buff.rejuvenation.down&cycle.health.pct<95&cycle.range>=0&cycle.range<=40
+    show_if: rotation_mode=1
 
   mplus_mouseover_healing_emergency:
     - natures_cure.mouseover,name="Cure (MO)",if=config.mplus_use_dispell&mouseover.dispelable.list&mouseover.range>=0&mouseover.range<=40
@@ -514,6 +584,7 @@ lists:
     - rejuvenation.mouseover,name="Rejuv (MO)",if=mouseover.buff.remains(rejuvenation)<1.5&mouseover.range>=0&mouseover.range<=40
     - regrowth.mouseover,name="Panic Regrowth (MO)",if=mouseover.range>=0&mouseover.range<=40
     
+    show_if: rotation_mode=1
   mplus_main:
     - return,if=player.channeling
     - return,if=buff.tranquility.up
@@ -534,8 +605,10 @@ lists:
     - call_action_list,name=mplus_moving,if=player.moving
     - call_action_list,name=mplus_active_healing,if=!config.mplus_force_dps
     - call_action_list,name=mplus_catweave,if=var.mplus_can_catweave&target.exists&target.alive&!target.friendly
+    show_if: rotation_mode=1
   raid_spell_queue:
     - queue_spell,name="Spell Queue",if=!buff.cat_form.up&!buff.bear_form.up
+    show_if: rotation_mode=2
 
   raid_sanity_checks:
     - return,if=player.dead
@@ -545,34 +618,41 @@ lists:
     - return,if=player.cc
     - return,if=player.loot_nearby
   
+    show_if: rotation_mode=2
   raid_interrupts:
     # Auto Swap to Soothe Enrage
     - target_enemy,delay=100,name="Search Enrage",if=!target.purgeable.enrage&enemies.combat.any(cycle.purgeable.enrage)
     - soothe,name="Soothe Enrage",if=target.purgeable.enrage    
   
+    show_if: rotation_mode=2
   raid_out_of_combat:
     - mark_of_the_wild,name="Mark of the Wild",if=buff.mark_of_the_wild.down
     
     - rejuvenation,name="OOC Rejuvenation",cycle=members,if=cycle.health.pct<config.raid_rejuvenation_threshold&cycle.buff.rejuvenation.remains<1.5&cycle.range>=0&cycle.range<=40&!player.combat
     - regrowth,name="OOC Regrowth",cycle=members,if=cycle.health.pct<config.raid_regrowth_threshold&cycle.buff.regrowth.remains<1.5&cycle.range>=0&cycle.range<=40&!player.combat
     
+    show_if: rotation_mode=2
   raid_defensives:
     - natures_cure,name="Nature's Cure",cycle=members,if=config.raid_use_dispell&cycle.dispelable.list&cycle.range>=0&cycle.range<=40
     - ironbark,name="Ironbark",cycle=members,if=cycle.health.pct<config.raid_ironbark_threshold&cycle.buff.ironbark.down&cycle.range>=0&cycle.range<=40
     - barkskin,name="Barkskin",if=health.pct<config.raid_barkskin_threshold
+    show_if: rotation_mode=2
 
   raid_racials:
     - shadowmeld,name="Shadowmeld",if=target.threat>=3&!player.casting
+    show_if: rotation_mode=2
 
   raid_cooldowns:
     - incarnation_tree_of_life,name="Tree of Life",if=talent.incarnation_tree_of_life&!var.raid_is_tree_form&group.count(cycle.health.pct<config.raid_tree_of_life_threshold)>=config.raid_tree_of_life_members
     - tranquility,name="Tranquility",if=group.count(cycle.health.pct<config.raid_tranquility_threshold)>=config.raid_tranquility_members&!player.moving
     - natures_swiftness,name="Nature's Swiftness",if=group.count(cycle.health.pct<config.raid_ns_threshold)>=1
     - heart_of_the_wild,name="Heart of the Wild",if=config.raid_use_heart_of_the_wild&talent.heart_of_the_wild
+    show_if: rotation_mode=2
 
   raid_trinkets:
     - trinket_1,name="Trinket 1",if=config.raid_use_trinkets&trinket_1.ready
     - trinket_2,name="Trinket 2",if=config.raid_use_trinkets&trinket_2.ready
+    show_if: rotation_mode=2
 
   raid_tree_of_life_rotation:
     # 1. Rejuv 10 targets (no matter health)
@@ -585,11 +665,13 @@ lists:
     - wild_growth,name="Tree Wild Growth",if=buff.soul_of_the_forest.up&prev_gcd.rejuvenation
     # 5. Regrowths as needed (locked behind 8+ Abundance to save mana)
     - regrowth,name="Tree Regrowth Filler",cycle=members,if=buff.abundance.stack>=8&cycle.health.pct<80&cycle.range<=40
+    show_if: rotation_mode=2
 
   raid_active_healing:
     # Lifebloom Focus Logic
     - lifebloom,target=tank1,name="LB Tank 1",if=config.raid_lifebloom_target=1&(tank1.buff.lifebloom.remains<=4.5|tank1.buff.lifebloom.stack<3)&tank1.range<=40
     - lifebloom,target=tank2,name="LB Tank 2",if=config.raid_lifebloom_target=2&(tank2.buff.lifebloom.remains<=4.5|tank2.buff.lifebloom.stack<3)&tank2.range<=40
+    show_if: rotation_mode=2
 
     - regrowth,name="NS Regrowth",cycle=members,if=buff.natures_swiftness.up&cycle.health.pct<config.raid_regrowth_threshold&cycle.range>=0&cycle.range<=40
     
@@ -608,17 +690,20 @@ lists:
     
   raid_utility:
     - innervate,name="Innervate",if=mana.pct<config.raid_innervate_threshold
+    show_if: rotation_mode=2
 
   raid_ranged_dps:
     - starsurge,name="Starsurge",if=talent.starsurge&mana.pct>20
     - starfire,name="Starfire",if=target.area_enemies>=3|buff.eclipse_solar.up
     - moonfire,name="Moonfire ST",if=debuff.moonfire.refreshable
     - sunfire,name="Sunfire AoE",if=debuff.sunfire.refreshable
+    show_if: rotation_mode=2
 
   raid_moving:
     - lifebloom,target=tank1,name="LB Tank 1 (Moving)",if=config.raid_lifebloom_target=1&(tank1.buff.lifebloom.remains<=4.5|tank1.buff.lifebloom.stack<3)&tank1.range<=40
     - lifebloom,target=tank2,name="LB Tank 2 (Moving)",if=config.raid_lifebloom_target=2&(tank2.buff.lifebloom.remains<=4.5|tank2.buff.lifebloom.stack<3)&tank2.range<=40
     - rejuvenation,name="Rejuvenation (Moving)",cycle=members,if=cycle.buff.rejuvenation.down&cycle.health.pct<config.raid_rejuvenation_threshold&cycle.range>=0&cycle.range<=40
+    show_if: rotation_mode=2
 
   raid_mouseover_healing_emergency:
     - natures_cure.mouseover,name="Cure (MO)",if=config.raid_use_dispell&mouseover.dispelable.list&mouseover.range>=0&mouseover.range<=40
@@ -627,6 +712,7 @@ lists:
     - rejuvenation.mouseover,name="Rejuv (MO)",if=mouseover.buff.remains(rejuvenation)<1.5&mouseover.range>=0&mouseover.range<=40
     - regrowth.mouseover,name="Panic Regrowth (MO)",if=mouseover.range>=0&mouseover.range<=40
     
+    show_if: rotation_mode=2
   raid_main:
     - return,if=player.channeling
     - return,if=buff.tranquility.up
@@ -648,6 +734,7 @@ lists:
     - call_action_list,name=raid_moving,if=player.moving
     - call_action_list,name=raid_active_healing,if=!config.raid_force_dps
     - call_action_list,name=raid_ranged_dps,if=target.exists&target.alive&!target.friendly&!var.raid_group_needs_healing&mana.pct>90
+    show_if: rotation_mode=2
 
   main:
     - call_action_list,name=mplus_main,if=config.rotation_mode=1
