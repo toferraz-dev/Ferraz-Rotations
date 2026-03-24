@@ -1,0 +1,159 @@
+version: 1.0
+author: Ferraz
+patch: "12.0.1"
+spec: 105
+name: Restoration Druid PVP
+description: |
+  Restoration Druid PvP Rotation.
+  Optimized for Arena and BGs.
+  Talents: CkGA8cL7tpvige+kkmGM9zUPWPMmZjZMzMmlxMjxsxsYZGAAAAAAAAAAsMDNbmx0MzMwsxMzMbGMDAAAAgBAwAW2GLYamZZAAACYhZmZwMAaGAMzAAGA
+entry: main
+
+config:
+  # =================================================================================================
+  #     DEFENSIVE & SURVIVAL
+  # =================================================================================================
+  barkskin_threshold:
+    label: "Barkskin HP %"
+    type: slider
+    min: 25
+    max: 99
+    default: 70
+
+  bear_form_threshold:
+    label: "Bear Form HP %"
+    type: slider
+    min: 10
+    max: 60
+    default: 40
+
+  # =================================================================================================
+  #     HEALING - PVP
+  # =================================================================================================
+  lifebloom_friendly_1:
+    label: "Lifebloom Target 1 (Unit Selector)"
+    type: unit_select
+    role_filter: all
+    max_selections: 1
+
+  lifebloom_friendly_2:
+    label: "Lifebloom Target 2 (Unit Selector)"
+    type: unit_select
+    role_filter: all
+    max_selections: 1
+
+  rejuvenation_threshold:
+    label: "Rejuvenation HP %"
+    type: slider
+    min: 25
+    max: 100
+    default: 95
+
+  regrowth_threshold:
+    label: "Regrowth HP %"
+    type: slider
+    min: 25
+    max: 99
+    default: 80
+
+  ns_threshold:
+    label: "Nature's Swiftness HP %"
+    type: slider
+    min: 25
+    max: 99
+    default: 50
+
+  # =================================================================================================
+  #     CROWD CONTROL & OFFENSE
+  # =================================================================================================
+  use_cyclone:
+    label: "Auto Cyclone (Focus/Healer)"
+    type: checkbox
+    default: true
+
+  cyclone_hp_threshold:
+    label: "Cyclone Avoid (Target HP %)"
+    type: slider
+    min: 10
+    max: 100
+    default: 30
+
+  # =================================================================================================
+  #     UTILITY
+  # =================================================================================================
+  use_dispell:
+    label: "Enable Nature's Cure"
+    type: checkbox
+    default: true
+
+  mana_regrown_threshold:
+    label: "Innervate Mana %"
+    type: slider
+    min: 10
+    max: 99
+    default: 70
+
+variables:
+  in_bear_form: buff.bear_form.up
+  need_dispel: config.use_dispell&group.any(cycle.dispelable.list&cycle.range<=40)
+  group_needs_healing: group.any(cycle.health.pct<85)
+  is_tree_form: buff.incarnation_tree_of_life.up|buff.reforestation.up
+  mo_friendly_valid: mouseover.exists&mouseover.alive&mouseover.friendly&mouseover.range>0&mouseover.range<=40
+
+lists:
+  spell_queue:
+    - queue_spell,name="Spell Queue",if=!var.in_bear_form
+
+  sanity_checks:
+    - return,if=player.dead
+    - return,if=mounted
+    - return,if=!state.rotation
+    - return,if=player.cc
+
+  defensives:
+    # Auto Shapeshift to remove roots/snares
+    - travel_form,name="Remove Root (Travel)",if=player.rooted|player.snared
+    - bear_form,name="Bear Form (Survival)",if=health.pct<config.bear_form_threshold&!var.in_bear_form
+    - barkskin,name="Barkskin",if=health.pct<config.barkskin_threshold
+    - ironbark,name="Ironbark",cycle=members,if=cycle.health.pct<50&cycle.range<=40
+
+  pvp_utility:
+    - natures_cure,name="Nature's Cure",cycle=members,if=config.use_dispell&cycle.dispelable.list&cycle.range<=40
+    - cyclone,name="Cyclone Focus",target=focus,if=config.use_cyclone&focus.exists&focus.alive&!focus.friendly&focus.health.pct>config.cyclone_hp_threshold&focus.range<=20&!focus.cc
+    - entangling_roots,name="Roots Melee",target=nearest_enemy,if=target.range<=30&target.melee&!target.cc
+    - innervate,name="Innervate",if=mana.pct<config.mana_regrown_threshold
+
+  pvp_healing:
+    # 1. Lifebloom maintenance (Undergrowth talent usually keeps 2 targets)
+    - lifebloom,name="LB Target 1",cycle=config.lifebloom_friendly_1,if=(cycle.buff.lifebloom.down|cycle.buff.lifebloom.remains<4.5)&cycle.range<=40
+    - lifebloom,name="LB Target 2",cycle=config.lifebloom_friendly_2,if=(cycle.buff.lifebloom.down|cycle.buff.lifebloom.remains<4.5)&cycle.range<=40
+
+    # 2. Nature's Swiftness for Emergency
+    - regrowth,name="NS Regrowth",cycle=members,if=buff.natures_swiftness.up&cycle.health.pct<80&cycle.range<=40
+
+    # 3. Swiftmend (Soul of the Forest proc)
+    - swiftmend,name="Swiftmend ST",cycle=members,if=cycle.health.pct<70&(cycle.buff.rejuvenation.up|cycle.buff.regrowth.up)&cycle.range<=40
+
+    # 4. Rejuvenation (Spread)
+    - rejuvenation,name="Rejuv Spread",cycle=members,if=cycle.buff.rejuvenation.down&cycle.health.pct<config.rejuvenation_threshold&cycle.range<=40
+
+    # 5. Regrowth (Abundance stacks)
+    - regrowth,name="Regrowth Abundance",cycle=members,if=(buff.clearcasting.up|buff.abundance.stack>=5)&cycle.health.pct<config.regrowth_threshold&cycle.range<=40
+    
+    # 6. Wild Growth (Group Pressure)
+    - wild_growth,name="Wild Growth",if=group.count(cycle.health.pct<85)>=2
+
+  pvp_offense:
+    - starsurge,name="Starsurge",if=mana.pct>50&!var.group_needs_healing
+    - moonfire,name="Moonfire Dot",if=debuff.moonfire.refreshable&!var.group_needs_healing
+    - sunfire,name="Sunfire Dot",if=debuff.sunfire.refreshable&!var.group_needs_healing
+    - wrath,name="Wrath Filler",if=!var.group_needs_healing
+
+  main:
+    - return,if=player.channeling
+    - call_action_list,name=sanity_checks
+    - call_action_list,name=spell_queue
+    - call_action_list,name=defensives
+    - call_action_list,name=pvp_utility
+    - call_action_list,name=pvp_healing,if=!var.in_bear_form
+    - call_action_list,name=pvp_offense,if=!var.in_bear_form&!var.group_needs_healing&target.exists&!target.friendly
