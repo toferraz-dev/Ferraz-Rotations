@@ -1,4 +1,4 @@
-version: 3.1
+version: 3.2
 author: Ferraz
 patch: "12.0.1"
 spec: 102
@@ -7,7 +7,7 @@ description: |
   Balance Druid - Elunes Chosen for Mythic+. Optimized for Patch 12.0.1 (Midnight).
   Supports Wowhead (Aggressive/Elune Focus) / Method.gg (Balanced/Eclipse Control).
   Talent Tree: CYGAOB00+EWim5ji+N0ScDXt8DAAAAAAAAAAAAAAAAWoMbNjxMDwsYmZGLMMMmZZmFzMzsMWmZZMzgFMMAjFzMgxIwEAAAgFzMmZwmhxYAAYmBA
-  
+
 entry: main
 
 # ============================================================
@@ -20,10 +20,8 @@ config:
     label: "Rotation Style"
     type: dropdown
     options:
-      - label: "Wowhead (Aggressive DPS)"
-        value: 1
-      - label: "Method.gg (Balanced)"
-        value: 2
+      - { label: "Wowhead (Aggressive DPS)", value: 1 }
+      - { label: "Method.gg (Balanced)", value: 2 }
     default: 2
 
   # --- Astral Power ---
@@ -117,14 +115,10 @@ config:
     label: "Stampeding Roar Usage"
     type: dropdown
     options:
-      - label: "Disabled"
-        value: 0
-      - label: "Only in combat"
-        value: 1
-      - label: "Only out of combat"
-        value: 2
-      - label: "Always when moving"
-        value: 3
+      - { label: "Disabled", value: 0 }
+      - { label: "Only in combat", value: 1 }
+      - { label: "Only out of combat", value: 2 }
+      - { label: "Always when moving", value: 3 }
     default: 2
   stampeding_roar_movement_time:
     label: "Roar after moving (seconds)"
@@ -138,6 +132,11 @@ config:
     label: "Auto Trinkets"
     type: checkbox
     default: true
+
+# ============================================================
+#  VARIABLES
+# ============================================================
+variables:
 
 # ============================================================
 #  ACTION LISTS
