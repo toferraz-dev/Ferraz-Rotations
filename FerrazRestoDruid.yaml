@@ -202,7 +202,6 @@ lists:
     
     # AoE Interrupt
     - incapacitating_roar,name="Roar (AoE CC)",if=interrupt.stun.aoe.check
-    # CC Interrupt
     - soothe,name="Soothe Enrage",if=target.purgeable.enrage    
   
   out_of_combat:
