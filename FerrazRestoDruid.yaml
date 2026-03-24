@@ -208,6 +208,10 @@ lists:
   out_of_combat:
     - mark_of_the_wild,name="Mark of the Wild",if=group.count(cycle.buff.mark_of_the_wild.down.any&cycle.range>=0&cycle.range<=40)>0
     - symbiotic_relationship,name="Symbiotic Tank",cycle=tanks,if=!buff.symbiotic_relationship.up&!cycle.buff.symbiotic_relationship.up&cycle.range>=0&cycle.range<=40&!player.casting
+    
+    # Lifebloom OOC Maintenance
+    - lifebloom,name="OOC Lifebloom Tank",cycle=tanks,if=talent.everbloom.rank>=1&(cycle.buff.lifebloom.stack<3|cycle.buff.lifebloom.remains<=5)&cycle.range>=0&cycle.range<=40
+    - lifebloom,name="OOC Lifebloom Tank",cycle=tanks,if=!talent.everbloom.enabled&cycle.buff.lifebloom.down&cycle.range>=0&cycle.range<=40
     - rejuvenation,name="OOC Rejuvenation",cycle=members,if=cycle.health.pct<config.rejuvenation_threshold&cycle.buff.rejuvenation.remains<1.5&!player.combat&cycle.range>=0&cycle.range<=40
     - regrowth,name="OOC Regrowth",cycle=members,if=cycle.health.pct<config.regrowth_threshold&cycle.buff.regrowth.remains<1.5&!player.combat&cycle.range>=0&cycle.range<=40
     
