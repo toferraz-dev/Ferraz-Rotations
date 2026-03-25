@@ -670,6 +670,6 @@ lists:
     - call_action_list,name=raid_active_healing,if=!config.raid_force_dps
     - call_action_list,name=raid_ranged_dps,if=target.exists&target.alive&!target.friendly&!var.raid_group_needs_healing&mana.pct>90
 
-main:
-  - call_action_list,name=mplus_main,if=config.rotation_mode=1
-  - call_action_list,name=raid_main,if=config.rotation_mode=2
+  main:
+    - call_action_list,name=mplus_main,if=config.rotation_mode=1
+    - call_action_list,name=raid_main,if=config.rotation_mode=2
