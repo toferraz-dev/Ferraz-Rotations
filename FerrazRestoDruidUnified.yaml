@@ -26,7 +26,7 @@ config:
     label: ">>>> [ MYTHIC+ ] Configuration <<<<"
     type: dropdown
     options:
-      - label: "Settings focused on DPS & M+ Utility"
+      - label: "Below are the settings for Mythic+'s Rotation Mode."
         value: 1
     default: 1
 
@@ -207,7 +207,7 @@ config:
     label: ">>>> [ RAID ] Configuration <<<<"
     type: dropdown
     options:
-      - label: "Settings focused on Group Healing & Care"
+      - label: "Below are the settings for Raid's Rotation Mode."
         value: 1
     default: 1
 
