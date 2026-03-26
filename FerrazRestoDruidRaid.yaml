@@ -140,9 +140,10 @@ config:
   #     HEALING TOGGLES & AUTOMATION
   # =================================================================================================
   spread_rejuvs:
-    label: "Spread Rejuvenations"
-    type: checkbox
-    default: true
+    label: "Spread Rejuvs"
+    type: toggle
+    spell: 774
+    description: "Ativa/Desativa o espalhamento automático de Rejuvenescimento"
 
   abundance_regrowth_stacks:
     label: "Abundance Stacks for Regrowth"
@@ -204,7 +205,8 @@ config:
       - label: "Tank 2"
         value: 2
     default: 1
-
+    show_override: true
+    
 variables:
   is_tree_form: buff.incarnation_tree_of_life.up|buff.reforestation.up
   group_needs_healing: group.any(cycle.health.pct<85)
