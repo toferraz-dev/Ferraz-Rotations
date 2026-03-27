@@ -99,6 +99,10 @@ config:
     min: 30
     max: 90
     default: 70
+  use_heart_of_the_wild:
+    label: "Use Heart of the Wild"
+    type: checkbox
+    default: true
 
   # ROTATION
   thrash_stacks_target:
@@ -246,7 +250,7 @@ lists:
     - berserk_ravage,name="Berserk (Elune)",if=config.hero_tree=1&talent.berserk&(active_enemies>=3|target.boss)
     - wild_guardian,name="Wild Guardian",if=var.incarnation_active
     - rage_of_the_sleeper,name="Rage of the Sleeper",if=config.hero_tree=1&(health.pct<config.rage_of_sleeper_threshold|active_enemies>=4|(var.incarnation_active&active_enemies>=3))
-    - heart_of_the_wild,name="Heart of the Wild",if=config.hero_tree=1&var.in_bear_form&active_enemies>=4
+    - heart_of_the_wild,name="Heart of the Wild",if=config.use_heart_of_the_wild&config.hero_tree=1&var.in_bear_form&active_enemies>=4
   
   interrupts:
     # Auto Swap
