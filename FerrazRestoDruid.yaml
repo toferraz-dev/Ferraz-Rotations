@@ -179,8 +179,9 @@ config:
     default: true
 
 variables:
+  is_tree_form: buff.incarnation_tree_of_life.up|buff.reforestation.up
   group_healthy: group.count(cycle.health.effective.pct<config.catweave_group_hp)<config.catweave_injured_max
-  can_catweave: (var.group_healthy|config.force_dps)&player.combat
+  can_catweave: (var.group_healthy|config.force_dps)&player.combat&!var.is_tree_form
   mo_friendly_valid: mouseover.exists&mouseover.alive&mouseover.friendly&mouseover.range>0&mouseover.range<=40
 
 lists:
@@ -272,11 +273,11 @@ lists:
     - wrath,name="Cat Wrath (Mana Save)",if=mana.pct>=70&!buff.cat_form.up&target.range>9
     
     # Fluid Form: we MUST cast rake or shred to shift BEFORE accessing catweave_aoe/st
-    - rake,name="Fluid Rake",if=talent.fluid_form&!buff.cat_form.up&debuff.rake.refreshable
-    - shred,name="Fluid Shred",if=talent.fluid_form&!buff.cat_form.up&target.range<=8
+    - rake,name="Fluid Rake",if=talent.fluid_form&!buff.cat_form.up&debuff.rake.refreshable&!var.is_tree_form
+    - shred,name="Fluid Shred",if=talent.fluid_form&!buff.cat_form.up&target.range<=8&!var.is_tree_form
     
     # Explicit shift fallback (for AoE when Shred is bypassed or without Fluid Form)
-    - cat_form,name="Manual Cat Shift",if=!buff.cat_form.up&target.range<=8
+    - cat_form,name="Manual Cat Shift",if=!buff.cat_form.up&target.range<=8&!var.is_tree_form
     - return,if=!buff.cat_form.up
     
     - call_action_list,name=catweave_aoe,if=enemies.combat.8y>=config.aoe_threshold
