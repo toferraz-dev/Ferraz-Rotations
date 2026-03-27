@@ -209,10 +209,10 @@ config:
     
 variables:
   is_tree_form: buff.incarnation_tree_of_life.up|buff.reforestation.up
-  group_needs_healing: group.any(cycle.health.pct<85)
+  group_needs_healing: group.any(cycle.health.effective.pct<85)
   mo_friendly_valid: mouseover.exists&mouseover.alive&mouseover.friendly&mouseover.range>0&mouseover.range<=40
   reforestation_ready: buff.reforestation_tracker.stack=3
-  emergency_for_tree: group.count(cycle.health.pct<config.reforestation_emergency_hp)>=config.reforestation_emergency_members
+  emergency_for_tree: group.count(cycle.health.effective.pct<config.reforestation_emergency_hp)>=config.reforestation_emergency_members
 
 lists:
   spell_queue:
@@ -234,21 +234,21 @@ lists:
   out_of_combat:
     - mark_of_the_wild,name="Mark of the Wild",if=buff.mark_of_the_wild.down
     
-    - rejuvenation,name="OOC Rejuvenation",cycle=members,if=cycle.health.pct<config.rejuvenation_threshold&cycle.buff.rejuvenation.remains<1.5&cycle.range>=0&cycle.range<=40&!player.combat
-    - regrowth,name="OOC Regrowth",cycle=members,if=cycle.health.pct<config.regrowth_threshold&cycle.buff.regrowth.remains<1.5&cycle.range>=0&cycle.range<=40&!player.combat
+    - rejuvenation,name="OOC Rejuvenation",cycle=members,if=cycle.health.effective.pct<config.rejuvenation_threshold&cycle.buff.rejuvenation.remains<1.5&cycle.range>=0&cycle.range<=40&!player.combat
+    - regrowth,name="OOC Regrowth",cycle=members,if=cycle.health.effective.pct<config.regrowth_threshold&cycle.buff.regrowth.remains<1.5&cycle.range>=0&cycle.range<=40&!player.combat
     
   defensives:
     - natures_cure,name="Nature's Cure",cycle=members,if=config.use_dispell&cycle.dispelable.list&cycle.range>=0&cycle.range<=40
-    - ironbark,name="Ironbark",cycle=members,if=cycle.health.pct<config.ironbark_threshold&cycle.buff.ironbark.down&cycle.range>=0&cycle.range<=40
-    - barkskin,name="Barkskin",if=health.pct<config.barkskin_threshold
+    - ironbark,name="Ironbark",cycle=members,if=cycle.health.effective.pct<config.ironbark_threshold&cycle.buff.ironbark.down&cycle.range>=0&cycle.range<=40
+    - barkskin,name="Barkskin",if=health.effective.pct<config.barkskin_threshold
 
   racials:
     - shadowmeld,name="Shadowmeld",if=target.threat>=3&!player.casting
 
   cooldowns:
-    - incarnation_tree_of_life,name="Tree of Life",if=talent.incarnation_tree_of_life&!var.is_tree_form&group.count(cycle.health.pct<config.tree_of_life_threshold)>=config.tree_of_life_members
-    - tranquility,name="Tranquility",if=group.count(cycle.health.pct<config.tranquility_threshold)>=config.tranquility_members&!player.moving
-    - natures_swiftness,name="Nature's Swiftness",if=group.count(cycle.health.pct<config.ns_threshold)>=1
+    - incarnation_tree_of_life,name="Tree of Life",if=talent.incarnation_tree_of_life&!var.is_tree_form&group.count(cycle.health.effective.pct<config.tree_of_life_threshold)>=config.tree_of_life_members
+    - tranquility,name="Tranquility",if=group.count(cycle.health.effective.pct<config.tranquility_threshold)>=config.tranquility_members&!player.moving
+    - natures_swiftness,name="Nature's Swiftness",if=group.count(cycle.health.effective.pct<config.ns_threshold)>=1
     - heart_of_the_wild,name="Heart of the Wild",if=config.use_heart_of_the_wild&talent.heart_of_the_wild
 
   trinkets:
@@ -265,27 +265,27 @@ lists:
     # 4. Wild Growth
     - wild_growth,name="Tree Wild Growth",if=buff.soul_of_the_forest.up&prev_gcd.rejuvenation
     # 5. Regrowths as needed (locked behind 8+ Abundance to save mana)
-    - regrowth,name="Tree Regrowth Filler",cycle=members,if=buff.abundance.stack>=8&cycle.health.pct<80&cycle.range<=40
+    - regrowth,name="Tree Regrowth Filler",cycle=members,if=buff.abundance.stack>=8&cycle.health.effective.pct<80&cycle.range<=40
 
   active_healing:
     # Lifebloom Focus Logic
     - lifebloom,target=tank1,name="LB Tank 1",if=config.lifebloom_target=1&(tank1.buff.lifebloom.remains<=4.5|tank1.buff.lifebloom.stack<3)&tank1.range<=40
     - lifebloom,target=tank2,name="LB Tank 2",if=config.lifebloom_target=2&(tank2.buff.lifebloom.remains<=4.5|tank2.buff.lifebloom.stack<3)&tank2.range<=40
 
-    - regrowth,name="NS Regrowth",cycle=members,if=buff.natures_swiftness.up&cycle.health.pct<config.regrowth_threshold&cycle.range>=0&cycle.range<=40
+    - regrowth,name="NS Regrowth",cycle=members,if=buff.natures_swiftness.up&cycle.health.effective.pct<config.regrowth_threshold&cycle.range>=0&cycle.range<=40
     
     # Reforestation Lock: Don't cast 4th Swiftmend unless emergency
-    - swiftmend,name="Swiftmend",cycle=members,if=cycle.health.pct<config.swiftmend_threshold&(cycle.buff.rejuvenation.up|cycle.buff.regrowth.up|cycle.buff.wild_growth.up)&cycle.range>=0&cycle.range<=40&(!var.reforestation_ready|var.emergency_for_tree)
+    - swiftmend,name="Swiftmend",cycle=members,if=cycle.health.effective.pct<config.swiftmend_threshold&(cycle.buff.rejuvenation.up|cycle.buff.regrowth.up|cycle.buff.wild_growth.up)&cycle.range>=0&cycle.range<=40&(!var.reforestation_ready|var.emergency_for_tree)
     
-    - wild_growth,name="Wild Growth",if=group.count(cycle.health.pct<config.wild_growth_threshold)>=config.wild_growth_members
-    - regrowth,name="Clearcasting Regrowth",cycle=members,if=buff.clearcasting.up&cycle.health.pct<95&cycle.range>=0&cycle.range<=40
+    - wild_growth,name="Wild Growth",if=group.count(cycle.health.effective.pct<config.wild_growth_threshold)>=config.wild_growth_members
+    - regrowth,name="Clearcasting Regrowth",cycle=members,if=buff.clearcasting.up&cycle.health.effective.pct<95&cycle.range>=0&cycle.range<=40
     
     # Abundance / Spread Rejuv Logic
     - rejuvenation,name="Spread Rejuvenation",cycle=members,if=config.spread_rejuvs&cycle.buff.rejuvenation.down&group.count(cycle.buff.rejuvenation.up)<12&cycle.range<=40
-    - regrowth,name="Abundance Regrowth",cycle=members,if=buff.abundance.stack>=config.abundance_regrowth_stacks&cycle.health.pct<95&cycle.range<=40
+    - regrowth,name="Abundance Regrowth",cycle=members,if=buff.abundance.stack>=config.abundance_regrowth_stacks&cycle.health.effective.pct<95&cycle.range<=40
     
-    - rejuvenation,name="Rejuvenation Filler",cycle=members,if=cycle.buff.rejuvenation.down&cycle.health.pct<config.rejuvenation_threshold&cycle.range>=0&cycle.range<=40
-    - regrowth,name="Regrowth Filler",cycle=members,if=buff.abundance.stack>=config.abundance_regrowth_stacks&cycle.health.pct<config.regrowth_threshold&cycle.range>=0&cycle.range<=40
+    - rejuvenation,name="Rejuvenation Filler",cycle=members,if=cycle.buff.rejuvenation.down&cycle.health.effective.pct<config.rejuvenation_threshold&cycle.range>=0&cycle.range<=40
+    - regrowth,name="Regrowth Filler",cycle=members,if=buff.abundance.stack>=config.abundance_regrowth_stacks&cycle.health.effective.pct<config.regrowth_threshold&cycle.range>=0&cycle.range<=40
     
   utility:
     - innervate,name="Innervate",if=mana.pct<config.innervate_threshold
@@ -299,7 +299,7 @@ lists:
   moving:
     - lifebloom,target=tank1,name="LB Tank 1 (Moving)",if=config.lifebloom_target=1&(tank1.buff.lifebloom.remains<=4.5|tank1.buff.lifebloom.stack<3)&tank1.range<=40
     - lifebloom,target=tank2,name="LB Tank 2 (Moving)",if=config.lifebloom_target=2&(tank2.buff.lifebloom.remains<=4.5|tank2.buff.lifebloom.stack<3)&tank2.range<=40
-    - rejuvenation,name="Rejuvenation (Moving)",cycle=members,if=cycle.buff.rejuvenation.down&cycle.health.pct<config.rejuvenation_threshold&cycle.range>=0&cycle.range<=40
+    - rejuvenation,name="Rejuvenation (Moving)",cycle=members,if=cycle.buff.rejuvenation.down&cycle.health.effective.pct<config.rejuvenation_threshold&cycle.range>=0&cycle.range<=40
 
   mouseover_healing_emergency:
     - natures_cure.mouseover,name="Cure (MO)",if=config.use_dispell&mouseover.dispelable.list&mouseover.range>=0&mouseover.range<=40
@@ -325,7 +325,7 @@ lists:
     - call_action_list,name=cooldowns
     - call_action_list,name=trinkets
     - call_action_list,name=tree_of_life_rotation,if=var.is_tree_form
-    - call_action_list,name=mouseover_healing_emergency,if=config.use_mouseover&var.mo_friendly_valid&(mouseover.health.pct<config.mouseover_emergency_hp|mouseover.dispelable.list)&!player.casting&!player.channeling
+    - call_action_list,name=mouseover_healing_emergency,if=config.use_mouseover&var.mo_friendly_valid&(mouseover.health.effective.pct<config.mouseover_emergency_hp|mouseover.dispelable.list)&!player.casting&!player.channeling
     - call_action_list,name=moving,if=player.moving
     - call_action_list,name=active_healing,if=!config.force_dps
     - call_action_list,name=ranged_dps,if=target.exists&target.alive&!target.friendly&!var.group_needs_healing&mana.pct>90
