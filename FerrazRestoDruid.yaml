@@ -179,7 +179,7 @@ config:
     default: true
 
 variables:
-  is_tree_form: buff.incarnation_tree_of_life.up|buff.reforestation.up
+  is_tree_form: buff.incarnation_tree_of_life.up
   group_healthy: group.count(cycle.health.effective.pct<config.catweave_group_hp)<config.catweave_injured_max
   can_catweave: (var.group_healthy|config.force_dps)&player.combat&!var.is_tree_form
   mo_friendly_valid: mouseover.exists&mouseover.alive&mouseover.friendly&mouseover.range>0&mouseover.range<=40
