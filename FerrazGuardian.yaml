@@ -402,8 +402,6 @@ lists:
     - trinket_2,name="Trinket 2",if=config.use_trinkets&trinket_2.ready&(var.incarnation_active|health.pct<70)
 
   movement:
-    - cat_form,name="Stay Cat (Rooted)",if=player.rooted&buff.bear_form.up
-    - bear_form,name="Stay Bear (Rooted)",if=player.rooted&!buff.bear_form.up
     - stampeding_roar,name="Stampeding Roar",if=var.use_stampeding_roar&config.stampeding_roar_usage!=0
   
   # ----------------------------------------------------------
@@ -415,7 +413,6 @@ lists:
     - call_action_list,name=spell_queue
     - rebirth.mouseover,name="Rebirth (MO)",if=mouseover.exists&mouseover.dead&mouseover.friendly&mouseover.range<=40
     - call_action_list,name=buff_mark_of_the_wild
-    - heart_of_the_wild,name="Heart of the Wild Claw",if=config.hero_tree=2&!var.in_bear_form&!buff.cat_form.up&player.combat
     - bear_form,name="Manual Bear Form",if=!var.in_bear_form&player.combat&!mounted.flying&!mounted.ground
     - moonfire,name="Pull Moonfire",if=config.allow_pull_with_mo&!player.combat&target.enemy&target.alive&debuff.moonfire.down
     - return,if=!player.combat&active_enemies=0
