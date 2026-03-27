@@ -234,6 +234,10 @@ lists:
   out_of_combat:
     - mark_of_the_wild,name="Mark of the Wild",if=buff.mark_of_the_wild.down
     
+    # Lifebloom OOC Maintenance (like M+)
+    - lifebloom,target=tank1,name="OOC LB Tank 1",if=config.lifebloom_target=1&tank1.buff.lifebloom.down&tank1.range>=0&tank1.range<=40
+    - lifebloom,target=tank2,name="OOC LB Tank 2",if=config.lifebloom_target=2&tank2.buff.lifebloom.down&tank2.range>=0&tank2.range<=40
+    
     - rejuvenation,name="OOC Rejuvenation",cycle=members,if=cycle.health.effective.pct<config.rejuvenation_threshold&cycle.buff.rejuvenation.remains<1.5&cycle.range>=0&cycle.range<=40&!player.combat
     - regrowth,name="OOC Regrowth",cycle=members,if=cycle.health.effective.pct<config.regrowth_threshold&cycle.buff.regrowth.remains<1.5&cycle.range>=0&cycle.range<=40&!player.combat
     
@@ -268,16 +272,19 @@ lists:
     - regrowth,name="Tree Regrowth Filler",cycle=members,if=buff.abundance.stack>=8&cycle.health.effective.pct<80&cycle.range<=40
 
   active_healing:
+    # High Priority CD Usage for Harmony of the Grove / Power of Nature
+    - swiftmend,name="Swiftmend ST",cycle=members,if=(cycle.buff.rejuvenation.up|cycle.buff.regrowth.up|cycle.buff.wild_growth.up)&cycle.range>=0&cycle.range<=40&(!var.reforestation_ready|var.emergency_for_tree)
+    - wild_growth,name="Wild Growth AoE",if=group.count(cycle.health.effective.pct<99)>=2
+    
+    # Soul of the Forest Follow-up: Rejuvenation is buffed and free
+    - rejuvenation,name="Sotf Rejuvenation",cycle=members,if=buff.soul_of_the_forest.up&cycle.buff.rejuvenation.down&cycle.range<=40
+    
     # Lifebloom Focus Logic
     - lifebloom,target=tank1,name="LB Tank 1",if=config.lifebloom_target=1&(tank1.buff.lifebloom.remains<=4.5|tank1.buff.lifebloom.stack<3)&tank1.range<=40
     - lifebloom,target=tank2,name="LB Tank 2",if=config.lifebloom_target=2&(tank2.buff.lifebloom.remains<=4.5|tank2.buff.lifebloom.stack<3)&tank2.range<=40
 
     - regrowth,name="NS Regrowth",cycle=members,if=buff.natures_swiftness.up&cycle.health.effective.pct<config.regrowth_threshold&cycle.range>=0&cycle.range<=40
     
-    # Reforestation Lock: Don't cast 4th Swiftmend unless emergency
-    - swiftmend,name="Swiftmend",cycle=members,if=cycle.health.effective.pct<config.swiftmend_threshold&(cycle.buff.rejuvenation.up|cycle.buff.regrowth.up|cycle.buff.wild_growth.up)&cycle.range>=0&cycle.range<=40&(!var.reforestation_ready|var.emergency_for_tree)
-    
-    - wild_growth,name="Wild Growth",if=group.count(cycle.health.effective.pct<config.wild_growth_threshold)>=config.wild_growth_members
     - regrowth,name="Clearcasting Regrowth",cycle=members,if=buff.clearcasting.up&cycle.health.effective.pct<95&cycle.range>=0&cycle.range<=40
     
     # Abundance / Spread Rejuv Logic
@@ -292,9 +299,16 @@ lists:
 
   ranged_dps:
     - starsurge,name="Starsurge",if=talent.starsurge&mana.pct>20
+    
+    # Instant Wrath procs (Clearcasting/Nature's Grace style)
+    - wrath,name="Instant Wrath Proc",if=buff.clearcasting.up|buff.natures_grace.up|buff.expansive_growth.up
+    
     - starfire,name="Starfire",if=target.area_enemies>=3|buff.eclipse_solar.up
     - moonfire,name="Moonfire ST",if=debuff.moonfire.refreshable
     - sunfire,name="Sunfire AoE",if=debuff.sunfire.refreshable
+    
+    # Filler & Mana Regen logic (idle usage)
+    - wrath,name="Wrath Mana Filler",if=mana.pct<99
 
   moving:
     - lifebloom,target=tank1,name="LB Tank 1 (Moving)",if=config.lifebloom_target=1&(tank1.buff.lifebloom.remains<=4.5|tank1.buff.lifebloom.stack<3)&tank1.range<=40
