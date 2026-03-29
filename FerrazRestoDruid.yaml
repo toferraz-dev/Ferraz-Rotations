@@ -257,12 +257,12 @@ lists:
     # Prioritize Swiftmend if group needs healing to trigger Soul of the Forest for Wild Growth
     - swiftmend,name="Swiftmend setup",cycle=members,if=group.count(cycle.health.effective.pct<config.wild_growth_threshold)>=config.wild_growth_members&(cycle.buff.rejuvenation.up|cycle.buff.regrowth.up)
 
-    # Wild Growth (Buffed by 2pc Set)
-    - wild_growth,name="Wild Growth",if=group.count(cycle.health.effective.pct<config.wild_growth_threshold)>=config.wild_growth_members
-    
     # Forced Ramp / Spread (Ignores HP thresholds if toggle is ON)
     - wild_growth,name="Forced Wild Growth",if=config.force_spread&group.count(cycle.buff.wild_growth.down)>=1
     - rejuvenation,name="Forced Rejuvenation",cycle=members,if=config.force_spread&(cycle.buff.rejuvenation.down|cycle.buff.rejuvenation.remains<1.5)
+
+    # Wild Growth (Buffed by 2pc Set)
+    - wild_growth,name="Wild Growth",if=group.count(cycle.health.effective.pct<config.wild_growth_threshold)>=config.wild_growth_members
     
     # Emergency & Single Target Filler
     - swiftmend,name="Swiftmend Emergency",cycle=members,if=cycle.health.effective.pct<config.swiftmend_threshold&(cycle.buff.rejuvenation.up|cycle.buff.regrowth.up|cycle.buff.wild_growth.up)
