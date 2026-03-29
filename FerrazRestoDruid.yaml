@@ -258,7 +258,7 @@ lists:
     - swiftmend,name="Swiftmend setup",cycle=members,if=group.count(cycle.health.effective.pct<config.wild_growth_threshold)>=config.wild_growth_members&(cycle.buff.rejuvenation.up|cycle.buff.regrowth.up)
 
     # Forced Ramp / Spread (Ignores HP thresholds if toggle is ON)
-    - wild_growth,name="Forced Wild Growth",cycle=members,if=config.force_spread&(cycle.buff.wild_growth.down|cycle.buff.wild_growth.remains<1.5)
+    - wild_growth,name="Forced Wild Growth",if=config.force_spread&(buff.wild_growth.down|group.any(cycle.buff.wild_growth.down))
     - rejuvenation,name="Forced Rejuvenation",cycle=members,if=config.force_spread&(cycle.buff.rejuvenation.down|cycle.buff.rejuvenation.remains<1.5)
 
     # Wild Growth (Buffed by 2pc Set)
