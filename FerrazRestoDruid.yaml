@@ -276,8 +276,6 @@ lists:
 
   catweave:
     - rejuvenation,name="Cat Rejuvenation",cycle=members,if=cycle.buff.rejuvenation.remains<4&(buff.cat_form.up|talent.fluid_form)&(target.range>8|!var.group_healthy)
-    - moonfire,name="Cat Moonfire",if=debuff.moonfire.remains<2&debuff.moonfire.refreshable&!buff.cat_form.up
-    - wrath,name="Cat Wrath (Mana Save)",if=mana.pct>=70&!buff.cat_form.up&target.range>9
     
     # Fluid Form: we MUST cast rake or shred to shift BEFORE accessing catweave_aoe/st
     - rake,name="Fluid Rake",if=talent.fluid_form&!buff.cat_form.up&debuff.rake.refreshable&!var.is_tree_form
@@ -289,6 +287,12 @@ lists:
     
     - call_action_list,name=catweave_aoe,if=enemies.combat.8y>=config.aoe_threshold
     - call_action_list,name=catweave_st,if=enemies.combat.8y<config.aoe_threshold
+
+  ranged_dps:
+    - sunfire,name="Sunfire Ranged",if=debuff.sunfire.refreshable&target.range<=40
+    - moonfire,name="Moonfire Ranged",if=debuff.moonfire.refreshable&target.range<=40
+    - starsurge,name="Starsurge",if=talent.starsurge&target.range<=40
+    - wrath,name="Wrath Ranged",if=target.range<=40
 
   moving:
     - convoke_the_spirits,name="Convoke (Moving)",if=group.count(cycle.health.effective.pct<config.convoke_threshold)>=config.convoke_members&!buff.cat_form.up&!buff.bear_form.up
@@ -322,3 +326,4 @@ lists:
     - call_action_list,name=moving,if=player.moving
     - call_action_list,name=active_healing,if=!config.force_dps
     - call_action_list,name=catweave,if=var.can_catweave&target.exists&target.alive&!target.friendly
+    - call_action_list,name=ranged_dps,if=!buff.cat_form.up&!buff.bear_form.up&target.exists&target.alive&!target.friendly
