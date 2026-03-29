@@ -188,7 +188,7 @@ config:
   use_thorn_bloom:
     label: "Auto Thorn Bloom (Haranir)"
     type: checkbox
-    default: true
+    default: false
 
   thorn_bloom_members:
     label: "Thorn Bloom - Min Members"
@@ -271,7 +271,7 @@ lists:
   cooldowns:
     - incarnation_tree_of_life,name="Tree of Life",if=talent.incarnation_tree_of_life&!var.is_tree_form&group.count(cycle.health.effective.pct<config.tree_of_life_threshold)>=config.tree_of_life_members
     - tranquility,name="Tranquility",if=!player.channeling&group.count(cycle.health.effective.pct<config.tranquility_threshold)>=config.tranquility_members&!player.moving
-    - thorn_bloom,name="Thorn Bloom (Racial)",if=!player.channeling&config.use_thorn_bloom&group.count(cycle.health.effective.pct<config.thorn_bloom_threshold)>=config.thorn_bloom_members
+    - entangling_roots,name="Thorn Bloom (Racial)",if=!player.channeling&config.use_thorn_bloom&group.count(cycle.health.effective.pct<config.thorn_bloom_threshold)>=config.thorn_bloom_members
     - natures_swiftness,name="Nature's Swiftness",if=group.count(cycle.health.effective.pct<config.ns_threshold)>=1
     - heart_of_the_wild,name="Heart of the Wild",if=config.use_heart_of_the_wild&talent.heart_of_the_wild
 
