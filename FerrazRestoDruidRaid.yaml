@@ -240,8 +240,8 @@ lists:
   
   interrupts:
     # Auto Swap to Soothe Enrage
-    - target_enemy,delay=100,name="Search Enrage",if=!target.purgeable.enrage&enemies.combat.any(cycle.purgeable.enrage)
-    - soothe,name="Soothe Enrage",if=target.purgeable.enrage    
+    - target_enemy,delay=100,name="Search Enrage",if=!player.channeling&!target.purgeable.enrage&enemies.combat.any(cycle.purgeable.enrage)
+    - soothe,name="Soothe Enrage",if=!player.channeling&target.purgeable.enrage    
   
   out_of_combat:
     - mark_of_the_wild,name="Mark of the Wild",range_check=none,if=buff.mark_of_the_wild.down.any
@@ -259,12 +259,12 @@ lists:
     - barkskin,name="Barkskin",if=health.pct<config.barkskin_threshold
 
   racials:
-    - shadowmeld,name="Shadowmeld",if=target.threat>=3&!player.casting
+    - shadowmeld,name="Shadowmeld",if=target.threat>=3&!player.casting&!player.channeling
 
   cooldowns:
     - incarnation_tree_of_life,name="Tree of Life",if=talent.incarnation_tree_of_life&!var.is_tree_form&group.count(cycle.health.effective.pct<config.tree_of_life_threshold)>=config.tree_of_life_members
-    - tranquility,name="Tranquility",if=group.count(cycle.health.effective.pct<config.tranquility_threshold)>=config.tranquility_members&!player.moving
-    - thorn_bloom,name="Thorn Bloom (Racial)",if=config.use_thorn_bloom&group.count(cycle.health.effective.pct<80)>=config.thorn_bloom_members
+    - tranquility,name="Tranquility",if=!player.channeling&group.count(cycle.health.effective.pct<config.tranquility_threshold)>=config.tranquility_members&!player.moving
+    - thorn_bloom,name="Thorn Bloom (Racial)",if=!player.channeling&config.use_thorn_bloom&group.count(cycle.health.effective.pct<80)>=config.thorn_bloom_members
     - natures_swiftness,name="Nature's Swiftness",if=group.count(cycle.health.effective.pct<config.ns_threshold)>=1
     - heart_of_the_wild,name="Heart of the Wild",if=config.use_heart_of_the_wild&talent.heart_of_the_wild
 
