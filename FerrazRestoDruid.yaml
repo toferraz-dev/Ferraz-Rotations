@@ -183,6 +183,12 @@ config:
     type: checkbox
     default: true
 
+  force_spread:
+    label: "Force HoT Spread"
+    type: toggle
+    spell: 774
+    description: "Forces Rejuvenation and Wild Growth spread regardless of HP"
+
 variables:
   is_tree_form: buff.incarnation_tree_of_life.up
   group_healthy: group.count(cycle.health.effective.pct<config.catweave_group_hp)<config.catweave_injured_max
@@ -253,6 +259,10 @@ lists:
 
     # Wild Growth (Buffed by 2pc Set)
     - wild_growth,name="Wild Growth",if=group.count(cycle.health.effective.pct<config.wild_growth_threshold)>=config.wild_growth_members
+    
+    # Forced Ramp / Spread (Ignores HP thresholds if toggle is ON)
+    - wild_growth,name="Forced Wild Growth",if=config.force_spread&group.count(cycle.buff.wild_growth.down)>=1
+    - rejuvenation,name="Forced Rejuvenation",cycle=members,if=config.force_spread&(cycle.buff.rejuvenation.down|cycle.buff.rejuvenation.remains<1.5)
     
     # Emergency & Single Target Filler
     - swiftmend,name="Swiftmend Emergency",cycle=members,if=cycle.health.effective.pct<config.swiftmend_threshold&(cycle.buff.rejuvenation.up|cycle.buff.regrowth.up|cycle.buff.wild_growth.up)
