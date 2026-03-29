@@ -236,10 +236,10 @@ lists:
     - soothe,name="Soothe Enrage",if=target.purgeable.enrage
 
   dispels:
-    - remove_corruption,name="Remove Corruption",cycle=members,if=cycle.dispelable.list&cycle.range>0&cycle.range<=40
+    - remove_corruption,name="Remove Corruption",cycle=members,if=cycle.dispelable.list
 
   out_of_combat:
-    - mark_of_the_wild,name="Mark of the Wild",if=group.count(cycle.buff.mark_of_the_wild.down&cycle.alive&cycle.range>=0&cycle.range<=40)>0
+    - mark_of_the_wild,name="Mark of the Wild",if=group.count(cycle.buff.mark_of_the_wild.down&cycle.alive)>0
     - prowl,name="Prowl (OOC)",if=config.use_prowl&!buff.prowl.up&(!player.combat|buff.shadowmeld.up)
 
   stealth_opener:
