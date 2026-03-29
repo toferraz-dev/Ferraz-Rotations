@@ -212,7 +212,7 @@ lists:
     - queue_spell,name="Spell Queue"
 
   buff_mark_of_the_wild:
-    - mark_of_the_wild,name="Mark of the Wild",if=group.count(cycle.buff.mark_of_the_wild.down&cycle.alive)>0
+    - mark_of_the_wild,target=player,name="Mark of the Wild",if=!player.combat&group.any(cycle.buff.mark_of_the_wild.down&cycle.alive&cycle.range<=100)
 
   sanity_checks:
     - return,if=player.dead
