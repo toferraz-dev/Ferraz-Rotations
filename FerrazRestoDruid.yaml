@@ -186,7 +186,7 @@ variables:
 
 lists:
   spell_queue:
-    - queue_spell,name="Spell Queue",if=!buff.cat_form.up&!buff.bear_form.up
+    - queue_spell,name="Spell Queue",if=!buff.cat_form.up&!buff.bear_form.up&!player.casting
 
   sanity_checks:
     - return,if=player.dead
