@@ -206,7 +206,7 @@ lists:
     - soothe,name="Soothe Enrage",if=target.purgeable.enrage    
   
   out_of_combat:
-    - mark_of_the_wild,name="Mark of the Wild",if=group.count(cycle.buff.mark_of_the_wild.down.any&cycle.range>=0&cycle.range<=40)>0
+    - mark_of_the_wild,name="Mark of the Wild",if=group.count(cycle.buff.mark_of_the_wild.down&cycle.alive&cycle.range>=0&cycle.range<=40)>0
     - symbiotic_relationship,name="Symbiotic Tank",cycle=tanks,if=!buff.symbiotic_relationship.up&!cycle.buff.symbiotic_relationship.up&cycle.range>=0&cycle.range<=40&!player.casting
     
     # Lifebloom OOC Maintenance
@@ -218,7 +218,7 @@ lists:
     
   defensives:
     - natures_cure,name="Nature's Cure",cycle=members,if=config.use_dispell&cycle.dispelable.list&cycle.range>=0&cycle.range<=40
-    - ironbark,name="Ironbark",cycle=members,if=cycle.health.effective.pct<config.ironbark_threshold&cycle.buff.ironbark.down&cycle.range>=0&cycle.range<=40
+    - ironbark,name="Ironbark",cycle=members,if=cycle.health.pct<config.ironbark_threshold&cycle.buff.ironbark.down&cycle.range>=0&cycle.range<=40
     - barkskin,name="Barkskin",if=health.pct<config.barkskin_threshold
     - bear_form,name="Panic Bear",if=health.pct<config.frenzied_regen_threshold&!buff.bear_form.up&cooldown.frenzied_regeneration.ready
     - frenzied_regeneration,name="Frenzied Regen",if=health.pct<config.frenzied_regen_threshold&buff.bear_form.up
