@@ -206,19 +206,19 @@ lists:
     - soothe,name="Soothe Enrage",if=target.purgeable.enrage    
   
   out_of_combat:
-    - mark_of_the_wild,target=player,name="Mark of the Wild",if=group.any(cycle.buff.mark_of_the_wild.down&cycle.alive&cycle.range<=100)
-    - symbiotic_relationship,name="Symbiotic Tank",cycle=tanks,if=!buff.symbiotic_relationship.up&!cycle.buff.symbiotic_relationship.up&cycle.range>=0&cycle.range<=40&!player.casting
+    - mark_of_the_wild,name="Mark of the Wild",range_check=none,if=buff.mark_of_the_wild.down.any
+    - symbiotic_relationship,name="Symbiotic Tank",cycle=tanks,if=!buff.symbiotic_relationship.up&!cycle.buff.symbiotic_relationship.up&!player.casting
     
     # Lifebloom OOC Maintenance
-    - lifebloom,name="OOC Lifebloom Tank",cycle=tanks,if=talent.everbloom.rank>=1&(cycle.buff.lifebloom.stack<3|cycle.buff.lifebloom.remains<=5)&cycle.range>=0&cycle.range<=40
-    - lifebloom,name="OOC Lifebloom Tank",cycle=tanks,if=!talent.everbloom.enabled&cycle.buff.lifebloom.down&cycle.range>=0&cycle.range<=40
-    - rejuvenation,name="OOC Rejuvenation",cycle=members,if=cycle.health.effective.pct<config.rejuvenation_threshold&cycle.buff.rejuvenation.remains<1.5&!player.combat&cycle.range>=0&cycle.range<=40
-    - regrowth,name="OOC Regrowth",cycle=members,if=cycle.health.effective.pct<config.regrowth_threshold&cycle.buff.regrowth.remains<1.5&!player.combat&cycle.range>=0&cycle.range<=40
+    - lifebloom,name="OOC Lifebloom Tank",cycle=tanks,if=talent.everbloom.rank>=1&(cycle.buff.lifebloom.stack<3|cycle.buff.lifebloom.remains<=5)
+    - lifebloom,name="OOC Lifebloom Tank",cycle=tanks,if=!talent.everbloom.enabled&cycle.buff.lifebloom.down
+    - rejuvenation,name="OOC Rejuvenation",cycle=members,if=cycle.health.effective.pct<config.rejuvenation_threshold&cycle.buff.rejuvenation.remains<1.5&!player.combat
+    - regrowth,name="OOC Regrowth",cycle=members,if=cycle.health.effective.pct<config.regrowth_threshold&cycle.buff.regrowth.remains<1.5&!player.combat
     
     
   defensives:
-    - natures_cure,name="Nature's Cure",cycle=members,if=config.use_dispell&cycle.dispelable.list&cycle.range>=0&cycle.range<=40
-    - ironbark,name="Ironbark",cycle=members,if=cycle.health.pct<config.ironbark_threshold&cycle.buff.ironbark.down&cycle.range>=0&cycle.range<=40
+    - natures_cure,name="Nature's Cure",cycle=members,if=config.use_dispell&cycle.dispelable.list
+    - ironbark,name="Ironbark",cycle=members,if=cycle.health.pct<config.ironbark_threshold&cycle.buff.ironbark.down
     - barkskin,name="Barkskin",if=health.pct<config.barkskin_threshold
     - bear_form,name="Panic Bear",if=health.pct<config.frenzied_regen_threshold&!buff.bear_form.up&cooldown.frenzied_regeneration.ready
     - frenzied_regeneration,name="Frenzied Regen",if=health.pct<config.frenzied_regen_threshold&buff.bear_form.up
@@ -238,18 +238,18 @@ lists:
 
   active_healing:
     # Nature's Swiftness follow-up: instant Regrowth on lowest
-    - lifebloom,name="Lifebloom Tank",cycle=tanks,if=talent.everbloom.rank>=1&(cycle.buff.lifebloom.stack<3|cycle.buff.lifebloom.remains<=5)&cycle.range>=0&cycle.range<=40
-    - lifebloom,name="Lifebloom Tank",cycle=tanks,if=!talent.everbloom.enabled&cycle.buff.lifebloom.down&cycle.range>=0&cycle.range<=40
-    - regrowth,name="NS Regrowth",cycle=members,if=buff.natures_swiftness.up&cycle.health.effective.pct<config.regrowth_threshold&cycle.range>=0&cycle.range<=40
-    - rejuvenation,name="Rejuvenation Filler",cycle=members,if=cycle.buff.rejuvenation.remains<1.5&cycle.health.effective.pct<config.rejuvenation_threshold&cycle.range>=0&cycle.range<=40    
-    - swiftmend,name="Swiftmend",cycle=members,if=cycle.health.effective.pct<config.swiftmend_threshold&(cycle.buff.rejuvenation.up|cycle.buff.regrowth.up|cycle.buff.wild_growth.up)&cycle.range>=0&cycle.range<=40
+    - lifebloom,name="Lifebloom Tank",cycle=tanks,if=talent.everbloom.rank>=1&(cycle.buff.lifebloom.stack<3|cycle.buff.lifebloom.remains<=5)
+    - lifebloom,name="Lifebloom Tank",cycle=tanks,if=!talent.everbloom.enabled&cycle.buff.lifebloom.down
+    - regrowth,name="NS Regrowth",cycle=members,if=buff.natures_swiftness.up&cycle.health.effective.pct<config.regrowth_threshold
+    - rejuvenation,name="Rejuvenation Filler",cycle=members,if=cycle.buff.rejuvenation.remains<1.5&cycle.health.effective.pct<config.rejuvenation_threshold
+    - swiftmend,name="Swiftmend",cycle=members,if=cycle.health.effective.pct<config.swiftmend_threshold&(cycle.buff.rejuvenation.up|cycle.buff.regrowth.up|cycle.buff.wild_growth.up)
     - wild_growth,name="Wild Growth",if=group.count(cycle.health.effective.pct<config.wild_growth_threshold)>=config.wild_growth_members
-    - regrowth,name="Regrowth Filler",cycle=members,if=cycle.health.effective.pct<config.regrowth_threshold&cycle.range>=0&cycle.range<=40
+    - regrowth,name="Regrowth Filler",cycle=members,if=cycle.health.effective.pct<config.regrowth_threshold
     
   utility:
     - bear_form,name="Stay Bear (Rooted)",if=player.rooted&!buff.bear_form.up
     - cat_form,name="Stay Cat (Rooted)",if=player.rooted&buff.bear_form.up
-    - rebirth.mouseover,name="Rebirth (MO)",if=mouseover.exists&mouseover.dead&mouseover.friendly&mouseover.range<=40
+    - rebirth.mouseover,name="Rebirth (MO)",if=mouseover.exists&mouseover.dead&mouseover.friendly
     - innervate,name="Innervate",if=mana.pct<config.innervate_threshold
 
   catweave_st:
@@ -285,15 +285,15 @@ lists:
 
   moving:
     - convoke_the_spirits,name="Convoke (Moving)",if=group.count(cycle.health.effective.pct<config.convoke_threshold)>=config.convoke_members&!buff.cat_form.up&!buff.bear_form.up
-    - lifebloom,name="Lifebloom (Moving)",cycle=tanks,if=player.combat&cycle.buff.lifebloom.down&cycle.range>=0&cycle.range<=40
-    - rejuvenation,name="Rejuvenation (Moving)",cycle=members,if=cycle.buff.rejuvenation.down&cycle.health.effective.pct<95&cycle.range>=0&cycle.range<=40
+    - lifebloom,name="Lifebloom (Moving)",cycle=tanks,if=player.combat&cycle.buff.lifebloom.down
+    - rejuvenation,name="Rejuvenation (Moving)",cycle=members,if=cycle.buff.rejuvenation.down&cycle.health.effective.pct<95
 
   mouseover_healing_emergency:
-    - natures_cure.mouseover,name="Cure (MO)",if=config.use_dispell&mouseover.dispelable.list&mouseover.range>=0&mouseover.range<=40
-    - regrowth.mouseover,name="Regrowth (MO)",if=buff.natures_swiftness.up&mouseover.range>=0&mouseover.range<=40
-    - swiftmend.mouseover,name="Swiftmend (MO)",if=(mouseover.buff.rejuvenation.up|mouseover.buff.regrowth.up|mouseover.buff.wild_growth.up)&mouseover.range>=0&mouseover.range<=40
-    - rejuvenation.mouseover,name="Rejuv (MO)",if=mouseover.buff.remains(rejuvenation)<1.5&mouseover.range>=0&mouseover.range<=40
-    - regrowth.mouseover,name="Panic Regrowth (MO)",if=mouseover.range>=0&mouseover.range<=40
+    - natures_cure.mouseover,name="Cure (MO)",if=config.use_dispell&mouseover.dispelable.list
+    - regrowth.mouseover,name="Regrowth (MO)",if=buff.natures_swiftness.up
+    - swiftmend.mouseover,name="Swiftmend (MO)",if=(mouseover.buff.rejuvenation.up|mouseover.buff.regrowth.up|mouseover.buff.wild_growth.up)
+    - rejuvenation.mouseover,name="Rejuv (MO)",if=mouseover.buff.remains(rejuvenation)<1.5
+    - regrowth.mouseover,name="Panic Regrowth (MO)"
     
   main:
     - return,if=player.channeling
