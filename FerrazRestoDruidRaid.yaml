@@ -232,7 +232,7 @@ lists:
     - soothe,name="Soothe Enrage",if=target.purgeable.enrage    
   
   out_of_combat:
-    - mark_of_the_wild,name="Mark of the Wild",if=buff.mark_of_the_wild.down
+    - mark_of_the_wild,name="Mark of the Wild",if=group.count(cycle.buff.mark_of_the_wild.down&cycle.alive&cycle.range>=0&cycle.range<=40)>0
     
     # Lifebloom OOC Maintenance (like M+)
     - lifebloom,target=tank1,name="OOC LB Tank 1",if=config.lifebloom_target=1&tank1.buff.lifebloom.down&tank1.range>=0&tank1.range<=40
@@ -243,8 +243,8 @@ lists:
     
   defensives:
     - natures_cure,name="Nature's Cure",cycle=members,if=config.use_dispell&cycle.dispelable.list&cycle.range>=0&cycle.range<=40
-    - ironbark,name="Ironbark",cycle=members,if=cycle.health.effective.pct<config.ironbark_threshold&cycle.buff.ironbark.down&cycle.range>=0&cycle.range<=40
-    - barkskin,name="Barkskin",if=health.effective.pct<config.barkskin_threshold
+    - ironbark,name="Ironbark",cycle=members,if=cycle.health.pct<config.ironbark_threshold&cycle.buff.ironbark.down&cycle.range>=0&cycle.range<=40
+    - barkskin,name="Barkskin",if=health.pct<config.barkskin_threshold
 
   racials:
     - shadowmeld,name="Shadowmeld",if=target.threat>=3&!player.casting
