@@ -212,7 +212,7 @@ lists:
     - queue_spell,name="Spell Queue"
 
   buff_mark_of_the_wild:
-    - mark_of_the_wild,target=player,name="Mark of the Wild",if=!player.combat&group.any(cycle.buff.mark_of_the_wild.down&cycle.alive&cycle.range<=100)
+    - mark_of_the_wild,name="Mark of the Wild",range_check=none,if=buff.mark_of_the_wild.down.any
 
   sanity_checks:
     - return,if=player.dead
@@ -271,8 +271,8 @@ lists:
     - remove_corruption,name="Remove Corruption",cycle=members,if=cycle.dispelable.list
 
   taunt:
-    - growl,name="Growl (MO)",target=mouseover,if=target.threat<3&target.range<=30&target.alive&target.enemy
-    - growl,name="Growl ST",if=target.threat<3&target.range<=30
+    - growl,name="Growl (MO)",target=mouseover,if=target.threat<3&target.alive&target.enemy
+    - growl,name="Growl ST",if=target.threat<3
   
   rage_management:
     - ironfur,name="Ironfur (Maintenance)",if=var.need_ironfur
@@ -415,7 +415,7 @@ lists:
   main:
     - call_action_list,name=sanity_checks
     - call_action_list,name=spell_queue
-    - rebirth.mouseover,name="Rebirth (MO)",if=mouseover.exists&mouseover.dead&mouseover.friendly&mouseover.range<=40
+    - rebirth.mouseover,name="Rebirth (MO)",if=mouseover.exists&mouseover.dead&mouseover.friendly
     - call_action_list,name=buff_mark_of_the_wild
     - bear_form,name="Manual Bear Form",if=!var.in_bear_form&player.combat&!mounted.flying&!mounted.ground
     - moonfire,name="Pull Moonfire",if=config.allow_pull_with_mo&!player.combat&target.enemy&target.alive&debuff.moonfire.down
