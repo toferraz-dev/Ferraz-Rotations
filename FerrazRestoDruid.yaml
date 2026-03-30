@@ -247,7 +247,7 @@ lists:
   cooldowns:
     - convoke_the_spirits,name="Convoke (Heal)",if=!player.channeling&group.count(cycle.health.effective.pct<config.convoke_threshold)>=config.convoke_members&!buff.cat_form.up&!buff.bear_form.up
     - tranquility,name="Tranquility",if=!player.channeling&group.count(cycle.health.effective.pct<config.tranquility_threshold)>=config.tranquility_members&!player.moving
-    - entangling_roots,name="Thorn Bloom",if=!player.channeling&config.use_thorn_bloom&group.count(cycle.health.effective.pct<config.thorn_bloom_threshold)>=2
+    - entangling_roots,name="Thorn Bloom",if=!player.channeling&config.use_thorn_bloom&cooldown.id(462615).remains=0&(group.count(cycle.health.effective.pct<config.thorn_bloom_threshold)>=2|group.count<2&health.pct<config.thorn_bloom_threshold)
     - natures_swiftness,name="Nature's Swiftness",if=group.count(cycle.health.effective.pct<config.ns_threshold)>=1
     - heart_of_the_wild,name="Heart of the Wild",if=config.use_heart_of_the_wild&talent.heart_of_the_wild&buff.cat_form.up
 
