@@ -66,13 +66,13 @@ config:
     type: slider
     min: 1
     max: 7
-    default: 3
+    default: 1
   ironfur_stacks_max:
     label: "Max Ironfur Stacks (heavy damage)"
     type: slider
-    min: 3
+    min: 2
     max: 10
-    default: 5
+    default: 3
   ironfur_rage_threshold:
     label: "Min Rage for Ironfur"
     type: slider
@@ -275,14 +275,14 @@ lists:
     - growl,name="Growl ST",if=target.threat<3
   
   rage_management:
-    - ironfur,name="Ironfur (Maintenance)",if=var.need_ironfur
-    - ironfur,name="Ironfur (Resource Dump)",if=var.ironfur_stacks<config.ironfur_stacks_max&var.rage>=60&buff.ironfur.remains<3
+    - ironfur,name="Ironfur (Resource Dump)",if=var.ironfur_stacks<config.ironfur_stacks_max&var.rage>=85&buff.ironfur.remains<2
     - ravage,name="Ravage (Proc)",if=config.hero_tree=2&buff.ravage.up
-    - maul,name="Maul (Tooth/Claw)",if=var.tooth_and_claw_up&var.rage>=35&!var.use_raze
+    - maul,name="Maul (Tooth/Claw)",if=var.tooth_and_claw_up&var.rage>=40&!var.use_raze
     - raze,name="Raze (Dump)",if=var.use_raze&var.rage_for_harnessed
     - raze,name="Raze (Overcap)",if=var.use_raze&var.rage_overcap
     - maul,name="Maul (Incarnation)",if=var.incarnation_active&var.rage>=50&!var.use_raze
     - maul,name="Maul (Overcap)",if=!var.use_raze&var.rage_overcap
+    - ironfur,name="Ironfur (Maintenance)",if=var.need_ironfur
   
   moonfire_spread:
     - moonfire,name="Moonfire Start",if=var.combat_start&debuff.moonfire.down&range<=40
@@ -298,15 +298,13 @@ lists:
   # ----------------------------------------------------------
   
   rotation_st_elune_wowhead:
-    - moonfire,name="Moonfire Refresh ST (W)",if=var.moonfire_needs_refresh
-    - thrash,name="Thrash Build ST (W)",if=debuff.thrash.stack<5
-    - barkskin,name="Barkskin (W)"
-    - maul,name="Maul Dump ST (W)",if=var.rage>=40&var.ironfur_stacks>=1
-    - mangle,name="Mangle ST (W)"
-    - thrash,name="Thrash Filler ST (W)"
     - moonfire,name="Moonfire GG ST (W)",if=var.galactic_guardian_up
-    - incarnation_guardian_of_ursoc,name="Incarnation ST (W)"
-    - wild_guardian,name="Wild Guardian ST (W)",if=var.incarnation_active
+    - maul,name="Maul (Harnessed)",if=var.rage>=80&config.rotation_source=1
+    - mangle,name="Mangle ST (W)",if=var.gore_up|cooldown.mangle.ready
+    - thrash,name="Thrash Build ST (W)",if=debuff.thrash.stack<3
+    - moonfire,name="Moonfire Refresh ST (W)",if=var.moonfire_needs_refresh
+    - maul,name="Maul Dump ST (W)",if=var.rage>=40
+    - thrash,name="Thrash Filler ST (W)"
     - swipe,name="Swipe Filler ST (W)"
 
   rotation_st_elune_alt:
@@ -321,14 +319,13 @@ lists:
     - swipe,name="Swipe Filler"
   
   rotation_aoe_elune_wowhead:
-    - thrash,name="Thrash Build AoE (W)",if=debuff.thrash.stack<5
-    - barkskin,name="Barkskin AoE (W)"
-    - raze,name="Raze Dump AoE (W)",if=var.rage>=40&var.ironfur_stacks>=1
+    - moonfire,name="Moonfire GG AoE (W)",if=var.galactic_guardian_up
+    - raze,name="Raze (Harnessed)",if=var.rage>=80&config.rotation_source=1
+    - thrash,name="Thrash Build AoE (W)",if=debuff.thrash.stack<3
+    - mangle,name="Mangle AoE (W)",if=var.gore_up
+    - raze,name="Raze Dump AoE (W)",if=var.rage>=40
     - thrash,name="Thrash AoE (W)"
-    - mangle,name="Mangle AoE (W)"
-    - incarnation_guardian_of_ursoc,name="Incarnation AoE (W)"
-    - wild_guardian,name="Wild Guardian AoE (W)",if=var.incarnation_active
-    - moonfire,name="Moonfire AoE (W)"
+    - moonfire,name="Moonfire AoE (W)",if=var.moonfire_needs_refresh
     - swipe,name="Swipe filler AoE (W)"
 
   rotation_aoe_elune_alt:
@@ -351,50 +348,49 @@ lists:
 
   rotation_st_claw_wowhead:
     - ravage,name="Ravage ST (W)",if=buff.ravage.up
-    - moonfire,name="Moonfire Refresh ST (W)",if=debuff.moonfire.remains<4.8
-    - thrash,name="Thrash Build ST (W)",if=debuff.thrash.stack<config.thrash_stacks_target
+    - moonfire,name="Moonfire GG ST (W)",if=buff.galactic_guardian.up
     - mangle,name="Mangle Proc ST (W)",if=buff.gore.up
     - mangle,name="Mangle ST (W)"
-    - maul,name="Maul T/C ST (W)",if=player.rage>=40&buff.ironfur.stack>=1&buff.tooth_and_claw.up
-    - maul,name="Maul Dump ST (W)",if=player.rage>=config.rage_cap_threshold&buff.ironfur.stack>=1
+    - thrash,name="Thrash Build ST (W)",if=debuff.thrash.stack<3
+    - maul,name="Maul T/C ST (W)",if=player.rage>=40&buff.tooth_and_claw.up
+    - maul,name="Maul Dump ST (W)",if=player.rage>=40
+    - moonfire,name="Moonfire Refresh ST (W)",if=debuff.moonfire.remains<4.8
     - thrash,name="Thrash ST (W)"
-    - moonfire,name="Moonfire GG ST (W)",if=buff.galactic_guardian.up
     - swipe,name="Swipe ST (W)"
 
   rotation_aoe_claw_wowhead:
     - ravage,name="Ravage AoE (W)",if=buff.ravage.up
-    - thrash,name="Thrash Build AoE (W)",if=debuff.thrash.stack<config.thrash_stacks_target
-    - maul,name="Maul Cleave AoE (W)",if=player.rage>=40&buff.ironfur.stack>=1
-    - thrash,name="Thrash AoE (W)"
+    - moonfire,name="Moonfire GG AoE (W)",if=buff.galactic_guardian.up
+    - thrash,name="Thrash Build AoE (W)",if=debuff.thrash.stack<3
+    - maul,name="Maul Cleave AoE (W)",if=player.rage>=40
     - mangle,name="Mangle Proc AoE (W)",if=buff.gore.up
     - mangle,name="Mangle AoE (W)"
-    - call_action_list,name=moonfire_spread
+    - moonfire,name="Moonfire Refresh AoE (W)",if=debuff.moonfire.remains<4.8
+    - thrash,name="Thrash AoE (W)"
     - swipe,name="Swipe AoE (W)"
 
   rotation_st_claw_method:
     - ravage,name="Ravage ST (M)",if=buff.ravage.up
     - mangle,name="Mangle Proc ST (M)",if=buff.gore.up
-    - mangle,name="Mangle Charge ST (M)",if=cooldown.mangle.charges>=2
     - mangle,name="Mangle Filler ST (M)"
-    - thrash,name="Thrash Build ST (M)",if=debuff.thrash.remains<4.5|debuff.thrash.stack<config.thrash_stacks_target
     - moonfire,name="Moonfire GG ST (M)",if=buff.galactic_guardian.up
+    - thrash,name="Thrash Build ST (M)",if=debuff.thrash.stack<3
+    - maul,name="Maul T/C ST (M)",if=player.rage>=40&buff.tooth_and_claw.up
+    - maul,name="Maul Dump ST (M)",if=player.rage>=50
     - moonfire,name="Moonfire Refresh ST (M)",if=debuff.moonfire.remains<4.8
-    - maul,name="Maul T/C ST (M)",if=player.rage>=config.rage_cap_threshold&buff.tooth_and_claw.up
-    - maul,name="Maul Dump ST (M)",if=player.rage>=config.rage_cap_threshold
     - thrash,name="Thrash ST (M)"
     - swipe,name="Swipe filler ST (M)"
 
   rotation_aoe_claw_method:
     - ravage,name="Ravage AoE (M)",if=buff.ravage.up
-    - thrash,name="Thrash Build AoE (M)",if=debuff.thrash.remains<4.5|debuff.thrash.stack<config.thrash_stacks_target
+    - thrash,name="Thrash Build AoE (M)",if=debuff.thrash.stack<3
     - mangle,name="Mangle Proc AoE (M)",if=buff.gore.up
-    - mangle,name="Mangle Charge AoE (M)",if=cooldown.mangle.charges>=2
-    - thrash,name="Thrash AoE (M)"
     - mangle,name="Mangle AoE (M)"
-    - call_action_list,name=moonfire_spread
-    - maul,name="Maul Dump AoE (M)",if=player.rage>=config.rage_cap_threshold
+    - moonfire,name="Moonfire GG AoE (M)",if=buff.galactic_guardian.up
     - maul,name="Maul T/C AoE (M)",if=player.rage>=40&buff.tooth_and_claw.up
     - maul,name="Maul Cleave AoE (M)",if=player.rage>=40
+    - moonfire,name="Moonfire Refresh AoE (M)",if=debuff.moonfire.remains<4.8
+    - thrash,name="Thrash AoE (M)"
     - swipe,name="Swipe AoE (M)"
 
   # ----------------------------------------------------------
@@ -433,20 +429,22 @@ lists:
     - call_action_list,name=defensives,if=var.in_bear_form
     - call_action_list,name=cooldowns,if=var.in_bear_form
     - call_action_list,name=racials,if=config.use_racials&var.in_bear_form
-    - call_action_list,name=rage_management,if=var.in_bear_form
     
-    # Movement & Utils
-    - call_action_list,name=movement,if=player.moving
-    - call_action_list,name=trinkets
-    
-    # Elune's Chosen Rotations
+    # Elune's Chosen Rotations (Damage Priority)
     - call_action_list,name=rotation_aoe_elune_wowhead,if=config.hero_tree=1&config.rotation_source=1&active_enemies>=3&var.in_bear_form
     - call_action_list,name=rotation_st_elune_wowhead,if=config.hero_tree=1&config.rotation_source=1&var.in_bear_form
     - call_action_list,name=rotation_aoe_elune_alt,if=config.hero_tree=1&config.rotation_source=2&active_enemies>=3&var.in_bear_form
     - call_action_list,name=rotation_st_elune_alt,if=config.hero_tree=1&config.rotation_source=2&var.in_bear_form
 
-    # Druid of the Claw Rotations
+    # Druid of the Claw Rotations (Damage Priority)
     - call_action_list,name=rotation_aoe_claw_wowhead,if=config.hero_tree=2&config.rotation_source=1&active_enemies>=3&var.in_bear_form
     - call_action_list,name=rotation_st_claw_wowhead,if=config.hero_tree=2&config.rotation_source=1&var.in_bear_form
     - call_action_list,name=rotation_aoe_claw_method,if=config.hero_tree=2&config.rotation_source=2&active_enemies>=3&var.in_bear_form
     - call_action_list,name=rotation_st_claw_method,if=config.hero_tree=2&config.rotation_source=2&var.in_bear_form
+
+    # Rage Dumps & Defensive Ironfur
+    - call_action_list,name=rage_management,if=var.in_bear_form
+
+    # Movement & Utils
+    - call_action_list,name=movement,if=player.moving
+    - call_action_list,name=trinkets
