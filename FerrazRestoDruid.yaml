@@ -194,7 +194,7 @@ config:
     label: "Force HoT Spread"
     type: toggle
     spell: 774
-    description: "Forces Rejuvenation and Wild Growth spread regardless of HP"
+    description: "Forces Rejuvenation / Wild Growth spread regardless of HP"
 
 variables:
   is_tree_form: buff.incarnation_tree_of_life.up
@@ -301,21 +301,21 @@ lists:
     - rejuvenation,name="Cat Rejuvenation",cycle=members,if=cycle.buff.rejuvenation.remains<4&(buff.cat_form.up|talent.fluid_form)&(target.range>8|!var.group_healthy)
     
     # Fluid Form: we MUST cast rake or shred to shift BEFORE accessing catweave_aoe/st
-    - rake,name="Fluid Rake",if=talent.fluid_form&!buff.cat_form.up&debuff.rake.refreshable&!var.is_tree_form
-    - shred,name="Fluid Shred",if=talent.fluid_form&!buff.cat_form.up&target.range<=8&!var.is_tree_form
+    - rake,name="Fluid Rake",if=talent.fluid_form&!buff.cat_form.up&debuff.rake.refreshable
+    - shred,name="Fluid Shred",if=talent.fluid_form&!buff.cat_form.up&target.range<=8
     
     # Explicit shift fallback (for AoE when Shred is bypassed or without Fluid Form)
-    - cat_form,name="Manual Cat Shift",if=!buff.cat_form.up&target.range<=8&!var.is_tree_form
+    - cat_form,name="Manual Cat Shift",if=!buff.cat_form.up&target.range<=8
     - return,if=!buff.cat_form.up
     
     - call_action_list,name=catweave_aoe,if=enemies.combat.8y>=config.aoe_threshold
     - call_action_list,name=catweave_st,if=enemies.combat.8y<config.aoe_threshold
 
   ranged_dps:
-    - sunfire,name="Sunfire Ranged",if=debuff.sunfire.refreshable&target.range<=40
-    - moonfire,name="Moonfire Ranged",if=debuff.moonfire.refreshable&target.range<=40
-    - starsurge,name="Starsurge",if=talent.starsurge&target.range<=40
-    - wrath,name="Wrath Ranged",if=target.range<=40
+    - sunfire,name="Sunfire Ranged",if=debuff.sunfire.refreshable
+    - moonfire,name="Moonfire Ranged",if=debuff.moonfire.refreshable
+    - starsurge,name="Starsurge",if=talent.starsurge
+    - wrath,name="Wrath Ranged"
 
   moving:
     - convoke_the_spirits,name="Convoke (Moving)",if=group.count(cycle.health.effective.pct<config.convoke_threshold)>=config.convoke_members&!buff.cat_form.up&!buff.bear_form.up
@@ -348,5 +348,5 @@ lists:
     - call_action_list,name=mouseover_healing_emergency,if=config.use_mouseover&var.mo_friendly_valid&(mouseover.health.pct<config.mouseover_emergency_hp|mouseover.dispelable.list)&!player.casting&!player.channeling
     - call_action_list,name=moving,if=player.moving
     - call_action_list,name=active_healing,if=!config.force_dps
-    - call_action_list,name=catweave,if=var.can_catweave&target.exists&target.alive&!target.friendly
-    - call_action_list,name=ranged_dps,if=!buff.cat_form.up&!buff.bear_form.up&target.exists&target.alive&!target.friendly
+    - call_action_list,name=catweave,if=var.can_catweave&target.exists&target.alive&!target.friendly&target.range<=8
+    - call_action_list,name=ranged_dps,if=target.exists&target.alive&!target.friendly&target.range<=40
