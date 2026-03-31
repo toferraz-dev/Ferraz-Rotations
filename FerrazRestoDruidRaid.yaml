@@ -230,7 +230,7 @@ variables:
   is_tree_form: buff.incarnation_tree_of_life.up|buff.reforestation.up
   group_needs_healing: group.any(cycle.health.effective.pct<85)
   mo_friendly_valid: mouseover.exists&mouseover.alive&mouseover.friendly&mouseover.range>0&mouseover.range<=40
-  reforestation_ready: buff.reforestation_tracker.stack=3
+  reforestation_ready: buff.reforestation.stack=3
   emergency_for_tree: group.count(cycle.health.effective.pct<config.reforestation_emergency_hp)>=config.reforestation_emergency_members
 
 lists:
