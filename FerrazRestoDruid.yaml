@@ -216,8 +216,8 @@ lists:
   
   interrupts:
     # Auto Swap Search
-    - target_enemy,delay=100,name="Search Soothe",if=!player.channeling&!target.purgeable.enrage&enemies.combat.any(cycle.purgeable.enrage)
-    - target_enemy,delay=100,name="Search Interrupt",if=!player.channeling&!interrupt.target.check&interrupt.5y.any
+    - target_enemy,delay=100,name="Search Soothe",if=!target.purgeable.enrage&enemies.combat.any(cycle.purgeable.enrage)
+    - target_enemy,delay=100,name="Search Interrupt",if=!interrupt.target.check&interrupt.5y.any
     
     # AoE Interrupt
     - incapacitating_roar,name="Roar (AoE CC)",if=interrupt.stun.aoe.check
@@ -242,12 +242,12 @@ lists:
     - frenzied_regeneration,name="Frenzied Regen",if=health.pct<config.frenzied_regen_threshold&buff.bear_form.up
 
   racials:
-    - shadowmeld,name="Shadowmeld (Aggro Drop)",if=player.combat&player.aggro&!player.casting&!player.channeling
+    - shadowmeld,name="Shadowmeld (Aggro Drop)",if=player.combat&player.aggro&!player.casting
 
   cooldowns:
-    - convoke_the_spirits,name="Convoke (Heal)",if=!player.channeling&group.count(cycle.health.effective.pct<config.convoke_threshold)>=config.convoke_members&!buff.cat_form.up&!buff.bear_form.up
-    - tranquility,name="Tranquility",if=!player.channeling&group.count(cycle.health.effective.pct<config.tranquility_threshold)>=config.tranquility_members&!player.moving
-    - thorn_bloom,name="Thorn Bloom",if=!player.channeling&config.use_thorn_bloom&(group.count(cycle.health.effective.pct<config.thorn_bloom_threshold)>=2|group.count<2&health.pct<config.thorn_bloom_threshold)
+    - convoke_the_spirits,name="Convoke (Heal)",if=group.count(cycle.health.effective.pct<config.convoke_threshold)>=config.convoke_members&!buff.cat_form.up&!buff.bear_form.up
+    - tranquility,name="Tranquility",if=group.count(cycle.health.effective.pct<config.tranquility_threshold)>=config.tranquility_members&!player.moving
+    - entangling_roots,name="Thorn Bloom",if=cooldown.1237885.ready&config.use_thorn_bloom&(group.count(cycle.health.effective.pct<config.thorn_bloom_threshold)>=2|group.count<2&health.pct<config.thorn_bloom_threshold)
     - natures_swiftness,name="Nature's Swiftness",if=group.count(cycle.health.effective.pct<config.ns_threshold)>=1
     - heart_of_the_wild,name="Heart of the Wild",if=config.use_heart_of_the_wild&talent.heart_of_the_wild&buff.cat_form.up
 
@@ -330,9 +330,7 @@ lists:
     - regrowth.mouseover,name="Panic Regrowth (MO)"
     
   main:
-    - return,if=player.channeling
-    - return,if=buff.tranquility.up
-    - return,if=buff.convoke_the_spirits.up
+    - return,if=player.channeling|player.casting|buff.tranquility.up|buff.convoke_the_spirits.up
     - call_action_list,name=sanity_checks
     - call_action_list,name=spell_queue
     - call_action_list,name=out_of_combat
