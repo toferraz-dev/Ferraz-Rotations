@@ -302,7 +302,7 @@ lists:
     - sunfire,name="Sunfire Ranged",if=debuff.sunfire.refreshable
     - moonfire,name="Moonfire Ranged",if=debuff.moonfire.refreshable
     - starsurge,name="Starsurge",if=talent.starsurge
-    - wrath,name="Wrath Ranged"
+    - wrath,name="Wrath Ranged",if=var.is_tree_form
 
   moving:
     - convoke_the_spirits,name="Convoke (Moving)",if=group.count(cycle.health.effective.pct<config.convoke_threshold)>=config.convoke_members&!buff.cat_form.up&!buff.bear_form.up
