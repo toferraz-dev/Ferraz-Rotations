@@ -285,7 +285,7 @@ lists:
     - swipe,name="Swipe AoE",if=target.range<=8
 
   catweave:
-    - moonfire,name="Moonfire Ranged",if=debuff.moonfire.refreshable  
+    - moonfire,name="Moonfire Ranged",if=debuff.moonfire.refreshable&!buff.cat_form.up 
     - rejuvenation,name="Cat Rejuvenation",cycle=members,if=cycle.buff.rejuvenation.remains<4&(buff.cat_form.up|talent.fluid_form)&(target.range>8|!var.group_healthy)
     
     # Fluid Form: we MUST cast rake or shred to shift BEFORE accessing catweave_aoe/st
