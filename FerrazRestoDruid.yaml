@@ -285,6 +285,7 @@ lists:
     - swipe,name="Swipe AoE",if=target.range<=8
 
   catweave:
+    - moonfire,name="Moonfire Ranged",if=debuff.moonfire.refreshable  
     - rejuvenation,name="Cat Rejuvenation",cycle=members,if=cycle.buff.rejuvenation.remains<4&(buff.cat_form.up|talent.fluid_form)&(target.range>8|!var.group_healthy)
     
     # Fluid Form: we MUST cast rake or shred to shift BEFORE accessing catweave_aoe/st
@@ -299,11 +300,10 @@ lists:
     - call_action_list,name=catweave_st,if=enemies.combat.8y<config.aoe_threshold
 
   ranged_dps:
-    - sunfire,name="Sunfire Ranged",if=debuff.sunfire.refreshable
-    - moonfire,name="Moonfire Ranged",if=debuff.moonfire.refreshable
     - starsurge,name="Starsurge",if=talent.starsurge
-    - wrath,name="Wrath Ranged",if=var.is_tree_form
-
+    - sunfire,name="Sunfire Ranged",if=talent.starsurge&debuff.sunfire.refreshable
+    - wrath,name="Wrath Ranged"
+    
   moving:
     - convoke_the_spirits,name="Convoke (Moving)",if=group.count(cycle.health.effective.pct<config.convoke_threshold)>=config.convoke_members&!buff.cat_form.up&!buff.bear_form.up
     - lifebloom,name="Lifebloom (Moving)",cycle=tanks,if=player.combat&cycle.buff.lifebloom.down
@@ -334,4 +334,4 @@ lists:
     - call_action_list,name=moving,if=player.moving
     - call_action_list,name=active_healing,if=!config.force_dps
     - call_action_list,name=catweave,if=var.can_catweave&target.exists&target.alive&!target.friendly&target.range<=8
-    - call_action_list,name=ranged_dps,if=target.exists&target.alive&!target.friendly&target.range<=40
+    - call_action_list,name=ranged_dps,if=target.exists&target.alive&!target.friendly&target.range<=40&var.is_tree_form
