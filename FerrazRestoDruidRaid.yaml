@@ -200,11 +200,13 @@ config:
     label: "Lifebloom Target"
     type: dropdown
     options:
+      - label: "Auto Tanks"
+        value: 0
       - label: "Tank 1"
         value: 1
       - label: "Tank 2"
         value: 2
-    default: 1
+    default: 0
     show_override: true
     
 variables:
@@ -235,6 +237,8 @@ lists:
     - mark_of_the_wild,name="Mark of the Wild",range_check=none,if=buff.mark_of_the_wild.down.any
     
     # Lifebloom OOC Maintenance (like M+)
+    - lifebloom,name="OOC LB Auto Maintain",cycle=tanks,if=config.lifebloom_target=0&cycle.buff.lifebloom.up&(cycle.buff.lifebloom.remains<=5|cycle.buff.lifebloom.stack<3)
+    - lifebloom,target=tank1,name="OOC LB Auto Initial",if=config.lifebloom_target=0&!tank1.buff.lifebloom.up&!tank2.buff.lifebloom.up
     - lifebloom,target=tank1,name="OOC LB Tank 1",if=config.lifebloom_target=1&tank1.buff.lifebloom.down
     - lifebloom,target=tank2,name="OOC LB Tank 2",if=config.lifebloom_target=2&tank2.buff.lifebloom.down
     
@@ -280,6 +284,8 @@ lists:
     - rejuvenation,name="Sotf Rejuvenation",cycle=members,if=buff.soul_of_the_forest.up&cycle.buff.rejuvenation.down
     
     # Lifebloom Focus Logic
+    - lifebloom,name="LB Auto Maintain",cycle=tanks,if=config.lifebloom_target=0&cycle.buff.lifebloom.up&(cycle.buff.lifebloom.remains<=4.5|cycle.buff.lifebloom.stack<3)
+    - lifebloom,target=tank1,name="LB Auto Initial",if=config.lifebloom_target=0&!tank1.buff.lifebloom.up&!tank2.buff.lifebloom.up
     - lifebloom,target=tank1,name="LB Tank 1",if=config.lifebloom_target=1&(tank1.buff.lifebloom.remains<=4.5|tank1.buff.lifebloom.stack<3)
     - lifebloom,target=tank2,name="LB Tank 2",if=config.lifebloom_target=2&(tank2.buff.lifebloom.remains<=4.5|tank2.buff.lifebloom.stack<3)
 
@@ -311,6 +317,8 @@ lists:
     - wrath,name="Wrath Mana Filler",if=mana.pct<99
 
   moving:
+    - lifebloom,name="LB Auto Maintain (Moving)",cycle=tanks,if=config.lifebloom_target=0&cycle.buff.lifebloom.up&(cycle.buff.lifebloom.remains<=4.5|cycle.buff.lifebloom.stack<3)
+    - lifebloom,target=tank1,name="LB Auto Initial (Moving)",if=config.lifebloom_target=0&!tank1.buff.lifebloom.up&!tank2.buff.lifebloom.up
     - lifebloom,target=tank1,name="LB Tank 1 (Moving)",if=config.lifebloom_target=1&(tank1.buff.lifebloom.remains<=4.5|tank1.buff.lifebloom.stack<3)
     - lifebloom,target=tank2,name="LB Tank 2 (Moving)",if=config.lifebloom_target=2&(tank2.buff.lifebloom.remains<=4.5|tank2.buff.lifebloom.stack<3)
     - rejuvenation,name="Rejuvenation (Moving)",cycle=members,if=cycle.buff.rejuvenation.down&cycle.health.effective.pct<config.rejuvenation_threshold
