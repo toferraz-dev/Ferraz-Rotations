@@ -148,11 +148,6 @@ config:
     max: 5
     default: 3
 
-  force_dps:
-    label: "Force DPS (Ignore Group HP)"
-    type: checkbox
-    default: false
-
   use_heart_of_the_wild:
     label: "Auto Heart of the Wild"
     type: checkbox
@@ -168,11 +163,16 @@ config:
     max: 99
     default: 60
 
-
   use_trinkets:
     label: "Auto Trinkets"
     type: checkbox
     default: true
+
+  force_dps:
+    label: "Force DPS"
+    spell: 768
+    type: toggle
+    description: "Forcing the DPS while forgetting that it's a healer role."
 
   force_spread:
     label: "Force HoT Spread"

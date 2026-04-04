@@ -1,4 +1,4 @@
-﻿version: 3.2
+version: 3.2
 author: Ferraz
 patch: "12.0.1"
 spec: 104
@@ -23,16 +23,7 @@ config:
         value: 2
     default: 1
 
-  # ROTATION STYLE
-  rotation_source:
-    label: "Rotation Style"
-    type: dropdown
-    options:
-      - label: "Wowhead (Aggressive DPS)"
-        value: 1
-      - label: "Alternative / Method (Balanced)"
-        value: 2
-    default: 2
+
 
   # CONFIG
   allow_pull_with_mo:
@@ -69,18 +60,7 @@ config:
     min: 3
     max: 10
     default: 5
-  ironfur_rage_threshold:
-    label: "Min Rage for Ironfur"
-    type: slider
-    min: 30
-    max: 80
-    default: 40
-  rage_cap_threshold:
-    label: "Rage Cap Threshold (dump)"
-    type: slider
-    min: 60
-    max: 100
-    default: 80
+
 
   # MAJOR COOLDOWNS
   incarnation_enemies:
@@ -161,14 +141,10 @@ config:
 variables:
   # FORM AND RESOURCES
   in_bear_form: buff.bear_form.up
-  rage: player.rage
-  rage_deficit: player.rage.max-player.rage
-  rage_overcap: var.rage>=config.rage_cap_threshold
-  rage_for_harnessed: var.rage>=80
 
   # DEFENSIVE BUFFS
   ironfur_stacks: buff.ironfur.stack
-  need_ironfur: var.ironfur_stacks<config.ironfur_stacks_min&var.rage>=config.ironfur_rage_threshold
+  need_ironfur: var.ironfur_stacks<config.ironfur_stacks_min
   heavy_damage: health.pct<70&var.ironfur_stacks<config.ironfur_stacks_max
   dangerous_situation: health.pct<50&!buff.survival_instincts.up
   emergency_situation: health.pct<30
@@ -186,7 +162,7 @@ variables:
 
   # DOT TRACKING
   thrash_stacks: debuff.thrash.stack
-  thrash_target_stacks: config.rotation_source=1?5:config.thrash_stacks_target
+  thrash_target_stacks: 5
   thrash_needs_refresh: debuff.thrash.remains<4.5|debuff.thrash.stack<var.thrash_target_stacks
   moonfire_needs_refresh: debuff.moonfire.remains<4.8
 
@@ -226,17 +202,17 @@ lists:
   defensives:
     - survival_instincts,if=var.emergency_situation&!var.survival_up
     - rage_of_the_sleeper,if=config.hero_tree=1&var.emergency_situation&!var.survival_up
-    - frenzied_regeneration,if=var.emergency_situation&var.rage>=10
+    - frenzied_regeneration,if=var.emergency_situation
     - barkskin,if=var.emergency_situation&!var.survival_up
     - survival_instincts,if=var.dangerous_situation&!var.barkskin_up
-    - frenzied_regeneration,if=var.dangerous_situation&var.rage>=20
-    - ironfur,if=var.dangerous_situation&var.rage>=40
+    - frenzied_regeneration,if=var.dangerous_situation
+    - ironfur,if=var.dangerous_situation
     - survival_instincts,if=health.pct<config.survival_instincts_threshold&cooldown.frenzied_regeneration.remains>2&!var.any_major_defensive
     - frenzied_regeneration,if=health.pct<config.frenzied_regen_threshold
     - barkskin,if=health.pct<config.barkskin_threshold&!var.survival_up
     - ironfur,if=var.after_avenger_up&var.ironfur_stacks<config.ironfur_stacks_max
-    - ironfur,if=var.heavy_damage&var.rage>=40
-    - ironfur,if=var.incarnation_active&var.ironfur_stacks<config.ironfur_stacks_max&var.rage>=45
+    - ironfur,if=var.heavy_damage
+    - ironfur,if=var.incarnation_active&var.ironfur_stacks<config.ironfur_stacks_max
       
   cooldowns:
     - lunar_beam,if=config.hero_tree=1&var.use_lunar_beam
@@ -260,13 +236,12 @@ lists:
   
   rage_management:
     - ironfur,if=var.need_ironfur
-    - ironfur,if=var.ironfur_stacks<config.ironfur_stacks_max&var.rage>=60&buff.ironfur.remains<3
+    - ironfur,if=var.ironfur_stacks<config.ironfur_stacks_max&buff.ironfur.remains<3
     - ravage,if=config.hero_tree=2&buff.ravage.up
-    - maul,if=var.tooth_and_claw_up&var.rage>=35&!var.use_raze
-    - raze,if=var.use_raze&var.rage_for_harnessed
-    - raze,if=var.use_raze&var.rage_overcap
-    - maul,if=var.incarnation_active&var.rage>=50&!var.use_raze
-    - maul,if=!var.use_raze&var.rage_overcap
+    - maul,if=var.tooth_and_claw_up&!var.use_raze
+    - raze,if=var.use_raze
+    - maul,if=var.incarnation_active&!var.use_raze
+    - maul,if=!var.use_raze
   
   moonfire_spread:
     - moonfire,if=var.combat_start&debuff.moonfire.down&range<=40
@@ -278,108 +253,53 @@ lists:
     - moonfire,target=mouseover,if=debuff.moonfire.down&range<=40&target.alive&target.enemy
 
   # ----------------------------------------------------------
-  #  ELUNE'S CHOSEN ROTATIONS
+  #  ELUNE'S CHOSEN ROTATIONS (DPS MAX)
   # ----------------------------------------------------------
   
-  rotation_st_elune_wowhead:
-    - moonfire,if=var.moonfire_needs_refresh
-    - thrash,if=debuff.thrash.stack<5
-    - barkskin
-    - maul,if=var.rage>=40&var.ironfur_stacks>=1
-    - mangle
-    - thrash
+  rotation_st_elune:
     - moonfire,if=var.galactic_guardian_up
-    - incarnation_guardian_of_ursoc
-    - swipe
-
-  rotation_st_elune_alt:
     - mangle,if=var.gore_up
-    - mangle,if=var.harnessed_rage&var.mangle_charges>=2
-    - mangle
-    - thrash
-    - moonfire,if=var.galactic_guardian_up
-    - moonfire,if=var.lunar_beam_soon&var.moonfire_needs_refresh
-    - moonfire,if=var.moonfire_needs_refresh
-    - raze,if=active_enemies=1&var.rage>=90
-    - raze,if=var.use_raze&var.rage>=config.rage_cap_threshold
-    - maul,if=var.rage>=config.rage_cap_threshold&var.tooth_and_claw_up
-    - maul,if=var.rage>=config.rage_cap_threshold
-    - swipe
-  
-  rotation_aoe_elune_wowhead:
-    - thrash,if=debuff.thrash.stack<5
-    - barkskin
-    - raze,if=var.rage>=40&var.ironfur_stacks>=1
-    - thrash
-    - mangle
-    - incarnation_guardian_of_ursoc
-    - moonfire
-    - swipe
-
-  rotation_aoe_elune_alt:
     - thrash,if=var.thrash_needs_refresh
+    - mangle
+    - moonfire,if=var.moonfire_needs_refresh
+    - maul,if=var.ironfur_stacks>=1
+    - thrash
+    - swipe
+  
+  rotation_aoe_elune:
+    - moonfire,if=var.galactic_guardian_up
+    - thrash,if=var.thrash_needs_refresh
+    - raze,if=var.ironfur_stacks>=1
     - mangle,if=var.gore_up
-    - mangle,if=var.harnessed_rage&var.mangle_charges>=2
-    - thrash
     - mangle
-    - call_action_list,name=moonfire_spread
-    - raze,if=var.lunar_beam_active&var.rage>=30
-    - raze,if=var.rage_for_harnessed
-    - raze,if=var.rage>=config.rage_cap_threshold
-    - maul,if=var.tooth_and_claw_up&var.rage>=60
-    - raze,if=var.rage>=40
+    - thrash
+    - moonfire,if=var.moonfire_needs_refresh
     - swipe
 
   # ----------------------------------------------------------
-  #  DRUID OF THE CLAW ROTATIONS
+  #  DRUID OF THE CLAW ROTATIONS (DPS MAX)
   # ----------------------------------------------------------
 
-  rotation_st_claw_wowhead:
+  rotation_st_claw:
     - ravage,if=buff.ravage.up
-    - moonfire,if=debuff.moonfire.remains<4.8
-    - thrash,if=debuff.thrash.stack<config.thrash_stacks_target
-    - mangle,if=buff.gore.up
+    - mangle,if=var.gore_up
+    - thrash,if=var.thrash_needs_refresh
     - mangle
-    - maul,if=player.rage>=40&buff.ironfur.stack>=1&buff.tooth_and_claw.up
-    - maul,if=player.rage>=config.rage_cap_threshold&buff.ironfur.stack>=1
+    - moonfire,if=var.galactic_guardian_up
+    - maul,if=buff.ironfur.stack>=1
     - thrash
-    - moonfire,if=buff.galactic_guardian.up
+    - moonfire,if=var.moonfire_needs_refresh
     - swipe
 
-  rotation_aoe_claw_wowhead:
+  rotation_aoe_claw:
     - ravage,if=buff.ravage.up
-    - thrash,if=debuff.thrash.stack<config.thrash_stacks_target
-    - maul,if=player.rage>=40&buff.ironfur.stack>=1
-    - thrash
-    - mangle,if=buff.gore.up
+    - thrash,if=var.thrash_needs_refresh
+    - maul,if=buff.ironfur.stack>=1
+    - mangle,if=var.gore_up
     - mangle
-    - call_action_list,name=moonfire_spread
-    - swipe
-
-  rotation_st_claw_method:
-    - ravage,if=buff.ravage.up
-    - mangle,if=buff.gore.up
-    - mangle,if=cooldown.mangle.charges>=2
-    - mangle
-    - thrash,if=debuff.thrash.remains<4.5|debuff.thrash.stack<config.thrash_stacks_target
-    - moonfire,if=buff.galactic_guardian.up
-    - moonfire,if=debuff.moonfire.remains<4.8
-    - maul,if=player.rage>=config.rage_cap_threshold&buff.tooth_and_claw.up
-    - maul,if=player.rage>=config.rage_cap_threshold
+    - moonfire,if=var.galactic_guardian_up
     - thrash
-    - swipe
-
-  rotation_aoe_claw_method:
-    - ravage,if=buff.ravage.up
-    - thrash,if=debuff.thrash.remains<4.5|debuff.thrash.stack<config.thrash_stacks_target
-    - mangle,if=buff.gore.up
-    - mangle,if=cooldown.mangle.charges>=2
-    - thrash
-    - mangle
-    - call_action_list,name=moonfire_spread
-    - maul,if=player.rage>=config.rage_cap_threshold
-    - maul,if=player.rage>=40&buff.tooth_and_claw.up
-    - maul,if=player.rage>=40
+    - moonfire,if=var.moonfire_needs_refresh
     - swipe
 
   # ----------------------------------------------------------
@@ -423,14 +343,8 @@ lists:
     - call_action_list,name=movement,if=player.moving
     - call_action_list,name=trinkets
     
-    # Elune's Chosen Rotations
-    - call_action_list,name=rotation_aoe_elune_wowhead,if=config.hero_tree=1&config.rotation_source=1&active_enemies>=3&var.in_bear_form
-    - call_action_list,name=rotation_st_elune_wowhead,if=config.hero_tree=1&config.rotation_source=1&var.in_bear_form
-    - call_action_list,name=rotation_aoe_elune_alt,if=config.hero_tree=1&config.rotation_source=2&active_enemies>=3&var.in_bear_form
-    - call_action_list,name=rotation_st_elune_alt,if=config.hero_tree=1&config.rotation_source=2&var.in_bear_form
-
-    # Druid of the Claw Rotations
-    - call_action_list,name=rotation_aoe_claw_wowhead,if=config.hero_tree=2&config.rotation_source=1&active_enemies>=3&var.in_bear_form
-    - call_action_list,name=rotation_st_claw_wowhead,if=config.hero_tree=2&config.rotation_source=1&var.in_bear_form
-    - call_action_list,name=rotation_aoe_claw_method,if=config.hero_tree=2&config.rotation_source=2&active_enemies>=3&var.in_bear_form
-    - call_action_list,name=rotation_st_claw_method,if=config.hero_tree=2&config.rotation_source=2&var.in_bear_form
+    # Rotations based on Hero Tree
+    - call_action_list,name=rotation_aoe_elune,if=config.hero_tree=1&active_enemies>=3&var.in_bear_form
+    - call_action_list,name=rotation_st_elune,if=config.hero_tree=1&var.in_bear_form
+    - call_action_list,name=rotation_aoe_claw,if=config.hero_tree=2&active_enemies>=3&var.in_bear_form
+    - call_action_list,name=rotation_st_claw,if=config.hero_tree=2&var.in_bear_form
