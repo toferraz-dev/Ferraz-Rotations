@@ -186,7 +186,7 @@ variables:
   thrash_needs_refresh: debuff.thrash.remains<4.5|debuff.thrash.stack<var.thrash_target_stacks
   moonfire_needs_refresh: debuff.moonfire.remains<4.8
 
-  # ELUNE'S CHOSEN SYNERGY
+  # ELUNE SYNERGY
   lunar_beam_active: buff.lunar_beam.up
   lunar_beam_soon: cooldown.lunar_beam.remains<15
   lunar_beam_ready: cooldown.lunar_beam.ready
@@ -239,26 +239,26 @@ lists:
   defensives:
     # 1. MAINTENANCE (OFF-GCD)
     - ironfur,name="Ironfur (Maintenance)",if=var.need_ironfur
-    - ironfur,name="Ironfur (Heavy)",if=health.pct<70&buff.ironfur.stack<2&var.rage>=45
-    - ironfur,name="Ironfur (Panic)",if=health.pct<40&var.rage>=40
+    - ironfur,name="Ironfur (Heavy)",if=health.pct<70&buff.ironfur.stack<2&player.rage>=45
+    - ironfur,name="Ironfur (Panic)",if=health.pct<40&player.rage>=40
 
     # 2. EMERGENCY DEFENSIVES
     - survival_instincts,name="Survival Instincts (Panic)",if=var.emergency_situation&!var.survival_up
     - rage_of_the_sleeper,name="Rage Sleeper (Panic)",if=var.emergency_situation&!var.survival_up
-    - frenzied_regeneration,name="Frenzied Regen (Panic)",if=var.emergency_situation&var.rage>=10
+    - frenzied_regeneration,name="Frenzied Regen (Panic)",if=var.emergency_situation&player.rage>=10
     - barkskin,name="Barkskin (Panic)",if=var.emergency_situation&!var.survival_up
 
     # 3. PROACTIVE DEFENSIVES
     - survival_instincts,name="Survival Instincts",if=var.dangerous_situation&!var.barkskin_up
-    - frenzied_regeneration,name="Frenzied Regen",if=var.dangerous_situation&var.rage>=20
-    - ironfur,name="Ironfur (Defensive)",if=var.dangerous_situation&var.rage>=40
+    - frenzied_regeneration,name="Frenzied Regen",if=var.dangerous_situation&player.rage>=20
+    - ironfur,name="Ironfur (Defensive)",if=var.dangerous_situation&player.rage>=40
     - survival_instincts,name="Survival Instincts (Low HP)",if=health.pct<config.survival_instincts_threshold&cooldown.frenzied_regeneration.remains>2&!var.any_major_defensive
     - frenzied_regeneration,name="Frenzied Regen (Low HP)",if=health.pct<config.frenzied_regen_threshold
     - barkskin,name="Barkskin",if=health.pct<config.barkskin_threshold&!var.survival_up
 
     # 4. MAINTENANCE DEFENSIVES
-    - ironfur,name="Ironfur (Avenger)",if=var.after_avenger_up&var.ironfur_stacks<config.ironfur_stacks_max
-    - ironfur,name="Ironfur (Incarnation)",if=var.incarnation_active&var.ironfur_stacks<config.ironfur_stacks_max&var.rage>=45
+    - ironfur,name="Ironfur (Avenger)",if=var.after_avenger_up&buff.ironfur.stack<config.ironfur_stacks_max
+    - ironfur,name="Ironfur (Incarnation)",if=var.incarnation_active&buff.ironfur.stack<config.ironfur_stacks_max&player.rage>=45
 
   racials:
     - blood_fury,name="Blood Fury",if=var.incarnation_active
@@ -277,7 +277,7 @@ lists:
     - berserk_ravage,name="Berserk (Elune)",if=talent.berserk&(active_enemies>=3|target.boss)
     - rage_of_the_sleeper,name="Rage of the Sleeper",if=health.pct<config.rage_of_sleeper_threshold|active_enemies>=3|var.incarnation_active
 
-  # --- CORE ELUNE'S CHOSEN ROTATIONS ---
+  # --- CORE ELUNE CHOSEN ROTATIONS ---
 
   rotation_st_elune:
     - moonfire,name="Moonfire (Guardian Proc)",if=var.galactic_guardian_up
@@ -286,22 +286,22 @@ lists:
     - mangle,name="Mangle Filler"
     - thrash,name="Thrash Maintenance",if=debuff.thrash.stack<3
     - moonfire,name="Moonfire (Refresh)",if=var.moonfire_needs_refresh
-    - raze,name="Raze (Dump)",if=active_enemies=1&var.rage>=90
-    - maul,name="Maul (Dump)",if=var.rage>=config.rage_cap_threshold
+    - raze,name="Raze (Dump)",if=active_enemies=1&player.rage>=90
+    - maul,name="Maul (Dump)",if=player.rage>=config.rage_cap_threshold
     - swipe,name="Swipe Filler"
 
   rotation_aoe_elune:
     - moonfire,name="Moonfire (Guardian Proc)",if=var.galactic_guardian_up
     - thrash,name="Thrash Refresh AoE",if=var.thrash_needs_refresh
-    - raze,name="Raze (Beam Sync)",if=var.lunar_beam_active&var.rage>=30
+    - raze,name="Raze (Beam Sync)",if=var.lunar_beam_active&player.rage>=30
     - call_action_list,name=moonfire_spread,if=var.moonfire_needs_refresh|active_enemies>1&debuff.moonfire.down
     - mangle,name="Mangle Proc AoE",if=var.gore_up
     - mangle,name="Mangle Charges AoE",if=var.harnessed_rage&var.mangle_charges>=2
     - thrash,name="Thrash AoE"
     - mangle,name="Mangle AoE"
-    - raze,name="Raze (Harnessed)",if=var.rage_for_harnessed
-    - raze,name="Raze (Overcap)",if=var.rage>=config.rage_cap_threshold
-    - raze,name="Raze Dump AoE",if=var.rage>=40
+    - raze,name="Raze (Harnessed)",if=player.rage>=80
+    - raze,name="Raze (Overcap)",if=player.rage>=config.rage_cap_threshold
+    - raze,name="Raze Dump AoE",if=player.rage>=40
     - swipe,name="Swipe AoE Filler"
 
   moonfire_spread:
@@ -314,12 +314,12 @@ lists:
     - moonfire,name="Moonfire (MO)",target=mouseover,if=debuff.moonfire.down&range<=40&target.alive&target.enemy
 
   rage_management:
-    - ironfur,name="Ironfur (Resource Dump)",if=buff.ironfur.stack<config.ironfur_stacks_max&var.rage>=85&buff.ironfur.remains<2
-    - maul,name="Maul (Tooth/Claw)",if=var.tooth_and_claw_up&var.rage>=40&!var.use_raze
-    - raze,name="Raze (Dump)",if=var.use_raze&var.rage_for_harnessed
-    - raze,name="Raze (Overcap)",if=var.use_raze&var.rage_overcap
-    - maul,name="Maul (Incarnation)",if=var.incarnation_active&var.rage>=50&!var.use_raze
-    - maul,name="Maul (Overcap)",if=!var.use_raze&var.rage_overcap
+    - ironfur,name="Ironfur (Resource Dump)",if=buff.ironfur.stack<config.ironfur_stacks_max&player.rage>=85&buff.ironfur.remains<2
+    - maul,name="Maul (Tooth/Claw)",if=var.tooth_and_claw_up&player.rage>=40&!var.use_raze
+    - raze,name="Raze (Dump)",if=var.use_raze&player.rage>=80
+    - raze,name="Raze (Overcap)",if=var.use_raze&player.rage>=config.rage_cap_threshold
+    - maul,name="Maul (Incarnation)",if=var.incarnation_active&player.rage>=50&!var.use_raze
+    - maul,name="Maul (Overcap)",if=!var.use_raze&player.rage>=config.rage_cap_threshold
     - ironfur,name="Ironfur (Maintenance)",if=var.need_ironfur
 
   trinkets:
