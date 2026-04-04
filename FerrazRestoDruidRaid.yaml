@@ -175,10 +175,6 @@ config:
     max: 99
     default: 60
 
-  use_dispell:
-    label: "Enable Dispell"
-    type: checkbox
-    default: true
 
   use_trinkets:
     label: "Auto Trinkets"
@@ -246,7 +242,6 @@ lists:
     - regrowth,name="OOC Regrowth",cycle=members,if=cycle.health.effective.pct<config.regrowth_threshold&cycle.buff.regrowth.remains<1.5&!player.combat
     
   defensives:
-    - natures_cure,name="Nature's Cure",cycle=members,if=config.use_dispell&cycle.dispelable.list
     - ironbark,name="Ironbark",cycle=members,if=cycle.health.pct<config.ironbark_threshold&cycle.buff.ironbark.down
     - barkskin,name="Barkskin",if=health.pct<config.barkskin_threshold
 
@@ -324,7 +319,6 @@ lists:
     - rejuvenation,name="Rejuvenation (Moving)",cycle=members,if=cycle.buff.rejuvenation.down&cycle.health.effective.pct<config.rejuvenation_threshold
 
   mouseover_healing_emergency:
-    - natures_cure.mouseover,name="Cure (MO)",if=config.use_dispell&mouseover.dispelable.list
     - regrowth.mouseover,name="Regrowth (MO)",if=buff.natures_swiftness.up
     - swiftmend.mouseover,name="Swiftmend (MO)",if=(mouseover.buff.rejuvenation.up|mouseover.buff.regrowth.up|mouseover.buff.wild_growth.up)
     - rejuvenation.mouseover,name="Rejuv (MO)",if=mouseover.buff.remains(rejuvenation)<1.5
@@ -347,7 +341,7 @@ lists:
     - call_action_list,name=cooldowns
     - call_action_list,name=trinkets
     - call_action_list,name=tree_of_life_rotation,if=var.is_tree_form
-    - call_action_list,name=mouseover_healing_emergency,if=config.use_mouseover&var.mo_friendly_valid&(mouseover.health.effective.pct<config.mouseover_emergency_hp|mouseover.dispelable.list)&!player.casting&!player.channeling
+    - call_action_list,name=mouseover_healing_emergency,if=config.use_mouseover&var.mo_friendly_valid&mouseover.health.effective.pct<config.mouseover_emergency_hp&!player.casting&!player.channeling
     - call_action_list,name=moving,if=player.moving
     - call_action_list,name=active_healing,if=!config.force_dps
     - call_action_list,name=ranged_dps,if=target.exists&target.alive&!target.friendly&!var.group_needs_healing&mana.pct>90

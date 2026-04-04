@@ -168,10 +168,6 @@ config:
     max: 99
     default: 60
 
-  use_dispell:
-    label: "Enable Dispell"
-    type: checkbox
-    default: true
 
   use_trinkets:
     label: "Auto Trinkets"
@@ -223,7 +219,6 @@ lists:
     
     
   defensives:
-    - natures_cure,name="Nature's Cure",cycle=members,if=config.use_dispell&cycle.dispelable.list
     - ironbark,name="Ironbark",cycle=members,if=cycle.health.pct<config.ironbark_threshold&cycle.buff.ironbark.down
     - barkskin,name="Barkskin",if=health.pct<config.barkskin_threshold
     - bear_form,name="Panic Bear",if=health.pct<config.frenzied_regen_threshold&!buff.bear_form.up&cooldown.frenzied_regeneration.ready
@@ -266,7 +261,6 @@ lists:
   utility:
     - bear_form,name="Stay Bear (Rooted)",if=player.rooted&!buff.bear_form.up
     - cat_form,name="Stay Cat (Rooted)",if=player.rooted&buff.bear_form.up
-    - rebirth.mouseover,name="Rebirth (MO)",if=mouseover.exists&mouseover.dead&mouseover.friendly
     - innervate,name="Innervate",if=mana.pct<config.innervate_threshold
 
   catweave_st:
@@ -310,7 +304,6 @@ lists:
     - rejuvenation,name="Rejuvenation (Moving)",cycle=members,if=cycle.buff.rejuvenation.down&cycle.health.effective.pct<95
 
   mouseover_healing_emergency:
-    - natures_cure.mouseover,name="Cure (MO)",if=config.use_dispell&mouseover.dispelable.list
     - regrowth.mouseover,name="Regrowth (MO)",if=buff.natures_swiftness.up
     - swiftmend.mouseover,name="Swiftmend (MO)",if=(mouseover.buff.rejuvenation.up|mouseover.buff.regrowth.up|mouseover.buff.wild_growth.up)
     - rejuvenation.mouseover,name="Rejuv (MO)",if=mouseover.buff.remains(rejuvenation)<1.5
@@ -330,7 +323,7 @@ lists:
     - call_action_list,name=utility
     - call_action_list,name=cooldowns
     - call_action_list,name=trinkets
-    - call_action_list,name=mouseover_healing_emergency,if=config.use_mouseover&var.mo_friendly_valid&(mouseover.health.pct<config.mouseover_emergency_hp|mouseover.dispelable.list)&!player.casting&!player.channeling
+    - call_action_list,name=mouseover_healing_emergency,if=config.use_mouseover&var.mo_friendly_valid&mouseover.health.pct<config.mouseover_emergency_hp&!player.casting&!player.channeling
     - call_action_list,name=moving,if=player.moving
     - call_action_list,name=active_healing,if=!config.force_dps
     - call_action_list,name=catweave,if=var.can_catweave&target.exists&target.alive&!target.friendly&target.range<=8
