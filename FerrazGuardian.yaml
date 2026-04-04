@@ -244,13 +244,13 @@ lists:
     - ironfur,name="Ironfur (Incarnation)",if=var.incarnation_active&var.ironfur_stacks<config.ironfur_stacks_max&var.rage>=45
       
   cooldowns:
+    - wild_guardian,name="Wild Guardian (Apex)",if=var.incarnation_active
+    - heart_of_the_wild,name="Heart of the Wild",if=config.use_heart_of_the_wild&var.in_bear_form&(cooldown.incarnation_guardian_of_ursoc.ready|var.incarnation_active|active_enemies>=3|target.boss)
     - lunar_beam,name="Lunar Beam",if=config.hero_tree=1&var.use_lunar_beam&target.range<=10
     - incarnation_guardian_of_ursoc,name="Incarnation",if=active_enemies>=config.incarnation_enemies|(target.boss&target.time_to_die>20)
     - berserk_ravage,name="Berserk Ravage",if=talent.berserk_ravage&(active_enemies>=3|target.boss)
     - berserk_ravage,name="Berserk (Elune)",if=config.hero_tree=1&talent.berserk&(active_enemies>=3|target.boss)
-    - wild_guardian,name="Wild Guardian",if=var.incarnation_active
     - rage_of_the_sleeper,name="Rage of the Sleeper",if=health.pct<config.rage_of_sleeper_threshold|active_enemies>=3|var.incarnation_active
-    - heart_of_the_wild,name="Heart of the Wild",if=config.use_heart_of_the_wild&var.in_bear_form&(var.incarnation_active|active_enemies>=3|target.boss)
   
   interrupts:
     # Auto Swap
