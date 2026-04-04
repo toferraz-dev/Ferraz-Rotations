@@ -267,9 +267,6 @@ lists:
     - mighty_bash,name="Mighty Bash",if=interrupt.cc.check
     - soothe,name="Soothe Enrage",if=target.purgeable.enrage
 
-  dispel:
-    - remove_corruption,name="Remove Corruption",cycle=members,if=cycle.dispelable.list
-
   taunt:
     - growl,name="Growl (MO)",target=mouseover,if=target.threat<3&target.alive&target.enemy
     - growl,name="Growl ST",if=target.threat<3
