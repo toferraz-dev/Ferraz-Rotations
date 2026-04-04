@@ -12,16 +12,7 @@ entry: main
 
 config:
 
-  # HERO TALENT TREE
-  hero_tree:
-    label: "Hero Talent Tree"
-    type: dropdown
-    options:
-      - label: "Elune's Chosen"
-        value: 1
-      - label: "Druid of the Claw"
-        value: 2
-    default: 1
+
 
   # CONFIG
   use_racials:
@@ -148,18 +139,17 @@ config:
 
 variables:
   # FORM AND RESOURCES
-  in_bear_form: buff.bear_form.up|player.form=1
+  in_bear_form: player.form=1|buff.bear_form.up|buff(Bear Form).up
   rage: player.rage
   rage_deficit: player.rage.max-player.rage
-  rage_overcap: var.rage>=80
-  rage_for_harnessed: var.rage>=80
-  rage_for_ironfur: var.rage>=40
-  need_ironfur: (buff.ironfur.stack<1|buff.ironfur.remains<1.5)&var.rage>=40
-
-  # DEFENSIVE BUFFS
+  rage_overcap: player.rage>=80
+  rage_for_harnessed: player.rage>=80
+  rage_for_ironfur: player.rage>=40
+  need_ironfur: (buff.ironfur.stack<1|buff.ironfur.remains<1.5)&player.rage>=40
+  heavy_ironfur: player.rage>=50&buff.ironfur.stack<3
   ironfur_stacks: buff.ironfur.stack
-  need_ironfur: var.ironfur_stacks<config.ironfur_stacks_min&var.rage>=config.ironfur_rage_threshold
   heavy_damage: health.pct<70&var.ironfur_stacks<config.ironfur_stacks_max
+
   dangerous_situation: health.pct<50&!buff.survival_instincts.up
   emergency_situation: health.pct<30
   barkskin_up: buff.barkskin.up
@@ -191,7 +181,7 @@ variables:
   use_lunar_beam: var.lunar_beam_ready&(active_enemies>=2|health.pct<70|target.boss)
 
   # TARGETING
-  use_raze: config.hero_tree=1&active_enemies>=config.raze_targets
+  use_raze: active_enemies>=config.raze_targets
   can_interrupt: target.casting&!target.casting.interruptible=false
 
   # MOVEMENT
@@ -243,10 +233,10 @@ lists:
   cooldowns:
     - wild_guardian,name="Wild Guardian (Apex)",if=var.incarnation_active
     - heart_of_the_wild,name="Heart of the Wild",if=config.use_heart_of_the_wild&var.in_bear_form&(cooldown.incarnation_guardian_of_ursoc.ready|var.incarnation_active|active_enemies>=3|target.boss)
-    - lunar_beam,name="Lunar Beam",if=config.hero_tree=1&var.use_lunar_beam&target.range<=10
+    - lunar_beam,name="Lunar Beam",if=var.use_lunar_beam&target.range<=10
     - incarnation_guardian_of_ursoc,name="Incarnation",if=active_enemies>=config.incarnation_enemies|(target.boss&target.time_to_die>20)
     - berserk_ravage,name="Berserk Ravage",if=talent.berserk_ravage&(active_enemies>=3|target.boss)
-    - berserk_ravage,name="Berserk (Elune)",if=config.hero_tree=1&talent.berserk&(active_enemies>=3|target.boss)
+    - berserk_ravage,name="Berserk (Elune)",if=talent.berserk&(active_enemies>=3|target.boss)
     - rage_of_the_sleeper,name="Rage of the Sleeper",if=health.pct<config.rage_of_sleeper_threshold|active_enemies>=3|var.incarnation_active
   
   interrupts:
@@ -269,8 +259,7 @@ lists:
     - growl,name="Growl ST",if=target.threat<3
   
   rage_management:
-    - ironfur,name="Ironfur (Resource Dump)",if=var.ironfur_stacks<config.ironfur_stacks_max&var.rage>=85&buff.ironfur.remains<2
-    - ravage,name="Ravage (Proc)",if=config.hero_tree=2&buff.ravage.up
+    - ironfur,name="Ironfur (Resource Dump)",if=buff.ironfur.stack<config.ironfur_stacks_max&var.rage>=85&buff.ironfur.remains<2
     - maul,name="Maul (Tooth/Claw)",if=var.tooth_and_claw_up&var.rage>=40&!var.use_raze
     - raze,name="Raze (Dump)",if=var.use_raze&var.rage_for_harnessed
     - raze,name="Raze (Overcap)",if=var.use_raze&var.rage_overcap
@@ -282,7 +271,7 @@ lists:
     - moonfire,name="Moonfire Start",if=var.combat_start&debuff.moonfire.down&range<=40
     - moonfire,name="Moonfire Incarnation",if=var.incarnation_active&debuff.moonfire.down&range<=40
     - moonfire,name="Moonfire (Galactic)",if=var.galactic_guardian_up
-    - moonfire,name="Moonfire (Beam Sync)",if=config.hero_tree=1&var.lunar_beam_soon&var.moonfire_needs_refresh
+    - moonfire,name="Moonfire (Beam Sync)",if=var.lunar_beam_soon&var.moonfire_needs_refresh
     - moonfire,name="Moonfire Apply",if=debuff.moonfire.down
     - moonfire,name="Moonfire Refresh",if=var.moonfire_needs_refresh
     - moonfire,name="Moonfire (MO)",target=mouseover,if=debuff.moonfire.down&range<=40&target.alive&target.enemy
@@ -321,38 +310,7 @@ lists:
     - raze,name="Raze Dump AoE",if=var.rage>=40
     - swipe,name="Swipe AoE Filler"
 
-  # ----------------------------------------------------------
-  #  DRUID OF THE CLAW ROTATIONS
-  # ----------------------------------------------------------
 
-  rotation_st_claw:
-    - ravage,name="Ravage ST",if=buff.ravage.up
-    - mangle,name="Mangle Proc ST",if=buff.gore.up
-    - mangle,name="Mangle Filler ST"
-    - moonfire,name="Moonfire GG ST",if=buff.galactic_guardian.up
-    - thrash,name="Thrash Build ST",if=debuff.thrash.stack<3
-    - maul,name="Maul T/C ST",if=player.rage>=40&buff.tooth_and_claw.up
-    - maul,name="Maul Dump ST",if=player.rage>=50
-    - moonfire,name="Moonfire Refresh ST",if=debuff.moonfire.remains<4.8
-    - thrash,name="Thrash ST"
-    - swipe,name="Swipe ST"
-
-  rotation_aoe_claw:
-    - ravage,name="Ravage AoE",if=buff.ravage.up
-    - thrash,name="Thrash Build AoE",if=debuff.thrash.stack<3
-    - mangle,name="Mangle Proc AoE",if=buff.gore.up
-    - mangle,name="Mangle AoE"
-    - moonfire,name="Moonfire GG AoE",if=buff.galactic_guardian.up
-    - maul,name="Maul T/C AoE",if=player.rage>=40&buff.tooth_and_claw.up
-    - mangle,name="Mangle (Proc)",if=var.gore_up
-    - mangle,name="Mangle"
-    - maul,name="Maul (T/C)",if=var.tooth_and_claw_up&var.rage>=40
-    - raze,name="Raze (Harnessed)",if=var.use_raze&var.rage_for_harnessed
-    - raze,name="Raze (Overcap)",if=var.use_raze&var.rage_overcap
-    - maul,name="Maul (Dump)",if=!var.use_raze&var.rage>=40
-    - moonfire,name="Moonfire (Refresh)",if=var.moonfire_needs_refresh
-    - thrash,name="Thrash"
-    - swipe,name="Swipe"
 
   # ----------------------------------------------------------
   #  SHARED / MISC
@@ -370,36 +328,37 @@ lists:
   # ----------------------------------------------------------
   
   main:
+    # --- STEP 1: SANITY & PREPARATIONS ---
     - call_action_list,name=sanity_checks
     - call_action_list,name=spell_queue
     - call_action_list,name=buff_mark_of_the_wild
-    - bear_form,name="Manual Bear Form",if=!var.in_bear_form&player.combat&!mounted.flying&!mounted.ground
+    
+    # --- STEP 2: FORM & PULL ---
+    - bear_form,name="Bear Form (Combat)",if=!var.in_bear_form&player.combat&!mounted.flying&!mounted.ground
     - moonfire,name="Pull Moonfire",if=config.allow_pull_with_mo&!player.combat&target.enemy&target.alive&debuff.moonfire.down
     - return,if=!player.combat&active_enemies=0
     - return,if=player.channeling
     
-    # Targeting & utility
+    # --- STEP 3: MITIGATION & SURVIVAL (OFF-GCD) ---
+    - ironfur,name="Ironfur (Emergency)",if=var.in_bear_form&var.need_ironfur
+    - ironfur,name="Ironfur (Heavy)",if=var.in_bear_form&var.heavy_ironfur&health.pct<70
+    - call_action_list,name=defensives,if=var.in_bear_form
+    
+    # --- STEP 4: UTILITY & CC ---
     - call_action_list,name=auto_target
     - call_action_list,name=auto_heal
     - call_action_list,name=taunt
     - call_action_list,name=interrupts
     
-    # Survival & cooldowns
-    - call_action_list,name=defensives,if=var.in_bear_form
+    # --- STEP 5: OFFENSIVE BURST ---
     - call_action_list,name=cooldowns,if=var.in_bear_form
     - call_action_list,name=racials,if=config.use_racials&var.in_bear_form
     
-    # Elune's Chosen Rotations (Damage Priority)
-    - call_action_list,name=rotation_aoe_elune,if=config.hero_tree=1&active_enemies>=2&var.in_bear_form
-    - call_action_list,name=rotation_st_elune,if=config.hero_tree=1&var.in_bear_form
+    # --- STEP 6: CORE ROTATION (GCD) ---
+    - call_action_list,name=rotation_aoe_elune,if=active_enemies>=2&var.in_bear_form
+    - call_action_list,name=rotation_st_elune,if=var.in_bear_form
 
-    # Druid of the Claw Rotations (Damage Priority)
-    - call_action_list,name=rotation_aoe_claw,if=config.hero_tree=2&active_enemies>=3&var.in_bear_form
-    - call_action_list,name=rotation_st_claw,if=config.hero_tree=2&var.in_bear_form
-
-    # Rage Dumps & Defensive Ironfur
+    # --- STEP 7: RAGE CAPPING & CLEANUP ---
     - call_action_list,name=rage_management,if=var.in_bear_form
-
-    # Movement & Utils
     - call_action_list,name=movement,if=player.moving
     - call_action_list,name=trinkets
