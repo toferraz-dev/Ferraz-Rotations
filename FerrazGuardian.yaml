@@ -60,6 +60,12 @@ config:
     min: 3
     max: 10
     default: 5
+  rage_pool:
+    label: "Rage Pool (Offensive)"
+    type: slider
+    min: 0
+    max: 80
+    default: 40
 
 
   # MAJOR COOLDOWNS
@@ -141,6 +147,9 @@ config:
 variables:
   # FORM AND RESOURCES
   in_bear_form: buff.bear_form.up
+  rage: rage
+  high_rage: var.rage >= 90
+  can_spend_rage: var.rage >= config.rage_pool
 
   # DEFENSIVE BUFFS
   ironfur_stacks: buff.ironfur.stack
@@ -236,12 +245,12 @@ lists:
   
   rage_management:
     - ironfur,if=var.need_ironfur
-    - ironfur,if=var.ironfur_stacks<config.ironfur_stacks_max&buff.ironfur.remains<3
+    - ironfur,if=var.ironfur_stacks<config.ironfur_stacks_max&(buff.ironfur.remains<3|var.high_rage)
     - ravage,if=config.hero_tree=2&buff.ravage.up
     - maul,if=var.tooth_and_claw_up&!var.use_raze
-    - raze,if=var.use_raze
-    - maul,if=var.incarnation_active&!var.use_raze
-    - maul,if=!var.use_raze
+    - raze,if=var.use_raze&var.can_spend_rage
+    - maul,if=var.incarnation_active&!var.use_raze&var.can_spend_rage
+    - maul,if=!var.use_raze&var.can_spend_rage
   
   moonfire_spread:
     - moonfire,if=var.combat_start&debuff.moonfire.down&range<=40
@@ -262,14 +271,14 @@ lists:
     - thrash,if=var.thrash_needs_refresh
     - mangle
     - moonfire,if=var.moonfire_needs_refresh
-    - maul,if=var.ironfur_stacks>=1
+    - maul,if=var.ironfur_stacks>=1&var.can_spend_rage
     - thrash
     - swipe
   
   rotation_aoe_elune:
     - moonfire,if=var.galactic_guardian_up
     - thrash,if=var.thrash_needs_refresh
-    - raze,if=var.ironfur_stacks>=1
+    - raze,if=var.ironfur_stacks>=1&var.can_spend_rage
     - mangle,if=var.gore_up
     - mangle
     - thrash
@@ -286,7 +295,7 @@ lists:
     - thrash,if=var.thrash_needs_refresh
     - mangle
     - moonfire,if=var.galactic_guardian_up
-    - maul,if=buff.ironfur.stack>=1
+    - maul,if=buff.ironfur.stack>=1&var.can_spend_rage
     - thrash
     - moonfire,if=var.moonfire_needs_refresh
     - swipe
@@ -294,7 +303,7 @@ lists:
   rotation_aoe_claw:
     - ravage,if=buff.ravage.up
     - thrash,if=var.thrash_needs_refresh
-    - maul,if=buff.ironfur.stack>=1
+    - maul,if=buff.ironfur.stack>=1&var.can_spend_rage
     - mangle,if=var.gore_up
     - mangle
     - moonfire,if=var.galactic_guardian_up
