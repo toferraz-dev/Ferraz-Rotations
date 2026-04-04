@@ -249,8 +249,8 @@ lists:
     - berserk_ravage,name="Berserk Ravage",if=talent.berserk_ravage&(active_enemies>=3|target.boss)
     - berserk_ravage,name="Berserk (Elune)",if=config.hero_tree=1&talent.berserk&(active_enemies>=3|target.boss)
     - wild_guardian,name="Wild Guardian",if=var.incarnation_active
-    - rage_of_the_sleeper,name="Rage of the Sleeper",if=config.hero_tree=1&(health.pct<config.rage_of_sleeper_threshold|active_enemies>=4|(var.incarnation_active&active_enemies>=3))
-    - heart_of_the_wild,name="Heart of the Wild",if=config.use_heart_of_the_wild&config.hero_tree=1&var.in_bear_form&active_enemies>=4
+    - rage_of_the_sleeper,name="Rage of the Sleeper",if=health.pct<config.rage_of_sleeper_threshold|active_enemies>=3|var.incarnation_active
+    - heart_of_the_wild,name="Heart of the Wild",if=config.use_heart_of_the_wild&var.in_bear_form&(var.incarnation_active|active_enemies>=3|target.boss)
   
   interrupts:
     # Auto Swap
@@ -305,11 +305,11 @@ lists:
     - swipe,name="Swipe Filler ST (W)"
 
   rotation_st_elune_alt:
+    - moonfire,name="Moonfire (Guardian Proc)",if=var.galactic_guardian_up
     - mangle,name="Mangle (Proc)",if=var.gore_up
     - mangle,name="Mangle (Charges)",if=var.harnessed_rage&cooldown.mangle.charges_fractional>=1.8
     - mangle,name="Mangle Filler"
-    - thrash,name="Thrash Maintenance",if=debuff.thrash.stack<5
-    - moonfire,name="Moonfire (Guardian Proc)",if=var.galactic_guardian_up
+    - thrash,name="Thrash Maintenance",if=debuff.thrash.stack<3
     - moonfire,name="Moonfire (Refresh)",if=var.moonfire_needs_refresh
     - raze,name="Raze (Dump)",if=active_enemies=1&var.rage>=90
     - maul,name="Maul (Dump)",if=var.rage>=config.rage_cap_threshold
@@ -318,6 +318,7 @@ lists:
   rotation_aoe_elune_wowhead:
     - moonfire,name="Moonfire GG AoE (W)",if=var.galactic_guardian_up
     - raze,name="Raze (Harnessed)",if=var.rage>=80&config.rotation_source=1
+    - raze,name="Raze (Beam Sync)",if=var.lunar_beam_active&var.rage>=30
     - thrash,name="Thrash Build AoE (W)",if=debuff.thrash.stack<3
     - mangle,name="Mangle AoE (W)",if=var.gore_up
     - raze,name="Raze Dump AoE (W)",if=var.rage>=40
@@ -326,13 +327,14 @@ lists:
     - swipe,name="Swipe filler AoE (W)"
 
   rotation_aoe_elune_alt:
+    - moonfire,name="Moonfire (Guardian Proc)",if=var.galactic_guardian_up
     - thrash,name="Thrash Refresh AoE",if=var.thrash_needs_refresh
+    - raze,name="Raze (Beam Sync)",if=var.lunar_beam_active&var.rage>=30
+    - call_action_list,name=moonfire_spread,if=var.moonfire_needs_refresh|active_enemies>1&debuff.moonfire.down
     - mangle,name="Mangle Proc AoE",if=var.gore_up
     - mangle,name="Mangle Charges AoE",if=var.harnessed_rage&var.mangle_charges>=2
     - thrash,name="Thrash AoE"
     - mangle,name="Mangle AoE"
-    - call_action_list,name=moonfire_spread
-    - raze,name="Raze (Beam Sync)",if=var.lunar_beam_active&var.rage>=30
     - raze,name="Raze (Harnessed)",if=var.rage_for_harnessed
     - raze,name="Raze (Overcap)",if=var.rage>=config.rage_cap_threshold
     - maul,name="Maul (Tooth/Claw AoE)",if=var.tooth_and_claw_up&var.rage>=60
@@ -426,9 +428,9 @@ lists:
     - call_action_list,name=racials,if=config.use_racials&var.in_bear_form
     
     # Elune's Chosen Rotations (Damage Priority)
-    - call_action_list,name=rotation_aoe_elune_wowhead,if=config.hero_tree=1&config.rotation_source=1&active_enemies>=3&var.in_bear_form
+    - call_action_list,name=rotation_aoe_elune_wowhead,if=config.hero_tree=1&config.rotation_source=1&active_enemies>=2&var.in_bear_form
     - call_action_list,name=rotation_st_elune_wowhead,if=config.hero_tree=1&config.rotation_source=1&var.in_bear_form
-    - call_action_list,name=rotation_aoe_elune_alt,if=config.hero_tree=1&config.rotation_source=2&active_enemies>=3&var.in_bear_form
+    - call_action_list,name=rotation_aoe_elune_alt,if=config.hero_tree=1&config.rotation_source=2&active_enemies>=2&var.in_bear_form
     - call_action_list,name=rotation_st_elune_alt,if=config.hero_tree=1&config.rotation_source=2&var.in_bear_form
 
     # Druid of the Claw Rotations (Damage Priority)
