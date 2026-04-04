@@ -160,8 +160,7 @@ variables:
   barkskin_up: buff.barkskin.up
   survival_up: buff.survival_instincts.up
   any_major_defensive: var.barkskin_up|var.survival_up|buff.rage_of_the_sleeper.up
-  after_avenger_up: buff.after_avenger.up|buff.after_the_wildfire.up
-
+  
   # OFFENSIVE PROCS
   galactic_guardian_up: buff.galactic_guardian.up
   tooth_and_claw_up: buff.tooth_and_claw.up
@@ -219,7 +218,7 @@ lists:
     - survival_instincts,if=health.pct<config.survival_instincts_threshold&cooldown.frenzied_regeneration.remains>2&!var.any_major_defensive
     - frenzied_regeneration,if=health.pct<config.frenzied_regen_threshold
     - barkskin,if=health.pct<config.barkskin_threshold&!var.survival_up
-    - ironfur,if=var.after_avenger_up&var.ironfur_stacks<config.ironfur_stacks_max
+    - ironfur,if=var.ironfur_stacks<config.ironfur_stacks_max
     - ironfur,if=var.heavy_damage
     - ironfur,if=var.incarnation_active&var.ironfur_stacks<config.ironfur_stacks_max
       
