@@ -149,7 +149,7 @@ variables:
   in_bear_form: buff.bear_form.up
   rage: rage
   high_rage: var.rage >= 90
-  can_spend_rage: var.rage >= config.rage_pool
+  can_spend_rage: (var.rage >= config.rage_pool) | var.incarnation_active | var.high_rage
 
   # DEFENSIVE BUFFS
   ironfur_stacks: buff.ironfur.stack
