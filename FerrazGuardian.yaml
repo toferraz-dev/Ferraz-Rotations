@@ -148,11 +148,13 @@ config:
 
 variables:
   # FORM AND RESOURCES
-  in_bear_form: buff.bear_form.up
+  in_bear_form: buff.bear_form.up|player.form=1
   rage: player.rage
   rage_deficit: player.rage.max-player.rage
-  rage_overcap: var.rage>=config.rage_cap_threshold
+  rage_overcap: var.rage>=80
   rage_for_harnessed: var.rage>=80
+  rage_for_ironfur: var.rage>=40
+  need_ironfur: (buff.ironfur.stack<1|buff.ironfur.remains<1.5)&var.rage>=40
 
   # DEFENSIVE BUFFS
   ironfur_stacks: buff.ironfur.stack
@@ -218,8 +220,14 @@ lists:
     - ancestral_call,name="Ancestral Call",if=var.incarnation_active
 
   defensives:
+    # 1. MAINTENANCE (OFF-GCD)
+    - ironfur,name="Ironfur (Maintenance)",if=var.need_ironfur
+    - ironfur,name="Ironfur (Heavy)",if=health.pct<70&buff.ironfur.stack<2&var.rage>=45
+    - ironfur,name="Ironfur (Panic)",if=health.pct<40&var.rage>=40
+    
+    # 2. EMERGENCY DEFENSIVES
     - survival_instincts,name="Survival Instincts (Panic)",if=var.emergency_situation&!var.survival_up
-    - rage_of_the_sleeper,name="Rage Sleeper (Panic)",if=config.hero_tree=1&var.emergency_situation&!var.survival_up
+    - rage_of_the_sleeper,name="Rage Sleeper (Panic)",if=var.emergency_situation&!var.survival_up
     - frenzied_regeneration,name="Frenzied Regen (Panic)",if=var.emergency_situation&var.rage>=10
     - barkskin,name="Barkskin (Panic)",if=var.emergency_situation&!var.survival_up
     - survival_instincts,name="Survival Instincts",if=var.dangerous_situation&!var.barkskin_up
@@ -229,8 +237,8 @@ lists:
     - frenzied_regeneration,name="Frenzied Regen (Low HP)",if=health.pct<config.frenzied_regen_threshold
     - barkskin,name="Barkskin",if=health.pct<config.barkskin_threshold&!var.survival_up
     - ironfur,name="Ironfur (Avenger)",if=var.after_avenger_up&var.ironfur_stacks<config.ironfur_stacks_max
-    - ironfur,name="Ironfur (Heavy)",if=var.heavy_damage&var.rage>=40
     - ironfur,name="Ironfur (Incarnation)",if=var.incarnation_active&var.ironfur_stacks<config.ironfur_stacks_max&var.rage>=45
+
       
   cooldowns:
     - wild_guardian,name="Wild Guardian (Apex)",if=var.incarnation_active
