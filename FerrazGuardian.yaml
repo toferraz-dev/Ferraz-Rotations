@@ -408,7 +408,6 @@ lists:
   main:
     - call_action_list,name=sanity_checks
     - call_action_list,name=spell_queue
-    - rebirth.mouseover,name="Rebirth (MO)",if=mouseover.exists&mouseover.dead&mouseover.friendly
     - call_action_list,name=buff_mark_of_the_wild
     - bear_form,name="Manual Bear Form",if=!var.in_bear_form&player.combat&!mounted.flying&!mounted.ground
     - moonfire,name="Pull Moonfire",if=config.allow_pull_with_mo&!player.combat&target.enemy&target.alive&debuff.moonfire.down
@@ -420,7 +419,6 @@ lists:
     - call_action_list,name=auto_heal
     - call_action_list,name=taunt
     - call_action_list,name=interrupts
-    - call_action_list,name=dispel
     
     # Survival & cooldowns
     - call_action_list,name=defensives,if=var.in_bear_form
