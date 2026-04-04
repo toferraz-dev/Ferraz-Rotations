@@ -4,105 +4,117 @@ patch: "12.0.1"
 spec: 104
 name: Guardian Master
 description: |
-  Master Guardian Druid Rotation for Mythic+.
-  Supports both Elunes Chosen / Druid of the Claw hero talents.
-  Includes Wowhead (Aggressive DPS) - Alternative / Method.gg (Balanced) rotation styles.
+  Master Guardian Druid Rotation for Mythic+ (Midnight Expansion).
+  Exclusively optimized for Elunes Chosen Hero Talents.
 
 entry: main
 
+# ==========================================================
+#  CONFIGURATION
+# ==========================================================
+
 config:
 
-
-
-  # CONFIG
-  use_racials:
-    label: "Auto Racials"
-    type: checkbox
-    default: true
-  allow_pull_with_mo:
-    label: "Pull with Moonfire"
-    type: checkbox
-    default: true
+  # SURVIVAL THRESHOLDS
   survival_instincts_threshold:
     label: Survival Instincts %
     type: slider
     min: 10
     max: 70
     default: 50
+
   frenzied_regen_threshold:
     label: Frenzied Regeneration %
     type: slider
     min: 30
     max: 80
     default: 65
+
   barkskin_threshold:
     label: Barkskin %
     type: slider
     min: 30
     max: 90
     default: 65
+
+  # IRONFUR SETTINGS
   ironfur_stacks_min:
     label: "Min Ironfur Stacks to maintain"
     type: slider
     min: 1
     max: 7
     default: 1
+
   ironfur_stacks_max:
     label: "Max Ironfur Stacks (heavy damage)"
     type: slider
     min: 2
     max: 10
     default: 3
+
   ironfur_rage_threshold:
     label: "Min Rage for Ironfur"
     type: slider
     min: 30
     max: 80
     default: 40
-  rage_cap_threshold:
-    label: "Rage Cap Threshold (dump)"
-    type: slider
-    min: 60
-    max: 100
-    default: 80
 
-  # MAJOR COOLDOWNS
-  incarnation_enemies:
-    label: "Min enemies for Incarnation"
-    type: slider
-    min: 1
-    max: 10
-    default: 3
-  rage_of_sleeper_threshold:
-    label: "HP% for Rage of the Sleeper (Elune)"
-    type: slider
-    min: 30
-    max: 90
-    default: 70
+  # GENERAL SETTINGS
+  use_racials:
+    label: "Auto Racials"
+    type: checkbox
+    default: true
+
+  allow_pull_with_mo:
+    label: "Pull with Moonfire"
+    type: checkbox
+    default: true
+
   use_heart_of_the_wild:
     label: "Use Heart of the Wild"
     type: checkbox
     default: true
 
-  # ROTATION
+  use_trinkets:
+    label: "Auto Trinkets"
+    type: checkbox
+    default: true
+
+  # ROTATION & COOLDOWNS
   thrash_stacks_target:
     label: "Thrash Stacks to maintain"
     type: slider
     min: 1
     max: 5
     default: 3
+
   raze_targets:
-    label: "Min targets for Raze (instead of Maul - Elune)"
+    label: "Min targets for Raze (Elune)"
     type: slider
     min: 2
     max: 5
     default: 2
+
+  incarnation_enemies:
+    label: "Min enemies for Incarnation"
+    type: slider
+    min: 1
+    max: 10
+    default: 3
+
+  rage_of_sleeper_threshold:
+    label: "HP% for Rage of the Sleeper"
+    type: slider
+    min: 30
+    max: 90
+    default: 70
 
   # INTERRUPTS
   use_skull_bash:
     label: "Auto Interrupt"
     type: checkbox
     default: true
+
   skull_bash_delay:
     label: "Interrupt Delay (ms)"
     type: slider
@@ -124,6 +136,7 @@ config:
       - label: "Always when moving"
         value: 3
     default: 2
+
   stampeding_roar_movement_time:
     label: "Roar after moving (seconds)"
     type: slider
@@ -131,13 +144,12 @@ config:
     max: 4
     default: 2
 
-  # TRINKETS
-  use_trinkets:
-    label: "Auto Trinkets"
-    type: checkbox
-    default: true
+# ==========================================================
+#  VARIABLES & DETECTION
+# ==========================================================
 
 variables:
+
   # FORM AND RESOURCES
   in_bear_form: player.form=1|buff.bear_form.up|buff(Bear Form).up
   rage: player.rage
@@ -145,17 +157,21 @@ variables:
   rage_overcap: player.rage>=80
   rage_for_harnessed: player.rage>=80
   rage_for_ironfur: player.rage>=40
+
+  # MITIGATION STATES
+  ironfur_stacks: buff.ironfur.stack
   need_ironfur: (buff.ironfur.stack<1|buff.ironfur.remains<1.5)&player.rage>=40
   heavy_ironfur: player.rage>=50&buff.ironfur.stack<3
-  ironfur_stacks: buff.ironfur.stack
   heavy_damage: health.pct<70&var.ironfur_stacks<config.ironfur_stacks_max
-
   dangerous_situation: health.pct<50&!buff.survival_instincts.up
   emergency_situation: health.pct<30
+
+  # BUFF TRACKING
   barkskin_up: buff.barkskin.up
   survival_up: buff.survival_instincts.up
   any_major_defensive: var.barkskin_up|var.survival_up|buff.rage_of_the_sleeper.up
   after_avenger_up: buff.after_avenger.up|buff.after_the_wildfire.up
+  incarnation_active: buff.incarnation_guardian_of_ursoc.up|buff.berserk.up
 
   # OFFENSIVE PROCS
   galactic_guardian_up: buff.galactic_guardian.up
@@ -170,24 +186,25 @@ variables:
   thrash_needs_refresh: debuff.thrash.remains<4.5|debuff.thrash.stack<var.thrash_target_stacks
   moonfire_needs_refresh: debuff.moonfire.remains<4.8
 
-  # COOLDOWN STATES
+  # ELUNE'S CHOSEN SYNERGY
   lunar_beam_active: buff.lunar_beam.up
   lunar_beam_soon: cooldown.lunar_beam.remains<15
   lunar_beam_ready: cooldown.lunar_beam.ready
-  incarnation_active: buff.incarnation_guardian_of_ursoc.up|buff.berserk.up
-  combat_start: player.combat&player.combat.time<3
-  
-  # ELUNE'S CHOSEN SYNERGY
   use_lunar_beam: var.lunar_beam_ready&(active_enemies>=2|health.pct<70|target.boss)
-
-  # TARGETING
   use_raze: active_enemies>=config.raze_targets
-  can_interrupt: target.casting&!target.casting.interruptible=false
+  combat_start: player.combat&player.combat.time<3
 
-  # MOVEMENT
+  # MOVEMENT & UTILITY
+  can_interrupt: target.casting&!target.casting.interruptible=false
   use_stampeding_roar: moving.time>=config.stampeding_roar_movement_time&buff.stampeding_roar.down&((config.stampeding_roar_usage=1&player.combat)|(config.stampeding_roar_usage=2&!player.combat)|(config.stampeding_roar_usage=3))
 
+# ==========================================================
+#  ACTION LISTS
+# ==========================================================
+
 lists:
+
+  # --- UTILITY & CHECKS ---
 
   spell_queue:
     - queue_spell,name="Spell Queue"
@@ -203,33 +220,54 @@ lists:
     - return,if=player.cc
     - return,if=player.loot_nearby
 
-  racials:
-    - blood_fury,name="Blood Fury",if=var.incarnation_active
-    - berserking,name="Berserking",if=var.incarnation_active
-    - fireblood,name="Fireblood",if=var.incarnation_active
-    - ancestral_call,name="Ancestral Call",if=var.incarnation_active
+  interrupts:
+    - target_enemy,delay=100,name="Search Interrupt",if=!interrupt.target.check&interrupt.5y.any
+    - target_enemy,delay=100,name="Search Soothe",if=!target.purgeable.enrage&enemies.combat.any(cycle.purgeable.enrage)
+    - skull_bash,name="Skull Bash",if=interrupt.target.check
+    - skull_bash.mouseover,name="Skull Bash (MO)",if=interrupt.mouseover.check
+    - skull_bash.focus,name="Skull Bash (Focus)",if=interrupt.focus.check
+    - incapacitating_roar,name="Roar (AoE CC)",if=interrupt.stun.aoe.check
+    - mighty_bash,name="Mighty Bash",if=interrupt.cc.check
+    - soothe,name="Soothe Enrage",if=target.purgeable.enrage
+
+  taunt:
+    - growl,name="Growl (MO)",target=mouseover,if=target.threat<3&target.alive&target.enemy
+    - growl,name="Growl ST",if=target.threat<3
+
+  # --- SURVIVAL & BUFFS ---
 
   defensives:
     # 1. MAINTENANCE (OFF-GCD)
     - ironfur,name="Ironfur (Maintenance)",if=var.need_ironfur
     - ironfur,name="Ironfur (Heavy)",if=health.pct<70&buff.ironfur.stack<2&var.rage>=45
     - ironfur,name="Ironfur (Panic)",if=health.pct<40&var.rage>=40
-    
+
     # 2. EMERGENCY DEFENSIVES
     - survival_instincts,name="Survival Instincts (Panic)",if=var.emergency_situation&!var.survival_up
     - rage_of_the_sleeper,name="Rage Sleeper (Panic)",if=var.emergency_situation&!var.survival_up
     - frenzied_regeneration,name="Frenzied Regen (Panic)",if=var.emergency_situation&var.rage>=10
     - barkskin,name="Barkskin (Panic)",if=var.emergency_situation&!var.survival_up
+
+    # 3. PROACTIVE DEFENSIVES
     - survival_instincts,name="Survival Instincts",if=var.dangerous_situation&!var.barkskin_up
     - frenzied_regeneration,name="Frenzied Regen",if=var.dangerous_situation&var.rage>=20
     - ironfur,name="Ironfur (Defensive)",if=var.dangerous_situation&var.rage>=40
     - survival_instincts,name="Survival Instincts (Low HP)",if=health.pct<config.survival_instincts_threshold&cooldown.frenzied_regeneration.remains>2&!var.any_major_defensive
     - frenzied_regeneration,name="Frenzied Regen (Low HP)",if=health.pct<config.frenzied_regen_threshold
     - barkskin,name="Barkskin",if=health.pct<config.barkskin_threshold&!var.survival_up
+
+    # 4. MAINTENANCE DEFENSIVES
     - ironfur,name="Ironfur (Avenger)",if=var.after_avenger_up&var.ironfur_stacks<config.ironfur_stacks_max
     - ironfur,name="Ironfur (Incarnation)",if=var.incarnation_active&var.ironfur_stacks<config.ironfur_stacks_max&var.rage>=45
 
-      
+  racials:
+    - blood_fury,name="Blood Fury",if=var.incarnation_active
+    - berserking,name="Berserking",if=var.incarnation_active
+    - fireblood,name="Fireblood",if=var.incarnation_active
+    - ancestral_call,name="Ancestral Call",if=var.incarnation_active
+
+  # --- OFFENSIVE COOLDOWNS ---
+
   cooldowns:
     - wild_guardian,name="Wild Guardian (Apex)",if=var.incarnation_active
     - heart_of_the_wild,name="Heart of the Wild",if=config.use_heart_of_the_wild&var.in_bear_form&(cooldown.incarnation_guardian_of_ursoc.ready|var.incarnation_active|active_enemies>=3|target.boss)
@@ -238,52 +276,9 @@ lists:
     - berserk_ravage,name="Berserk Ravage",if=talent.berserk_ravage&(active_enemies>=3|target.boss)
     - berserk_ravage,name="Berserk (Elune)",if=talent.berserk&(active_enemies>=3|target.boss)
     - rage_of_the_sleeper,name="Rage of the Sleeper",if=health.pct<config.rage_of_sleeper_threshold|active_enemies>=3|var.incarnation_active
-  
-  interrupts:
-    # Auto Swap
-    - target_enemy,delay=100,name="Search Interrupt",if=!interrupt.target.check&interrupt.5y.any
-    - target_enemy,delay=100,name="Search Soothe",if=!target.purgeable.enrage&enemies.combat.any(cycle.purgeable.enrage)
-    
-    # Interrupts
-    - skull_bash,name="Skull Bash",if=interrupt.target.check
-    - skull_bash.mouseover,name="Skull Bash (MO)",if=interrupt.mouseover.check
-    - skull_bash.focus,name="Skull Bash (Focus)",if=interrupt.focus.check
-    
-    # Utility
-    - incapacitating_roar,name="Roar (AoE CC)",if=interrupt.stun.aoe.check
-    - mighty_bash,name="Mighty Bash",if=interrupt.cc.check
-    - soothe,name="Soothe Enrage",if=target.purgeable.enrage
 
-  taunt:
-    - growl,name="Growl (MO)",target=mouseover,if=target.threat<3&target.alive&target.enemy
-    - growl,name="Growl ST",if=target.threat<3
-  
-  rage_management:
-    - ironfur,name="Ironfur (Resource Dump)",if=buff.ironfur.stack<config.ironfur_stacks_max&var.rage>=85&buff.ironfur.remains<2
-    - maul,name="Maul (Tooth/Claw)",if=var.tooth_and_claw_up&var.rage>=40&!var.use_raze
-    - raze,name="Raze (Dump)",if=var.use_raze&var.rage_for_harnessed
-    - raze,name="Raze (Overcap)",if=var.use_raze&var.rage_overcap
-    - maul,name="Maul (Incarnation)",if=var.incarnation_active&var.rage>=50&!var.use_raze
-    - maul,name="Maul (Overcap)",if=!var.use_raze&var.rage_overcap
-    - ironfur,name="Ironfur (Maintenance)",if=var.need_ironfur
-  
-  moonfire_spread:
-    - moonfire,name="Moonfire Start",if=var.combat_start&debuff.moonfire.down&range<=40
-    - moonfire,name="Moonfire Incarnation",if=var.incarnation_active&debuff.moonfire.down&range<=40
-    - moonfire,name="Moonfire (Galactic)",if=var.galactic_guardian_up
-    - moonfire,name="Moonfire (Beam Sync)",if=var.lunar_beam_soon&var.moonfire_needs_refresh
-    - moonfire,name="Moonfire Apply",if=debuff.moonfire.down
-    - moonfire,name="Moonfire Refresh",if=var.moonfire_needs_refresh
-    - moonfire,name="Moonfire (MO)",target=mouseover,if=debuff.moonfire.down&range<=40&target.alive&target.enemy
+  # --- CORE ELUNE'S CHOSEN ROTATIONS ---
 
-  # ----------------------------------------------------------
-  #  ELUNE'S CHOSEN ROTATIONS
-  # ----------------------------------------------------------
-  
-  # ----------------------------------------------------------
-  #  ELUNE'S CHOSEN ROTATIONS
-  # ----------------------------------------------------------
-  
   rotation_st_elune:
     - moonfire,name="Moonfire (Guardian Proc)",if=var.galactic_guardian_up
     - mangle,name="Mangle (Proc)",if=var.gore_up
@@ -294,7 +289,7 @@ lists:
     - raze,name="Raze (Dump)",if=active_enemies=1&var.rage>=90
     - maul,name="Maul (Dump)",if=var.rage>=config.rage_cap_threshold
     - swipe,name="Swipe Filler"
-  
+
   rotation_aoe_elune:
     - moonfire,name="Moonfire (Guardian Proc)",if=var.galactic_guardian_up
     - thrash,name="Thrash Refresh AoE",if=var.thrash_needs_refresh
@@ -306,15 +301,26 @@ lists:
     - mangle,name="Mangle AoE"
     - raze,name="Raze (Harnessed)",if=var.rage_for_harnessed
     - raze,name="Raze (Overcap)",if=var.rage>=config.rage_cap_threshold
-    - maul,name="Maul (Tooth/Claw AoE)",if=var.tooth_and_claw_up&var.rage>=60
     - raze,name="Raze Dump AoE",if=var.rage>=40
     - swipe,name="Swipe AoE Filler"
 
+  moonfire_spread:
+    - moonfire,name="Moonfire Start",if=var.combat_start&debuff.moonfire.down&range<=40
+    - moonfire,name="Moonfire Incarnation",if=var.incarnation_active&debuff.moonfire.down&range<=40
+    - moonfire,name="Moonfire (Galactic)",if=var.galactic_guardian_up
+    - moonfire,name="Moonfire (Beam Sync)",if=var.lunar_beam_soon&var.moonfire_needs_refresh
+    - moonfire,name="Moonfire Apply",if=debuff.moonfire.down
+    - moonfire,name="Moonfire Refresh",if=var.moonfire_needs_refresh
+    - moonfire,name="Moonfire (MO)",target=mouseover,if=debuff.moonfire.down&range<=40&target.alive&target.enemy
 
-
-  # ----------------------------------------------------------
-  #  SHARED / MISC
-  # ----------------------------------------------------------
+  rage_management:
+    - ironfur,name="Ironfur (Resource Dump)",if=buff.ironfur.stack<config.ironfur_stacks_max&var.rage>=85&buff.ironfur.remains<2
+    - maul,name="Maul (Tooth/Claw)",if=var.tooth_and_claw_up&var.rage>=40&!var.use_raze
+    - raze,name="Raze (Dump)",if=var.use_raze&var.rage_for_harnessed
+    - raze,name="Raze (Overcap)",if=var.use_raze&var.rage_overcap
+    - maul,name="Maul (Incarnation)",if=var.incarnation_active&var.rage>=50&!var.use_raze
+    - maul,name="Maul (Overcap)",if=!var.use_raze&var.rage_overcap
+    - ironfur,name="Ironfur (Maintenance)",if=var.need_ironfur
 
   trinkets:
     - trinket_1,name="Trinket 1",if=config.use_trinkets&trinket_1.ready&(var.incarnation_active|health.pct<70)
@@ -322,43 +328,43 @@ lists:
 
   movement:
     - stampeding_roar,name="Stampeding Roar",if=var.use_stampeding_roar&config.stampeding_roar_usage!=0
-  
-  # ----------------------------------------------------------
-  #  MAIN ENTRY POINT
-  # ----------------------------------------------------------
-  
-  main:
-    # --- STEP 1: SANITY & PREPARATIONS ---
-    - call_action_list,name=sanity_checks
-    - call_action_list,name=spell_queue
-    - call_action_list,name=buff_mark_of_the_wild
-    
-    # --- STEP 2: FORM & PULL ---
-    - bear_form,name="Bear Form (Combat)",if=!var.in_bear_form&player.combat&!mounted.flying&!mounted.ground
-    - moonfire,name="Pull Moonfire",if=config.allow_pull_with_mo&!player.combat&target.enemy&target.alive&debuff.moonfire.down
-    - return,if=!player.combat&active_enemies=0
-    - return,if=player.channeling
-    
-    # --- STEP 3: MITIGATION & SURVIVAL (OFF-GCD) ---
-    - ironfur,name="Ironfur (Emergency)",if=var.in_bear_form&var.need_ironfur
-    - ironfur,name="Ironfur (Heavy)",if=var.in_bear_form&var.heavy_ironfur&health.pct<70
-    - call_action_list,name=defensives,if=var.in_bear_form
-    
-    # --- STEP 4: UTILITY & CC ---
-    - call_action_list,name=auto_target
-    - call_action_list,name=auto_heal
-    - call_action_list,name=taunt
-    - call_action_list,name=interrupts
-    
-    # --- STEP 5: OFFENSIVE BURST ---
-    - call_action_list,name=cooldowns,if=var.in_bear_form
-    - call_action_list,name=racials,if=config.use_racials&var.in_bear_form
-    
-    # --- STEP 6: CORE ROTATION (GCD) ---
-    - call_action_list,name=rotation_aoe_elune,if=active_enemies>=2&var.in_bear_form
-    - call_action_list,name=rotation_st_elune,if=var.in_bear_form
 
-    # --- STEP 7: RAGE CAPPING & CLEANUP ---
-    - call_action_list,name=rage_management,if=var.in_bear_form
-    - call_action_list,name=movement,if=player.moving
-    - call_action_list,name=trinkets
+# ==========================================================
+#  MAIN ENTRY POINT
+# ==========================================================
+
+main:
+  # --- STEP 1: SANITY & PREPARATIONS ---
+  - call_action_list,name=sanity_checks
+  - call_action_list,name=spell_queue
+  - call_action_list,name=buff_mark_of_the_wild
+
+  # --- STEP 2: FORM & PULL ---
+  - bear_form,name="Bear Form (Combat)",if=!var.in_bear_form&player.combat&!mounted.flying&!mounted.ground
+  - moonfire,name="Pull Moonfire",if=config.allow_pull_with_mo&!player.combat&target.enemy&target.alive&debuff.moonfire.down
+  - return,if=!player.combat&active_enemies=0
+  - return,if=player.channeling
+
+  # --- STEP 3: MITIGATION & SURVIVAL (OFF-GCD) ---
+  - ironfur,name="Ironfur (Emergency)",if=var.in_bear_form&var.need_ironfur
+  - ironfur,name="Ironfur (Heavy)",if=var.in_bear_form&var.heavy_ironfur&health.pct<70
+  - call_action_list,name=defensives,if=var.in_bear_form
+
+  # --- STEP 4: UTILITY & CC ---
+  - call_action_list,name=auto_target
+  - call_action_list,name=auto_heal
+  - call_action_list,name=taunt
+  - call_action_list,name=interrupts
+
+  # --- STEP 5: OFFENSIVE BURST ---
+  - call_action_list,name=cooldowns,if=var.in_bear_form
+  - call_action_list,name=racials,if=config.use_racials&var.in_bear_form
+
+  # --- STEP 6: CORE ROTATION (GCD) ---
+  - call_action_list,name=rotation_aoe_elune,if=active_enemies>=2&var.in_bear_form
+  - call_action_list,name=rotation_st_elune,if=var.in_bear_form
+
+  # --- STEP 7: RAGE CAPPING & CLEANUP ---
+  - call_action_list,name=rage_management,if=var.in_bear_form
+  - call_action_list,name=movement,if=player.moving
+  - call_action_list,name=trinkets
