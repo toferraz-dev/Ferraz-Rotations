@@ -110,11 +110,6 @@ config:
     type: checkbox
     default: false
 
-  auto_dispel:
-    label: "Auto Dispel"
-    type: checkbox
-    default: true
-
   # --- Movement ---
   stampeding_roar_usage:
     label: "Stampeding Roar Usage"
@@ -228,10 +223,6 @@ lists:
     - incapacitating_roar,name="Roar (AoE)",if=interrupt.stun.aoe.check
     - mighty_bash,name="Mighty Bash",if=interrupt.cc.check
     - soothe,name="Soothe",if=target.purgeable.enrage
-
-  dispel:
-    - remove_corruption,name="Remove Corruption",cycle=members,if=config.auto_dispel&cycle.dispelable.list&cycle.range>0&cycle.range<=40
-
 
   # ----------------------------------------------------------
   #  TRINKETS & MOVEMENT
@@ -358,7 +349,7 @@ lists:
     - call_action_list,name=auto_target
     - call_action_list,name=auto_heal
     - call_action_list,name=interrupts
-    - call_action_list,name=dispel
+    - call_action_list,name=auto_dispel
     - call_action_list,name=defensives
     - call_action_list,name=movement,if=player.moving
     - call_action_list,name=trinkets

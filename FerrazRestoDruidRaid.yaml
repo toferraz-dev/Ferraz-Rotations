@@ -234,9 +234,6 @@ lists:
     - target_enemy,delay=100,name="Search Enrage",if=!player.channeling&!target.purgeable.enrage&enemies.combat.any(cycle.purgeable.enrage)
     - soothe,name="Soothe Enrage",if=!player.channeling&target.purgeable.enrage    
 
-  dispel:
-    - natures_cure,name="Nature's Cure",cycle=members,if=config.auto_dispel&cycle.dispelable.list&cycle.range>0&cycle.range<=40
-  
   out_of_combat:
     - mark_of_the_wild,name="Mark of the Wild",range_check=none,if=buff.mark_of_the_wild.down.any
     
@@ -343,7 +340,7 @@ lists:
     - call_action_list,name=auto_target
     - call_action_list,name=auto_heal
     - call_action_list,name=interrupts
-    - call_action_list,name=dispel
+    - call_action_list,name=auto_dispel
     - call_action_list,name=racials
     - call_action_list,name=defensives
     - call_action_list,name=utility
