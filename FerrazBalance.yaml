@@ -1,8 +1,8 @@
 version: 3.2
 author: Ferraz
-patch: "12.0.1"
+patch: "12.0.1.6"
 spec: 102
-name: Balance Elunes (Midnight Updated)
+name: Balance Elunes (Outdated)
 description: |
   Balance Druid - Elunes Chosen for Mythic+. Optimized for Patch 12.0.1 (Midnight).
   Supports Wowhead (Aggressive/Elune Focus) / Method.gg (Balanced/Eclipse Control).
