@@ -228,8 +228,7 @@ lists:
     - rage_of_the_sleeper,if=config.hero_tree=1&(health.pct<config.rage_of_sleeper_threshold|active_enemies>=4|(var.incarnation_active&active_enemies>=3))
     - berserk_ravage,if=talent.berserk_ravage&(active_enemies>=3|target.boss)
     - berserk_ravage,if=config.hero_tree=1&talent.berserk&(active_enemies>=3|target.boss)
-    - heart_of_the_wild,if=config.hero_tree=1&var.in_bear_form&active_enemies>=4
-  
+      
   interrupts:
     - skull_bash,if=config.use_skull_bash&var.can_interrupt,delay=config.skull_bash_delay
     - soothe,if=target.purgeable.enrage
@@ -329,7 +328,6 @@ lists:
     - call_action_list,name=sanity_checks
     - call_action_list,name=spell_queue
     - call_action_list,name=buff_mark_of_the_wild
-    - heart_of_the_wild,if=config.hero_tree=2&!var.in_bear_form&!buff.cat_form.up&player.combat
     - bear_form,if=!var.in_bear_form&player.combat&!mounted.flying&!mounted.ground
     - moonfire,if=config.allow_pull_with_mo&!player.combat&target.enemy&target.alive&debuff.moonfire.down
     - return,if=!player.combat&active_enemies=0
