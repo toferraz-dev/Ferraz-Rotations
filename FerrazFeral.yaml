@@ -1,8 +1,8 @@
 version: 2.0
 author: Ferraz
-patch: "12.0.1"
+patch: "12.0.1.6"
 spec: 103
-name: Feral Midnight (Teste Beta)
+name: Feral Midnight
 description: |
   Feral Druid Rotation for Mythic+ — Midnight (12.0.1).
   Optimized for simplified 12.0.1 mechanics (Removed Thrash/Brutal Slash).
