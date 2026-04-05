@@ -187,17 +187,6 @@ variables:
   mo_friendly_valid: mouseover.exists&mouseover.alive&mouseover.friendly&mouseover.range>0&mouseover.range<=40
 
 lists:
-  spell_queue:
-    - queue_spell,name="Spell Queue",if=!buff.cat_form.up&!buff.bear_form.up&!player.casting
-
-  sanity_checks:
-    - return,if=player.dead
-    - return,if=mounted
-    - return,if=!state.rotation
-    - return,if=state.blocked_inputs
-    - return,if=player.cc
-    - return,if=player.loot_nearby
-  
   interrupts:
     # Auto Swap Search
     - target_enemy,delay=100,name="Search Soothe",if=!target.purgeable.enrage&enemies.combat.any(cycle.purgeable.enrage)
