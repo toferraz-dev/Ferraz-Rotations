@@ -168,6 +168,11 @@ config:
     type: checkbox
     default: true
 
+  auto_dispel:
+    label: "Auto Dispel"
+    type: checkbox
+    default: true
+
   force_dps:
     label: "Force DPS"
     spell: 768
@@ -206,7 +211,10 @@ lists:
     # AoE Interrupt
     - incapacitating_roar,name="Roar (AoE CC)",if=interrupt.stun.aoe.check
     - soothe,name="Soothe Enrage",if=target.purgeable.enrage    
-  
+
+  dispel:
+    - natures_cure,name="Nature's Cure",cycle=members,if=config.auto_dispel&cycle.dispelable.list&cycle.range>0&cycle.range<=40
+    
   out_of_combat:
     - mark_of_the_wild,name="Mark of the Wild",if=group.count(cycle.buff.mark_of_the_wild.down.any)>0
     - symbiotic_relationship,name="Symbiotic Tank",cycle=tanks,if=!buff.symbiotic_relationship.up&!cycle.buff.symbiotic_relationship.up&!player.casting
@@ -318,6 +326,7 @@ lists:
     - call_action_list,name=auto_target
     - call_action_list,name=auto_heal
     - call_action_list,name=interrupts
+    - call_action_list,name=dispel
     - call_action_list,name=racials
     - call_action_list,name=defensives
     - call_action_list,name=utility
