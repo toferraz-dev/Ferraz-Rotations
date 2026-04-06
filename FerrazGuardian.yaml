@@ -192,20 +192,8 @@ variables:
   use_stampeding_roar: moving.time>=config.stampeding_roar_movement_time&buff.stampeding_roar.down&((config.stampeding_roar_usage=1&player.combat)|(config.stampeding_roar_usage=2&!player.combat)|(config.stampeding_roar_usage=3))
 
 lists:
-
-  spell_queue:
-    - queue_spell
-
-  buff_mark_of_the_wild:
-    - mark_of_the_wild,if=group.count(cycle.buff.mark_of_the_wild.down.any&cycle.range>0&cycle.range<=40)>0
-
-  sanity_checks:
-    - return,if=player.dead
-    - return,if=mounted
-    - return,if=!state.rotation
-    - return,if=state.blocked_inputs
-    - return,if=player.cc
-    - return,if=player.loot_nearby
+  out_of_combat:
+    - mark_of_the_wild,name="Mark of the Wild",range_check=none,if=buff.mark_of_the_wild.down.any
 
   defensives:
     - survival_instincts,if=var.emergency_situation&!var.survival_up
@@ -309,7 +297,6 @@ lists:
   # ----------------------------------------------------------
   #  SHARED / MISC
   # ----------------------------------------------------------
-
   trinkets:
     - trinket_1,if=trinket_1.ready&config.trinket_usage!=0&((config.trinket_usage=1)|(config.trinket_usage=2&var.incarnation_active)|(config.trinket_usage=3&health.pct<70))
     - trinket_2,if=trinket_2.ready&config.trinket_usage!=0&((config.trinket_usage=1)|(config.trinket_usage=2&var.incarnation_active)|(config.trinket_usage=3&health.pct<70))
@@ -322,30 +309,25 @@ lists:
   # ----------------------------------------------------------
   
   main:
-    - call_action_list,name=sanity_checks
     - call_action_list,name=spell_queue
-    - call_action_list,name=buff_mark_of_the_wild
-    - bear_form,if=!var.in_bear_form&player.combat&!mounted.flying&!mounted.ground
-    - moonfire,if=config.allow_pull_with_mo&!player.combat&target.enemy&target.alive&debuff.moonfire.down
-    - return,if=!player.combat&active_enemies=0
-    - return,if=player.channeling
-    
-    # Targeting & utility
+    - call_action_list,name=sanity_checks
+    - call_action_list,name=out_of_combat
     - call_action_list,name=auto_target
-    - call_action_list,name=auto_heal    
+    - call_action_list,name=auto_heal
+    - return,if=auto_combat.player
+
+    # Bear Form Management (Simia Logic)
+    - bear_form,name="Manual Bear Shift",if=!var.in_bear_form&!talent.fluid_form&(target.attackable|active_enemies>0)
+    - mangle,name="Fluid Form Shift",if=!var.in_bear_form&talent.fluid_form&(target.attackable|active_enemies>0)
+
     - call_action_list,name=taunt
     - call_action_list,name=interrupts
-    - call_action_list,name=auto_dispel
-    
-    # Survival & cooldowns
     - call_action_list,name=defensives,if=var.in_bear_form
     - call_action_list,name=cooldowns,if=var.in_bear_form
-    - call_action_list,name=rage_management,if=var.in_bear_form
-    
-    # Movement & Utils
-    - call_action_list,name=movement,if=player.moving
     - call_action_list,name=trinkets
-    
+    - call_action_list,name=rage_management,if=var.in_bear_form
+    - call_action_list,name=movement,if=player.moving
+
     # Rotations based on Hero Tree
     - call_action_list,name=rotation_aoe_elune,if=config.hero_tree=1&active_enemies>=3&var.in_bear_form
     - call_action_list,name=rotation_st_elune,if=config.hero_tree=1&var.in_bear_form
