@@ -201,7 +201,7 @@ variables:
   use_lunar_beam: var.lunar_beam_ready&(active_enemies>=2|health.pct<70|target.boss)
 
   # TARGETING
-  use_raze: config.hero_tree=1&active_enemies>=config.raze_targets
+  use_raze: active_enemies>=config.raze_targets
   can_interrupt: target.casting&!target.casting.interruptible=false
 
   # MOVEMENT
@@ -213,7 +213,7 @@ lists:
 
   defensives:
     - survival_instincts,if=var.emergency_situation&!var.survival_up
-    - rage_of_the_sleeper,if=config.hero_tree=1&var.emergency_situation&!var.survival_up
+    - rage_of_the_sleeper,if=var.emergency_situation&!var.survival_up
     - frenzied_regeneration,if=var.emergency_situation
     - barkskin,if=var.emergency_situation&!var.survival_up
     - survival_instincts,if=var.dangerous_situation&!var.barkskin_up
@@ -227,11 +227,11 @@ lists:
     - ironfur,if=var.incarnation_active&var.ironfur_stacks<config.ironfur_stacks_max
       
   cooldowns:
-    - lunar_beam,if=config.hero_tree=1&var.use_lunar_beam
+    - lunar_beam,if=var.use_lunar_beam
     - incarnation_guardian_of_ursoc,if=active_enemies>=config.incarnation_enemies|(target.boss&target.time_to_die>20)
-    - rage_of_the_sleeper,if=config.hero_tree=1&(health.pct<config.rage_of_sleeper_threshold|active_enemies>=4|(var.incarnation_active&active_enemies>=3))
+    - rage_of_the_sleeper,if=(health.pct<config.rage_of_sleeper_threshold|active_enemies>=4|(var.incarnation_active&active_enemies>=3))
     - berserk_ravage,if=talent.berserk_ravage&(active_enemies>=3|target.boss)
-    - berserk_ravage,if=config.hero_tree=1&talent.berserk&(active_enemies>=3|target.boss)
+    - berserk_ravage,if=talent.berserk&(active_enemies>=3|target.boss)
       
   interrupts:
     - skull_bash,if=config.use_skull_bash&var.can_interrupt,delay=config.skull_bash_delay
@@ -245,8 +245,8 @@ lists:
   rage_management:
     - ironfur,if=var.need_ironfur
     - ironfur,if=var.ironfur_stacks<config.ironfur_stacks_max&(buff.ironfur.remains<3|var.high_rage)
-    - ravage,if=config.hero_tree=2&buff.ravage.up
-    - maul,if=var.tooth_and_claw_up&!var.use_raze
+    - ravage,if=buff.ravage.up&var.can_spend_rage
+    - maul,if=var.tooth_and_claw_up&!var.use_raze&var.can_spend_rage
     - raze,if=var.use_raze&var.can_spend_rage
     - maul,if=var.incarnation_active&!var.use_raze&var.can_spend_rage
     - maul,if=!var.use_raze&var.can_spend_rage
@@ -255,7 +255,7 @@ lists:
     - moonfire,if=var.combat_start&debuff.moonfire.down&range<=40
     - moonfire,if=var.incarnation_active&debuff.moonfire.down&range<=40
     - moonfire,if=var.galactic_guardian_up
-    - moonfire,if=config.hero_tree=1&var.lunar_beam_soon&var.moonfire_needs_refresh
+    - moonfire,if=var.lunar_beam_soon&var.moonfire_needs_refresh
     - moonfire,if=debuff.moonfire.down
     - moonfire,if=var.moonfire_needs_refresh
     - moonfire,target=mouseover,if=debuff.moonfire.down&range<=40&target.alive&target.enemy
@@ -302,7 +302,8 @@ lists:
   rotation_aoe_claw:
     - ravage,if=buff.ravage.up
     - thrash,if=var.thrash_needs_refresh
-    - maul,if=buff.ironfur.stack>=1&var.can_spend_rage
+    - raze,if=var.use_raze&var.can_spend_rage
+    - maul,if=buff.ironfur.stack>=1&!var.use_raze&var.can_spend_rage
     - mangle,if=var.gore_up
     - mangle
     - moonfire,if=var.galactic_guardian_up
