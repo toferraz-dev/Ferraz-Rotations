@@ -135,6 +135,7 @@ variables:
 lists:
 
   out_of_combat:
+  
     - call_action_list,name=buffs
     - redemption,cycle=members,if=cycle.dead
     - holy_shock,cycle=members,if=cycle.health.effective.pct<98&var.holy_shock_ready
