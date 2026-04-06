@@ -14,6 +14,7 @@ config:
   # GAME MODE
   game_mode:
     label: "Game Mode"
+    section: "General"
     type: dropdown
     options:
       - label: "Mythic+"
@@ -25,6 +26,7 @@ config:
   # ROTATION STYLE
   rotation_source:
     label: "Rotation Style"
+    section: "General"
     type: dropdown
     options:
       - label: "Druid of the Claw"
@@ -36,12 +38,14 @@ config:
   # --- Talent Config ---
   use_chomp:
     label: "Auto Chomp"
+    section: "General"
     type: checkbox
     default: true
 
   # DEFENSIVES
   barkskin_threshold:
     label: "Barkskin HP %"
+    section: "Defensives"
     type: slider
     min: 25
     max: 95
@@ -49,6 +53,7 @@ config:
 
   survival_instincts_threshold:
     label: "Survival Instincts HP %"
+    section: "Defensives"
     type: slider
     min: 20
     max: 70
@@ -56,6 +61,7 @@ config:
 
   renewal_threshold:
     label: "Renewal HP %"
+    section: "Defensives"
     type: slider
     min: 20
     max: 80
@@ -64,36 +70,43 @@ config:
   # COOLDOWNS
   use_berserk:
     label: "Auto Berserk/Incarnation"
+    section: "Cooldowns"
     type: checkbox
     default: true
 
   use_convoke:
     label: "Auto Convoke"
+    section: "Cooldowns"
     type: checkbox
     default: true
 
   use_heart_of_the_wild:
     label: "Auto Heart of the Wild"
+    section: "Cooldowns"
     type: checkbox
     default: false
 
   use_racials:
     label: "Auto Racials"
+    section: "Cooldowns"
     type: checkbox
     default: true
 
   use_trinkets:
     label: "Auto Trinkets"
+    section: "Cooldowns"
     type: checkbox
     default: true
 
   # INTERRUPTS
   use_skull_bash:
     label: "Auto Interrupt"
+    section: "Interrupts"
     type: checkbox
     default: true
   skull_bash_delay:
     label: "Interrupt Delay (ms)"
+    section: "Interrupts"
     type: slider
     min: 0
     max: 2000
@@ -102,6 +115,7 @@ config:
   # AOE
   aoe_threshold:
     label: "Min Enemies for AoE"
+    section: "Damage"
     type: slider
     min: 2
     max: 5
@@ -110,6 +124,7 @@ config:
   # MOVEMENT
   stampeding_roar_usage:
     label: "Stampeding Roar Usage"
+    section: "Movement"
     type: dropdown
     options:
       - label: "Disabled"
@@ -123,6 +138,7 @@ config:
     default: 2
   stampeding_roar_movement_time:
     label: "Roar after moving (seconds)"
+    section: "Movement"
     type: slider
     min: 0
     max: 4
@@ -131,11 +147,13 @@ config:
   # UTILITY
   use_prowl:
     label: "Auto Prowl"
+    section: "Utility"
     type: checkbox
     default: true
 
   use_shadowmeld:
     label: "Auto Shadowmeld"
+    section: "Utility"
     type: checkbox
     default: true
 

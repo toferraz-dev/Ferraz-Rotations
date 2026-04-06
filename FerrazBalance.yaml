@@ -15,38 +15,45 @@ entry: main
 config:
   barkskin_hp:
     label: "Barkskin HP%"
+    section: "Defensives"
     type: slider
     min: 0
     max: 100
     default: 40
   renewal_hp:
     label: "Renewal HP%"
+    section: "Defensives"
     type: slider
     min: 0
     max: 100
     default: 50
   regrowth_ooc_hp:
     label: "Regrowth (OOC) HP%"
+    section: "Healing"
     type: slider
     min: 0
     max: 100
     default: 70
   travel_form_auto:
     label: "Auto Travel Form (OOC)"
+    section: "Utility"
     type: checkbox
     default: true
   enable_hotw:
     label: "HotW Support (Heal Party)"
+    section: "Healing"
     type: checkbox
     default: true
   hotw_hp_threshold:
     label: "Party HP% for HotW"
+    section: "Healing"
     type: slider
     min: 30
     max: 90
     default: 75
   use_trinkets:
     label: "Auto Trinkets"
+    section: "Utility"
     type: checkbox
     default: true
 

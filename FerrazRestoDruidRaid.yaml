@@ -13,6 +13,7 @@ config:
   # =================================================================================================
   barkskin_threshold:
     label: "Barkskin HP %"
+    section: "Defensives"
     type: slider
     min: 25
     max: 99
@@ -21,6 +22,7 @@ config:
 
   ironbark_threshold:
     label: "Ironbark HP %"
+    section: "Defensives"
     type: slider
     min: 25
     max: 99
@@ -32,6 +34,7 @@ config:
 
   tranquility_threshold:
     label: "Tranquility HP %"
+    section: "Cooldowns"
     type: slider
     min: 25
     max: 99
@@ -39,6 +42,7 @@ config:
 
   tranquility_members:
     label: "Tranquility - Min Members"
+    section: "Cooldowns"
     type: slider
     min: 1
     max: 20
@@ -46,6 +50,7 @@ config:
 
   tree_of_life_threshold:
     label: "Tree of Life HP %"
+    section: "Cooldowns"
     type: slider
     min: 25
     max: 99
@@ -53,6 +58,7 @@ config:
 
   tree_of_life_members:
     label: "Tree of Life - Min Members"
+    section: "Cooldowns"
     type: slider
     min: 1
     max: 20
@@ -60,6 +66,7 @@ config:
 
   ns_threshold:
     label: "Nature's Swiftness HP %"
+    section: "Cooldowns"
     type: slider
     min: 25
     max: 99
@@ -70,6 +77,7 @@ config:
   # =================================================================================================
   reforestation_emergency_hp:
     label: "Tree Proc - Emergency HP %"
+    section: "Cooldowns"
     type: slider
     min: 25
     max: 99
@@ -77,6 +85,7 @@ config:
 
   reforestation_emergency_members:
     label: "Tree Proc - Min Members"
+    section: "Cooldowns"
     type: slider
     min: 1
     max: 10
@@ -87,11 +96,13 @@ config:
   # =================================================================================================
   use_mouseover:
     label: "MO Healing (Emergency)"
+    section: "Healing"
     type: checkbox
     default: true
 
   mouseover_emergency_hp:
     label: "MO Emergency HP %"
+    section: "Healing"
     type: slider
     min: 10
     max: 99
@@ -99,6 +110,7 @@ config:
 
   wild_growth_threshold:
     label: "Wild Growth HP %"
+    section: "Healing"
     type: slider
     min: 25
     max: 99
@@ -106,6 +118,7 @@ config:
 
   wild_growth_members:
     label: "Wild Growth - Min Members"
+    section: "Healing"
     type: slider
     min: 1
     max: 20
@@ -116,6 +129,7 @@ config:
   # =================================================================================================
   swiftmend_threshold:
     label: "Swiftmend HP %"
+    section: "Healing"
     type: slider
     min: 25
     max: 99
@@ -123,6 +137,7 @@ config:
 
   regrowth_threshold:
     label: "Regrowth HP %"
+    section: "Healing"
     type: slider
     min: 25
     max: 99
@@ -130,6 +145,7 @@ config:
 
   rejuvenation_threshold:
     label: "Rejuvenation HP %"
+    section: "Healing"
     type: slider
     min: 25
     max: 100
@@ -141,12 +157,14 @@ config:
   # =================================================================================================
   spread_rejuvs:
     label: "Spread Rejuvs"
+    section: "Healing"
     type: toggle
     spell: 774
     description: "Ativa/Desativa o espalhamento automático de Rejuvenescimento"
 
   abundance_regrowth_stacks:
     label: "Abundance Stacks for Regrowth"
+    section: "Healing"
     type: slider
     min: 5
     max: 20
@@ -157,11 +175,13 @@ config:
   # =================================================================================================
   force_dps:
     label: "Force DPS (Ignore Group HP)"
+    section: "Damage"
     type: checkbox
     default: false
 
   use_heart_of_the_wild:
     label: "Auto Heart of the Wild"
+    section: "Damage"
     type: checkbox
     default: true
 
@@ -170,6 +190,7 @@ config:
   # =================================================================================================
   innervate_threshold:
     label: "Innervate Mana %"
+    section: "Utility"
     type: slider
     min: 25
     max: 99
@@ -178,11 +199,13 @@ config:
 
   use_trinkets:
     label: "Auto Trinkets"
+    section: "Utility"
     type: checkbox
     default: true
 
   auto_dispel:
     label: "Auto Dispel"
+    section: "Utility"
     type: checkbox
     default: true
 
@@ -191,6 +214,7 @@ config:
   # =================================================================================================
   symbiotic_target:
     label: "Symbiosis Target"
+    section: "Targeting"
     type: dropdown
     options:
       - label: "Manual"
@@ -199,6 +223,7 @@ config:
 
   lifebloom_target:
     label: "Lifebloom Target"
+    section: "Targeting"
     type: dropdown
     options:
       - label: "Auto Tanks"
