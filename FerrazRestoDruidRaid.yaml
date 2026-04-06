@@ -292,7 +292,8 @@ lists:
     - lifebloom,target=tank1,name="LB Auto Initial",if=config.lifebloom_target=0&!tank1.buff.lifebloom.up&!tank2.buff.lifebloom.up
     - lifebloom,target=tank1,name="LB Tank 1",if=config.lifebloom_target=1&(tank1.buff.lifebloom.remains<=3|tank1.buff.lifebloom.stack<3)
     - lifebloom,target=tank2,name="LB Tank 2",if=config.lifebloom_target=2&(tank2.buff.lifebloom.remains<=3|tank2.buff.lifebloom.stack<3)
-    - regrowth,name="NS Regrowth",cycle=members,if=buff.natures_swiftness.up&cycle.health.effective.pct<config.regrowth_threshold
+    - regrowth.mouseover,name="Regrowth (MO) Instant",if=var.mo_friendly_valid&(buff.natures_swiftness.up|var.is_tree_form)
+    - regrowth,name="Cycle Regrowth Instant",cycle=members,if=(buff.natures_swiftness.up|var.is_tree_form)&cycle.health.effective.pct<config.regrowth_threshold
     - regrowth,name="Clearcasting Regrowth",cycle=members,if=buff.clearcasting.up&cycle.health.effective.pct<95
     - rejuvenation,name="Spread Rejuvenation",cycle=members,if=config.spread_rejuvs&cycle.buff.rejuvenation.down&group.count(cycle.buff.rejuvenation.up)<12
     - regrowth,name="Abundance Regrowth",cycle=members,if=buff.abundance.stack>=config.abundance_regrowth_stacks&cycle.health.effective.pct<95
@@ -319,10 +320,10 @@ lists:
     - wrath,name="Wrath (Moving Tree)",if=var.is_tree_form
 
   mouseover_healing_emergency:
-    - regrowth.mouseover,name="Regrowth (MO)",if=buff.natures_swiftness.up
+    - regrowth.mouseover,name="Regrowth (MO) Instant",if=buff.natures_swiftness.up|var.is_tree_form
     - swiftmend.mouseover,name="Swiftmend (MO)",if=(mouseover.buff.rejuvenation.up|mouseover.buff.regrowth.up|mouseover.buff.wild_growth.up)
+    - regrowth.mouseover,name="Regrowth (MO) Cast",if=!player.moving
     - rejuvenation.mouseover,name="Rejuv (MO)",if=mouseover.buff.remains(rejuvenation)<1.5
-    - regrowth.mouseover,name="Panic Regrowth (MO)"
     
   main:
     - return,if=player.channeling|player.casting|buff.tranquility.up|buff.convoke_the_spirits.up
