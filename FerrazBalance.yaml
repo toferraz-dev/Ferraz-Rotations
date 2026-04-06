@@ -13,13 +13,43 @@ entry: main
 #  CONFIGURATION
 # ============================================================
 config:
-  barkskin_hp: { label: "Barkskin HP%", type: slider, min: 0, max: 100, default: 40 }
-  renewal_hp: { label: "Renewal HP%", type: slider, min: 0, max: 100, default: 50 }
-  regrowth_ooc_hp: { label: "Regrowth (OOC) HP%", type: slider, min: 0, max: 100, default: 70 }
-  
-  travel_form_auto: { label: "Auto Travel Form (OOC)", type: checkbox, default: true }
-  enable_hotw: { label: "HotW Support (Heal Party)", type: checkbox, default: true }
-  hotw_hp_threshold: { label: "Party HP% for HotW", type: slider, min: 30, max: 90, default: 75 }
+  barkskin_hp:
+    label: "Barkskin HP%"
+    type: slider
+    min: 0
+    max: 100
+    default: 40
+  renewal_hp:
+    label: "Renewal HP%"
+    type: slider
+    min: 0
+    max: 100
+    default: 50
+  regrowth_ooc_hp:
+    label: "Regrowth (OOC) HP%"
+    type: slider
+    min: 0
+    max: 100
+    default: 70
+  travel_form_auto:
+    label: "Auto Travel Form (OOC)"
+    type: checkbox
+    default: true
+  enable_hotw:
+    label: "HotW Support (Heal Party)"
+    type: checkbox
+    default: true
+  hotw_hp_threshold:
+    label: "Party HP% for HotW"
+    type: slider
+    min: 30
+    max: 90
+    default: 75
+  use_trinkets:
+    label: "Auto Trinkets"
+    type: checkbox
+    default: true
+
 
 # ============================================================
 #  VARIABLES (Synced with Simia _common & rotation_102)
