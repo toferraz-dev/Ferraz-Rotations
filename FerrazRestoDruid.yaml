@@ -208,6 +208,7 @@ variables:
   group_healthy: group.count(cycle.health.effective.pct<config.catweave_group_hp)<config.catweave_injured_max
   can_catweave: (var.group_healthy|config.force_dps)&player.combat&!var.is_tree_form
   mo_friendly_valid: mouseover.exists&mouseover.alive&mouseover.friendly&mouseover.range>0&mouseover.range<=40
+  mo_attacker_valid: mouseover.exists&mouseover.alive&!mouseover.friendly&mouseover.range>0&mouseover.range<=40 
 
 lists:
   interrupts:
@@ -307,8 +308,8 @@ lists:
 
   ranged_dps:
     - heart_of_the_wild,name="HotW Moonkin",if=config.use_heart_of_the_wild&talent.heart_of_the_wild&buff.moonkin_form.up
-    - sunfire,name="Sunfire AoE Dot",if=debuff.sunfire.refreshable
-    - moonfire,name="Moonfire ST Dot",if=debuff.moonfire.refreshable
+    - moonfire,name="Moonfire ST Refresh",if=debuff.moonfire.refreshable
+    - sunfire,name="Sunfire Aoe Dot",if=debuff.sunfire.refreshable
     - starfire,name="Starfire AoE",if=active_enemies>=config.aoe_threshold&!player.moving
     - wrath,name="Wrath ST",if=active_enemies<config.aoe_threshold&!player.moving
     
@@ -318,6 +319,9 @@ lists:
     - lifebloom,name="Lifebloom Moving",cycle=tanks,if=player.combat&!talent.everbloom.enabled&cycle.buff.lifebloom.down
     - rejuvenation,name="Rejuvenation (Moving)",cycle=members,if=cycle.buff.rejuvenation.down&cycle.health.effective.pct<95
     - wrath,name="Wrath (Moving)",if=var.is_tree_form&target.exists&!target.friendly
+
+  mouseover_dps:
+    - moonfire.mouseover,name="Moonfire (MO)",if=var.mo_attacker_valid&mouseover.debuff.remains(moonfire)<2
 
   mouseover_healing_emergency:
     - regrowth.mouseover,name="Regrowth (MO) Instant",if=buff.natures_swiftness.up|var.is_tree_form
@@ -342,5 +346,6 @@ lists:
     - call_action_list,name=mouseover_healing_emergency,if=config.use_mouseover&var.mo_friendly_valid&mouseover.health.pct<config.mouseover_emergency_hp&!player.casting&!player.channeling
     - call_action_list,name=moving,if=player.moving
     - call_action_list,name=active_healing,if=!config.force_dps
+    - call_action_list,name=mouseover_dps,if=config.use_mouseover&var.mo_attacker_valid
     - call_action_list,name=catweave,if=var.can_catweave&target.exists&target.alive&!target.friendly&target.range<=8
     - call_action_list,name=ranged_dps,if=var.can_catweave&target.exists&target.alive&!target.friendly&target.range>8
