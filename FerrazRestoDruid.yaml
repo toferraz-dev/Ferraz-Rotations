@@ -223,7 +223,7 @@ lists:
   out_of_combat:
     - mark_of_the_wild,name="Mark of the Wild",if=group.count(cycle.buff.mark_of_the_wild.down.any)>0
     - symbiotic_relationship,name="Symbiotic Tank",cycle=tanks,if=!buff.symbiotic_relationship.up&!cycle.buff.symbiotic_relationship.up&!player.casting
-    
+
     # Lifebloom OOC Maintenance
     - lifebloom,name="OOC Lifebloom Tank",cycle=tanks,if=talent.everbloom.rank>=1&(cycle.buff.lifebloom.stack<3|cycle.buff.lifebloom.remains<=5)
     - lifebloom,name="OOC Lifebloom Tank",cycle=tanks,if=!talent.everbloom.enabled&cycle.buff.lifebloom.down
@@ -251,23 +251,20 @@ lists:
     - trinket_2,name="Trinket 2",if=config.use_trinkets&trinket_2.ready
 
   active_healing:
+    # Emergency & Single Target Filler
+    - swiftmend,name="Swiftmend Emergency",cycle=members,if=cycle.health.effective.pct<config.swiftmend_threshold&(cycle.buff.rejuvenation.up|cycle.buff.regrowth.up|cycle.buff.wild_growth.up)
+    - regrowth,name="Nature Swift Regrowth",cycle=members,if=buff.natures_swiftness.up&cycle.health.effective.pct<config.regrowth_threshold
+
     # Nature's Swiftness follow-up: instant Regrowth on lowest
     - lifebloom,name="Lifebloom Tank",cycle=tanks,if=talent.everbloom.rank>=1&(cycle.buff.lifebloom.stack<3|cycle.buff.lifebloom.remains<=5)
     - lifebloom,name="Lifebloom Tank",cycle=tanks,if=!talent.everbloom.enabled&cycle.buff.lifebloom.down
-    - regrowth,name="Nature Swift Regrowth",cycle=members,if=buff.natures_swiftness.up&cycle.health.effective.pct<config.regrowth_threshold
     
-    # Prioritize Swiftmend if group needs healing to trigger Soul of the Forest for Wild Growth
-    - swiftmend,name="Swiftmend setup",cycle=members,if=group.count(cycle.health.effective.pct<config.wild_growth_threshold)>=config.wild_growth_members&(cycle.buff.rejuvenation.up|cycle.buff.regrowth.up)
-
     # Forced Ramp / Spread (Ignores HP thresholds if toggle is ON)
     - wild_growth,name="Forced Wild Growth",if=config.force_spread&(buff.wild_growth.down|group.any(cycle.buff.wild_growth.down))
     - rejuvenation,name="Forced Rejuvenation",cycle=members,if=config.force_spread&(cycle.buff.rejuvenation.down|cycle.buff.rejuvenation.remains<1.5)
 
     # Wild Growth (Buffed by 2pc Set)
     - wild_growth,name="Wild Growth",if=group.count(cycle.health.effective.pct<config.wild_growth_threshold)>=config.wild_growth_members
-    
-    # Emergency & Single Target Filler
-    - swiftmend,name="Swiftmend Emergency",cycle=members,if=cycle.health.effective.pct<config.swiftmend_threshold&(cycle.buff.rejuvenation.up|cycle.buff.regrowth.up|cycle.buff.wild_growth.up)
     - rejuvenation,name="Rejuvenation Filler",cycle=members,if=cycle.buff.rejuvenation.remains<1.5&cycle.health.effective.pct<config.rejuvenation_threshold
     - regrowth,name="Regrowth Filler",cycle=members,if=cycle.health.effective.pct<config.regrowth_threshold
     
