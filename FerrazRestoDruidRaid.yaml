@@ -218,17 +218,6 @@ variables:
   emergency_for_tree: group.count(cycle.health.effective.pct<config.reforestation_emergency_hp)>=config.reforestation_emergency_members
 
 lists:
-  spell_queue:
-    - queue_spell,name="Spell Queue",if=!buff.cat_form.up&!buff.bear_form.up&!player.casting
-
-  sanity_checks:
-    - return,if=player.dead
-    - return,if=mounted
-    - return,if=!state.rotation
-    - return,if=state.blocked_inputs
-    - return,if=player.cc
-    - return,if=player.loot_nearby
-  
   interrupts:
     # Auto Swap to Soothe Enrage
     - target_enemy,delay=100,name="Search Enrage",if=!player.channeling&!target.purgeable.enrage&enemies.combat.any(cycle.purgeable.enrage)
@@ -264,39 +253,24 @@ lists:
     - trinket_2,name="Trinket 2",if=config.use_trinkets&trinket_2.ready
 
   tree_of_life_rotation:
-    # 1. Rejuv 10 targets (no matter health)
     - rejuvenation,name="Tree Rejuv Spread",cycle=members,if=group.count(cycle.buff.rejuvenation.up)<10&cycle.buff.rejuvenation.down
-    # 2. Swiftmend for proc buff (Soul of the Forest usually)
     - swiftmend,name="Tree Swiftmend",cycle=members,if=group.count(cycle.buff.rejuvenation.up)>=10&!buff.soul_of_the_forest.up&(cycle.buff.rejuvenation.up|cycle.buff.regrowth.up|cycle.buff.wild_growth.up)
-    # 3. Rejuv 1 time for empowered rejuv and 2 stacks of abundance
     - rejuvenation,name="Tree Empowered Rejuv",cycle=members,if=buff.soul_of_the_forest.up&!prev_gcd.rejuvenation
-    # 4. Wild Growth
     - wild_growth,name="Tree Wild Growth",if=buff.soul_of_the_forest.up&prev_gcd.rejuvenation
-    # 5. Regrowths as needed (locked behind 8+ Abundance to save mana)
     - regrowth,name="Tree Regrowth Filler",cycle=members,if=buff.abundance.stack>=8&cycle.health.effective.pct<80
 
   active_healing:
-    # High Priority CD Usage for Harmony of the Grove / Power of Nature
     - swiftmend,name="Swiftmend ST",cycle=members,if=(cycle.buff.rejuvenation.up|cycle.buff.regrowth.up|cycle.buff.wild_growth.up)&(!var.reforestation_ready|var.emergency_for_tree)
     - wild_growth,name="Wild Growth AoE",if=group.count(cycle.health.effective.pct<99)>=2
-    
-    # Soul of the Forest Follow-up: Rejuvenation is buffed and free
     - rejuvenation,name="Sotf Rejuvenation",cycle=members,if=buff.soul_of_the_forest.up&cycle.buff.rejuvenation.down
-    
-    # Lifebloom Focus Logic
     - lifebloom,name="LB Auto Maintain",cycle=tanks,if=config.lifebloom_target=0&cycle.buff.lifebloom.up&(cycle.buff.lifebloom.remains<=3|cycle.buff.lifebloom.stack<3)
     - lifebloom,target=tank1,name="LB Auto Initial",if=config.lifebloom_target=0&!tank1.buff.lifebloom.up&!tank2.buff.lifebloom.up
     - lifebloom,target=tank1,name="LB Tank 1",if=config.lifebloom_target=1&(tank1.buff.lifebloom.remains<=3|tank1.buff.lifebloom.stack<3)
     - lifebloom,target=tank2,name="LB Tank 2",if=config.lifebloom_target=2&(tank2.buff.lifebloom.remains<=3|tank2.buff.lifebloom.stack<3)
-
     - regrowth,name="NS Regrowth",cycle=members,if=buff.natures_swiftness.up&cycle.health.effective.pct<config.regrowth_threshold
-    
     - regrowth,name="Clearcasting Regrowth",cycle=members,if=buff.clearcasting.up&cycle.health.effective.pct<95
-    
-    # Abundance / Spread Rejuv Logic
     - rejuvenation,name="Spread Rejuvenation",cycle=members,if=config.spread_rejuvs&cycle.buff.rejuvenation.down&group.count(cycle.buff.rejuvenation.up)<12
     - regrowth,name="Abundance Regrowth",cycle=members,if=buff.abundance.stack>=config.abundance_regrowth_stacks&cycle.health.effective.pct<95
-    
     - rejuvenation,name="Rejuvenation Filler",cycle=members,if=cycle.buff.rejuvenation.down&cycle.health.effective.pct<config.rejuvenation_threshold
     - regrowth,name="Regrowth Filler",cycle=members,if=buff.abundance.stack>=config.abundance_regrowth_stacks&cycle.health.effective.pct<config.regrowth_threshold
     
@@ -305,15 +279,10 @@ lists:
 
   ranged_dps:
     - starsurge,name="Starsurge",if=talent.starsurge&mana.pct>20
-    
-    # Instant Wrath procs (Clearcasting/Nature's Grace style)
     - wrath,name="Instant Wrath Proc",if=buff.clearcasting.up|buff.natures_grace.up|buff.expansive_growth.up
-    
     - starfire,name="Starfire",if=target.area_enemies>=3|buff.eclipse_solar.up
     - moonfire,name="Moonfire ST",if=debuff.moonfire.refreshable
     - sunfire,name="Sunfire AoE",if=debuff.sunfire.refreshable
-    
-    # Filler & Mana Regen logic (idle usage)
     - wrath,name="Wrath Mana Filler",if=mana.pct<99
 
   moving:
@@ -322,6 +291,7 @@ lists:
     - lifebloom,target=tank1,name="LB Tank 1 (Moving)",if=config.lifebloom_target=1&(tank1.buff.lifebloom.remains<=4.5|tank1.buff.lifebloom.stack<3)
     - lifebloom,target=tank2,name="LB Tank 2 (Moving)",if=config.lifebloom_target=2&(tank2.buff.lifebloom.remains<=4.5|tank2.buff.lifebloom.stack<3)
     - rejuvenation,name="Rejuvenation (Moving)",cycle=members,if=cycle.buff.rejuvenation.down&cycle.health.effective.pct<config.rejuvenation_threshold
+    - wrath,name="Wrath (Moving Tree)",if=var.is_tree_form
 
   mouseover_healing_emergency:
     - regrowth.mouseover,name="Regrowth (MO)",if=buff.natures_swiftness.up
@@ -330,24 +300,20 @@ lists:
     - regrowth.mouseover,name="Panic Regrowth (MO)"
     
   main:
-    - return,if=player.channeling
-    - return,if=buff.tranquility.up
-    - return,if=buff.convoke_the_spirits.up
-    - call_action_list,name=sanity_checks
     - call_action_list,name=spell_queue
+    - call_action_list,name=sanity_checks
     - call_action_list,name=out_of_combat
-    - return,if=!player.combat
     - call_action_list,name=auto_target
     - call_action_list,name=auto_heal
+    - return,if=auto_combat.player
     - call_action_list,name=interrupts
-    - call_action_list,name=auto_dispel
     - call_action_list,name=racials
     - call_action_list,name=defensives
     - call_action_list,name=utility
     - call_action_list,name=cooldowns
     - call_action_list,name=trinkets
+    - call_action_list,name=mouseover_healing_emergency,if=config.use_mouseover&var.mo_friendly_valid&mouseover.health.effective.pct<config.mouseover_emergency_hp&!player.casting&!player.channeling    
     - call_action_list,name=tree_of_life_rotation,if=var.is_tree_form
-    - call_action_list,name=mouseover_healing_emergency,if=config.use_mouseover&var.mo_friendly_valid&mouseover.health.effective.pct<config.mouseover_emergency_hp&!player.casting&!player.channeling
     - call_action_list,name=moving,if=player.moving
     - call_action_list,name=active_healing,if=!config.force_dps
     - call_action_list,name=ranged_dps,if=target.exists&target.alive&!target.friendly&!var.group_needs_healing&mana.pct>90
