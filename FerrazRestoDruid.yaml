@@ -253,7 +253,7 @@ lists:
     # Nature's Swiftness follow-up: instant Regrowth on lowest
     - lifebloom,name="Lifebloom Tank",cycle=tanks,if=talent.everbloom.rank>=1&(cycle.buff.lifebloom.stack<3|cycle.buff.lifebloom.remains<=5)
     - lifebloom,name="Lifebloom Tank",cycle=tanks,if=!talent.everbloom.enabled&cycle.buff.lifebloom.down
-    - regrowth,name="NS Regrowth",cycle=members,if=buff.natures_swiftness.up
+    - regrowth,name="Nature Swift Regrowth",cycle=members,if=buff.natures_swiftness.up&cycle.health.effective.pct<config.regrowth_threshold
     
     # Prioritize Swiftmend if group needs healing to trigger Soul of the Forest for Wild Growth
     - swiftmend,name="Swiftmend setup",cycle=members,if=group.count(cycle.health.effective.pct<config.wild_growth_threshold)>=config.wild_growth_members&(cycle.buff.rejuvenation.up|cycle.buff.regrowth.up)
@@ -323,21 +323,21 @@ lists:
     - regrowth.mouseover,name="Panic Regrowth (MO)"
     
   main:
-    - return,if=player.channeling|player.casting|buff.tranquility.up|buff.convoke_the_spirits.up
-    - call_action_list,name=spell_queue
-    - call_action_list,name=sanity_checks
-    - call_action_list,name=out_of_combat
-    - call_action_list,name=auto_target
-    - call_action_list,name=auto_heal
-    - return,if=auto_combat.player
-    - call_action_list,name=interrupts
-    - call_action_list,name=defensives
-    - call_action_list,name=racials
-    - call_action_list,name=utility
-    - call_action_list,name=cooldowns
-    - call_action_list,name=trinkets
-    - call_action_list,name=mouseover_healing_emergency,if=config.use_mouseover&var.mo_friendly_valid&mouseover.health.pct<config.mouseover_emergency_hp&!player.casting&!player.channeling
-    - call_action_list,name=moving,if=player.moving
-    - call_action_list,name=active_healing,if=!config.force_dps
-    - call_action_list,name=catweave,if=var.can_catweave&target.exists&target.alive&!target.friendly&target.range<=8
-    - call_action_list,name=ranged_dps,if=target.exists&target.alive&!target.friendly&target.range<=40&var.is_tree_form
+    - return,if=player.channeling|player.casting|buff.tranquility.up|buff.convoke_the_spirits.up # Trava de seguranca: nao faz nada se estiver castando ou canalizando
+    - call_action_list,name=spell_queue # Verifica a fila de feiticos manuais do jogador
+    - call_action_list,name=sanity_checks # Checagens basicas: morto, montado, silenciado, etc.
+    - call_action_list,name=out_of_combat # Manutencao de buffs e HoTs fora de combate
+    - call_action_list,name=auto_target # Busca automatica de alvos se estiver sem alvo
+    - call_action_list,name=auto_heal # Sistema de cura inteligente de fundo
+    - return,if=auto_combat.player # Pausa se o jogador estiver em controle manual
+    - call_action_list,name=interrupts # Prioridade maxima de combate: Cortar casts inimigos
+    - call_action_list,name=defensives # Prioridade de sobrevivencia propria e do grupo
+    - call_action_list,name=racials # Uso de habilidades de raca (Berserking, Shadowmeld, etc.)
+    - call_action_list,name=utility # Utilitarios como Inervar e remover raizes
+    - call_action_list,name=cooldowns # Grandes tempos de recarga (Convoke, Tranquilidade)
+    - call_action_list,name=trinkets # Uso automatico de Berloques ativos
+    - call_action_list,name=mouseover_healing_emergency,if=config.use_mouseover&var.mo_friendly_valid&mouseover.health.pct<config.mouseover_emergency_hp # Cura de emergencia instantanea no Mouseover
+    - call_action_list,name=moving,if=player.moving # Habilidades utilizaveis em movimento
+    - call_action_list,name=active_healing,if=!config.force_dps # Ciclo de cura principal (se nao estiver forcando dano)
+    - call_action_list,name=catweave,if=var.can_catweave&target.exists&target.alive&!target.friendly&target.range<=8 # Inicia o dano em forma de gato se o grupo estiver seguro
+    - call_action_list,name=ranged_dps,if=target.exists&target.alive&!target.friendly&target.range<=40&var.is_tree_form # Dano a distancia (Wrath/Moonfire) se estiver em Tree Form
