@@ -300,6 +300,7 @@ lists:
     - regrowth.mouseover,name="Panic Regrowth (MO)"
     
   main:
+    - return,if=player.channeling|player.casting|buff.tranquility.up|buff.convoke_the_spirits.up
     - call_action_list,name=spell_queue
     - call_action_list,name=sanity_checks
     - call_action_list,name=out_of_combat
