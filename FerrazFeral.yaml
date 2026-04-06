@@ -306,7 +306,7 @@ lists:
     - ferocious_bite,name="Bite (Apex Proc)",if=var.has_apex
     
     # Smart Rake Spreading (Tab Targeting)
-    - target_enemy,delay=100,name="Search Rake Target",if=debuff.rake.up&active_dot.rake<active_enemies&active_dot.rake<6
+    - target_enemy,delay=200,name="Search Rake Target",if=debuff.rake.up&!var.rake_refreshable&active_dot.rake<active_enemies&active_dot.rake<6
     - rake,name="Rake (Spread)",if=var.rake_refreshable
     
     - swipe,name="Swipe AoE Builder"
