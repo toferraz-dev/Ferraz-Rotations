@@ -253,7 +253,7 @@ lists:
     # Nature's Swiftness follow-up: instant Regrowth on lowest
     - lifebloom,name="Lifebloom Tank",cycle=tanks,if=talent.everbloom.rank>=1&(cycle.buff.lifebloom.stack<3|cycle.buff.lifebloom.remains<=5)
     - lifebloom,name="Lifebloom Tank",cycle=tanks,if=!talent.everbloom.enabled&cycle.buff.lifebloom.down
-    - regrowth,name="NS Regrowth",cycle=members,if=buff.natures_swiftness.up
+    - regrowth,name="Nature Swift Regrowth",cycle=members,if=buff.natures_swiftness.up&cycle.health.effective.pct<config.regrowth_threshold
     
     # Prioritize Swiftmend if group needs healing to trigger Soul of the Forest for Wild Growth
     - swiftmend,name="Swiftmend setup",cycle=members,if=group.count(cycle.health.effective.pct<config.wild_growth_threshold)>=config.wild_growth_members&(cycle.buff.rejuvenation.up|cycle.buff.regrowth.up)
@@ -337,7 +337,7 @@ lists:
     - call_action_list,name=utility
     - call_action_list,name=cooldowns
     - call_action_list,name=trinkets
-    - call_action_list,name=mouseover_healing_emergency,if=config.use_mouseover&var.mo_friendly_valid&mouseover.health.effective.pct<config.mouseover_emergency_hp&!player.casting&!player.channeling
+    - call_action_list,name=mouseover_healing_emergency,if=config.use_mouseover&var.mo_friendly_valid&mouseover.health.pct<config.mouseover_emergency_hp&!player.casting&!player.channeling
     - call_action_list,name=moving,if=player.moving
     - call_action_list,name=active_healing,if=!config.force_dps
     - call_action_list,name=catweave,if=var.can_catweave&target.exists&target.alive&!target.friendly&target.range<=8
