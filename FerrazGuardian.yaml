@@ -15,6 +15,7 @@ config:
   # HERO TALENT TREE
   hero_tree:
     label: "Hero Talent Tree"
+    section: "General"
     type: dropdown
     options:
       - label: "Elune's Chosen"
@@ -28,55 +29,63 @@ config:
   # CONFIG
   allow_pull_with_mo:
     label: "Pull with Moonfire"
+    section: "General"
     type: checkbox
     default: true
   survival_instincts_threshold:
     label: Survival Instincts %
+    section: "Defensives"
     type: slider
     min: 10
     max: 70
     default: 50
   frenzied_regen_threshold:
     label: Frenzied Regeneration %
+    section: "Defensives"
     type: slider
     min: 30
     max: 80
     default: 65
   barkskin_threshold:
     label: Barkskin %
+    section: "Defensives"
     type: slider
     min: 30
     max: 90
     default: 65
   ironfur_stacks_min:
     label: "Min Ironfur Stacks to maintain"
+    section: "Defensives"
     type: slider
     min: 1
     max: 7
     default: 3
   ironfur_stacks_max:
     label: "Max Ironfur Stacks (heavy damage)"
+    section: "Defensives"
     type: slider
     min: 3
     max: 10
     default: 5
   rage_pool:
     label: "Rage Pool (Offensive)"
+    section: "Rotation"
     type: slider
     min: 0
     max: 80
     default: 40
 
-
   # MAJOR COOLDOWNS
   incarnation_enemies:
     label: "Min enemies for Incarnation"
+    section: "Cooldowns"
     type: slider
     min: 1
     max: 10
     default: 3
   rage_of_sleeper_threshold:
     label: "HP% for Rage of the Sleeper (Elune)"
+    section: "Cooldowns"
     type: slider
     min: 30
     max: 90
@@ -85,12 +94,14 @@ config:
   # ROTATION
   thrash_stacks_target:
     label: "Thrash Stacks to maintain"
+    section: "Rotation"
     type: slider
     min: 1
     max: 5
     default: 3
   raze_targets:
     label: "Min targets for Raze (instead of Maul - Elune)"
+    section: "Rotation"
     type: slider
     min: 2
     max: 5
@@ -99,10 +110,12 @@ config:
   # INTERRUPTS
   use_skull_bash:
     label: "Auto Interrupt"
+    section: "Interrupts"
     type: checkbox
     default: true
   skull_bash_delay:
     label: "Interrupt Delay (ms)"
+    section: "Interrupts"
     type: slider
     min: 0
     max: 2000
@@ -111,6 +124,7 @@ config:
   # MOVEMENT
   stampeding_roar_usage:
     label: "Stampeding Roar Usage"
+    section: "Movement"
     type: dropdown
     options:
       - label: "Disabled"
@@ -124,6 +138,7 @@ config:
     default: 2
   stampeding_roar_movement_time:
     label: "Roar after moving (seconds)"
+    section: "Movement"
     type: slider
     min: 0
     max: 4
@@ -132,6 +147,7 @@ config:
   # TRINKETS
   trinket_usage:
     label: "Trinket Usage"
+    section: "Utility"
     type: dropdown
     options:
       - label: "On Cooldown"
