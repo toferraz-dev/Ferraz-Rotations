@@ -199,13 +199,13 @@ lists:
     - soothe,name="Soothe Enrage",if=!player.channeling&target.purgeable.enrage    
 
   out_of_combat:
-    - mark_of_the_wild,name="Mark of the Wild",range_check=none,if=buff.mark_of_the_wild.down.any
+    - mark_of_the_wild,name="Mark of the Wild",range_check=nonne,if=buff.mark_of_the_wild.down.any
     
     # Lifebloom OOC Maintenance
-    - lifebloom,name="OOC LB Auto Maintain",cycle=tanks,if=config.lifebloom_target=0&cycle.buff.lifebloom.up&(cycle.buff.lifebloom.remains<=3|cycle.buff.lifebloom.stack<3)
+    - lifebloom,name="OOC LB Auto Maintain",cycle=tanks,if=config.lifebloom_target=0&cycle.buff.lifebloom.up&cycle.buff.lifebloom.remains<=3
     - lifebloom,target=tank1,name="OOC LB Auto Initial",if=config.lifebloom_target=0&!tank1.buff.lifebloom.up&!tank2.buff.lifebloom.up
-    - lifebloom,target=tank1,name="OOC LB Tank 1",if=config.lifebloom_target=1&(tank1.buff.lifebloom.stack<3|tank1.buff.lifebloom.remains<=3)
-    - lifebloom,target=tank2,name="OOC LB Tank 2",if=config.lifebloom_target=2&(tank2.buff.lifebloom.stack<3|tank2.buff.lifebloom.remains<=3)
+    - lifebloom,target=tank1,name="OOC LB Tank 1",if=config.lifebloom_target=1&tank1.buff.lifebloom.remains<=3
+    - lifebloom,target=tank2,name="OOC LB Tank 2",if=config.lifebloom_target=2&tank2.buff.lifebloom.remains<=3
     
     - rejuvenation,name="OOC Rejuvenation",cycle=members,if=cycle.health.effective.pct<config.rejuvenation_threshold&cycle.buff.rejuvenation.remains<1.5&!player.combat
     - regrowth,name="OOC Regrowth",cycle=members,if=cycle.health.effective.pct<config.regrowth_threshold&cycle.buff.regrowth.remains<1.5&!player.combat
@@ -269,10 +269,10 @@ lists:
     - wild_growth,name="Wild Growth AoE",if=group.count(cycle.health.effective.pct<config.wild_growth_threshold)>=config.wild_growth_members
 
     # Priority 5: Lifebloom maintenance (aim for 100% uptime for Clearcasting procs)
-    - lifebloom,name="LB Auto Maintain",cycle=tanks,if=config.lifebloom_target=0&cycle.buff.lifebloom.up&(cycle.buff.lifebloom.remains<=3|cycle.buff.lifebloom.stack<3)
+    - lifebloom,name="LB Auto Maintain",cycle=tanks,if=config.lifebloom_target=0&cycle.buff.lifebloom.up&cycle.buff.lifebloom.remains<=3
     - lifebloom,target=tank1,name="LB Auto Initial",if=config.lifebloom_target=0&!tank1.buff.lifebloom.up&!tank2.buff.lifebloom.up
-    - lifebloom,target=tank1,name="LB Tank 1",if=config.lifebloom_target=1&(tank1.buff.lifebloom.remains<=3|tank1.buff.lifebloom.stack<3)
-    - lifebloom,target=tank2,name="LB Tank 2",if=config.lifebloom_target=2&(tank2.buff.lifebloom.remains<=3|tank2.buff.lifebloom.stack<3)
+    - lifebloom,target=tank1,name="LB Tank 1",if=config.lifebloom_target=1&tank1.buff.lifebloom.remains<=3
+    - lifebloom,target=tank2,name="LB Tank 2",if=config.lifebloom_target=2&tank2.buff.lifebloom.remains<=3
 
     # Priority 6: Instant Regrowth (Nature's Swiftness or Tree Form)
     - regrowth.mouseover,name="Regrowth (MO) Instant",if=var.mo_friendly_valid&(buff.natures_swiftness.up|var.is_tree_form)
@@ -308,10 +308,10 @@ lists:
     # Convoke is usable while moving
     - convoke_the_spirits,name="Convoke (Moving)",if=talent.convoke_the_spirits&!player.channeling&group.count(cycle.health.effective.pct<config.convoke_threshold)>=config.convoke_members
 
-    - lifebloom,name="LB Auto Maintain (Moving)",cycle=tanks,if=config.lifebloom_target=0&cycle.buff.lifebloom.up&(cycle.buff.lifebloom.remains<=4.5|cycle.buff.lifebloom.stack<3)
+    - lifebloom,name="LB Auto Maintain (Moving)",cycle=tanks,if=config.lifebloom_target=0&cycle.buff.lifebloom.up&cycle.buff.lifebloom.remains<=4.5
     - lifebloom,target=tank1,name="LB Auto Initial (Moving)",if=config.lifebloom_target=0&!tank1.buff.lifebloom.up&!tank2.buff.lifebloom.up
-    - lifebloom,target=tank1,name="LB Tank 1 (Moving)",if=config.lifebloom_target=1&(tank1.buff.lifebloom.remains<=4.5|tank1.buff.lifebloom.stack<3)
-    - lifebloom,target=tank2,name="LB Tank 2 (Moving)",if=config.lifebloom_target=2&(tank2.buff.lifebloom.remains<=4.5|tank2.buff.lifebloom.stack<3)
+    - lifebloom,target=tank1,name="LB Tank 1 (Moving)",if=config.lifebloom_target=1&tank1.buff.lifebloom.remains<=4.5
+    - lifebloom,target=tank2,name="LB Tank 2 (Moving)",if=config.lifebloom_target=2&tank2.buff.lifebloom.remains<=4.5
     - rejuvenation,name="Rejuvenation (Moving)",cycle=members,if=cycle.buff.rejuvenation.down&cycle.health.effective.pct<config.rejuvenation_threshold
     - wrath,name="Wrath (Moving Tree)",if=var.is_tree_form
 
