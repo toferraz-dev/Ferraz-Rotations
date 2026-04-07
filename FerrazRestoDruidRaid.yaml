@@ -1,10 +1,11 @@
-version: 1.1
+version: 1.2
 author: Ferraz
 patch: "12.0.1.6"
 spec: 105
 name: Restoration Druid Raid
 description: |
   Restoration Druid - Keeper of the Grove for Raid.
+  Optimized rotation based on Mythic raid analysis (Convoke + Tree of Life ramp cycle).
 entry: main
 
 config:
@@ -31,6 +32,22 @@ config:
   # =================================================================================================
   #     MAJOR COOLDOWNS
   # =================================================================================================
+
+  convoke_threshold:
+    label: "Convoke HP %"
+    section: "Cooldowns"
+    type: slider
+    min: 25
+    max: 99
+    default: 65
+
+  convoke_members:
+    label: "Convoke - Min Members"
+    section: "Cooldowns"
+    type: slider
+    min: 1
+    max: 20
+    default: 5
 
   tranquility_threshold:
     label: "Tranquility HP %"
@@ -63,6 +80,7 @@ config:
     min: 1
     max: 20
     default: 8
+
 
   ns_threshold:
     label: "Nature's Swiftness HP %"
@@ -122,7 +140,7 @@ config:
     type: slider
     min: 1
     max: 20
-    default: 5
+    default: 3
 
   # =================================================================================================
   #     HEALING - SINGLE TARGET
@@ -133,7 +151,7 @@ config:
     type: slider
     min: 25
     max: 99
-    default: 70
+    default: 75
 
   regrowth_threshold:
     label: "Regrowth HP %"
@@ -149,9 +167,8 @@ config:
     type: slider
     min: 25
     max: 100
-    default: 75
+    default: 80
 
-  # Removido o target manual para Symbiosis/Lifebloom
   # =================================================================================================
   #     HEALING TOGGLES & AUTOMATION
   # =================================================================================================
@@ -168,7 +185,7 @@ config:
     type: slider
     min: 5
     max: 20
-    default: 10
+    default: 8
 
   # =================================================================================================
   #     DAMAGE & REGEN
@@ -245,7 +262,7 @@ lists:
   out_of_combat:
     - mark_of_the_wild,name="Mark of the Wild",range_check=none,if=buff.mark_of_the_wild.down.any
     
-    # Lifebloom OOC Maintenance (like M+)
+    # Lifebloom OOC Maintenance
     - lifebloom,name="OOC LB Auto Maintain",cycle=tanks,if=config.lifebloom_target=0&cycle.buff.lifebloom.up&(cycle.buff.lifebloom.remains<=3|cycle.buff.lifebloom.stack<3)
     - lifebloom,target=tank1,name="OOC LB Auto Initial",if=config.lifebloom_target=0&!tank1.buff.lifebloom.up&!tank2.buff.lifebloom.up
     - lifebloom,target=tank1,name="OOC LB Tank 1",if=config.lifebloom_target=1&(tank1.buff.lifebloom.stack<3|tank1.buff.lifebloom.remains<=3)
@@ -262,46 +279,103 @@ lists:
     - shadowmeld,name="Shadowmeld",if=target.threat>=3&!player.casting&!player.channeling
 
   cooldowns:
-    - incarnation_tree_of_life,name="Tree of Life",if=talent.incarnation_tree_of_life&!var.is_tree_form&group.count(cycle.health.effective.pct<config.tree_of_life_threshold)>=config.tree_of_life_members
-    - tranquility,name="Tranquility",if=!player.channeling&group.count(cycle.health.effective.pct<config.tranquility_threshold)>=config.tranquility_members&!player.moving
+    # Innervate: use early for mana-heavy ramp phases
+    - innervate,name="Innervate (Ramp)",if=mana.pct<config.innervate_threshold
+
+    # Nature's Swiftness: emergency single-target save
     - natures_swiftness,name="Nature's Swiftness",if=group.count(cycle.health.effective.pct<config.ns_threshold)>=1
+
+    # Convoke the Spirits: primary burst cooldown (~13% healing contribution)
+    - convoke_the_spirits,name="Convoke the Spirits",if=talent.convoke_the_spirits&!player.channeling&!player.moving&group.count(cycle.health.effective.pct<config.convoke_threshold)>=config.convoke_members
+
+    # Incarnation: Tree of Life - secondary burst cooldown, use for sustained pressure
+    - incarnation_tree_of_life,name="Tree of Life",if=talent.incarnation_tree_of_life&!var.is_tree_form&group.count(cycle.health.effective.pct<config.tree_of_life_threshold)>=config.tree_of_life_members
+
+    # Tranquility: last resort big heal
+    - tranquility,name="Tranquility",if=!player.channeling&group.count(cycle.health.effective.pct<config.tranquility_threshold)>=config.tranquility_members&!player.moving
+
+    # Heart of the Wild: when raid is healthy and we can DPS
     - heart_of_the_wild,name="Heart of the Wild",if=config.use_heart_of_the_wild&talent.heart_of_the_wild
 
+    # Grove Guardians: use on cooldown for consistent healing
+    - grove_guardians,name="Grove Guardians",if=talent.grove_guardians
+
   tree_of_life_rotation:
+    # Tree of Life: prioritize Rejuv spreading, then SotF combo, then Regrowth spam
+    # Step 1: Spread Rejuvs to build Abundance + Mastery stacking
     - rejuvenation,name="Tree Rejuv Spread",cycle=members,if=group.count(cycle.buff.rejuvenation.up)<10&cycle.buff.rejuvenation.down
-    - swiftmend,name="Tree Swiftmend",cycle=members,if=group.count(cycle.buff.rejuvenation.up)>=10&!buff.soul_of_the_forest.up&(cycle.buff.rejuvenation.up|cycle.buff.regrowth.up|cycle.buff.wild_growth.up)
-    - rejuvenation,name="Tree Empowered Rejuv",cycle=members,if=buff.soul_of_the_forest.up&!prev_gcd.rejuvenation
-    - wild_growth,name="Tree Wild Growth",if=buff.soul_of_the_forest.up&prev_gcd.rejuvenation
-    - regrowth,name="Tree Regrowth Filler",cycle=members,if=buff.abundance.stack>=8&cycle.health.effective.pct<80
+    
+    # Step 2: Swiftmend for Soul of the Forest proc
+    - swiftmend,name="Tree Swiftmend SotF",cycle=members,if=!buff.soul_of_the_forest.up&(cycle.buff.rejuvenation.up|cycle.buff.regrowth.up|cycle.buff.wild_growth.up)&cycle.health.effective.pct<config.swiftmend_threshold
+    
+    # Step 3: SotF-empowered Wild Growth (highest priority when SotF is active)
+    - wild_growth,name="Tree SotF Wild Growth",if=buff.soul_of_the_forest.up&group.count(cycle.health.effective.pct<99)>=2
+    
+    # Step 4: SotF-empowered Rejuv if Wild Growth not needed
+    - rejuvenation,name="Tree SotF Rejuv",cycle=members,if=buff.soul_of_the_forest.up&cycle.buff.rejuvenation.down
+    
+    # Step 5: Regrowth spam (instant in Tree Form) - primary filler during Tree
+    - regrowth,name="Tree Regrowth Spam",cycle=members,if=cycle.health.effective.pct<90
+    
+    # Step 6: Wild Growth on cooldown if damaged members
+    - wild_growth,name="Tree Wild Growth",if=group.count(cycle.health.effective.pct<99)>=2
+    
+    # Step 7: Continue spreading Rejuvs as filler
+    - rejuvenation,name="Tree Rejuv Filler",cycle=members,if=cycle.buff.rejuvenation.down
 
   active_healing:
-    - swiftmend,name="Swiftmend ST",cycle=members,if=(cycle.buff.rejuvenation.up|cycle.buff.regrowth.up|cycle.buff.wild_growth.up)&(!var.reforestation_ready|var.emergency_for_tree)
-    - wild_growth,name="Wild Growth AoE",if=group.count(cycle.health.effective.pct<99)>=2
-    - rejuvenation,name="Sotf Rejuvenation",cycle=members,if=buff.soul_of_the_forest.up&cycle.buff.rejuvenation.down
+    # Priority 1: Swiftmend for emergency + SotF proc generation (83% efficiency target)
+    - swiftmend,name="Swiftmend SotF",cycle=members,if=(cycle.buff.rejuvenation.up|cycle.buff.regrowth.up|cycle.buff.wild_growth.up)&cycle.health.effective.pct<config.swiftmend_threshold&(!var.reforestation_ready|var.emergency_for_tree)
+
+    # Priority 2: SotF-empowered Wild Growth (core combo: Swiftmend → Wild Growth)
+    - wild_growth,name="SotF Wild Growth",if=buff.soul_of_the_forest.up&group.count(cycle.health.effective.pct<99)>=2
+
+    # Priority 3: SotF-empowered Rejuvenation (if WG not needed)
+    - rejuvenation,name="SotF Rejuvenation",cycle=members,if=buff.soul_of_the_forest.up&cycle.buff.rejuvenation.down
+
+    # Priority 4: Wild Growth on cooldown when raid is damaged (5.7% healing from Improved WG)
+    - wild_growth,name="Wild Growth AoE",if=group.count(cycle.health.effective.pct<config.wild_growth_threshold)>=config.wild_growth_members
+
+    # Priority 5: Lifebloom maintenance (aim for 100% uptime for Clearcasting procs)
     - lifebloom,name="LB Auto Maintain",cycle=tanks,if=config.lifebloom_target=0&cycle.buff.lifebloom.up&(cycle.buff.lifebloom.remains<=3|cycle.buff.lifebloom.stack<3)
     - lifebloom,target=tank1,name="LB Auto Initial",if=config.lifebloom_target=0&!tank1.buff.lifebloom.up&!tank2.buff.lifebloom.up
     - lifebloom,target=tank1,name="LB Tank 1",if=config.lifebloom_target=1&(tank1.buff.lifebloom.remains<=3|tank1.buff.lifebloom.stack<3)
     - lifebloom,target=tank2,name="LB Tank 2",if=config.lifebloom_target=2&(tank2.buff.lifebloom.remains<=3|tank2.buff.lifebloom.stack<3)
+
+    # Priority 6: Instant Regrowth (Nature's Swiftness or Tree Form)
     - regrowth.mouseover,name="Regrowth (MO) Instant",if=var.mo_friendly_valid&(buff.natures_swiftness.up|var.is_tree_form)
-    - regrowth,name="Cycle Regrowth Instant",cycle=members,if=(buff.natures_swiftness.up|var.is_tree_form)&cycle.health.effective.pct<config.regrowth_threshold
+    - regrowth,name="NS/Tree Regrowth",cycle=members,if=(buff.natures_swiftness.up|var.is_tree_form)&cycle.health.effective.pct<config.regrowth_threshold
+
+    # Priority 7: Clearcasting Regrowth (free, no mana cost)
     - regrowth,name="Clearcasting Regrowth",cycle=members,if=buff.clearcasting.up&cycle.health.effective.pct<95
+
+    # Priority 8: Spread Rejuvenation (builds Abundance avg ~9.6 stacks, Mastery, Power of the Archdruid)
     - rejuvenation,name="Spread Rejuvenation",cycle=members,if=config.spread_rejuvs&cycle.buff.rejuvenation.down&group.count(cycle.buff.rejuvenation.up)<12
-    - regrowth,name="Abundance Regrowth",cycle=members,if=buff.abundance.stack>=config.abundance_regrowth_stacks&cycle.health.effective.pct<95
+
+    # Priority 9: Abundance-powered Regrowth (at ~8+ stacks, Regrowth becomes very efficient)
+    - regrowth,name="Abundance Regrowth",cycle=members,if=buff.abundance.stack>=config.abundance_regrowth_stacks&cycle.health.effective.pct<95&!player.moving
+
+    # Priority 10: Rejuvenation on injured targets without HoTs
     - rejuvenation,name="Rejuvenation Filler",cycle=members,if=cycle.buff.rejuvenation.down&cycle.health.effective.pct<config.rejuvenation_threshold
-    - regrowth,name="Regrowth Filler",cycle=members,if=buff.abundance.stack>=config.abundance_regrowth_stacks&cycle.health.effective.pct<config.regrowth_threshold
+
+    # Priority 11: Regrowth as hard-cast filler when Abundance is high
+    - regrowth,name="Regrowth Filler",cycle=members,if=buff.abundance.stack>=config.abundance_regrowth_stacks&cycle.health.effective.pct<config.regrowth_threshold&!player.moving
     
   utility:
     - innervate,name="Innervate",if=mana.pct<config.innervate_threshold
 
   ranged_dps:
     - starsurge,name="Starsurge",if=talent.starsurge&mana.pct>20
-    - wrath,name="Instant Wrath Proc",if=buff.clearcasting.up|buff.natures_grace.up|buff.expansive_growth.up
-    - starfire,name="Starfire",if=target.area_enemies>=3|buff.eclipse_solar.up
+    - wrath,name="Instant Wrath Proc",if=buff.clearcasting.up|buff.natures_grace.up
+    - starfire,name="Starfire",if=active_enemies>=3|buff.eclipse_solar.up
     - moonfire,name="Moonfire ST",if=debuff.moonfire.refreshable
     - sunfire,name="Sunfire AoE",if=debuff.sunfire.refreshable
-    - wrath,name="Wrath Mana Filler",if=mana.pct<99
+    - wrath,name="Wrath Mana Filler"
 
   moving:
+    # Convoke is usable while moving
+    - convoke_the_spirits,name="Convoke (Moving)",if=talent.convoke_the_spirits&!player.channeling&group.count(cycle.health.effective.pct<config.convoke_threshold)>=config.convoke_members
+
     - lifebloom,name="LB Auto Maintain (Moving)",cycle=tanks,if=config.lifebloom_target=0&cycle.buff.lifebloom.up&(cycle.buff.lifebloom.remains<=4.5|cycle.buff.lifebloom.stack<3)
     - lifebloom,target=tank1,name="LB Auto Initial (Moving)",if=config.lifebloom_target=0&!tank1.buff.lifebloom.up&!tank2.buff.lifebloom.up
     - lifebloom,target=tank1,name="LB Tank 1 (Moving)",if=config.lifebloom_target=1&(tank1.buff.lifebloom.remains<=4.5|tank1.buff.lifebloom.stack<3)
@@ -326,7 +400,6 @@ lists:
     - call_action_list,name=interrupts
     - call_action_list,name=racials
     - call_action_list,name=defensives
-    - call_action_list,name=utility
     - call_action_list,name=cooldowns
     - call_action_list,name=mouseover_healing_emergency,if=config.use_mouseover&var.mo_friendly_valid&mouseover.health.effective.pct<config.mouseover_emergency_hp&!player.casting&!player.channeling    
     - call_action_list,name=tree_of_life_rotation,if=var.is_tree_form
