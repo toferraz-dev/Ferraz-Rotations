@@ -2,10 +2,10 @@ version: 3.2
 author: Ferraz
 patch: "12.0.1.6"
 spec: 104
-name: Guardian Master
+name: Guardian of the Claw
 description: |
   Master Guardian Druid Rotation for Mythic+.
-  Supports both Elunes Chosen / Druid of the Claw hero talents.
+  Supports Druid of the Claw hero talents.
   Includes Wowhead (Aggressive DPS) - Alternative / Method.gg (Balanced) rotation styles.
 
 entry: main
@@ -14,17 +14,6 @@ entry: main
 #  CONFIGURATION
 # ==========================================
 config:
-  hero_tree:
-    label: "Hero Talent Tree"
-    section: "General"
-    type: dropdown
-    options:
-      - label: "Elune's Chosen"
-        value: 1
-      - label: "Druid of the Claw"
-        value: 2
-    default: 1
-
   allow_pull_with_mo:
     label: "Pull with Moonfire"
     section: "General"
@@ -111,6 +100,14 @@ config:
     max: 5
     default: 2
 
+  min_aoe_enemies:
+    label: "Min enemies for AOE Rotation"
+    section: "Rotation"
+    type: slider
+    min: 2
+    max: 10
+    default: 3
+
   stampeding_roar_usage:
     label: "Stampeding Roar Usage"
     section: "Movement"
@@ -192,7 +189,6 @@ variables:
 #  ACTION LISTS
 # ==========================================
 lists:
-  # --- UTILITY & SETUP ---
   out_of_combat:
     - mark_of_the_wild,name="Mark of the Wild",range_check=none,if=buff.mark_of_the_wild.down.any
 
@@ -207,20 +203,14 @@ lists:
     - trinket_1,name="Trinket 1",if=trinket_1.ready & config.trinket_usage != 0 & ((config.trinket_usage = 1) | (config.trinket_usage = 2 & var.incarnation_active) | (config.trinket_usage = 3 & health.pct < 70))
     - trinket_2,name="Trinket 2",if=trinket_2.ready & config.trinket_usage != 0 & ((config.trinket_usage = 1) | (config.trinket_usage = 2 & var.incarnation_active) | (config.trinket_usage = 3 & health.pct < 70))
 
-  # --- SURVIVABILITY ---
   defensives:
-    # Ultra-Emergency
     - survival_instincts,name="Survival Instincts (Emergency)",if=var.emergency_situation & !var.survival_up
     - rage_of_the_sleeper,name="Rage of the Sleeper (Emergency)",if=var.emergency_situation & !var.survival_up
     - frenzied_regeneration,name="Frenzied Regeneration (Emergency)",if=var.emergency_situation
     - barkskin,name="Barkskin (Emergency)",if=var.emergency_situation & !var.survival_up
-    
-    # Severe Damage
     - survival_instincts,name="Survival Instincts (Dangerous)",if=var.dangerous_situation & !var.barkskin_up
     - frenzied_regeneration,name="Frenzied Regeneration (Dangerous)",if=var.dangerous_situation
     - ironfur,name="Ironfur (Dangerous)",if=var.dangerous_situation
-    
-    # General Mitigation
     - survival_instincts,name="Survival Instincts",if=health.pct < config.survival_instincts_threshold & cooldown.frenzied_regeneration.remains > 2 & !var.any_major_defensive
     - frenzied_regeneration,name="Frenzied Regeneration",if=health.pct < config.frenzied_regen_threshold
     - barkskin,name="Barkskin",if=health.pct < config.barkskin_threshold & !var.survival_up
@@ -228,7 +218,6 @@ lists:
     - ironfur,name="Ironfur (Heavy Damage)",if=var.heavy_damage
     - ironfur,name="Ironfur (Incarnation)",if=var.incarnation_active & var.ironfur_stacks < config.ironfur_stacks_max
 
-  # --- COOLDOWNS ---
   cooldowns:
     - lunar_beam,name="Lunar Beam"
     - incarnation_guardian_of_ursoc,name="Incarnation",if=active_enemies >= config.incarnation_enemies | (target.boss & target.time_to_die > 20)
@@ -236,7 +225,6 @@ lists:
     - berserk_ravage,name="Berserk (Ravage)",if=talent.berserk_ravage & (active_enemies >= 3 | target.boss)
     - berserk_ravage,name="Berserk",if=talent.berserk & (active_enemies >= 3 | target.boss)
 
-  # --- RANGE SPENDERS ---
   ravage_proc:
     - ravage,name="Ravage (Proc)",if=buff.ravage.up & rage >= 40 & var.ironfur_stacks >= 2
 
@@ -250,7 +238,6 @@ lists:
     - maul,name="Maul (Incarnation)",if=var.incarnation_active & !var.use_raze & var.can_spend_rage
     - maul,name="Maul",if=!var.use_raze & var.can_spend_rage
 
-  # --- DAMAGE COMPONENT ---
   moonfire_spread:
     - moonfire,name="Moonfire (Combat Start)",if=var.combat_start & debuff.moonfire.down & range <= 40
     - moonfire,name="Moonfire (Incarnation)",if=var.incarnation_active & debuff.moonfire.down & range <= 40
@@ -260,28 +247,6 @@ lists:
     - moonfire,name="Moonfire (Refresh)",if=var.moonfire_needs_refresh
     - moonfire,name="Moonfire (Mouseover)",target=mouseover,if=debuff.moonfire.down & range <= 40 & target.alive & target.enemy
 
-  # --- ELUNE'S CHOSEN ROTATIONS ---
-  rotation_st_elune:
-    - moonfire,name="Moonfire (GG)",if=var.galactic_guardian_up
-    - mangle,name="Mangle (Gore)",if=var.gore_up
-    - thrash,name="Thrash (Refresh)",if=var.thrash_needs_refresh
-    - mangle,name="Mangle"
-    - moonfire,name="Moonfire (Refresh)",if=var.moonfire_needs_refresh
-    - maul,name="Maul (Offensive)",if=var.ironfur_stacks >= 1 & var.can_spend_rage
-    - thrash,name="Thrash"
-    - swipe,name="Swipe"
-
-  rotation_aoe_elune:
-    - moonfire,name="Moonfire (GG)",if=var.galactic_guardian_up
-    - thrash,name="Thrash (Refresh)",if=var.thrash_needs_refresh
-    - raze,name="Raze (Offensive)",if=var.ironfur_stacks >= 1 & var.can_spend_rage
-    - mangle,name="Mangle (Gore)",if=var.gore_up
-    - mangle,name="Mangle"
-    - thrash,name="Thrash"
-    - moonfire,name="Moonfire (Refresh)",if=var.moonfire_needs_refresh
-    - swipe,name="Swipe"
-
-  # --- DRUID OF THE CLAW ROTATIONS ---
   rotation_st_claw:
     - ravage,name="Ravage",if=buff.ravage.up
     - mangle,name="Mangle (Gore)",if=var.gore_up
@@ -305,33 +270,22 @@ lists:
     - moonfire,name="Moonfire (Refresh)",if=var.moonfire_needs_refresh
     - swipe,name="Swipe"
 
-# ==========================================
-#  MAIN ENTRY POINT
-# ==========================================
-main:
-  - call_action_list,name=spell_queue
-  - call_action_list,name=sanity_checks
-  - call_action_list,name=out_of_combat
-  - call_action_list,name=auto_target
-  - call_action_list,name=auto_heal
-  - return,if=auto_combat.player
-
-  # Bear Form Management
-  - bear_form,name="Manual Bear Shift",if=!var.in_bear_form & !talent.fluid_form & (target.attackable | active_enemies > 0)
-  - mangle,name="Fluid Form Shift",if=!var.in_bear_form & talent.fluid_form & (target.attackable | active_enemies > 0)
-  - return,if=!buff.bear_form.up
-
-  # Priority Sequences
-  - call_action_list,name=taunt
-  - call_action_list,name=ravage_proc
-  - call_action_list,name=defensives
-  - call_action_list,name=cooldowns
-  - call_action_list,name=trinkets
-  - call_action_list,name=rage_management
-  - call_action_list,name=movement,if=player.moving
-
-  # Rotation Selection
-  - call_action_list,name=rotation_aoe_elune,if=config.hero_tree = 1 & active_enemies >= 3
-  - call_action_list,name=rotation_st_elune,if=config.hero_tree = 1
-  - call_action_list,name=rotation_aoe_claw,if=config.hero_tree = 2 & active_enemies >= 3
-  - call_action_list,name=rotation_st_claw,if=config.hero_tree = 2
+  main:
+    - call_action_list,name=spell_queue
+    - call_action_list,name=sanity_checks
+    - call_action_list,name=out_of_combat
+    - call_action_list,name=auto_target
+    - call_action_list,name=auto_heal
+    - return,if=auto_combat.player
+    - bear_form,name="Manual Bear Shift",if=!var.in_bear_form & !talent.fluid_form & (target.attackable | active_enemies > 0)
+    - mangle,name="Fluid Form Shift",if=!var.in_bear_form & talent.fluid_form & (target.attackable | active_enemies > 0)
+    - return,if=!buff.bear_form.up
+    - call_action_list,name=taunt
+    - call_action_list,name=ravage_proc
+    - call_action_list,name=defensives
+    - call_action_list,name=cooldowns
+    - call_action_list,name=trinkets
+    - call_action_list,name=rage_management
+    - call_action_list,name=movement,if=player.moving
+    - call_action_list,name=rotation_aoe_claw,if=active_enemies >= config.min_aoe_enemies
+    - call_action_list,name=rotation_st_claw
