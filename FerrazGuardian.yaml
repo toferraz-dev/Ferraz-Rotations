@@ -102,18 +102,32 @@ lists:
     - mark_of_the_wild,name="Mark of the Wild",range_check=none,if=buff.mark_of_the_wild.down.any
 
   defensives:
-    - survival_instincts,name="Survival Instincts",if=health.pct<config.survival_instincts_threshold&!buff.survival_instincts.up
-    - frenzied_regeneration,name="Frenzied Regeneration",if=health.pct<config.frenzied_regen_threshold
-    - barkskin,name="Barkskin",if=health.pct<config.barkskin_threshold&!buff.survival_instincts.up
+    - survival_instincts,name="Survival Instincts",if=health.effective.pct<config.survival_instincts_threshold&!buff.survival_instincts.up
+    - frenzied_regeneration,name="Frenzied Regeneration",if=health.effective.pct<config.frenzied_regen_threshold
+    - barkskin,name="Barkskin",if=health.effective.pct<config.barkskin_threshold&!buff.survival_instincts.up
     - ironfur,name="Ironfur (Min Stacks)",if=buff.ironfur.stack<config.ironfur_stacks_min
     - ironfur,name="Ironfur (Refresh)",if=buff.ironfur.remains<2&buff.ironfur.stack<config.ironfur_stacks_max
-    - ironfur,name="Ironfur (Heavy Damage)",if=health.pct<50&buff.ironfur.stack<config.ironfur_stacks_max
+    - ironfur,name="Ironfur (Heavy Damage)",if=health.effective.pct<50&buff.ironfur.stack<config.ironfur_stacks_max
 
   racials:
     - blood_fury,name="Blood Fury"
     - berserking,name="Berserking"
     - fireblood,name="Fireblood"
     - ancestral_call,name="Ancestral Call"
+
+  interrupts:
+    # Auto Swap Search
+    - target_enemy,delay=100,name="Search Soothe",if=!target.purgeable.enrage&enemies.combat.any(cycle.purgeable.enrage)
+    - target_enemy,delay=100,name="Search Interrupt",if=!interrupt.target.check&interrupt.5y.any
+    
+    # Single Interrupt
+    - skull_bash,name="Skull Bash",if=interrupt.target.check
+    - skull_bash.mouseover,name="Skull Bash (MO)",if=interrupt.mouseover.check
+    - skull_bash.focus,name="Skull Bash (Focus)",if=interrupt.focus.check
+
+    # AoE Interrupt
+    - incapacitating_roar,name="Roar (AoE CC)",if=interrupt.stun.aoe.check
+    - soothe,name="Soothe Enrage",if=target.purgeable.enrage      
 
   cooldowns:
     - lunar_beam,name="Lunar Beam",if=var.incarnation_active|((cooldown.incarnation_guardian_of_ursoc.remains>60|cooldown.berserk.remains>60)&!talent.lunation|(cooldown.incarnation_guardian_of_ursoc.remains>30|cooldown.berserk.remains>30)&talent.lunation)
@@ -165,6 +179,7 @@ lists:
     - return,if=!var.in_bear_form
 
     # Priority
+    - call_action_list,name=interrupts
     - call_action_list,name=defensives
     - call_action_list,name=racials
     - call_action_list,name=cooldowns
