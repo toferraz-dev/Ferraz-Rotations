@@ -197,7 +197,7 @@ config:
     show_override: true
     
 variables:
-  is_tree_form: buff.reforestation.up
+  is_tree_form: buff.incarnation_tree_of_life.up
   group_needs_healing: group.any(cycle.health.effective.pct<85)
   mo_friendly_valid: mouseover.exists&mouseover.alive&mouseover.friendly&mouseover.range>0&mouseover.range<=40
 
@@ -225,7 +225,7 @@ lists:
 
   racials:
     # Thorn Bloom (Haranir): AoE heal+damage, 3min CD — use as mini healing cooldown when raid is hurt
-    - thorn_bloom,name="Thorn Bloom",if=group.count(cycle.health.effective.pct<config.wild_growth_threshold)>=config.wild_growth_members
+    - thorn_bloom,name="Thorn Bloom"#,if=group.count(cycle.health.effective.pct<config.wild_growth_threshold)>=config.wild_growth_members
     - shadowmeld,name="Shadowmeld",if=target.threat>=3
 
   cooldowns:
