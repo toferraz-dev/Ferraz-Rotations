@@ -82,13 +82,6 @@ config:
         value: 0
     default: 1
 
-  use_incarnation:
-    label: "Use Incarnation"
-    section: "Utility"
-    type: toggle
-    spell: 102558
-    description: "Use Incarnation"
-
 # ==========================================
 #  VARIABLES
 # ==========================================
@@ -140,7 +133,7 @@ lists:
   cooldowns:
     - lunar_beam,name="Lunar Beam",if=var.incarnation_active|((cooldown.incarnation_guardian_of_ursoc.remains>60|cooldown.berserk.remains>60)&!talent.lunation|(cooldown.incarnation_guardian_of_ursoc.remains>30|cooldown.berserk.remains>30)&talent.lunation)
     - sundering_roar,name="Sundering Roar",if=debuff.thrash.stack<3
-    - incarnation_guardian_of_ursoc,name="Incarnation",if=(active_enemies>=config.incarnation_enemies|target.boss)&config.use_incarnation
+    - incarnation_guardian_of_ursoc,name="Incarnation",if=(active_enemies>=config.incarnation_enemies|target.boss)
     - berserk,name="Berserk",if=!talent.incarnation_guardian_of_ursoc&(active_enemies>=config.incarnation_enemies|target.boss)
     - wild_guardian,name="Wild Guardian",if=(buff.ravage.up&talent.ravage)|!talent.ravage
 
