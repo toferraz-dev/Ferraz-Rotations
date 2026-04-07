@@ -69,18 +69,6 @@ config:
     max: 10
     default: 5
 
-  trinket_usage:
-    label: "Trinket Usage"
-    section: "Utility"
-    type: dropdown
-    options:
-      - label: "On Cooldown"
-        value: 1
-      - label: "With CD/Burst"
-        value: 2
-      - label: "Manual"
-        value: 0
-    default: 1
 
 # ==========================================
 #  VARIABLES
