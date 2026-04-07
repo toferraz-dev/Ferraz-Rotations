@@ -51,11 +51,6 @@ config:
     min: 30
     max: 90
     default: 75
-  use_trinkets:
-    label: "Auto Trinkets"
-    section: "Utility"
-    type: checkbox
-    default: true
 
 
 # ============================================================
@@ -184,8 +179,6 @@ lists:
     - call_action_list,name=defensives
     - call_action_list,name=interrupts
     - return,if=auto_combat.player
-    - trinket_1,if=config.use_trinkets&trinket_1.ready
-    - trinket_2,if=config.use_trinkets&trinket_2.ready
      - call_action_list,name=heal_support
      # Rotation Branches
     - run_action_list,name=opener_aoe,if=var.opener&enemies_around_target>2

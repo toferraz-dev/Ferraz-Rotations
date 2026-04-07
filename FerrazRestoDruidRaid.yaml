@@ -197,12 +197,6 @@ config:
     default: 60
 
 
-  use_trinkets:
-    label: "Auto Trinkets"
-    section: "Utility"
-    type: checkbox
-    default: true
-
   auto_dispel:
     label: "Auto Dispel"
     section: "Utility"
@@ -273,10 +267,6 @@ lists:
     - natures_swiftness,name="Nature's Swiftness",if=group.count(cycle.health.effective.pct<config.ns_threshold)>=1
     - heart_of_the_wild,name="Heart of the Wild",if=config.use_heart_of_the_wild&talent.heart_of_the_wild
 
-  trinkets:
-    - trinket_1,name="Trinket 1",if=config.use_trinkets&trinket_1.ready
-    - trinket_2,name="Trinket 2",if=config.use_trinkets&trinket_2.ready
-
   tree_of_life_rotation:
     - rejuvenation,name="Tree Rejuv Spread",cycle=members,if=group.count(cycle.buff.rejuvenation.up)<10&cycle.buff.rejuvenation.down
     - swiftmend,name="Tree Swiftmend",cycle=members,if=group.count(cycle.buff.rejuvenation.up)>=10&!buff.soul_of_the_forest.up&(cycle.buff.rejuvenation.up|cycle.buff.regrowth.up|cycle.buff.wild_growth.up)
@@ -338,7 +328,6 @@ lists:
     - call_action_list,name=defensives
     - call_action_list,name=utility
     - call_action_list,name=cooldowns
-    - call_action_list,name=trinkets
     - call_action_list,name=mouseover_healing_emergency,if=config.use_mouseover&var.mo_friendly_valid&mouseover.health.effective.pct<config.mouseover_emergency_hp&!player.casting&!player.channeling    
     - call_action_list,name=tree_of_life_rotation,if=var.is_tree_form
     - call_action_list,name=moving,if=player.moving
