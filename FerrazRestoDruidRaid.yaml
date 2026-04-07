@@ -73,23 +73,6 @@ config:
     max: 20
     default: 8
 
-  tree_of_life_threshold:
-    label: "Tree of Life HP %"
-    section: "Cooldowns"
-    type: slider
-    min: 25
-    max: 99
-    default: 70
-
-  tree_of_life_members:
-    label: "Tree of Life - Min Members"
-    section: "Cooldowns"
-    type: slider
-    min: 1
-    max: 20
-    default: 8
-
-
   ns_threshold:
     label: "Nature's Swiftness HP %"
     section: "Cooldowns"
@@ -97,25 +80,6 @@ config:
     min: 25
     max: 99
     default: 45
-
-  # =================================================================================================
-  #     REFORESTATION & TREE FORM
-  # =================================================================================================
-  reforestation_emergency_hp:
-    label: "Tree Proc - Emergency HP %"
-    section: "Cooldowns"
-    type: slider
-    min: 25
-    max: 99
-    default: 65
-
-  reforestation_emergency_members:
-    label: "Tree Proc - Min Members"
-    section: "Cooldowns"
-    type: slider
-    min: 1
-    max: 10
-    default: 3
 
   # =================================================================================================
   #     HEALING - AOE & GROUP
@@ -196,21 +160,6 @@ config:
     default: 8
 
   # =================================================================================================
-  #     DAMAGE & REGEN
-  # =================================================================================================
-  force_dps:
-    label: "Force DPS (Ignore Group HP)"
-    section: "Damage"
-    type: checkbox
-    default: false
-
-  use_heart_of_the_wild:
-    label: "Auto Heart of the Wild"
-    section: "Damage"
-    type: checkbox
-    default: true
-
-  # =================================================================================================
   #     UTILITY & ITEMS
   # =================================================================================================
   innervate_threshold:
@@ -220,13 +169,6 @@ config:
     min: 25
     max: 99
     default: 60
-
-
-  auto_dispel:
-    label: "Auto Dispel"
-    section: "Utility"
-    type: checkbox
-    default: true
 
   # =================================================================================================
   #     TARGETING
@@ -255,11 +197,9 @@ config:
     show_override: true
     
 variables:
-  is_tree_form: buff.incarnation_tree_of_life.up|buff.reforestation.up
+  is_tree_form: buff.reforestation.up
   group_needs_healing: group.any(cycle.health.effective.pct<85)
   mo_friendly_valid: mouseover.exists&mouseover.alive&mouseover.friendly&mouseover.range>0&mouseover.range<=40
-  reforestation_ready: buff.reforestation.stack=3
-  emergency_for_tree: group.count(cycle.health.effective.pct<config.reforestation_emergency_hp)>=config.reforestation_emergency_members
 
 lists:
   interrupts:
@@ -284,7 +224,9 @@ lists:
     - barkskin,name="Barkskin",if=health.pct<config.barkskin_threshold
 
   racials:
-    - shadowmeld,name="Shadowmeld",if=target.threat>=3&!player.casting&!player.channeling
+    # Thorn Bloom (Haranir): AoE heal+damage, 3min CD — use as mini healing cooldown when raid is hurt
+    - thorn_bloom,name="Thorn Bloom",if=group.count(cycle.health.effective.pct<config.wild_growth_threshold)>=config.wild_growth_members
+    - shadowmeld,name="Shadowmeld",if=target.threat>=3
 
   cooldowns:
     # Innervate: use early for mana-heavy ramp phases
@@ -296,17 +238,8 @@ lists:
     # Convoke the Spirits: primary burst cooldown (~13% healing contribution)
     - convoke_the_spirits,name="Convoke the Spirits",if=talent.convoke_the_spirits&!player.channeling&!player.moving&group.count(cycle.health.effective.pct<config.convoke_threshold)>=config.convoke_members
 
-    # Incarnation: Tree of Life - secondary burst cooldown, use for sustained pressure
-    - incarnation_tree_of_life,name="Tree of Life",if=talent.incarnation_tree_of_life&!var.is_tree_form&group.count(cycle.health.effective.pct<config.tree_of_life_threshold)>=config.tree_of_life_members
-
     # Tranquility: last resort big heal
     - tranquility,name="Tranquility",if=!player.channeling&group.count(cycle.health.effective.pct<config.tranquility_threshold)>=config.tranquility_members&!player.moving
-
-    # Heart of the Wild: when raid is healthy and we can DPS
-    - heart_of_the_wild,name="Heart of the Wild",if=config.use_heart_of_the_wild&talent.heart_of_the_wild
-
-    # Grove Guardians: use on cooldown for consistent healing
-    - grove_guardians,name="Grove Guardians",if=talent.grove_guardians
 
   tree_of_life_rotation:
     # Tree of Life: prioritize Rejuv spreading, then SotF combo, then Regrowth spam
@@ -333,7 +266,7 @@ lists:
 
   active_healing:
     # Priority 1: Swiftmend for emergency + SotF proc generation (83% efficiency target)
-    - swiftmend,name="Swiftmend SotF",cycle=members,if=(cycle.buff.rejuvenation.up|cycle.buff.regrowth.up|cycle.buff.wild_growth.up)&cycle.health.effective.pct<config.swiftmend_threshold&(!var.reforestation_ready|var.emergency_for_tree)
+    - swiftmend,name="Swiftmend SotF",cycle=members,if=(cycle.buff.rejuvenation.up|cycle.buff.regrowth.up|cycle.buff.wild_growth.up)&cycle.health.effective.pct<config.swiftmend_threshold
 
     # Priority 2: SotF-empowered Wild Growth (core combo: Swiftmend → Wild Growth)
     - wild_growth,name="SotF Wild Growth",if=buff.soul_of_the_forest.up&group.count(cycle.health.effective.pct<99)>=2
@@ -416,5 +349,5 @@ lists:
     - call_action_list,name=mouseover_healing_emergency,if=config.use_mouseover&var.mo_friendly_valid&mouseover.health.effective.pct<config.mouseover_emergency_hp&!player.casting&!player.channeling    
     - call_action_list,name=tree_of_life_rotation,if=var.is_tree_form
     - call_action_list,name=moving,if=player.moving
-    - call_action_list,name=active_healing,if=!config.force_dps
-    - call_action_list,name=ranged_dps,if=target.exists&target.alive&!target.friendly&!var.group_needs_healing&mana.pct>90
+    - call_action_list,name=active_healing
+    - call_action_list,name=ranged_dps,if=target.exists&target.alive&!target.friendly&!var.group_needs_healing&mana.pct>85
