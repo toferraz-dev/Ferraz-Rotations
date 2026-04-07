@@ -1,12 +1,11 @@
-version: 3.2
+version: 3.5
 author: Ferraz
 patch: "12.0.1.6"
 spec: 104
-name: Guardian of the Claw
+name: Guardian of the Claw Simia
 description: |
-  Master Guardian Druid Rotation for Mythic+.
-  Supports Druid of the Claw hero talents.
-  Includes Wowhead (Aggressive DPS) - Alternative / Method.gg (Balanced) rotation styles.
+  Optimized Guardian Druid (Claw) based on SimulationCraft.
+  Supports Killing Blow and Fount of Strength builds.
 
 entry: main
 
@@ -14,11 +13,21 @@ entry: main
 #  CONFIGURATION
 # ==========================================
 config:
-  allow_pull_with_mo:
-    label: "Pull with Moonfire"
-    section: "General"
-    type: checkbox
-    default: true
+  min_aoe_enemies:
+    label: "Min enemies for AOE"
+    section: "Rotation"
+    type: slider
+    min: 1
+    max: 10
+    default: 1
+
+  incarnation_enemies:
+    label: "Min enemies for Incarnation"
+    section: "Rotation"
+    type: slider
+    min: 1
+    max: 10
+    default: 3
 
   survival_instincts_threshold:
     label: Survival Instincts %
@@ -26,7 +35,7 @@ config:
     type: slider
     min: 10
     max: 70
-    default: 50
+    default: 45
 
   frenzied_regen_threshold:
     label: Frenzied Regeneration %
@@ -42,94 +51,23 @@ config:
     type: slider
     min: 30
     max: 90
-    default: 65
+    default: 70
 
   ironfur_stacks_min:
-    label: "Min Ironfur Stacks to maintain"
+    label: "Min Ironfur Stacks"
     section: "Defensives"
     type: slider
     min: 1
-    max: 7
-    default: 3
+    max: 5
+    default: 2
 
   ironfur_stacks_max:
-    label: "Max Ironfur Stacks (heavy damage)"
+    label: "Max Ironfur Stacks"
     section: "Defensives"
     type: slider
     min: 3
     max: 10
     default: 5
-
-  rage_pool:
-    label: "Rage Pool (Offensive)"
-    section: "Rotation"
-    type: slider
-    min: 0
-    max: 80
-    default: 40
-
-  incarnation_enemies:
-    label: "Min enemies for Incarnation"
-    section: "Cooldowns"
-    type: slider
-    min: 1
-    max: 10
-    default: 3
-
-  rage_of_sleeper_threshold:
-    label: "HP% for Rage of the Sleeper"
-    section: "Cooldowns"
-    type: slider
-    min: 30
-    max: 90
-    default: 70
-
-  thrash_stacks_target:
-    label: "Thrash Stacks to maintain"
-    section: "Rotation"
-    type: slider
-    min: 1
-    max: 5
-    default: 3
-
-  raze_targets:
-    label: "Min targets for Raze"
-    section: "Rotation"
-    type: slider
-    min: 2
-    max: 5
-    default: 2
-
-  min_aoe_enemies:
-    label: "Min enemies for AOE Rotation"
-    section: "Rotation"
-    type: slider
-    min: 2
-    max: 10
-    default: 3
-
-  stampeding_roar_usage:
-    label: "Stampeding Roar Usage"
-    section: "Movement"
-    type: dropdown
-    options:
-      - label: "Disabled"
-        value: 0
-      - label: "Only in combat"
-        value: 1
-      - label: "Only out of combat"
-        value: 2
-      - label: "Always when moving"
-        value: 3
-    default: 2
-
-  stampeding_roar_movement_time:
-    label: "Roar after moving (seconds)"
-    section: "Movement"
-    type: slider
-    min: 0
-    max: 4
-    default: 2
 
   trinket_usage:
     label: "Trinket Usage"
@@ -138,11 +76,9 @@ config:
     options:
       - label: "On Cooldown"
         value: 1
-      - label: "With Incarnation"
+      - label: "With CD/Burst"
         value: 2
-      - label: "When taking damage"
-        value: 3
-      - label: "Manual Only"
+      - label: "Manual"
         value: 0
     default: 1
 
@@ -150,40 +86,13 @@ config:
 #  VARIABLES
 # ==========================================
 variables:
-  # Resource & Form
   in_bear_form: buff.bear_form.up
-  rage: rage
-  high_rage: var.rage >= 90
-  can_spend_rage: (var.rage >= config.rage_pool) | var.incarnation_active | var.high_rage
-
-  # Defensive Status
-  ironfur_stacks: buff.ironfur.stack
-  need_ironfur: var.ironfur_stacks < config.ironfur_stacks_min
-  heavy_damage: health.pct < 70 & var.ironfur_stacks < config.ironfur_stacks_max
-  dangerous_situation: health.pct < 50 & !buff.survival_instincts.up
-  emergency_situation: health.pct < 30
-  barkskin_up: buff.barkskin.up
-  survival_up: buff.survival_instincts.up
-  any_major_defensive: var.barkskin_up | var.survival_up | buff.rage_of_the_sleeper.up
-  
-  # Offensive Procs & Talents
-  galactic_guardian_up: buff.galactic_guardian.up
-  tooth_and_claw_up: buff.tooth_and_claw.up
-  gore_up: buff.gore.up
-
-  # DoT Tracking
-  thrash_target_stacks: 5
-  thrash_needs_refresh: debuff.thrash.remains < 4.5 | debuff.thrash.stack < var.thrash_target_stacks
-  moonfire_needs_refresh: debuff.moonfire.remains < 4.8
-
-  # Cooldown States
-  lunar_beam_soon: cooldown.lunar_beam.remains < 15
-  incarnation_active: buff.incarnation_guardian_of_ursoc.up | buff.berserk.up
-  combat_start: player.combat & player.combat.time < 3
-  
-  # Logic Conditions
-  use_raze: active_enemies >= config.raze_targets
-  use_stampeding_roar: moving.time >= config.stampeding_roar_movement_time & buff.stampeding_roar.down & ((config.stampeding_roar_usage = 1 & player.combat) | (config.stampeding_roar_usage = 2 & !player.combat) | (config.stampeding_roar_usage = 3))
+  incarnation_active: buff.incarnation_guardian_of_ursoc.up|buff.berserk.up
+  kb_enabled: talent.killing_blow
+  fount_enabled: talent.fount_of_strength
+  red_moon_ticking: debuff.red_moon.up
+  thrash_refresh: debuff.thrash.remains<4.5|debuff.thrash.stack<3
+  moonfire_refresh: debuff.moonfire.remains<4.8
 
 # ==========================================
 #  ACTION LISTS
@@ -192,82 +101,55 @@ lists:
   out_of_combat:
     - mark_of_the_wild,name="Mark of the Wild",range_check=none,if=buff.mark_of_the_wild.down.any
 
-  taunt:
-    - growl,name="Growl (MO)",target=mouseover,if=target.threat < 3 & target.range <= 30 & target.alive & target.enemy
-    - growl,name="Growl",if=target.threat < 3 & target.range <= 30
-
-  movement:
-    - stampeding_roar,name="Stampeding Roar",if=var.use_stampeding_roar & config.stampeding_roar_usage != 0
-
-  trinkets:
-    - trinket_1,name="Trinket 1",if=trinket_1.ready & config.trinket_usage != 0 & ((config.trinket_usage = 1) | (config.trinket_usage = 2 & var.incarnation_active) | (config.trinket_usage = 3 & health.pct < 70))
-    - trinket_2,name="Trinket 2",if=trinket_2.ready & config.trinket_usage != 0 & ((config.trinket_usage = 1) | (config.trinket_usage = 2 & var.incarnation_active) | (config.trinket_usage = 3 & health.pct < 70))
-
   defensives:
-    - survival_instincts,name="Survival Instincts (Emergency)",if=var.emergency_situation & !var.survival_up
-    - rage_of_the_sleeper,name="Rage of the Sleeper (Emergency)",if=var.emergency_situation & !var.survival_up
-    - frenzied_regeneration,name="Frenzied Regeneration (Emergency)",if=var.emergency_situation
-    - barkskin,name="Barkskin (Emergency)",if=var.emergency_situation & !var.survival_up
-    - survival_instincts,name="Survival Instincts (Dangerous)",if=var.dangerous_situation & !var.barkskin_up
-    - frenzied_regeneration,name="Frenzied Regeneration (Dangerous)",if=var.dangerous_situation
-    - ironfur,name="Ironfur (Dangerous)",if=var.dangerous_situation
-    - survival_instincts,name="Survival Instincts",if=health.pct < config.survival_instincts_threshold & cooldown.frenzied_regeneration.remains > 2 & !var.any_major_defensive
-    - frenzied_regeneration,name="Frenzied Regeneration",if=health.pct < config.frenzied_regen_threshold
-    - barkskin,name="Barkskin",if=health.pct < config.barkskin_threshold & !var.survival_up
-    - ironfur,name="Ironfur (Max Stacks)",if=var.ironfur_stacks < config.ironfur_stacks_max
-    - ironfur,name="Ironfur (Heavy Damage)",if=var.heavy_damage
-    - ironfur,name="Ironfur (Incarnation)",if=var.incarnation_active & var.ironfur_stacks < config.ironfur_stacks_max
+    - survival_instincts,name="Survival Instincts",if=health.pct<config.survival_instincts_threshold&!buff.survival_instincts.up
+    - frenzied_regeneration,name="Frenzied Regeneration",if=health.pct<config.frenzied_regen_threshold
+    - barkskin,name="Barkskin",if=health.pct<config.barkskin_threshold&!buff.survival_instincts.up
+    - ironfur,name="Ironfur (Min Stacks)",if=buff.ironfur.stack<config.ironfur_stacks_min
+    - ironfur,name="Ironfur (Refresh)",if=buff.ironfur.remains<2&buff.ironfur.stack<config.ironfur_stacks_max
+    - ironfur,name="Ironfur (Heavy Damage)",if=health.pct<50&buff.ironfur.stack<config.ironfur_stacks_max
+
+  racials:
+    - blood_fury,name="Blood Fury"
+    - berserking,name="Berserking"
+    - fireblood,name="Fireblood"
+    - ancestral_call,name="Ancestral Call"
 
   cooldowns:
-    - lunar_beam,name="Lunar Beam"
-    - incarnation_guardian_of_ursoc,name="Incarnation",if=active_enemies >= config.incarnation_enemies | (target.boss & target.time_to_die > 20)
-    - rage_of_the_sleeper,name="Rage of the Sleeper",if=(health.pct < config.rage_of_sleeper_threshold | active_enemies >= 4 | (var.incarnation_active & active_enemies >= 3))
-    - berserk_ravage,name="Berserk (Ravage)",if=talent.berserk_ravage & (active_enemies >= 3 | target.boss)
-    - berserk_ravage,name="Berserk",if=talent.berserk & (active_enemies >= 3 | target.boss)
+    - lunar_beam,name="Lunar Beam",if=var.incarnation_active|((cooldown.incarnation_guardian_of_ursoc.remains>60|cooldown.berserk.remains>60)&!talent.lunation|(cooldown.incarnation_guardian_of_ursoc.remains>30|cooldown.berserk.remains>30)&talent.lunation)
+    - sundering_roar,name="Sundering Roar",if=debuff.thrash.stack<3
+    - incarnation_guardian_of_ursoc,name="Incarnation",if=active_enemies>=config.incarnation_enemies|target.boss
+    - berserk,name="Berserk",if=!talent.incarnation_guardian_of_ursoc&(active_enemies>=config.incarnation_enemies|target.boss)
+    - wild_guardian,name="Wild Guardian",if=(buff.ravage.up&talent.ravage)|!talent.ravage
 
-  ravage_proc:
-    - ravage,name="Ravage (Proc)",if=buff.ravage.up & rage >= 40 & var.ironfur_stacks >= 2
+  rotation_claw:
+    # Ravage / Assolar (Empowered Maul/Raze)
+    - ravage,name="Ravage (ST Proc)",if=buff.ravage.up&active_enemies<config.min_aoe_enemies&((!var.kb_enabled&rage>=40)|(var.kb_enabled&rage>=60))
+    - ravage,name="Ravage (AOE Proc)",if=buff.ravage.up&active_enemies>=config.min_aoe_enemies&((!var.kb_enabled&rage>=40)|(var.kb_enabled&rage>=60))
 
-  rage_management:
-    - ironfur,name="Ironfur (Maintenance)",if=var.ironfur_stacks < 2
-    - call_action_list,name=ravage_proc
-    - maul,name="Maul (Tooth and Claw)",if=var.tooth_and_claw_up & !var.use_raze & var.can_spend_rage
-    - raze,name="Raze",if=var.use_raze & var.can_spend_rage
-    - ironfur,name="Ironfur (Need Stacks)",if=var.need_ironfur
-    - ironfur,name="Ironfur (Rage Dump)",if=var.ironfur_stacks < config.ironfur_stacks_max & (buff.ironfur.remains < 3 | var.high_rage)
-    - maul,name="Maul (Incarnation)",if=var.incarnation_active & !var.use_raze & var.can_spend_rage
-    - maul,name="Maul",if=!var.use_raze & var.can_spend_rage
+    # Rage Spenders (Raze AOE / Maul ST)
+    - raze,name="Raze (High Rage)",if=active_enemies>=config.min_aoe_enemies&((!var.fount_enabled&rage>=50)|(var.fount_enabled&rage>=85))
+    - raze,name="Raze (Tooth and Claw)",if=active_enemies>=config.min_aoe_enemies&buff.tooth_and_claw.up&rage>=40
+    - maul,name="Maul (High Rage)",if=active_enemies<config.min_aoe_enemies&((!var.fount_enabled&rage>=50)|(var.fount_enabled&rage>=85))
+    - maul,name="Maul (Tooth and Claw)",if=active_enemies<config.min_aoe_enemies&buff.tooth_and_claw.up&rage>=40
 
-  moonfire_spread:
-    - moonfire,name="Moonfire (Combat Start)",if=var.combat_start & debuff.moonfire.down & range <= 40
-    - moonfire,name="Moonfire (Incarnation)",if=var.incarnation_active & debuff.moonfire.down & range <= 40
-    - moonfire,name="Moonfire (Galactic Guardian)",if=var.galactic_guardian_up
-    - moonfire,name="Moonfire (Lunar Beam Prep)",if=var.lunar_beam_soon & var.moonfire_needs_refresh
-    - moonfire,name="Moonfire (Apply)",if=debuff.moonfire.down
-    - moonfire,name="Moonfire (Refresh)",if=var.moonfire_needs_refresh
-    - moonfire,name="Moonfire (Mouseover)",target=mouseover,if=debuff.moonfire.down & range <= 40 & target.alive & target.enemy
+    # Mangle / Thrash Core
+    - mangle,name="Mangle (Red Moon)",if=var.red_moon_ticking
+    - thrash,name="Thrash (Refresh)",target_if=var.thrash_refresh
 
-  rotation_st_claw:
-    - ravage,name="Ravage",if=buff.ravage.up
-    - mangle,name="Mangle (Gore)",if=var.gore_up
-    - thrash,name="Thrash (Refresh)",if=var.thrash_needs_refresh
-    - mangle,name="Mangle"
-    - moonfire,name="Moonfire (GG)",if=var.galactic_guardian_up
-    - maul,name="Maul (Offensive)",if=buff.ironfur.stack >= 1 & var.can_spend_rage
+    # Red Moon & Wildpower Surge
+    - red_moon,name="Red Moon",if=cooldown.mangle.ready&!var.red_moon_ticking
+    - mangle,name="Mangle (Surge)",if=var.incarnation_active&talent.wildpower_surge
+
+    # Secondary Rage Dump
+    - raze,name="Raze (AOE)",if=active_enemies>=config.min_aoe_enemies&rage>=50
+    - maul,name="Maul (ST)",if=active_enemies<config.min_aoe_enemies&rage>=50
+
+    # Core Fillers
+    - mangle,name="Mangle",if=var.incarnation_active|rage<85
     - thrash,name="Thrash"
-    - moonfire,name="Moonfire (Refresh)",if=var.moonfire_needs_refresh
-    - swipe,name="Swipe"
-
-  rotation_aoe_claw:
-    - ravage,name="Ravage",if=buff.ravage.up
-    - thrash,name="Thrash (Refresh)",if=var.thrash_needs_refresh
-    - raze,name="Raze (Offensive)",if=var.use_raze & var.can_spend_rage
-    - maul,name="Maul (Offensive)",if=buff.ironfur.stack >= 1 & !var.use_raze & var.can_spend_rage
-    - mangle,name="Mangle (Gore)",if=var.gore_up
-    - mangle,name="Mangle"
-    - moonfire,name="Moonfire (GG)",if=var.galactic_guardian_up
-    - thrash,name="Thrash"
-    - moonfire,name="Moonfire (Refresh)",if=var.moonfire_needs_refresh
+    - moonfire,name="Moonfire (GG)",if=buff.galactic_guardian.up&var.in_bear_form
+    - moonfire,name="Moonfire (Refresh)",if=var.moonfire_refresh&var.in_bear_form
     - swipe,name="Swipe"
 
   main:
@@ -277,15 +159,13 @@ lists:
     - call_action_list,name=auto_target
     - call_action_list,name=auto_heal
     - return,if=auto_combat.player
-    - bear_form,name="Manual Bear Shift",if=!var.in_bear_form & !talent.fluid_form & (target.attackable | active_enemies > 0)
-    - mangle,name="Fluid Form Shift",if=!var.in_bear_form & talent.fluid_form & (target.attackable | active_enemies > 0)
-    - return,if=!buff.bear_form.up
-    - call_action_list,name=taunt
-    - call_action_list,name=ravage_proc
+
+    # Bear Form Management
+    - bear_form,name="Bear Form",if=!var.in_bear_form&!buff.feline_potential.up
+    - return,if=!var.in_bear_form
+
+    # Priority
     - call_action_list,name=defensives
+    - call_action_list,name=racials
     - call_action_list,name=cooldowns
-    - call_action_list,name=trinkets
-    - call_action_list,name=rage_management
-    - call_action_list,name=movement,if=player.moving
-    - call_action_list,name=rotation_aoe_claw,if=active_enemies >= config.min_aoe_enemies
-    - call_action_list,name=rotation_st_claw
+    - call_action_list,name=rotation_claw
