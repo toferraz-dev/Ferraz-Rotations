@@ -20,7 +20,6 @@ config:
     max: 99
     default: 55
 
-
   ironbark_threshold:
     label: "Ironbark HP %"
     section: "Defensives"
@@ -28,14 +27,6 @@ config:
     min: 25
     max: 99
     default: 55
-
-  manapotion:
-    section: "Defensives"
-    label: "Mana Potion"
-    type: slider
-    min: 0
-    max: 100
-    default: 40
 
   # =================================================================================================
   #     MAJOR COOLDOWNS
@@ -330,9 +321,6 @@ lists:
     - regrowth.mouseover,name="Regrowth (MO) Cast",if=!player.moving
     - rejuvenation.mouseover,name="Rejuv (MO)",if=mouseover.buff.remains(rejuvenation)<1.5
 
-  auto_mana:
-    - mana_potion,delay=250,if=mana_potion.ready&mana.pct<=config.manapotion
-
   main:
     - return,if=player.channeling|player.casting|buff.tranquility.up|buff.convoke_the_spirits.up
     - call_action_list,name=spell_queue
@@ -341,7 +329,6 @@ lists:
     - call_action_list,name=auto_target
     - call_action_list,name=auto_heal
     - return,if=auto_combat.player
-    - call_action_list,name=auto_mana    
     - call_action_list,name=interrupts
     - call_action_list,name=racials
     - call_action_list,name=defensives
