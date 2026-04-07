@@ -242,12 +242,19 @@ lists:
     - growl,target=mouseover,if=target.threat<3&target.range<=30&target.alive&target.enemy
     - growl,if=target.threat<3&target.range<=30
   
+  # ----------------------------------------------------------
+  #  SPENDERS / RAGE MANAGEMENT
+  # ----------------------------------------------------------
+  ravage_proc:
+    - ravage,if=buff.ravage.up&rage>=40&var.ironfur_stacks>=2
+
   rage_management:
-    - ironfur,if=var.need_ironfur
-    - ironfur,if=var.ironfur_stacks<config.ironfur_stacks_max&(buff.ironfur.remains<3|var.high_rage)
-    - ravage,if=buff.ravage.up&var.can_spend_rage
+    - ironfur,if=var.ironfur_stacks<2
+    - call_action_list,name=ravage_proc
     - maul,if=var.tooth_and_claw_up&!var.use_raze&var.can_spend_rage
     - raze,if=var.use_raze&var.can_spend_rage
+    - ironfur,if=var.need_ironfur
+    - ironfur,if=var.ironfur_stacks<config.ironfur_stacks_max&(buff.ironfur.remains<3|var.high_rage)
     - maul,if=var.incarnation_active&!var.use_raze&var.can_spend_rage
     - maul,if=!var.use_raze&var.can_spend_rage
   
@@ -339,6 +346,7 @@ lists:
 
     - call_action_list,name=taunt
     - call_action_list,name=interrupts
+    - call_action_list,name=ravage_proc,if=var.in_bear_form
     - call_action_list,name=defensives,if=var.in_bear_form
     - call_action_list,name=cooldowns,if=var.in_bear_form
     - call_action_list,name=trinkets
