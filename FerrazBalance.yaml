@@ -19,6 +19,7 @@ config:
     min: 0
     max: 100
     default: 40
+
   renewal_hp:
     label: "Renewal HP%"
     section: "Defensives"
@@ -26,6 +27,7 @@ config:
     min: 0
     max: 100
     default: 50
+
   frenzied_regen_hp:
     label: "Frenzied Regen HP%"
     section: "Defensives"
@@ -33,6 +35,7 @@ config:
     min: 0
     max: 100
     default: 30
+
   regrowth_ooc_hp:
     label: "Regrowth (OOC) HP%"
     section: "Healing"
@@ -40,16 +43,13 @@ config:
     min: 0
     max: 100
     default: 70
-  travel_form_auto:
-    label: "Auto Travel Form (OOC)"
-    section: "Utility"
-    type: checkbox
-    default: true
+
   enable_hotw:
     label: "HotW Support (Heal Party)"
     section: "Healing"
     type: checkbox
     default: true
+
   hotw_hp_threshold:
     label: "Party HP% for HotW"
     section: "Healing"
@@ -57,7 +57,6 @@ config:
     min: 30
     max: 90
     default: 75
-
 
 # ============================================================
 #  VARIABLES (Synced with Simia _common & rotation_102)
@@ -76,7 +75,6 @@ variables:
 #  ACTION LISTS
 # ============================================================
 lists:
-
   # ----------------------------------------------------------
   #  DEFENSIVES
   # ----------------------------------------------------------
@@ -121,23 +119,6 @@ lists:
     - new_moon,if=astral_power.deficit>10&debuff.atmospheric_exposure.remains<action.new_moon.execute_time+0.5
     - wild_mushroom,if=buff.eclipse_solar.up|cooldown.wild_mushroom.full_recharge_time<cooldown.celestial_alignment.remains
     - starfire,if=action.starfire.execute_time<buff.eclipse.remains
-    - wrath
-
-  # ----------------------------------------------------------
-  #  KEEPER OF THE GROVE - SINGLE TARGET
-  # ----------------------------------------------------------
-  kotg_st:
-    - celestial_alignment,delay=500,if=prev_gcd.1.force_of_nature|fight_remains<20
-    - incarnation_chosen_of_elune,delay=500,if=prev_gcd.1.force_of_nature|fight_remains<20
-    - moonfire,if=buff.harmony_of_the_grove.down&(debuff.moonfire.remains<2|debuff.moonfire.refreshable&var.eclipse_down)
-    - sunfire,if=debuff.sunfire.remains<2|debuff.sunfire.refreshable&var.eclipse_down
-    - fury_of_elune,if=buff.harmony_of_the_grove.up|cooldown.force_of_nature.remains<gcd.max
-    - force_of_nature,if=((var.eclipse_down&!talent.early_spring|talent.early_spring)&(cooldown.solar_eclipse.remains<gcd.max|cooldown.celestial_alignment.ready))|fight_remains<21
-    - solar_eclipse,if=var.eclipse_down&(cooldown.solar_eclipse.charges_fractional>1.5&var.cd_window|cooldown.solar_eclipse.ready&var.cd_window_narrow)
-    - convoke_the_spirits,if=(buff.celestial_alignment.up|buff.incarnation_chosen_of_elune.up)&astral_power<40|cooldown.celestial_alignment.remains>50&buff.harmony_of_the_grove.up&astral_power<50
-    - starfall,if=buff.starweavers_warp.react
-    - starsurge,if=var.eclipse_down&astral_power.deficit<20|!var.eclipse_down&(buff.eclipse_solar.remains>5|astral_power.deficit<20)|buff.touch_the_cosmos.react|buff.starweavers_weft.react
-    - wild_mushroom,if=buff.eclipse_solar.up|buff.eclipse_lunar.up|cooldown.wild_mushroom.full_recharge_time<cooldown.celestial_alignment.remains
     - wrath
 
   # ----------------------------------------------------------
@@ -192,18 +173,17 @@ lists:
   #  MAIN ENTRY POINT
   # ----------------------------------------------------------
   main:
+    - return,if=player.channeling|player.casting|buff.tranquility.up|buff.convoke_the_spirits.up
     - call_action_list,name=spell_queue
     - call_action_list,name=sanity_checks
     - call_action_list,name=auto_target
-    # Forms
-    - moonkin_form,if=buff.moonkin_form.down&!talent.fluid_form&buff.frenzied_regeneration.down
+    - call_action_list,name=auto_heal
+    - return,if=auto_combat.player
+    - moonkin_form,if=buff.moonkin_form.down
     - call_action_list,name=defensives
     - call_action_list,name=interrupts
-    - return,if=auto_combat.player
     - call_action_list,name=heal_support
-    # Rotation Branches
-    - run_action_list,name=opener_aoe,if=var.opener&enemies_around_target>2
-    - run_action_list,name=opener_st,if=var.opener&enemies_around_target<=2
-    - run_action_list,name=ec_st,if=hero_tree.elunes_chosen&enemies_around_target<=1
-    - run_action_list,name=kotg_st,if=hero_tree.keeper_of_the_grove&enemies_around_target<=1
-    - run_action_list,name=aoe,if=enemies_around_target>1
+    - run_action_list,name=opener_aoe,if=var.opener&active_enemies>2
+    - run_action_list,name=opener_st,if=var.opener&active_enemies<=2
+    - run_action_list,name=ec_st,if=hero_tree.elunes_chosen&active_enemies<=1
+    - run_action_list,name=aoe,if=active_enemies>1
