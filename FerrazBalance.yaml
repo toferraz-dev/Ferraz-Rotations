@@ -27,14 +27,7 @@ config:
     type: slider
     min: 0
     max: 100
-    default: 40
-  renewal_hp:
-    label: "Renewal HP%"
-    section: "Defensives"
-    type: slider
-    min: 0
-    max: 100
-    default: 50
+    default: 60
   frenzied_regen_hp:
     label: "Frenzied Regen HP%"
     section: "Defensives"
@@ -45,13 +38,6 @@ config:
   # ============================================================
   #  HEALING
   # ============================================================
-  regrowth_ooc_hp:
-    label: "Regrowth (OOC) HP%"
-    section: "Healing"
-    type: slider
-    min: 0
-    max: 100
-    default: 70
   enable_hotw:
     label: "HotW Support (Heal Party)"
     section: "Healing"
@@ -64,6 +50,19 @@ config:
     min: 30
     max: 90
     default: 75
+  # ============================================================
+  #  TRINKETS
+  # ============================================================
+  use_trinket_1:
+    label: "Auto Trinket 1"
+    section: "Trinkets"
+    type: checkbox
+    default: true
+  use_trinket_2:
+    label: "Auto Trinket 2"
+    section: "Trinkets"
+    type: checkbox
+    default: true
 
 # ============================================================
 #  VARIABLES
@@ -85,21 +84,25 @@ variables:
 lists:
 
   # ----------------------------------------------------------
+  #  TRINKETS
+  # ----------------------------------------------------------
+  trinkets:
+    - trinket1,if=trinket_1.sync&config.use_trinket_1&player.combat
+    - trinket2,if=trinket_2.sync&config.use_trinket_2&player.combat
+
+  # ----------------------------------------------------------
   #  DEFENSIVES
   # ----------------------------------------------------------
   defensives:
     - bear_form,if=health.pct<=config.frenzied_regen_hp&cooldown.frenzied_regeneration.ready&buff.frenzied_regeneration.down&!buff.bear_form.up
     - frenzied_regeneration,if=health.pct<=config.frenzied_regen_hp&buff.bear_form.up
     - barkskin,if=health.pct<=config.barkskin_hp
-    - renewal,if=health.pct<=config.renewal_hp
-    - regrowth,if=health.pct<=config.regrowth_ooc_hp&!player.combat
 
   # ----------------------------------------------------------
   #  HEAL SUPPORT (Heart of the Wild Party Healing)
   # ----------------------------------------------------------
   heal_support:
     - heart_of_the_wild,if=config.enable_hotw&group.lowest.health.pct<config.hotw_hp_threshold&!buff.heart_of_the_wild.up
-    - regrowth,target=lowest,if=buff.heart_of_the_wild.up&group.lowest.health.pct<config.hotw_hp_threshold
 
   # ----------------------------------------------------------
   #  ELUNE'S CHOSEN - SINGLE TARGET
@@ -251,25 +254,25 @@ lists:
 
     # Fury of Elune → CA/Inc
     - fury_of_elune
-    - celestial_alignment,delay=500
-    - incarnation_chosen_of_elune,delay=500
+    - celestial_alignment
+    - incarnation_chosen_of_elune
 
   # ----------------------------------------------------------
   #  MAIN ENTRY POINT
   # ----------------------------------------------------------
   main:
-    - return,if=player.channeling|player.casting|buff.tranquility.up|buff.convoke_the_spirits.up
+    - return,if=player.channeling|player.casting
     - call_action_list,name=spell_queue
     - call_action_list,name=sanity_checks
     - call_action_list,name=auto_target
     - call_action_list,name=auto_heal
     - mark_of_the_wild,if=group.count(cycle.buff.mark_of_the_wild.down.any)>0&!player.combat
     - return,if=auto_combat.player
-    - moonkin_form,if=buff.moonkin_form.down
+    - moonkin_form,if=buff.moonkin_form.down&health.pct>config.frenzied_regen_hp&!buff.frenzied_regeneration.up
     - call_action_list,name=defensives
-    - call_action_list,name=interrupts
     - call_action_list,name=heal_support
-    - run_action_list,name=opener_aoe,if=var.opener&active_enemies>2
-    - run_action_list,name=opener_st,if=var.opener&active_enemies<=2
-    - run_action_list,name=ec_st,if=active_enemies<=1
-    - run_action_list,name=aoe,if=active_enemies>1
+    - call_action_list,name=trinkets
+    - call_action_list,name=opener_aoe,if=var.opener&active_enemies>2
+    - call_action_list,name=opener_st,if=var.opener&active_enemies<=2
+    - call_action_list,name=ec_st,if=active_enemies<=1
+    - call_action_list,name=aoe,if=active_enemies>1
