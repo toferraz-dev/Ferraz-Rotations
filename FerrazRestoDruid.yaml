@@ -77,7 +77,7 @@ config:
     type: slider
     min: 25
     max: 99
-    default: 45
+    default: 60
 
   # =================================================================================================
   #     HEALING - AOE & GROUP
@@ -129,7 +129,7 @@ config:
     type: slider
     min: 25
     max: 99
-    default: 80
+    default: 85
 
   rejuvenation_threshold:
     label: "Rejuvenation HP %"
@@ -137,7 +137,7 @@ config:
     type: slider
     min: 25
     max: 99
-    default: 90
+    default: 95
 
   # =================================================================================================
   #     DAMAGE & CATWEAVING
@@ -148,7 +148,7 @@ config:
     type: slider
     min: 25
     max: 99
-    default: 80
+    default: 85
 
   catweave_injured_max:
     label: "Exit Cat - Max Injured"
@@ -156,7 +156,7 @@ config:
     type: slider
     min: 0
     max: 5
-    default: 2
+    default: 1
 
   aoe_threshold:
     label: "AoE - Min Enemies"
@@ -182,7 +182,6 @@ config:
     min: 25
     max: 99
     default: 60
-
 
   force_dps:
     label: "Force DPS"
