@@ -164,14 +164,6 @@ config:
   # =================================================================================================
   #     TARGETING
   # =================================================================================================
-  symbiotic_target:
-    label: "Symbiosis Target"
-    section: "Targeting"
-    type: dropdown
-    options:
-      - label: "Manual"
-        value: 1
-    default: 1
 
   lifebloom_target:
     label: "Lifebloom Target"
@@ -216,12 +208,12 @@ lists:
 
   racials:
     # Thorn Bloom (Haranir): AoE heal+damage, 3min CD — use as mini healing cooldown when raid is hurt
-    - thorn_bloom,name="Thorn Bloom"#,if=group.count(cycle.health.effective.pct<config.wild_growth_threshold)>=config.wild_growth_members
+    - thorn_bloom,name="Thorn Bloom",if=group.count(cycle.health.effective.pct<config.wild_growth_threshold)>=config.wild_growth_members
     - shadowmeld,name="Shadowmeld",if=target.threat>=3
 
   cooldowns:
     # Innervate: use early for mana-heavy ramp phases
-    - innervate,name="Innervate (Ramp)",if=mana.pct<config.innervate_threshold
+    - innervate,name="Innervate (Ramp)",if=player.combat&mana.pct<config.innervate_threshold
 
     # Nature's Swiftness: emergency single-target save
     - natures_swiftness,name="Nature's Swiftness",if=group.count(cycle.health.effective.pct<config.ns_threshold)>=1
@@ -293,12 +285,9 @@ lists:
     # Priority 11: Regrowth as hard-cast filler when Abundance is high
     - regrowth,name="Regrowth Filler",cycle=members,if=buff.abundance.stack>=config.abundance_regrowth_stacks&cycle.health.effective.pct<config.regrowth_threshold&!player.moving
     
-  utility:
-    - innervate,name="Innervate",if=mana.pct<config.innervate_threshold
-
   ranged_dps:
     - moonfire,name="Moonfire ST",if=debuff.moonfire.refreshable
-    - sunfire,name="Sunfire AoE",if=debuff.sunfire.refreshable
+
     - wrath,name="Wrath Filler"
 
   moving:
