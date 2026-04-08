@@ -87,8 +87,8 @@ lists:
   #  TRINKETS
   # ----------------------------------------------------------
   trinkets:
-    - trinket1,if=trinket_1.sync&config.use_trinket_1&player.combat
-    - trinket2,if=trinket_2.sync&config.use_trinket_2&player.combat
+    - trinket_1,if=config.use_trinket_1&player.combat&trinket_1.ready
+    - trinket_2,if=config.use_trinket_2&player.combat&trinket_2.ready
 
   # ----------------------------------------------------------
   #  DEFENSIVES
