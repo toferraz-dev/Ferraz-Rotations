@@ -57,14 +57,11 @@ config:
 #  VARIABLES (Synced with Simia _common & rotation_102)
 # ============================================================
 variables:
-  eclipse_up: buff.eclipse_solar.up|buff.eclipse_lunar.up
   eclipse_down: buff.eclipse_solar.down&buff.eclipse_lunar.down
-  ca_soon: cooldown.celestial_alignment.remains<3|cooldown.incarnation_chosen_of_elune.remains<3
   ec: talent.boundless_moonlight
   opener: (talent.celestial_alignment|talent.incarnation_chosen_of_elune)&cooldown.celestial_alignment.remains=0
   cd_window: cooldown.force_of_nature.remains>15|(cooldown.celestial_alignment.remains<44&cooldown.incarnation_chosen_of_elune.remains<44)
   cd_window_narrow: cooldown.force_of_nature.remains>30|((cooldown.celestial_alignment.remains>10|cooldown.incarnation_chosen_of_elune.remains>10)&(cooldown.celestial_alignment.remains<20&cooldown.incarnation_chosen_of_elune.remains<20))
-  inc_charge: cooldown.celestial_alignment.charges_fractional<1|cooldown.incarnation_chosen_of_elune.charges_fractional<1
 
 # ============================================================
 #  ACTION LISTS
