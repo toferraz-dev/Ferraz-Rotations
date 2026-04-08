@@ -116,8 +116,8 @@ lists:
     - moonfire,if=buff.harmony_of_the_grove.down&(debuff.moonfire.remains<2|debuff.moonfire.refreshable&var.eclipse_down)
     - sunfire,if=debuff.sunfire.remains<2|debuff.sunfire.refreshable&var.eclipse_down
     - fury_of_elune,if=buff.harmony_of_the_grove.up|cooldown.force_of_nature.remains<gcd.max
-    - solar_eclipse,if=var.eclipse_down&(cooldown.solar_eclipse.charges_fractional>1.5&var.cd_window|cooldown.solar_eclipse.ready&var.cd_window_narrow)
     - force_of_nature,if=((var.eclipse_down&!talent.early_spring|talent.early_spring)&(cooldown.solar_eclipse.remains<gcd.max|cooldown.celestial_alignment.ready))|fight_remains<21
+    - solar_eclipse,if=var.eclipse_down&(cooldown.solar_eclipse.charges_fractional>1.5&var.cd_window|cooldown.solar_eclipse.ready&var.cd_window_narrow)
     - convoke_the_spirits,if=(buff.celestial_alignment.up|buff.incarnation_chosen_of_elune.up)&astral_power<40|cooldown.celestial_alignment.remains>50&buff.harmony_of_the_grove.up&astral_power<50
     - starfall,if=buff.starweavers_warp.react
     - starsurge,if=var.eclipse_down&astral_power.deficit<20|!var.eclipse_down&(buff.eclipse_solar.remains>5|astral_power.deficit<20)|buff.touch_the_cosmos.react|buff.starweavers_weft.react
@@ -164,6 +164,7 @@ lists:
     - lunar_eclipse,if=var.eclipse_down
     - starsurge,if=(var.eclipse_down|buff.touch_the_cosmos.react)&talent.convoke_the_spirits
     - fury_of_elune
+    - force_of_nature
     - celestial_alignment,delay=500
     - incarnation_chosen_of_elune,delay=500
 
