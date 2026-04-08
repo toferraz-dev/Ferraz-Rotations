@@ -1,11 +1,11 @@
 version: 4.1
-author: Ferraz
+author: "Ferraz"
 patch: "12.0.1.6"
 spec: 102
 name: Ferraz Balance
 description: |
   Balance Druid - High-End Mythic+ & Raid.
-  Logic synchronized with SimC Midnight Branch (Simia).
+  Logic synchronized with SimC Midnight Branch.
 entry: main
 
 config:
@@ -192,9 +192,9 @@ lists:
   #  MAIN ENTRY POINT
   # ----------------------------------------------------------
   main:
-    - call_action_list,name=sanity_checks
     - call_action_list,name=spell_queue
-    - call_action_list,name=auto_target_ranged
+    - call_action_list,name=sanity_checks
+    - call_action_list,name=auto_target
     # Forms
     - moonkin_form,if=buff.moonkin_form.down&!talent.fluid_form&buff.frenzied_regeneration.down
     - call_action_list,name=defensives
