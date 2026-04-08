@@ -94,14 +94,6 @@ lists:
     - regrowth,if=health.pct<=config.regrowth_ooc_hp&!player.combat
 
   # ----------------------------------------------------------
-  #  INTERRUPTS
-  # ----------------------------------------------------------
-  interrupts:
-    - solar_beam,if=interrupt.target.check
-    - solar_beam.mouseover,if=interrupt.mouseover.check
-    - solar_beam.focus,if=interrupt.focus.check
-
-  # ----------------------------------------------------------
   #  HEAL SUPPORT (Heart of the Wild Party Healing)
   # ----------------------------------------------------------
   heal_support:
@@ -144,9 +136,6 @@ lists:
     - celestial_alignment,delay=500,if=buff.ascendant_stars.down&(cooldown.convoke_the_spirits.remains<5|cooldown.solar_eclipse.charges_fractional<1.5|!talent.elunes_guidance)
     - incarnation_chosen_of_elune,delay=500,if=buff.ascendant_stars.down&(cooldown.convoke_the_spirits.remains<5|cooldown.solar_eclipse.charges_fractional<1.5|!talent.elunes_guidance)
 
-    # 6. Convoke: inside CA/Inc window, AP < 40 (per Icy Veins)
-    - convoke_the_spirits,if=(buff.celestial_alignment.up|buff.incarnation_chosen_of_elune.up)&astral_power<40|fight_remains<20
-
     # 7. Wild Mushroom: don't let charges cap
     - wild_mushroom,if=buff.eclipse_lunar.up|cooldown.wild_mushroom.full_recharge_time<cooldown.celestial_alignment.remains
 
@@ -185,9 +174,6 @@ lists:
 
     # 2. Enter Lunar Eclipse (EC always uses Lunar in AoE)
     - lunar_eclipse,if=var.eclipse_down
-
-    # 3. Convoke FIRST inside CA/Inc — before Starfall (more free Starfalls)
-    - convoke_the_spirits,if=(buff.celestial_alignment.up|buff.incarnation_chosen_of_elune.up)&astral_power<40
 
     # 4. Starfire: AoE filler inside Eclipse (cleaves all targets)
     - starfire,if=buff.eclipse_lunar.up&enemies_around_target>2
