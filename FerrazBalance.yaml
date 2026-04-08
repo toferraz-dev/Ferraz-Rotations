@@ -1,11 +1,12 @@
-version: 4.1
-author: "Ferraz"
-patch: "12.0.1.6"
+# =============================================================================
+# Druid - Balance - 102
+# Based on: SimC default APL (midnight branch) + assisted_combat
+# =============================================================================
+
+version: 4.0
+author: Ferraz
 spec: 102
-name: Ferraz Balance
-description: |
-  Balance Druid - High-End Mythic+ & Raid.
-  Logic synchronized with SimC Midnight Branch.
+name: Ferraz Balance Druid (Optimized)
 entry: main
 
 config:
@@ -19,7 +20,6 @@ config:
     min: 0
     max: 100
     default: 40
-
   renewal_hp:
     label: "Renewal HP%"
     section: "Defensives"
@@ -27,7 +27,6 @@ config:
     min: 0
     max: 100
     default: 50
-
   frenzied_regen_hp:
     label: "Frenzied Regen HP%"
     section: "Defensives"
@@ -35,7 +34,6 @@ config:
     min: 0
     max: 100
     default: 30
-
   regrowth_ooc_hp:
     label: "Regrowth (OOC) HP%"
     section: "Healing"
@@ -43,13 +41,11 @@ config:
     min: 0
     max: 100
     default: 70
-
   enable_hotw:
     label: "HotW Support (Heal Party)"
     section: "Healing"
     type: checkbox
     default: true
-
   hotw_hp_threshold:
     label: "Party HP% for HotW"
     section: "Healing"
@@ -57,19 +53,18 @@ config:
     min: 30
     max: 90
     default: 75
-
 # ============================================================
 #  VARIABLES (Synced with Simia _common & rotation_102)
 # ============================================================
 variables:
   eclipse_up: buff.eclipse_solar.up|buff.eclipse_lunar.up
   eclipse_down: buff.eclipse_solar.down&buff.eclipse_lunar.down
-  no_weaver_procs: !buff.touch_the_cosmos.react&!buff.starweavers_warp.react
-  ca_soon: (cooldown.celestial_alignment.remains<3|cooldown.incarnation_chosen_of_elune.remains<3)
+  ca_soon: cooldown.celestial_alignment.remains<3|cooldown.incarnation_chosen_of_elune.remains<3
   ec: talent.boundless_moonlight
   opener: (talent.celestial_alignment|talent.incarnation_chosen_of_elune)&cooldown.celestial_alignment.remains=0
   cd_window: cooldown.force_of_nature.remains>15|(cooldown.celestial_alignment.remains<44&cooldown.incarnation_chosen_of_elune.remains<44)
   cd_window_narrow: cooldown.force_of_nature.remains>30|((cooldown.celestial_alignment.remains>10|cooldown.incarnation_chosen_of_elune.remains>10)&(cooldown.celestial_alignment.remains<20&cooldown.incarnation_chosen_of_elune.remains<20))
+  inc_charge: cooldown.celestial_alignment.charges_fractional<1|cooldown.incarnation_chosen_of_elune.charges_fractional<1
 
 # ============================================================
 #  ACTION LISTS
@@ -185,5 +180,5 @@ lists:
     - call_action_list,name=heal_support
     - run_action_list,name=opener_aoe,if=var.opener&active_enemies>2
     - run_action_list,name=opener_st,if=var.opener&active_enemies<=2
-    - run_action_list,name=ec_st,if=hero_tree.elunes_chosen&active_enemies<=1
+    - run_action_list,name=ec_st,if=active_enemies<=1
     - run_action_list,name=aoe,if=active_enemies>1
