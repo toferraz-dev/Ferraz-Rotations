@@ -238,9 +238,6 @@ lists:
     - celestial_alignment,delay=500
     - incarnation_chosen_of_elune,delay=500
 
-    # Convoke immediately inside CA — must be < 40 AP
-    - convoke_the_spirits,if=(buff.celestial_alignment.up|buff.incarnation_chosen_of_elune.up)&astral_power<40
-
     # Fury of Elune after Convoke
     - fury_of_elune
 
