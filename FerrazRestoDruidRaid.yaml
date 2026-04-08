@@ -38,7 +38,7 @@ config:
     type: slider
     min: 25
     max: 99
-    default: 65
+    default: 75
 
   convoke_members:
     label: "Convoke - Min Members"
@@ -46,7 +46,7 @@ config:
     type: slider
     min: 1
     max: 20
-    default: 5
+    default: 3
 
   tranquility_threshold:
     label: "Tranquility HP %"
@@ -54,7 +54,7 @@ config:
     type: slider
     min: 25
     max: 99
-    default: 65
+    default: 70
 
   tranquility_members:
     label: "Tranquility - Min Members"
@@ -62,7 +62,7 @@ config:
     type: slider
     min: 1
     max: 20
-    default: 8
+    default: 5
 
   ns_threshold:
     label: "Nature's Swiftness HP %"
@@ -70,7 +70,7 @@ config:
     type: slider
     min: 25
     max: 99
-    default: 45
+    default: 55
 
   # =================================================================================================
   #     HEALING - AOE & GROUP
@@ -87,7 +87,7 @@ config:
     type: slider
     min: 10
     max: 99
-    default: 65
+    default: 75
 
   wild_growth_threshold:
     label: "Wild Growth HP %"
@@ -95,7 +95,7 @@ config:
     type: slider
     min: 25
     max: 99
-    default: 85
+    default: 90
 
   wild_growth_members:
     label: "Wild Growth - Min Members"
@@ -103,7 +103,7 @@ config:
     type: slider
     min: 1
     max: 20
-    default: 3
+    default: 2
 
   # =================================================================================================
   #     HEALING - SINGLE TARGET
@@ -114,7 +114,7 @@ config:
     type: slider
     min: 25
     max: 99
-    default: 75
+    default: 85
 
   regrowth_threshold:
     label: "Regrowth HP %"
@@ -122,7 +122,7 @@ config:
     type: slider
     min: 25
     max: 99
-    default: 80
+    default: 90
 
   rejuvenation_threshold:
     label: "Rejuvenation HP %"
@@ -130,7 +130,7 @@ config:
     type: slider
     min: 25
     max: 100
-    default: 80
+    default: 95
 
   # =================================================================================================
   #     HEALING TOGGLES & AUTOMATION
@@ -148,7 +148,7 @@ config:
     type: slider
     min: 5
     max: 20
-    default: 8
+    default: 6
 
   # =================================================================================================
   #     UTILITY & ITEMS
@@ -199,7 +199,7 @@ lists:
     - soothe,name="Soothe Enrage",if=!player.channeling&target.purgeable.enrage    
 
   out_of_combat:
-    - mark_of_the_wild,name="Mark of the Wild",range_check=nonne,if=buff.mark_of_the_wild.down.any
+    - mark_of_the_wild,name="Mark of the Wild",range_check=none,if=buff.mark_of_the_wild.down.any
     
     # Lifebloom OOC Maintenance
     - lifebloom,name="OOC LB Auto Maintain",cycle=tanks,if=config.lifebloom_target=0&cycle.buff.lifebloom.up&cycle.buff.lifebloom.remains<=3
