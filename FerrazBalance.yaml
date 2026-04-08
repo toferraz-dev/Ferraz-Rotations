@@ -1,17 +1,24 @@
 # =============================================================================
-# Druid - Balance - 102
-# Based on: SimC default APL (midnight branch) + assisted_combat
+# Druid - Balance - 102 — Elune's Chosen
+# Meta Source: Icy Veins Midnight Season 1 (updated 17 Mar 2026)
+#              Archon.gg Mythic Raid data (Apr 2026)
+# Key principles:
+#   - Always enter Lunar Eclipse (EC builds do NOT use Solar)
+#   - Fury of Elune is 2nd priority after DoTs — never hold it
+#   - Convoke inside CA/Inc window, below 40 AP
+#   - Starlord: pool 50-80 AP before Eclipse transitions
+#   - Starweaver mentions removed (no longer relevant as of 17/03/2026)
 # =============================================================================
 
 version: 4.0
 author: Ferraz
 spec: 102
-name: Ferraz Balance Druid (Optimized)
+name: Ferraz Balance Druid (Elunes Chosen)
 entry: main
 
 config:
   # ============================================================
-  #  CONFIGURATION
+  #  DEFENSIVES
   # ============================================================
   barkskin_hp:
     label: "Barkskin HP%"
@@ -34,6 +41,9 @@ config:
     min: 0
     max: 100
     default: 30
+  # ============================================================
+  #  HEALING
+  # ============================================================
   regrowth_ooc_hp:
     label: "Regrowth (OOC) HP%"
     section: "Healing"
@@ -53,13 +63,18 @@ config:
     min: 30
     max: 90
     default: 75
+
 # ============================================================
-#  VARIABLES (Synced with Simia _common & rotation_102)
+#  VARIABLES
 # ============================================================
 variables:
+  # Eclipse state
   eclipse_down: buff.eclipse_solar.down&buff.eclipse_lunar.down
+  # Elune's Chosen hero talent active (Boundless Moonlight)
   ec: talent.boundless_moonlight
+  # True when about to open (CA/Inc ready, not yet pressed)
   opener: (talent.celestial_alignment|talent.incarnation_chosen_of_elune)&cooldown.celestial_alignment.remains=0
+  # Window where burning CDs together is correct
   cd_window: cooldown.force_of_nature.remains>15|(cooldown.celestial_alignment.remains<44&cooldown.incarnation_chosen_of_elune.remains<44)
   cd_window_narrow: cooldown.force_of_nature.remains>30|((cooldown.celestial_alignment.remains>10|cooldown.incarnation_chosen_of_elune.remains>10)&(cooldown.celestial_alignment.remains<20&cooldown.incarnation_chosen_of_elune.remains<20))
 
@@ -67,6 +82,7 @@ variables:
 #  ACTION LISTS
 # ============================================================
 lists:
+
   # ----------------------------------------------------------
   #  DEFENSIVES
   # ----------------------------------------------------------
@@ -86,78 +102,171 @@ lists:
     - solar_beam.focus,if=interrupt.focus.check
 
   # ----------------------------------------------------------
-  #  HEAL SUPPORT
+  #  HEAL SUPPORT (Heart of the Wild Party Healing)
   # ----------------------------------------------------------
   heal_support:
     - heart_of_the_wild,if=config.enable_hotw&group.lowest.health.pct<config.hotw_hp_threshold&!buff.heart_of_the_wild.up
     - regrowth,target=lowest,if=buff.heart_of_the_wild.up&group.lowest.health.pct<config.hotw_hp_threshold
-    
+
   # ----------------------------------------------------------
   #  ELUNE'S CHOSEN - SINGLE TARGET
+  #
+  #  Priority (Icy Veins Midnight S1 - Elune's Chosen ST):
+  #  1. Maintain Sunfire + Moonfire
+  #  2. Enter Lunar Eclipse
+  #  3. Fury of Elune on cooldown (pair with CA when possible)
+  #  4. Starsurge: stack Starlord / consume Touch the Cosmos proc
+  #  5. CA/Inc: use after Fury of Elune is in flight
+  #  6. Convoke: inside CA/Inc if AP < 40
+  #  7. Wild Mushroom: don't cap charges
+  #  8. New/Half/Full Moon: don't cap charges
+  #  9. Starfire: primary filler in Lunar Eclipse
+  # 10. Wrath: filler outside Eclipse (up to 5 targets)
   # ----------------------------------------------------------
   ec_st:
-    - celestial_alignment,delay=500,if=buff.ascendant_stars.down&(cooldown.convoke_the_spirits.remains<5|cooldown.solar_eclipse.charges_fractional<1.5|!talent.elunes_guidance)
-    - incarnation_chosen_of_elune,delay=500,if=buff.ascendant_stars.down&(cooldown.convoke_the_spirits.remains<5|cooldown.solar_eclipse.charges_fractional<1.5|!talent.elunes_guidance)
+    # 1. Maintain DoTs (refresh before they fall off)
     - moonfire,if=debuff.moonfire.remains<2|debuff.moonfire.refreshable&var.eclipse_down
     - sunfire,if=debuff.sunfire.remains<2|debuff.sunfire.refreshable&var.eclipse_down
-    - convoke_the_spirits,if=(buff.celestial_alignment.up|buff.incarnation_chosen_of_elune.up)&astral_power<40|(cooldown.celestial_alignment.remains>30&var.eclipse_down)|fight_remains<20
+
+    # 2. Enter Lunar Eclipse (EC always uses Lunar, never Solar)
     - lunar_eclipse,if=var.eclipse_down
-    - starfall,if=buff.starweavers_warp.react
-    - starsurge,if=astral_power>80|!var.eclipse_down|buff.starweavers_weft.react|buff.touch_the_cosmos.react
-    - fury_of_elune,if=!talent.sundered_firmament|debuff.atmospheric_exposure.remains<2&(buff.eclipse_solar.remains>5|buff.eclipse_lunar.remains>5)|fight_remains<20
-    - force_of_nature
+
+    # 3. Fury of Elune on cooldown — pair with CA/Inc when possible
+    #    Guard: atmospheric_exposure must be down or low, OR we are in fight end
+    - fury_of_elune,if=!talent.sundered_firmament|(debuff.atmospheric_exposure.remains<2&(buff.eclipse_lunar.remains>5))|fight_remains<20
+
+    # 4. Starsurge: spend Touch the Cosmos proc, maintain Starlord,
+    #    or prevent AP cap during Eclipse
+    - starsurge,if=buff.touch_the_cosmos.react|astral_power>80|(!var.eclipse_down&astral_power>40)
+
+    # 5. CA/Inc after Fury of Elune is casting/done (opener logic
+    #    handles the very first use; this covers every subsequent window)
+    - celestial_alignment,delay=500,if=buff.ascendant_stars.down&(cooldown.convoke_the_spirits.remains<5|cooldown.solar_eclipse.charges_fractional<1.5|!talent.elunes_guidance)
+    - incarnation_chosen_of_elune,delay=500,if=buff.ascendant_stars.down&(cooldown.convoke_the_spirits.remains<5|cooldown.solar_eclipse.charges_fractional<1.5|!talent.elunes_guidance)
+
+    # 6. Convoke: inside CA/Inc window, AP < 40 (per Icy Veins)
+    - convoke_the_spirits,if=(buff.celestial_alignment.up|buff.incarnation_chosen_of_elune.up)&astral_power<40|fight_remains<20
+
+    # 7. Wild Mushroom: don't let charges cap
+    - wild_mushroom,if=buff.eclipse_lunar.up|cooldown.wild_mushroom.full_recharge_time<cooldown.celestial_alignment.remains
+
+    # 8. Moon charges: don't cap (generates AP when there's room)
     - full_moon,if=astral_power.deficit>40&debuff.atmospheric_exposure.remains<action.full_moon.execute_time+0.5
     - half_moon,if=astral_power.deficit>20&debuff.atmospheric_exposure.remains<action.half_moon.execute_time+0.5
     - new_moon,if=astral_power.deficit>10&debuff.atmospheric_exposure.remains<action.new_moon.execute_time+0.5
-    - wild_mushroom,if=buff.eclipse_solar.up|cooldown.wild_mushroom.full_recharge_time<cooldown.celestial_alignment.remains
-    - starfire,if=action.starfire.execute_time<buff.eclipse.remains
+
+    # 9. Starfire: primary filler in Lunar Eclipse
+    - starfire,if=buff.eclipse_lunar.up
+
+    # 10. Wrath: filler outside Eclipse (outside Eclipse it builds AP faster)
     - wrath
 
   # ----------------------------------------------------------
   #  AOE (2+ targets)
+  #
+  #  Log analysis (阿揪揪, Algethar S18, Elune's Chosen):
+  #  Observed sequence: DoT Spread → Convoke (Lunar Bolts ×20 targets)
+  #    → Starfire filler → Starsurge (Star Cascade) → Starfall → Fury of Elune
+  #
+  #  Icy Veins confirms: cast Convoke BEFORE Starfalls to increase
+  #  chance of getting free Starfall from Convoke.
+  #  Fury of Elune fires AFTER Starfall/Starsurge dump — not first.
+  #
+  #  Talents confirmed active: Astral Smolder, Star Cascade (tier)
   # ----------------------------------------------------------
   aoe:
-    - celestial_alignment,delay=500,if=prev_gcd.1.force_of_nature&!var.ec|var.ec&prev_gcd.1.fury_of_elune&var.eclipse_down|fight_remains<20
-    - incarnation_chosen_of_elune,delay=500,if=prev_gcd.1.force_of_nature&!var.ec|var.ec&prev_gcd.1.fury_of_elune&var.eclipse_down|fight_remains<20
+    # CA/Inc: pair after DoTs; fire when CA is ready (not just after prev_gcd fury)
+    - celestial_alignment,delay=500,if=var.eclipse_down|fight_remains<20
+    - incarnation_chosen_of_elune,delay=500,if=var.eclipse_down|fight_remains<20
+
+    # 1. Maintain DoTs — spread to all targets before spending AP
     - moonfire,if=debuff.moonfire.remains<2|debuff.moonfire.refreshable&var.eclipse_down
     - sunfire,if=debuff.sunfire.remains<2|debuff.sunfire.refreshable&var.eclipse_down
-    - starfire,if=enemies_around_target>2&talent.dream_surge&var.eclipse_down
-    - wrath,if=enemies_around_target=2&talent.dream_surge&var.eclipse_down
-    - fury_of_elune,if=var.ec|buff.harmony_of_the_grove.up|cooldown.force_of_nature.remains<gcd.max
-    - force_of_nature,if=(var.eclipse_down&!talent.early_spring|talent.early_spring)
+
+    # 2. Enter Lunar Eclipse (EC always uses Lunar in AoE)
+    - lunar_eclipse,if=var.eclipse_down
+
+    # 3. Convoke FIRST inside CA/Inc — before Starfall (more free Starfalls)
+    - convoke_the_spirits,if=(buff.celestial_alignment.up|buff.incarnation_chosen_of_elune.up)&astral_power<40
+
+    # 4. Starfire: AoE filler inside Eclipse (cleaves all targets)
+    - starfire,if=buff.eclipse_lunar.up&enemies_around_target>2
+
+    # 5. Starfall: main AP dump in AoE
+    - starfall,if=(astral_power>80|!var.eclipse_down|buff.touch_the_cosmos.react)&target.time_to_die>5
+
+    # 6. Fury of Elune: after Starfall/Convoke burst (per log behavior)
+    - fury_of_elune
+
+    # 7. Wild Mushroom: don't cap charges
+    - wild_mushroom,if=buff.eclipse_lunar.up|buff.eclipse_solar.up|cooldown.wild_mushroom.full_recharge_time<cooldown.celestial_alignment.remains
+
+    # 8. Moon charges
     - full_moon,if=astral_power.deficit>40
     - half_moon,if=astral_power.deficit>20
     - new_moon,if=astral_power.deficit>10
-    - wild_mushroom,if=buff.eclipse_lunar.up|buff.eclipse_solar.up|cooldown.wild_mushroom.full_recharge_time<cooldown.celestial_alignment.remains
-    - solar_eclipse,if=var.eclipse_down&(cooldown.solar_eclipse.charges_fractional>1.5&var.cd_window|cooldown.solar_eclipse.ready&var.cd_window_narrow)
-    - lunar_eclipse,if=var.eclipse_down&(enemies_around_target>2&!var.ec|(var.ec&cooldown.celestial_alignment.full_recharge_time>15))
-    - convoke_the_spirits,if=(buff.celestial_alignment.up|buff.incarnation_chosen_of_elune.up)&astral_power<40
-    - starfall,if=(astral_power>80|!var.eclipse_down|buff.touch_the_cosmos.react|!buff.starweavers_weft.react)&target.time_to_die>5
-    - starsurge,if=buff.starweavers_weft.react
-    - starfire,if=var.ec|var.eclipse_down&enemies_around_target>6|buff.eclipse_lunar.up&(enemies_around_target>2&buff.celestial_alignment.up|enemies_around_target<=2&!buff.celestial_alignment.up)
+
+    # 9. Solar Eclipse enter for non-EC fallback
+    - solar_eclipse,if=var.eclipse_down&!var.ec&(cooldown.solar_eclipse.charges_fractional>1.5&var.cd_window|cooldown.solar_eclipse.ready&var.cd_window_narrow)
+
+    # 10. Starfire: filler fallback
+    - starfire,if=var.ec|var.eclipse_down&enemies_around_target>6|buff.eclipse_lunar.up
+
+    # 11. Wrath: only on 1-2 targets outside Eclipse
     - wrath
 
   # ----------------------------------------------------------
-  #  OPENER SEQUENCES
+  #  OPENER - ST (Elune's Chosen)
+  #
+  #  Icy Veins opener sequence:
+  #  Pre-cast 2x Wrath + 1x Starfire at pull → DoTs → Lunar Eclipse
+  #  → Starsurge ×3 (Ascendant Eclipses stacks) → CA/Inc → Convoke
+  #  → Fury of Elune → Starsurge → Starfire filler
+  # ----------------------------------------------------------
+  opener_st:
+    # DoTs first
+    - moonfire,if=debuff.moonfire.remains<2|debuff.moonfire.refreshable&var.eclipse_down
+    - sunfire,if=debuff.sunfire.remains<2|debuff.sunfire.refreshable&var.eclipse_down
+
+    # Enter Lunar Eclipse (required before dumping Starsurge stacks)
+    - lunar_eclipse,if=var.eclipse_down
+
+    # Burn 3x Starsurge to stack Ascendant Eclipses (build Starlord)
+    - starsurge,if=buff.ascendant_stars.up|buff.touch_the_cosmos.react
+
+    # CA/Inc after stacks consumed
+    - celestial_alignment,delay=500
+    - incarnation_chosen_of_elune,delay=500
+
+    # Convoke immediately inside CA — must be < 40 AP
+    - convoke_the_spirits,if=(buff.celestial_alignment.up|buff.incarnation_chosen_of_elune.up)&astral_power<40
+
+    # Fury of Elune after Convoke
+    - fury_of_elune
+
+    # Starsurge to consume Touch the Cosmos
+    - starsurge,if=buff.touch_the_cosmos.react|astral_power>80
+
+    # Starfire as primary filler inside CA/Inc
+    - starfire
+
+  # ----------------------------------------------------------
+  #  OPENER - AOE (Elune's Chosen, 3+ targets)
+  #  EC always enters Lunar Eclipse in AoE
   # ----------------------------------------------------------
   opener_aoe:
     - moonfire,if=debuff.moonfire.refreshable
     - sunfire,if=debuff.sunfire.refreshable
-    - solar_eclipse,if=var.eclipse_down
+
+    # Enter Lunar Eclipse (never Solar for EC)
+    - lunar_eclipse,if=var.eclipse_down
+
+    # Dump Starlord stacks
     - starfall,if=buff.ascendant_stars.up&(var.eclipse_down|buff.touch_the_cosmos.react)
     - starfire,if=buff.ascendant_stars.up
-    - fury_of_elune
-    - force_of_nature
-    - celestial_alignment,delay=500
-    - incarnation_chosen_of_elune,delay=500
 
-  opener_st:
-    - moonfire,if=debuff.moonfire.remains<2|debuff.moonfire.refreshable&var.eclipse_down
-    - sunfire,if=debuff.sunfire.remains<2|debuff.sunfire.refreshable&var.eclipse_down
-    - lunar_eclipse,if=var.eclipse_down
-    - starsurge,if=(var.eclipse_down|buff.touch_the_cosmos.react)&talent.convoke_the_spirits
+    # Fury of Elune → CA/Inc
     - fury_of_elune
-    - force_of_nature
     - celestial_alignment,delay=500
     - incarnation_chosen_of_elune,delay=500
 
@@ -170,6 +279,7 @@ lists:
     - call_action_list,name=sanity_checks
     - call_action_list,name=auto_target
     - call_action_list,name=auto_heal
+    - mark_of_the_wild,if=group.count(cycle.buff.mark_of_the_wild.down.any)>0&!player.combat
     - return,if=auto_combat.player
     - moonkin_form,if=buff.moonkin_form.down
     - call_action_list,name=defensives
