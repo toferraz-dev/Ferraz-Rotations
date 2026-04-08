@@ -18,7 +18,7 @@ config:
     type: slider
     min: 25
     max: 99
-    default: 55
+    default: 65
 
   frenzied_regen_threshold:
     label: "Frenzied Regen HP %"
@@ -34,7 +34,7 @@ config:
     type: slider
     min: 25
     max: 99
-    default: 55
+    default: 60
 
   # =================================================================================================
   #     MAJOR COOLDOWNS
@@ -183,6 +183,25 @@ config:
     max: 99
     default: 60
 
+  # =================================================================================================
+  #     RACIAL ABILITIES
+  # =================================================================================================
+  thorn_bloom_threshold:
+    label: "Thorn Bloom HP %"
+    section: "Racials"
+    type: slider
+    min: 25
+    max: 99
+    default: 75
+
+  thorn_bloom_members:
+    label: "Thorn Bloom - Min Members"
+    section: "Racials"
+    type: slider
+    min: 1
+    max: 5
+    default: 1
+
   force_dps:
     label: "Force DPS"
     spell: 768
@@ -233,6 +252,7 @@ lists:
 
   racials:
     - shadowmeld,name="Shadowmeld (Aggro Drop)",if=player.combat&player.aggro&!player.casting
+    - thorn_bloom,name="Thorn Bloom",if=group.count(cycle.health.effective.pct<config.thorn_bloom_threshold)>=config.thorn_bloom_members
 
   cooldowns:
     - convoke_the_spirits,name="Convoke (Heal)",if=group.count(cycle.health.effective.pct<config.convoke_threshold)>=config.convoke_members&!buff.cat_form.up&!buff.bear_form.up
