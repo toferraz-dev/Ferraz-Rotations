@@ -2,17 +2,16 @@ version: 4.1
 author: Ferraz
 patch: "12.0.1.6"
 spec: 102
-name: Ferraz Balance - Simia Elite
+name: Ferraz Balance
 description: |
   Balance Druid - High-End Mythic+ & Raid.
   Logic synchronized with SimC Midnight Branch (Simia).
-  Supports Elunes Chosen & Keeper of the Grove hero trees.
 entry: main
 
-# ============================================================
-#  CONFIGURATION
-# ============================================================
 config:
+  # ============================================================
+  #  CONFIGURATION
+  # ============================================================
   barkskin_hp:
     label: "Barkskin HP%"
     section: "Defensives"
@@ -27,6 +26,13 @@ config:
     min: 0
     max: 100
     default: 50
+  frenzied_regen_hp:
+    label: "Frenzied Regen HP%"
+    section: "Defensives"
+    type: slider
+    min: 0
+    max: 100
+    default: 30
   regrowth_ooc_hp:
     label: "Regrowth (OOC) HP%"
     section: "Healing"
@@ -57,14 +63,14 @@ config:
 #  VARIABLES (Synced with Simia _common & rotation_102)
 # ============================================================
 variables:
-  eclipse_up: "buff.eclipse_solar.up|buff.eclipse_lunar.up"
-  eclipse_down: "buff.eclipse_solar.down&buff.eclipse_lunar.down"
-  no_weaver_procs: "!buff.touch_the_cosmos.react&!buff.starweavers_warp.react"
-  ca_soon: "(cooldown.celestial_alignment.remains<3|cooldown.incarnation_chosen_of_elune.remains<3)"
-  ec: "talent.boundless_moonlight"
-  opener: "(talent.celestial_alignment|talent.incarnation_chosen_of_elune)&cooldown.celestial_alignment.remains=0"
-  cd_window: "cooldown.force_of_nature.remains>15|(cooldown.celestial_alignment.remains<44&cooldown.incarnation_chosen_of_elune.remains<44)"
-  cd_window_narrow: "cooldown.force_of_nature.remains>30|((cooldown.celestial_alignment.remains>10|cooldown.incarnation_chosen_of_elune.remains>10)&(cooldown.celestial_alignment.remains<20&cooldown.incarnation_chosen_of_elune.remains<20))"
+  eclipse_up: buff.eclipse_solar.up|buff.eclipse_lunar.up
+  eclipse_down: buff.eclipse_solar.down&buff.eclipse_lunar.down
+  no_weaver_procs: !buff.touch_the_cosmos.react&!buff.starweavers_warp.react
+  ca_soon: (cooldown.celestial_alignment.remains<3|cooldown.incarnation_chosen_of_elune.remains<3)
+  ec: talent.boundless_moonlight
+  opener: (talent.celestial_alignment|talent.incarnation_chosen_of_elune)&cooldown.celestial_alignment.remains=0
+  cd_window: cooldown.force_of_nature.remains>15|(cooldown.celestial_alignment.remains<44&cooldown.incarnation_chosen_of_elune.remains<44)
+  cd_window_narrow: cooldown.force_of_nature.remains>30|((cooldown.celestial_alignment.remains>10|cooldown.incarnation_chosen_of_elune.remains>10)&(cooldown.celestial_alignment.remains<20&cooldown.incarnation_chosen_of_elune.remains<20))
 
 # ============================================================
 #  ACTION LISTS
@@ -75,9 +81,19 @@ lists:
   #  DEFENSIVES
   # ----------------------------------------------------------
   defensives:
+    - bear_form,if=health.pct<=config.frenzied_regen_hp&cooldown.frenzied_regeneration.ready&buff.frenzied_regeneration.down&!buff.bear_form.up
+    - frenzied_regeneration,if=health.pct<=config.frenzied_regen_hp&buff.bear_form.up
     - barkskin,if=health.pct<=config.barkskin_hp
     - renewal,if=health.pct<=config.renewal_hp
     - regrowth,if=health.pct<=config.regrowth_ooc_hp&!player.combat
+
+  # ----------------------------------------------------------
+  #  INTERRUPTS
+  # ----------------------------------------------------------
+  interrupts:
+    - solar_beam,if=interrupt.target.check
+    - solar_beam.mouseover,if=interrupt.mouseover.check
+    - solar_beam.focus,if=interrupt.focus.check
 
   # ----------------------------------------------------------
   #  HEAL SUPPORT
@@ -136,6 +152,10 @@ lists:
     - wrath,if=enemies_around_target=2&talent.dream_surge&var.eclipse_down
     - fury_of_elune,if=var.ec|buff.harmony_of_the_grove.up|cooldown.force_of_nature.remains<gcd.max
     - force_of_nature,if=(var.eclipse_down&!talent.early_spring|talent.early_spring)
+    - full_moon,if=astral_power.deficit>40
+    - half_moon,if=astral_power.deficit>20
+    - new_moon,if=astral_power.deficit>10
+    - wild_mushroom,if=buff.eclipse_lunar.up|buff.eclipse_solar.up|cooldown.wild_mushroom.full_recharge_time<cooldown.celestial_alignment.remains
     - solar_eclipse,if=var.eclipse_down&(cooldown.solar_eclipse.charges_fractional>1.5&var.cd_window|cooldown.solar_eclipse.ready&var.cd_window_narrow)
     - lunar_eclipse,if=var.eclipse_down&(enemies_around_target>2&!var.ec|(var.ec&cooldown.celestial_alignment.full_recharge_time>15))
     - convoke_the_spirits,if=(buff.celestial_alignment.up|buff.incarnation_chosen_of_elune.up)&astral_power<40
@@ -176,14 +196,14 @@ lists:
     - call_action_list,name=spell_queue
     - call_action_list,name=auto_target_ranged
     # Forms
-    - moonkin_form,if=buff.moonkin_form.down&!talent.fluid_form
+    - moonkin_form,if=buff.moonkin_form.down&!talent.fluid_form&buff.frenzied_regeneration.down
     - call_action_list,name=defensives
     - call_action_list,name=interrupts
     - return,if=auto_combat.player
-     - call_action_list,name=heal_support
-     # Rotation Branches
+    - call_action_list,name=heal_support
+    # Rotation Branches
     - run_action_list,name=opener_aoe,if=var.opener&enemies_around_target>2
     - run_action_list,name=opener_st,if=var.opener&enemies_around_target<=2
-     - run_action_list,name=ec_st,if=hero_tree.elunes_chosen&enemies_around_target<=1
+    - run_action_list,name=ec_st,if=hero_tree.elunes_chosen&enemies_around_target<=1
     - run_action_list,name=kotg_st,if=hero_tree.keeper_of_the_grove&enemies_around_target<=1
     - run_action_list,name=aoe,if=enemies_around_target>1
