@@ -189,7 +189,7 @@ config:
     
 variables:
   is_tree_form: buff.incarnation_tree_of_life.up
-  group_needs_healing: group.any(cycle.health.effective.pct<85)
+  group_needs_healing: group.any(cycle.health.effective.pct<95)
   mo_friendly_valid: mouseover.exists&mouseover.alive&mouseover.friendly&mouseover.range>0&mouseover.range<=40
 
 lists:
@@ -297,12 +297,9 @@ lists:
     - innervate,name="Innervate",if=mana.pct<config.innervate_threshold
 
   ranged_dps:
-    - starsurge,name="Starsurge",if=talent.starsurge&mana.pct>20
-    - wrath,name="Instant Wrath Proc",if=buff.clearcasting.up|buff.natures_grace.up
-    - starfire,name="Starfire",if=active_enemies>=3|buff.eclipse_solar.up
     - moonfire,name="Moonfire ST",if=debuff.moonfire.refreshable
     - sunfire,name="Sunfire AoE",if=debuff.sunfire.refreshable
-    - wrath,name="Wrath Mana Filler"
+    - wrath,name="Wrath Filler"
 
   moving:
     # Convoke is usable while moving
@@ -337,4 +334,4 @@ lists:
     - call_action_list,name=tree_of_life_rotation,if=var.is_tree_form
     - call_action_list,name=moving,if=player.moving
     - call_action_list,name=active_healing
-    - call_action_list,name=ranged_dps,if=target.exists&target.alive&!target.friendly&!var.group_needs_healing&mana.pct>85
+    - call_action_list,name=ranged_dps,if=target.exists&target.alive&!target.friendly&!var.group_needs_healing&mana.pct>95
