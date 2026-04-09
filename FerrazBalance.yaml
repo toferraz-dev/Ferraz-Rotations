@@ -14,7 +14,7 @@ version: 1.0
 author: Ferraz
 patch: "12.0.1.6"
 spec: 102
-name: Ferraz Balance Druid (Elunes Chosen)
+name: Ferraz Balance Druid (Elunes)
 entry: main
 
 config:
@@ -124,21 +124,20 @@ lists:
     - moonfire,if=debuff.moonfire.remains<2|debuff.moonfire.refreshable&var.eclipse_down
     - sunfire,if=debuff.sunfire.remains<2|debuff.sunfire.refreshable&var.eclipse_down
 
-    # 2. Enter Lunar Eclipse (EC always uses Lunar, never Solar)
-    - lunar_eclipse,if=var.eclipse_down
+    # 2. Enter Eclipse Preference (Starfire used almost exclusively over Wrath)
+    - solar_eclipse,if=var.eclipse_down
 
     # 3. Fury of Elune on cooldown — pair with CA/Inc when possible
     #    Guard: atmospheric_exposure must be down or low, OR we are in fight end
     - fury_of_elune,if=!talent.sundered_firmament|(debuff.atmospheric_exposure.remains<2&(buff.eclipse_lunar.remains>5))|fight_remains<20
 
-    # 4. Starsurge: spend Touch the Cosmos proc, maintain Starlord,
-    #    or prevent AP cap during Eclipse
-    - starsurge,if=buff.touch_the_cosmos.react|astral_power>80|(!var.eclipse_down&astral_power>40)
+    # 4. Starfall over Starsurge based on logs emphasizing massive Starfall usage
+    - starfall,if=astral_power>80|buff.touch_the_cosmos.react
+    - starsurge,if=astral_power>90
 
-    # 5. CA/Inc after Fury of Elune is casting/done (opener logic
-    #    handles the very first use; this covers every subsequent window)
-    - celestial_alignment,delay=500,if=buff.ascendant_stars.down&(cooldown.convoke_the_spirits.remains<5|cooldown.solar_eclipse.charges_fractional<1.5|!talent.elunes_guidance)
-    - incarnation_chosen_of_elune,delay=500,if=buff.ascendant_stars.down&(cooldown.convoke_the_spirits.remains<5|cooldown.solar_eclipse.charges_fractional<1.5|!talent.elunes_guidance)
+    # 5. CA/Inc after Fury of Elune is casting/done
+    - celestial_alignment,delay=500,if=buff.ascendant_stars.down&(!talent.elunes_guidance|cooldown.solar_eclipse.charges_fractional<1.5)
+    - incarnation_chosen_of_elune,delay=500,if=buff.ascendant_stars.down&(!talent.elunes_guidance|cooldown.solar_eclipse.charges_fractional<1.5)
 
     # 7. Wild Mushroom: don't let charges cap
     - wild_mushroom,if=buff.eclipse_lunar.up|cooldown.wild_mushroom.full_recharge_time<cooldown.celestial_alignment.remains
@@ -168,7 +167,7 @@ lists:
   #  Talents confirmed active: Astral Smolder, Star Cascade (tier)
   # ----------------------------------------------------------
   aoe:
-    # CA/Inc: pair after DoTs; fire when CA is ready (not just after prev_gcd fury)
+    # CA/Inc: pair after DoTs; fire when CA is ready
     - celestial_alignment,delay=500,if=var.eclipse_down|fight_remains<20
     - incarnation_chosen_of_elune,delay=500,if=var.eclipse_down|fight_remains<20
 
@@ -176,14 +175,11 @@ lists:
     - moonfire,if=debuff.moonfire.remains<2|debuff.moonfire.refreshable&var.eclipse_down
     - sunfire,if=debuff.sunfire.remains<2|debuff.sunfire.refreshable&var.eclipse_down
 
-    # 2. Enter Lunar Eclipse (EC always uses Lunar in AoE)
-    - lunar_eclipse,if=var.eclipse_down
+    # 2. Enter Eclipse: Logs show almost 0 Wrath casts, meaning Starfire (Solar Eclipse entrance) is standard in AoE
+    - solar_eclipse,if=var.eclipse_down
 
-    # 4. Starfire: AoE filler inside Eclipse (cleaves all targets)
-    - starfire,if=buff.eclipse_lunar.up&enemies_around_target>2
-
-    # 5. Starfall: main AP dump in AoE
-    - starfall,if=(astral_power>80|!var.eclipse_down|buff.touch_the_cosmos.react)&target.time_to_die>5
+    # 3. Starfall: main AP dump in AoE (prioritized above Eclipses once AP is high)
+    - starfall,if=(astral_power>80|buff.touch_the_cosmos.react)&target.time_to_die>5
 
     # 6. Fury of Elune: after Starfall/Convoke burst (per log behavior)
     - fury_of_elune
@@ -199,39 +195,38 @@ lists:
     # 9. Solar Eclipse enter for non-EC fallback
     - solar_eclipse,if=var.eclipse_down&!var.ec&(cooldown.solar_eclipse.charges_fractional>1.5&var.cd_window|cooldown.solar_eclipse.ready&var.cd_window_narrow)
 
-    # 10. Starfire: filler fallback
-    - starfire,if=var.ec|var.eclipse_down&enemies_around_target>6|buff.eclipse_lunar.up
-
-    # 11. Wrath: only on 1-2 targets outside Eclipse
-    - wrath
+    # 10. Starfire: filler fallback (Wrath removed per M+ logs)
+    - starfire
 
   # ----------------------------------------------------------
   #  OPENER - ST (Elune's Chosen)
   #
   #  Icy Veins opener sequence:
-  #  Pre-cast 2x Wrath + 1x Starfire at pull → DoTs → Lunar Eclipse
-  #  → Starsurge ×3 (Ascendant Eclipses stacks) → CA/Inc → Convoke
-  #  → Fury of Elune → Starsurge → Starfire filler
+  #  Pre-cast Starfires at pull → DoTs → Solar Eclipse
+  #  → Starsurge ×3 (Ascendant Eclipses stacks) → CA/Inc
+  #  → Fury of Elune → Starsurge/Starfall → Starfire filler
   # ----------------------------------------------------------
   opener_st:
     # DoTs first
     - moonfire,if=debuff.moonfire.remains<2|debuff.moonfire.refreshable&var.eclipse_down
     - sunfire,if=debuff.sunfire.remains<2|debuff.sunfire.refreshable&var.eclipse_down
 
-    # Enter Lunar Eclipse (required before dumping Starsurge stacks)
-    - lunar_eclipse,if=var.eclipse_down
+    # Enter Eclipse (using Starfire)
+    - solar_eclipse,if=var.eclipse_down
 
     # Burn 3x Starsurge to stack Ascendant Eclipses (build Starlord)
+    - starfall,if=active_enemies>1&(buff.ascendant_stars.up|buff.touch_the_cosmos.react)
     - starsurge,if=buff.ascendant_stars.up|buff.touch_the_cosmos.react
 
     # CA/Inc after stacks consumed
     - celestial_alignment,delay=500
     - incarnation_chosen_of_elune,delay=500
 
-    # Fury of Elune after Convoke
+    # Fury of Elune
     - fury_of_elune
 
-    # Starsurge to consume Touch the Cosmos
+    # AP Dump
+    - starfall,if=active_enemies>1&(buff.touch_the_cosmos.react|astral_power>80)
     - starsurge,if=buff.touch_the_cosmos.react|astral_power>80
 
     # Starfire as primary filler inside CA/Inc
@@ -245,8 +240,8 @@ lists:
     - moonfire,if=debuff.moonfire.refreshable
     - sunfire,if=debuff.sunfire.refreshable
 
-    # Enter Lunar Eclipse (never Solar for EC)
-    - lunar_eclipse,if=var.eclipse_down
+    # Enter Eclipse (never Wrath per logs)
+    - solar_eclipse,if=var.eclipse_down
 
     # Dump Starlord stacks
     - starfall,if=buff.ascendant_stars.up&(var.eclipse_down|buff.touch_the_cosmos.react)
