@@ -124,8 +124,8 @@ lists:
     - moonfire,if=debuff.moonfire.remains<2|debuff.moonfire.refreshable&var.eclipse_down
     - sunfire,if=debuff.sunfire.remains<2|debuff.sunfire.refreshable&var.eclipse_down
 
-    # 2. Enter Eclipse Preference (Starfire used almost exclusively over Wrath)
-    - solar_eclipse,if=var.eclipse_down
+    # 2. Enter Eclipse Preference (Lunar Eclipse for Elune's Chosen)
+    - lunar_eclipse,if=var.eclipse_down
 
     # 3. Fury of Elune on cooldown — pair with CA/Inc when possible
     #    Guard: atmospheric_exposure must be down or low, OR we are in fight end
@@ -136,8 +136,8 @@ lists:
     - starsurge,if=astral_power>90
 
     # 5. CA/Inc after Fury of Elune is casting/done
-    - celestial_alignment,delay=500,if=buff.ascendant_stars.down&(!talent.elunes_guidance|cooldown.solar_eclipse.charges_fractional<1.5)
-    - incarnation_chosen_of_elune,delay=500,if=buff.ascendant_stars.down&(!talent.elunes_guidance|cooldown.solar_eclipse.charges_fractional<1.5)
+    - celestial_alignment,delay=500,if=buff.ascendant_stars.down&(!talent.elunes_guidance|cooldown.lunar_eclipse.charges_fractional<1.5)
+    - incarnation_chosen_of_elune,delay=500,if=buff.ascendant_stars.down&(!talent.elunes_guidance|cooldown.lunar_eclipse.charges_fractional<1.5)
 
     # 7. Wild Mushroom: don't let charges cap
     - wild_mushroom,if=buff.eclipse_lunar.up|cooldown.wild_mushroom.full_recharge_time<cooldown.celestial_alignment.remains
@@ -172,14 +172,15 @@ lists:
     - incarnation_chosen_of_elune,delay=500,if=var.eclipse_down|fight_remains<20
 
     # 1. Maintain DoTs — spread to all targets before spending AP
-    - moonfire,if=debuff.moonfire.remains<2|debuff.moonfire.refreshable&var.eclipse_down
+    # Optimization: Only manual Moonfire if we aren't about to Starfall
+    - moonfire,if=active_enemies<6&(debuff.moonfire.remains<2|debuff.moonfire.refreshable&var.eclipse_down)
     - sunfire,if=debuff.sunfire.remains<2|debuff.sunfire.refreshable&var.eclipse_down
 
-    # 2. Enter Eclipse: Logs show almost 0 Wrath casts, meaning Starfire (Solar Eclipse entrance) is standard in AoE
-    - solar_eclipse,if=var.eclipse_down
+    # 2. Enter Eclipse: EC builds always want Lunar Eclipse
+    - lunar_eclipse,if=var.eclipse_down
 
     # 3. Starfall: main AP dump in AoE (prioritized above Eclipses once AP is high)
-    - starfall,if=(astral_power>80|buff.touch_the_cosmos.react)&target.time_to_die>5
+    - starfall,if=(astral_power>50|buff.touch_the_cosmos.react)&target.time_to_die>5
 
     # 6. Fury of Elune: after Starfall/Convoke burst (per log behavior)
     - fury_of_elune
@@ -211,8 +212,8 @@ lists:
     - moonfire,if=debuff.moonfire.remains<2|debuff.moonfire.refreshable&var.eclipse_down
     - sunfire,if=debuff.sunfire.remains<2|debuff.sunfire.refreshable&var.eclipse_down
 
-    # Enter Eclipse (using Starfire)
-    - solar_eclipse,if=var.eclipse_down
+    # Enter Eclipse (Wrath x2 for Lunar)
+    - lunar_eclipse,if=var.eclipse_down
 
     # Burn 3x Starsurge to stack Ascendant Eclipses (build Starlord)
     - starfall,if=active_enemies>1&(buff.ascendant_stars.up|buff.touch_the_cosmos.react)
@@ -237,20 +238,20 @@ lists:
   #  EC always enters Lunar Eclipse in AoE
   # ----------------------------------------------------------
   opener_aoe:
-    - moonfire,if=debuff.moonfire.refreshable
     - sunfire,if=debuff.sunfire.refreshable
+    - moonfire,if=active_enemies<6&debuff.moonfire.refreshable
 
-    # Enter Eclipse (never Wrath per logs)
-    - solar_eclipse,if=var.eclipse_down
+    # Cooldowns ASAP in AoE
+    - incarnation_chosen_of_elune
+    - celestial_alignment
+    - fury_of_elune
+
+    # Enter Eclipse (Lunar via Wrath)
+    - lunar_eclipse,if=var.eclipse_down
 
     # Dump Starlord stacks
-    - starfall,if=buff.ascendant_stars.up&(var.eclipse_down|buff.touch_the_cosmos.react)
+    - starfall,if=astral_power>50|buff.ascendant_stars.up
     - starfire,if=buff.ascendant_stars.up
-
-    # Fury of Elune → CA/Inc
-    - fury_of_elune
-    - celestial_alignment
-    - incarnation_chosen_of_elune
 
   # ----------------------------------------------------------
   #  MAIN ENTRY POINT
