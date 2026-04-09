@@ -77,6 +77,8 @@ variables:
   # Window where burning CDs together is correct
   cd_window: cooldown.force_of_nature.remains>15|(cooldown.celestial_alignment.remains<44&cooldown.incarnation_chosen_of_elune.remains<44)
   cd_window_narrow: cooldown.force_of_nature.remains>30|((cooldown.celestial_alignment.remains>10|cooldown.incarnation_chosen_of_elune.remains>10)&(cooldown.celestial_alignment.remains<20&cooldown.incarnation_chosen_of_elune.remains<20))
+  # CD is currently active
+  cd_active: buff.celestial_alignment.up|buff.incarnation_chosen_of_elune.up
 
 # ============================================================
 #  ACTION LISTS
@@ -84,11 +86,20 @@ variables:
 lists:
 
   # ----------------------------------------------------------
+  #  INTERRUPTS
+  # ----------------------------------------------------------
+  interrupts:
+    - solar_beam,if=interrupt.target.check
+    - solar_beam.mouseover,if=interrupt.mouseover.check
+    - solar_beam.focus,if=interrupt.focus.check
+
+  # ----------------------------------------------------------
   #  TRINKETS
   # ----------------------------------------------------------
   trinkets:
-    - trinket_1,if=config.use_trinket_1&player.combat&trinket_1.ready
-    - trinket_2,if=config.use_trinket_2&player.combat&trinket_2.ready
+    # Use Haste/Stat trinkets with Inc/CA or if it's a long way off
+    - trinket_1,if=config.use_trinket_1&player.combat&trinket_1.ready&(var.cd_active|cooldown.celestial_alignment.remains>40|cooldown.incarnation_chosen_of_elune.remains>40)
+    - trinket_2,if=config.use_trinket_2&player.combat&trinket_2.ready&(var.cd_active|cooldown.celestial_alignment.remains>40|cooldown.incarnation_chosen_of_elune.remains>40)
 
   # ----------------------------------------------------------
   #  DEFENSIVES
@@ -131,12 +142,13 @@ lists:
     #    Guard: atmospheric_exposure must be down or low, OR we are in fight end
     - fury_of_elune,if=!talent.sundered_firmament|(debuff.atmospheric_exposure.remains<2&(buff.eclipse_lunar.remains>5))|fight_remains<20
 
-    # 4. Starfall over Starsurge based on logs emphasizing massive Starfall usage
-    - starfall,if=astral_power>80|buff.touch_the_cosmos.react
-    - starsurge,if=astral_power>90
+    # 4. Spenders: Prioritize procs and Starlord maintenance
+    - starfall,if=buff.starweaver_s_weft.up|buff.touch_the_cosmos.react
+    - starsurge,if=buff.starweaver_s_warp.up
+    - starfall,if=astral_power>80&(active_enemies>1|!talent.starlord)
+    - starsurge,if=astral_power>80&active_enemies<=1
 
     # 5. CA/Inc after Fury of Elune is casting/done
-    - celestial_alignment,delay=500,if=buff.ascendant_stars.down&(!talent.elunes_guidance|cooldown.lunar_eclipse.charges_fractional<1.5)
     - incarnation_chosen_of_elune,delay=500,if=buff.ascendant_stars.down&(!talent.elunes_guidance|cooldown.lunar_eclipse.charges_fractional<1.5)
 
     # 7. Wild Mushroom: don't let charges cap
@@ -168,7 +180,6 @@ lists:
   # ----------------------------------------------------------
   aoe:
     # CA/Inc: pair after DoTs; fire when CA is ready
-    - celestial_alignment,delay=500,if=var.eclipse_down|fight_remains<20
     - incarnation_chosen_of_elune,delay=500,if=var.eclipse_down|fight_remains<20
 
     # 1. Maintain DoTs — spread to all targets before spending AP
@@ -179,13 +190,14 @@ lists:
     # 2. Enter Eclipse: EC builds always want Lunar Eclipse
     - lunar_eclipse,if=var.eclipse_down
 
-    # 3. Starfall: main AP dump in AoE (prioritized above Eclipses once AP is high)
-    - starfall,if=(astral_power>50|buff.touch_the_cosmos.react)&target.time_to_die>5
+    # 3. Starfall: main AP dump in AoE (prioritize procs)
+    - starfall,if=buff.starweaver_s_weft.up|buff.touch_the_cosmos.react
+    - starfall,if=(astral_power>50)&target.time_to_die>5
 
-    # 6. Fury of Elune: after Starfall/Convoke burst (per log behavior)
-    - fury_of_elune
+    # 4. Fury of Elune: Fire early to start AP generation and hit the exposure window
+    - fury_of_elune,if=!talent.sundered_firmament|debuff.atmospheric_exposure.remains<2
 
-    # 7. Wild Mushroom: don't cap charges
+    # 5. Wild Mushroom: Burn charges during Eclipse or if capped
     - wild_mushroom,if=buff.eclipse_lunar.up|buff.eclipse_solar.up|cooldown.wild_mushroom.full_recharge_time<cooldown.celestial_alignment.remains
 
     # 8. Moon charges
@@ -220,7 +232,6 @@ lists:
     - starsurge,if=buff.ascendant_stars.up|buff.touch_the_cosmos.react
 
     # CA/Inc after stacks consumed
-    - celestial_alignment,delay=500
     - incarnation_chosen_of_elune,delay=500
 
     # Fury of Elune
@@ -243,7 +254,6 @@ lists:
 
     # Cooldowns ASAP in AoE
     - incarnation_chosen_of_elune
-    - celestial_alignment
     - fury_of_elune
 
     # Enter Eclipse (Lunar via Wrath)
@@ -265,6 +275,7 @@ lists:
     - mark_of_the_wild,if=group.count(cycle.buff.mark_of_the_wild.down.any)>0&!player.combat
     - return,if=auto_combat.player
     - moonkin_form,if=buff.moonkin_form.down&health.pct>config.frenzied_regen_hp&!buff.frenzied_regeneration.up
+    - call_action_list,name=interrupts
     - call_action_list,name=defensives
     - call_action_list,name=heal_support
     - call_action_list,name=trinkets
