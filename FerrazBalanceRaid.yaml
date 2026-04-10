@@ -1,0 +1,363 @@
+# =============================================================================
+# Druid - Balance - 102 — Elune's Chosen (RAID)
+# Meta Source: Icy Veins Midnight Season 1 (updated 17 Mar 2026)
+#              Archon.gg Mythic Raid data (Apr 2026)
+#              Combat log analysis: Yasa (Crown of the Cosmos)
+# Key principles:
+#   - Prefer Lunar Eclipse, but use Solar if needed for AP gen/filler
+#   - Fury of Elune is high priority — pair with Inc/CA
+#   - Force of Nature (if talented) used as minor CD
+#   - Wrath is used as filler in Solar or for AP during opener
+#   - Starfire is primary filler in Lunar/CA
+# =============================================================================
+
+version: 1.0
+author: Ferraz
+patch: "12.0.1.6"
+spec: 102
+name: Ferraz Balance Druid (Raid)
+entry: main
+
+config:
+  # ============================================================
+  #  DEFENSIVES
+  # ============================================================
+  barkskin_hp:
+    label: "Barkskin HP%"
+    section: "Defensives"
+    type: slider
+    min: 0
+    max: 100
+    default: 60
+  frenzied_regen_hp:
+    label: "Frenzied Regen HP%"
+    section: "Defensives"
+    type: slider
+    min: 0
+    max: 100
+    default: 30
+  # ============================================================
+  #  HEALING
+  # ============================================================
+  enable_hotw:
+    label: "HotW Support (Heal Party)"
+    section: "Healing"
+    type: checkbox
+    default: true
+  hotw_hp_threshold:
+    label: "Party HP% for HotW"
+    section: "Healing"
+    type: slider
+    min: 30
+    max: 90
+    default: 75
+  # ============================================================
+  #  TRINKETS
+  # ============================================================
+  use_trinket_1:
+    label: "Auto Trinket 1"
+    section: "Trinkets"
+    type: checkbox
+    default: true
+  use_trinket_2:
+    label: "Auto Trinket 2"
+    section: "Trinkets"
+    type: checkbox
+    default: true
+
+# ============================================================
+#  VARIABLES
+# ============================================================
+variables:
+  # Eclipse state
+  eclipse_down: buff.eclipse_solar.down&buff.eclipse_lunar.down
+  # Elune's Chosen hero talent active (Boundless Moonlight)
+  ec: talent.boundless_moonlight
+  # True when about to open (CA/Inc ready, not yet pressed)
+  opener: (talent.celestial_alignment|talent.incarnation_chosen_of_elune)&cooldown.celestial_alignment.remains=0
+  # Window where burning CDs together is correct
+  cd_window: cooldown.force_of_nature.remains>15|(cooldown.celestial_alignment.remains<44&cooldown.incarnation_chosen_of_elune.remains<44)
+  cd_window_narrow: cooldown.force_of_nature.remains>30|((cooldown.celestial_alignment.remains>10|cooldown.incarnation_chosen_of_elune.remains>10)&(cooldown.celestial_alignment.remains<20&cooldown.incarnation_chosen_of_elune.remains<20))
+  # CD is currently active
+  cd_active: buff.celestial_alignment.up|buff.incarnation_chosen_of_elune.up
+
+# ============================================================
+#  ACTION LISTS
+# ============================================================
+lists:
+
+  # ----------------------------------------------------------
+  #  INTERRUPTS
+  # ----------------------------------------------------------
+  interrupts:
+    - solar_beam,if=interrupt.target.check
+    - solar_beam.mouseover,if=interrupt.mouseover.check
+    - solar_beam.focus,if=interrupt.focus.check
+
+  # ----------------------------------------------------------
+  #  TRINKETS
+  # ----------------------------------------------------------
+  trinkets:
+    # Use Haste/Stat trinkets with Inc/CA or if it's a long way off
+    - trinket_1,if=config.use_trinket_1&player.combat&trinket_1.ready&(var.cd_active|cooldown.celestial_alignment.remains>40|cooldown.incarnation_chosen_of_elune.remains>40)
+    - trinket_2,if=config.use_trinket_2&player.combat&trinket_2.ready&(var.cd_active|cooldown.celestial_alignment.remains>40|cooldown.incarnation_chosen_of_elune.remains>40)
+
+  # ----------------------------------------------------------
+  #  DEFENSIVES
+  # ----------------------------------------------------------
+  defensives:
+    - bear_form,if=health.pct<=config.frenzied_regen_hp&cooldown.frenzied_regeneration.ready&buff.frenzied_regeneration.down&!buff.bear_form.up
+    - frenzied_regeneration,if=health.pct<=config.frenzied_regen_hp&buff.bear_form.up
+    - barkskin,if=health.pct<=config.barkskin_hp
+
+  # ----------------------------------------------------------
+  #  HEAL SUPPORT (Heart of the Wild Party Healing)
+  # ----------------------------------------------------------
+  heal_support:
+    - heart_of_the_wild,if=config.enable_hotw&group.lowest.health.pct<config.hotw_hp_threshold&!buff.heart_of_the_wild.up
+
+  # ----------------------------------------------------------
+  #  MOVEMENT - SINGLE TARGET (Instant-cast only)
+  #
+  #  When moving, we can only use instant spells.
+  #  Priority: DoT refresh → AP spenders → cooldowns → generators
+  # ----------------------------------------------------------
+  moving_st:
+    # 1. Refresh DoTs if needed
+    - moonfire,if=debuff.moonfire.remains<2|debuff.moonfire.refreshable
+    - sunfire,if=debuff.sunfire.remains<2|debuff.sunfire.refreshable
+
+    # 2. Starsurge: instant AP dump, maintains Starlord
+    - starsurge,if=buff.starweaver_s_warp.up|buff.touch_the_cosmos.react
+    - starsurge,if=astral_power>60
+
+    # 3. Fury of Elune if available
+    - fury_of_elune,if=!talent.sundered_firmament|(debuff.atmospheric_exposure.remains<2&buff.eclipse_lunar.remains>5)
+
+    # 4. Wild Mushroom: instant, don't cap charges
+    - wild_mushroom,if=cooldown.wild_mushroom.full_recharge_time<cooldown.celestial_alignment.remains
+
+    # 5. New Moon: instant, generates AP
+    - new_moon,if=astral_power.deficit>10
+
+    # 6. Moonfire/Sunfire filler (instant, generates small AP via Shooting Stars)
+    - moonfire
+    - sunfire
+
+  # ----------------------------------------------------------
+  #  MOVEMENT - AOE (Instant-cast only, 2+ targets)
+  #
+  #  AoE movement priority: Starfall > Starsurge > DoTs > WM
+  # ----------------------------------------------------------
+  moving_aoe:
+    # 1. Sunfire: instant AoE DoT, always worth refreshing
+    - sunfire,if=debuff.sunfire.remains<2|debuff.sunfire.refreshable
+
+    # 2. Moonfire: spread to targets (skip if 6+ for efficiency)
+    - moonfire,if=active_enemies<6&(debuff.moonfire.remains<2|debuff.moonfire.refreshable)
+
+    # 3. Starfall: primary AoE AP dump (instant)
+    - starfall,if=buff.starweaver_s_weft.up|buff.touch_the_cosmos.react
+    - starfall,if=astral_power>50
+
+    # 4. Starsurge: Star Cascade cleave + Starlord stacks
+    - starsurge,if=buff.starfall.up&(buff.touch_the_cosmos.react|buff.starweaver_s_warp.up)
+    - starsurge,if=buff.starfall.up&astral_power>60
+
+    # 5. Fury of Elune (instant)
+    - fury_of_elune,if=!talent.sundered_firmament|debuff.atmospheric_exposure.remains<2
+
+    # 6. Wild Mushroom (instant, AoE)
+    - wild_mushroom,if=buff.eclipse_lunar.up|buff.eclipse_solar.up|cooldown.wild_mushroom.full_recharge_time<cooldown.celestial_alignment.remains
+
+    # 7. New Moon (instant)
+    - new_moon,if=astral_power.deficit>10
+
+    # 8. Moonfire/Sunfire filler
+    - sunfire
+    - moonfire,if=active_enemies<6
+
+  # ----------------------------------------------------------
+  #  ELUNE'S CHOSEN - SINGLE TARGET
+  #
+  #  Priority (Icy Veins + Log Analysis):
+  #  1. Maintain Sunfire + Moonfire
+  #  2. Enter Lunar Eclipse
+  #  3. Fury of Elune on cooldown (pair with CA when possible)
+  #  4. Starsurge: stack Starlord / consume Touch the Cosmos proc
+  #  5. CA/Inc: use after Fury of Elune is in flight
+  #  6. Moon charges: don't cap (generates AP)
+  #  7. Wild Mushroom: don't cap charges
+  #  8. Starfire: primary filler (ONLY filler — Wrath removed)
+  # ----------------------------------------------------------
+  ec_st:
+    # 1. Maintain DoTs (refresh before they fall off)
+    - moonfire,if=debuff.moonfire.remains<2|debuff.moonfire.refreshable&var.eclipse_down
+    - sunfire,if=debuff.sunfire.remains<2|debuff.sunfire.refreshable&var.eclipse_down
+
+    # 2. Enter Eclipse Preference (Lunar Eclipse for Elune's Chosen)
+    - lunar_eclipse,if=var.eclipse_down&!var.ec
+    - solar_eclipse,if=var.eclipse_down&var.ec&cooldown.fury_of_elune.remains<5 # Yasa uses Solar to prep FoE/Inc
+
+    # 3. Fury of Elune on cooldown — pair with CA/Inc when possible
+    - fury_of_elune,if=!talent.sundered_firmament|(debuff.atmospheric_exposure.remains<2&(buff.eclipse_lunar.remains>5))|fight_remains<20
+
+    # 4. Force of Nature (if talented)
+    - force_of_nature,if=var.cd_active|cooldown.incarnation_chosen_of_elune.remains>30
+
+    # 5. Spenders: Prioritize procs and Starlord maintenance
+    - starfall,if=active_enemies>=2&(buff.starweaver_s_weft.up|buff.touch_the_cosmos.react)
+    - starsurge,if=buff.starweaver_s_warp.up|buff.touch_the_cosmos.react
+    - starsurge,if=astral_power>60&active_enemies<=1
+
+    # 6. CA/Inc after Fury of Elune
+    - incarnation_chosen_of_elune,delay=500,if=buff.ascendant_stars.down&(!talent.elunes_guidance|cooldown.lunar_eclipse.charges_fractional<1.5)
+
+    # 7. Moon charges: don't cap
+    - full_moon,if=astral_power.deficit>40&debuff.atmospheric_exposure.remains<action.full_moon.execute_time+0.5
+    - half_moon,if=astral_power.deficit>20&debuff.atmospheric_exposure.remains<action.half_moon.execute_time+0.5
+    - new_moon,if=astral_power.deficit>10&debuff.atmospheric_exposure.remains<action.new_moon.execute_time+0.5
+
+    # 8. Wild Mushroom: don't let charges cap
+    - wild_mushroom,if=buff.eclipse_lunar.up|cooldown.wild_mushroom.full_recharge_time<cooldown.celestial_alignment.remains
+
+    # 9. Filler: Starfire in Lunar/CA, Wrath in Solar
+    - starfire,if=buff.eclipse_lunar.up|buff.celestial_alignment.up|buff.incarnation_chosen_of_elune.up
+    - wrath
+
+  # ----------------------------------------------------------
+  #  AOE (2+ targets)
+  #
+  #  Log analysis (阿揪揪, Skyreach/Maisara/Algethar, Elune's Chosen):
+  #  Observed sequence: DoT Spread → FoE → Inc → Starfall spam
+  #    → Starsurge (Star Cascade) → Wild Mushroom → Starfire filler
+  #
+  #  Key findings:
+  #  - Starsurge IS used in AoE for Star Cascade cleave
+  #  - Wrath is NEVER used (Starfire only)
+  #  - Wild Mushroom fires mid-rotation, not at start
+  #  - FoE fires BEFORE Inc to maximize AP ramp
+  # ----------------------------------------------------------
+  aoe:
+    # 1. Maintain DoTs — spread before spending AP
+    - sunfire,if=debuff.sunfire.remains<2|debuff.sunfire.refreshable&var.eclipse_down
+    - moonfire,if=active_enemies<6&(debuff.moonfire.remains<2|debuff.moonfire.refreshable&var.eclipse_down)
+
+    # 2. Enter Eclipse: EC builds often use Solar for faster AP/Wrath cleave if talented
+    - lunar_eclipse,if=var.eclipse_down&!var.ec
+    - solar_eclipse,if=var.eclipse_down&var.ec
+
+    # 3. Fury of Elune: High priority cleave
+    - fury_of_elune,if=!talent.sundered_firmament|debuff.atmospheric_exposure.remains<2
+
+    # 4. Force of Nature
+    - force_of_nature,if=var.cd_active|cooldown.incarnation_chosen_of_elune.remains>30
+
+    # 5. CA/Inc
+    - incarnation_chosen_of_elune,delay=500,if=var.eclipse_down|fight_remains<20
+
+    # 6. Starfall: main AP dump in AoE
+    - starfall,if=buff.starweaver_s_weft.up|buff.touch_the_cosmos.react
+    - starfall,if=(astral_power>50)&target.time_to_die>5
+
+    # 7. Starsurge: Star Cascade cleave / Starlord
+    - starsurge,if=buff.starfall.up&(buff.starweaver_s_warp.up|buff.touch_the_cosmos.react)
+    - starsurge,if=buff.starfall.up&astral_power>80&buff.starlord.stack<3
+
+    # 8. Wild Mushroom
+    - wild_mushroom,if=buff.eclipse_lunar.up|buff.eclipse_solar.up|cooldown.wild_mushroom.full_recharge_time<cooldown.celestial_alignment.remains
+
+    # 9. Filler
+    - starfire,if=active_enemies>=3
+    - wrath
+
+  # ----------------------------------------------------------
+  #  OPENER - ST (Elune's Chosen)
+  #
+  #  Icy Veins opener sequence:
+  #  Pre-cast Starfires at pull → DoTs → Solar Eclipse
+  #  → Starsurge ×3 (Ascendant Eclipses stacks) → CA/Inc
+  #  → Fury of Elune → Starsurge/Starfall → Starfire filler
+  # ----------------------------------------------------------
+  opener_st:
+    # 1. DoTs first
+    - moonfire,if=debuff.moonfire.remains<2|debuff.moonfire.refreshable&var.eclipse_down
+    - sunfire,if=debuff.sunfire.remains<2|debuff.sunfire.refreshable&var.eclipse_down
+
+    # 2. Enter Eclipse (prefer Solar to start for fast AP/Starsurge if EC)
+    - solar_eclipse,if=var.eclipse_down&var.ec
+    - lunar_eclipse,if=var.eclipse_down
+
+    # 3. Use Ascendant Stars / Starlord stacks
+    - starsurge,if=buff.ascendant_stars.up|buff.touch_the_cosmos.react
+
+    # 4. Fury of Elune BEFORE CDs
+    - fury_of_elune
+
+    # 5. Force of Nature (if talented)
+    - force_of_nature
+
+    # 6. CA/Inc
+    - incarnation_chosen_of_elune,delay=500
+
+    # 7. AP Dump during CD
+    - starfall,if=active_enemies>1&(buff.touch_the_cosmos.react|astral_power>80)
+    - starsurge,if=buff.touch_the_cosmos.react|astral_power>80
+
+    # 8. Starfire filler inside CA/Inc
+    - starfire
+
+  # ----------------------------------------------------------
+  #  OPENER - AOE (Elune's Chosen, 3+ targets)
+  #
+  #  Log-confirmed opener (阿揪揪):
+  #  MF spread → SF → FoE → Inc → Starfall × N → Starsurge → WM → Starfire
+  # ----------------------------------------------------------
+  opener_aoe:
+    # 1. Sunfire first (AoE hit)
+    - sunfire,if=debuff.sunfire.refreshable
+    - moonfire,if=active_enemies<6&debuff.moonfire.refreshable
+
+    # 2. Fury of Elune BEFORE Inc
+    - fury_of_elune
+
+    # 3. Force of Nature
+    - force_of_nature
+
+    # 4. Cooldowns
+    - incarnation_chosen_of_elune
+
+    # 5. Enter Eclipse
+    - solar_eclipse,if=var.eclipse_down&var.ec
+    - lunar_eclipse,if=var.eclipse_down
+
+    # 6. Dump Starlord/Ascendant stacks
+    - starfall,if=astral_power>50|buff.ascendant_stars.up
+    - starsurge,if=buff.starfall.up&buff.ascendant_stars.up
+    - starfire,if=buff.ascendant_stars.up
+
+  # ----------------------------------------------------------
+  #  MAIN ENTRY POINT
+  # ----------------------------------------------------------
+  main:
+    - return,if=player.channeling|player.casting
+    - call_action_list,name=spell_queue
+    - call_action_list,name=sanity_checks
+    - call_action_list,name=auto_target
+    - call_action_list,name=auto_heal
+    - mark_of_the_wild,if=group.count(cycle.buff.mark_of_the_wild.down.any)>0&!player.combat
+    - return,if=auto_combat.player
+    - moonkin_form,if=buff.moonkin_form.down&health.pct>config.frenzied_regen_hp&!buff.frenzied_regeneration.up
+    - call_action_list,name=interrupts
+    - call_action_list,name=defensives
+    - call_action_list,name=heal_support
+    - call_action_list,name=trinkets
+    # Openers (when CDs are available)
+    - call_action_list,name=opener_aoe,if=var.opener&active_enemies>2
+    - call_action_list,name=opener_st,if=var.opener&active_enemies<=2
+    # Movement: use instant-cast spells only
+    - call_action_list,name=moving_aoe,if=player.moving&active_enemies>1
+    - call_action_list,name=moving_st,if=player.moving&active_enemies<=1
+    # Standard rotation
+    - call_action_list,name=ec_st,if=active_enemies<=1
+    - call_action_list,name=aoe,if=active_enemies>1
