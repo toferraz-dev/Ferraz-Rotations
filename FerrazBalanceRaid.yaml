@@ -15,7 +15,7 @@ version: 1.0
 author: Ferraz
 patch: "12.0.1.6"
 spec: 102
-name: Ferraz Balance Druid (Raid)
+name: Ferraz Balance Druid Raid (Grove)
 entry: main
 
 config:
