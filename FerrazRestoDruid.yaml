@@ -206,13 +206,13 @@ config:
     label: "Auto Trinket 1 (Before Convoke)"
     section: "Trinkets"
     type: checkbox
-    default: true
+    default: false
 
   use_trinket_2:
     label: "Auto Trinket 2 (Before Convoke)"
     section: "Trinkets"
     type: checkbox
-    default: true
+    default: false
 
   use_mark_of_the_wild:
     label: "Auto Mark of the Wild"
