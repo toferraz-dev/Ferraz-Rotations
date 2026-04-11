@@ -273,8 +273,8 @@ lists:
     - thorn_bloom,name="Thorn Bloom",if=group.count(cycle.health.effective.pct<config.thorn_bloom_threshold)>=config.thorn_bloom_members
 
   cooldowns:
-    - trinket_1,if=config.use_trinket_1&group.count(cycle.health.effective.pct<=config.convoke_threshold)>=config.convoke_members
-    - trinket_2,if=config.use_trinket_2&group.count(cycle.health.effective.pct<=config.convoke_threshold)>=config.convoke_members
+    - trinket_1,if=config.use_trinket_1&trinket_1.ready&group.count(cycle.health.effective.pct<=config.convoke_threshold)>=config.convoke_members
+    - trinket_2,if=config.use_trinket_2&trinket_2.ready&group.count(cycle.health.effective.pct<=config.convoke_threshold)>=config.convoke_members
     - convoke_the_spirits,name="Convoke (Heal)",if=group.count(cycle.health.effective.pct<config.convoke_threshold)>=config.convoke_members&!buff.cat_form.up&!buff.bear_form.up
     - tranquility,name="Tranquility",if=group.count(cycle.health.effective.pct<config.tranquility_threshold)>=config.tranquility_members&!player.moving
     - natures_swiftness,name="Nature's Swiftness",if=group.count(cycle.health.effective.pct<config.ns_threshold)>=1
@@ -322,8 +322,6 @@ lists:
   catweave:
     - rejuvenation,name="Cat Rejuvenation",cycle=members,if=cycle.buff.rejuvenation.remains<4&(buff.cat_form.up|talent.fluid_form)&(target.range>8|!var.group_healthy)
     
-    - sunfire,name="Sunfire Aoe Dot",if=debuff.sunfire.refreshable
-
     # Fluid Form: we MUST cast rake or shred to shift BEFORE accessing catweave_aoe/st
     - rake,name="Fluid Rake",if=talent.fluid_form&!buff.cat_form.up&debuff.rake.refreshable
     - shred,name="Fluid Shred",if=talent.fluid_form&!buff.cat_form.up
@@ -336,9 +334,14 @@ lists:
     - call_action_list,name=catweave_st,if=active_enemies<config.aoe_threshold
 
   ranged_dps:
+    - sunfire,name="Sunfire Aoe Dot",if=debuff.sunfire.refreshable  
     - moonfire,name="Moonfire ST Refresh",if=debuff.moonfire.refreshable
-    - wrath,name="Wrath Filler"
-    
+
+  bearweave:
+    - thrash,name="Thrash (BearmForm Bleed)",if=debuff.thrash.remains<3&talent.fluid_form
+    - mangle,name="Mangle (BearForm)",if=talent.fluid_form
+    - call_action_list,name=catweave
+
   moving:
     - convoke_the_spirits,name="Convoke (Moving)",if=group.count(cycle.health.effective.pct<config.convoke_threshold)>=config.convoke_members&!buff.cat_form.up&!buff.bear_form.up
     - lifebloom,name="Lifebloom Moving",cycle=tanks,if=player.combat&talent.everbloom.rank>=1&(cycle.buff.lifebloom.stack<3|cycle.buff.lifebloom.remains<=5)
@@ -350,7 +353,7 @@ lists:
     - regrowth.mouseover,name="Regrowth (MO) Instant",if=buff.natures_swiftness.up|var.is_tree_form
     - swiftmend.mouseover,name="Swiftmend (MO)",if=(mouseover.buff.rejuvenation.up|mouseover.buff.regrowth.up|mouseover.buff.wild_growth.up)
     - regrowth.mouseover,name="Regrowth (MO) Cast",if=!player.moving
-    - rejuvenation.mouseover,name="Rejuv (MO)",if=mouseover.buff.remains(rejuvenation)<1.5
+    - rejuvenation.mouseover,name="Rejuvenation (MO)",if=mouseover.buff.remains(rejuvenation)<1.5
     
   main:
     - return,if=player.channeling|player.casting|buff.tranquility.up|buff.convoke_the_spirits.up
@@ -368,5 +371,9 @@ lists:
     - call_action_list,name=mouseover_healing_emergency,if=config.use_mouseover&var.mo_friendly_valid&mouseover.health.pct<config.mouseover_emergency_hp&!player.casting&!player.channeling
     - call_action_list,name=moving,if=player.moving
     - call_action_list,name=active_healing,if=!config.force_dps
+    - call_action_list,name=ranged_dps,if=var.can_catweave&target.exists&target.alive&!target.friendly
+    - call_action_list,name=bearweave,if=var.can_catweave&target.exists&target.alive&!target.friendly&target.range<=8&active_enemies>=2
     - call_action_list,name=catweave,if=var.can_catweave&target.exists&target.alive&!target.friendly&target.range<=8
-    - call_action_list,name=ranged_dps,if=var.can_catweave&target.exists&target.alive&!target.friendly&target.range>8
+
+
+
