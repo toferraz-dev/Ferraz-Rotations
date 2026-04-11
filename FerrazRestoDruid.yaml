@@ -29,12 +29,23 @@ config:
     default: 40
 
   ironbark_threshold:
-    label: "Ironbark (Tank) HP %"
+    label: "Ironbark HP %"
     section: "Defensives"
     type: slider
     min: 25
     max: 99
     default: 60
+
+  ironbark_target:
+    label: "Ironbark Target"
+    section: "Defensives"
+    type: dropdown
+    options:
+      - label: "Tanks Only"
+        value: 1
+      - label: "All Members"
+        value: 2
+    default: 1
 
   # =================================================================================================
   #     MAJOR COOLDOWNS
@@ -263,7 +274,8 @@ lists:
     
     
   defensives:
-    - ironbark,name="Ironbark",cycle=tanks,if=cycle.health.pct<config.ironbark_threshold&cycle.buff.ironbark.down
+    - ironbark,name="Ironbark (T)",cycle=tanks,if=config.ironbark_target=1&cycle.health.pct<config.ironbark_threshold&cycle.buff.ironbark.down
+    - ironbark,name="Ironbark (A)",cycle=members,if=config.ironbark_target=2&cycle.health.pct<config.ironbark_threshold&cycle.buff.ironbark.down
     - barkskin,name="Barkskin",if=health.pct<config.barkskin_threshold
     - bear_form,name="Panic Bear",if=health.pct<config.frenzied_regen_threshold&!buff.bear_form.up&cooldown.frenzied_regeneration.ready
     - frenzied_regeneration,name="Frenzied Regen",if=health.pct<config.frenzied_regen_threshold&buff.bear_form.up
