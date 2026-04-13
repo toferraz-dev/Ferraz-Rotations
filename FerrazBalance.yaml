@@ -56,15 +56,15 @@ config:
   #  TRINKETS
   # ============================================================
   use_trinket_1:
-    label: "Auto Trinket 1"
+    label: "Auto Trinket 1 (Before Incarnation)"
     section: "Trinkets"
     type: checkbox
-    default: true
+    default: false
   use_trinket_2:
-    label: "Auto Trinket 2"
+    label: "Auto Trinket 2 (Before Incarnation)"
     section: "Trinkets"
     type: checkbox
-    default: true
+    default: false
 
 # ============================================================
 #  VARIABLES
@@ -101,9 +101,9 @@ lists:
   #  TRINKETS
   # ----------------------------------------------------------
   trinkets:
-    # Use Haste/Stat trinkets with Inc/CA or if it's a long way off
-    - trinket_1,if=config.use_trinket_1&player.combat&trinket_1.ready&(var.cd_active|cooldown.celestial_alignment.remains>40|cooldown.incarnation_chosen_of_elune.remains>40)
-    - trinket_2,if=config.use_trinket_2&player.combat&trinket_2.ready&(var.cd_active|cooldown.celestial_alignment.remains>40|cooldown.incarnation_chosen_of_elune.remains>40)
+    # Use trinkets specifically when about to burst (opener) or if already in burst
+    - trinket_1,if=config.use_trinket_1&trinket_1.ready&player.combat&(var.opener|var.cd_active)
+    - trinket_2,if=config.use_trinket_2&trinket_2.ready&player.combat&(var.opener|var.cd_active)
 
   # ----------------------------------------------------------
   #  DEFENSIVES
@@ -195,8 +195,8 @@ lists:
   # ----------------------------------------------------------
   ec_st:
     # 1. Maintain DoTs (refresh before they fall off)
-    - moonfire,if=debuff.moonfire.remains<2|debuff.moonfire.refreshable&var.eclipse_down
-    - sunfire,if=debuff.sunfire.remains<2|debuff.sunfire.refreshable&var.eclipse_down
+    - moonfire,if=debuff.moonfire.remains<2|debuff.moonfire.refreshable
+    - sunfire,if=debuff.sunfire.remains<2|debuff.sunfire.refreshable
 
     # 2. Enter Eclipse Preference (Lunar Eclipse for Elune's Chosen)
     - lunar_eclipse,if=var.eclipse_down
@@ -240,8 +240,8 @@ lists:
   # ----------------------------------------------------------
   aoe:
     # 1. Maintain DoTs — spread before spending AP
-    - sunfire,if=debuff.sunfire.remains<2|debuff.sunfire.refreshable&var.eclipse_down
-    - moonfire,if=active_enemies<6&(debuff.moonfire.remains<2|debuff.moonfire.refreshable&var.eclipse_down)
+    - sunfire,if=debuff.sunfire.refreshable
+    - moonfire,if=debuff.moonfire.refreshable
 
     # 2. Enter Eclipse: EC builds always want Lunar Eclipse
     - lunar_eclipse,if=var.eclipse_down
@@ -284,9 +284,9 @@ lists:
   #  → Fury of Elune → Starsurge/Starfall → Starfire filler
   # ----------------------------------------------------------
   opener_st:
-    # DoTs first
-    - moonfire,if=debuff.moonfire.remains<2|debuff.moonfire.refreshable&var.eclipse_down
-    - sunfire,if=debuff.sunfire.remains<2|debuff.sunfire.refreshable&var.eclipse_down
+    # 1. DoTs first
+    - moonfire,if=debuff.moonfire.refreshable
+    - sunfire,if=debuff.sunfire.refreshable
 
     # Enter Eclipse (Wrath x2 for Lunar)
     - lunar_eclipse,if=var.eclipse_down
@@ -317,7 +317,7 @@ lists:
   opener_aoe:
     # DoTs: Sunfire first (AoE hit), then Moonfire spread
     - sunfire,if=debuff.sunfire.refreshable
-    - moonfire,if=active_enemies<6&debuff.moonfire.refreshable
+    - moonfire,if=debuff.moonfire.refreshable
 
     # Fury of Elune BEFORE Inc (log-confirmed order)
     - fury_of_elune
