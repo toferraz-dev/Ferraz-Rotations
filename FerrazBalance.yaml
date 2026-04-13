@@ -76,7 +76,7 @@ variables:
   # Elune's Chosen hero talent active (Boundless Moonlight)
   ec: talent.boundless_moonlight
   # True when about to open (CA/Inc ready, not yet pressed)
-  opener: (talent.celestial_alignment|talent.incarnation_chosen_of_elune)&cooldown.celestial_alignment.remains=0
+  opener: (talent.celestial_alignment|talent.incarnation_chosen_of_elune)&cooldown.celestial_alignment.remains=0&!var.cd_active
   # Window where burning CDs together is correct
   cd_window: cooldown.force_of_nature.remains>15|(cooldown.celestial_alignment.remains<44&cooldown.incarnation_chosen_of_elune.remains<44)
   cd_window_narrow: cooldown.force_of_nature.remains>30|((cooldown.celestial_alignment.remains>10|cooldown.incarnation_chosen_of_elune.remains>10)&(cooldown.celestial_alignment.remains<20&cooldown.incarnation_chosen_of_elune.remains<20))
@@ -212,7 +212,7 @@ lists:
     - starsurge,if=astral_power>60&active_enemies<=1
 
     # 5. CA/Inc after Fury of Elune is casting/done
-    - incarnation_chosen_of_elune,delay=500,if=buff.ascendant_stars.down&(!talent.elunes_guidance|cooldown.lunar_eclipse.charges_fractional<1.5)
+    - incarnation_chosen_of_elune,delay=500,if=!var.cd_active&buff.ascendant_stars.down&(!talent.elunes_guidance|cooldown.lunar_eclipse.charges_fractional<1.5)
 
     # 6. Moon charges: don't cap (higher priority than WM in ST — more AP per GCD)
     - full_moon,if=astral_power.deficit>40&debuff.atmospheric_exposure.remains<action.full_moon.execute_time+0.5
@@ -250,7 +250,7 @@ lists:
     - fury_of_elune,if=!talent.sundered_firmament|debuff.atmospheric_exposure.remains<2
 
     # 4. CA/Inc: pair after FoE; fire when CA is ready
-    - incarnation_chosen_of_elune,delay=500,if=var.eclipse_down|fight_remains<20
+    - incarnation_chosen_of_elune,delay=500,if=!var.cd_active&(var.eclipse_down|fight_remains<20)
 
     # 5. Starfall: main AP dump in AoE (prioritize procs)
     - starfall,if=buff.starweavers_weft.up|buff.touch_the_cosmos.react
@@ -296,7 +296,7 @@ lists:
     - starsurge,if=buff.ascendant_stars.up|buff.touch_the_cosmos.react
 
     # CA/Inc after stacks consumed
-    - incarnation_chosen_of_elune,delay=500
+    - incarnation_chosen_of_elune,delay=500,if=!var.cd_active
 
     # Fury of Elune
     - fury_of_elune
@@ -323,7 +323,7 @@ lists:
     - fury_of_elune
 
     # Cooldowns
-    - incarnation_chosen_of_elune
+    - incarnation_chosen_of_elune,if=!var.cd_active
 
     # Enter Eclipse (Lunar via Wrath)
     - lunar_eclipse,if=var.eclipse_down
