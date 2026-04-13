@@ -257,8 +257,8 @@ variables:
   is_tree_form: buff.incarnation_tree_of_life.up
   group_healthy: group.count(cycle.health.effective.pct<config.catweave_group_hp)<config.catweave_injured_max
   can_catweave: (var.group_healthy|config.force_dps)&player.combat&!var.is_tree_form
-  mo_friendly_valid: mouseover.exists&mouseover.alive&mouseover.friendly&mouseover.range>0&mouseover.range<=40
-  mo_attacker_valid: mouseover.exists&mouseover.alive&!mouseover.friendly&mouseover.range>0&mouseover.range<=40
+  mo_friendly_valid: mouseover.exists&mouseover.alive&mouseover.friendly&mouseover.unitframe
+  mo_attacker_valid: mouseover.exists&mouseover.alive&!mouseover.friendly
 
 lists:
   interrupts:
@@ -303,10 +303,8 @@ lists:
     - swiftmend,delay=150,name="Swiftmend Emergency",cycle=members,if=cycle.health.effective.pct<config.swiftmend_threshold&(cycle.buff.rejuvenation.up|cycle.buff.regrowth.up|cycle.buff.wild_growth.up)
     - regrowth,delay=150,name="Nature Swift Regrowth",cycle=members,if=buff.natures_swiftness.up&cycle.health.effective.pct<config.regrowth_threshold
 
-    # Lifebloom Tank Baseline
-    - lifebloom,delay=150,name="Lifebloom Tank",cycle=tanks,if=cycle.buff.lifebloom.stack<3|cycle.buff.lifebloom.remains<=3
-
     # Forced Ramp / Spread (Ignores HP thresholds if toggle is ON)
+    - lifebloom,delay=150,name="Lifebloom Tank",cycle=tanks,if=config.force_spread&cycle.buff.lifebloom.stack<3|cycle.buff.lifebloom.remains<=3
     - wild_growth,delay=150,name="Forced Wild Growth",if=config.force_spread&(buff.wild_growth.down|group.any(cycle.buff.wild_growth.down))
     - rejuvenation,delay=150,name="Forced Rejuvenation",cycle=members,if=config.force_spread&(cycle.buff.rejuvenation.down|cycle.buff.rejuvenation.remains<1.5)
 
@@ -314,6 +312,9 @@ lists:
     - wild_growth,delay=150,name="Wild Growth",if=group.count(cycle.health.effective.pct<config.wild_growth_threshold)>=config.wild_growth_members
     - rejuvenation,delay=150,name="Rejuvenation Filler",cycle=members,if=cycle.buff.rejuvenation.remains<1.5&cycle.health.effective.pct<config.rejuvenation_threshold
     - regrowth,delay=150,name="Regrowth Filler",cycle=members,if=cycle.health.effective.pct<config.regrowth_threshold
+
+    # Lifebloom Tank Baseline
+    - lifebloom,delay=150,name="Lifebloom Tank",cycle=tanks,if=cycle.buff.lifebloom.stack<3|cycle.buff.lifebloom.remains<=3
 
   utility:
     - bear_form,name="Stay Bear (Rooted)",if=player.rooted&!buff.bear_form.up
@@ -367,10 +368,11 @@ lists:
     - wrath,delay=150,name="Wrath (Moving)",if=var.is_tree_form&target.exists&!target.friendly
 
   mouseover_healing_emergency:
+    - lifebloom.mouseover,name="Lifebloom (MO)",if=mouseover.buff.stacks(lifebloom)<3|mouseover.buff.remains(lifebloom)<=5
     - regrowth.mouseover,delay=150,name="Regrowth (MO) Instant",if=buff.natures_swiftness.up|var.is_tree_form
-    - swiftmend.mouseover,delay=150,name="Swiftmend (MO)",if=(mouseover.buff.rejuvenation.up|mouseover.buff.regrowth.up|mouseover.buff.wild_growth.up)
+    - swiftmend.mouseover,delay=150,name="Swiftmend (MO)",if=mouseover.buff.remains(rejuvenation)>1|mouseover.buff.remains(regrowth) >1|mouseover.buff.remains(wild_growth)>1
+    - rejuvenation.mouseover,delay=150,name="Rejuvenation (MO)",if=mouseover.buff.remains(rejuvenation)<=1.5
     - regrowth.mouseover,delay=150,name="Regrowth (MO) Cast",if=!player.moving
-    - rejuvenation.mouseover,delay=150,name="Rejuvenation (MO)",if=mouseover.buff.remains(rejuvenation)<1.5
 
   main:
     - return,if=player.channeling|player.casting|buff.tranquility.up|buff.convoke_the_spirits.up
@@ -385,7 +387,7 @@ lists:
     - call_action_list,name=racials
     - call_action_list,name=utility
     - call_action_list,name=cooldowns
-    - call_action_list,name=mouseover_healing_emergency,if=config.use_mouseover&var.mo_friendly_valid&mouseover.health.pct<config.mouseover_emergency_hp&!player.casting&!player.channeling
+    - call_action_list,name=mouseover_healing_emergency,if=config.use_mouseover&var.mo_friendly_valid&mouseover.health.effective.pct<config.mouseover_emergency_hp
     - call_action_list,name=moving,if=player.moving
     - call_action_list,name=active_healing,if=!config.force_dps
     - call_action_list,name=ranged_dps,if=var.can_catweave&target.exists&target.alive&!target.friendly
