@@ -233,6 +233,12 @@ config:
     type: checkbox
     default: false
 
+  use_potion:
+    label: "Auto Offensive Potion"
+    section: "Trinkets"
+    type: checkbox
+    default: false
+
   use_mark_of_the_wild:
     label: "Auto Mark of the Wild"
     section: "Utility"
@@ -291,8 +297,9 @@ lists:
     - thorn_bloom,name="Thorn Bloom",if=group.count(cycle.health.effective.pct<config.thorn_bloom_threshold)>=config.thorn_bloom_members
 
   cooldowns:
-    - trinket_1,if=config.use_trinket_1&trinket_1.ready&group.count(cycle.health.effective.pct<=config.convoke_threshold)>=config.convoke_members
-    - trinket_2,if=config.use_trinket_2&trinket_2.ready&group.count(cycle.health.effective.pct<=config.convoke_threshold)>=config.convoke_members
+    - trinket_1,if=config.use_trinket_1&trinket_1.ready&group.count(cycle.health.effective.pct<=config.convoke_threshold)>=config.convoke_members&!buff.cat_form.up&!buff.bear_form.up
+    - trinket_2,if=config.use_trinket_2&trinket_2.ready&group.count(cycle.health.effective.pct<=config.convoke_threshold)>=config.convoke_members&!buff.cat_form.up&!buff.bear_form.up
+    - combat_potion,if=combat_potion.ready&config.use_potion&group.count(cycle.health.effective.pct<=config.convoke_threshold)>=config.convoke_members&!buff.cat_form.up&!buff.bear_form.up
     - convoke_the_spirits,delay=300,name="Convoke (Heal)",if=group.count(cycle.health.effective.pct<config.convoke_threshold)>=config.convoke_members&!buff.cat_form.up&!buff.bear_form.up
     - tranquility,delay=300,name="Tranquility",if=group.count(cycle.health.effective.pct<config.tranquility_threshold)>=config.tranquility_members&!player.moving
     - natures_swiftness,name="Nature's Swiftness",if=group.count(cycle.health.effective.pct<config.ns_threshold)>=1
@@ -375,6 +382,7 @@ lists:
     - regrowth.mouseover,delay=150,name="Regrowth (MO) Cast",if=!player.moving
 
   main:
+
     - return,if=player.channeling|player.casting|buff.tranquility.up|buff.convoke_the_spirits.up
     - call_action_list,name=spell_queue
     - call_action_list,name=sanity_checks
