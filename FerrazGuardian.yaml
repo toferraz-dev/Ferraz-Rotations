@@ -5,13 +5,14 @@ spec: 104
 name: Ferraz Guardian Druid (Claw)
 description: |
   Optimized Guardian Druid (Claw) based on SimulationCraft.
-  Supports Killing Blow and Fount of Strength builds.
+  Supports Killing Blow Fount of Strength builds.
   Talent Tree: CgGA8cL7tpvige+kkmGM9zUPWDAAAAAAAAAAAgZmxsMzMjZWMLDMWGwmZMaimZmlZmZmZZMDAAAAAAzYZGAAAAqZWmlZmZAAsgZeAgllZwAWssNAYmNYA
 entry: main
 
 # ==========================================
 #  CONFIGURATION
 # ==========================================
+
 config:
   min_aoe_enemies:
     label: "Min enemies for AOE"
@@ -73,6 +74,7 @@ config:
 # ==========================================
 #  VARIABLES
 # ==========================================
+
 variables:
   in_bear_form: buff.bear_form.up
   incarnation_active: buff.incarnation_guardian_of_ursoc.up|buff.berserk.up
@@ -85,6 +87,7 @@ variables:
 # ==========================================
 #  ACTION LISTS
 # ==========================================
+
 lists:
   out_of_combat:
     - mark_of_the_wild,name="Mark of the Wild",range_check=none,if=buff.mark_of_the_wild.down.any
@@ -108,7 +111,7 @@ lists:
     # Auto Swap Search
     - target_enemy,delay=100,name="Search Soothe",if=!target.purgeable.enrage&enemies.combat.any(cycle.purgeable.enrage)
     - target_enemy,delay=100,name="Search Interrupt",if=!interrupt.target.check&interrupt.5y.any
-    
+
     # Single Interrupt
     - skull_bash,name="Skull Bash",if=interrupt.target.check
     - skull_bash.mouseover,name="Skull Bash (MO)",if=interrupt.mouseover.check
@@ -116,7 +119,7 @@ lists:
 
     # AoE Interrupt
     - incapacitating_roar,name="Roar (AoE CC)",if=interrupt.stun.aoe.check
-    - soothe,name="Soothe Enrage",if=target.purgeable.enrage      
+    - soothe,name="Soothe Enrage",if=target.purgeable.enrage
 
   cooldowns:
     - lunar_beam,name="Lunar Beam",if=var.incarnation_active|((cooldown.incarnation_guardian_of_ursoc.remains>60|cooldown.berserk.remains>60)&!talent.lunation|(cooldown.incarnation_guardian_of_ursoc.remains>30|cooldown.berserk.remains>30)&talent.lunation)

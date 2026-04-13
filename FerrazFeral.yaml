@@ -162,7 +162,6 @@ variables:
 
   # BUFF TRACKING
   has_apex: buff.apex_predators_craving.up
-  has_clearcasting: buff.clearcasting_feral.up
   has_sudden_ambush: buff.sudden_ambush.up
   tigers_fury_up: buff.tigers_fury.up
   berserk_up: buff.berserk.up|buff.incarnation_avatar_of_ashamane.up
@@ -237,12 +236,12 @@ lists:
   interrupts:
     # Auto Swap
     - target_enemy,delay=100,name="Search Interrupt",if=!interrupt.target.check&interrupt.5y.any
-    
+
     # Interrupts
     - skull_bash,name="Skull Bash",if=interrupt.target.check
     - skull_bash.mouseover,name="Skull Bash (MO)",if=interrupt.mouseover.check
     - skull_bash.focus,name="Skull Bash (Focus)",if=interrupt.focus.check
-    
+
     # CC & Utility
     - incapacitating_roar,name="Roar (AoE CC)",if=interrupt.stun.aoe.check
     - mighty_bash,name="Mighty Bash",if=interrupt.cc.check
@@ -295,11 +294,11 @@ lists:
     - tigers_fury,name="Tiger's Fury AoE",if=var.energy_for_tf|buff.tigers_fury.down
     - primal_wrath,name="Primal Wrath (Bleed)",if=var.cp_max&debuff.rip.refreshable
     - ferocious_bite,name="Bite (Apex Proc)",if=var.has_apex
-    
+
     # Smart Rake Spreading (Tab Targeting)
     - target_enemy,delay=200,name="Search Rake Target",if=debuff.rake.up&!var.rake_refreshable&active_dot.rake<active_enemies&active_dot.rake<6
     - rake,name="Rake (Spread)",if=var.rake_refreshable
-    
+
     - swipe,name="Swipe AoE Builder"
 
   main:
