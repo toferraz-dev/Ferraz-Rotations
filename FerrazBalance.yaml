@@ -69,6 +69,7 @@ config:
 # ============================================================
 #  VARIABLES
 # ============================================================
+
 variables:
   # Eclipse state
   eclipse_down: buff.eclipse_solar.down&buff.eclipse_lunar.down
@@ -85,6 +86,7 @@ variables:
 # ============================================================
 #  ACTION LISTS
 # ============================================================
+
 lists:
 
   # ----------------------------------------------------------
@@ -129,7 +131,7 @@ lists:
     - sunfire,if=debuff.sunfire.remains<2|debuff.sunfire.refreshable
 
     # 2. Starsurge: instant AP dump, maintains Starlord
-    - starsurge,if=buff.starweaver_s_warp.up|buff.touch_the_cosmos.react
+    - starsurge,if=buff.starweavers_warp.up|buff.touch_the_cosmos.react
     - starsurge,if=astral_power>60
 
     # 3. Fury of Elune if available
@@ -158,11 +160,11 @@ lists:
     - moonfire,if=active_enemies<6&(debuff.moonfire.remains<2|debuff.moonfire.refreshable)
 
     # 3. Starfall: primary AoE AP dump (instant)
-    - starfall,if=buff.starweaver_s_weft.up|buff.touch_the_cosmos.react
+    - starfall,if=buff.starweavers_weft.up|buff.touch_the_cosmos.react
     - starfall,if=astral_power>50
 
     # 4. Starsurge: Star Cascade cleave + Starlord stacks
-    - starsurge,if=buff.starfall.up&(buff.touch_the_cosmos.react|buff.starweaver_s_warp.up)
+    - starsurge,if=buff.starfall.up&(buff.touch_the_cosmos.react|buff.starweavers_warp.up)
     - starsurge,if=buff.starfall.up&astral_power>60
 
     # 5. Fury of Elune (instant)
@@ -205,8 +207,8 @@ lists:
 
     # 4. Spenders: Prioritize procs and Starlord maintenance
     #    Log data: top players dump AP at 60+ not 80+
-    - starfall,if=buff.starweaver_s_weft.up|buff.touch_the_cosmos.react
-    - starsurge,if=buff.starweaver_s_warp.up
+    - starfall,if=buff.starweavers_weft.up|buff.touch_the_cosmos.react
+    - starsurge,if=buff.starweavers_warp.up
     - starsurge,if=astral_power>60&active_enemies<=1
 
     # 5. CA/Inc after Fury of Elune is casting/done
@@ -251,12 +253,12 @@ lists:
     - incarnation_chosen_of_elune,delay=500,if=var.eclipse_down|fight_remains<20
 
     # 5. Starfall: main AP dump in AoE (prioritize procs)
-    - starfall,if=buff.starweaver_s_weft.up|buff.touch_the_cosmos.react
+    - starfall,if=buff.starweavers_weft.up|buff.touch_the_cosmos.react
     - starfall,if=(astral_power>50)&target.time_to_die>5
 
     # 6. Starsurge: Star Cascade cleave — use when Starfall is already up
     #    Log confirmed: top players cast Starsurge even in 8+ target AoE
-    - starsurge,if=buff.starfall.up&(buff.starweaver_s_warp.up|buff.touch_the_cosmos.react)
+    - starsurge,if=buff.starfall.up&(buff.starweavers_warp.up|buff.touch_the_cosmos.react)
     - starsurge,if=buff.starfall.up&astral_power>80&buff.starlord.stack<3
 
     # 7. Wild Mushroom: Burn charges mid-rotation (after first Starfall wave)

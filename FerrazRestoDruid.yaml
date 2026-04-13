@@ -134,6 +134,14 @@ config:
     max: 99
     default: 70
 
+  lifebloom_swap_threshold:
+    label: "Lifebloom Swap HP %"
+    section: "Healing"
+    type: slider
+    min: 25
+    max: 99
+    default: 65
+
   regrowth_threshold:
     label: "Regrowth HP %"
     section: "Healing"
@@ -250,29 +258,27 @@ variables:
   group_healthy: group.count(cycle.health.effective.pct<config.catweave_group_hp)<config.catweave_injured_max
   can_catweave: (var.group_healthy|config.force_dps)&player.combat&!var.is_tree_form
   mo_friendly_valid: mouseover.exists&mouseover.alive&mouseover.friendly&mouseover.range>0&mouseover.range<=40
-  mo_attacker_valid: mouseover.exists&mouseover.alive&!mouseover.friendly&mouseover.range>0&mouseover.range<=40 
+  mo_attacker_valid: mouseover.exists&mouseover.alive&!mouseover.friendly&mouseover.range>0&mouseover.range<=40
 
 lists:
   interrupts:
     # Auto Swap Search
     - target_enemy,delay=100,name="Search Soothe",if=!target.purgeable.enrage&enemies.combat.any(cycle.purgeable.enrage)
     - target_enemy,delay=100,name="Search Interrupt",if=!interrupt.target.check&interrupt.5y.any
-    
+
     # AoE Interrupt
-    - incapacitating_roar,name="Roar (AoE CC)",if=interrupt.stun.aoe.check
-    - soothe,name="Soothe Enrage",if=target.purgeable.enrage    
+    - soothe,name="Soothe Enrage",if=target.purgeable.enrage
 
   out_of_combat:
     - mark_of_the_wild,name="Mark of the Wild",if=config.use_mark_of_the_wild&group.count(cycle.buff.mark_of_the_wild.down.any)>0
     - symbiotic_relationship,name="Symbiotic Tank",cycle=tanks,if=!buff.symbiotic_relationship.up&!cycle.buff.symbiotic_relationship.up&!player.casting
 
     # Lifebloom OOC Maintenance
-    - lifebloom,name="OOC Lifebloom Tank",cycle=tanks,if=talent.everbloom.rank>=1&(cycle.buff.lifebloom.stack<3|cycle.buff.lifebloom.remains<=5)
-    - lifebloom,name="OOC Lifebloom Tank",cycle=tanks,if=!talent.everbloom.enabled&cycle.buff.lifebloom.down
+    - lifebloom,name="OOC Lifebloom Tank",cycle=tanks,if=cycle.buff.lifebloom.stack<3|cycle.buff.lifebloom.remains<=5
     - rejuvenation,name="OOC Rejuvenation",cycle=members,if=cycle.health.effective.pct<config.rejuvenation_threshold&cycle.buff.rejuvenation.remains<1.5&!player.combat
     - regrowth,name="OOC Regrowth",cycle=members,if=cycle.health.effective.pct<config.regrowth_threshold&cycle.buff.regrowth.remains<1.5&!player.combat
-    
-    
+
+
   defensives:
     - ironbark,name="Ironbark (Tank)",cycle=tanks,if=config.ironbark_target=1&cycle.health.pct<config.ironbark_threshold&cycle.buff.ironbark.down
     - ironbark,name="Ironbark (Members)",cycle=members,if=config.ironbark_target=2&cycle.health.pct<config.ironbark_threshold&cycle.buff.ironbark.down
@@ -297,10 +303,9 @@ lists:
     - swiftmend,name="Swiftmend Emergency",cycle=members,if=cycle.health.effective.pct<config.swiftmend_threshold&(cycle.buff.rejuvenation.up|cycle.buff.regrowth.up|cycle.buff.wild_growth.up)
     - regrowth,name="Nature Swift Regrowth",cycle=members,if=buff.natures_swiftness.up&cycle.health.effective.pct<config.regrowth_threshold
 
-    # Nature's Swiftness follow-up: instant Regrowth on lowest
-    - lifebloom,name="Lifebloom Tank",cycle=tanks,if=talent.everbloom.rank>=1&(cycle.buff.lifebloom.stack<3|cycle.buff.lifebloom.remains<=5)
-    - lifebloom,name="Lifebloom Tank",cycle=tanks,if=!talent.everbloom.enabled&cycle.buff.lifebloom.down
-    
+    # Lifebloom Tank Baseline
+    - lifebloom,name="Lifebloom Tank",cycle=tanks,if=cycle.buff.lifebloom.stack<3|cycle.buff.lifebloom.remains<=3
+
     # Forced Ramp / Spread (Ignores HP thresholds if toggle is ON)
     - wild_growth,name="Forced Wild Growth",if=config.force_spread&(buff.wild_growth.down|group.any(cycle.buff.wild_growth.down))
     - rejuvenation,name="Forced Rejuvenation",cycle=members,if=config.force_spread&(cycle.buff.rejuvenation.down|cycle.buff.rejuvenation.remains<1.5)
@@ -309,7 +314,7 @@ lists:
     - wild_growth,name="Wild Growth",if=group.count(cycle.health.effective.pct<config.wild_growth_threshold)>=config.wild_growth_members
     - rejuvenation,name="Rejuvenation Filler",cycle=members,if=cycle.buff.rejuvenation.remains<1.5&cycle.health.effective.pct<config.rejuvenation_threshold
     - regrowth,name="Regrowth Filler",cycle=members,if=cycle.health.effective.pct<config.regrowth_threshold
-    
+
   utility:
     - bear_form,name="Stay Bear (Rooted)",if=player.rooted&!buff.bear_form.up
     - cat_form,name="Stay Cat (Rooted)",if=player.rooted&buff.bear_form.up
@@ -329,24 +334,24 @@ lists:
     - ferocious_bite,name="Bite AoE",if=combo_points>=5
     - rake,name="Rake AoE",if=debuff.rake.refreshable
     - swipe,name="Swipe AoE",if=talent.swipe
-    - shred,name="Shred AoE",if=!talent.swipe    
+    - shred,name="Shred AoE",if=!talent.swipe
 
   catweave:
     - rejuvenation,name="Cat Rejuvenation",cycle=members,if=cycle.buff.rejuvenation.remains<4&(buff.cat_form.up|talent.fluid_form)&(target.range>8|!var.group_healthy)
-    
+
     # Fluid Form: we MUST cast rake or shred to shift BEFORE accessing catweave_aoe/st
     - rake,name="Fluid Rake",if=talent.fluid_form&!buff.cat_form.up&debuff.rake.refreshable
     - shred,name="Fluid Shred",if=talent.fluid_form&!buff.cat_form.up
-    
+
     # Explicit shift fallback (for AoE when Shred is bypassed or without Fluid Form)
     - cat_form,name="Manual Cat Shift",if=!buff.cat_form.up
     - return,if=!buff.cat_form.up
-    
+
     - call_action_list,name=catweave_aoe,if=active_enemies>=config.aoe_threshold
     - call_action_list,name=catweave_st,if=active_enemies<config.aoe_threshold
 
   ranged_dps:
-    - sunfire,name="Sunfire Aoe Dot",if=debuff.sunfire.refreshable  
+    - sunfire,name="Sunfire Aoe Dot",if=debuff.sunfire.refreshable
     - moonfire,name="Moonfire ST Refresh",if=debuff.moonfire.refreshable
 
   bearweave:
@@ -356,8 +361,8 @@ lists:
 
   moving:
     - convoke_the_spirits,name="Convoke (Moving)",if=group.count(cycle.health.effective.pct<config.convoke_threshold)>=config.convoke_members&!buff.cat_form.up&!buff.bear_form.up
-    - lifebloom,name="Lifebloom Moving",cycle=tanks,if=player.combat&talent.everbloom.rank>=1&(cycle.buff.lifebloom.stack<3|cycle.buff.lifebloom.remains<=5)
-    - lifebloom,name="Lifebloom Moving",cycle=tanks,if=player.combat&!talent.everbloom.enabled&cycle.buff.lifebloom.down
+    - lifebloom,name="Lifebloom Swap (Moving)",cycle=members,if=player.combat&cycle.health.effective.pct<config.lifebloom_swap_threshold&(cycle.buff.lifebloom.stack<3|cycle.buff.lifebloom.remains<=5)
+    - lifebloom,name="Lifebloom Tank (Moving)",cycle=tanks,if=player.combat&(cycle.buff.lifebloom.stack<3|cycle.buff.lifebloom.remains<=5)
     - rejuvenation,name="Rejuvenation (Moving)",cycle=members,if=cycle.buff.rejuvenation.down&cycle.health.effective.pct<95
     - wrath,name="Wrath (Moving)",if=var.is_tree_form&target.exists&!target.friendly
 
@@ -366,7 +371,7 @@ lists:
     - swiftmend.mouseover,name="Swiftmend (MO)",if=(mouseover.buff.rejuvenation.up|mouseover.buff.regrowth.up|mouseover.buff.wild_growth.up)
     - regrowth.mouseover,name="Regrowth (MO) Cast",if=!player.moving
     - rejuvenation.mouseover,name="Rejuvenation (MO)",if=mouseover.buff.remains(rejuvenation)<1.5
-    
+
   main:
     - return,if=player.channeling|player.casting|buff.tranquility.up|buff.convoke_the_spirits.up
     - call_action_list,name=spell_queue
