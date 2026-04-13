@@ -270,9 +270,10 @@ lists:
   interrupts:
     # Auto Swap Search
     - target_enemy,delay=100,name="Search Soothe",if=!target.purgeable.enrage&enemies.combat.any(cycle.purgeable.enrage)
-    - target_enemy,delay=100,name="Search Interrupt",if=!interrupt.target.check&interrupt.5y.any
+    - target_enemy,delay=100,name="Search Interrupt",if=!interrupt.target.check&interrupt.8y.any
 
     # AoE Interrupt
+    - incapacitating_roar,name="Roar (AoE CC)",if=interrupt.stun.aoe.check
     - soothe,name="Soothe Enrage",if=target.purgeable.enrage
 
   out_of_combat:
