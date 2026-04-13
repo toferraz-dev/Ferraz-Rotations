@@ -16,7 +16,7 @@ version: 1.0
 author: Ferraz
 patch: "12.0.1.6"
 spec: 102
-name: Ferraz Balance Druid (Elunes)
+name: Ferraz Balance Druid M+ (Elunes)
 entry: main
 
 config:
