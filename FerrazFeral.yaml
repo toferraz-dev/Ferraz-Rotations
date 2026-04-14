@@ -2,38 +2,14 @@ version: 2.0
 author: Ferraz
 patch: "12.0.1.6"
 spec: 103
-name: Ferraz Feral Druid (Elunes/Claw)
+name: Ferraz Feral Druid (Claw)
 description: |
   Feral Druid Rotation for Mythic+ — Midnight (12.0.1).
-  Optimized based on elite M+ combat log analysis (Turbogronil pattern).
-  Supports Druid of the Claw & Wildstalker procs.
+  Druid of the Claw — optimized from elite M+ logs (Turbogronil).
   Frantic Frenzy in AoE, aggressive Ravage usage, Convoke synergy.
 entry: main
 
 config:
-  # GAME MODE
-  game_mode:
-    label: "Game Mode"
-    section: "General"
-    type: dropdown
-    options:
-      - label: "Mythic+"
-        value: 1
-      - label: "Leveling"
-        value: 2
-    default: 1
-
-  # ROTATION STYLE
-  rotation_source:
-    label: "Rotation Style"
-    section: "General"
-    type: dropdown
-    options:
-      - label: "Druid of the Claw"
-        value: 1
-      - label: "Wildstalker"
-        value: 2
-    default: 1
 
   # --- Talent Config ---
   use_chomp:
@@ -335,8 +311,7 @@ lists:
     - cat_form,name="Cat Form Shift",if=!buff.cat_form.up&!mounted.flying&!mounted.ground
     - call_action_list,name=out_of_combat,if=!player.combat&!mounted.flying&!mounted.ground
 
-    # Leveling mode: pull with Moonfire at range
-    - moonfire,name="Pull Moonfire",if=config.game_mode=2&!player.combat&target.enemy&target.alive&range>8
+
 
     # Only use defensives and auto-heals in combat (prevent auto-potion/Renewal from fall damage out of combat)
     - call_action_list,name=defensives,if=player.combat
