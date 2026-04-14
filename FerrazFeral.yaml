@@ -129,9 +129,6 @@ config:
     default: true
 
 variables:
-  # FORM
-  in_cat_form: buff.cat_form.up
-
   # RESOURCES — use direct resource names, no variable wrapper
   cp_max: combo_points>=4
   cp_full: combo_points>=5
@@ -143,7 +140,6 @@ variables:
   berserk_up: buff.berserk.up|buff.incarnation_avatar_of_ashamane.up
   ravage_up: buff.ravage.up
   predatory_swiftness_up: buff.predatory_swiftness.up
-  frantic_frenzy_up: buff.frantic_frenzy.up
 
   # DOT/BLEED TRACKING
   rip_up: debuff.rip.up
@@ -151,17 +147,9 @@ variables:
   rake_refreshable: debuff.rake.refreshable|debuff.rake.remains<4.2
   moonfire_refreshable: debuff.moonfire.refreshable|debuff.moonfire.remains<4.2
 
-  # SNAPSHOTTING — refresh bleeds when Tiger's Fury is active for better damage
-  rip_needs_tf_snapshot: var.tigers_fury_up&debuff.rip.up&!debuff.rip.remains<8
-  rake_needs_tf_snapshot: var.tigers_fury_up&var.rake_refreshable
-
   # DEFENSIVE STATES
   emergency_situation: health.pct<35
   dangerous_situation: health.pct<60
-
-  # COMBAT
-  combat_start: player.combat&player.combat.time<3
-  can_interrupt: target.casting&!target.casting.interruptible=false
 
   # ENERGY MANAGEMENT
   # 50+ energy is ideal for max Bite damage, but 25+ is still usable
@@ -173,17 +161,6 @@ variables:
   use_stampeding_roar: moving.time>=config.stampeding_roar_movement_time&buff.stampeding_roar.down&((config.stampeding_roar_usage=1&player.combat)|(config.stampeding_roar_usage=2&!player.combat)|(config.stampeding_roar_usage=3))
 
 lists:
-  spell_queue:
-    - queue_spell,name="Spell Queue"
-
-  sanity_checks:
-    - return,if=player.dead
-    - return,if=mounted
-    - return,if=!state.rotation
-    - return,if=state.blocked_inputs
-    - return,if=player.cc
-    - return,if=player.loot_nearby
-
   defensives:
     - survival_instincts,name="Survival Instincts (Panic)",if=var.emergency_situation&!buff.survival_instincts.up
     - renewal,name="Renewal (Panic)",if=var.emergency_situation
@@ -304,34 +281,20 @@ lists:
     - swipe,name="Swipe AoE Builder"
 
   main:
-    - return,if=player.channeling
-    - return,if=buff.convoke_the_spirits.up
-    - call_action_list,name=sanity_checks
+    - return,if=player.channeling|player.casting|player.casting.remains>0|player.channeling.remains>0|buff.convoke_the_spirits.up
     - call_action_list,name=spell_queue
-    - cat_form,name="Cat Form Shift",if=!buff.cat_form.up&!mounted.flying&!mounted.ground
-    - call_action_list,name=out_of_combat,if=!player.combat&!mounted.flying&!mounted.ground
-
-
-
+    - call_action_list,name=sanity_checks
+    - call_action_list,name=out_of_combat
+    - call_action_list,name=auto_target
+    - call_action_list,name=auto_heal
+    return,if=player.combat
     # Only use defensives and auto-heals in combat (prevent auto-potion/Renewal from fall damage out of combat)
-    - call_action_list,name=defensives,if=player.combat
-    - call_action_list,name=auto_target,if=player.combat
-    - call_action_list,name=auto_heal,if=player.combat
+    - call_action_list,name=defensives
     - call_action_list,name=interrupts
-    - call_action_list,name=auto_dispel
-    # Stealth opener: Rake from stealth only if close enough
     - call_action_list,name=stealth_opener,if=target.enemy&(buff.prowl.up|buff.shadowmeld.up)&range<=8
-
-    # Prevent popping cooldowns, Tiger's Fury, and attacking completely if we are out of combat and not in melee range yet
     - return,if=!player.combat&range>8
-
-    # Cooldowns and burst
-    - call_action_list,name=cooldowns,if=player.combat
-    - call_action_list,name=racials,if=config.use_racials&player.combat
-
-    # Movement
+    - call_action_list,name=cooldowns
+    - call_action_list,name=racials,if=config.use_racials
     - call_action_list,name=movement,if=player.moving
-
-    # Core rotation dispatch
     - call_action_list,name=aoe_rotation,if=active_enemies>=config.aoe_threshold
     - call_action_list,name=st_rotation,if=active_enemies<config.aoe_threshold
