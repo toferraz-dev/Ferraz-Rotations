@@ -174,5 +174,6 @@ lists:
     - call_action_list,name=interrupts
     - call_action_list,name=defensives
     - call_action_list,name=racials
+    - return,if=!target.exists|target.dead|!target.enemy
     - call_action_list,name=cooldowns
     - call_action_list,name=rotation_claw

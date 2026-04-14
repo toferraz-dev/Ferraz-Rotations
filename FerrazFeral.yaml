@@ -5,9 +5,9 @@ spec: 103
 name: Ferraz Feral Druid (Elunes/Claw)
 description: |
   Feral Druid Rotation for Mythic+ — Midnight (12.0.1).
-  Optimized for simplified 12.0.1 mechanics (Removed Thrash/Brutal Slash).
+  Optimized based on elite M+ combat log analysis (Turbogronil pattern).
   Supports Druid of the Claw & Wildstalker procs.
-  Chomp, Ravage, Apex Predator management.
+  Frantic Frenzy in AoE, aggressive Ravage usage, Convoke synergy.
 entry: main
 
 config:
@@ -167,6 +167,7 @@ variables:
   berserk_up: buff.berserk.up|buff.incarnation_avatar_of_ashamane.up
   ravage_up: buff.ravage.up
   predatory_swiftness_up: buff.predatory_swiftness.up
+  frantic_frenzy_up: buff.frantic_frenzy.up
 
   # DOT/BLEED TRACKING
   rip_up: debuff.rip.up
@@ -215,15 +216,15 @@ lists:
     - barkskin,name="Barkskin (Defensive)",if=var.dangerous_situation&!buff.barkskin.up
     - renewal,name="Renewal",if=health.pct<config.renewal_threshold
     - barkskin,name="Barkskin",if=health.pct<config.barkskin_threshold&!buff.barkskin.up
-    - regrowth,name="Regrowth (Proc)",if=var.predatory_swiftness_up&health.pct<80
+    - regrowth,name="Regrowth (Proc)",if=var.predatory_swiftness_up&health.pct<90
 
   cooldowns:
     - heart_of_the_wild,name="Heart of the Wild",if=config.use_heart_of_the_wild&talent.heart_of_the_wild
     - tigers_fury,name="Tiger's Fury",if=var.energy_for_tf|buff.tigers_fury.down
     - berserk,name="Berserk",if=config.use_berserk&var.tigers_fury_up
     - incarnation_avatar_of_ashamane,name="Incarnation",if=config.use_berserk&var.tigers_fury_up&(target.boss|active_enemies>=config.aoe_threshold)
-    - convoke_the_spirits,name="Convoke (Berserk)",if=config.use_convoke&var.berserk_up&var.tigers_fury_up&combo_points<=2
-    - convoke_the_spirits,name="Convoke (Guidance)",if=config.use_convoke&talent.ashamanes_guidance&var.tigers_fury_up&combo_points<=2
+    - convoke_the_spirits,name="Convoke (Berserk)",if=config.use_convoke&var.berserk_up&var.tigers_fury_up&combo_points<=3
+    - convoke_the_spirits,name="Convoke (TF Only)",if=config.use_convoke&var.tigers_fury_up&!var.berserk_up&combo_points<=3
 
   racials:
     - shadowmeld,name="Shadowmeld (Prowl Proc)",if=config.use_shadowmeld&player.combat&var.berserk_up&combo_points<=2&!buff.sudden_ambush.up
@@ -263,37 +264,62 @@ lists:
 
   # -------------------------------------------------------------------------------------------------
   # DRUID OF THE CLAW - SINGLE TARGET
-  # Based on Icy Veins Midnight 12.0.1 priority
+  # Based on elite M+ log analysis (Turbogronil) + Icy Veins 12.0.1
   # -------------------------------------------------------------------------------------------------
   st_rotation:
-    - ferocious_bite,name="Bite (Apex Proc) ST",if=var.has_apex
+    # Apex procs — consume immediately
     - ravage,name="Ravage (Apex Proc) ST",if=var.has_apex&var.ravage_up
+    - ferocious_bite,name="Bite (Apex Proc) ST",if=var.has_apex
     - tigers_fury,name="Tiger's Fury ST",if=var.energy_for_tf|buff.tigers_fury.down
     - chomp,name="Chomp ST",if=config.use_chomp&cooldown.chomp.ready&energy>=50
+    # Execute below 25%
     - ferocious_bite,name="Bite (Execute) ST",if=var.cp_full&target.health.pct<25
+    # Rip management
     - rip,name="Rip Apply ST",if=var.cp_max&!var.rip_up&target.health.pct>=25
     - rip,name="Rip Snapshot ST",if=var.cp_max&var.rip_refreshable&var.tigers_fury_up&target.health.pct>=25
     - rip,name="Rip Refresh ST",if=var.cp_full&var.rip_refreshable&target.health.pct>=25
+    # Ravage finisher — elite players use Ravage aggressively as a finisher
     - ravage,name="Ravage ST",if=var.ravage_up&var.cp_max&var.energy_for_bite
+    # Ferocious Bite dumps
     - ferocious_bite,name="Bite (Dump Ideal) ST",if=var.cp_max&var.energy_for_bite_ideal&var.rip_up
     - ferocious_bite,name="Bite (Dump) ST",if=var.cp_full&var.energy_for_bite&var.rip_up
+    # Frantic Frenzy — use BEFORE builders when low CP, higher priority than Rake
+    - frantic_frenzy,name="Frantic Frenzy ST",if=talent.frantic_frenzy&combo_points<=3&var.tigers_fury_up
+    - feral_frenzy,name="Feral Frenzy ST",if=!talent.frantic_frenzy&combo_points<=3&var.tigers_fury_up
+    # Rake management
     - rake,name="Rake (Ambush Proc) ST",if=var.has_sudden_ambush&var.rake_refreshable
     - rake,name="Rake Refresh ST",if=var.rake_refreshable&target.health.pct>=25
     - rake,name="Rake Execute ST",if=!debuff.rake.up&target.health.pct<25
-    - frantic_frenzy,name="Frantic Frenzy ST",if=talent.frantic_frenzy&combo_points<=2&var.tigers_fury_up
-    - feral_frenzy,name="Feral Frenzy ST",if=!talent.frantic_frenzy&combo_points<=2&var.tigers_fury_up
+    # Builders
     - shred,name="Shred (Ambush Proc) ST",if=var.has_sudden_ambush
     - moonfire,name="Moonfire ST",if=talent.lunar_inspiration&var.moonfire_refreshable
     - shred,name="Shred Filler ST"
 
   # -------------------------------------------------------------------------------------------------
   # DRUID OF THE CLAW - AOE (3+ targets)
-  # Based on Icy Veins Midnight 12.0.1 priority
+  # Based on elite M+ log analysis (Turbogronil) + Icy Veins 12.0.1
+  # Priority: TF → PW → FF → Ravage/Apex → PW again → Rake spread → Swipe
   # -------------------------------------------------------------------------------------------------
   aoe_rotation:
     - tigers_fury,name="Tiger's Fury AoE",if=var.energy_for_tf|buff.tigers_fury.down
+
+    # Primal Wrath — apply/refresh Rip on all targets
     - primal_wrath,name="Primal Wrath (Bleed)",if=var.cp_max&debuff.rip.refreshable
-    - ferocious_bite,name="Bite (Apex Proc)",if=var.has_apex
+    - primal_wrath,name="Primal Wrath (Dump)",if=var.cp_full&active_enemies>=4
+
+    # Frantic Frenzy — elite players use FF immediately after PW in AoE
+    - frantic_frenzy,name="Frantic Frenzy AoE",if=talent.frantic_frenzy&combo_points<=3&var.tigers_fury_up
+    - feral_frenzy,name="Feral Frenzy AoE",if=!talent.frantic_frenzy&combo_points<=3&var.tigers_fury_up
+
+    # Ravage — elite players use Ravage aggressively in AoE (110 total casts in log)
+    - ravage,name="Ravage (Apex AoE)",if=var.has_apex&var.ravage_up
+    - ravage,name="Ravage (AoE Finisher)",if=var.ravage_up&var.cp_max&var.energy_for_bite
+
+    # Apex Ferocious Bite — consume procs
+    - ferocious_bite,name="Bite (Apex Proc AoE)",if=var.has_apex
+
+    # Ferocious Bite cleave during Berserk (high CP generation)
+    - ferocious_bite,name="Bite (Berserk Cleave)",if=var.berserk_up&var.cp_full&var.energy_for_bite
 
     # Smart Rake Spreading (Tab Targeting)
     - target_enemy,delay=200,name="Search Rake Target",if=debuff.rake.up&!var.rake_refreshable&active_dot.rake<active_enemies&active_dot.rake<6
