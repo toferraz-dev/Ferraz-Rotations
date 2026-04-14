@@ -219,10 +219,10 @@ lists:
     - natures_swiftness,name="Nature's Swiftness",if=group.count(cycle.health.effective.pct<config.ns_threshold)>=1
 
     # Convoke the Spirits: primary burst cooldown (~13% healing contribution)
-    - convoke_the_spirits,name="Convoke the Spirits",if=talent.convoke_the_spirits&!player.channeling&!player.moving&group.count(cycle.health.effective.pct<config.convoke_threshold)>=config.convoke_members
+    - convoke_the_spirits,global_delay=500,name="Convoke the Spirits",if=talent.convoke_the_spirits&!player.channeling&!player.moving&group.count(cycle.health.effective.pct<config.convoke_threshold)>=config.convoke_members
 
     # Tranquility: last resort big heal
-    - tranquility,name="Tranquility",if=!player.channeling&group.count(cycle.health.effective.pct<config.tranquility_threshold)>=config.tranquility_members&!player.moving
+    - tranquility,global_delay=500,name="Tranquility",if=!player.channeling&group.count(cycle.health.effective.pct<config.tranquility_threshold)>=config.tranquility_members&!player.moving
 
   tree_of_life_rotation:
     # Tree of Life: prioritize Rejuv spreading, then SotF combo, then Regrowth spam
@@ -292,7 +292,7 @@ lists:
 
   moving:
     # Convoke is usable while moving
-    - convoke_the_spirits,name="Convoke (Moving)",if=talent.convoke_the_spirits&!player.channeling&group.count(cycle.health.effective.pct<config.convoke_threshold)>=config.convoke_members
+    - convoke_the_spirits,global_delay=500,name="Convoke (Moving)",if=talent.convoke_the_spirits&!player.channeling&group.count(cycle.health.effective.pct<config.convoke_threshold)>=config.convoke_members
 
     - lifebloom,name="LB Auto Maintain (Moving)",cycle=tanks,if=config.lifebloom_target=0&cycle.buff.lifebloom.up&cycle.buff.lifebloom.remains<=4.5
     - lifebloom,target=tank1,name="LB Auto Initial (Moving)",if=config.lifebloom_target=0&!tank1.buff.lifebloom.up&!tank2.buff.lifebloom.up
@@ -308,7 +308,7 @@ lists:
     - rejuvenation.mouseover,name="Rejuv (MO)",if=mouseover.buff.remains(rejuvenation)<1.5
 
   main:
-    - return,if=player.channeling|player.casting|buff.tranquility.up|buff.convoke_the_spirits.up
+    - return,if=player.channeling|player.casting|player.casting.remains>0|player.channeling.remains>0|buff.tranquility.up|buff.convoke_the_spirits.up
     - call_action_list,name=spell_queue
     - call_action_list,name=sanity_checks
     - call_action_list,name=out_of_combat

@@ -301,8 +301,8 @@ lists:
     - trinket_1,if=config.use_trinket_1&trinket_1.ready&group.count(cycle.health.effective.pct<=config.convoke_threshold)>=config.convoke_members&!buff.cat_form.up&!buff.bear_form.up
     - trinket_2,if=config.use_trinket_2&trinket_2.ready&group.count(cycle.health.effective.pct<=config.convoke_threshold)>=config.convoke_members&!buff.cat_form.up&!buff.bear_form.up
     - combat_potion,if=combat_potion.ready&config.use_potion&group.count(cycle.health.effective.pct<=config.convoke_threshold)>=config.convoke_members&!buff.cat_form.up&!buff.bear_form.up
-    - convoke_the_spirits,delay=300,name="Convoke (Heal)",if=group.count(cycle.health.effective.pct<config.convoke_threshold)>=config.convoke_members&!buff.cat_form.up&!buff.bear_form.up
-    - tranquility,delay=300,name="Tranquility",if=group.count(cycle.health.effective.pct<config.tranquility_threshold)>=config.tranquility_members&!player.moving
+    - convoke_the_spirits,global_delay=500,name="Convoke (Heal)",if=group.count(cycle.health.effective.pct<config.convoke_threshold)>=config.convoke_members&!buff.cat_form.up&!buff.bear_form.up
+    - tranquility,global_delay=500,name="Tranquility",if=group.count(cycle.health.effective.pct<config.tranquility_threshold)>=config.tranquility_members&!player.moving
     - natures_swiftness,name="Nature's Swiftness",if=group.count(cycle.health.effective.pct<config.ns_threshold)>=1
     - heart_of_the_wild,name="Heart of the Wild",if=config.use_heart_of_the_wild&talent.heart_of_the_wild&buff.cat_form.up
 
@@ -369,14 +369,13 @@ lists:
     - call_action_list,name=catweave
 
   moving:
-    - convoke_the_spirits,delay=300,name="Convoke (Moving)",if=group.count(cycle.health.effective.pct<config.convoke_threshold)>=config.convoke_members&!buff.cat_form.up&!buff.bear_form.up
+    - convoke_the_spirits,global_delay=500,name="Convoke (Moving)",if=group.count(cycle.health.effective.pct<config.convoke_threshold)>=config.convoke_members&!buff.cat_form.up&!buff.bear_form.up
     - lifebloom,delay=150,name="Lifebloom Swap (Moving)",cycle=members,if=player.combat&cycle.health.effective.pct<config.lifebloom_swap_threshold&(cycle.buff.lifebloom.stack<3|cycle.buff.lifebloom.remains<=5)
     - lifebloom,delay=150,name="Lifebloom Tank (Moving)",cycle=tanks,if=player.combat&(cycle.buff.lifebloom.stack<3|cycle.buff.lifebloom.remains<=5)
     - rejuvenation,delay=150,name="Rejuvenation (Moving)",cycle=members,if=cycle.buff.rejuvenation.down&cycle.health.effective.pct<95
     - wrath,delay=150,name="Wrath (Moving)",if=var.is_tree_form&target.exists&!target.friendly
 
   mouseover_healing_emergency:
-    - lifebloom.mouseover,name="Lifebloom (MO)",if=mouseover.buff.stacks(lifebloom)<3|mouseover.buff.remains(lifebloom)<=5
     - regrowth.mouseover,delay=150,name="Regrowth (MO) Instant",if=buff.natures_swiftness.up|var.is_tree_form
     - swiftmend.mouseover,delay=150,name="Swiftmend (MO)",if=mouseover.buff.remains(rejuvenation)>1|mouseover.buff.remains(regrowth) >1|mouseover.buff.remains(wild_growth)>1
     - rejuvenation.mouseover,delay=150,name="Rejuvenation (MO)",if=mouseover.buff.remains(rejuvenation)<=1.5
@@ -384,7 +383,7 @@ lists:
 
   main:
 
-    - return,if=player.channeling|player.casting|buff.tranquility.up|buff.convoke_the_spirits.up
+    - return,if=player.channeling|player.casting|player.casting.remains>0|player.channeling.remains>0|buff.tranquility.up|buff.convoke_the_spirits.up
     - call_action_list,name=spell_queue
     - call_action_list,name=sanity_checks
     - call_action_list,name=out_of_combat
