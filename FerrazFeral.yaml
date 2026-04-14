@@ -10,43 +10,9 @@ entry: main
 
 config:
 
-
-  # DEFENSIVES
-  barkskin_threshold:
-    label: "Barkskin HP %"
-    section: "Defensives"
-    type: slider
-    min: 25
-    max: 95
-    default: 55
-
-  survival_instincts_threshold:
-    label: "Survival Instincts HP %"
-    section: "Defensives"
-    type: slider
-    min: 20
-    max: 70
-    default: 40
-
-  renewal_threshold:
-    label: "Renewal HP %"
-    section: "Defensives"
-    type: slider
-    min: 20
-    max: 80
-    default: 40
-
-  regrowth_threshold:
-    label: "Regrowth (Proc) HP %"
-    section: "Defensives"
-    type: slider
-    min: 20
-    max: 95
-    default: 40
-
-  # COOLDOWNS
+  # ── COOLDOWNS ──
   use_berserk:
-    label: "Auto Berserk/Incarnation"
+    label: "Auto Berserk"
     section: "Cooldowns"
     type: checkbox
     default: true
@@ -63,7 +29,7 @@ config:
     type: checkbox
     default: true
 
-  # TRINKETS
+  # ── TRINKETS ──
   use_trinket_1:
     label: "Auto Trinket 1"
     section: "Trinkets"
@@ -82,13 +48,38 @@ config:
     type: checkbox
     default: false
 
+  # ── DEFENSIVES ──
+  barkskin_threshold:
+    label: "Barkskin HP %"
+    section: "Defensives"
+    type: slider
+    min: 25
+    max: 95
+    default: 55
 
-  # INTERRUPTS
+  survival_instincts_threshold:
+    label: "Survival Instincts HP %"
+    section: "Defensives"
+    type: slider
+    min: 20
+    max: 70
+    default: 40
+
+  regrowth_threshold:
+    label: "Regrowth (Proc) HP %"
+    section: "Defensives"
+    type: slider
+    min: 20
+    max: 95
+    default: 40
+
+  # ── INTERRUPTS ──
   use_skull_bash:
     label: "Auto Interrupt"
     section: "Interrupts"
     type: checkbox
     default: true
+
   skull_bash_delay:
     label: "Interrupt Delay (ms)"
     section: "Interrupts"
@@ -97,7 +88,7 @@ config:
     max: 2000
     default: 250
 
-  # AOE
+  # ── DAMAGE ──
   aoe_threshold:
     label: "Min Enemies for AoE"
     section: "Damage"
@@ -106,7 +97,7 @@ config:
     max: 5
     default: 3
 
-  # MOVEMENT
+  # ── MOVEMENT ──
   stampeding_roar_usage:
     label: "Stampeding Roar Usage"
     section: "Movement"
@@ -121,6 +112,7 @@ config:
       - label: "Always when moving"
         value: 3
     default: 2
+
   stampeding_roar_movement_time:
     label: "Roar after moving (seconds)"
     section: "Movement"
@@ -129,7 +121,7 @@ config:
     max: 4
     default: 2
 
-  # UTILITY
+  # ── UTILITY ──
   use_prowl:
     label: "Auto Prowl"
     section: "Utility"
