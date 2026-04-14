@@ -68,6 +68,25 @@ config:
     type: checkbox
     default: true
 
+  # TRINKETS
+  use_trinket_1:
+    label: "Auto Trinket 1"
+    section: "Trinkets"
+    type: checkbox
+    default: false
+
+  use_trinket_2:
+    label: "Auto Trinket 2"
+    section: "Trinkets"
+    type: checkbox
+    default: false
+
+  use_potion:
+    label: "Auto Offensive Potion"
+    section: "Trinkets"
+    type: checkbox
+    default: false
+
 
   # INTERRUPTS
   use_skull_bash:
@@ -174,6 +193,10 @@ lists:
   cooldowns:
     - heart_of_the_wild,name="Heart of the Wild",if=config.use_heart_of_the_wild&talent.heart_of_the_wild
     - tigers_fury,name="Tiger's Fury",if=var.energy_for_tf|buff.tigers_fury.down
+    # Trinkets & Potion — fire before burst, synced with Tiger's Fury
+    - trinket_1,name="Trinket 1",if=config.use_trinket_1&trinket_1.ready&var.tigers_fury_up
+    - trinket_2,name="Trinket 2",if=config.use_trinket_2&trinket_2.ready&var.tigers_fury_up
+    - combat_potion,name="Potion",if=config.use_potion&combat_potion.ready&var.tigers_fury_up&(var.berserk_up|target.boss)
     - berserk,name="Berserk",if=config.use_berserk&var.tigers_fury_up
     - incarnation_avatar_of_ashamane,name="Incarnation",if=config.use_berserk&var.tigers_fury_up&(target.boss|active_enemies>=config.aoe_threshold)
     - convoke_the_spirits,name="Convoke (Berserk)",if=config.use_convoke&var.berserk_up&var.tigers_fury_up&combo_points<=3
