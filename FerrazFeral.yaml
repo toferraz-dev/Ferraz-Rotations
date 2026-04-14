@@ -5,18 +5,11 @@ spec: 103
 name: Ferraz Feral Druid M+ (Claw)
 description: |
   Feral Druid Rotation for Mythic+ — Midnight (12.0.1).
-  Druid of the Claw — optimized from elite M+ logs (Turbogronil).
-  Frantic Frenzy in AoE, aggressive Ravage usage, Convoke synergy.
+  Talent: CcGA8cL7tpvige+kkmGM9zUPWDAAAAAgZMDzMzMjxsZsNz2MzMjZGAAAAWCmNDPgZG1MmFzMzMLjZMDAAAAAgBGAAAANzysMzMDIwCYmBYhBDAAgZ2wA
 entry: main
 
 config:
 
-  # --- Talent Config ---
-  use_chomp:
-    label: "Auto Chomp"
-    section: "General"
-    type: checkbox
-    default: true
 
   # DEFENSIVES
   barkskin_threshold:
@@ -41,6 +34,14 @@ config:
     type: slider
     min: 20
     max: 80
+    default: 40
+
+  regrowth_threshold:
+    label: "Regrowth (Proc) HP %"
+    section: "Defensives"
+    type: slider
+    min: 20
+    max: 95
     default: 40
 
   # COOLDOWNS
@@ -158,11 +159,10 @@ variables:
   rip_up: debuff.rip.up
   rip_refreshable: debuff.rip.refreshable|debuff.rip.remains<4.8
   rake_refreshable: debuff.rake.refreshable|debuff.rake.remains<4.2
-  moonfire_refreshable: debuff.moonfire.refreshable|debuff.moonfire.remains<4.2
+
 
   # DEFENSIVE STATES
   emergency_situation: health.effective.pct<35
-  dangerous_situation: health.effective.pct<60
 
   # ENERGY MANAGEMENT
   # 50+ energy is ideal for max Bite damage, but 25+ is still usable
@@ -175,23 +175,16 @@ variables:
 
 lists:
   defensives:
-    - survival_instincts,name="Survival Instincts (Panic)",if=var.emergency_situation&!buff.survival_instincts.up
-    - renewal,name="Renewal (Panic)",if=var.emergency_situation
-    - barkskin,name="Barkskin (Panic)",if=var.emergency_situation&!buff.survival_instincts.up
-    - survival_instincts,name="Survival Instincts",if=health.effective.pct<config.survival_instincts_threshold&!buff.survival_instincts.up
-    - barkskin,name="Barkskin (Defensive)",if=var.dangerous_situation&!buff.barkskin.up
-    - renewal,name="Renewal",if=health.effective.pct<config.renewal_threshold
-    - barkskin,name="Barkskin",if=health.effective.pct<config.barkskin_threshold&!buff.barkskin.up
-    - regrowth,name="Regrowth (Proc)",if=var.predatory_swiftness_up&health.effective.pct<90
+    - survival_instincts,name="Survival Instincts",if=health.effective.pct<config.survival_instincts_threshold
+    - barkskin,name="Barkskin",if=health.effective.pct<config.barkskin_threshold
+    - regrowth,name="Regrowth (Proc)",if=var.predatory_swiftness_up&health.effective.pct<config.regrowth_threshold
 
   cooldowns:
     - tigers_fury,name="Tiger's Fury",if=var.energy_for_tf|buff.tigers_fury.down
-    # Trinkets & Potion — fire before burst, synced with Tiger's Fury
     - trinket_1,name="Trinket 1",if=config.use_trinket_1&trinket_1.ready&var.tigers_fury_up
     - trinket_2,name="Trinket 2",if=config.use_trinket_2&trinket_2.ready&var.tigers_fury_up
     - combat_potion,name="Potion",if=config.use_potion&combat_potion.ready&var.tigers_fury_up&(var.berserk_up|target.boss)
     - berserk,name="Berserk",if=config.use_berserk&var.tigers_fury_up
-    - incarnation_avatar_of_ashamane,name="Incarnation",if=config.use_berserk&var.tigers_fury_up&(target.boss|active_enemies>=config.aoe_threshold)
     - convoke_the_spirits,name="Convoke (Berserk)",if=config.use_convoke&var.berserk_up&var.tigers_fury_up&combo_points<=3
     - convoke_the_spirits,name="Convoke (TF Only)",if=config.use_convoke&var.tigers_fury_up&!var.berserk_up&combo_points<=3
 
@@ -205,7 +198,7 @@ lists:
 
   interrupts:
     # Auto Swap
-    - target_enemy,delay=100,name="Search Interrupt",if=!interrupt.target.check&interrupt.5y.any
+    - target_enemy,delay=100,name="Search Interrupt",if=!interrupt.target.check&interrupt.8y.any
 
     # Interrupts
     - skull_bash,name="Skull Bash",if=interrupt.target.check
@@ -236,32 +229,20 @@ lists:
   # Based on elite M+ log analysis (Turbogronil) + Icy Veins 12.0.1
   # -------------------------------------------------------------------------------------------------
   st_rotation:
-    # Apex procs — consume immediately
     - ravage,name="Ravage (Apex Proc) ST",if=var.has_apex&var.ravage_up
     - ferocious_bite,name="Bite (Apex Proc) ST",if=var.has_apex
     - tigers_fury,name="Tiger's Fury ST",if=var.energy_for_tf|buff.tigers_fury.down
-    - chomp,name="Chomp ST",if=config.use_chomp&cooldown.chomp.ready&energy>=50
-    # Execute below 25%
     - ferocious_bite,name="Bite (Execute) ST",if=var.cp_full&target.health.effective.pct<25
-    # Rip management
     - rip,name="Rip Apply ST",if=var.cp_max&!var.rip_up&target.health.effective.pct>=25
     - rip,name="Rip Snapshot ST",if=var.cp_max&var.rip_refreshable&var.tigers_fury_up&target.health.effective.pct>=25
     - rip,name="Rip Refresh ST",if=var.cp_full&var.rip_refreshable&target.health.effective.pct>=25
-    # Ravage finisher — elite players use Ravage aggressively as a finisher
     - ravage,name="Ravage ST",if=var.ravage_up&var.cp_max&var.energy_for_bite
-    # Ferocious Bite dumps
     - ferocious_bite,name="Bite (Dump Ideal) ST",if=var.cp_max&var.energy_for_bite_ideal&var.rip_up
     - ferocious_bite,name="Bite (Dump) ST",if=var.cp_full&var.energy_for_bite&var.rip_up
-    # Frantic Frenzy — use BEFORE builders when low CP, higher priority than Rake
-    - frantic_frenzy,name="Frantic Frenzy ST",if=talent.frantic_frenzy&combo_points<=3&var.tigers_fury_up
-    - feral_frenzy,name="Feral Frenzy ST",if=!talent.frantic_frenzy&combo_points<=3&var.tigers_fury_up
-    # Rake management
     - rake,name="Rake (Ambush Proc) ST",if=var.has_sudden_ambush&var.rake_refreshable
     - rake,name="Rake Refresh ST",if=var.rake_refreshable&target.health.effective.pct>=25
     - rake,name="Rake Execute ST",if=!debuff.rake.up&target.health.effective.pct<25
-    # Builders
     - shred,name="Shred (Ambush Proc) ST",if=var.has_sudden_ambush
-    - moonfire,name="Moonfire ST",if=talent.lunar_inspiration&var.moonfire_refreshable
     - shred,name="Shred Filler ST"
 
   # -------------------------------------------------------------------------------------------------
@@ -271,29 +252,15 @@ lists:
   # -------------------------------------------------------------------------------------------------
   aoe_rotation:
     - tigers_fury,name="Tiger's Fury AoE",if=var.energy_for_tf|buff.tigers_fury.down
-
-    # Primal Wrath — apply/refresh Rip on all targets
     - primal_wrath,name="Primal Wrath (Bleed)",if=var.cp_max&debuff.rip.refreshable
     - primal_wrath,name="Primal Wrath (Dump)",if=var.cp_full&active_enemies>=4
-
-    # Frantic Frenzy — elite players use FF immediately after PW in AoE
     - frantic_frenzy,name="Frantic Frenzy AoE",if=talent.frantic_frenzy&combo_points<=3&var.tigers_fury_up
     - feral_frenzy,name="Feral Frenzy AoE",if=!talent.frantic_frenzy&combo_points<=3&var.tigers_fury_up
-
-    # Ravage — elite players use Ravage aggressively in AoE (110 total casts in log)
     - ravage,name="Ravage (Apex AoE)",if=var.has_apex&var.ravage_up
     - ravage,name="Ravage (AoE Finisher)",if=var.ravage_up&var.cp_max&var.energy_for_bite
-
-    # Apex Ferocious Bite — consume procs
     - ferocious_bite,name="Bite (Apex Proc AoE)",if=var.has_apex
-
-    # Ferocious Bite cleave during Berserk (high CP generation)
     - ferocious_bite,name="Bite (Berserk Cleave)",if=var.berserk_up&var.cp_full&var.energy_for_bite
-
-    # Smart Rake Spreading (Tab Targeting)
-    - target_enemy,delay=200,name="Search Rake Target",if=debuff.rake.up&!var.rake_refreshable&active_dot.rake<active_enemies&active_dot.rake<6
-    - rake,name="Rake (Spread)",if=var.rake_refreshable
-
+    - rake,name="Rake",if=var.rake_refreshable
     - swipe,name="Swipe AoE Builder"
 
   main:
