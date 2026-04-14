@@ -162,6 +162,27 @@ config:
     default: 60
 
   # =================================================================================================
+  #     TRINKETS & POTIONS
+  # =================================================================================================
+  use_trinket_1:
+    label: "Auto Trinket 1 (Before Convoke)"
+    section: "Trinkets"
+    type: checkbox
+    default: false
+
+  use_trinket_2:
+    label: "Auto Trinket 2 (Before Convoke)"
+    section: "Trinkets"
+    type: checkbox
+    default: false
+
+  use_potion:
+    label: "Auto Offensive Potion"
+    section: "Trinkets"
+    type: checkbox
+    default: false
+
+  # =================================================================================================
   #     TARGETING
   # =================================================================================================
 
@@ -217,6 +238,11 @@ lists:
 
     # Nature's Swiftness: emergency single-target save
     - natures_swiftness,name="Nature's Swiftness",if=group.count(cycle.health.effective.pct<config.ns_threshold)>=1
+
+    # Trinkets & Potion: fire right before Convoke for burst synergy
+    - trinket_1,if=config.use_trinket_1&trinket_1.ready&group.count(cycle.health.effective.pct<=config.convoke_threshold)>=config.convoke_members
+    - trinket_2,if=config.use_trinket_2&trinket_2.ready&group.count(cycle.health.effective.pct<=config.convoke_threshold)>=config.convoke_members
+    - combat_potion,if=combat_potion.ready&config.use_potion&group.count(cycle.health.effective.pct<=config.convoke_threshold)>=config.convoke_members
 
     # Convoke the Spirits: primary burst cooldown (~13% healing contribution)
     - convoke_the_spirits,global_delay=500,name="Convoke the Spirits",if=talent.convoke_the_spirits&!player.channeling&!player.moving&group.count(cycle.health.effective.pct<config.convoke_threshold)>=config.convoke_members
@@ -285,6 +311,10 @@ lists:
     # Priority 11: Regrowth as hard-cast filler when Abundance is high
     - regrowth,name="Regrowth Filler",cycle=members,if=buff.abundance.stack>=config.abundance_regrowth_stacks&cycle.health.effective.pct<config.regrowth_threshold&!player.moving
     
+  utility:
+    - bear_form,name="Stay Bear (Rooted)",if=player.rooted&!buff.bear_form.up
+    - cat_form,name="Stay Cat (Rooted)",if=player.rooted&buff.bear_form.up
+
   ranged_dps:
     - moonfire,name="Moonfire ST",if=debuff.moonfire.refreshable
 
@@ -318,6 +348,7 @@ lists:
     - call_action_list,name=interrupts
     - call_action_list,name=racials
     - call_action_list,name=defensives
+    - call_action_list,name=utility
     - call_action_list,name=cooldowns
     - call_action_list,name=mouseover_healing_emergency,if=config.use_mouseover&var.mo_friendly_valid&mouseover.health.effective.pct<config.mouseover_emergency_hp&!player.casting&!player.channeling    
     - call_action_list,name=tree_of_life_rotation,if=var.is_tree_form
