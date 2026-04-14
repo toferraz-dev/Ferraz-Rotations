@@ -310,7 +310,7 @@ lists:
     - call_action_list,name=out_of_combat
     - call_action_list,name=auto_target
     - call_action_list,name=auto_heal
-    return,if=player.combat
+    - return,if=player.combat
     # Only use defensives and auto-heals in combat (prevent auto-potion/Renewal from fall damage out of combat)
     - call_action_list,name=defensives
     - call_action_list,name=interrupts
