@@ -56,12 +56,6 @@ config:
     type: checkbox
     default: true
 
-  use_heart_of_the_wild:
-    label: "Auto Heart of the Wild"
-    section: "Cooldowns"
-    type: checkbox
-    default: false
-
   use_racials:
     label: "Auto Racials"
     section: "Cooldowns"
@@ -167,8 +161,8 @@ variables:
   moonfire_refreshable: debuff.moonfire.refreshable|debuff.moonfire.remains<4.2
 
   # DEFENSIVE STATES
-  emergency_situation: health.pct<35
-  dangerous_situation: health.pct<60
+  emergency_situation: health.effective.pct<35
+  dangerous_situation: health.effective.pct<60
 
   # ENERGY MANAGEMENT
   # 50+ energy is ideal for max Bite damage, but 25+ is still usable
@@ -184,14 +178,13 @@ lists:
     - survival_instincts,name="Survival Instincts (Panic)",if=var.emergency_situation&!buff.survival_instincts.up
     - renewal,name="Renewal (Panic)",if=var.emergency_situation
     - barkskin,name="Barkskin (Panic)",if=var.emergency_situation&!buff.survival_instincts.up
-    - survival_instincts,name="Survival Instincts",if=health.pct<config.survival_instincts_threshold&!buff.survival_instincts.up
+    - survival_instincts,name="Survival Instincts",if=health.effective.pct<config.survival_instincts_threshold&!buff.survival_instincts.up
     - barkskin,name="Barkskin (Defensive)",if=var.dangerous_situation&!buff.barkskin.up
-    - renewal,name="Renewal",if=health.pct<config.renewal_threshold
-    - barkskin,name="Barkskin",if=health.pct<config.barkskin_threshold&!buff.barkskin.up
-    - regrowth,name="Regrowth (Proc)",if=var.predatory_swiftness_up&health.pct<90
+    - renewal,name="Renewal",if=health.effective.pct<config.renewal_threshold
+    - barkskin,name="Barkskin",if=health.effective.pct<config.barkskin_threshold&!buff.barkskin.up
+    - regrowth,name="Regrowth (Proc)",if=var.predatory_swiftness_up&health.effective.pct<90
 
   cooldowns:
-    - heart_of_the_wild,name="Heart of the Wild",if=config.use_heart_of_the_wild&talent.heart_of_the_wild
     - tigers_fury,name="Tiger's Fury",if=var.energy_for_tf|buff.tigers_fury.down
     # Trinkets & Potion — fire before burst, synced with Tiger's Fury
     - trinket_1,name="Trinket 1",if=config.use_trinket_1&trinket_1.ready&var.tigers_fury_up
@@ -249,11 +242,11 @@ lists:
     - tigers_fury,name="Tiger's Fury ST",if=var.energy_for_tf|buff.tigers_fury.down
     - chomp,name="Chomp ST",if=config.use_chomp&cooldown.chomp.ready&energy>=50
     # Execute below 25%
-    - ferocious_bite,name="Bite (Execute) ST",if=var.cp_full&target.health.pct<25
+    - ferocious_bite,name="Bite (Execute) ST",if=var.cp_full&target.health.effective.pct<25
     # Rip management
-    - rip,name="Rip Apply ST",if=var.cp_max&!var.rip_up&target.health.pct>=25
-    - rip,name="Rip Snapshot ST",if=var.cp_max&var.rip_refreshable&var.tigers_fury_up&target.health.pct>=25
-    - rip,name="Rip Refresh ST",if=var.cp_full&var.rip_refreshable&target.health.pct>=25
+    - rip,name="Rip Apply ST",if=var.cp_max&!var.rip_up&target.health.effective.pct>=25
+    - rip,name="Rip Snapshot ST",if=var.cp_max&var.rip_refreshable&var.tigers_fury_up&target.health.effective.pct>=25
+    - rip,name="Rip Refresh ST",if=var.cp_full&var.rip_refreshable&target.health.effective.pct>=25
     # Ravage finisher — elite players use Ravage aggressively as a finisher
     - ravage,name="Ravage ST",if=var.ravage_up&var.cp_max&var.energy_for_bite
     # Ferocious Bite dumps
@@ -264,8 +257,8 @@ lists:
     - feral_frenzy,name="Feral Frenzy ST",if=!talent.frantic_frenzy&combo_points<=3&var.tigers_fury_up
     # Rake management
     - rake,name="Rake (Ambush Proc) ST",if=var.has_sudden_ambush&var.rake_refreshable
-    - rake,name="Rake Refresh ST",if=var.rake_refreshable&target.health.pct>=25
-    - rake,name="Rake Execute ST",if=!debuff.rake.up&target.health.pct<25
+    - rake,name="Rake Refresh ST",if=var.rake_refreshable&target.health.effective.pct>=25
+    - rake,name="Rake Execute ST",if=!debuff.rake.up&target.health.effective.pct<25
     # Builders
     - shred,name="Shred (Ambush Proc) ST",if=var.has_sudden_ambush
     - moonfire,name="Moonfire ST",if=talent.lunar_inspiration&var.moonfire_refreshable
@@ -310,8 +303,7 @@ lists:
     - call_action_list,name=out_of_combat
     - call_action_list,name=auto_target
     - call_action_list,name=auto_heal
-    - return,if=player.combat
-    # Only use defensives and auto-heals in combat (prevent auto-potion/Renewal from fall damage out of combat)
+    - return,if=!player.combat
     - call_action_list,name=defensives
     - call_action_list,name=interrupts
     - call_action_list,name=stealth_opener,if=target.enemy&(buff.prowl.up|buff.shadowmeld.up)&range<=8
