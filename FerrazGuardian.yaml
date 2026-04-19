@@ -90,7 +90,7 @@ variables:
 
 lists:
   out_of_combat:
-    - mark_of_the_wild,name="Mark of the Wild",range_check=none,if=buff.mark_of_the_wild.down.any
+    - mark_of_the_wild,name="Mark of the Wild",if=group.count(cycle.buff.mark_of_the_wild.down.any)>0
 
   defensives:
     - regrowth,name="Regrowth (Guardian)",if=buff.dream_of_cenarius.up&health.effective.pct<85

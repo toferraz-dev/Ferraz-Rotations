@@ -134,14 +134,6 @@ config:
     max: 99
     default: 70
 
-  lifebloom_swap_threshold:
-    label: "Lifebloom Swap HP %"
-    section: "Healing"
-    type: slider
-    min: 25
-    max: 99
-    default: 65
-
   regrowth_threshold:
     label: "Regrowth HP %"
     section: "Healing"
@@ -264,7 +256,6 @@ variables:
   group_healthy: group.count(cycle.health.effective.pct<config.catweave_group_hp)<config.catweave_injured_max
   can_catweave: (var.group_healthy|config.force_dps)&player.combat&!var.is_tree_form
   mo_friendly_valid: mouseover.exists&mouseover.alive&mouseover.friendly&mouseover.unitframe
-  mo_attacker_valid: mouseover.exists&mouseover.alive&!mouseover.friendly
 
 lists:
   interrupts:
@@ -304,7 +295,6 @@ lists:
     - convoke_the_spirits,global_delay=500,name="Convoke (Heal)",if=group.count(cycle.health.effective.pct<config.convoke_threshold)>=config.convoke_members&!buff.cat_form.up&!buff.bear_form.up
     - tranquility,global_delay=500,name="Tranquility",if=group.count(cycle.health.effective.pct<config.tranquility_threshold)>=config.tranquility_members&!player.moving
     - natures_swiftness,name="Nature's Swiftness",if=group.count(cycle.health.effective.pct<config.ns_threshold)>=1
-    - heart_of_the_wild,name="Heart of the Wild",if=config.use_heart_of_the_wild&talent.heart_of_the_wild&buff.cat_form.up
 
   active_healing:
     # Emergency & Single Target Filler
@@ -312,21 +302,28 @@ lists:
     - regrowth,delay=150,name="Nature Swift Regrowth",cycle=members,if=buff.natures_swiftness.up&cycle.health.effective.pct<config.regrowth_threshold
 
     # Forced Ramp / Spread (Ignores HP thresholds if toggle is ON)
-    - lifebloom,delay=150,name="Lifebloom Tank",cycle=tanks,if=config.force_spread&cycle.buff.lifebloom.stack<3|cycle.buff.lifebloom.remains<=3
+    - lifebloom,delay=150,name="Lifebloom Tank",cycle=tanks,if=config.force_spread&(cycle.buff.lifebloom.stack<3|cycle.buff.lifebloom.remains<=3)
     - wild_growth,delay=150,name="Forced Wild Growth",if=config.force_spread&(buff.wild_growth.down|group.any(cycle.buff.wild_growth.down))
     - rejuvenation,delay=150,name="Forced Rejuvenation",cycle=members,if=config.force_spread&(cycle.buff.rejuvenation.down|cycle.buff.rejuvenation.remains<1.5)
 
     # Wild Growth (Buffed by 2pc Set)
     - wild_growth,delay=150,name="Wild Growth",if=group.count(cycle.health.effective.pct<config.wild_growth_threshold)>=config.wild_growth_members
-    - rejuvenation,delay=150,name="Rejuvenation Filler",cycle=members,if=cycle.buff.rejuvenation.remains<1.5&cycle.health.effective.pct<config.rejuvenation_threshold
-    - regrowth,delay=150,name="Regrowth Filler",cycle=members,if=cycle.health.effective.pct<config.regrowth_threshold
+    - rejuvenation,delay=150,name="Rejuvenation",cycle=members,if=cycle.buff.rejuvenation.remains<1.5&cycle.health.effective.pct<config.rejuvenation_threshold
+    - regrowth,delay=150,name="Regrowth",cycle=members,if=cycle.health.effective.pct<config.regrowth_threshold
 
     # Lifebloom Tank Baseline
-    - lifebloom,delay=150,name="Lifebloom Tank",cycle=tanks,if=cycle.buff.lifebloom.stack<3|cycle.buff.lifebloom.remains<=3
+    - lifebloom,delay=150,name="Lifebloom Tank",cycle=tanks,if=(cycle.buff.lifebloom.stack<3|cycle.buff.lifebloom.remains<=3)
 
   utility:
-    - bear_form,name="Stay Bear (Rooted)",if=player.rooted&!buff.bear_form.up
-    - cat_form,name="Stay Cat (Rooted)",if=player.rooted&buff.bear_form.up
+    # --- Shapeshift Utility (Expanded Dungeon Mechanics) ---
+    # Clears Roots, Snares, and specific dangerous mechanics:
+    # - Nexus-Point Xenas: Permeating Cold, Crystallize, Devouring Rift, Suppression Field
+    # - Pit of Saron: Plungegrip (prevents 5s stun), Permeating Cold
+    # - Seat of the Triumvirate: Chains of Subjugation
+    # - Maisara Caverns: Ritual Sacrifice (Rokh'zal)
+    - bear_form,name="Shapeshift Clear",if=(player.rooted|player.snared|debuff.permeating_cold.up|debuff.crystallize.up|debuff.devouring_rift.up|debuff.suppression_field.up|debuff.plungegrip.up|debuff.chains_of_subjugation.up|debuff.ritual_sacrifice.up)&!buff.bear_form.up&!player.stunned
+    - cat_form,name="Shapeshift Toggle",if=(player.rooted|player.snared|debuff.permeating_cold.up|debuff.crystallize.up|debuff.devouring_rift.up|debuff.suppression_field.up|debuff.plungegrip.up|debuff.chains_of_subjugation.up|debuff.ritual_sacrifice.up)&buff.bear_form.up&!player.stunned
+
     - innervate,name="Innervate",if=mana.pct<config.innervate_threshold
 
   catweave_st:
@@ -370,10 +367,8 @@ lists:
 
   moving:
     - convoke_the_spirits,global_delay=500,name="Convoke (Moving)",if=group.count(cycle.health.effective.pct<config.convoke_threshold)>=config.convoke_members&!buff.cat_form.up&!buff.bear_form.up
-    - lifebloom,delay=150,name="Lifebloom Swap (Moving)",cycle=members,if=player.combat&cycle.health.effective.pct<config.lifebloom_swap_threshold&(cycle.buff.lifebloom.stack<3|cycle.buff.lifebloom.remains<=5)
     - lifebloom,delay=150,name="Lifebloom Tank (Moving)",cycle=tanks,if=player.combat&(cycle.buff.lifebloom.stack<3|cycle.buff.lifebloom.remains<=5)
     - rejuvenation,delay=150,name="Rejuvenation (Moving)",cycle=members,if=cycle.buff.rejuvenation.down&cycle.health.effective.pct<95
-    - wrath,delay=150,name="Wrath (Moving)",if=var.is_tree_form&target.exists&!target.friendly
 
   mouseover_healing_emergency:
     - regrowth.mouseover,delay=150,name="Regrowth (MO) Instant",if=buff.natures_swiftness.up|var.is_tree_form
