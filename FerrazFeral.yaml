@@ -134,6 +134,20 @@ config:
     type: checkbox
     default: true
 
+  use_mark_of_the_wild:
+    label: "Auto Mark of the Wild"
+    section: "Utility"
+    type: checkbox
+    default: true
+
+  innervate_threshold:
+    label: "Innervate Healer Mana %"
+    section: "Utility"
+    type: slider
+    min: 10
+    max: 90
+    default: 50
+
 variables:
   # RESOURCES — use direct resource names, no variable wrapper
   cp_max: combo_points>=4
@@ -203,7 +217,7 @@ lists:
     - soothe,name="Soothe Enrage",if=target.purgeable.enrage
 
   out_of_combat:
-    - mark_of_the_wild,name="Mark of the Wild",range_check=none,if=buff.mark_of_the_wild.down.any
+    - mark_of_the_wild,name="Mark of the Wild",if=config.use_mark_of_the_wild&group.count(cycle.buff.mark_of_the_wild.down.any)>0
     - prowl,name="Prowl (OOC)",if=config.use_prowl&!buff.prowl.up&(!player.combat|buff.shadowmeld.up)
 
   stealth_opener:
@@ -214,7 +228,9 @@ lists:
     - cat_form,name="Stay Cat (Rooted)",if=player.rooted&buff.bear_form.up
     - prowl,name="Prowl (Movement)",if=config.use_prowl&!buff.prowl.up&!player.combat
     - stampeding_roar,name="Stampeding Roar",if=var.use_stampeding_roar&config.stampeding_roar_usage!=0
-    - wild_charge,name="Wild Charge",if=player.moving&range>8&player.combat
+
+  utility:
+    - innervate,name="Innervate (Healer)",cycle=healers,if=cycle.mana.pct<config.innervate_threshold&!cycle.buff.innervate.up
 
   # -------------------------------------------------------------------------------------------------
   # DRUID OF THE CLAW - SINGLE TARGET
@@ -267,6 +283,7 @@ lists:
     - call_action_list,name=interrupts
     - call_action_list,name=stealth_opener,if=target.enemy&(buff.prowl.up|buff.shadowmeld.up)&range<=8
     - return,if=!player.combat&range>8
+    - call_action_list,name=utility
     - call_action_list,name=cooldowns
     - call_action_list,name=racials,if=config.use_racials
     - call_action_list,name=movement,if=player.moving
