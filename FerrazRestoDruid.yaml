@@ -317,13 +317,8 @@ lists:
 
   utility:
     # --- Shapeshift Utility (Expanded Dungeon Mechanics) ---
-    # Clears Roots, Snares, and specific dangerous mechanics:
-    # - Nexus-Point Xenas: Permeating Cold, Crystallize, Devouring Rift, Suppression Field
-    # - Pit of Saron: Plungegrip (prevents 5s stun), Permeating Cold
-    # - Seat of the Triumvirate: Chains of Subjugation
-    # - Maisara Caverns: Ritual Sacrifice (Rokh'zal)
-    - bear_form,name="Shapeshift Clear",if=(player.rooted|player.snared|debuff.permeating_cold.up|debuff.crystallize.up|debuff.devouring_rift.up|debuff.suppression_field.up|debuff.plungegrip.up|debuff.chains_of_subjugation.up|debuff.ritual_sacrifice.up)&!buff.bear_form.up&!player.stunned
-    - cat_form,name="Shapeshift Toggle",if=(player.rooted|player.snared|debuff.permeating_cold.up|debuff.crystallize.up|debuff.devouring_rift.up|debuff.suppression_field.up|debuff.plungegrip.up|debuff.chains_of_subjugation.up|debuff.ritual_sacrifice.up)&buff.bear_form.up&!player.stunned
+    - bear_form,name="Shapeshift Clear",if=player.rooted&!buff.bear_form.up&!player.stunned
+    - cat_form,name="Shapeshift Toggle",if=player.rooted&buff.bear_form.up&!player.stunned
 
     - innervate,name="Innervate",if=mana.pct<config.innervate_threshold
 
