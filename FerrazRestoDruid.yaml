@@ -292,6 +292,7 @@ lists:
     - trinket_1,if=config.use_trinket_1&trinket_1.ready&group.count(cycle.health.effective.pct<=config.convoke_threshold)>=config.convoke_members&!buff.cat_form.up&!buff.bear_form.up
     - trinket_2,if=config.use_trinket_2&trinket_2.ready&group.count(cycle.health.effective.pct<=config.convoke_threshold)>=config.convoke_members&!buff.cat_form.up&!buff.bear_form.up
     - combat_potion,if=combat_potion.ready&config.use_potion&group.count(cycle.health.effective.pct<=config.convoke_threshold)>=config.convoke_members&!buff.cat_form.up&!buff.bear_form.up
+    - natures_swiftness,name="NS (Pre-Convoke)",if=spell.convoke_the_spirits.ready&group.count(cycle.health.effective.pct<config.convoke_threshold)>=config.convoke_members&!buff.cat_form.up&!buff.bear_form.up
     - convoke_the_spirits,global_delay=500,name="Convoke (Heal)",if=group.count(cycle.health.effective.pct<config.convoke_threshold)>=config.convoke_members&!buff.cat_form.up&!buff.bear_form.up
     - tranquility,global_delay=500,name="Tranquility",if=group.count(cycle.health.effective.pct<config.tranquility_threshold)>=config.tranquility_members&!player.moving
     - natures_swiftness,name="Nature's Swiftness",if=group.count(cycle.health.effective.pct<config.ns_threshold)>=1
@@ -366,6 +367,7 @@ lists:
     - call_action_list,name=catweave
 
   moving:
+    - natures_swiftness,name="NS (Pre-Convoke Moving)",if=spell.convoke_the_spirits.ready&group.count(cycle.health.effective.pct<config.convoke_threshold)>=config.convoke_members&!buff.cat_form.up&!buff.bear_form.up
     - convoke_the_spirits,global_delay=500,name="Convoke (Moving)",if=group.count(cycle.health.effective.pct<config.convoke_threshold)>=config.convoke_members&!buff.cat_form.up&!buff.bear_form.up
     - lifebloom,delay=150,name="Lifebloom Tank (Moving)",cycle=tanks,if=player.combat&(cycle.buff.lifebloom.stack<3|cycle.buff.lifebloom.remains<=5)
     - rejuvenation,delay=150,name="Rejuvenation (Moving)",cycle=members,if=cycle.buff.rejuvenation.down&cycle.health.effective.pct<95

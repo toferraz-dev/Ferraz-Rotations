@@ -250,13 +250,13 @@ lists:
 
     # --- NS + Trinket + Convoke MACRO (log-backed: 0.0s gap) ---
     # Step 1: NS fires immediately before Convoke for Regrowth buff during channel
-    - natures_swiftness,name="NS (Pre-Convoke)",if=talent.convoke_the_spirits&spell.convoke_the_spirits.ready&!player.channeling&!player.moving&group.count(cycle.health.effective.pct<config.convoke_threshold)>=config.convoke_members
+    - natures_swiftness,name="NS (Pre-Convoke)",if=talent.convoke_the_spirits&spell.convoke_the_spirits.ready&!player.channeling&group.count(cycle.health.effective.pct<config.convoke_threshold)>=config.convoke_members
     # Step 2: Trinkets fire right before Convoke
     - trinket_1,if=config.use_trinket_1&trinket_1.ready&spell.convoke_the_spirits.ready&group.count(cycle.health.effective.pct<=config.convoke_threshold)>=config.convoke_members
     - trinket_2,if=config.use_trinket_2&trinket_2.ready&spell.convoke_the_spirits.ready&group.count(cycle.health.effective.pct<=config.convoke_threshold)>=config.convoke_members
     - combat_potion,if=combat_potion.ready&config.use_potion&spell.convoke_the_spirits.ready&group.count(cycle.health.effective.pct<=config.convoke_threshold)>=config.convoke_members
     # Step 3: Convoke fires immediately after NS+Trinkets
-    - convoke_the_spirits,global_delay=500,name="Convoke the Spirits",if=talent.convoke_the_spirits&!player.channeling&!player.moving&group.count(cycle.health.effective.pct<config.convoke_threshold)>=config.convoke_members
+    - convoke_the_spirits,global_delay=500,name="Convoke the Spirits",if=talent.convoke_the_spirits&!player.channeling&group.count(cycle.health.effective.pct<config.convoke_threshold)>=config.convoke_members
 
     # Trinkets (standalone, when Convoke is on CD)
     - trinket_1,if=config.use_trinket_1&trinket_1.ready&!spell.convoke_the_spirits.ready&group.count(cycle.health.effective.pct<=config.convoke_threshold)>=config.convoke_members
@@ -334,6 +334,7 @@ lists:
 
   moving:
     # Convoke is usable while moving
+    - natures_swiftness,name="NS (Pre-Convoke Moving)",if=talent.convoke_the_spirits&spell.convoke_the_spirits.ready&!player.channeling&group.count(cycle.health.effective.pct<config.convoke_threshold)>=config.convoke_members
     - convoke_the_spirits,global_delay=500,name="Convoke (Moving)",if=talent.convoke_the_spirits&!player.channeling&group.count(cycle.health.effective.pct<config.convoke_threshold)>=config.convoke_members
 
     - lifebloom,name="LB Auto Maintain (Moving)",cycle=tanks,if=config.lifebloom_target=0&cycle.buff.lifebloom.up&cycle.buff.lifebloom.remains<=4.5
