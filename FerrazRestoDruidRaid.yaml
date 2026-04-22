@@ -209,10 +209,17 @@ config:
     default: 0
     show_override: true
 
+  heal_priority:
+    label: "Heal Priority Targets"
+    section: "Targeting"
+    type: unit_select
+    max: 20
+
 variables:
   is_tree_form: buff.incarnation_tree_of_life.up
   group_needs_healing: group.any(cycle.health.effective.pct<95)
   mo_friendly_valid: mouseover.exists&mouseover.alive&mouseover.friendly&mouseover.range>0&mouseover.range<=40
+  has_heal_filter: config.heal_priority>0
 
 lists:
   interrupts:
@@ -273,26 +280,32 @@ lists:
     - wild_growth,name="Tree Wild Growth",if=group.count(cycle.health.effective.pct<99)>=2
 
     # Step 2: Swiftmend for emergency + SotF proc
-    - swiftmend,name="Tree Swiftmend",cycle=members,if=(cycle.buff.rejuvenation.up|cycle.buff.regrowth.up|cycle.buff.wild_growth.up)&cycle.health.effective.pct<config.swiftmend_threshold
+    - swiftmend,name="Tree Swiftmend (Filtered)",cycle=config.heal_priority,if=var.has_heal_filter&(cycle.buff.rejuvenation.up|cycle.buff.regrowth.up|cycle.buff.wild_growth.up)&cycle.health.effective.pct<config.swiftmend_threshold
+    - swiftmend,name="Tree Swiftmend",cycle=members,if=!var.has_heal_filter&(cycle.buff.rejuvenation.up|cycle.buff.regrowth.up|cycle.buff.wild_growth.up)&cycle.health.effective.pct<config.swiftmend_threshold
 
     # Step 3: Regrowth spam (instant in Tree Form) — PRIMARY action (log: 5-7 casts per 10s window)
-    - regrowth,name="Tree Regrowth Spam",cycle=members,if=cycle.health.effective.pct<95
+    - regrowth,name="Tree Regrowth Spam (Filtered)",cycle=config.heal_priority,if=var.has_heal_filter&cycle.health.effective.pct<95
+    - regrowth,name="Tree Regrowth Spam",cycle=members,if=!var.has_heal_filter&cycle.health.effective.pct<95
 
     # Step 4: Rejuv spread as filler during Tree
-    - rejuvenation,name="Tree Rejuv Spread",cycle=members,if=cycle.buff.rejuvenation.down
+    - rejuvenation,name="Tree Rejuv Spread (Filtered)",cycle=config.heal_priority,if=var.has_heal_filter&cycle.buff.rejuvenation.down
+    - rejuvenation,name="Tree Rejuv Spread",cycle=members,if=!var.has_heal_filter&cycle.buff.rejuvenation.down
 
     # Step 5: Regrowth on ANY injured target (Tree makes it instant + enhanced)
-    - regrowth,name="Tree Regrowth Filler",cycle=members,if=cycle.health.effective.pct<100&!player.moving
+    - regrowth,name="Tree Regrowth Filler (Filtered)",cycle=config.heal_priority,if=var.has_heal_filter&cycle.health.effective.pct<100&!player.moving
+    - regrowth,name="Tree Regrowth Filler",cycle=members,if=!var.has_heal_filter&cycle.health.effective.pct<100&!player.moving
 
   active_healing:
     # Priority 1: Swiftmend for emergency heal (log: 95% on tank, pure emergency tool)
-    - swiftmend,name="Swiftmend",cycle=members,if=(cycle.buff.rejuvenation.up|cycle.buff.regrowth.up|cycle.buff.wild_growth.up)&cycle.health.effective.pct<config.swiftmend_threshold
+    - swiftmend,name="Swiftmend (Filtered)",cycle=config.heal_priority,if=var.has_heal_filter&(cycle.buff.rejuvenation.up|cycle.buff.regrowth.up|cycle.buff.wild_growth.up)&cycle.health.effective.pct<config.swiftmend_threshold
+    - swiftmend,name="Swiftmend",cycle=members,if=!var.has_heal_filter&(cycle.buff.rejuvenation.up|cycle.buff.regrowth.up|cycle.buff.wild_growth.up)&cycle.health.effective.pct<config.swiftmend_threshold
 
     # Priority 2: SotF-empowered Wild Growth (if SotF proc is active)
     - wild_growth,name="SotF Wild Growth",if=buff.soul_of_the_forest.up&group.count(cycle.health.effective.pct<99)>=2
 
     # Priority 3: SotF-empowered Rejuvenation (if WG not needed)
-    - rejuvenation,name="SotF Rejuvenation",cycle=members,if=buff.soul_of_the_forest.up&cycle.buff.rejuvenation.down
+    - rejuvenation,name="SotF Rejuvenation (Filtered)",cycle=config.heal_priority,if=var.has_heal_filter&buff.soul_of_the_forest.up&cycle.buff.rejuvenation.down
+    - rejuvenation,name="SotF Rejuvenation",cycle=members,if=!var.has_heal_filter&buff.soul_of_the_forest.up&cycle.buff.rejuvenation.down
 
     # Priority 4: Wild Growth on cooldown when raid is damaged (18.9% healing contribution)
     - wild_growth,name="Wild Growth AoE",if=group.count(cycle.health.effective.pct<config.wild_growth_threshold)>=config.wild_growth_members
@@ -305,23 +318,28 @@ lists:
 
     # Priority 6: Instant Regrowth (Nature's Swiftness or Tree Form)
     - regrowth.mouseover,name="Regrowth (MO) Instant",if=var.mo_friendly_valid&(buff.natures_swiftness.up|var.is_tree_form)
-    - regrowth,name="NS/Tree Regrowth",cycle=members,if=(buff.natures_swiftness.up|var.is_tree_form)&cycle.health.effective.pct<config.regrowth_threshold
+    - regrowth,name="NS/Tree Regrowth (Filtered)",cycle=config.heal_priority,if=var.has_heal_filter&(buff.natures_swiftness.up|var.is_tree_form)&cycle.health.effective.pct<config.regrowth_threshold
+    - regrowth,name="NS/Tree Regrowth",cycle=members,if=!var.has_heal_filter&(buff.natures_swiftness.up|var.is_tree_form)&cycle.health.effective.pct<config.regrowth_threshold
 
     # Priority 7: Clearcasting Regrowth (free, no mana cost)
-    - regrowth,name="Clearcasting Regrowth",cycle=members,if=buff.clearcasting.up&cycle.health.effective.pct<95
+    - regrowth,name="Clearcasting Regrowth (Filtered)",cycle=config.heal_priority,if=var.has_heal_filter&buff.clearcasting.up&cycle.health.effective.pct<95
+    - regrowth,name="Clearcasting Regrowth",cycle=members,if=!var.has_heal_filter&buff.clearcasting.up&cycle.health.effective.pct<95
 
     # Priority 8: Spread Rejuvenation (log: 14.5 CPM, aggressive spreading)
-    - rejuvenation,name="Spread Rejuvenation",cycle=members,if=config.spread_rejuvs&cycle.buff.rejuvenation.down&group.count(cycle.buff.rejuvenation.up)<config.rejuv_spread_cap
-
+    - rejuvenation,name="Spread Rejuvenation (Filtered)",cycle=config.heal_priority,if=var.has_heal_filter&config.spread_rejuvs&cycle.buff.rejuvenation.down&group.count(cycle.buff.rejuvenation.up)<config.rejuv_spread_cap
+    - rejuvenation,name="Spread Rejuvenation",cycle=members,if=!var.has_heal_filter&config.spread_rejuvs&cycle.buff.rejuvenation.down&group.count(cycle.buff.rejuvenation.up)<config.rejuv_spread_cap
 
     # Priority 10: Abundance-powered Regrowth (log: dominant cast at 20.4 CPM)
-    - regrowth,name="Abundance Regrowth",cycle=members,if=buff.abundance.stack>=config.abundance_regrowth_stacks&cycle.health.effective.pct<95&!player.moving
+    - regrowth,name="Abundance Regrowth (Filtered)",cycle=config.heal_priority,if=var.has_heal_filter&buff.abundance.stack>=config.abundance_regrowth_stacks&cycle.health.effective.pct<95&!player.moving
+    - regrowth,name="Abundance Regrowth",cycle=members,if=!var.has_heal_filter&buff.abundance.stack>=config.abundance_regrowth_stacks&cycle.health.effective.pct<95&!player.moving
 
     # Priority 11: Rejuvenation on injured targets without HoTs
-    - rejuvenation,name="Rejuvenation Filler",cycle=members,if=cycle.buff.rejuvenation.down&cycle.health.effective.pct<config.rejuvenation_threshold
+    - rejuvenation,name="Rejuvenation Filler (Filtered)",cycle=config.heal_priority,if=var.has_heal_filter&cycle.buff.rejuvenation.down&cycle.health.effective.pct<config.rejuvenation_threshold
+    - rejuvenation,name="Rejuvenation Filler",cycle=members,if=!var.has_heal_filter&cycle.buff.rejuvenation.down&cycle.health.effective.pct<config.rejuvenation_threshold
 
     # Priority 12: Regrowth as hard-cast filler when Abundance is high
-    - regrowth,name="Regrowth Filler",cycle=members,if=buff.abundance.stack>=config.abundance_regrowth_stacks&cycle.health.effective.pct<config.regrowth_threshold&!player.moving
+    - regrowth,name="Regrowth Filler (Filtered)",cycle=config.heal_priority,if=var.has_heal_filter&buff.abundance.stack>=config.abundance_regrowth_stacks&cycle.health.effective.pct<config.regrowth_threshold&!player.moving
+    - regrowth,name="Regrowth Filler",cycle=members,if=!var.has_heal_filter&buff.abundance.stack>=config.abundance_regrowth_stacks&cycle.health.effective.pct<config.regrowth_threshold&!player.moving
 
   utility:
     - bear_form,name="Stay Bear (Rooted)",if=player.rooted&!buff.bear_form.up
@@ -341,7 +359,8 @@ lists:
     - lifebloom,target=tank1,name="LB Auto Initial (Moving)",if=config.lifebloom_target=0&!tank1.buff.lifebloom.up&!tank2.buff.lifebloom.up
     - lifebloom,target=tank1,name="LB Tank 1 (Moving)",if=config.lifebloom_target=1&tank1.buff.lifebloom.remains<=4.5
     - lifebloom,target=tank2,name="LB Tank 2 (Moving)",if=config.lifebloom_target=2&tank2.buff.lifebloom.remains<=4.5
-    - rejuvenation,name="Rejuvenation (Moving)",cycle=members,if=cycle.buff.rejuvenation.down&cycle.health.effective.pct<config.rejuvenation_threshold
+    - rejuvenation,name="Rejuvenation (Moving Filtered)",cycle=config.heal_priority,if=var.has_heal_filter&cycle.buff.rejuvenation.down&cycle.health.effective.pct<config.rejuvenation_threshold
+    - rejuvenation,name="Rejuvenation (Moving)",cycle=members,if=!var.has_heal_filter&cycle.buff.rejuvenation.down&cycle.health.effective.pct<config.rejuvenation_threshold
     - wrath,name="Wrath (Moving Tree)",if=var.is_tree_form
 
   mouseover_healing_emergency:
