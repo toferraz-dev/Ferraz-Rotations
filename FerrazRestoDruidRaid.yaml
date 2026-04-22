@@ -317,7 +317,6 @@ lists:
     - lifebloom,target=tank2,name="LB Tank 2",if=config.lifebloom_target=2&tank2.buff.lifebloom.remains<=3
 
     # Priority 6: Instant Regrowth (Nature's Swiftness or Tree Form)
-    - regrowth.mouseover,name="Regrowth (MO) Instant",if=var.mo_friendly_valid&(buff.natures_swiftness.up|var.is_tree_form)
     - regrowth,name="NS/Tree Regrowth (Filtered)",cycle=config.heal_priority,if=var.has_heal_filter&(buff.natures_swiftness.up|var.is_tree_form)&cycle.health.effective.pct<config.regrowth_threshold
     - regrowth,name="NS/Tree Regrowth",cycle=members,if=!var.has_heal_filter&(buff.natures_swiftness.up|var.is_tree_form)&cycle.health.effective.pct<config.regrowth_threshold
 
@@ -347,7 +346,6 @@ lists:
 
   ranged_dps:
     - moonfire,name="Moonfire ST",if=debuff.moonfire.refreshable
-
     - wrath,name="Wrath Filler"
 
   moving:
