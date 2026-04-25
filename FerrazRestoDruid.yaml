@@ -303,7 +303,7 @@ lists:
     - trinket_2,if=config.use_trinket_2&trinket_2.ready&group.count(cycle.health.effective.pct<=config.convoke_threshold)>=config.convoke_members&!buff.cat_form.up&!buff.bear_form.up
     - combat_potion,if=combat_potion.ready&config.use_potion&group.count(cycle.health.effective.pct<=config.convoke_threshold)>=config.convoke_members&!buff.cat_form.up&!buff.bear_form.up
     - natures_swiftness,name="NS (Pre-Convoke)",if=spell.convoke_the_spirits.ready&group.count(cycle.health.effective.pct<config.convoke_threshold)>=config.convoke_members&!buff.cat_form.up&!buff.bear_form.up
-    - convoke_the_spirits,global_delay=500,name="Convoke (Heal)",if=group.count(cycle.health.effective.pct<config.convoke_threshold)>=config.convoke_members&!buff.cat_form.up&!buff.bear_form.up
+    - convoke_the_spirits,global_delay=500,name="Convoke (Heal)",if=group.count(cycle.health.effective.pct<config.convoke_threshold)>=config.convoke_members&!buff.cat_form.up&!buff.bear_form.up&buff.abundance.stack>=3
     - tranquility,global_delay=500,name="Tranquility",if=group.count(cycle.health.effective.pct<config.tranquility_threshold)>=config.tranquility_members&!player.moving
     - natures_swiftness,name="Nature's Swiftness",if=group.count(cycle.health.effective.pct<config.ns_threshold)>=1
 
@@ -328,11 +328,7 @@ lists:
 
   utility:
     # --- Shapeshift Utility (Expanded Dungeon Mechanics) ---
-    - bear_form,name="Shapeshift Clear",if=player.rooted&!buff.bear_form.up&!player.stunned
-    - cat_form,name="Shapeshift Clear",if=player.rooted&buff.bear_form.up&!player.stunned
-    - moonkin_form,name="Shapeshift Clear",if=player.debuff.chains_of_subjugation.up&!buff.moonkin_form.up
-    - moonkin_form,name="Shapeshift Clear",if=player.debuff.suppression_field.up&!buff.moonkin_form.up
-
+    - moonkin_form,name="Shapeshift Clear",if=debuff_list.freedom.up&!buff.moonkin_form.up
     - innervate,name="Innervate",if=mana.pct<config.innervate_threshold
 
   catweave_st:
@@ -376,7 +372,7 @@ lists:
 
   moving:
     - natures_swiftness,name="NS (Pre-Convoke Moving)",if=spell.convoke_the_spirits.ready&group.count(cycle.health.effective.pct<config.convoke_threshold)>=config.convoke_members&!buff.cat_form.up&!buff.bear_form.up
-    - convoke_the_spirits,global_delay=500,name="Convoke (Moving)",if=group.count(cycle.health.effective.pct<config.convoke_threshold)>=config.convoke_members&!buff.cat_form.up&!buff.bear_form.up
+    - convoke_the_spirits,global_delay=500,name="Convoke (Moving)",if=group.count(cycle.health.effective.pct<config.convoke_threshold)>=config.convoke_members&!buff.cat_form.up&!buff.bear_form.up&buff.abundance.stack>=3
     - lifebloom,delay=150,name="Lifebloom (Moving)",cycle=members,if=cycle.health.effective.pct<config.lifebloom_threshold&cycle.buff.lifebloom.stacks<3&(cycle.buff.lifebloom.up|group.count(cycle.buff.lifebloom.up)=0|tank1.buff.lifebloom.up)
     - lifebloom,delay=150,name="Lifebloom Tank (Moving)",cycle=tanks,if=(cycle.buff.lifebloom.stacks<3|cycle.buff.lifebloom.remains<4.5)&(cycle.buff.lifebloom.up|group.count(cycle.buff.lifebloom.up)=0)
     - rejuvenation,delay=150,name="Rejuvenation (Moving)",cycle=members,if=cycle.buff.rejuvenation.down&cycle.health.effective.pct<95
