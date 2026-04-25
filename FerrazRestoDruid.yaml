@@ -329,7 +329,8 @@ lists:
   utility:
     # --- Shapeshift Utility (Expanded Dungeon Mechanics) ---
     - bear_form,name="Shapeshift Clear",if=player.rooted&!buff.bear_form.up&!player.stunned
-    - cat_form,name="Shapeshift Toggle",if=player.rooted&buff.bear_form.up&!player.stunned
+    - cat_form,name="Shapeshift Clear",if=player.rooted&buff.bear_form.up&!player.stunned
+    - moonkin_form,name="Shapeshift Clear",if=player.debuff.chains_of_subjugation.up&!buff.moonkin_form.up
 
     - innervate,name="Innervate",if=mana.pct<config.innervate_threshold
 
