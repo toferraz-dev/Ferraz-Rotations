@@ -326,7 +326,7 @@ lists:
     # --- Core Healing ---
     - wild_growth,delay=150,name="Wild Growth",if=group.count(cycle.health.effective.pct<config.wild_growth_threshold)>=config.wild_growth_members
     - rejuvenation,delay=150,name="Rejuvenation",cycle=members,if=cycle.buff.rejuvenation.remains<1.5&cycle.health.effective.pct<config.rejuvenation_threshold
-    - rejuvenation,delay=150,name="Germination",cycle=members,if=talent.germination&cycle.buff.rejuvenation.up&cycle.buff.rejuvenation_germination.down&cycle.health.effective.pct<config.rejuvenation_threshold
+    - rejuvenation,delay=150,name="Germination",cycle=members,if=talent.germination&cycle.buff.rejuvenation.up&cycle.health.effective.pct<config.rejuvenation_threshold
     - regrowth,delay=150,name="Regrowth",cycle=members,if=cycle.health.effective.pct<config.regrowth_threshold
 
   utility:
