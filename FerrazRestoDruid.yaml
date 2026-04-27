@@ -307,12 +307,13 @@ lists:
     - tranquility,global_delay=500,name="Tranquility",if=group.count(cycle.health.effective.pct<config.tranquility_threshold)>=config.tranquility_members&!player.moving
 
   active_healing:
+    - regrowth,delay=150,name="Nature Swift Regrowth",cycle=members,if=buff.natures_swiftness.up
+
     # --- Soul of the Forest (SotF) Consumption ---
     - wild_growth,delay=150,name="SotF Wild Growth",if=var.has_soul&group.count(cycle.health.effective.pct<config.wild_growth_threshold)>=config.wild_growth_members
     - regrowth,delay=150,name="SotF Regrowth",cycle=members,if=var.has_soul&cycle.health.effective.pct<config.regrowth_threshold
 
     # --- Emergency & Single Target ---
-    - regrowth,delay=150,name="Nature Swift Regrowth",cycle=members,if=buff.natures_swiftness.up
     - swiftmend,delay=150,name="Swiftmend Emergency",cycle=members,if=cycle.health.effective.pct<config.swiftmend_threshold&(cycle.buff.rejuvenation.up|cycle.buff.regrowth.up|cycle.buff.wild_growth.up)
 
     - thorn_bloom,name="Thorn Bloom",if=group.count(cycle.health.effective.pct<config.thorn_bloom_threshold)>=config.thorn_bloom_members&target.range<=8
