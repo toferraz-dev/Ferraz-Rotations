@@ -305,10 +305,9 @@ lists:
     - combat_potion,if=combat_potion.ready&config.use_potion&buff.natures_swiftness.up
     - convoke_the_spirits,global_delay=500,name="Convoke (Heal)",if=buff.natures_swiftness.up
     - tranquility,global_delay=500,name="Tranquility",if=group.count(cycle.health.effective.pct<config.tranquility_threshold)>=config.tranquility_members&!player.moving
-
-  active_healing:
     - regrowth,delay=150,name="Nature Swift Regrowth",cycle=members,if=buff.natures_swiftness.up
 
+  active_healing:
     # --- Soul of the Forest (SotF) Consumption ---
     - wild_growth,delay=150,name="SotF Wild Growth",if=var.has_soul&group.count(cycle.health.effective.pct<config.wild_growth_threshold)>=config.wild_growth_members
     - regrowth,delay=150,name="SotF Regrowth",cycle=members,if=var.has_soul&cycle.health.effective.pct<config.regrowth_threshold
