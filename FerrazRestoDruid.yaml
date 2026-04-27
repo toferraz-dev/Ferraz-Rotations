@@ -299,13 +299,14 @@ lists:
     - shadowmeld,name="Shadowmeld (Aggro Drop)",if=player.combat&player.aggro&!player.casting
 
   cooldowns:
-    - natures_swiftness,name="NS (Pre-Convoke)",if=cooldown.convoke_the_spirits.ready&group.count(cycle.health.effective.pct<config.convoke_threshold)>=config.convoke_members&!buff.cat_form.up&!buff.bear_form.up&!buff.moonkin_form.up&buff.abundance.stack>=3
-    - trinket_1,if=config.use_trinket_1&trinket_1.ready&buff.natures_swiftness.up
-    - trinket_2,if=config.use_trinket_2&trinket_2.ready&buff.natures_swiftness.up
-    - combat_potion,if=combat_potion.ready&config.use_potion&buff.natures_swiftness.up
+    - natures_swiftness,delay=300,name="NS (Pre-Convoke)",if=cooldown.convoke_the_spirits.ready&group.count(cycle.health.effective.pct<config.convoke_threshold)>=config.convoke_members&!buff.cat_form.up&!buff.bear_form.up&!buff.moonkin_form.up&buff.abundance.stack>=3
+    - trinket_1,delay=300,if=config.use_trinket_1&trinket_1.ready&buff.natures_swiftness.up
+    - trinket_2,delay=300,if=config.use_trinket_2&trinket_2.ready&buff.natures_swiftness.up
+    - combat_potion,delay=300,if=combat_potion.ready&config.use_potion&buff.natures_swiftness.up
     - convoke_the_spirits,global_delay=500,name="Convoke (Heal)",if=buff.natures_swiftness.up&!buff.cat_form.up&!buff.bear_form.up&!buff.moonkin_form.up&buff.abundance.stack>=3
+    - regrowth,delay=300,name="Nature Swift Regrowth",cycle=members,if=buff.natures_swiftness.up
+
     - tranquility,global_delay=500,name="Tranquility",if=group.count(cycle.health.effective.pct<config.tranquility_threshold)>=config.tranquility_members&!player.moving
-    - regrowth,delay=150,name="Nature Swift Regrowth",cycle=members,if=buff.natures_swiftness.up
 
   active_healing:
     # --- Soul of the Forest (SotF) Consumption ---
@@ -315,7 +316,7 @@ lists:
     # --- Emergency & Single Target ---
     - swiftmend,delay=150,name="Swiftmend Emergency",cycle=members,if=cycle.health.effective.pct<config.swiftmend_threshold&(cycle.buff.rejuvenation.up|cycle.buff.regrowth.up|cycle.buff.wild_growth.up)
 
-    - thorn_bloom,name="Thorn Bloom",if=group.count(cycle.health.effective.pct<config.thorn_bloom_threshold)>=config.thorn_bloom_members&target.range<=8
+    - thorn_bloom,delay=150,name="Thorn Bloom",if=group.count(cycle.health.effective.pct<config.thorn_bloom_threshold)>=config.thorn_bloom_members&target.range<=8
 
     # Lifebloom Maintenance (Everbloom auto-stacks to 3)
     - lifebloom,delay=150,name="Lifebloom",cycle=members,if=cycle.health.effective.pct<config.lifebloom_threshold&cycle.buff.lifebloom.down&(group.count(cycle.buff.lifebloom.up)=0|tank1.buff.lifebloom.up)
@@ -332,18 +333,18 @@ lists:
 
   utility:
     # --- Shapeshift Utility (Expanded Dungeon Mechanics) ---
-    - moonkin_form,name="Shapeshift Clear",if=debuff_list.freedom.up&!buff.moonkin_form.up
-    - innervate,name="Innervate",if=mana.pct<config.innervate_threshold
+    - moonkin_form,delay=150,name="Shapeshift Clear",if=debuff_list.freedom.up&!buff.moonkin_form.up
+    - innervate,delay=150,name="Innervate",if=mana.pct<config.innervate_threshold
 
   catweave_st:
-    - heart_of_the_wild,name="HotW Cat ST",if=config.use_heart_of_the_wild&talent.heart_of_the_wild&buff.cat_form.up
+    - heart_of_the_wild,delay=150,name="HotW Cat ST",if=config.use_heart_of_the_wild&talent.heart_of_the_wild&buff.cat_form.up
     - rip,delay=150,name="Rip ST",if=combo_points>=5&debuff.rip.refreshable
     - ferocious_bite,delay=150,name="Bite ST",if=combo_points>=5
     - rake,delay=150,name="Rake ST",if=debuff.rake.refreshable
     - shred,delay=150,name="Shred ST"
 
   catweave_aoe:
-    - heart_of_the_wild,name="HotW Cat AoE",if=config.use_heart_of_the_wild&talent.heart_of_the_wild&buff.cat_form.up
+    - heart_of_the_wild,delay=150,name="HotW Cat AoE",if=config.use_heart_of_the_wild&talent.heart_of_the_wild&buff.cat_form.up
     - target_enemy,name="Search Bleed Target",if=combo_points>=5&!debuff.rip.refreshable&active_dot.rip<enemies.combat.8y
     - rip,delay=150,name="Rip AoE",if=combo_points>=5&debuff.rip.refreshable
     - ferocious_bite,delay=150,name="Bite AoE",if=combo_points>=5
@@ -359,7 +360,7 @@ lists:
     - shred,delay=150,name="Fluid Shred",if=talent.fluid_form&!buff.cat_form.up
 
     # Explicit shift fallback (for AoE when Shred is bypassed or without Fluid Form)
-    - cat_form,name="Manual Cat Shift",if=!buff.cat_form.up
+    - cat_form,delay=150,name="Manual Cat Shift",if=!buff.cat_form.up
     - return,if=!buff.cat_form.up
 
     - call_action_list,name=catweave_aoe,if=active_enemies>=config.aoe_threshold
@@ -375,8 +376,6 @@ lists:
     - call_action_list,name=catweave
 
   moving:
-    - natures_swiftness,name="NS (Pre-Convoke Moving)",if=spell.convoke_the_spirits.ready&group.count(cycle.health.effective.pct<config.convoke_threshold)>=config.convoke_members&!buff.cat_form.up&!buff.bear_form.up
-    - convoke_the_spirits,global_delay=500,name="Convoke (Moving)",if=group.count(cycle.health.effective.pct<config.convoke_threshold)>=config.convoke_members&!buff.cat_form.up&!buff.bear_form.up&buff.abundance.stack>=3
     - lifebloom,delay=150,name="Lifebloom (Moving)",cycle=members,if=cycle.health.effective.pct<config.lifebloom_threshold&cycle.buff.lifebloom.down&(group.count(cycle.buff.lifebloom.up)=0|tank1.buff.lifebloom.up)
     - lifebloom,delay=150,name="Lifebloom Tank (Moving)",cycle=tanks,if=(cycle.buff.lifebloom.down|cycle.buff.lifebloom.remains<4.5)&(cycle.buff.lifebloom.up|group.count(cycle.buff.lifebloom.up)=0)
     - rejuvenation,delay=150,name="Rejuvenation (Moving)",cycle=members,if=cycle.buff.rejuvenation.remains<1.5&cycle.health.effective.pct<config.rejuvenation_threshold
@@ -397,11 +396,11 @@ lists:
     - call_action_list,name=auto_target
     - call_action_list,name=auto_heal
     - return,if=auto_combat.player
-    - call_action_list,name=interrupts
     - call_action_list,name=defensives
-    - call_action_list,name=racials
     - call_action_list,name=utility
+    - call_action_list,name=racials
     - call_action_list,name=cooldowns
+    - call_action_list,name=interrupts
     - call_action_list,name=mouseover_healing_emergency,if=config.use_mouseover&var.mo_friendly_valid&mouseover.health.effective.pct<config.mouseover_emergency_hp
     - call_action_list,name=moving,if=player.moving
     - call_action_list,name=active_healing,if=!config.force_dps
