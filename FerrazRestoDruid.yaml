@@ -305,28 +305,24 @@ lists:
     - combat_potion,name="Combat Potion",if=combat_potion.ready&config.use_potion&buff.natures_swiftness.up
     - convoke_the_spirits,global_delay=500,name="Convoke (Heal)",if=buff.natures_swiftness.up&!buff.cat_form.up&!buff.bear_form.up&!buff.moonkin_form.up&buff.abundance.stack>=3
     - regrowth,name="Nature Swift Regrowth",cycle=members,if=buff.natures_swiftness.up
-
     - tranquility,global_delay=500,name="Tranquility",if=group.count(cycle.health.effective.pct<config.tranquility_threshold)>=config.tranquility_members&!player.moving
-
+    - swiftmend,name="Swiftmend for SotF/Treants",cycle=members,if=(cooldown.wild_growth.ready&group.count(cycle.health.effective.pct<config.wild_growth_threshold)>=config.wild_growth_members|cycle.health.effective.pct<config.swiftmend_threshold)&(cycle.buff.rejuvenation.up|cycle.buff.regrowth.up|cycle.buff.wild_growth.up)
+    - regrowth,name="Clearcasting Regrowth",cycle=members,if=buff.clearcasting.up&(cycle.buff.regrowth.down|cycle.health.effective.pct<99)
   active_healing:
     # --- Soul of the Forest (SotF) Consumption ---
     - wild_growth,name="SotF Wild Growth",if=var.has_soul&group.count(cycle.health.effective.pct<config.wild_growth_threshold)>=config.wild_growth_members
     - regrowth,name="SotF Regrowth",cycle=members,if=var.has_soul&cycle.health.effective.pct<config.regrowth_threshold
-
-    # --- Clearcasting (Omen of Clarity) ---
-    - regrowth,name="Clearcasting Regrowth",cycle=members,if=buff.clearcasting.up&(cycle.buff.regrowth.down|cycle.health.effective.pct<99)
-
-    # --- Emergency & Single Target ---
-    - swiftmend,name="Swiftmend for SotF/Treants",cycle=members,if=(cooldown.wild_growth.ready&group.count(cycle.health.effective.pct<config.wild_growth_threshold)>=config.wild_growth_members|cycle.health.effective.pct<config.swiftmend_threshold)&(cycle.buff.rejuvenation.up|cycle.buff.regrowth.up|cycle.buff.wild_growth.up)
 
     - thorn_bloom,name="Thorn Bloom",if=group.count(cycle.health.effective.pct<config.thorn_bloom_threshold)>=config.thorn_bloom_members&target.range<=8
 
     # Lifebloom Maintenance (Everbloom auto-stacks to 3)
     - lifebloom,name="Lifebloom",cycle=members,if=cycle.health.effective.pct<config.lifebloom_threshold&cycle.buff.lifebloom.down&(group.count(cycle.buff.lifebloom.up)=0|tank1.buff.lifebloom.up)
     - lifebloom,name="Lifebloom (Tank)",cycle=tanks,if=(cycle.buff.lifebloom.down|cycle.buff.lifebloom.remains<4.5)&(cycle.buff.lifebloom.up|group.count(cycle.buff.lifebloom.up)=0)
+
     # Forced Ramp / Spread (Ignores HP thresholds if toggle is ON)
     - wild_growth,name="Forced Wild Growth",if=config.force_spread&(buff.wild_growth.down|group.any(cycle.buff.wild_growth.down))
     - rejuvenation,name="Forced Rejuvenation",cycle=members,if=config.force_spread&(cycle.buff.rejuvenation.down|cycle.buff.rejuvenation.remains<1.5)
+    - rejuvenation,name="Forced Germination",cycle=members,if=config.force_spread&talent.germination&cycle.buff.rejuvenation_germination.up&cycle.health.effective.pct<config.rejuvenation_threshold
 
     # --- Core Healing ---
     - wild_growth,name="Wild Growth",if=group.count(cycle.health.effective.pct<config.wild_growth_threshold)>=config.wild_growth_members
