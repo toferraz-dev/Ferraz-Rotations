@@ -110,7 +110,6 @@ lists:
   interrupts:
     # Auto Swap Search
     - target_enemy,delay=100,name="Search Soothe",if=!target.purgeable.enrage&enemies.combat.any(cycle.purgeable.enrage)
-    - target_enemy,delay=100,name="Search Interrupt",if=!interrupt.target.check&interrupt.5y.any
 
     # Single Interrupt
     - skull_bash,name="Skull Bash",if=interrupt.target.check
