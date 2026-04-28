@@ -117,7 +117,6 @@ lists:
   #  HEAL SUPPORT (Heart of the Wild Party Healing)
   # ----------------------------------------------------------
   heal_support:
-    - innervate,name="Innervate (Healer)",cycle=healers,if=cycle.mana.pct<70
     - heart_of_the_wild,if=config.enable_hotw&group.lowest.health.pct<config.hotw_hp_threshold&!buff.heart_of_the_wild.up
 
   # ----------------------------------------------------------
