@@ -112,8 +112,8 @@ config:
     section: "Healing"
     type: slider
     min: 25
-    max: 99
-    default: 85
+    max: 100
+    default: 95
 
   wild_growth_members:
     label: "Wild Growth - Min Members"
@@ -155,8 +155,8 @@ config:
     section: "Healing"
     type: slider
     min: 25
-    max: 99
-    default: 95
+    max: 100
+    default: 100
 
   # =================================================================================================
   #     DAMAGE & CATWEAVING
@@ -308,10 +308,13 @@ lists:
     - tranquility,global_delay=500,name="Tranquility",if=group.count(cycle.health.effective.pct<config.tranquility_threshold)>=config.tranquility_members&!player.moving
     - swiftmend,name="Swiftmend for SotF/Treants",cycle=members,if=(cooldown.wild_growth.ready&group.count(cycle.health.effective.pct<config.wild_growth_threshold)>=config.wild_growth_members|cycle.health.effective.pct<config.swiftmend_threshold)&(cycle.buff.rejuvenation.up|cycle.buff.regrowth.up|cycle.buff.wild_growth.up)
     - regrowth,name="Clearcasting Regrowth",cycle=members,if=buff.clearcasting.up&(cycle.buff.regrowth.down|cycle.health.effective.pct<99)
+
   active_healing:
     # --- Soul of the Forest (SotF) Consumption ---
     - wild_growth,name="SotF Wild Growth",if=var.has_soul&group.count(cycle.health.effective.pct<config.wild_growth_threshold)>=config.wild_growth_members
     - regrowth,name="SotF Regrowth",cycle=members,if=var.has_soul&cycle.health.effective.pct<config.regrowth_threshold
+    - rejuvenation,name="SotF Germination",cycle=members,if=var.has_soul&talent.germination&cycle.buff.rejuvenation.up&(cycle.buff.rejuvenation_germination.down|cycle.buff.rejuvenation_germination.remains<1.5)
+    - rejuvenation,name="SotF Rejuvenation",cycle=members,if=var.has_soul&cycle.buff.rejuvenation.remains<1.5
 
     - thorn_bloom,name="Thorn Bloom",if=group.count(cycle.health.effective.pct<config.thorn_bloom_threshold)>=config.thorn_bloom_members&target.range<=8
 
@@ -322,12 +325,12 @@ lists:
     # Forced Ramp / Spread (Ignores HP thresholds if toggle is ON)
     - wild_growth,name="Forced Wild Growth",if=config.force_spread&(buff.wild_growth.down|group.any(cycle.buff.wild_growth.down))
     - rejuvenation,name="Forced Rejuvenation",cycle=members,if=config.force_spread&(cycle.buff.rejuvenation.down|cycle.buff.rejuvenation.remains<1.5)
-    - rejuvenation,name="Forced Germination",cycle=members,if=config.force_spread&talent.germination&cycle.buff.rejuvenation_germination.up&cycle.health.effective.pct<config.rejuvenation_threshold
+    - rejuvenation,name="Forced Germination",cycle=members,if=config.force_spread&talent.germination&cycle.buff.rejuvenation.up&cycle.buff.rejuvenation_germination.down&cycle.health.effective.pct<config.rejuvenation_threshold
 
     # --- Core Healing ---
     - wild_growth,name="Wild Growth",if=group.count(cycle.health.effective.pct<config.wild_growth_threshold)>=config.wild_growth_members
     - rejuvenation,name="Rejuvenation",cycle=members,if=cycle.buff.rejuvenation.remains<1.5&cycle.health.effective.pct<config.rejuvenation_threshold
-    - rejuvenation,name="Germination",cycle=members,if=talent.germination&cycle.buff.rejuvenation_germination.up&cycle.health.effective.pct<config.rejuvenation_threshold
+    - rejuvenation,name="Germination",cycle=members,if=talent.germination&cycle.buff.rejuvenation.up&(cycle.buff.rejuvenation_germination.down|cycle.buff.rejuvenation_germination.remains<1.5)&cycle.health.effective.pct<config.rejuvenation_threshold
     - regrowth,name="Regrowth",cycle=members,if=cycle.health.effective.pct<config.regrowth_threshold
 
   utility:
@@ -378,7 +381,7 @@ lists:
     - lifebloom,name="Lifebloom (Moving)",cycle=members,if=cycle.health.effective.pct<config.lifebloom_threshold&cycle.buff.lifebloom.down&(group.count(cycle.buff.lifebloom.up)=0|tank1.buff.lifebloom.up)
     - lifebloom,name="Lifebloom Tank (Moving)",cycle=tanks,if=(cycle.buff.lifebloom.down|cycle.buff.lifebloom.remains<4.5)&(cycle.buff.lifebloom.up|group.count(cycle.buff.lifebloom.up)=0)
     - rejuvenation,name="Rejuvenation (Moving)",cycle=members,if=cycle.buff.rejuvenation.remains<1.5&cycle.health.effective.pct<config.rejuvenation_threshold
-    - rejuvenation,name="Germination (Moving)",cycle=members,if=talent.germination&cycle.buff.rejuvenation_germination.up&cycle.health.effective.pct<config.rejuvenation_threshold
+    - rejuvenation,name="Germination (Moving)",cycle=members,if=talent.germination&cycle.buff.rejuvenation.up&(cycle.buff.rejuvenation_germination.down|cycle.buff.rejuvenation_germination.remains<1.5)&cycle.health.effective.pct<config.rejuvenation_threshold
 
   mouseover_healing_emergency:
     - regrowth.mouseover,name="Regrowth (MO) Instant",if=buff.natures_swiftness.up|var.is_tree_form
