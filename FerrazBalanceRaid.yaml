@@ -1,21 +1,10 @@
-# =============================================================================
-# Druid - Balance - 102 — Elune's Chosen (RAID)
-# Meta Source: Icy Veins Midnight Season 1 (updated 17 Mar 2026)
-#              Archon.gg Mythic Raid data (Apr 2026)
-#              Combat log analysis: Yasa (Crown of the Cosmos)
-# Key principles:
-#   - Prefer Lunar Eclipse, but use Solar if needed for AP gen/filler
-#   - Fury of Elune is high priority — pair with Inc/CA
-#   - Force of Nature (if talented) used as minor CD
-#   - Wrath is used as filler in Solar or for AP during opener
-#   - Starfire is primary filler in Lunar/CA
-# =============================================================================
-
-version: 1.0
+version: 1.1
 author: Ferraz
-patch: "12.0.1.6"
+patch: "12.0.5"
 spec: 102
-name: Ferraz Balance Druid Raid (Grove)
+name: |
+  Ferraz Balance Druid Raid (Grove)
+  Talent Tree: CYGAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWoMbNjxMDMmlZmZmBYGjZWGLzYGbsMzyYmZMLYYAGgltxGmmZWGAAAAsxMzMD2MwYGAzMAwA
 entry: main
 
 config:
@@ -197,9 +186,10 @@ lists:
     - moonfire,if=debuff.moonfire.remains<2|debuff.moonfire.refreshable&var.eclipse_down
     - sunfire,if=debuff.sunfire.remains<2|debuff.sunfire.refreshable&var.eclipse_down
 
-    # 2. Enter Eclipse Preference (Lunar Eclipse for Elune's Chosen)
-    - lunar_eclipse,if=var.eclipse_down&!var.ec
+    # 2. Enter Eclipse Preference (Solar for Grove, Lunar for Elune's Chosen)
+    - solar_eclipse,if=var.eclipse_down&!var.ec
     - solar_eclipse,if=var.eclipse_down&var.ec&cooldown.fury_of_elune.remains<5 # Yasa uses Solar to prep FoE/Inc
+    - lunar_eclipse,if=var.eclipse_down&var.ec
 
     # 3. Fury of Elune on cooldown — pair with CA/Inc when possible
     - fury_of_elune,if=!talent.sundered_firmament|(debuff.atmospheric_exposure.remains<2&(buff.eclipse_lunar.remains>5))|fight_remains<20
@@ -223,8 +213,9 @@ lists:
     # 8. Wild Mushroom: don't let charges cap
     - wild_mushroom,if=buff.eclipse_lunar.up|cooldown.wild_mushroom.full_recharge_time<cooldown.celestial_alignment.remains
 
-    # 9. Filler: Starfire in Lunar/CA, Wrath in Solar
-    - starfire,if=buff.eclipse_lunar.up|buff.celestial_alignment.up|buff.incarnation_chosen_of_elune.up
+    # 9. Filler: Starfire for Elune's Chosen, Wrath for Keeper of the Grove
+    - starfire,if=var.ec&(buff.eclipse_lunar.up|buff.celestial_alignment.up|buff.incarnation_chosen_of_elune.up)
+    - starfire,if=!var.ec&buff.eclipse_lunar.up&!buff.celestial_alignment.up&!buff.incarnation_chosen_of_elune.up
     - wrath
 
   # ----------------------------------------------------------
@@ -245,9 +236,9 @@ lists:
     - sunfire,if=debuff.sunfire.remains<2|debuff.sunfire.refreshable&var.eclipse_down
     - moonfire,if=active_enemies<6&(debuff.moonfire.remains<2|debuff.moonfire.refreshable&var.eclipse_down)
 
-    # 2. Enter Eclipse: EC builds often use Solar for faster AP/Wrath cleave if talented
-    - lunar_eclipse,if=var.eclipse_down&!var.ec
-    - solar_eclipse,if=var.eclipse_down&var.ec
+    # 2. Enter Eclipse (Solar for Grove, Lunar for Elune's Chosen)
+    - solar_eclipse,if=var.eclipse_down&!var.ec
+    - lunar_eclipse,if=var.eclipse_down&var.ec
 
     # 3. Fury of Elune: High priority cleave
     - fury_of_elune,if=!talent.sundered_firmament|debuff.atmospheric_exposure.remains<2
@@ -286,9 +277,9 @@ lists:
     - moonfire,if=debuff.moonfire.remains<2|debuff.moonfire.refreshable&var.eclipse_down
     - sunfire,if=debuff.sunfire.remains<2|debuff.sunfire.refreshable&var.eclipse_down
 
-    # 2. Enter Eclipse (prefer Solar to start for fast AP/Starsurge if EC)
-    - solar_eclipse,if=var.eclipse_down&var.ec
-    - lunar_eclipse,if=var.eclipse_down
+    # 2. Enter Eclipse (Solar for Grove, Lunar for EC)
+    - solar_eclipse,if=var.eclipse_down&!var.ec
+    - lunar_eclipse,if=var.eclipse_down&var.ec
 
     # 3. Use Ascendant Stars / Starlord stacks
     - starsurge,if=buff.ascendant_stars.up|buff.touch_the_cosmos.react
@@ -329,9 +320,9 @@ lists:
     # 4. Cooldowns
     - incarnation_chosen_of_elune,if=!var.cd_active
 
-    # 5. Enter Eclipse
-    - solar_eclipse,if=var.eclipse_down&var.ec
-    - lunar_eclipse,if=var.eclipse_down
+    # 5. Enter Eclipse (Solar for Grove, Lunar for EC)
+    - solar_eclipse,if=var.eclipse_down&!var.ec
+    - lunar_eclipse,if=var.eclipse_down&var.ec
 
     # 6. Dump Starlord/Ascendant stacks
     - starfall,if=astral_power>50|buff.ascendant_stars.up
