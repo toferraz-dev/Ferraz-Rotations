@@ -327,14 +327,12 @@ lists:
     - innervate,name="Innervate",if=mana.pct<config.innervate_threshold
 
   catweave_st:
-    - heart_of_the_wild,name="HotW Cat ST",if=config.use_heart_of_the_wild&talent.heart_of_the_wild&buff.cat_form.up
     - rip,name="Rip ST",if=combo_points>=5&debuff.rip.refreshable
     - ferocious_bite,name="Bite ST",if=combo_points>=5
     - rake,name="Rake ST",if=debuff.rake.refreshable
     - shred,name="Shred ST"
 
   catweave_aoe:
-    - heart_of_the_wild,name="HotW Cat AoE",if=config.use_heart_of_the_wild&talent.heart_of_the_wild&buff.cat_form.up
     - target_enemy,name="Search Bleed Target",if=combo_points>=5&!debuff.rip.refreshable&active_dot.rip<enemies.combat.8y
     - rip,name="Rip AoE",if=combo_points>=5&debuff.rip.refreshable
     - ferocious_bite,name="Bite AoE",if=combo_points>=5
@@ -353,6 +351,7 @@ lists:
     - cat_form,name="Manual Cat Shift",if=!buff.cat_form.up
     - return,if=!buff.cat_form.up
 
+    - heart_of_the_wild,name="HotW Cat",if=config.use_heart_of_the_wild&talent.heart_of_the_wild&buff.cat_form.up
     - call_action_list,name=catweave_aoe,if=active_enemies>=config.aoe_threshold
     - call_action_list,name=catweave_st,if=active_enemies<config.aoe_threshold
 
