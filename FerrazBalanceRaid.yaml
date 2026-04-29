@@ -2,7 +2,8 @@ version: 1.1
 author: Ferraz
 patch: "12.0.5"
 spec: 102
-name: |
+name: Ferraz Balance Druid Raid (Grove)
+description: |
   Ferraz Balance Druid Raid (Grove)
   Talent Tree: CYGAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWoMbNjxMDMmlZmZmBYGjZWGLzYGbsMzyYmZMLYYAGgltxGmmZWGAAAAsxMzMD2MwYGAzMAwA
 entry: main
