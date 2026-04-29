@@ -62,8 +62,6 @@ config:
 variables:
   # Eclipse state
   eclipse_down: buff.eclipse_solar.down&buff.eclipse_lunar.down
-  # Elune's Chosen hero talent active (Boundless Moonlight)
-  ec: talent.boundless_moonlight
   # True when about to open (CA/Inc ready, not yet pressed)
   opener: (talent.celestial_alignment|talent.incarnation_chosen_of_elune)&cooldown.celestial_alignment.remains=0&!var.cd_active
   # Window where burning CDs together is correct
@@ -170,27 +168,25 @@ lists:
     - moonfire,if=active_enemies<6
 
   # ----------------------------------------------------------
-  #  ELUNE'S CHOSEN - SINGLE TARGET
+  #  GROVE - SINGLE TARGET
   #
-  #  Priority (Icy Veins + Log Analysis):
+  #  Priority:
   #  1. Maintain Sunfire + Moonfire
-  #  2. Enter Lunar Eclipse
+  #  2. Enter Solar Eclipse
   #  3. Fury of Elune on cooldown (pair with CA when possible)
   #  4. Starsurge: stack Starlord / consume Touch the Cosmos proc
   #  5. CA/Inc: use after Fury of Elune is in flight
   #  6. Moon charges: don't cap (generates AP)
   #  7. Wild Mushroom: don't cap charges
-  #  8. Starfire: primary filler (ONLY filler — Wrath removed)
+  #  8. Wrath: primary filler
   # ----------------------------------------------------------
-  ec_st:
+  st:
     # 1. Maintain DoTs (refresh before they fall off)
     - moonfire,if=debuff.moonfire.remains<2|debuff.moonfire.refreshable&var.eclipse_down
     - sunfire,if=debuff.sunfire.remains<2|debuff.sunfire.refreshable&var.eclipse_down
 
-    # 2. Enter Eclipse Preference (Solar for Grove, Lunar for Elune's Chosen)
-    - solar_eclipse,if=var.eclipse_down&!var.ec
-    - solar_eclipse,if=var.eclipse_down&var.ec&cooldown.fury_of_elune.remains<5 # Yasa uses Solar to prep FoE/Inc
-    - lunar_eclipse,if=var.eclipse_down&var.ec
+    # 2. Enter Eclipse (Solar for Grove)
+    - solar_eclipse,if=var.eclipse_down
 
     # 3. Fury of Elune on cooldown — pair with CA/Inc when possible
     - fury_of_elune,if=!talent.sundered_firmament|(debuff.atmospheric_exposure.remains<2&(buff.eclipse_lunar.remains>5))|fight_remains<20
@@ -214,9 +210,8 @@ lists:
     # 8. Wild Mushroom: don't let charges cap
     - wild_mushroom,if=buff.eclipse_lunar.up|cooldown.wild_mushroom.full_recharge_time<cooldown.celestial_alignment.remains
 
-    # 9. Filler: Starfire for Elune's Chosen, Wrath for Keeper of the Grove
-    - starfire,if=var.ec&(buff.eclipse_lunar.up|buff.celestial_alignment.up|buff.incarnation_chosen_of_elune.up)
-    - starfire,if=!var.ec&buff.eclipse_lunar.up&!buff.celestial_alignment.up&!buff.incarnation_chosen_of_elune.up
+    # 9. Filler: Wrath for Keeper of the Grove
+    - starfire,if=buff.eclipse_lunar.up&!buff.celestial_alignment.up&!buff.incarnation_chosen_of_elune.up
     - wrath
 
   # ----------------------------------------------------------
@@ -237,9 +232,8 @@ lists:
     - sunfire,if=debuff.sunfire.remains<2|debuff.sunfire.refreshable&var.eclipse_down
     - moonfire,if=active_enemies<6&(debuff.moonfire.remains<2|debuff.moonfire.refreshable&var.eclipse_down)
 
-    # 2. Enter Eclipse (Solar for Grove, Lunar for Elune's Chosen)
-    - solar_eclipse,if=var.eclipse_down&!var.ec
-    - lunar_eclipse,if=var.eclipse_down&var.ec
+    # 2. Enter Eclipse (Solar for Grove)
+    - solar_eclipse,if=var.eclipse_down
 
     # 3. Fury of Elune: High priority cleave
     - fury_of_elune,if=!talent.sundered_firmament|debuff.atmospheric_exposure.remains<2
@@ -266,21 +260,20 @@ lists:
     - wrath
 
   # ----------------------------------------------------------
-  #  OPENER - ST (Elune's Chosen)
+  #  OPENER - ST (Grove)
   #
   #  Icy Veins opener sequence:
-  #  Pre-cast Starfires at pull → DoTs → Solar Eclipse
+  #  Pre-cast Wraths at pull → DoTs → Solar Eclipse
   #  → Starsurge ×3 (Ascendant Eclipses stacks) → CA/Inc
-  #  → Fury of Elune → Starsurge/Starfall → Starfire filler
+  #  → Fury of Elune → Starsurge/Starfall → Wrath filler
   # ----------------------------------------------------------
   opener_st:
     # 1. DoTs first
     - moonfire,if=debuff.moonfire.remains<2|debuff.moonfire.refreshable&var.eclipse_down
     - sunfire,if=debuff.sunfire.remains<2|debuff.sunfire.refreshable&var.eclipse_down
 
-    # 2. Enter Eclipse (Solar for Grove, Lunar for EC)
-    - solar_eclipse,if=var.eclipse_down&!var.ec
-    - lunar_eclipse,if=var.eclipse_down&var.ec
+    # 2. Enter Eclipse (Solar for Grove)
+    - solar_eclipse,if=var.eclipse_down
 
     # 3. Use Ascendant Stars / Starlord stacks
     - starsurge,if=buff.ascendant_stars.up|buff.touch_the_cosmos.react
@@ -298,14 +291,14 @@ lists:
     - starfall,if=active_enemies>1&(buff.touch_the_cosmos.react|astral_power>80)
     - starsurge,if=buff.touch_the_cosmos.react|astral_power>80
 
-    # 8. Starfire filler inside CA/Inc
-    - starfire
+    # 8. Filler inside CA/Inc
+    - wrath
 
   # ----------------------------------------------------------
-  #  OPENER - AOE (Elune's Chosen, 3+ targets)
+  #  OPENER - AOE (Grove, 3+ targets)
   #
   #  Log-confirmed opener (阿揪揪):
-  #  MF spread → SF → FoE → Inc → Starfall × N → Starsurge → WM → Starfire
+  #  MF spread → SF → FoE → Inc → Starfall × N → Starsurge → WM → Wrath
   # ----------------------------------------------------------
   opener_aoe:
     # 1. Sunfire first (AoE hit)
@@ -321,14 +314,13 @@ lists:
     # 4. Cooldowns
     - incarnation_chosen_of_elune,global_delay=500,if=!var.cd_active
 
-    # 5. Enter Eclipse (Solar for Grove, Lunar for EC)
-    - solar_eclipse,if=var.eclipse_down&!var.ec
-    - lunar_eclipse,if=var.eclipse_down&var.ec
+    # 5. Enter Eclipse (Solar for Grove)
+    - solar_eclipse,if=var.eclipse_down
 
     # 6. Dump Starlord/Ascendant stacks
     - starfall,if=astral_power>50|buff.ascendant_stars.up
     - starsurge,if=buff.starfall.up&buff.ascendant_stars.up
-    - starfire,if=buff.ascendant_stars.up
+    - wrath,if=buff.ascendant_stars.up
 
   # ----------------------------------------------------------
   #  MAIN ENTRY POINT
@@ -347,11 +339,11 @@ lists:
     - call_action_list,name=heal_support
     - call_action_list,name=trinkets
     # Openers (when CDs are available)
-    - call_action_list,name=opener_aoe,if=var.opener&active_enemies>2
-    - call_action_list,name=opener_st,if=var.opener&active_enemies<=2
+    - call_action_list,name=opener_aoe,if=var.opener&active_enemies>1
+    - call_action_list,name=opener_st,if=var.opener&active_enemies<=1
     # Movement: use instant-cast spells only
     - call_action_list,name=moving_aoe,if=player.moving&active_enemies>1
     - call_action_list,name=moving_st,if=player.moving&active_enemies<=1
     # Standard rotation
-    - call_action_list,name=ec_st,if=active_enemies<=1
+    - call_action_list,name=st,if=active_enemies<=1
     - call_action_list,name=aoe,if=active_enemies>1
