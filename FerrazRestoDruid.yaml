@@ -290,9 +290,9 @@ lists:
 
   cooldowns:
     - natures_swiftness,delay=150,name="NS (Pre-Convoke)",if=cooldown.convoke_the_spirits.ready&group.count(cycle.health.effective.pct<config.convoke_threshold)>=config.convoke_members&!buff.cat_form.up&!buff.bear_form.up&!buff.moonkin_form.up&buff.abundance.stack>=3
-    - trinket_1,name="Trinket 1",if=config.use_trinket_1&trinket_1.ready&buff.natures_swiftness.up
-    - trinket_2,name="Trinket 2",if=config.use_trinket_2&trinket_2.ready&buff.natures_swiftness.up
-    - combat_potion,name="Combat Potion",if=combat_potion.ready&config.use_potion&buff.natures_swiftness.up
+    - trinket_1,delay=150,name="Trinket 1",if=config.use_trinket_1&trinket_1.ready&buff.natures_swiftness.up
+    - trinket_2,delay=150,name="Trinket 2",if=config.use_trinket_2&trinket_2.ready&buff.natures_swiftness.up
+    - combat_potion,delay=150,name="Combat Potion",if=combat_potion.ready&config.use_potion&buff.natures_swiftness.up
     - convoke_the_spirits,global_delay=500,name="Convoke (Heal)",if=buff.natures_swiftness.up&!buff.cat_form.up&!buff.bear_form.up&!buff.moonkin_form.up
     - regrowth,name="Nature Swift Regrowth",cycle=members,if=buff.natures_swiftness.up
     - tranquility,global_delay=500,name="Tranquility",if=group.count(cycle.health.effective.pct<config.tranquility_threshold)>=config.tranquility_members&!player.moving
