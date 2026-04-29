@@ -203,7 +203,7 @@ lists:
     - starsurge,if=astral_power>60&active_enemies<=1
 
     # 6. CA/Inc after Fury of Elune
-    - incarnation_chosen_of_elune,delay=500,if=!var.cd_active&buff.ascendant_stars.down&(!talent.elunes_guidance|cooldown.lunar_eclipse.charges_fractional<1.5)
+    - incarnation_chosen_of_elune,global_delay=500,if=!var.cd_active&buff.ascendant_stars.down&(!talent.elunes_guidance|cooldown.lunar_eclipse.charges_fractional<1.5)
 
     # 7. Moon charges: don't cap
     - full_moon,if=astral_power.deficit>40&debuff.atmospheric_exposure.remains<action.full_moon.execute_time+0.5
@@ -247,7 +247,7 @@ lists:
     - force_of_nature,if=var.cd_active|cooldown.incarnation_chosen_of_elune.remains>30
 
     # 5. CA/Inc
-    - incarnation_chosen_of_elune,delay=500,if=!var.cd_active&(var.eclipse_down|fight_remains<20)
+    - incarnation_chosen_of_elune,global_delay=500,if=!var.cd_active&(var.eclipse_down|fight_remains<20)
 
     # 6. Starfall: main AP dump in AoE
     - starfall,if=buff.starweavers_weft.up|buff.touch_the_cosmos.react
@@ -291,7 +291,7 @@ lists:
     - force_of_nature
 
     # 6. CA/Inc
-    - incarnation_chosen_of_elune,delay=500,if=!var.cd_active
+    - incarnation_chosen_of_elune,global_delay=500,if=!var.cd_active
 
     # 7. AP Dump during CD
     - starfall,if=active_enemies>1&(buff.touch_the_cosmos.react|astral_power>80)
@@ -318,7 +318,7 @@ lists:
     - force_of_nature
 
     # 4. Cooldowns
-    - incarnation_chosen_of_elune,if=!var.cd_active
+    - incarnation_chosen_of_elune,global_delay=500,if=!var.cd_active
 
     # 5. Enter Eclipse (Solar for Grove, Lunar for EC)
     - solar_eclipse,if=var.eclipse_down&!var.ec
