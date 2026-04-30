@@ -1,11 +1,11 @@
 version: 2.1
 author: Ferraz
-patch: "12.0.1.6"
+patch: "12.0.5"
 spec: 103
 name: Ferraz Feral Druid M+ (Claw)
 description: |
-  Feral Druid Rotation for Mythic+ — Midnight (12.0.1).
-  Talent: CcGA8cL7tpvige+kkmGM9zUPWDAAAAAgZMDzMzMjxsZsNz2MzMjZGAAAAWCmNDPgZG1MmFzMzMLjZMDAAAAAgBGAAAANzysMzMDIwCYmBYhBDAAgZ2wA
+  Ferraz Feral Druid M+ (Claw)
+  Talent Tree: CcGA8cL7tpvige+kkmGM9zUPWDAAAAAgZMDzMzMjxsZsNz2MzMjZGAAAAWCmNDPgZG1MmFzMzMLjZMDAAAAAgBGAAAANzysMzMDIwCYmBYhBDAAgZ2wA
 entry: main
 
 config:

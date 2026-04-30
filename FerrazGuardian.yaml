@@ -1,11 +1,10 @@
 version: 3.5
 author: Ferraz
-patch: "12.0.1.6"
+patch: "12.0.5"
 spec: 104
-name: Ferraz Guardian Druid (Claw)
+name: Ferraz Guardian Druid M+ (Claw)
 description: |
-  Optimized Guardian Druid (Claw) based on SimulationCraft.
-  Supports Killing Blow Fount of Strength builds.
+  Ferraz Guardian Druid M+ (Claw)
   Talent Tree: CgGA8cL7tpvige+kkmGM9zUPWDAAAAAAAAAAAgZmxsMzMjZWMLDMWGwmZMaimZmlZmZmZZMDAAAAAAzYZGAAAAqZWmlZmZAAsgZeAgllZwAWssNAYmNYA
 entry: main
 
