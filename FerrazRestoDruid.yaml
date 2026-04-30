@@ -9,9 +9,7 @@ description: |
 entry: main
 
 config:
-  # =================================================================================================
-  #     DEFENSIVE & SURVIVAL
-  # =================================================================================================
+  # -- Defensives --
   barkskin_threshold:
     label: "Barkskin HP %"
     section: "Defensives"
@@ -47,9 +45,7 @@ config:
         value: 2
     default: 1
 
-  # =================================================================================================
-  #     MAJOR COOLDOWNS
-  # =================================================================================================
+  # -- Major Cooldowns --
   convoke_threshold:
     label: "Convoke HP %"
     section: "Cooldowns"
@@ -82,9 +78,7 @@ config:
     max: 5
     default: 3
 
-  # =================================================================================================
-  #     HEALING - AOE & GROUP
-  # =================================================================================================
+  # -- Healing AoE & Group --
   use_mouseover:
     label: "MO Healing (Emergency)"
     section: "Healing"
@@ -115,9 +109,7 @@ config:
     max: 5
     default: 2
 
-  # =================================================================================================
-  #     HEALING - SINGLE TARGET
-  # =================================================================================================
+  # -- Healing Single Target --
   lifebloom_threshold:
     label: "Lifebloom HP %"
     section: "Healing"
@@ -150,9 +142,7 @@ config:
     max: 100
     default: 100
 
-  # =================================================================================================
-  #     DAMAGE & CATWEAVING
-  # =================================================================================================
+  # -- Damage & Catweaving --
   catweave_group_hp:
     label: "Enter Cat - Group HP %"
     section: "Damage"
@@ -183,9 +173,7 @@ config:
     type: checkbox
     default: true
 
-  # =================================================================================================
-  #     UTILITY & ITEMS
-  # =================================================================================================
+  # -- Utility --
   innervate_threshold:
     label: "Innervate Mana %"
     section: "Utility"
@@ -194,9 +182,7 @@ config:
     max: 99
     default: 60
 
-  # =================================================================================================
-  #     RACIAL ABILITIES
-  # =================================================================================================
+  # -- Racials --
   thorn_bloom_threshold:
     label: "Thorn Bloom HP %"
     section: "Racials"
@@ -213,6 +199,7 @@ config:
     max: 5
     default: 1
 
+  # -- Trinkets --
   use_trinket_1:
     label: "Auto Trinket 1 (Before Convoke)"
     section: "Trinkets"
@@ -252,32 +239,36 @@ config:
     description: "Forces Rejuvenation / Wild Growth spread regardless of HP"
 
 variables:
+  # True when fewer party members are injured than the exit threshold
   group_healthy: group.count(cycle.health.effective.pct<config.catweave_group_hp)<config.catweave_injured_max
+  # Safe to enter Cat Form for DPS (group healthy or Force DPS toggle)
   can_catweave: (var.group_healthy|config.force_dps)&player.combat
+  # Valid mouseover healing target
   mo_friendly_valid: mouseover.exists&mouseover.alive&mouseover.friendly&mouseover.unitframe
+  # Soul of the Forest proc is active
   has_soul: buff.soul_of_the_forest.up
 
 lists:
+  # Auto-swap to enraged/interruptible target; AoE CC; Soothe
   interrupts:
-    # Auto Swap Search
     - target_enemy,delay=100,name="Search Soothe",if=!target.purgeable.enrage&enemies.combat.any(cycle.purgeable.enrage)
     - target_enemy,delay=100,name="Search Interrupt",if=!interrupt.target.check&interrupt.8y.any
-
-    # AoE Interrupt
     - incapacitating_roar,name="Roar (AoE CC)",if=interrupt.stun.aoe.check
     - soothe,name="Soothe Enrage",if=target.purgeable.enrage
 
+  # OOC: Mark, Symbiotic, remove Moonkin via Rejuv cast, pre-spread Lifebloom/Rejuv/Regrowth
   out_of_combat:
     - mark_of_the_wild,name="Mark of the Wild",if=config.use_mark_of_the_wild&group.count(cycle.buff.mark_of_the_wild.down.any)>0
     - symbiotic_relationship,name="Symbiotic Tank",cycle=tanks,if=!buff.symbiotic_relationship.up&!cycle.buff.symbiotic_relationship.up&!player.casting
+    # Cast Rejuv to exit Moonkin Form (forces caster form)
     - rejuvenation,name="Rejuvenation - Remove MoonkinForm",cycle=members,if=buff.moonkin_form.up
-
-    # Lifebloom OOC Maintenance (Everbloom auto-stacks to 3)
+    # Lifebloom pre-combat maintenance (Everbloom auto-stacks to 3)
     - lifebloom,name="OOC Lifebloom",cycle=members,if=cycle.health.effective.pct<config.lifebloom_threshold&cycle.buff.lifebloom.down&(group.count(cycle.buff.lifebloom.up)=0|tank1.buff.lifebloom.up)&!player.combat
     - lifebloom,name="OOC Lifebloom (Tank)",cycle=tanks,if=(cycle.buff.lifebloom.down|cycle.buff.lifebloom.remains<4.5)&(cycle.buff.lifebloom.up|group.count(cycle.buff.lifebloom.up)=0)&!player.combat
     - rejuvenation,name="OOC Rejuvenation",cycle=members,if=cycle.health.effective.pct<config.rejuvenation_threshold&cycle.buff.rejuvenation.remains<1.5&!player.combat
     - regrowth,name="OOC Regrowth",cycle=members,if=cycle.health.effective.pct<config.regrowth_threshold&cycle.buff.regrowth.remains<1.5&!player.combat
 
+  # Ironbark on tanks/members > Barkskin > Emergency Bear Form + Frenzied Regen
   defensives:
     - ironbark,name="Ironbark (Tank)",cycle=tanks,if=config.ironbark_target=1&cycle.health.pct<config.ironbark_threshold&cycle.buff.ironbark.down
     - ironbark,name="Ironbark (Members)",cycle=members,if=config.ironbark_target=2&cycle.health.pct<config.ironbark_threshold&cycle.buff.ironbark.down
@@ -285,6 +276,7 @@ lists:
     - bear_form,name="Panic Bear",if=health.pct<config.frenzied_regen_threshold&!buff.bear_form.up&cooldown.frenzied_regeneration.ready
     - frenzied_regeneration,name="Frenzied Regen",if=health.pct<config.frenzied_regen_threshold&buff.bear_form.up
 
+  # Shadowmeld aggro drop; Berserking haste during emergency; AoE CC racials; Darkflight
   racials:
     - shadowmeld,name="Shadowmeld (Aggro Drop)",if=player.combat&player.aggro&!player.casting
     - berserking,name="Berserking (Haste CD)",if=buff.natures_swiftness.up|group.count(cycle.health.effective.pct<config.tranquility_threshold)>=config.tranquility_members
@@ -293,50 +285,56 @@ lists:
     - haymaker,name="Haymaker (Interrupt/Knockback)",if=interrupt.target.check
     - darkflight,name="Darkflight (Movement)",if=player.moving&!buff.dash.up&!buff.stampeding_roar.up
 
+  # NS > Trinkets/Potion (pre-Convoke) > Convoke > NS Regrowth > Tranquility > Swiftmend > Clearcasting
   cooldowns:
     - natures_swiftness,delay=150,name="NS (Pre-Convoke)",if=cooldown.convoke_the_spirits.ready&group.count(cycle.health.effective.pct<config.convoke_threshold)>=config.convoke_members&!buff.cat_form.up&!buff.bear_form.up&!buff.moonkin_form.up&buff.abundance.stack>=3
     - trinket_1,delay=150,name="Trinket 1",if=config.use_trinket_1&trinket_1.ready&buff.natures_swiftness.up
     - trinket_2,delay=150,name="Trinket 2",if=config.use_trinket_2&trinket_2.ready&buff.natures_swiftness.up
     - combat_potion,delay=150,name="Combat Potion",if=combat_potion.ready&config.use_potion&buff.natures_swiftness.up
     - convoke_the_spirits,global_delay=500,name="Convoke (Heal)",if=buff.natures_swiftness.up&!buff.cat_form.up&!buff.bear_form.up&!buff.moonkin_form.up
+    # Consume NS with Regrowth if Convoke wasn't used
     - regrowth,name="Nature Swift Regrowth",cycle=members,if=buff.natures_swiftness.up
     - tranquility,global_delay=500,name="Tranquility",if=group.count(cycle.health.effective.pct<config.tranquility_threshold)>=config.tranquility_members&!player.moving
+    # Swiftmend for SotF proc (requires existing HoT on target)
     - swiftmend,name="Swiftmend for SotF/Treants",cycle=members,if=cycle.health.effective.pct<config.swiftmend_threshold&(cycle.buff.rejuvenation.up|cycle.buff.regrowth.up|cycle.buff.wild_growth.up)
     - regrowth,name="Clearcasting Regrowth",cycle=members,if=buff.clearcasting.up&(cycle.buff.regrowth.down|cycle.health.effective.pct<99)
 
+  # Active healing: SotF consumption > Lifebloom > Forced spread > Core healing
   active_healing:
-    # --- Soul of the Forest (SotF) Consumption ---
+    # Consume Soul of the Forest with Regrowth or Rejuvenation
     - regrowth,name="SotF Regrowth",cycle=members,if=var.has_soul&cycle.health.effective.pct<config.regrowth_threshold
     - rejuvenation,name="SotF Germination",cycle=members,if=var.has_soul&talent.germination&cycle.buff.rejuvenation.up&(cycle.buff.rejuvenation_germination.down|cycle.buff.rejuvenation_germination.remains<1.5)
     - rejuvenation,name="SotF Rejuvenation",cycle=members,if=var.has_soul&cycle.buff.rejuvenation.remains<1.5
 
-    # Lifebloom Maintenance (Everbloom auto-stacks to 3)
+    # Lifebloom maintenance (Everbloom auto-stacks to 3)
     - lifebloom,name="Lifebloom",cycle=members,if=cycle.health.effective.pct<config.lifebloom_threshold&cycle.buff.lifebloom.down&(group.count(cycle.buff.lifebloom.up)=0|tank1.buff.lifebloom.up)
     - lifebloom,name="Lifebloom (Tank)",cycle=tanks,if=(cycle.buff.lifebloom.down|cycle.buff.lifebloom.remains<4.5)&(cycle.buff.lifebloom.up|group.count(cycle.buff.lifebloom.up)=0)
 
-    # Forced Ramp / Spread (Ignores HP thresholds if toggle is ON)
+    # Forced HoT ramp when toggle is ON (ignores HP thresholds)
     - wild_growth,name="Forced Wild Growth",if=config.force_spread&(buff.wild_growth.down|group.any(cycle.buff.wild_growth.down))
     - rejuvenation,name="Forced Rejuvenation",cycle=members,if=config.force_spread&(cycle.buff.rejuvenation.down|cycle.buff.rejuvenation.remains<1.5)
     - rejuvenation,name="Forced Germination",cycle=members,if=config.force_spread&talent.germination&cycle.buff.rejuvenation.up&cycle.buff.rejuvenation_germination.down&cycle.health.effective.pct<config.rejuvenation_threshold
 
-    # --- Core Healing ---
+    # Core healing: Wild Growth > Rejuv > Germination > Regrowth > Thorn Bloom
     - wild_growth,name="Wild Growth",if=group.count(cycle.health.effective.pct<config.wild_growth_threshold)>=config.wild_growth_members
     - rejuvenation,name="Rejuvenation",cycle=members,if=cycle.buff.rejuvenation.remains<1.5&cycle.health.effective.pct<config.rejuvenation_threshold
     - rejuvenation,name="Germination",cycle=members,if=talent.germination&cycle.buff.rejuvenation.up&(cycle.buff.rejuvenation_germination.down|cycle.buff.rejuvenation_germination.remains<1.5)&cycle.health.effective.pct<config.rejuvenation_threshold
     - regrowth,name="Regrowth",cycle=members,if=cycle.health.effective.pct<config.regrowth_threshold
     - thorn_bloom,name="Thorn Bloom",if=group.count(cycle.health.effective.pct<config.thorn_bloom_threshold)>=config.thorn_bloom_members&target.range<=8
 
+  # Shapeshift to clear roots; Innervate self
   utility:
-    # --- Shapeshift Utility (Expanded Dungeon Mechanics) ---
     - moonkin_form,name="Shapeshift Clear",if=debuff_list.freedom.up&!buff.moonkin_form.up
     - innervate,name="Innervate",if=mana.pct<config.innervate_threshold
 
+  # Catweave ST: Rip > Bite > Rake > Shred
   catweave_st:
     - rip,name="Rip ST",if=combo_points>=5&debuff.rip.refreshable
     - ferocious_bite,name="Bite ST",if=combo_points>=5
     - rake,name="Rake ST",if=debuff.rake.refreshable
     - shred,name="Shred ST"
 
+  # Catweave AoE: target swap for bleed spread > Rip > Bite > Rake > Swipe/Shred
   catweave_aoe:
     - target_enemy,name="Search Bleed Target",if=combo_points>=5&!debuff.rip.refreshable&active_dot.rip<enemies.combat.8y
     - rip,name="Rip AoE",if=combo_points>=5&debuff.rip.refreshable
@@ -345,14 +343,16 @@ lists:
     - swipe,name="Swipe AoE",if=talent.swipe
     - shred,name="Shred AoE",if=!talent.swipe
 
+  # Catweave entry: emergency Rejuv > Fluid Form shift > manual shift > HotW > route to ST/AoE
   catweave:
+    # Refresh Rejuv on injured members before fully committing to Cat
     - rejuvenation,name="Cat Rejuvenation",cycle=members,if=cycle.buff.rejuvenation.remains<4&(buff.cat_form.up|talent.fluid_form)&(target.range>8|!var.group_healthy)
 
-    # Fluid Form: we MUST cast rake or shred to shift BEFORE accessing catweave_aoe/st
+    # Fluid Form: cast Rake/Shred to auto-shift into Cat Form
     - rake,name="Fluid Rake",if=talent.fluid_form&!buff.cat_form.up&debuff.rake.refreshable
     - shred,name="Fluid Shred",if=talent.fluid_form&!buff.cat_form.up
 
-    # Explicit shift fallback (for AoE when Shred is bypassed or without Fluid Form)
+    # Explicit shift fallback when Fluid Form isn't available
     - cat_form,name="Manual Cat Shift",if=!buff.cat_form.up
     - return,if=!buff.cat_form.up
 
@@ -360,28 +360,34 @@ lists:
     - call_action_list,name=catweave_aoe,if=active_enemies>=config.aoe_threshold
     - call_action_list,name=catweave_st,if=active_enemies<config.aoe_threshold
 
+  # Ranged DoT maintenance while in caster form
   ranged_dps:
     - sunfire,name="Sunfire Aoe Dot",if=debuff.sunfire.refreshable
     - moonfire,name="Moonfire ST Refresh",if=debuff.moonfire.refreshable
 
+  # Bearweave: Thrash/Mangle via Fluid Form, then fall into catweave
   bearweave:
     - thrash,name="Thrash (BearmForm Bleed)",if=debuff.thrash.remains<3&talent.fluid_form
     - mangle,name="Mangle (BearForm)",if=talent.fluid_form
     - call_action_list,name=catweave
 
+  # Movement healing: instant-cast HoTs only
   moving:
     - lifebloom,name="Lifebloom (Moving)",cycle=members,if=cycle.health.effective.pct<config.lifebloom_threshold&cycle.buff.lifebloom.down&(group.count(cycle.buff.lifebloom.up)=0|tank1.buff.lifebloom.up)
     - lifebloom,name="Lifebloom Tank (Moving)",cycle=tanks,if=(cycle.buff.lifebloom.down|cycle.buff.lifebloom.remains<4.5)&(cycle.buff.lifebloom.up|group.count(cycle.buff.lifebloom.up)=0)
     - rejuvenation,name="Rejuvenation (Moving)",cycle=members,if=cycle.buff.rejuvenation.remains<1.5&cycle.health.effective.pct<config.rejuvenation_threshold
     - rejuvenation,name="Germination (Moving)",cycle=members,if=talent.germination&cycle.buff.rejuvenation.up&(cycle.buff.rejuvenation_germination.down|cycle.buff.rejuvenation_germination.remains<1.5)&cycle.health.effective.pct<config.rejuvenation_threshold
 
+  # Mouseover emergency: NS Regrowth > Swiftmend > Rejuv > hardcast Regrowth
   mouseover_healing_emergency:
     - regrowth.mouseover,name="Regrowth (MO) Instant",if=buff.natures_swiftness.up
     - swiftmend.mouseover,name="Swiftmend (MO)",if=mouseover.buff.remains(rejuvenation)>1|mouseover.buff.remains(regrowth) >1|mouseover.buff.remains(wild_growth)>1
     - rejuvenation.mouseover,name="Rejuvenation (MO)",if=mouseover.buff.remains(rejuvenation)<=1.5
     - regrowth.mouseover,name="Regrowth (MO) Cast",if=!player.moving
 
+  # Main — priority routing
   main:
+    # Skip if casting/channeling or during Tranquility/Convoke
     - return,if=player.channeling|player.casting|player.casting.remains>0|player.channeling.remains>0|buff.tranquility.up|buff.convoke_the_spirits.up
     - call_action_list,name=spell_queue
     - call_action_list,name=sanity_checks
@@ -394,9 +400,12 @@ lists:
     - call_action_list,name=racials
     - call_action_list,name=cooldowns
     - call_action_list,name=interrupts
+    # Mouseover emergency healing on low-HP friendly unit frames
     - call_action_list,name=mouseover_healing_emergency,if=config.use_mouseover&var.mo_friendly_valid&mouseover.health.effective.pct<config.mouseover_emergency_hp
     - call_action_list,name=moving,if=player.moving
+    # Active healing (disabled when Force DPS is on)
     - call_action_list,name=active_healing,if=!config.force_dps
+    # DPS weaving when group is healthy and target is valid in range
     - call_action_list,name=ranged_dps,if=var.can_catweave&target.exists&target.alive&!target.friendly
     - call_action_list,name=bearweave,if=var.can_catweave&target.exists&target.alive&!target.friendly&target.range<=8&active_enemies>=2
     - call_action_list,name=catweave,if=var.can_catweave&target.exists&target.alive&!target.friendly&target.range<=8

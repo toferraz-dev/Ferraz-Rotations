@@ -8,11 +8,8 @@ description: |
   Talent Tree: CgGA8cL7tpvige+kkmGM9zUPWDAAAAAAAAAAAgZmxsMzMjZWMLDMWGwmZMaimZmlZmZmZZMDAAAAAAzYZGAAAAqZWmlZmZAAsgZeAgllZwAWssNAYmNYA
 entry: main
 
-# ==========================================
-#  CONFIGURATION
-# ==========================================
-
 config:
+  # -- Rotation --
   min_aoe_enemies:
     label: "Min enemies for AOE"
     section: "Rotation"
@@ -29,6 +26,7 @@ config:
     max: 10
     default: 3
 
+  # -- Defensives --
   survival_instincts_threshold:
     label: Survival Instincts %
     section: "Defensives"
@@ -70,92 +68,92 @@ config:
     default: 5
 
 
-# ==========================================
-#  VARIABLES
-# ==========================================
-
 variables:
+  # Form and buff state
   in_bear_form: buff.bear_form.up
   incarnation_active: buff.incarnation_guardian_of_ursoc.up|buff.berserk.up
+  # Talent checks
   kb_enabled: talent.killing_blow
   fount_enabled: talent.fount_of_strength
+  # DoT/debuff tracking
   red_moon_ticking: debuff.red_moon.up
   thrash_refresh: debuff.thrash.remains<4.5|debuff.thrash.stack<3
   moonfire_refresh: debuff.moonfire.remains<4.8
 
-# ==========================================
-#  ACTION LISTS
-# ==========================================
-
 lists:
+  # Mark of the Wild out of combat
   out_of_combat:
     - mark_of_the_wild,name="Mark of the Wild",if=group.count(cycle.buff.mark_of_the_wild.down.any)>0
 
+  # Defensive priority: Dream of Cenarius Regrowth > SI > Frenzied Regen > Barkskin > Ironfur stacking
   defensives:
     - regrowth,name="Regrowth (Guardian)",if=buff.dream_of_cenarius.up&health.effective.pct<85
     - survival_instincts,name="Survival Instincts",if=health.effective.pct<config.survival_instincts_threshold&!buff.survival_instincts.up
     - frenzied_regeneration,name="Frenzied Regeneration",if=health.effective.pct<config.frenzied_regen_threshold
     - barkskin,name="Barkskin",if=health.effective.pct<config.barkskin_threshold&!buff.survival_instincts.up
+    # Ironfur: maintain minimum stacks, refresh before expiry, extra stacks under heavy damage
     - ironfur,name="Ironfur (Min Stacks)",if=buff.ironfur.stack<config.ironfur_stacks_min
     - ironfur,name="Ironfur (Refresh)",if=buff.ironfur.remains<2&buff.ironfur.stack<config.ironfur_stacks_max
     - ironfur,name="Ironfur (Heavy Damage)",if=health.effective.pct<50&buff.ironfur.stack<config.ironfur_stacks_max
 
+  # Racial damage CDs (unconditional)
   racials:
     - blood_fury,name="Blood Fury"
     - berserking,name="Berserking"
     - fireblood,name="Fireblood"
     - ancestral_call,name="Ancestral Call"
 
+  # Auto-swap to enraged target; Skull Bash on target/MO/focus; AoE CC; Soothe
   interrupts:
-    # Auto Swap Search
     - target_enemy,delay=100,name="Search Soothe",if=!target.purgeable.enrage&enemies.combat.any(cycle.purgeable.enrage)
-
-    # Single Interrupt
     - skull_bash,name="Skull Bash",if=interrupt.target.check
     - skull_bash.mouseover,name="Skull Bash (MO)",if=interrupt.mouseover.check
     - skull_bash.focus,name="Skull Bash (Focus)",if=interrupt.focus.check
-
-    # AoE Interrupt
     - incapacitating_roar,name="Roar (AoE CC)",if=interrupt.stun.aoe.check
     - soothe,name="Soothe Enrage",if=target.purgeable.enrage
 
+  # Lunar Beam > Sundering Roar > Incarnation/Berserk > Wild Guardian
   cooldowns:
+    # Lunar Beam: use during Inc or if Inc is far away; respect Lunation timing
     - lunar_beam,name="Lunar Beam",if=var.incarnation_active|((cooldown.incarnation_guardian_of_ursoc.remains>60|cooldown.berserk.remains>60)&!talent.lunation|(cooldown.incarnation_guardian_of_ursoc.remains>30|cooldown.berserk.remains>30)&talent.lunation)
     - sundering_roar,name="Sundering Roar",if=debuff.thrash.stack<3
+    # Incarnation/Berserk: require min enemies or boss target
     - incarnation_guardian_of_ursoc,name="Incarnation",if=(active_enemies>=config.incarnation_enemies|target.boss)
     - berserk,name="Berserk",if=!talent.incarnation_guardian_of_ursoc&(active_enemies>=config.incarnation_enemies|target.boss)
     - wild_guardian,name="Wild Guardian",if=(buff.ravage.up&talent.ravage)|!talent.ravage
 
+  # Druid of the Claw rotation — Ravage > Rage spenders > Mangle/Thrash core > fillers
   rotation_claw:
-    # Ravage / Assolar (Empowered Maul/Raze)
+    # Ravage (empowered Maul/Raze): spend at 40+ rage, or 60+ with Killing Blow
     - ravage,name="Ravage (ST Proc)",if=buff.ravage.up&active_enemies<config.min_aoe_enemies&((!var.kb_enabled&rage>=40)|(var.kb_enabled&rage>=60))
     - ravage,name="Ravage (AOE Proc)",if=buff.ravage.up&active_enemies>=config.min_aoe_enemies&((!var.kb_enabled&rage>=40)|(var.kb_enabled&rage>=60))
 
-    # Rage Spenders (Raze AOE / Maul ST)
+    # Rage spenders: Raze (AoE) / Maul (ST) — higher threshold with Fount of Strength
     - raze,name="Raze (High Rage)",if=active_enemies>=config.min_aoe_enemies&((!var.fount_enabled&rage>=50)|(var.fount_enabled&rage>=85))
     - raze,name="Raze (Tooth and Claw)",if=active_enemies>=config.min_aoe_enemies&buff.tooth_and_claw.up&rage>=40
     - maul,name="Maul (High Rage)",if=active_enemies<config.min_aoe_enemies&((!var.fount_enabled&rage>=50)|(var.fount_enabled&rage>=85))
     - maul,name="Maul (Tooth and Claw)",if=active_enemies<config.min_aoe_enemies&buff.tooth_and_claw.up&rage>=40
 
-    # Mangle / Thrash Core
+    # Core generators: Mangle (Red Moon priority) > Thrash (refresh stacks)
     - mangle,name="Mangle (Red Moon)",if=var.red_moon_ticking
     - thrash,name="Thrash (Refresh)",target_if=var.thrash_refresh
 
-    # Red Moon & Wildpower Surge
+    # Red Moon application and Wildpower Surge Mangle during Incarnation
     - red_moon,name="Red Moon",if=cooldown.mangle.ready&!var.red_moon_ticking
     - mangle,name="Mangle (Surge)",if=var.incarnation_active&talent.wildpower_surge
 
-    # Secondary Rage Dump
+    # Secondary rage dump at 50+
     - raze,name="Raze (AOE)",if=active_enemies>=config.min_aoe_enemies&rage>=50
     - maul,name="Maul (ST)",if=active_enemies<config.min_aoe_enemies&rage>=50
 
-    # Core Fillers
+    # Fillers: Mangle > Thrash > Moonfire (GG proc or refresh) > Swipe
     - mangle,name="Mangle",if=var.incarnation_active|rage<85
     - thrash,name="Thrash"
     - moonfire,name="Moonfire (GG)",if=buff.galactic_guardian.up&var.in_bear_form
     - moonfire,name="Moonfire (Refresh)",if=var.moonfire_refresh&var.in_bear_form
     - swipe,name="Swipe"
 
+  # Main — entry point
   main:
     - call_action_list,name=spell_queue
     - call_action_list,name=sanity_checks
@@ -164,11 +162,11 @@ lists:
     - call_action_list,name=auto_heal
     - return,if=auto_combat.player
 
-    # Bear Form Management
+    # Ensure Bear Form; skip rotation if shifting failed
     - bear_form,name="Bear Form",if=!var.in_bear_form&!buff.feline_potential.up
     - return,if=!var.in_bear_form
 
-    # Priority
+    # Combat priority: Interrupts > Defensives > Racials > (valid target check) > CDs > Rotation
     - call_action_list,name=interrupts
     - call_action_list,name=defensives
     - call_action_list,name=racials
