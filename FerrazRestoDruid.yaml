@@ -287,6 +287,11 @@ lists:
 
   racials:
     - shadowmeld,name="Shadowmeld (Aggro Drop)",if=player.combat&player.aggro&!player.casting
+    - berserking,name="Berserking (Haste CD)",if=buff.natures_swiftness.up|group.count(cycle.health.effective.pct<config.tranquility_threshold)>=config.tranquility_members
+    - war_stomp,name="War Stomp (AoE CC)",if=interrupt.stun.aoe.check
+    - bull_rush,name="Bull Rush (AoE CC)",if=interrupt.stun.aoe.check
+    - haymaker,name="Haymaker (Interrupt/Knockback)",if=interrupt.target.check
+    - darkflight,name="Darkflight (Movement)",if=player.moving&!buff.dash.up&!buff.stampeding_roar.up
 
   cooldowns:
     - natures_swiftness,delay=150,name="NS (Pre-Convoke)",if=cooldown.convoke_the_spirits.ready&group.count(cycle.health.effective.pct<config.convoke_threshold)>=config.convoke_members&!buff.cat_form.up&!buff.bear_form.up&!buff.moonkin_form.up&buff.abundance.stack>=3
