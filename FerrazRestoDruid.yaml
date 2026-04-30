@@ -56,7 +56,7 @@ config:
     type: slider
     min: 25
     max: 99
-    default: 65
+    default: 70
 
   convoke_members:
     label: "Convoke - Min Members"
