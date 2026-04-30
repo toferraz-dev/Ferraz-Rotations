@@ -65,6 +65,11 @@ config:
     section: "Trinkets"
     type: checkbox
     default: false
+  use_potion:
+    label: "Auto Offensive Potion"
+    section: "Trinkets"
+    type: checkbox
+    default: false
 
 # ============================================================
 #  VARIABLES
@@ -102,8 +107,9 @@ lists:
   # ----------------------------------------------------------
   trinkets:
     # Use trinkets specifically when about to burst (opener) or if already in burst
-    - trinket_1,if=config.use_trinket_1&trinket_1.ready&player.combat&(var.opener|var.cd_active)
-    - trinket_2,if=config.use_trinket_2&trinket_2.ready&player.combat&(var.opener|var.cd_active)
+    - trinket_1,delay=150,name="Trinket 1",if=config.use_trinket_1&trinket_1.ready&player.combat&(var.opener|var.cd_active)
+    - trinket_2,delay=150,name="Trinket 2",if=config.use_trinket_2&trinket_2.ready&player.combat&(var.opener|var.cd_active)
+    - combat_potion,delay=150,name="Combat Potion",if=config.use_potion&combat_potion.ready&player.combat&(var.opener|var.cd_active)
 
   # ----------------------------------------------------------
   #  DEFENSIVES
@@ -199,7 +205,7 @@ lists:
     - sunfire,if=debuff.sunfire.remains<2|debuff.sunfire.refreshable
 
     # 2. Enter Eclipse Preference (Lunar Eclipse for Elune's Chosen)
-    - lunar_eclipse,if=var.eclipse_down
+    - wrath,name="Wrath (Enter Lunar)",if=var.eclipse_down
 
     # 3. Fury of Elune on cooldown — pair with CA/Inc when possible
     #    Guard: atmospheric_exposure must be down or low, OR we are in fight end
@@ -244,7 +250,7 @@ lists:
     - moonfire,if=debuff.moonfire.refreshable
 
     # 2. Enter Eclipse: EC builds always want Lunar Eclipse
-    - lunar_eclipse,if=var.eclipse_down
+    - wrath,name="Wrath (Enter Lunar)",if=var.eclipse_down
 
     # 3. Fury of Elune: Fire BEFORE Inc to start AP gen + Atmospheric Exposure
     - fury_of_elune,if=!talent.sundered_firmament|debuff.atmospheric_exposure.remains<2
@@ -293,7 +299,7 @@ lists:
     - incarnation_chosen_of_elune,delay=500,if=!var.cd_active
 
     # 4. Enter Eclipse if Inc is down
-    - lunar_eclipse,if=var.eclipse_down
+    - wrath,name="Wrath (Enter Lunar)",if=var.eclipse_down
 
     # 5. AP Dump
     - starfall,if=active_enemies>1&(buff.touch_the_cosmos.react|astral_power>80)
@@ -320,7 +326,7 @@ lists:
     - incarnation_chosen_of_elune,if=!var.cd_active
 
     # Enter Eclipse (Lunar via Wrath)
-    - lunar_eclipse,if=var.eclipse_down
+    - wrath,name="Wrath (Enter Lunar)",if=var.eclipse_down
 
     # Dump Starlord stacks
     - starfall,if=astral_power>50|buff.ascendant_stars.up
