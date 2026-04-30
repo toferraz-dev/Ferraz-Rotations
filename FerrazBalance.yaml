@@ -12,9 +12,9 @@
 #   - Starfire is the ONLY filler (Wrath removed per all log data)
 # =============================================================================
 
-version: 1.0
+version: 1.1
 author: Ferraz
-patch: "12.0.1.6"
+patch: "12.0.5"
 spec: 102
 name: Ferraz Balance Druid M+ (Elunes)
 entry: main
