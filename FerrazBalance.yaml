@@ -1,22 +1,11 @@
-# =============================================================================
-# Druid - Balance - 102 — Elune's Chosen
-# Meta Source: Icy Veins Midnight Season 1 (updated 17 Mar 2026)
-#              Archon.gg Mythic Raid data (Apr 2026)
-#              Combat log analysis: 阿揪揪 (Skyreach, Maisara, Algethar ×2)
-# Key principles:
-#   - Always enter Lunar Eclipse (EC builds do NOT use Solar)
-#   - Fury of Elune is 2nd priority after DoTs — never hold it
-#   - Convoke NOT used in EC M+ builds (dropped from talents)
-#   - Starlord: pool 50-80 AP before Eclipse transitions
-#   - Movement: use instant-cast spells (MF, SF, Starsurge, Starfall, WM, FoE)
-#   - Starfire is the ONLY filler (Wrath removed per all log data)
-# =============================================================================
-
 version: 1.1
 author: Ferraz
 patch: "12.0.5"
 spec: 102
 name: Ferraz Balance Druid M+ (Elunes)
+description: |
+  Ferraz Balance Druid M+ (Elunes)
+  Talent Tree:
 entry: main
 
 config:
@@ -78,13 +67,17 @@ config:
 variables:
   # Eclipse state
   eclipse_down: buff.eclipse_solar.down&buff.eclipse_lunar.down
+
   # Elune's Chosen hero talent active (Boundless Moonlight)
   ec: talent.boundless_moonlight
+
   # True when about to open (CA/Inc ready, not yet pressed)
   opener: (talent.celestial_alignment|talent.incarnation_chosen_of_elune)&cooldown.celestial_alignment.remains=0&!var.cd_active
+
   # Window where burning CDs together is correct
   cd_window: cooldown.force_of_nature.remains>15|(cooldown.celestial_alignment.remains<44&cooldown.incarnation_chosen_of_elune.remains<44)
   cd_window_narrow: cooldown.force_of_nature.remains>30|((cooldown.celestial_alignment.remains>10|cooldown.incarnation_chosen_of_elune.remains>10)&(cooldown.celestial_alignment.remains<20&cooldown.incarnation_chosen_of_elune.remains<20))
+
   # CD is currently active
   cd_active: buff.celestial_alignment.up|buff.incarnation_chosen_of_elune.up
 
@@ -315,20 +308,20 @@ lists:
   #  MF spread → SF → FoE → Inc → Starfall × N → Starsurge → WM → Starfire
   # ----------------------------------------------------------
   opener_aoe:
-    # DoTs: Sunfire first (AoE hit), then Moonfire spread
+    # 1. DoTs: Sunfire first (AoE hit), then Moonfire spread
     - sunfire,if=debuff.sunfire.refreshable
     - moonfire,if=debuff.moonfire.refreshable
 
-    # Fury of Elune BEFORE Inc (log-confirmed order)
+    # 2. Fury of Elune BEFORE Inc (log-confirmed order)
     - fury_of_elune
 
-    # Cooldowns
+    # 3. Cooldowns
     - incarnation_chosen_of_elune,if=!var.cd_active
 
-    # Enter Eclipse (Lunar via Wrath)
+    # 4. Enter Eclipse (Lunar via Wrath)
     - wrath,name="Wrath (Enter Lunar)",if=var.eclipse_down
 
-    # Dump Starlord stacks
+    # 5. Dump Starlord stacks
     - starfall,if=astral_power>50|buff.ascendant_stars.up
     - starsurge,if=buff.starfall.up&buff.ascendant_stars.up
     - starfire,if=buff.ascendant_stars.up
@@ -337,6 +330,7 @@ lists:
   #  MAIN ENTRY POINT
   # ----------------------------------------------------------
   main:
+    # 1. System checks & buffs
     - return,if=player.channeling|player.casting
     - call_action_list,name=spell_queue
     - call_action_list,name=sanity_checks
@@ -345,16 +339,21 @@ lists:
     - mark_of_the_wild,if=group.count(cycle.buff.mark_of_the_wild.down.any)>0&!player.combat
     - return,if=auto_combat.player
     - moonkin_form,if=buff.moonkin_form.down&health.pct>config.frenzied_regen_hp&!buff.frenzied_regeneration.up
+
+    # 2. Utility & Defensives
     - call_action_list,name=interrupts
     - call_action_list,name=defensives
     - call_action_list,name=heal_support
     - call_action_list,name=trinkets
-    # Openers (when CDs are available)
+
+    # 3. Openers (when CDs are available)
     - call_action_list,name=opener_aoe,if=var.opener&active_enemies>2
     - call_action_list,name=opener_st,if=var.opener&active_enemies<=2
-    # Movement: use instant-cast spells only
+
+    # 4. Movement: use instant-cast spells only
     - call_action_list,name=moving_aoe,if=player.moving&active_enemies>1
     - call_action_list,name=moving_st,if=player.moving&active_enemies<=1
-    # Standard rotation
+
+    # 5. Standard rotation
     - call_action_list,name=ec_st,if=active_enemies<=1
     - call_action_list,name=aoe,if=active_enemies>1

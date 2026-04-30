@@ -2,9 +2,9 @@ version: 4.1
 author: Ferraz
 patch: "12.0.5"
 spec: 105
-name: Ferraz Restoration Druid Mythic+ (Wildstalker)
+name: Ferraz Restoration Druid M+ (Wildstalker)
 description: |
-  Restoration Druid - Wildstalker for Mythic+.
+  Ferraz Restoration Druid M+ (Wildstalker)
   Talent Tree: CkGA8cL7tpvige+kkmGM9zUPWPMmZZMjZmxsN8AjZswsYbGAAAAAAAAAAsNoZzw0MjZmxsYmZGLzgZAAAAAAAwAWWGLYamZZAAMbzs1sNziNGz8AYmZB0MAAzMAMA
 entry: main
 
