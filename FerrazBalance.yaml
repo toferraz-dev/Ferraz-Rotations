@@ -212,7 +212,7 @@ lists:
     - starsurge,if=astral_power>60&active_enemies<=1
 
     # 5. CA/Inc after Fury of Elune is casting/done
-    - incarnation_chosen_of_elune,delay=500,if=!var.cd_active&buff.ascendant_stars.down&(!talent.elunes_guidance|cooldown.lunar_eclipse.charges_fractional<1.5)
+    - incarnation_chosen_of_elune,delay=500,if=!var.cd_active&(!talent.elunes_guidance|cooldown.lunar_eclipse.charges_fractional<1.5)
 
     # 6. Moon charges: don't cap (higher priority than WM in ST — more AP per GCD)
     - full_moon,if=astral_power.deficit>40&debuff.atmospheric_exposure.remains<action.full_moon.execute_time+0.5
@@ -278,34 +278,28 @@ lists:
   # ----------------------------------------------------------
   #  OPENER - ST (Elune's Chosen)
   #
-  #  Icy Veins opener sequence:
-  #  Pre-cast Starfires at pull → DoTs → Solar Eclipse
-  #  → Starsurge ×3 (Ascendant Eclipses stacks) → CA/Inc
-  #  → Fury of Elune → Starsurge/Starfall → Starfire filler
+  #  Log-confirmed opener:
+  #  DoTs → Fury of Elune → CA/Inc → Starsurge/Starfall → Starfire filler
   # ----------------------------------------------------------
   opener_st:
     # 1. DoTs first
-    - moonfire,if=debuff.moonfire.refreshable
     - sunfire,if=debuff.sunfire.refreshable
+    - moonfire,if=debuff.moonfire.refreshable
 
-    # Enter Eclipse (Wrath x2 for Lunar)
-    - lunar_eclipse,if=var.eclipse_down
-
-    # Burn 3x Starsurge to stack Ascendant Eclipses (build Starlord)
-    - starfall,if=active_enemies>1&(buff.ascendant_stars.up|buff.touch_the_cosmos.react)
-    - starsurge,if=buff.ascendant_stars.up|buff.touch_the_cosmos.react
-
-    # CA/Inc after stacks consumed
-    - incarnation_chosen_of_elune,delay=500,if=!var.cd_active
-
-    # Fury of Elune
+    # 2. Fury of Elune BEFORE CDs
     - fury_of_elune
 
-    # AP Dump
-    - starfall,if=active_enemies>1&(buff.touch_the_cosmos.react|astral_power>80)
-    - starsurge,if=buff.touch_the_cosmos.react|astral_power>80
+    # 3. CA/Inc
+    - incarnation_chosen_of_elune,delay=500,if=!var.cd_active
 
-    # Starfire as primary filler inside CA/Inc
+    # 4. Enter Eclipse if Inc is down
+    - lunar_eclipse,if=var.eclipse_down
+
+    # 5. AP Dump
+    - starfall,if=active_enemies>1&(buff.touch_the_cosmos.react|astral_power>80)
+    - starsurge,if=buff.touch_the_cosmos.react|astral_power>80|buff.ascendant_stars.up
+
+    # 6. Starfire as primary filler inside CA/Inc
     - starfire
 
   # ----------------------------------------------------------
