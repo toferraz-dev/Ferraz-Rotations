@@ -63,6 +63,48 @@ config:
     type: checkbox
     default: false
 
+  # -- Time To Die (TTD) --
+  ttd_incarnation:
+    label: "Incarnation TTD (seconds)"
+    section: "Time To Die"
+    type: slider
+    min: 5
+    max: 30
+    default: 15
+    description: "Minimum fight time remaining to use Incarnation"
+  ttd_fury_of_elune:
+    label: "Fury of Elune TTD (seconds)"
+    section: "Time To Die"
+    type: slider
+    min: 3
+    max: 20
+    default: 8
+    description: "Minimum fight time remaining to use Fury of Elune"
+  ttd_trinkets:
+    label: "Trinkets TTD (seconds)"
+    section: "Time To Die"
+    type: slider
+    min: 5
+    max: 30
+    default: 10
+    description: "Minimum fight time remaining to use trinkets"
+  ttd_potion:
+    label: "Potion TTD (seconds)"
+    section: "Time To Die"
+    type: slider
+    min: 5
+    max: 30
+    default: 15
+    description: "Minimum fight time remaining to use combat potion"
+  ttd_starfall:
+    label: "Starfall TTD (seconds)"
+    section: "Time To Die"
+    type: slider
+    min: 2
+    max: 15
+    default: 5
+    description: "Minimum fight time remaining to use Starfall (avoid wasting AP)"
+
 variables:
   # True when no Eclipse is active
   eclipse_down: buff.eclipse_solar.down&buff.eclipse_lunar.down
@@ -74,6 +116,13 @@ variables:
   # Currently inside CA or Incarnation
   cd_active: buff.celestial_alignment.up|buff.incarnation_chosen_of_elune.up
 
+  # === TIME TO DIE VARIABLES ===
+  inc_ttd_ok: (target.time_to_die>=config.ttd_incarnation|fight_remains>=config.ttd_incarnation)
+  foe_ttd_ok: (target.time_to_die>=config.ttd_fury_of_elune|fight_remains>=config.ttd_fury_of_elune)
+  trinkets_ttd_ok: (target.time_to_die>=config.ttd_trinkets|fight_remains>=config.ttd_trinkets)
+  potion_ttd_ok: (target.time_to_die>=config.ttd_potion|fight_remains>=config.ttd_potion)
+  starfall_ttd_ok: (target.time_to_die>=config.ttd_starfall|fight_remains>=config.ttd_starfall)
+
 lists:
 
   # Solar Beam on target, mouseover, or focus
@@ -84,9 +133,9 @@ lists:
 
   # Activate trinkets/potion during burst windows (only when burst toggle is ON)
   trinkets:
-    - trinket_1,delay=150,name="Trinket 1",if=config.burst_toggle&config.use_trinket_1&trinket_1.ready&player.combat&cooldown.fury_of_elune.remains>0&(var.opener|var.cd_active)
-    - trinket_2,delay=150,name="Trinket 2",if=config.burst_toggle&config.use_trinket_2&trinket_2.ready&player.combat&cooldown.fury_of_elune.remains>0&(var.opener|var.cd_active)
-    - combat_potion,delay=150,name="Combat Potion",if=config.burst_toggle&config.use_potion&combat_potion.ready&player.combat&cooldown.fury_of_elune.remains>0&(var.opener|var.cd_active)
+    - trinket_1,delay=150,name="Trinket 1",if=config.burst_toggle&config.use_trinket_1&trinket_1.ready&player.combat&var.trinkets_ttd_ok&cooldown.fury_of_elune.remains>0&(var.opener|var.cd_active)
+    - trinket_2,delay=150,name="Trinket 2",if=config.burst_toggle&config.use_trinket_2&trinket_2.ready&player.combat&var.trinkets_ttd_ok&cooldown.fury_of_elune.remains>0&(var.opener|var.cd_active)
+    - combat_potion,delay=150,name="Combat Potion",if=config.burst_toggle&config.use_potion&combat_potion.ready&player.combat&var.potion_ttd_ok&cooldown.fury_of_elune.remains>0&(var.opener|var.cd_active)
 
   # Emergency Bear Form for Frenzied Regen, then Barkskin
   defensives:
@@ -99,6 +148,7 @@ lists:
 
   # Heart of the Wild when party HP is low
   heal_support:
+    - mark_of_the_wild,if=group.count(cycle.buff.mark_of_the_wild.down.any)>0&!player.combat
     - heart_of_the_wild,if=config.enable_hotw&group.lowest.health.pct<config.hotw_hp_threshold&!buff.heart_of_the_wild.up
 
   # Movement ST — instant-cast only: DoTs > Starsurge > FoE > filler
@@ -141,13 +191,14 @@ lists:
     # Activate Lunar Eclipse directly when charges available (no Wrath needed in 12.0.5)
     - lunar_eclipse,if=var.eclipse_down&cooldown.lunar_eclipse.ready
     # FoE on CD — Lunation passively reduces CD via Arcane casts (~28s effective CD)
-    - fury_of_elune
+    - fury_of_elune,if=var.foe_ttd_ok
     # Spend AP — free procs first (Hail of Stars: free SS/SF grants Solstice for 3s)
     - starfall,if=buff.starweavers_weft.up|buff.touch_the_cosmos.react
+    # Note: free procs (Starweaver/TtC) bypass TTD — never waste a free cast
     - starsurge,if=buff.starweavers_warp.up|buff.touch_the_cosmos.react
     - starsurge,if=astral_power>60
     # Activate Inc — only after FoE was cast (FoE on CD = burst sequence complete)
-    - incarnation_chosen_of_elune,delay=500,if=config.burst_toggle&!var.cd_active&cooldown.fury_of_elune.remains>0
+    - incarnation_chosen_of_elune,delay=500,if=config.burst_toggle&var.inc_ttd_ok&!var.cd_active&cooldown.fury_of_elune.remains>0
     # Fillers — Wrath for ST when Eclipse is down, Starfire when Eclipse is up (empowered +50%)
     - wrath,if=var.eclipse_down&active_enemies<=1
     - starfire
@@ -162,12 +213,12 @@ lists:
     # Activate Lunar Eclipse directly when charges available (no Wrath needed in 12.0.5)
     - lunar_eclipse,if=var.eclipse_down&cooldown.lunar_eclipse.ready
     # FoE on CD — Radiant Moonlight (+50% dmg, -15s CD) + Lunation (Arcane spells reduce CD further)
-    - fury_of_elune
+    - fury_of_elune,if=var.foe_ttd_ok
     # Activate Inc — only after FoE was cast (FoE on CD = burst sequence complete)
-    - incarnation_chosen_of_elune,delay=500,if=config.burst_toggle&!var.cd_active&cooldown.fury_of_elune.remains>0
+    - incarnation_chosen_of_elune,delay=500,if=config.burst_toggle&var.inc_ttd_ok&!var.cd_active&cooldown.fury_of_elune.remains>0
     # Starfall — SPAM aggressively (Aetherial Kindling extends DoTs, Starweaver 40% proc→free SS)
     - starfall,if=buff.starweavers_weft.up|buff.touch_the_cosmos.react
-    - starfall,if=(astral_power>50)&target.time_to_die>5
+    - starfall,if=(astral_power>50)&var.starfall_ttd_ok
     # Starsurge weaving during Starfall (Star Cascade: 72% of SS during SF for cleave)
     - starsurge,if=buff.starfall.up&(buff.starweavers_warp.up|buff.touch_the_cosmos.react)
     - starsurge,if=buff.starfall.up&astral_power>60&buff.starlord.stack<3
@@ -178,8 +229,8 @@ lists:
     - sunfire,if=debuff.sunfire.refreshable
     - moonfire,if=debuff.moonfire.refreshable
     # FoE before Inc for AP ramp + Atmospheric Exposure debuff (+6% dmg taken)
-    - fury_of_elune
-    - incarnation_chosen_of_elune,delay=500,if=!var.cd_active&cooldown.fury_of_elune.remains>0
+    - fury_of_elune,if=var.foe_ttd_ok
+    - incarnation_chosen_of_elune,delay=500,if=var.inc_ttd_ok&!var.cd_active&cooldown.fury_of_elune.remains>0
     # Inc grants both Eclipses — Ascendant Eclipses: next cast is instant, first 3 spenders +20%
     # Dump AP aggressively during burst (Elune's Guidance: SS -10 AP, SF -12 AP)
     - starfall,if=buff.starweavers_weft.up|buff.touch_the_cosmos.react
@@ -191,8 +242,8 @@ lists:
   opener_aoe:
     - sunfire,if=debuff.sunfire.refreshable
     - moonfire,if=debuff.moonfire.refreshable
-    - fury_of_elune
-    - incarnation_chosen_of_elune,if=!var.cd_active&cooldown.fury_of_elune.remains>0
+    - fury_of_elune,if=var.foe_ttd_ok
+    - incarnation_chosen_of_elune,if=var.inc_ttd_ok&!var.cd_active&cooldown.fury_of_elune.remains>0
     # Ascendant Eclipses: first 3 spenders deal +20% — prioritize Starfall + Starsurge weave
     - starfall,if=buff.starweavers_weft.up|buff.touch_the_cosmos.react|astral_power>50
     - starsurge,if=buff.starfall.up&(buff.starweavers_warp.up|buff.touch_the_cosmos.react|astral_power>60)
@@ -204,14 +255,17 @@ lists:
     - call_action_list,name=spell_queue
     - call_action_list,name=sanity_checks
     - call_action_list,name=auto_target_ranged
+
+    - return,if=!target.valid&!((cfg.auto_combat.has(1)&target.quest_mob&target.enemy&!target.dead)|(cfg.auto_combat.has(2)&target.combat&target.enemy&!target.dead)|(cfg.auto_combat.has(3)&target.targeting_party&target.enemy&!target.dead))
+    - return,if=!target.valid&cfg.auto_combat.has(0)
+    - return,if=!target.valid|target.dead|!target.attackable
+
     - call_action_list,name=auto_heal
-    - mark_of_the_wild,if=group.count(cycle.buff.mark_of_the_wild.down.any)>0&!player.combat
-    - return,if=auto_combat.player
+    - call_action_list,name=heal_support
     # Defensives
     - call_action_list,name=defensives
     # Utility
     - call_action_list,name=interrupts
-    - call_action_list,name=heal_support
     - call_action_list,name=trinkets
     # Opener when CDs are freshly available
     - call_action_list,name=opener_aoe,if=var.opener&active_enemies>2
