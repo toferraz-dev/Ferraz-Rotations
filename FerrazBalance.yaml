@@ -95,7 +95,7 @@ lists:
     - barkskin,if=health.pct<=config.barkskin_hp
     # Break roots — shift to Cat Form to clear movement-impairing effects
     - cat_form,if=debuff_list.freedom.up&buff.moonkin_form.up
-    - wrath, if=!buff.moonkin_form.up
+    - starfire, if=!buff.moonkin_form.up
 
   # Heart of the Wild when party HP is low
   heal_support:
@@ -110,7 +110,7 @@ lists:
     - starsurge,if=astral_power>60
     # Fury of Elune — on CD, instant
     - fury_of_elune
-    # Last-resort instant fillers
+    # Last-qresort instant fillers
     - moonfire
     - sunfire
 
@@ -203,7 +203,7 @@ lists:
     - return,if=player.channeling|player.casting
     - call_action_list,name=spell_queue
     - call_action_list,name=sanity_checks
-    - call_action_list,name=auto_target
+    - call_action_list,name=auto_target_ranged
     - call_action_list,name=auto_heal
     - mark_of_the_wild,if=group.count(cycle.buff.mark_of_the_wild.down.any)>0&!player.combat
     - return,if=auto_combat.player
