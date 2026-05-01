@@ -117,11 +117,12 @@ variables:
   cd_active: buff.celestial_alignment.up|buff.incarnation_chosen_of_elune.up
 
   # === TIME TO DIE VARIABLES ===
-  inc_ttd_ok: (target.time_to_die>=config.ttd_incarnation|fight_remains>=config.ttd_incarnation)
-  foe_ttd_ok: (target.time_to_die>=config.ttd_fury_of_elune|fight_remains>=config.ttd_fury_of_elune)
-  trinkets_ttd_ok: (target.time_to_die>=config.ttd_trinkets|fight_remains>=config.ttd_trinkets)
-  potion_ttd_ok: (target.time_to_die>=config.ttd_potion|fight_remains>=config.ttd_potion)
-  starfall_ttd_ok: (target.time_to_die>=config.ttd_starfall|fight_remains>=config.ttd_starfall)
+  # target.boss bypasses TTD — bosses always get full CDs (TTD is unreliable on bosses)
+  inc_ttd_ok: (target.boss|target.time_to_die>=config.ttd_incarnation|fight_remains>=config.ttd_incarnation)
+  foe_ttd_ok: (target.boss|target.time_to_die>=config.ttd_fury_of_elune|fight_remains>=config.ttd_fury_of_elune)
+  trinkets_ttd_ok: (target.boss|target.time_to_die>=config.ttd_trinkets|fight_remains>=config.ttd_trinkets)
+  potion_ttd_ok: (target.boss|target.time_to_die>=config.ttd_potion|fight_remains>=config.ttd_potion)
+  starfall_ttd_ok: (target.boss|target.time_to_die>=config.ttd_starfall|fight_remains>=config.ttd_starfall)
 
 lists:
 
