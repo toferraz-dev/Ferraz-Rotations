@@ -24,7 +24,7 @@ config:
     type: slider
     min: 25
     max: 99
-    default: 60
+    default: 40
 
   ironbark_threshold:
     label: "Ironbark HP %"
@@ -76,7 +76,7 @@ config:
     type: slider
     min: 1
     max: 5
-    default: 4
+    default: 3
 
   manual_tranquility:
     label: "Manual Tranquility"
@@ -130,7 +130,7 @@ config:
     type: slider
     min: 25
     max: 99
-    default: 85
+    default: 70
 
   regrowth_threshold:
     label: "Regrowth HP %"
@@ -138,7 +138,7 @@ config:
     type: slider
     min: 25
     max: 99
-    default: 80
+    default: 85
 
   rejuvenation_threshold:
     label: "Rejuvenation HP %"
@@ -358,23 +358,23 @@ lists:
     - rake,name="Fluid Rake",if=talent.fluid_form&!buff.cat_form.up&debuff.rake.refreshable
     - shred,name="Fluid Shred",if=talent.fluid_form&!buff.cat_form.up
 
-    # Explicit shift fallback only when Fluid Form isn't talented
-    - cat_form,name="Manual Cat Shift",if=!talent.fluid_form&!buff.cat_form.up
+    # Explicit shift fallback when Fluid Form isn't available
+    - cat_form,name="Manual Cat Shift",if=!buff.cat_form.up
     - return,if=!buff.cat_form.up
 
     - heart_of_the_wild,name="HotW Cat",if=config.use_heart_of_the_wild&talent.heart_of_the_wild&buff.cat_form.up
     - call_action_list,name=catweave_aoe,if=active_enemies>=config.aoe_threshold
     - call_action_list,name=catweave_st,if=active_enemies<config.aoe_threshold
 
-  # Ranged DoT maintenance + Starfire filler while in caster form
+  # Ranged DoT maintenance while in caster form
   ranged_dps:
     - sunfire,name="Sunfire Aoe Dot",if=debuff.sunfire.refreshable
-    - moonfire,name="Moonfire ST Refresh",if=debuff.moonfire.refreshable&active_enemies<config.aoe_threshold
-    - starfire,name="Starfire Filler",if=!player.moving
+    - moonfire,name="Moonfire ST Refresh",if=debuff.moonfire.refreshable
 
-  # Bearweave: Thrash via Fluid Form, then fall into catweave (no Mangle — not worth GCDs)
+  # Bearweave: Thrash/Mangle via Fluid Form, then fall into catweave
   bearweave:
     - thrash,name="Thrash (BearmForm Bleed)",if=debuff.thrash.remains<3&talent.fluid_form
+    - mangle,name="Mangle (BearForm)",if=talent.fluid_form
     - call_action_list,name=catweave
 
   # Movement healing: instant-cast HoTs only
@@ -383,8 +383,6 @@ lists:
     - lifebloom,name="Lifebloom Tank (Moving)",cycle=tanks,if=(cycle.buff.lifebloom.down|cycle.buff.lifebloom.remains<4.5)&(cycle.buff.lifebloom.up|group.count(cycle.buff.lifebloom.up)=0)
     - rejuvenation,name="Rejuvenation (Moving)",cycle=members,if=cycle.buff.rejuvenation.remains<1.5&cycle.health.effective.pct<config.rejuvenation_threshold
     - rejuvenation,name="Germination (Moving)",cycle=members,if=talent.germination&cycle.buff.rejuvenation.up&(cycle.buff.rejuvenation_germination.down|cycle.buff.rejuvenation_germination.remains<1.5)&cycle.health.effective.pct<config.rejuvenation_threshold
-    - sunfire,name="Sunfire Aoe Dot (Moving)",if=debuff.sunfire.refreshable
-    - moonfire,name="Moonfire ST Refresh (Moving)",if=debuff.moonfire.refreshable&active_enemies<config.aoe_threshold
 
   # Mouseover emergency: NS Regrowth > Swiftmend > Rejuv > hardcast Regrowth
   mouseover_healing_emergency:
@@ -415,5 +413,5 @@ lists:
     - call_action_list,name=active_healing,if=!config.force_dps
     # DPS weaving when group is healthy and target is valid in range
     - call_action_list,name=ranged_dps,if=var.can_catweave&target.exists&target.alive&!target.friendly
-    - call_action_list,name=bearweave,if=var.can_catweave&target.exists&target.alive&!target.friendly&target.range<=8&buff.bear_form.up
+    - call_action_list,name=bearweave,if=var.can_catweave&target.exists&target.alive&!target.friendly&target.range<=8
     - call_action_list,name=catweave,if=var.can_catweave&target.exists&target.alive&!target.friendly&target.range<=8

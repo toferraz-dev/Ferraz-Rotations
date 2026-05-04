@@ -78,6 +78,12 @@ config:
     max: 5
     default: 5
 
+  raid_manual_tranquility:
+    label: "Manual Tranquility"
+    section: "Cooldowns"
+    type: checkbox
+    default: false
+
   # -- Healing AoE & Group --
   raid_use_mouseover:
     label: "MO Healing (Emergency)"
@@ -287,7 +293,7 @@ lists:
     # Convoke requires NS + Abundance 3+ and caster form
     - convoke_the_spirits,global_delay=500,name="Convoke (Heal)",if=buff.natures_swiftness.up&!buff.cat_form.up&!buff.bear_form.up&!buff.moonkin_form.up&buff.abundance.stack>=3
     - regrowth,name="Nature Swift Regrowth",cycle=members,if=buff.natures_swiftness.up
-    - tranquility,global_delay=500,name="Tranquility",if=group.count(cycle.health.effective.pct<config.raid_tranquility_threshold)>=config.raid_tranquility_members&!player.moving
+    - tranquility,global_delay=500,name="Tranquility",if=!config.raid_manual_tranquility&group.count(cycle.health.effective.pct<config.raid_tranquility_threshold)>=config.raid_tranquility_members&!player.moving
     - swiftmend,name="Swiftmend for SotF/Treants",cycle=members,if=cycle.health.effective.pct<config.raid_swiftmend_threshold&(cycle.buff.rejuvenation.up|cycle.buff.regrowth.up|cycle.buff.wild_growth.up)
     - regrowth,name="Clearcasting Regrowth",cycle=members,if=buff.clearcasting.up&(cycle.buff.regrowth.down|cycle.health.effective.pct<99)
 
