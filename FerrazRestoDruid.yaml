@@ -358,8 +358,8 @@ lists:
     - rake,name="Fluid Rake",if=talent.fluid_form&!buff.cat_form.up&debuff.rake.refreshable
     - shred,name="Fluid Shred",if=talent.fluid_form&!buff.cat_form.up
 
-    # Explicit shift fallback when Fluid Form isn't available
-    - cat_form,name="Manual Cat Shift",if=!buff.cat_form.up
+    # Explicit shift fallback only when Fluid Form isn't talented
+    - cat_form,name="Manual Cat Shift",if=!talent.fluid_form&!buff.cat_form.up
     - return,if=!buff.cat_form.up
 
     - heart_of_the_wild,name="HotW Cat",if=config.use_heart_of_the_wild&talent.heart_of_the_wild&buff.cat_form.up
@@ -383,6 +383,8 @@ lists:
     - lifebloom,name="Lifebloom Tank (Moving)",cycle=tanks,if=(cycle.buff.lifebloom.down|cycle.buff.lifebloom.remains<4.5)&(cycle.buff.lifebloom.up|group.count(cycle.buff.lifebloom.up)=0)
     - rejuvenation,name="Rejuvenation (Moving)",cycle=members,if=cycle.buff.rejuvenation.remains<1.5&cycle.health.effective.pct<config.rejuvenation_threshold
     - rejuvenation,name="Germination (Moving)",cycle=members,if=talent.germination&cycle.buff.rejuvenation.up&(cycle.buff.rejuvenation_germination.down|cycle.buff.rejuvenation_germination.remains<1.5)&cycle.health.effective.pct<config.rejuvenation_threshold
+    - sunfire,name="Sunfire Aoe Dot (Moving)",if=debuff.sunfire.refreshable
+    - moonfire,name="Moonfire ST Refresh (Moving)",if=debuff.moonfire.refreshable&active_enemies<config.aoe_threshold
 
   # Mouseover emergency: NS Regrowth > Swiftmend > Rejuv > hardcast Regrowth
   mouseover_healing_emergency:
