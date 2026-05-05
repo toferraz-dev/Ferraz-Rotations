@@ -246,6 +246,8 @@ lists:
     - call_action_list,name=taunt
     - call_action_list,name=utility
     - call_action_list,name=racials
+
     - return,if=!target.exists|target.dead|!target.enemy
+
     - call_action_list,name=cooldowns
     - call_action_list,name=rotation_claw
