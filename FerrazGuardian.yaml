@@ -104,6 +104,12 @@ config:
     max: 90
     default: 50
 
+  use_mark_of_the_wild:
+    label: "Auto Mark of the Wild"
+    section: "Utility"
+    type: checkbox
+    default: true
+
   # -- Trinkets --
   use_trinket_1:
     label: "Auto Trinket 1"
@@ -140,7 +146,7 @@ variables:
 lists:
   # Mark of the Wild out of combat
   out_of_combat:
-    - mark_of_the_wild,name="Mark of the Wild",if=group.count(cycle.buff.mark_of_the_wild.down.any)>0
+    - mark_of_the_wild,name="Mark of the Wild",if=config.use_mark_of_the_wild&group.count(cycle.buff.mark_of_the_wild.down.any)>0
 
   # Defensive priority: Dream of Cenarius Regrowth > SI > Frenzied Regen > Barkskin (on CD)
   defensives:
