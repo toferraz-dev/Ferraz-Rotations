@@ -106,6 +106,12 @@ config:
     default: 3
 
   # -- Movement --
+  use_wild_charge:
+    label: "Auto Wild Charge"
+    section: "Movement"
+    type: checkbox
+    default: false
+
   stampeding_roar_usage:
     label: "Stampeding Roar Usage"
     section: "Movement"
@@ -244,7 +250,7 @@ lists:
 
   # Wild Charge gap-close, root/snare breaking via Fluid Form, Prowl, Stampeding Roar
   movement:
-    - wild_charge,name="Wild Charge",if=target.enemy&range>8&range<=25
+    - wild_charge,name="Wild Charge",if=config.use_wild_charge&target.enemy&range>8&range<=25
     # Root/snare break: shapeshift cycle via Fluid Form (bear_form > shred auto-returns Cat)
     - bear_form,name="Shapeshift Clear (Root)",if=player.rooted&!buff.bear_form.up
     - shred,name="Fluid Cat Return (Root)",if=player.rooted&buff.bear_form.up
