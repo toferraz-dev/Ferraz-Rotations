@@ -185,9 +185,8 @@ variables:
   # Bearweave heal flag — enter Bear for Frenzied Regen
   needs_bearweave_heal: health.effective.pct<config.frenzied_regen_threshold&!buff.frenzied_regeneration.up&cooldown.frenzied_regeneration.ready
 
-  # Energy thresholds — 50+ ideal for max Bite damage, 25+ usable
-  energy_for_bite: energy>=25
-  energy_for_bite_ideal: energy>=50
+  # Energy thresholds — 50+ ideal for max Bite damage
+  energy_for_bite: energy>=50
   energy_for_tf: energy.deficit>=50
 
   # Stampeding Roar conditions based on config
@@ -234,6 +233,7 @@ lists:
     - berserking,name="Berserking",if=config.burst_toggle&var.berserk_up
     - fireblood,name="Fireblood",if=config.burst_toggle&var.berserk_up
     - ancestral_call,name="Ancestral Call",if=config.burst_toggle&var.berserk_up
+    - thorn_bloom,name="Thorn Bloom (AoE)",if=config.burst_toggle&var.berserk_up&active_enemies>=config.aoe_threshold
 
   # Skull Bash on target/mouseover/focus; AoE CC; Soothe
   interrupts:
@@ -279,21 +279,19 @@ lists:
     - ravage,name="Ravage (Apex Proc) ST",if=var.has_apex&var.ravage_up
     - ferocious_bite,name="Bite (Apex Proc) ST",if=var.has_apex
     - tigers_fury,name="Tiger's Fury ST",if=var.energy_for_tf|buff.tigers_fury.down
-    # Execute-range Bite at 5 CP
-    - ferocious_bite,name="Bite (Execute) ST",if=var.cp_full&target.health.effective.pct<25
+    # Execute-range Bite at 5 CP (requires 50 energy for 100% bonus damage)
+    - ferocious_bite,name="Bite (Execute) ST",if=var.cp_full&var.energy_for_bite&target.health.effective.pct<25
     # Rip: apply if missing, snapshot with TF, or refresh when full CP
-    - rip,name="Rip Apply ST",if=var.cp_max&!var.rip_up&target.health.effective.pct>=25
-    - rip,name="Rip Snapshot ST",if=var.cp_max&var.rip_refreshable&var.tigers_fury_up&target.health.effective.pct>=25
-    - rip,name="Rip Refresh ST",if=var.cp_full&var.rip_refreshable&target.health.effective.pct>=25
-    # Ravage at max CP with energy
+    - rip,name="Rip Apply ST",if=var.cp_max&!var.rip_up
+    - rip,name="Rip Snapshot ST",if=var.cp_max&var.rip_refreshable&var.tigers_fury_up
+    - rip,name="Rip Refresh ST",if=var.cp_full&var.rip_refreshable
+    # Ravage at max CP with 50 energy
     - ravage,name="Ravage ST",if=var.ravage_up&var.cp_max&var.energy_for_bite
-    # Ferocious Bite — ideal energy first, then any energy at 5 CP
-    - ferocious_bite,name="Bite (Dump Ideal) ST",if=var.cp_max&var.energy_for_bite_ideal&var.rip_up
-    - ferocious_bite,name="Bite (Dump) ST",if=var.cp_full&var.energy_for_bite&var.rip_up
+    # Ferocious Bite — always wait for 50 energy for double damage
+    - ferocious_bite,name="Bite (Dump) ST",if=var.cp_max&var.energy_for_bite&var.rip_up
     # Rake — Sudden Ambush empowered first, then normal refresh
     - rake,name="Rake (Ambush Proc) ST",if=var.has_sudden_ambush&var.rake_refreshable
-    - rake,name="Rake Refresh ST",if=var.rake_refreshable&target.health.effective.pct>=25
-    - rake,name="Rake Execute ST",if=!debuff.rake.up&target.health.effective.pct<25
+    - rake,name="Rake Refresh ST",if=var.rake_refreshable
     # Shred — Sudden Ambush empowered first, then filler
     - shred,name="Shred (Ambush Proc) ST",if=var.has_sudden_ambush
     - shred,name="Shred Filler ST"
@@ -335,4 +333,4 @@ lists:
     - call_action_list,name=movement,if=player.moving
     # AoE or ST based on enemy count threshold
     - call_action_list,name=aoe_rotation,if=active_enemies>=config.aoe_threshold
-    - call_action_list,name=st_rotation,if=active_enemies<config.aoe_threshold
+    - call_action_list,name=st_rotation
