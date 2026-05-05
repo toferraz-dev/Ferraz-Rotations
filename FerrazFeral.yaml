@@ -71,7 +71,15 @@ config:
     type: slider
     min: 20
     max: 95
-    default: 40
+    default: 70
+
+  frenzied_regen_threshold:
+    label: "Frenzied Regen HP %"
+    section: "Defensives"
+    type: slider
+    min: 25
+    max: 80
+    default: 55
 
   # -- Interrupts --
   use_skull_bash:
@@ -140,14 +148,6 @@ config:
     type: checkbox
     default: true
 
-  innervate_threshold:
-    label: "Innervate Healer Mana %"
-    section: "Utility"
-    type: slider
-    min: 10
-    max: 90
-    default: 50
-
 variables:
   # Combo point thresholds
   cp_max: combo_points>=4
@@ -169,6 +169,9 @@ variables:
   # Emergency flag
   emergency_situation: health.effective.pct<35
 
+  # Bearweave heal flag — enter Bear for Frenzied Regen
+  needs_bearweave_heal: health.effective.pct<config.frenzied_regen_threshold&!buff.frenzied_regeneration.up&cooldown.frenzied_regeneration.ready
+
   # Energy thresholds — 50+ ideal for max Bite damage, 25+ usable
   energy_for_bite: energy>=25
   energy_for_bite_ideal: energy>=50
@@ -178,25 +181,37 @@ variables:
   use_stampeding_roar: moving.time>=config.stampeding_roar_movement_time&buff.stampeding_roar.down&((config.stampeding_roar_usage=1&player.combat)|(config.stampeding_roar_usage=2&!player.combat)|(config.stampeding_roar_usage=3))
 
 lists:
-  # Survival Instincts > Barkskin > Predatory Swiftness Regrowth
+  # Survival Instincts > Barkskin > Bear Form + Frenzied Regen > Regrowth
+  # Note: Fluid Form auto-returns to Cat on next Rake/Shred (no Cat Form needed)
   defensives:
     - survival_instincts,name="Survival Instincts",if=health.effective.pct<config.survival_instincts_threshold
     - barkskin,name="Barkskin",if=health.effective.pct<config.barkskin_threshold
+    # Bearweave: Bear Form required (FR not in Fluid Form spell list), Cat return is automatic
+    - bear_form,name="Bear Form (Defensive)",if=var.needs_bearweave_heal&!buff.bear_form.up
+    - frenzied_regeneration,name="Frenzied Regen",if=buff.bear_form.up&health.effective.pct<config.frenzied_regen_threshold
     - regrowth,name="Regrowth (Proc)",if=var.predatory_swiftness_up&health.effective.pct<config.regrowth_threshold
 
-  # Tiger's Fury > Trinkets/Potion > Berserk > Convoke
+  # Tiger's Fury > Trinkets/Potion > Berserk > Frenzy > Convoke
   cooldowns:
     - tigers_fury,name="Tiger's Fury",if=var.energy_for_tf|buff.tigers_fury.down
-    - trinket_1,name="Trinket 1",if=config.use_trinket_1&trinket_1.ready&var.tigers_fury_up
-    - trinket_2,name="Trinket 2",if=config.use_trinket_2&trinket_2.ready&var.tigers_fury_up
+    # Trinkets: prefer Berserk burst window, fallback to TF-only
+    - trinket_1,name="Trinket 1 (Burst)",if=config.use_trinket_1&trinket_1.ready&var.berserk_up&var.tigers_fury_up
+    - trinket_2,name="Trinket 2 (Burst)",if=config.use_trinket_2&trinket_2.ready&var.berserk_up&var.tigers_fury_up
+    - trinket_1,name="Trinket 1 (TF)",if=config.use_trinket_1&trinket_1.ready&var.tigers_fury_up&!var.berserk_up&cooldown.berserk.remains>30
+    - trinket_2,name="Trinket 2 (TF)",if=config.use_trinket_2&trinket_2.ready&var.tigers_fury_up&!var.berserk_up&cooldown.berserk.remains>30
+    # Potion: during Berserk burst or on boss pull
     - combat_potion,name="Potion",if=config.use_potion&combat_potion.ready&var.tigers_fury_up&(var.berserk_up|target.boss)
     - berserk,name="Berserk",if=config.use_berserk&var.tigers_fury_up
+    # Frantic/Feral Frenzy — after Berserk, before Convoke (used in both ST and AoE)
+    - frantic_frenzy,name="Frantic Frenzy",if=talent.frantic_frenzy&combo_points<=3&var.tigers_fury_up
+    - feral_frenzy,name="Feral Frenzy",if=!talent.frantic_frenzy&combo_points<=3&var.tigers_fury_up
     # Convoke during Berserk + TF, or TF-only fallback
     - convoke_the_spirits,name="Convoke (Berserk)",if=config.use_convoke&var.berserk_up&var.tigers_fury_up&combo_points<=3
     - convoke_the_spirits,name="Convoke (TF Only)",if=config.use_convoke&var.tigers_fury_up&!var.berserk_up&combo_points<=3
 
-  # Shadowmeld for stealth proc or aggro drop; racial damage CDs during Berserk
+  # Shadowmeld post-Convoke for empowered Rake, stealth proc, or aggro drop; racial CDs during Berserk
   racials:
+    - shadowmeld,name="Shadowmeld (Post-Convoke)",if=config.use_shadowmeld&player.combat&var.berserk_up&buff.convoke_the_spirits.down&cooldown.convoke_the_spirits.remains>115&combo_points<=2&!buff.sudden_ambush.up
     - shadowmeld,name="Shadowmeld (Prowl Proc)",if=config.use_shadowmeld&player.combat&var.berserk_up&combo_points<=2&!buff.sudden_ambush.up
     - shadowmeld,name="Shadowmeld (Aggro Drop)",if=config.use_shadowmeld&player.combat&(target.threat>=3|player.aggro)&!target.boss
     - blood_fury,name="Blood Fury",if=var.berserk_up
@@ -221,20 +236,26 @@ lists:
     - mark_of_the_wild,name="Mark of the Wild",if=config.use_mark_of_the_wild&group.count(cycle.buff.mark_of_the_wild.down.any)>0
     - prowl,name="Prowl (OOC)",if=config.use_prowl&!buff.prowl.up&(!player.combat|buff.shadowmeld.up)
 
-  # Open from stealth with empowered Rake
+  # Open from stealth — TF first for snapshot, then empowered Rake
   stealth_opener:
+    - tigers_fury,name="TF Opener",if=(buff.prowl.up|buff.shadowmeld.up)&(energy.deficit>=50|buff.tigers_fury.down)
     - rake,name="Rake Opener",if=buff.prowl.up|buff.shadowmeld.up
 
-  # Root-breaking shapeshifts, Prowl, Stampeding Roar
+  # Wild Charge gap-close, root/snare breaking via Fluid Form, Prowl, Stampeding Roar
   movement:
-    - bear_form,name="Stay Bear (Rooted)",if=player.rooted&!buff.bear_form.up
-    - cat_form,name="Stay Cat (Rooted)",if=player.rooted&buff.bear_form.up
+    - wild_charge,name="Wild Charge",if=target.enemy&range>8&range<=25
+    # Root/snare break: shapeshift cycle via Fluid Form (bear_form > shred auto-returns Cat)
+    - bear_form,name="Shapeshift Clear (Root)",if=player.rooted&!buff.bear_form.up
+    - shred,name="Fluid Cat Return (Root)",if=player.rooted&buff.bear_form.up
     - prowl,name="Prowl (Movement)",if=config.use_prowl&!buff.prowl.up&!player.combat
     - stampeding_roar,name="Stampeding Roar",if=var.use_stampeding_roar&config.stampeding_roar_usage!=0
 
-  # Innervate the healer when their mana is low
+  # Innervate healer, shapeshift to clear snares/slows (debuff_list.freedom pattern from Resto)
   utility:
-    - innervate,name="Innervate (Healer)",cycle=healers,if=cycle.mana.pct<config.innervate_threshold&!cycle.buff.innervate.up
+    # Shapeshift snare/slow clear: bear_form to break, Fluid Form shred returns Cat
+    - bear_form,name="Shapeshift Clear (Snare)",if=debuff_list.freedom.up&!buff.bear_form.up
+    - shred,name="Fluid Cat Return (Snare)",if=debuff_list.freedom.up&buff.bear_form.up
+    - innervate,name="Innervate (Healer)",cycle=healers,if=!cycle.buff.innervate.up
 
   # ST — Apex proc > TF > Execute Bite > Rip maintenance > Ravage > Bite dump > Rake > Shred
   st_rotation:
@@ -261,15 +282,13 @@ lists:
     - shred,name="Shred (Ambush Proc) ST",if=var.has_sudden_ambush
     - shred,name="Shred Filler ST"
 
-  # AoE (3+) — TF > Primal Wrath > Frenzy > Ravage/Apex > Bite > Rake > Swipe
+  # AoE (3+) — TF > Primal Wrath > Ravage/Apex > Bite > Rake > Swipe
+  # Note: Frantic/Feral Frenzy is now handled in the cooldowns list
   aoe_rotation:
     - tigers_fury,name="Tiger's Fury AoE",if=var.energy_for_tf|buff.tigers_fury.down
-    # Primal Wrath: AoE bleed application and refresh
-    - primal_wrath,name="Primal Wrath (Bleed)",if=var.cp_max&debuff.rip.refreshable
-    - primal_wrath,name="Primal Wrath (Dump)",if=var.cp_full&active_enemies>=4
-    # Frenzy variants for CP generation
-    - frantic_frenzy,name="Frantic Frenzy AoE",if=talent.frantic_frenzy&combo_points<=3&var.tigers_fury_up
-    - feral_frenzy,name="Feral Frenzy AoE",if=!talent.frantic_frenzy&combo_points<=3&var.tigers_fury_up
+    # Primal Wrath: aggressive usage — always at full CP, or at 4+ CP to refresh bleeds
+    - primal_wrath,name="Primal Wrath (Full CP)",if=var.cp_full
+    - primal_wrath,name="Primal Wrath (Bleed Refresh)",if=var.cp_max&debuff.rip.refreshable
     # Apex proc Ravage/Bite
     - ravage,name="Ravage (Apex AoE)",if=var.has_apex&var.ravage_up
     - ravage,name="Ravage (AoE Finisher)",if=var.ravage_up&var.cp_max&var.energy_for_bite

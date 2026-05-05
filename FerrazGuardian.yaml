@@ -96,13 +96,6 @@ config:
     type: checkbox
     default: true
 
-  innervate_threshold:
-    label: "Innervate Healer Mana %"
-    section: "Utility"
-    type: slider
-    min: 10
-    max: 90
-    default: 50
 
   use_mark_of_the_wild:
     label: "Auto Mark of the Wild"
@@ -179,7 +172,7 @@ lists:
 
   # Innervate healer + Stampeding Roar
   utility:
-    - innervate,name="Innervate (Healer)",cycle=healers,if=cycle.mana.pct<config.innervate_threshold&!cycle.buff.innervate.up
+    - innervate,name="Innervate (Healer)",cycle=healers,if=!cycle.buff.innervate.up
     - stampeding_roar,name="Stampeding Roar",if=var.use_stampeding_roar&config.stampeding_roar_usage!=0
 
   # Trinkets > Potion > Lunar Beam > Sundering Roar > Incarnation/Berserk > Wild Guardian
