@@ -62,6 +62,14 @@ config:
     max: 5
     default: 3
 
+  manual_convoke:
+    label: "Manual Convoke (Auto-Off)"
+    section: "Cooldowns"
+    type: toggle
+    spell: 391528
+    default: true
+    description: "Toggle to disable auto NS+Convoke."
+
   tranquility_threshold:
     label: "Tranquility HP %"
     section: "Cooldowns"
@@ -82,7 +90,8 @@ config:
     label: "Manual Tranquility"
     section: "Cooldowns"
     type: checkbox
-    default: false
+    default: true
+    description: "Toggle to disable automatic Tranquility usage."
 
   # -- Healing AoE & Group --
   use_mouseover:
@@ -230,13 +239,6 @@ config:
     type: checkbox
     default: true
 
-  force_dps:
-    label: "Force DPS"
-    spell: 768
-    section: "Utility"
-    type: toggle
-    description: "Forcing the DPS while forgetting that it's a healer role."
-
   force_spread:
     label: "Force HoT Spread"
     section: "Utility"
@@ -247,8 +249,8 @@ config:
 variables:
   # True when fewer party members are injured than the exit threshold
   group_healthy: group.count(cycle.health.effective.pct<config.catweave_group_hp)<config.catweave_injured_max
-  # Safe to enter Cat Form for DPS (group healthy or Force DPS toggle)
-  can_catweave: (var.group_healthy|config.force_dps)&player.combat
+  # Safe to enter Cat Form for DPS (group healthy)
+  can_catweave: var.group_healthy&player.combat
   # Valid mouseover healing target
   mo_friendly_valid: mouseover.exists&mouseover.alive&mouseover.friendly&mouseover.unitframe
   # Soul of the Forest proc is active
@@ -293,7 +295,7 @@ lists:
 
   # NS > Trinkets/Potion (pre-Convoke) > Convoke > NS Regrowth > Tranquility > Swiftmend > Clearcasting
   cooldowns:
-    - natures_swiftness,delay=150,name="NS (Pre-Convoke)",if=cooldown.convoke_the_spirits.ready&group.count(cycle.health.effective.pct<config.convoke_threshold)>=config.convoke_members&!buff.cat_form.up&!buff.bear_form.up&!buff.moonkin_form.up&buff.abundance.stack>=3
+    - natures_swiftness,delay=150,name="NS (Pre-Convoke)",if=cooldown.convoke_the_spirits.ready&(!config.manual_convoke&group.count(cycle.health.effective.pct<config.convoke_threshold)>=config.convoke_members&buff.abundance.stack>=3)&!buff.cat_form.up&!buff.bear_form.up&!buff.moonkin_form.up
     - trinket_1,delay=150,name="Trinket 1",if=config.use_trinket_1&trinket_1.ready&buff.natures_swiftness.up
     - trinket_2,delay=150,name="Trinket 2",if=config.use_trinket_2&trinket_2.ready&buff.natures_swiftness.up
     - combat_potion,delay=150,name="Combat Potion",if=combat_potion.ready&config.use_potion&buff.natures_swiftness.up
@@ -409,8 +411,8 @@ lists:
     # Mouseover emergency healing on low-HP friendly unit frames
     - call_action_list,name=mouseover_healing_emergency,if=config.use_mouseover&var.mo_friendly_valid&mouseover.health.effective.pct<config.mouseover_emergency_hp
     - call_action_list,name=moving,if=player.moving
-    # Active healing (disabled when Force DPS is on)
-    - call_action_list,name=active_healing,if=!config.force_dps
+    # Active healing
+    - call_action_list,name=active_healing
     # DPS weaving when group is healthy and target is valid in range
     - call_action_list,name=ranged_dps,if=var.can_catweave&target.exists&target.alive&!target.friendly
     - call_action_list,name=bearweave,if=var.can_catweave&target.exists&target.alive&!target.friendly&target.range<=8
