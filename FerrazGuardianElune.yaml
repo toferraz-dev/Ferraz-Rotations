@@ -191,7 +191,7 @@ lists:
     - ironfur,name="Ironfur (Heavy Damage)",if=health.effective.pct<50&buff.ironfur.stack<config.ironfur_stacks_max
 
     # Raze: spend Tooth and Claw procs immediately (free + more damage + defensive)
-    - raze,name="Raze",if=buff.ironfur.stack>=config.ironfur_stacks_min
+    - raze,name="Raze",global_delay=500,if=buff.ironfur.stack>=config.ironfur_stacks_min
 
     # Galactic Guardian Moonfire — high priority to avoid wasting procs
     - moonfire,name="Moonfire (GG)",if=buff.galactic_guardian.up&var.in_bear_form
