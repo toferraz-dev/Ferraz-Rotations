@@ -188,13 +188,15 @@ lists:
     - berserk,name="Berserk",if=!var.incarnation_active&!talent.incarnation_guardian_of_ursoc&(active_enemies>=config.incarnation_enemies|target.boss)
     - wild_guardian,name="Wild Guardian"
 
-  # Elune's Chosen rotation — Ironfur first > GG Moonfire > Thrash/Mangle core > fillers
-  # Focuses on high Moonfire/Thrash/Mangle uptime and Raze on overflow.
+  # Elune's Chosen rotation
+  # Focuses on high Moonfire/Thrash/Mangle uptime and Raze as primary AoE spender.
   rotation_elunes:
     # Ironfur: proactive maintenance
     - ironfur,name="Ironfur (Maintain)",if=buff.ironfur.remains<3|buff.ironfur.stack<config.ironfur_stacks_min
-    - ironfur,name="Ironfur (Stack)",if=rage>=60&buff.ironfur.stack<config.ironfur_stacks_max
     - ironfur,name="Ironfur (Heavy Damage)",if=health.effective.pct<50&buff.ironfur.stack<config.ironfur_stacks_max
+
+    # Raze: spend Tooth and Claw procs immediately (free + more damage + defensive)
+    - raze,name="Raze (Proc)",if=buff.tooth_and_claw.up&active_enemies>=config.min_aoe_enemies
 
     # Galactic Guardian Moonfire — high priority to avoid wasting procs
     - moonfire,name="Moonfire (GG)",if=buff.galactic_guardian.up&var.in_bear_form
@@ -202,8 +204,11 @@ lists:
     # Thrash: maintain 3 stacks and bleed
     - thrash,name="Thrash (Refresh)",target_if=var.thrash_refresh
 
-    # Raze: only when rage is overflowing in AoE
-    - raze,name="Raze (Overflow)",if=active_enemies>=config.min_aoe_enemies&rage>=80
+    # Raze: primary rage spender when defense is safe
+    - raze,name="Raze",if=active_enemies>=config.min_aoe_enemies&rage>=60&buff.ironfur.stack>=config.ironfur_stacks_min
+
+    # Ironfur: Stack with excess rage if not using Raze
+    - ironfur,name="Ironfur (Stack)",if=rage>=70&buff.ironfur.stack<config.ironfur_stacks_max
 
     # Mangle: core generator
     - mangle,name="Mangle"
