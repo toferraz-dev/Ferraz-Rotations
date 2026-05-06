@@ -131,7 +131,7 @@ variables:
   fount_enabled: talent.fount_of_strength
   # DoT/debuff tracking
   red_moon_ticking: debuff.red_moon.up
-  thrash_refresh: debuff.thrash.remains<4.5|debuff.thrash.stack<3
+  thrash_refresh: debuff.remains(thrash)<4.5|debuff.stacks(thrash)<5
   moonfire_refresh: debuff.moonfire.remains<4.8
   # Stampeding Roar conditions based on config
   use_stampeding_roar: moving.time>=config.stampeding_roar_movement_time&buff.stampeding_roar.down&((config.stampeding_roar_usage=1&player.combat)|(config.stampeding_roar_usage=2&!player.combat)|(config.stampeding_roar_usage=3))
