@@ -210,10 +210,10 @@ lists:
   cooldowns:
     - tigers_fury,name="Tiger's Fury",if=var.energy_for_tf|buff.tigers_fury.down
     # Trinkets: prefer Berserk burst window, fallback to TF-only
-    - trinket_1,name="Trinket 1 (Burst)",if=config.burst_toggle&config.use_trinket_1&trinket_1.ready&var.berserk_up&var.tigers_fury_up
-    - trinket_2,name="Trinket 2 (Burst)",if=config.burst_toggle&config.use_trinket_2&trinket_2.ready&var.berserk_up&var.tigers_fury_up
-    - trinket_1,name="Trinket 1 (TF)",if=config.burst_toggle&config.use_trinket_1&trinket_1.ready&var.tigers_fury_up&!var.berserk_up&cooldown.berserk.remains>30
-    - trinket_2,name="Trinket 2 (TF)",if=config.burst_toggle&config.use_trinket_2&trinket_2.ready&var.tigers_fury_up&!var.berserk_up&cooldown.berserk.remains>30
+    - trinket_1,name="Trinket 1 (Burst)",if=config.burst_toggle&config.use_trinket_1&trinket_1.sync&var.berserk_up&var.tigers_fury_up
+    - trinket_2,name="Trinket 2 (Burst)",if=config.burst_toggle&config.use_trinket_2&trinket_2.sync&var.berserk_up&var.tigers_fury_up
+    - trinket_1,name="Trinket 1 (TF)",if=config.burst_toggle&config.use_trinket_1&trinket_1.sync&var.tigers_fury_up&!var.berserk_up&cooldown.berserk.remains>30
+    - trinket_2,name="Trinket 2 (TF)",if=config.burst_toggle&config.use_trinket_2&trinket_2.sync&var.tigers_fury_up&!var.berserk_up&cooldown.berserk.remains>30
     # Potion: during Berserk burst or on boss pull
     - combat_potion,name="Potion",if=config.burst_toggle&config.use_potion&combat_potion.ready&var.tigers_fury_up&(var.berserk_up|target.boss)
     - berserk,name="Berserk",if=config.burst_toggle&config.use_berserk&var.tigers_fury_up
