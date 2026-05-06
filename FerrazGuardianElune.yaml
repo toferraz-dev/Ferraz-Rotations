@@ -126,13 +126,8 @@ variables:
   # Form and buff state
   in_bear_form: buff.bear_form.up
   incarnation_active: buff.incarnation_guardian_of_ursoc.up|buff.berserk.up
-  # Talent checks
-  kb_enabled: talent.killing_blow
-  fount_enabled: talent.fount_of_strength
-  # DoT/debuff tracking
-  red_moon_ticking: debuff.red_moon.up
-  thrash_refresh: debuff.thrash.remains<4.5|debuff.thrash.stack<3
-  moonfire_refresh: debuff.moonfire.remains<4.8
+  thrash_refresh: target.debuff.remains(thrash)<4.5|target.debuff.stacks(thrash)<5
+  moonfire_refresh: target.debuff.remains(moonfire)<3
   # Stampeding Roar conditions based on config
   use_stampeding_roar: moving.time>=config.stampeding_roar_movement_time&buff.stampeding_roar.down&((config.stampeding_roar_usage=1&player.combat)|(config.stampeding_roar_usage=2&!player.combat)|(config.stampeding_roar_usage=3))
 
@@ -196,19 +191,16 @@ lists:
     - ironfur,name="Ironfur (Heavy Damage)",if=health.effective.pct<50&buff.ironfur.stack<config.ironfur_stacks_max
 
     # Raze: spend Tooth and Claw procs immediately (free + more damage + defensive)
-    - raze,name="Raze (Proc)",if=buff.tooth_and_claw.up&active_enemies>=config.min_aoe_enemies
+    - raze,name="Raze (Proc)",if=buff.tooth_and_claw.up
+
+    # Raze: primary rage spender when defense is safe
+    - raze,name="Raze",if=rage>=50&buff.ironfur.stack>=config.ironfur_stacks_min
 
     # Galactic Guardian Moonfire — high priority to avoid wasting procs
     - moonfire,name="Moonfire (GG)",if=buff.galactic_guardian.up&var.in_bear_form
 
     # Thrash: maintain 3 stacks and bleed
     - thrash,name="Thrash (Refresh)",target_if=var.thrash_refresh
-
-    # Raze: primary rage spender when defense is safe
-    - raze,name="Raze",if=active_enemies>=config.min_aoe_enemies&rage>=60&buff.ironfur.stack>=config.ironfur_stacks_min
-
-    # Ironfur: Stack with excess rage if not using Raze
-    - ironfur,name="Ironfur (Stack)",if=rage>=70&buff.ironfur.stack<config.ironfur_stacks_max
 
     # Mangle: core generator
     - mangle,name="Mangle"
