@@ -191,31 +191,27 @@ lists:
   # Druid of the Claw rotation — Ironfur first > Ravage > GG Moonfire > Mangle/Thrash core > fillers
   # Based on Squishvegan log: 76% rage to Ironfur, 0 Maul, Raze only on overflow
   rotation_claw:
-    # Ironfur: proactive maintenance — ALWAYS keep stacks up (89.4% uptime, 13.6 CPM in ref log)
+    # Ironfur: proactive maintenance
     - ironfur,name="Ironfur (Maintain)",if=buff.ironfur.remains<3|buff.ironfur.stack<config.ironfur_stacks_min
     - ironfur,name="Ironfur (Stack)",if=rage>=60&buff.ironfur.stack<config.ironfur_stacks_max
     - ironfur,name="Ironfur (Heavy Damage)",if=health.effective.pct<50&buff.ironfur.stack<config.ironfur_stacks_max
 
-    # Ravage: spend proc as a high priority generator
+    # Ravage: spend proc as absolute highest priority
     - ravage,name="Ravage",if=buff.ravage.up
 
-    # Galactic Guardian Moonfire — high priority to avoid wasting procs (128 wasted in ref log)
+    # Mangle: absolute priority generator, use on CD to maximize rage and Ravage procs!
+    - mangle,name="Mangle"
+
+    # Galactic Guardian Moonfire — high priority to avoid wasting procs
     - moonfire,name="Moonfire (GG)",if=buff.galactic_guardian.up&var.in_bear_form
 
-    # Core generators: Mangle (Red Moon priority) > Thrash (refresh stacks)
-    - mangle,name="Mangle (Red Moon)",if=var.red_moon_ticking
-    - thrash,name="Thrash (Refresh)",target_if=var.thrash_refresh
+    # Thrash: keep 3 stacks and maintain bleed
+    - thrash,name="Thrash"
 
-    # Red Moon application and Wildpower Surge Mangle during Incarnation
-    - red_moon,name="Red Moon",if=cooldown.mangle.ready&!var.red_moon_ticking
-    - mangle,name="Mangle (Surge)",if=var.incarnation_active&talent.wildpower_surge
-
-    # Raze: only when rage is overflowing in AoE (21 casts in 30min in ref log)
+    # Raze: only when rage is overflowing in AoE
     - raze,name="Raze (Overflow)",if=active_enemies>=config.min_aoe_enemies&rage>=80
 
-    # Fillers: Mangle > Thrash > Moonfire (refresh) > Swipe
-    - mangle,name="Mangle"
-    - thrash,name="Thrash"
+    # Fillers: Moonfire > Swipe
     - moonfire,name="Moonfire (Refresh)",if=var.moonfire_refresh&var.in_bear_form
     - swipe,name="Swipe"
 
