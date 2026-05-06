@@ -196,8 +196,8 @@ lists:
     - ironfur,name="Ironfur (Stack)",if=rage>=60&buff.ironfur.stack<config.ironfur_stacks_max
     - ironfur,name="Ironfur (Heavy Damage)",if=health.effective.pct<50&buff.ironfur.stack<config.ironfur_stacks_max
 
-    # Ravage: spend proc only when Ironfur is safe
-    - ravage,name="Ravage",if=buff.ravage.up&buff.ironfur.remains>3&rage>=40
+    # Ravage: spend proc as a high priority generator
+    - ravage,name="Ravage",if=buff.ravage.up
 
     # Galactic Guardian Moonfire — high priority to avoid wasting procs (128 wasted in ref log)
     - moonfire,name="Moonfire (GG)",if=buff.galactic_guardian.up&var.in_bear_form
@@ -214,7 +214,7 @@ lists:
     - raze,name="Raze (Overflow)",if=active_enemies>=config.min_aoe_enemies&rage>=80
 
     # Fillers: Mangle > Thrash > Moonfire (refresh) > Swipe
-    - mangle,name="Mangle",if=var.incarnation_active|rage<85
+    - mangle,name="Mangle"
     - thrash,name="Thrash"
     - moonfire,name="Moonfire (Refresh)",if=var.moonfire_refresh&var.in_bear_form
     - swipe,name="Swipe"
