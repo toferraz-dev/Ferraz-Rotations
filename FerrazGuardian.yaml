@@ -199,17 +199,20 @@ lists:
     # Ravage: spend proc as absolute highest priority
     - ravage,name="Ravage",if=buff.ravage.up
 
-    # Mangle: absolute priority generator, use on CD to maximize rage and Ravage procs!
-    - mangle,name="Mangle"
-
     # Galactic Guardian Moonfire — high priority to avoid wasting procs
     - moonfire,name="Moonfire (GG)",if=buff.galactic_guardian.up&var.in_bear_form
 
-    # Thrash: keep 3 stacks and maintain bleed
-    - thrash,name="Thrash"
+    # Thrash: maintain 3 stacks and bleed
+    - thrash,name="Thrash (Refresh)",target_if=var.thrash_refresh
 
     # Raze: only when rage is overflowing in AoE
     - raze,name="Raze (Overflow)",if=active_enemies>=config.min_aoe_enemies&rage>=80
+
+    # Mangle: core generator
+    - mangle,name="Mangle"
+
+    # Thrash: core AoE filler
+    - thrash,name="Thrash"
 
     # Fillers: Moonfire > Swipe
     - moonfire,name="Moonfire (Refresh)",if=var.moonfire_refresh&var.in_bear_form
