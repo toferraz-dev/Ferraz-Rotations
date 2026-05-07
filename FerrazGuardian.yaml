@@ -139,7 +139,7 @@ variables:
 lists:
   # Mark of the Wild out of combat
   out_of_combat:
-    - mark_of_the_wild,name="Mark of the Wild",if=config.use_mark_of_the_wild&group.count(cycle.buff.mark_of_the_wild.down.any)>0
+    - mark_of_the_wild,range_check=none,if=(buff.mark_of_the_wild.down.any|action.mark_of_the_wild.overlayed)&lastcast.mark_of_the_wild>=10
 
   # Defensive priority: Dream of Cenarius Regrowth > SI > Frenzied Regen > Barkskin (on CD)
   defensives:

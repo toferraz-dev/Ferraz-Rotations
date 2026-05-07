@@ -81,7 +81,7 @@ lists:
 
   # Heart of the Wild when party HP is low
   heal_support:
-    - mark_of_the_wild,range_check=none,if=buff.mark_of_the_wild.down.any
+    - mark_of_the_wild,range_check=none,if=(buff.mark_of_the_wild.down.any|action.mark_of_the_wild.overlayed)&lastcast.mark_of_the_wild>=10
     - heart_of_the_wild,if=config.enable_hotw&group.lowest.health.pct<config.hotw_hp_threshold&!buff.heart_of_the_wild.up
 
   # Movement ST — instant-cast only: DoTs > Starsurge > FoE > WM > New Moon > filler
