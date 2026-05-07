@@ -217,7 +217,7 @@ lists:
     - return,if=auto_combat.player
 
     # Ensure Bear Form; skip rotation if shifting failed
-    - bear_form,name="Bear Form",if=!var.in_bear_form&!buff.feline_potential.up
+    - bear_form,name="Bear Form",if=!var.in_bear_form
     - return,if=!var.in_bear_form
 
     # Combat priority: Interrupts > Defensives > Taunt > Utility > Racials > (valid target check) > CDs > Rotation
