@@ -149,6 +149,7 @@ lists:
     - berserking,name="Berserking"
     - fireblood,name="Fireblood"
     - ancestral_call,name="Ancestral Call"
+    - thorn_bloom,name="Thorn Bloom",if=active_enemies>=config.min_aoe_enemies
 
   # Auto-swap to enraged target; Skull Bash on target/MO/focus; AoE CC; Soothe
   interrupts:
