@@ -264,7 +264,7 @@ lists:
 
   # OOC: Mark, Lifebloom maintenance (Everbloom stacks to 3), pre-spread Rejuv/Regrowth
   out_of_combat:
-    - mark_of_the_wild,name="Mark of the Wild",if=config.raid_use_mark_of_the_wild&group.count(cycle.buff.mark_of_the_wild.down.any)>0
+    - mark_of_the_wild,range_check=none,if=buff.mark_of_the_wild.down.any
     # Lifebloom pre-combat (raid: check both tanks)
     - lifebloom,name="OOC Lifebloom",cycle=members,if=cycle.health.effective.pct<config.raid_lifebloom_threshold&cycle.buff.lifebloom.down&(group.count(cycle.buff.lifebloom.up)=0|tank1.buff.lifebloom.up|tank2.buff.lifebloom.up)
     - lifebloom,name="OOC Lifebloom (Tank)",cycle=tanks,if=(cycle.buff.lifebloom.down|cycle.buff.lifebloom.remains<4.5)&(cycle.buff.lifebloom.up|group.count(cycle.buff.lifebloom.up)=0)

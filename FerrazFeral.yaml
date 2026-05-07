@@ -249,7 +249,7 @@ lists:
 
   # Mark of the Wild + Prowl outside combat
   out_of_combat:
-    - mark_of_the_wild,name="Mark of the Wild",if=config.use_mark_of_the_wild&group.count(cycle.buff.mark_of_the_wild.down.any)>0&cycle.range<=40
+    - mark_of_the_wild,range_check=none,if=buff.mark_of_the_wild.down.any
     - prowl,name="Prowl (OOC)",if=config.use_prowl&!buff.prowl.up&(!player.combat|buff.shadowmeld.up)
 
   # Open from stealth — TF first for snapshot, then empowered Rake
