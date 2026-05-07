@@ -16,7 +16,7 @@ config:
     type: slider
     min: 1
     max: 10
-    default: 1
+    default: 2
 
   incarnation_enemies:
     label: "Min enemies for Incarnation"
@@ -33,7 +33,7 @@ config:
     type: slider
     min: 10
     max: 70
-    default: 45
+    default: 50
 
   frenzied_regen_threshold:
     label: Frenzied Regeneration %
@@ -41,7 +41,7 @@ config:
     type: slider
     min: 30
     max: 80
-    default: 65
+    default: 70
 
   use_barkskin_on_cd:
     label: "Barkskin on Cooldown"
@@ -95,7 +95,6 @@ config:
     section: "Utility"
     type: checkbox
     default: true
-
 
   use_mark_of_the_wild:
     label: "Auto Mark of the Wild"
@@ -184,14 +183,14 @@ lists:
     - wild_guardian,name="Wild Guardian"
 
   # Elune's Chosen rotation
-  # Focuses on high Moonfire/Thrash/Mangle uptime and Raze as primary AoE spender.
+  # Focuses on high Moonfire/Thrash/Mangle uptime. Raze and Swipe are removed from this build.
   rotation_elunes:
     # Ironfur: proactive maintenance
     - ironfur,name="Ironfur (Maintain)",if=buff.ironfur.remains<3|buff.ironfur.stack<config.ironfur_stacks_min
     - ironfur,name="Ironfur (Heavy Damage)",if=health.effective.pct<50&buff.ironfur.stack<config.ironfur_stacks_max
 
-    # Raze: spend Tooth and Claw procs immediately (free + more damage + defensive)
-    - raze,name="Raze",global_delay=500,if=buff.ironfur.stack>=config.ironfur_stacks_min
+    # Ironfur (Dump): use extra rage for defense, up to max stacks
+    - ironfur,name="Ironfur (Dump)",if=rage>=40&buff.ironfur.stack<config.ironfur_stacks_max
 
     # Galactic Guardian Moonfire — high priority to avoid wasting procs
     - moonfire,name="Moonfire (GG)",if=buff.galactic_guardian.up&var.in_bear_form
@@ -205,9 +204,8 @@ lists:
     # Thrash: core AoE filler
     - thrash,name="Thrash"
 
-    # Fillers: Moonfire > Swipe
-    - moonfire,name="Moonfire (Refresh)",if=var.moonfire_refresh&var.in_bear_form
-    - swipe,name="Swipe"
+    # Filler: Moonfire (Replaces Swipe entirely)
+    - moonfire,name="Moonfire",if=var.in_bear_form
 
   # Main — entry point
   main:
