@@ -361,6 +361,7 @@ lists:
   ranged_dps:
     - sunfire,name="Sunfire Aoe Dot",if=debuff.sunfire.refreshable
     - moonfire,name="Moonfire ST Refresh",if=debuff.moonfire.refreshable
+    - wrath, name="Wrath"
 
   # Bearweave: Thrash/Mangle via Fluid Form, then fall into catweave
   bearweave:
