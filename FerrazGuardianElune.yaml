@@ -198,9 +198,6 @@ lists:
     # Thrash: maintain 3 stacks and bleed
     - thrash,name="Thrash (Refresh)",target_if=var.thrash_refresh
 
-    # Mangle: core generator
-    - mangle,name="Mangle"
-
     # Thrash: core AoE filler
     - thrash,name="Thrash"
 
