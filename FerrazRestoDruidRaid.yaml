@@ -410,6 +410,6 @@ lists:
     # Active healing (disabled when Force DPS is on)
     - call_action_list,name=active_healing
     # DPS weaving when group is healthy
-    - call_action_list,name=ranged_dps,if=config.raid_ranged_dps&var.can_catweave&target.exists&target.alive&!target.friendly
+    - call_action_list,name=ranged_dps,if=config.raid_ranged_dps&var.can_catweave&target.exists&target.alive&!target.friendly&((config.raid_melee_dps&target.range>8)|!config.raid_melee_dps)
     - call_action_list,name=bearweave,if=config.raid_melee_dps&var.can_catweave&target.exists&target.alive&!target.friendly&target.range<=8&active_enemies>=2
     - call_action_list,name=catweave,if=config.raid_melee_dps&var.can_catweave&target.exists&target.alive&!target.friendly&target.range<=8
