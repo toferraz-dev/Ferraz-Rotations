@@ -242,13 +242,6 @@ config:
     type: checkbox
     default: true
 
-  raid_force_dps:
-    label: "Force DPS"
-    spell: 768
-    section: "Utility"
-    type: toggle
-    description: "Forcing the DPS while forgetting that it's a healer role."
-
   raid_force_spread:
     label: "Force HoT Spread"
     section: "Utility"
@@ -415,7 +408,7 @@ lists:
     - call_action_list,name=mouseover_healing_emergency,if=config.raid_use_mouseover&var.mo_friendly_valid&mouseover.health.effective.pct<config.raid_mouseover_emergency_hp
     - call_action_list,name=moving,if=player.moving
     # Active healing (disabled when Force DPS is on)
-    - call_action_list,name=active_healing,if=!config.raid_force_dps
+    - call_action_list,name=active_healing
     # DPS weaving when group is healthy
     - call_action_list,name=ranged_dps,if=config.raid_ranged_dps&var.can_catweave&target.exists&target.alive&!target.friendly
     - call_action_list,name=bearweave,if=config.raid_melee_dps&var.can_catweave&target.exists&target.alive&!target.friendly&target.range<=8&active_enemies>=2
