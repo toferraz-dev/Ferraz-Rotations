@@ -183,7 +183,7 @@ lists:
     - berserk,name="Berserk",if=!var.incarnation_active&(active_enemies>=config.incarnation_enemies|target.boss)
 
   # Elune's Chosen rotation
-  # Focuses on high Moonfire/Thrash/Mangle uptime. Raze and Swipe are removed from this build.
+  # Focuses on high Moonfire/Thrash uptime. Raze and Swipe are removed from this build.
   rotation_elunes:
     # Ironfur: proactive maintenance
     - ironfur,name="Ironfur (Maintain)",if=buff.ironfur.remains<3|buff.ironfur.stack<config.ironfur_stacks_min
@@ -194,9 +194,6 @@ lists:
 
     # Galactic Guardian Moonfire — high priority to avoid wasting procs
     - moonfire,name="Moonfire (GG)",if=buff.galactic_guardian.up&var.in_bear_form
-
-    # Thrash: maintain 3 stacks and bleed
-    - thrash,name="Thrash (Refresh)",target_if=var.thrash_refresh
 
     # Thrash: core AoE filler
     - thrash,name="Thrash"
