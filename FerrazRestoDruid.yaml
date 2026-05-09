@@ -313,7 +313,7 @@ lists:
   # Shadowmeld aggro drop; Berserking haste during emergency; AoE CC racials; Darkflight
   racials:
     - shadowmeld,name="Shadowmeld (Aggro Drop)",if=player.combat&player.aggro&!player.casting
-    - berserking,name="Berserking (Haste CD)",if=buff.natures_swiftness.up|group.count(cycle.health.effective.pct<config.tranquility_threshold)>=config.tranquility_members
+    - berserking,name="Berserking (Haste CD)",if=buff.natures_swiftness.up
     - war_stomp,name="War Stomp (AoE CC)",if=interrupt.stun.aoe.check
     - bull_rush,name="Bull Rush (AoE CC)",if=interrupt.stun.aoe.check
     - haymaker,name="Haymaker (Interrupt/Knockback)",if=interrupt.target.check
@@ -347,7 +347,7 @@ lists:
     # Forced HoT ramp when toggle is ON (ignores HP thresholds)
     - wild_growth,name="Forced Wild Growth",if=config.force_spread&(buff.wild_growth.down|group.any(cycle.buff.wild_growth.down))
     - rejuvenation,name="Forced Rejuvenation",cycle=members,if=config.force_spread&(cycle.buff.rejuvenation.down|cycle.buff.rejuvenation.remains<1.5)
-    - rejuvenation,name="Forced Germination",cycle=members,if=config.force_spread&talent.germination&cycle.buff.rejuvenation.up&cycle.buff.rejuvenation_germination.down
+    - rejuvenation,name="Forced Germination",cycle=members,if=config.force_spread&cycle.buff.rejuvenation.up&cycle.buff.rejuvenation_germination.down
 
     # Core healing: Wild Growth > Rejuv > Germination > Regrowth > Thorn Bloom
     - wild_growth,name="Wild Growth",if=group.count(cycle.health.effective.pct<config.wild_growth_threshold)>=config.wild_growth_members
