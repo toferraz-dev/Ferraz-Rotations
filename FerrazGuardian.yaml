@@ -55,7 +55,7 @@ config:
     type: slider
     min: 1
     max: 5
-    default: 2
+    default: 3
 
   ironfur_stacks_max:
     label: "Max Ironfur Stacks"
@@ -63,7 +63,7 @@ config:
     type: slider
     min: 3
     max: 10
-    default: 5
+    default: 7
 
   # -- Movement --
   stampeding_roar_usage:
