@@ -188,6 +188,30 @@ config:
     type: checkbox
     default: true
 
+  # -- Movement --
+  stampeding_roar_usage:
+    label: "Stampeding Roar Usage"
+    section: "Movement"
+    type: dropdown
+    options:
+      - label: "Disabled"
+        value: 0
+      - label: "Only in combat"
+        value: 1
+      - label: "Only out of combat"
+        value: 2
+      - label: "Always when moving"
+        value: 3
+    default: 2
+
+  stampeding_roar_movement_time:
+    label: "Roar after moving (seconds)"
+    section: "Movement"
+    type: slider
+    min: 0
+    max: 4
+    default: 2
+
   # -- Utility --
   innervate_threshold:
     label: "Innervate Mana %"
@@ -255,6 +279,8 @@ variables:
   mo_friendly_valid: mouseover.exists&mouseover.alive&mouseover.friendly&mouseover.unitframe
   # Soul of the Forest proc is active
   has_soul: buff.soul_of_the_forest.up
+  # Stampeding Roar conditions based on config
+  use_stampeding_roar: moving.time>=config.stampeding_roar_movement_time&buff.stampeding_roar.down&((config.stampeding_roar_usage=1&player.combat)|(config.stampeding_roar_usage=2&!player.combat)|(config.stampeding_roar_usage=3))
 
 lists:
   # Auto-swap to enraged/interruptible target; AoE CC; Soothe
@@ -330,10 +356,11 @@ lists:
     - regrowth,name="Regrowth",cycle=members,if=cycle.health.effective.pct<config.regrowth_threshold
     - thorn_bloom,name="Thorn Bloom",if=group.count(cycle.health.effective.pct<config.thorn_bloom_threshold)>=config.thorn_bloom_members&target.range<=8
 
-  # Shapeshift to clear roots; Innervate self
+  # Shapeshift to clear roots; Innervate self; Stampeding Roar
   utility:
     - moonkin_form,name="Shapeshift Clear",if=debuff_list.freedom.up&!buff.moonkin_form.up
     - innervate,name="Innervate",if=mana.pct<config.innervate_threshold
+    - stampeding_roar,name="Stampeding Roar",if=var.use_stampeding_roar&config.stampeding_roar_usage!=0
 
   # Catweave ST: Rip > Bite > Rake > Shred
   catweave_st:
