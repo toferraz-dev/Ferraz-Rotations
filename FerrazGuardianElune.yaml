@@ -177,7 +177,7 @@ lists:
     - combat_potion,name="Combat Potion",if=combat_potion.ready&config.use_potion&var.incarnation_active
     # Lunar Beam: use aggressively, almost on CD (24 uses vs 15 Inc in reference log)
     - lunar_beam,name="Lunar Beam",if=active_enemies>=1
-    - sundering_roar,name="Sundering Roar",if=debuff.thrash.stack<3
+    - sundering_roar,name="Sundering Roar",if=debuff.thrash.stack=5
     # Incarnation/Berserk: require min enemies or boss target; never overlap (ref log spaces ~110s apart)
     - incarnation_guardian_of_ursoc,name="Incarnation",if=!var.incarnation_active&(active_enemies>=config.incarnation_enemies|target.boss)
     - berserk,name="Berserk",if=!var.incarnation_active&(active_enemies>=config.incarnation_enemies|target.boss)
