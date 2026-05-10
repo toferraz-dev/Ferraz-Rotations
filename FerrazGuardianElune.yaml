@@ -186,11 +186,8 @@ lists:
   # Focuses on high Moonfire/Thrash uptime. Raze and Swipe are removed from this build.
   rotation_elunes:
     # Ironfur: proactive maintenance
-    - ironfur,name="Ironfur (Maintain)",if=buff.ironfur.remains<3|buff.ironfur.stack<config.ironfur_stacks_min
-    - ironfur,name="Ironfur (Heavy Damage)",if=health.effective.pct<50&buff.ironfur.stack<config.ironfur_stacks_max
-
-    # Ironfur (Dump): use extra rage for defense, up to max stacks
-    - ironfur,name="Ironfur (Dump)",if=rage>=40&buff.ironfur.stack<config.ironfur_stacks_max
+    - ironfur,name="Ironfur (Maintain)",if=buff.ironfur.stack<config.ironfur_stacks_min
+    - ironfur,name="Ironfur (Heavy Damage)",if=health.effective.pct<70&buff.ironfur.stack<config.ironfur_stacks_max
 
     # Galactic Guardian Moonfire — high priority to avoid wasting procs
     - moonfire,name="Moonfire (GG)",if=buff.galactic_guardian.up&var.in_bear_form
