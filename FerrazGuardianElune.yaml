@@ -30,7 +30,7 @@ config:
     label: "Use Mangle"
     section: "Rotation"
     type: checkbox
-    default: true
+    default: false
 
   # -- Defensives --
   survival_instincts_threshold:
@@ -108,12 +108,6 @@ config:
     type: checkbox
     default: true
 
-  use_symbiotic:
-    label: "Auto Symbiotic (Healer)"
-    section: "Utility"
-    type: checkbox
-    default: true
-
   # -- Trinkets --
   use_trinket_1:
     label: "Auto Trinket 1"
@@ -146,7 +140,6 @@ lists:
   # Mark of the Wild out of combat
   out_of_combat:
     - mark_of_the_wild,range_check=none,if=(buff.mark_of_the_wild.down.any|action.mark_of_the_wild.overlayed)&lastcast.mark_of_the_wild>=10
-    - symbiotic_relationship,name="Symbiotic Healer",cycle=healers,if=config.use_symbiotic&!buff.symbiotic_relationship.up&!cycle.buff.symbiotic_relationship.up
 
   # Defensive priority: Dream of Cenarius Regrowth > SI > Frenzied Regen > Barkskin (on CD)
   defensives:
