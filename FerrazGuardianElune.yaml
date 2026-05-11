@@ -186,7 +186,6 @@ lists:
     - sundering_roar,name="Sundering Roar",if=debuff.thrash.stack=5
     # Incarnation/Berserk: require min enemies or boss target; never overlap (ref log spaces ~110s apart)
     - incarnation_guardian_of_ursoc,name="Incarnation",if=!var.incarnation_active&(active_enemies>=config.incarnation_enemies|target.boss)
-    - berserk,name="Berserk",if=!var.incarnation_active&(active_enemies>=config.incarnation_enemies|target.boss)
 
   # Elune's Chosen rotation
   # Focuses on high Moonfire/Thrash uptime. Raze and Swipe are removed from this build.
