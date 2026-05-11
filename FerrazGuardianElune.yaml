@@ -26,6 +26,12 @@ config:
     max: 10
     default: 3
 
+  use_mangle:
+    label: "Use Mangle"
+    section: "Rotation"
+    type: checkbox
+    default: true
+
   # -- Defensives --
   survival_instincts_threshold:
     label: Survival Instincts %
@@ -203,7 +209,7 @@ lists:
     - thrash,name="Thrash"
 
     # Mangle: Gore is up
-    - mangle,name="Mangle",if=buff.gore.up
+    - mangle,name="Mangle",if=config.use_mangle&buff.gore.up
 
     # Filler: Moonfire (Replaces Swipe entirely)
     - moonfire,name="Moonfire"
