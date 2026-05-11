@@ -34,7 +34,7 @@ config:
 
   # -- Defensives --
   survival_instincts_threshold:
-    label: Survival Instincts %
+    label: "Survival Instincts %"
     section: "Defensives"
     type: slider
     min: 10
@@ -42,7 +42,7 @@ config:
     default: 50
 
   frenzied_regen_threshold:
-    label: Frenzied Regeneration %
+    label: "Frenzied Regeneration %"
     section: "Defensives"
     type: slider
     min: 30
