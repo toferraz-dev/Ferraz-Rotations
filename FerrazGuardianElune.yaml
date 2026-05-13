@@ -5,32 +5,17 @@ spec: 104
 name: Ferraz Guardian Druid M+ (Elunes)
 description: |
   Ferraz Guardian Druid M+ (Elunes)
-  Talent Tree: CgGAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAgZmxsMMjZWMLzMzMWGY2MMaimZmlxMzMLzMzDMAAAAAADbzAW2mZwYWGATAAAAbYGALmBDGLAwMDgB
+  Talent Tree: CgGA8cL7tpvige+kkmGM9zUPWDAAAAAAAAAAAgZmZmFzMjZWMLm5BmZZZgZbGGNRmZWMzMzsMmZAAAAAwAjNzALbzMYMLDgpmZZWmZmBAwGmBwixwAzilNAzMzsBA
 entry: main
 
 config:
-  # -- Rotation --
-  min_aoe_enemies:
-    label: "Min enemies for AOE"
-    section: "Rotation"
-    type: slider
-    min: 1
-    max: 10
-    default: 2
-
-  incarnation_enemies:
-    label: "Min enemies for Incarnation"
-    section: "Rotation"
-    type: slider
-    min: 1
-    max: 10
-    default: 3
-
-  use_mangle:
-    label: "Use Mangle"
-    section: "Rotation"
-    type: checkbox
-    default: false
+  # -- Burst Combo --
+  starfall_combo:
+    label: "Starfall Combo"
+    section: "Burst"
+    type: toggle
+    description: "HotW Moonkin + Starfall combo"
+    spell: 191034
 
   # -- Defensives --
   survival_instincts_threshold:
@@ -54,22 +39,6 @@ config:
     section: "Defensives"
     type: checkbox
     default: true
-
-  ironfur_stacks_min:
-    label: "Min Ironfur Stacks"
-    section: "Defensives"
-    type: slider
-    min: 1
-    max: 5
-    default: 2
-
-  ironfur_stacks_max:
-    label: "Max Ironfur Stacks"
-    section: "Defensives"
-    type: slider
-    min: 3
-    max: 10
-    default: 5
 
   # -- Movement --
   stampeding_roar_usage:
@@ -130,9 +99,7 @@ config:
 variables:
   # Form and buff state
   in_bear_form: buff.bear_form.up
-  incarnation_active: buff.incarnation_guardian_of_ursoc.up|buff.berserk.up
-  thrash_refresh: target.debuff.remains(thrash)<4.5|target.debuff.stacks(thrash)<5
-  moonfire_refresh: target.debuff.remains(moonfire)<3
+  incarnation_active: buff.incarnation_guardian_of_ursoc.up
   # Stampeding Roar conditions based on config
   use_stampeding_roar: moving.time>=config.stampeding_roar_movement_time&buff.stampeding_roar.down&((config.stampeding_roar_usage=1&player.combat)|(config.stampeding_roar_usage=2&!player.combat)|(config.stampeding_roar_usage=3))
 
@@ -143,7 +110,6 @@ lists:
 
   # Defensive priority: Dream of Cenarius Regrowth > SI > Frenzied Regen > Barkskin (on CD)
   defensives:
-    - regrowth,name="Regrowth (Guardian)",if=buff.dream_of_cenarius.up&health.effective.pct<85
     - survival_instincts,name="Survival Instincts",if=health.effective.pct<config.survival_instincts_threshold&!buff.survival_instincts.up
     - frenzied_regeneration,name="Frenzied Regeneration",if=health.effective.pct<config.frenzied_regen_threshold
     - barkskin,name="Barkskin",if=config.use_barkskin_on_cd&!buff.survival_instincts.up
@@ -151,11 +117,11 @@ lists:
 
   # Racial damage CDs (unconditional)
   racials:
-    - blood_fury,name="Blood Fury"
-    - berserking,name="Berserking"
-    - fireblood,name="Fireblood"
-    - ancestral_call,name="Ancestral Call"
-    - thorn_bloom,name="Thorn Bloom",if=active_enemies>=config.min_aoe_enemies
+    - blood_fury,name="Blood Fury",if=debuff.thrash.stack>=2
+    - berserking,name="Berserking",if=debuff.thrash.stack>=2
+    - fireblood,name="Fireblood",if=debuff.thrash.stack>=2
+    - ancestral_call,name="Ancestral Call",if=debuff.thrash.stack>=2
+    - thorn_bloom,name="Thorn Bloom",if=debuff.thrash.stack>=2
 
   # Auto-swap to enraged target; Skull Bash on target/MO/focus; AoE CC; Soothe
   interrupts:
@@ -181,30 +147,30 @@ lists:
     - trinket_1,name="Trinket 1",if=config.use_trinket_1&trinket_1.sync&var.incarnation_active
     - trinket_2,name="Trinket 2",if=config.use_trinket_2&trinket_2.sync&var.incarnation_active
     - combat_potion,name="Combat Potion",if=combat_potion.ready&config.use_potion&var.incarnation_active
-    # Lunar Beam: use aggressively, almost on CD (24 uses vs 15 Inc in reference log)
-    - lunar_beam,name="Lunar Beam",if=active_enemies>=1
-    - sundering_roar,name="Sundering Roar",if=debuff.thrash.stack=5
     # Incarnation/Berserk: require min enemies or boss target; never overlap (ref log spaces ~110s apart)
-    - incarnation_guardian_of_ursoc,name="Incarnation",if=!var.incarnation_active&(active_enemies>=config.incarnation_enemies|target.boss)
+    - incarnation_guardian_of_ursoc,name="Incarnation",if=debuff.thrash.stack>=2
+    # Sundering Roar: use at 5 stacks
+    - sundering_roar,name="Sundering Roar",if=debuff.thrash.stack>=5
+    # Lunar Beam: Use when stop moving
+    - lunar_beam,if=player.standing.time>=1
+
+  # Starfall Burst Combo: Roar -> Moonkin -> HotW -> Bear
+  starfall:
+    - moonkin_form,range_check=none,if=!buff.moonkin_form.up&cooldown.heart_of_the_wild.ready
+    - heart_of_the_wild,range_check=none,if=buff.moonkin_form.up
+    - bear_form,range_check=none,if=!buff.bear_form.up&buff.stampeding_roar.remains>=3
 
   # Elune's Chosen rotation
   # Focuses on high Moonfire/Thrash uptime. Raze and Swipe are removed from this build.
   rotation_elunes:
-    # Ironfur: proactive maintenance
-    - ironfur,name="Ironfur (Maintain)",if=buff.ironfur.stack<config.ironfur_stacks_min
-    - ironfur,name="Ironfur (Heavy Damage)",if=health.effective.pct<70&buff.ironfur.stack<config.ironfur_stacks_max
-
-    # Galactic Guardian Moonfire — high priority to avoid wasting procs
-    - moonfire,name="Moonfire (GG)",if=buff.galactic_guardian.up
-
     # Thrash: core AoE filler
     - thrash,name="Thrash"
-
-    # Mangle: Gore is up
-    - mangle,name="Mangle",if=config.use_mangle&buff.gore.up
-
+    # Ironfur: proactive maintenance
+    - ironfur,name="Ironfur",use_off_gcd=1,if=rage>=50
+    # Frenzied Regen: proactive shield during CDs
+    - frenzied_regeneration,range_check=none,if=buff.frenzied_regeneration.down&cooldown.thrash.remains>1&buff.incarnation_guardian_of_ursoc.up
     # Filler: Moonfire (Replaces Swipe entirely)
-    - moonfire,name="Moonfire"
+    - moonfire,name="Moonfire",delay=400
 
   # Main — entry point
   main:
@@ -214,6 +180,9 @@ lists:
     - call_action_list,name=auto_target
     - call_action_list,name=auto_heal
     - return,if=auto_combat.player
+
+    # Starfall Burst Combo
+    - call_action_list,name=starfall,if=config.starfall_combo&!buff.heart_of_the_wild.up
 
     # Ensure Bear Form; skip rotation if shifting failed
     - bear_form,name="Bear Form",if=!var.in_bear_form
