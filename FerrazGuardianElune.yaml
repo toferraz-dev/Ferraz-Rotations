@@ -158,7 +158,7 @@ lists:
   starfall:
     - moonkin_form,range_check=none,if=!buff.moonkin_form.up&cooldown.heart_of_the_wild.ready
     - heart_of_the_wild,range_check=none,if=buff.moonkin_form.up
-    - bear_form,range_check=none,if=!buff.bear_form.up&buff.stampeding_roar.remains>=3
+    - bear_form,range_check=none,if=!buff.bear_form.up
 
   # Elune's Chosen rotation
   # Focuses on high Moonfire/Thrash uptime. Raze and Swipe are removed from this build.
