@@ -178,8 +178,8 @@ lists:
     - return,if=!buff.bear_form.up
 
     # Combat priority: Interrupts > Defensives > Taunt > Utility > Racials > (valid target check) > CDs > Rotation
-    - call_action_list,name=interrupts
     - call_action_list,name=defensives
+    - call_action_list,name=interrupts
     - call_action_list,name=taunt
     - call_action_list,name=utility
     - call_action_list,name=racials
