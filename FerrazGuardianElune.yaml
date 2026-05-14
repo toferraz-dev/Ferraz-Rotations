@@ -149,12 +149,10 @@ lists:
   # Elune's Chosen rotation
   # Focuses on high Moonfire/Thrash uptime. Raze and Swipe are removed from this build.
   rotation_elunes:
-    # Thrash: core AoE filler
-    - thrash,name="Thrash"
     # Ironfur: proactive maintenance
-    - ironfur,name="Ironfur",use_off_gcd=1,if=rage>=50
-    # Frenzied Regen: proactive shield during CDs
-    - frenzied_regeneration,range_check=none,if=buff.frenzied_regeneration.down&cooldown.thrash.remains>1&buff.incarnation_guardian_of_ursoc.up
+    - ironfur,name="Ironfur",use_off_gcd=1,if=rage>=45
+    # Thrash: Core
+    - thrash,name="Thrash"
     # Filler: Moonfire (Replaces Swipe entirely)
     - moonfire,name="Moonfire",delay=400
 
