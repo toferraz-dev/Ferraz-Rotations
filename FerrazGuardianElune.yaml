@@ -9,14 +9,6 @@ description: |
 entry: main
 
 config:
-  # -- Burst Combo --
-  starfall_combo:
-    label: "Starfall Combo"
-    section: "Burst"
-    type: toggle
-    description: "HotW Moonkin + Starfall combo"
-    spell: 191034
-
   # -- Defensives --
   survival_instincts_threshold:
     label: "Survival Instincts %"
@@ -154,12 +146,6 @@ lists:
     # Lunar Beam: Use when stop moving
     - lunar_beam,if=player.standing.time>=1
 
-  # Starfall Burst Combo: Roar -> Moonkin -> HotW -> Bear
-  starfall:
-    - moonkin_form,range_check=none,if=!buff.moonkin_form.up&cooldown.heart_of_the_wild.ready
-    - heart_of_the_wild,range_check=none,if=buff.moonkin_form.up
-    - bear_form,range_check=none,if=!buff.bear_form.up
-
   # Elune's Chosen rotation
   # Focuses on high Moonfire/Thrash uptime. Raze and Swipe are removed from this build.
   rotation_elunes:
@@ -180,9 +166,6 @@ lists:
     - call_action_list,name=auto_target
     - call_action_list,name=auto_heal
     - return,if=auto_combat.player
-
-    # Starfall Burst Combo
-    - call_action_list,name=starfall,if=config.starfall_combo&!buff.heart_of_the_wild.up
 
     # Ensure Bear Form; skip rotation if shifting failed
     - bear_form,name="Bear Form",if=!var.in_bear_form
