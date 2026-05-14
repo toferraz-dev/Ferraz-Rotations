@@ -69,6 +69,12 @@ config:
     type: checkbox
     default: true
 
+  use_feral_frenzy:
+    label: "Feral Frenzy (Cat Form)"
+    section: "Utility"
+    type: checkbox
+    default: true
+
   # -- Trinkets --
   use_trinket_1:
     label: "Auto Trinket 1"
@@ -89,9 +95,6 @@ config:
     default: false
 
 variables:
-  # Form and buff state
-  in_bear_form: buff.bear_form.up
-  incarnation_active: buff.incarnation_guardian_of_ursoc.up
   # Stampeding Roar conditions based on config
   use_stampeding_roar: moving.time>=config.stampeding_roar_movement_time&buff.stampeding_roar.down&((config.stampeding_roar_usage=1&player.combat)|(config.stampeding_roar_usage=2&!player.combat)|(config.stampeding_roar_usage=3))
 
@@ -103,7 +106,7 @@ lists:
   # Defensive priority: Dream of Cenarius Regrowth > SI > Frenzied Regen > Barkskin (on CD)
   defensives:
     - survival_instincts,name="Survival Instincts",if=health.effective.pct<config.survival_instincts_threshold&!buff.survival_instincts.up
-    - frenzied_regeneration,name="Frenzied Regeneration",if=health.effective.pct<config.frenzied_regen_threshold
+    - frenzied_regeneration,name="Frenzied Regeneration",if=health.effective.pct<config.frenzied_regen_threshold&buff.frenzied_regeneration.down
     - barkskin,name="Barkskin",if=config.use_barkskin_on_cd&!buff.survival_instincts.up
     - barkskin,name="Barkskin (Low HP)",if=!config.use_barkskin_on_cd&health.effective.pct<60&!buff.survival_instincts.up
 
@@ -136,9 +139,9 @@ lists:
   # Trinkets > Potion > Lunar Beam > Sundering Roar > Incarnation/Berserk > Wild Guardian
   cooldowns:
     # Trinkets and Potion: sync with Incarnation burst window
-    - trinket_1,name="Trinket 1",if=config.use_trinket_1&trinket_1.sync&var.incarnation_active
-    - trinket_2,name="Trinket 2",if=config.use_trinket_2&trinket_2.sync&var.incarnation_active
-    - combat_potion,name="Combat Potion",if=combat_potion.ready&config.use_potion&var.incarnation_active
+    - trinket_1,name="Trinket 1",if=config.use_trinket_1&trinket_1.sync&buff.incarnation_guardian_of_ursoc.up
+    - trinket_2,name="Trinket 2",if=config.use_trinket_2&trinket_2.sync&buff.incarnation_guardian_of_ursoc.up
+    - combat_potion,name="Combat Potion",if=combat_potion.ready&config.use_potion&buff.incarnation_guardian_of_ursoc.up
     # Incarnation/Berserk: require min enemies or boss target; never overlap (ref log spaces ~110s apart)
     - incarnation_guardian_of_ursoc,name="Incarnation",if=debuff.thrash.stack>=2
     # Sundering Roar: use at 5 stacks
@@ -149,12 +152,17 @@ lists:
   # Elune's Chosen rotation
   # Focuses on high Moonfire/Thrash uptime. Raze and Swipe are removed from this build.
   rotation_elunes:
-    # Ironfur: proactive maintenance
-    - ironfur,name="Ironfur",use_off_gcd=1,if=rage>=45
     # Thrash: Core
     - thrash,name="Thrash"
+    # Ironfur: proactive maintenance
+    - ironfur,name="Ironfur",use_off_gcd=1,if=rage>=50
     # Filler: Moonfire (Replaces Swipe entirely)
     - moonfire,name="Moonfire",delay=400
+
+  hotw:
+    - cat_form,if=!buff.cat_form.up&cooldown.heart_of_the_wild.ready
+    - heart_of_the_wild,if=buff.cat_form.up&target.range<=8
+    - bear_form,delay=400,if=!buff.bear_form.up
 
   # Main — entry point
   main:
@@ -166,8 +174,8 @@ lists:
     - return,if=auto_combat.player
 
     # Ensure Bear Form; skip rotation if shifting failed
-    - bear_form,name="Bear Form",if=!var.in_bear_form
-    - return,if=!var.in_bear_form
+    - bear_form,name="Bear Form",if=!buff.bear_form.up
+    - return,if=!buff.bear_form.up
 
     # Combat priority: Interrupts > Defensives > Taunt > Utility > Racials > (valid target check) > CDs > Rotation
     - call_action_list,name=interrupts
@@ -179,4 +187,5 @@ lists:
     - return,if=!target.exists|target.dead|!target.enemy
 
     - call_action_list,name=cooldowns
+    - call_action_list,name=hotw,if=config.use_feral_frenzy
     - call_action_list,name=rotation_elunes
