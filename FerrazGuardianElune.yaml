@@ -71,9 +71,10 @@ config:
 
   use_feral_frenzy:
     label: "Feral Frenzy (Cat Form)"
+    spell: 274837
     section: "Utility"
-    type: checkbox
-    default: true
+    type: toggle
+    description: "Toggle ON/OFF to enable or disable Feral Frenzy (HotW Cat Form)."
 
   # -- Trinkets --
   use_trinket_1:
@@ -187,5 +188,5 @@ lists:
     - return,if=!target.exists|target.dead|!target.enemy
 
     - call_action_list,name=cooldowns
-    - call_action_list,name=hotw,if=config.use_feral_frenzy
+    - call_action_list,name=hotw,if=config.use_feral_frenzy&buff.ironfur.stack>=3
     - call_action_list,name=rotation_elunes
