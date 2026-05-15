@@ -102,7 +102,7 @@ variables:
 lists:
   # Mark of the Wild out of combat
   out_of_combat:
-    - mark_of_the_wild,range_check=none,if=(buff.mark_of_the_wild.down.any|action.mark_of_the_wild.overlayed)&lastcast.mark_of_the_wild>=10
+    - mark_of_the_wild,name="Mark of the Wild",range_check=none,if=(buff.mark_of_the_wild.down.any|action.mark_of_the_wild.overlayed)&lastcast.mark_of_the_wild>=10
 
   # Defensive priority: Dream of Cenarius Regrowth > SI > Frenzied Regen > Barkskin (on CD)
   defensives:
@@ -148,7 +148,7 @@ lists:
     # Sundering Roar: use at 5 stacks
     - sundering_roar,name="Sundering Roar",if=debuff.thrash.stack>=5
     # Lunar Beam: Use when stop moving
-    - lunar_beam,if=player.standing.time>=1
+    - lunar_beam,name="Lunar Beam",if=player.standing.time>=1
 
   # Elune's Chosen rotation
   # Focuses on high Moonfire/Thrash uptime. Raze and Swipe are removed from this build.
@@ -161,9 +161,9 @@ lists:
     - moonfire,name="Moonfire",delay=400
 
   hotw:
-    - cat_form,if=!buff.cat_form.up&cooldown.heart_of_the_wild.ready
-    - heart_of_the_wild,if=buff.cat_form.up&target.range<=8
-    - bear_form,delay=400,if=!buff.bear_form.up
+    - cat_form,name="Cat Form",delay=400,if=!buff.cat_form.up&cooldown.heart_of_the_wild.ready
+    - heart_of_the_wild,name="Heart of the Wild",if=buff.cat_form.up
+    - bear_form,name="Bear Form",delay=400,if=!buff.bear_form.up
 
   # Main — entry point
   main:
@@ -188,5 +188,5 @@ lists:
     - return,if=!target.exists|target.dead|!target.enemy
 
     - call_action_list,name=cooldowns
-    - call_action_list,name=hotw,if=config.use_feral_frenzy&buff.ironfur.stack>=3
+    - call_action_list,name=hotw,if=config.use_feral_frenzy&buff.ironfur.stack>=3&target.range<=8
     - call_action_list,name=rotation_elunes
