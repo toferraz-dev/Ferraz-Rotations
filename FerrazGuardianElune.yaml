@@ -188,5 +188,5 @@ lists:
     - return,if=!target.exists|target.dead|!target.enemy
 
     - call_action_list,name=cooldowns
-    - call_action_list,name=hotw,if=config.use_feral_frenzy&buff.ironfur.stack>=3
+    - call_action_list,name=hotw,if=config.use_feral_frenzy&buff.ironfur.stack>=3&target.range<=8
     - call_action_list,name=rotation_elunes
