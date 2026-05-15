@@ -160,10 +160,10 @@ lists:
     # Filler: Moonfire (Replaces Swipe entirely)
     - moonfire,name="Moonfire",delay=400
 
+  # Heart of the Wild - Shift to Cat Form
   hotw:
     - cat_form,name="Cat Form",delay=400,if=!buff.cat_form.up&cooldown.heart_of_the_wild.ready
     - heart_of_the_wild,delay=400,name="Feral Frenzy",if=buff.cat_form.up
-    - bear_form,name="Bear Form",delay=400,if=!buff.bear_form.up
 
   # Main — entry point
   main:
@@ -173,6 +173,9 @@ lists:
     - call_action_list,name=auto_target
     - call_action_list,name=auto_heal
     - return,if=auto_combat.player
+
+    # Heart of the Wild - Shift to Cat Form
+    - call_action_list,name=hotw,if=config.use_feral_frenzy&target.range<=8
 
     # Ensure Bear Form; skip rotation if shifting failed
     - bear_form,name="Bear Form",if=!buff.bear_form.up
@@ -186,7 +189,5 @@ lists:
     - call_action_list,name=racials
 
     - return,if=!target.exists|target.dead|!target.enemy
-
     - call_action_list,name=cooldowns
-    - call_action_list,name=hotw,if=config.use_feral_frenzy&buff.ironfur.stack>=3&target.range<=8
     - call_action_list,name=rotation_elunes
