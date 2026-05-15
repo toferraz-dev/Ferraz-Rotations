@@ -162,7 +162,7 @@ lists:
 
   hotw:
     - cat_form,name="Cat Form",delay=400,if=!buff.cat_form.up&cooldown.heart_of_the_wild.ready
-    - heart_of_the_wild,name="Heart of the Wild",if=buff.cat_form.up
+    - heart_of_the_wild,delay=400,name="Feral Frenzy",if=buff.cat_form.up
     - bear_form,name="Bear Form",delay=400,if=!buff.bear_form.up
 
   # Main — entry point
@@ -188,5 +188,5 @@ lists:
     - return,if=!target.exists|target.dead|!target.enemy
 
     - call_action_list,name=cooldowns
-    - call_action_list,name=hotw,if=config.use_feral_frenzy&buff.ironfur.stack>=3&target.range<=8
+    - call_action_list,name=hotw,if=config.use_feral_frenzy&buff.ironfur.stack>=3
     - call_action_list,name=rotation_elunes
