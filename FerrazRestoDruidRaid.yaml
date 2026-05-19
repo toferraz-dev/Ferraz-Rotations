@@ -5,10 +5,15 @@ spec: 105
 name: Ferraz Restoration Druid Raid (Wildstalker)
 description: |
   Ferraz Restoration Druid Raid (Wildstalker)
-  Talent Tree: CkGAAAAAAAAAAAAAAAAAAAAAAMjxMLz2MmZG2GGzMDjFmBAAAAAAAAAALDa2MMNzYYMLzMzMDDzMAAAAAAAAAAAAAmtZWa2mZzGjZGMzA0MAAzMAMA
 entry: main
 
 config:
+  recommended_talents:
+    section: "Talents"
+    type: copy_text        # aliases: copy, copytext, copy-text
+    label: "Recommended Talent String"
+    text: "CkGAAAAAAAAAAAAAAAAAAAAAAMjxMLz2MmZG2GGzMDjFmBAAAAAAAAAALDa2MMNzYYMLzMzMDDzMAAAAAAAAAAAAAmtZWa2mZzGjZGMzA0MAAzMAMA"
+
   # -- Defensives --
   raid_barkskin_threshold:
     label: "Barkskin HP %"
