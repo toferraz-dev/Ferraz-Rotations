@@ -5,10 +5,15 @@ spec: 105
 name: Ferraz Restoration Druid M+ (Wildstalker)
 description: |
   Ferraz Restoration Druid M+ (Wildstalker)
-  Talent Tree: CkGA8cL7tpvige+kkmGM9zUPWPMmZZMjZmxsN8AjZswsYbGAAAAAAAAAAsNoZzw0MjZmxsYmZGLzgZAAAAAAAwAWWGLYamZZAAMbzs1sNziNGz8AYmZB0MAAzMAMA
 entry: main
 
 config:
+  recommended_talents:
+    section: "Talents"
+    type: copy_text        # aliases: copy, copytext, copy-text
+    label: "Recommended Talent String"
+    text: "CkGA8cL7tpvige+kkmGM9zUPWPMmZZMjZmxsN8AjZswsYbGAAAAAAAAAAsNoZzw0MjZmxsYmZGLzgZAAAAAAAwAWWGLYamZZAAMbzs1sNziNGz8AYmZB0MAAzMAMA"
+
   # -- Defensives --
   barkskin_threshold:
     label: "Barkskin HP %"

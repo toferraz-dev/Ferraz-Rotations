@@ -5,10 +5,14 @@ spec: 103
 name: Ferraz Feral Druid M+ (Claw)
 description: |
   Ferraz Feral Druid M+ (Claw)
-  Talent Tree: CcGA8cL7tpvige+kkmGM9zUPWDAAAAAgZMzmZmZmxY2M2GbzMzMmZAAAAYJY2M8AmZUzYWMzMzsMmxMAAAAAAGYAAAA0MLz2MzMgALgZGgFGMAAAmZDD
 entry: main
 
 config:
+  recommended_talents:
+    section: "Talents"
+    type: copy_text        # aliases: copy, copytext, copy-text
+    label: "Recommended Talent String"
+    text: "CcGA8cL7tpvige+kkmGM9zUPWDAAAAAgZMzmZmZmxY2M2GbzMzMmZAAAAYJY2M8AmZUzYWMzMzsMmxMAAAAAAGYAAAA0MLz2MzMgALgZGgFGMAAAmZDD"
 
   # -- Cooldowns --
   burst_toggle:

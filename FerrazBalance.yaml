@@ -5,10 +5,15 @@ spec: 102
 name: Ferraz Balance Druid M+ (Elunes)
 description: |
   Ferraz Balance Druid M+ (Elunes)
-  Talent Tree: CYGA8cL7tpvige+kkmGM9zUPWDAAAAAAAAAAAAAAAAWoMbNjxMDwsYmZmZhBjZZmlZWMzM2YZmlxMjxCGGgx22MDGz2IwEAAAgFzMzMD2MMGDAAzMwA
 entry: main
 
 config:
+  recommended_talents:
+    section: "Talents"
+    type: copy_text        # aliases: copy, copytext, copy-text
+    label: "Recommended Talent String"
+    text: "CYGA8cL7tpvige+kkmGM9zUPWDAAAAAAAAAAAAAAAAWoMbNjxMDwsYmZmZhBjZZmlZWMzM2YZmlxMjxCGGgx22MDGz2IwEAAAgFzMzMD2MMGDAAzMwA"
+
   # -- Defensives --
   barkskin_hp:
     label: "Barkskin HP%"

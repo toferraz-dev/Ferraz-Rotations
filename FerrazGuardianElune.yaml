@@ -5,10 +5,15 @@ spec: 104
 name: Ferraz Guardian Druid M+ (Elunes)
 description: |
   Ferraz Guardian Druid M+ (Elunes)
-  Talent Tree: CgGA8cL7tpvige+kkmGM9zUPWDAAAAAAAAAAAgZmZmFzMjZWmZx4BmZZZgZzwoJyMzyMzMzsMmBAAAAAAjNzALbzMYMLDgpmZZWmZmBAwmxMDwixwAzilNAzMzsBA
 entry: main
 
 config:
+  recommended_talents:
+    section: "Talents"
+    type: copy_text        # aliases: copy, copytext, copy-text
+    label: "Recommended Talent String"
+    text: "CgGA8cL7tpvige+kkmGM9zUPWDAAAAAAAAAAAgZmZmFzMjZWmZx4BmZZZgZzwoJyMzyMzMzsMmBAAAAAAjNzALbzMYMLDgpmZZWmZmBAwmxMDwixwAzilNAzMzsBA"
+
   # -- Defensives --
   survival_instincts_threshold:
     label: "Survival Instincts %"

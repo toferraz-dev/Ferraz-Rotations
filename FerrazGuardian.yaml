@@ -5,10 +5,15 @@ spec: 104
 name: Ferraz Guardian Druid M+ (Claw)
 description: |
   Ferraz Guardian Druid M+ (Claw)
-  Talent Tree: CgGAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAgZmxsMmZMziZZGmZZZgZzwoJamZWGzMzsMm5BGAAAAAghNDAAAAamlZZmZGAALYmHAYxMYwYxmBAzsBD
 entry: main
 
 config:
+  recommended_talents:
+    section: "Talents"
+    type: copy_text        # aliases: copy, copytext, copy-text
+    label: "Recommended Talent String"
+    text: "CgGAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAgZmxsMmZMziZZGmZZZgZzwoJamZWGzMzsMm5BGAAAAAghNDAAAAamlZZmZGAALYmHAYxMYwYxmBAzsBD"
+
   # -- Rotation --
   min_aoe_enemies:
     label: "Min enemies for AOE"
