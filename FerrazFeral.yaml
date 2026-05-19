@@ -165,6 +165,13 @@ config:
     type: checkbox
     default: true
 
+  discord_button:
+    section: "Help"
+    type: button
+    label: "Discord - Ferraz"
+    text: "Join Discord - Ferraz"
+    url: "https://discord.com/channels/857767821093634068/1467268534420766854"
+
 variables:
   # Combo point thresholds
   cp_max: combo_points>=4
