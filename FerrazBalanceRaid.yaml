@@ -54,6 +54,13 @@ config:
     type: checkbox
     default: true
 
+  discord_button:
+    section: "Help"
+    type: button
+    label: "Discord - Ferraz"
+    text: "Join Discord - Ferraz"
+    url: "https://discord.com/channels/857767821093634068/1467268534420766854"
+
 variables:
   # True when no Eclipse is active
   eclipse_down: buff.eclipse_solar.down&buff.eclipse_lunar.down
