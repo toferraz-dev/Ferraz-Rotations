@@ -325,7 +325,7 @@ lists:
 
   # NS > Trinkets/Potion (pre-Convoke) > Convoke > NS Regrowth > Tranquility > Swiftmend > Clearcasting
   cooldowns:
-    - natures_swiftness,delay=150,name="NS (Pre-Convoke)",if=cooldown.convoke_the_spirits.ready&(!config.manual_convoke&group.count(cycle.health.effective.pct<config.convoke_threshold)>=config.convoke_members&buff.abundance.stack>=3)&!buff.cat_form.up&!buff.bear_form.up&!buff.moonkin_form.up
+    - natures_swiftness,delay=150,name="NS (Pre-Convoke)",cycle=members,if=cooldown.convoke_the_spirits.ready&(!config.manual_convoke&group.count(cycle.health.effective.pct<config.convoke_threshold)>=config.convoke_members&buff.abundance.stack>=3)&!buff.cat_form.up&!buff.bear_form.up&!buff.moonkin_form.up
     - trinket_1,delay=150,name="Trinket 1",if=config.use_trinket_1&trinket_1.ready&buff.natures_swiftness.up
     - trinket_2,delay=150,name="Trinket 2",if=config.use_trinket_2&trinket_2.ready&buff.natures_swiftness.up
     - combat_potion,delay=150,name="Combat Potion",if=combat_potion.ready&config.use_potion&buff.natures_swiftness.up
