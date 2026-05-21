@@ -164,20 +164,12 @@ config:
 
   # -- Damage & Catweaving --
   catweave_group_hp:
-    label: "Enter Cat - Group HP %"
+    label: "Exit Cat - Group HP %"
     section: "Damage"
     type: slider
     min: 25
     max: 99
     default: 85
-
-  catweave_injured_max:
-    label: "Exit Cat - Max Injured"
-    section: "Damage"
-    type: slider
-    min: 0
-    max: 5
-    default: 1
 
   aoe_threshold:
     label: "AoE - Min Enemies"
@@ -284,7 +276,7 @@ config:
 
 variables:
   # True when fewer party members are injured than the exit threshold
-  group_healthy: group.count(cycle.health.effective.pct<config.catweave_group_hp)<config.catweave_injured_max
+  group_healthy: group.lowest.health.effective.pct<config.catweave_group_hp
   # Safe to enter Cat Form for DPS (group healthy)
   can_catweave: var.group_healthy&player.combat
   # Valid mouseover healing target
