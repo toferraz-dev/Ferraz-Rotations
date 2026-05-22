@@ -16,42 +16,17 @@ config:
 
   # -- Cooldowns --
   burst_toggle:
-    label: "Burst (Berserk + Convoke + Trinkets + Pot)"
+    label: "Burst (Berserk + Convoke + Potion)"
     spell: 106951
     section: "Cooldowns"
     type: toggle
-    description: "Toggle ON to allow Berserk, Convoke, trinkets and potion. Toggle OFF to hold CDs."
-
-  use_berserk:
-    label: "Auto Berserk"
-    section: "Cooldowns"
-    type: checkbox
-    default: true
-
-  use_convoke:
-    label: "Auto Convoke"
-    section: "Cooldowns"
-    type: checkbox
-    default: true
+    description: "Toggle ON to allow Berserk, Convoke and potion. Toggle OFF to hold CDs."
 
   use_racials:
     label: "Auto Racials"
     section: "Cooldowns"
     type: checkbox
     default: true
-
-  # -- Trinkets --
-  use_trinket_1:
-    label: "Auto Trinket 1"
-    section: "Trinkets"
-    type: checkbox
-    default: false
-
-  use_trinket_2:
-    label: "Auto Trinket 2"
-    section: "Trinkets"
-    type: checkbox
-    default: false
 
   use_potion:
     label: "Auto Offensive Potion"
@@ -92,27 +67,12 @@ config:
     max: 80
     default: 55
 
-  # -- Interrupts --
-  use_skull_bash:
-    label: "Auto Interrupt"
-    section: "Interrupts"
-    type: checkbox
-    default: true
-
-  skull_bash_delay:
-    label: "Interrupt Delay (ms)"
-    section: "Interrupts"
-    type: slider
-    min: 0
-    max: 2000
-    default: 250
-
   # -- Damage --
   aoe_threshold:
     label: "Min Enemies for AoE"
     section: "Damage"
     type: slider
-    min: 2
+    min: 1
     max: 5
     default: 3
 
@@ -222,17 +182,16 @@ lists:
   cooldowns:
     - tigers_fury,name="Tiger's Fury",if=var.energy_for_tf|buff.tigers_fury.down
     # Trinkets: prefer Berserk burst window, fallback to TF-only
-    - trinket_1,name="Trinket 1 (TF)",if=trinket_1.sync
-    - trinket_2,name="Trinket 2 (TF)",if=trinket_2.sync
+    #- trinket_1,name="Trinket 1 (TF)",if=trinket_1.sync
+    #- trinket_2,name="Trinket 2 (TF)",if=trinket_2.sync
     # Potion: during Berserk burst or on boss pull
-    - combat_potion,name="Potion",if=config.burst_toggle&config.use_potion&combat_potion.ready&var.tigers_fury_up&(var.berserk_up|target.boss)
-    - berserk,name="Berserk",if=config.burst_toggle&config.use_berserk&var.tigers_fury_up
+    - combat_potion,name="Potion",if=config.burst_toggle&config.use_potion&combat_potion.ready
+    - berserk,name="Berserk",if=config.burst_toggle
     # Frantic/Feral Frenzy — after Berserk, before Convoke (used in both ST and AoE)
-    - frantic_frenzy,name="Frantic Frenzy",if=player.standing.time>=1
+    - frantic_frenzy,name="Frantic Frenzy"
     # Convoke during Berserk + TF, or TF-only fallback
-    - convoke_the_spirits,name="Convoke (Berserk)",if=config.burst_toggle&config.use_convoke&var.berserk_up&var.tigers_fury_up&combo_points<=3
-    - convoke_the_spirits,name="Convoke (TF Only)",if=config.burst_toggle&config.use_convoke&var.tigers_fury_up&!var.berserk_up&combo_points<=3
-
+    - convoke_the_spirits,name="Convoke (Berserk)",if=config.burst_toggle
+  trinkets:
   # Shadowmeld post-Convoke for empowered Rake, stealth proc, or aggro drop; racial CDs during Berserk
   racials:
     - shadowmeld,name="Shadowmeld (Post-Convoke)",if=config.use_shadowmeld&player.combat&var.berserk_up&buff.convoke_the_spirits.down&cooldown.convoke_the_spirits.remains>115&combo_points<=2&!buff.sudden_ambush.up
