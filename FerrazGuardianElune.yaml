@@ -174,7 +174,7 @@ lists:
 
   # Heart of the Wild - Shift to Cat Form
   hotw:
-    - cat_form,name="Cat Form",delay=400,if=!buff.cat_form.up&cooldown.heart_of_the_wild.ready
+    - rake,name="Cat Form",delay=400,if=!buff.cat_form.up&cooldown.heart_of_the_wild.ready
     - heart_of_the_wild,delay=400,name="Feral Frenzy",if=buff.cat_form.up
 
   # Main — entry point
@@ -190,7 +190,7 @@ lists:
     - call_action_list,name=hotw,if=config.use_feral_frenzy&target.range<=8
 
     # Ensure Bear Form; skip rotation if shifting failed
-    - bear_form,name="Bear Form",if=!buff.bear_form.up
+    - mangle,name="Bear Form",if=!buff.bear_form.up
     - return,if=!buff.bear_form.up
 
     # Combat priority: Interrupts > Defensives > Taunt > Utility > Racials > (valid target check) > CDs > Rotation
