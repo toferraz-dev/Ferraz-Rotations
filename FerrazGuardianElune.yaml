@@ -31,12 +31,6 @@ config:
     max: 80
     default: 70
 
-  use_barkskin_on_cd:
-    label: "Barkskin on Cooldown"
-    section: "Defensives"
-    type: checkbox
-    default: true
-
   # -- Movement --
   stampeding_roar_usage:
     label: "Stampeding Roar Usage"
@@ -64,12 +58,6 @@ config:
   # -- Utility --
   use_growl:
     label: "Auto Growl (Taunt)"
-    section: "Utility"
-    type: checkbox
-    default: true
-
-  use_mark_of_the_wild:
-    label: "Auto Mark of the Wild"
     section: "Utility"
     type: checkbox
     default: true
@@ -120,8 +108,7 @@ lists:
   defensives:
     - survival_instincts,name="Survival Instincts",if=health.effective.pct<config.survival_instincts_threshold&!buff.survival_instincts.up
     - frenzied_regeneration,name="Frenzied Regeneration",if=health.effective.pct<config.frenzied_regen_threshold&buff.frenzied_regeneration.down
-    - barkskin,name="Barkskin",if=config.use_barkskin_on_cd&!buff.survival_instincts.up
-    - barkskin,name="Barkskin (Low HP)",if=!config.use_barkskin_on_cd&health.effective.pct<60&!buff.survival_instincts.up
+    - barkskin,name="Barkskin",if=(!buff.survival_instincts.up&fight_remains>=20)|player.on_last_boss
 
   # Racial damage CDs (unconditional)
   racials:
@@ -133,7 +120,6 @@ lists:
 
   # Auto-swap to enraged target; Skull Bash on target/MO/focus; AoE CC; Soothe
   interrupts:
-    - target_enemy,delay=100,name="Search Soothe",if=!target.purgeable.enrage&enemies.combat.any(cycle.purgeable.enrage)
     - skull_bash,name="Skull Bash",if=interrupt.target.check
     - skull_bash.mouseover,name="Skull Bash (MO)",if=interrupt.mouseover.check
     - skull_bash.focus,name="Skull Bash (Focus)",if=interrupt.focus.check
