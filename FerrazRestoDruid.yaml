@@ -275,10 +275,12 @@ config:
     url: "https://discord.com/channels/857767821093634068/1467268534420766854"
 
 variables:
-  # True when fewer party members are injured than the exit threshold
-  group_healthy: group.lowest.health.effective.pct<config.catweave_group_hp
+  # True when the group's lowest member is above the catweave HP threshold
+  group_healthy: group.lowest.health.effective.pct>=config.catweave_group_hp
   # Safe to enter Cat Form for DPS (group healthy)
   can_catweave: var.group_healthy&player.combat
+  # Player is currently in a DPS shapeshift form
+  in_dps_form: buff.cat_form.up|buff.bear_form.up
   # Valid mouseover healing target
   mo_friendly_valid: mouseover.exists&mouseover.alive&mouseover.friendly&mouseover.unitframe
   # Soul of the Forest proc is active
@@ -432,18 +434,18 @@ lists:
     - call_action_list,name=sanity_checks
     - call_action_list,name=out_of_combat
     - call_action_list,name=auto_target
-    - call_action_list,name=auto_heal
+    - call_action_list,name=auto_heal,if=!var.in_dps_form|!var.group_healthy
     - return,if=auto_combat.player
-    - call_action_list,name=defensives
+    - call_action_list,name=defensives,if=!var.in_dps_form|!var.group_healthy
     - call_action_list,name=utility
     - call_action_list,name=racials
-    - call_action_list,name=cooldowns
+    - call_action_list,name=cooldowns,if=!var.in_dps_form|!var.group_healthy
     - call_action_list,name=interrupts
     # Mouseover emergency healing on low-HP friendly unit frames
-    - call_action_list,name=mouseover_healing_emergency,if=config.use_mouseover&var.mo_friendly_valid&mouseover.health.effective.pct<config.mouseover_emergency_hp
-    - call_action_list,name=moving,if=player.moving
-    # Active healing
-    - call_action_list,name=active_healing
+    - call_action_list,name=mouseover_healing_emergency,if=config.use_mouseover&var.mo_friendly_valid&mouseover.health.effective.pct<config.mouseover_emergency_hp&(!var.in_dps_form|!var.group_healthy)
+    - call_action_list,name=moving,if=player.moving&(!var.in_dps_form|!var.group_healthy)
+    # Active healing (skipped while in DPS form if group is healthy)
+    - call_action_list,name=active_healing,if=!var.in_dps_form|!var.group_healthy
     # DPS weaving when group is healthy and target is valid in range
     - call_action_list,name=ranged_dps,if=var.can_catweave&target.exists&target.alive&!target.friendly
     - call_action_list,name=bearweave,if=var.can_catweave&target.exists&target.alive&!target.friendly&target.range<=8
