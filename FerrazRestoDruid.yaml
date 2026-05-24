@@ -447,6 +447,6 @@ lists:
     # Active healing (skipped while in DPS form if group is healthy)
     - call_action_list,name=active_healing,if=!var.in_dps_form|!var.group_healthy
     # DPS weaving when group is healthy and target is valid in range
-    - call_action_list,name=ranged_dps,if=var.can_catweave&target.exists&target.alive&!target.friendly
+    - call_action_list,name=ranged_dps,if=var.can_catweave&target.exists&target.alive&!target.friendly&target.range>8
     - call_action_list,name=bearweave,if=var.can_catweave&target.exists&target.alive&!target.friendly&target.range<=8
     - call_action_list,name=catweave,if=var.can_catweave&target.exists&target.alive&!target.friendly&target.range<=8
