@@ -254,12 +254,6 @@ config:
     type: checkbox
     default: false
 
-  use_mark_of_the_wild:
-    label: "Auto Mark of the Wild"
-    section: "Utility"
-    type: checkbox
-    default: true
-
   force_spread:
     label: "Force HoT Spread"
     section: "Utility"
