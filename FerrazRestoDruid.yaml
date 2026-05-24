@@ -12,7 +12,7 @@ config:
     section: "Talents"
     type: copy_text        # aliases: copy, copytext, copy-text
     label: "Recommended Talent String"
-    text: "CkGA8cL7tpvige+kkmGM9zUPWPMmZZMjZmxsN8AjZswsYbGAAAAAAAAAAsNoZzw0MjZmxsYmZGLzgZAAAAAAAwAWWGLYamZZAAMbzs1sNziNGz8AYmZB0MAAzMAMA"
+    text: "CkGA8cL7tpvige+kkmGM9zUPWPMmZbMjZmxsN8AMzswsYbGAAAAAAAAAAsNoZzw0MjhxsYmZmxMMGAAAAAAAMAAEAAwsNzWzyML2YmZeAMzsAaGAgZGAGA"
 
   # -- Defensives --
   barkskin_threshold:
