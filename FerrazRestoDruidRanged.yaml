@@ -358,7 +358,6 @@ lists:
   # Priority: Moonkin Form > Sunfire (AoE dot) > Starsurge (instant spend) > Starfire (AoE cleave) > Wrath (ST filler)
   # Healing spells auto-cancel Moonkin Form when needed — no extra GCD to exit
   ranged_dps:
-    # Enter Moonkin Form for +10% spell damage (heals will auto-cancel when needed)
     # Sunfire AoE DoT maintenance (highest prio — spreads to all nearby targets)
     - sunfire,name="Sunfire AoE Dot",if=debuff.sunfire.refreshable
     # Starsurge — instant cast Astral Power spender, high damage
