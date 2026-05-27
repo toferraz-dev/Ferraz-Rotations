@@ -88,6 +88,13 @@ config:
     type: checkbox
     default: false
 
+  pool_rage:
+    label: "Pool Rage (End of Pack)"
+    section: "Defensives"
+    type: toggle
+    spell: 192081
+    description: "Toggle ON to reserve rage for 2x Ironfur. Only casts Ironfur if you have no stacks or have enough rage left for 2 more."
+
   discord_button:
     section: "Help"
     type: button
@@ -153,8 +160,13 @@ lists:
   rotation_elunes:
     # Thrash: Core
     - thrash,name="Thrash"
-    # Ironfur: proactive maintenance
-    - ironfur,name="Ironfur",use_off_gcd=1,if=rage>=50
+    # Ironfur: proactive maintenance (respects Pool Rage toggle)
+    # Pool OFF: cast normally at rage>=50
+    - ironfur,name="Ironfur",use_off_gcd=1,if=rage>=50&!config.pool_rage
+    # Pool ON + no Ironfur stacks: emergency cast (never be without mitigation)
+    - ironfur,name="Ironfur (Emergency)",use_off_gcd=1,if=rage>=40&config.pool_rage&buff.ironfur.down
+    # Pool ON + has Ironfur + enough rage: cast and still reserve 2x Ironfur (80 rage)
+    - ironfur,name="Ironfur (Pool)",use_off_gcd=1,if=rage>=120&config.pool_rage&buff.ironfur.up
     # Filler: Moonfire (Replaces Swipe entirely)
     - moonfire,name="Moonfire",delay=400
 
