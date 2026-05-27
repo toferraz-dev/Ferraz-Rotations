@@ -359,7 +359,6 @@ lists:
   # Healing spells auto-cancel Moonkin Form when needed — no extra GCD to exit
   ranged_dps:
     # Enter Moonkin Form for +10% spell damage (heals will auto-cancel when needed)
-    - moonkin_form,name="Moonkin Form (DPS)",if=!buff.moonkin_form.up
     # Sunfire AoE DoT maintenance (highest prio — spreads to all nearby targets)
     - sunfire,name="Sunfire AoE Dot",if=debuff.sunfire.refreshable
     # Starsurge — instant cast Astral Power spender, high damage
