@@ -354,9 +354,12 @@ lists:
 
 
 
-  # Ranged DPS rotation (caster form) — based on top log analysis
-  # Priority: Sunfire (AoE dot) > Starsurge (instant spend) > Starfire (AoE cleave + Moonfire/Bombardments procs) > Wrath (ST filler)
+  # Ranged DPS rotation (Moonkin Form for +10% spell damage)
+  # Priority: Moonkin Form > Sunfire (AoE dot) > Starsurge (instant spend) > Starfire (AoE cleave) > Wrath (ST filler)
+  # Healing spells auto-cancel Moonkin Form when needed — no extra GCD to exit
   ranged_dps:
+    # Enter Moonkin Form for +10% spell damage (heals will auto-cancel when needed)
+    - moonkin_form,name="Moonkin Form (DPS)",if=!buff.moonkin_form.up
     # Sunfire AoE DoT maintenance (highest prio — spreads to all nearby targets)
     - sunfire,name="Sunfire AoE Dot",if=debuff.sunfire.refreshable
     # Starsurge — instant cast Astral Power spender, high damage
