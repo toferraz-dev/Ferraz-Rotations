@@ -62,12 +62,6 @@ config:
     type: checkbox
     default: true
 
-  use_feral_frenzy:
-    label: "Feral Frenzy (Cat Form)"
-    spell: 274837
-    section: "Utility"
-    type: toggle
-    description: "Toggle ON/OFF to enable or disable Feral Frenzy (HotW Cat Form)."
 
   # -- Trinkets --
   use_trinket_1:
@@ -88,12 +82,6 @@ config:
     type: checkbox
     default: false
 
-  pool_rage:
-    label: "Pool Rage (End of Pack)"
-    section: "Defensives"
-    type: toggle
-    spell: 192081
-    description: "Toggle ON to reserve rage for 2x Ironfur. Only casts Ironfur if you have no stacks or have enough rage left for 2 more."
 
   discord_button:
     section: "Help"
@@ -160,13 +148,8 @@ lists:
   rotation_elunes:
     # Thrash: Core
     - thrash,name="Thrash"
-    # Ironfur: proactive maintenance (respects Pool Rage toggle)
-    # Pool OFF: cast normally at rage>=50
-    - ironfur,name="Ironfur",use_off_gcd=1,if=rage>=50&!config.pool_rage
-    # Pool ON + no Ironfur stacks: emergency cast (never be without mitigation)
-    - ironfur,name="Ironfur (Emergency)",use_off_gcd=1,if=rage>=40&config.pool_rage&buff.ironfur.down
-    # Pool ON + has Ironfur + enough rage: cast and still reserve 2x Ironfur (80 rage)
-    - ironfur,name="Ironfur (Pool)",use_off_gcd=1,if=rage>=120&config.pool_rage&buff.ironfur.up
+    # Ironfur: only cast if fight has >10s left OR HP below 70% (saves rage at end of packs)
+    - ironfur,name="Ironfur",use_off_gcd=1,if=rage>=50&(fight_remains>10|health.effective.pct<70)
     # Filler: Moonfire (Replaces Swipe entirely)
     - moonfire,name="Moonfire",delay=400
 
@@ -184,8 +167,8 @@ lists:
     - call_action_list,name=auto_heal
     - return,if=auto_combat.player
 
-    # Heart of the Wild - Shift to Cat Form
-    - call_action_list,name=hotw,if=config.use_feral_frenzy&target.range<=8
+    # Heart of the Wild - Shift to Cat Form (auto when Barkskin is active for safety)
+    - call_action_list,name=hotw,if=buff.barkskin.up&target.range<=8
 
     # Ensure Bear Form; skip rotation if shifting failed
     - mangle,name="Bear Form",if=!buff.bear_form.up
