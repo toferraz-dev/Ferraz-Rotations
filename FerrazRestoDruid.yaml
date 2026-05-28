@@ -402,8 +402,8 @@ lists:
 
   # Bearweave: Thrash/Mangle via Fluid Form, then fall into catweave
   bearweave:
-    - thrash,name="Thrash (BearmForm Bleed)",if=debuff.thrash.remains<3&talent.fluid_form
-    - mangle,name="Mangle (BearForm)",if=talent.fluid_form
+    - thrash,name="Thrash (BearmForm Bleed)",if=target.debuff.remains(thrash)<3|target.debuff.stacks(thrash)<3
+    - mangle,name="Mangle (BearForm)",if=talent.fluid_form&!buff.bear_form.up
     - call_action_list,name=catweave
 
   # Movement healing: instant-cast HoTs only
@@ -443,4 +443,3 @@ lists:
     # DPS weaving when group is healthy and target is valid in range
     - call_action_list,name=ranged_dps,if=var.can_catweave&target.exists&target.alive&!target.friendly&target.range>8
     - call_action_list,name=bearweave,if=var.can_catweave&target.exists&target.alive&!target.friendly&target.range<=8
-    - call_action_list,name=catweave,if=var.can_catweave&target.exists&target.alive&!target.friendly&target.range<=8
