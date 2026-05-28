@@ -130,6 +130,14 @@ config:
     default: 2
 
   # -- Healing Single Target --
+  natures_swiftness_threshold:
+    label: "Nature's Swiftness HP %"
+    section: "Healing"
+    type: slider
+    min: 10
+    max: 99
+    default: 45
+
   lifebloom_threshold:
     label: "Lifebloom HP %"
     section: "Healing"
@@ -321,13 +329,12 @@ lists:
 
   # NS > Trinkets/Potion (pre-Convoke) > Convoke > NS Regrowth > Tranquility > Swiftmend > Clearcasting
   cooldowns:
-    - natures_swiftness,delay=150,name="NS (Pre-Convoke)",cycle=members,if=cooldown.convoke_the_spirits.ready&(!config.manual_convoke&group.count(cycle.health.effective.pct<config.convoke_threshold)>=config.convoke_members&buff.abundance.stack>=3)&!buff.cat_form.up&!buff.bear_form.up&!buff.moonkin_form.up
-    - trinket_1,delay=150,name="Trinket 1",if=config.use_trinket_1&trinket_1.ready&buff.natures_swiftness.up
-    - trinket_2,delay=150,name="Trinket 2",if=config.use_trinket_2&trinket_2.ready&buff.natures_swiftness.up
-    - combat_potion,delay=150,name="Combat Potion",if=combat_potion.ready&config.use_potion&buff.natures_swiftness.up
-    - convoke_the_spirits,global_delay=500,name="Convoke (Heal)",if=buff.natures_swiftness.up&!buff.cat_form.up&!buff.bear_form.up&!buff.moonkin_form.up
-    # Consume NS with Regrowth if Convoke wasn't used
-    - regrowth,name="Nature Swift Regrowth",cycle=members,if=buff.natures_swiftness.up
+    - trinket_1,delay=150,name="Trinket 1",if=config.use_trinket_1&trinket_1.ready&(!config.manual_convoke&group.count(cycle.health.effective.pct<config.convoke_threshold)>=config.convoke_members&buff.abundance.stack>=3)&!buff.cat_form.up&!buff.bear_form.up&!buff.moonkin_form.up
+    - trinket_2,delay=150,name="Trinket 2",if=config.use_trinket_2&trinket_2.ready&(!config.manual_convoke&group.count(cycle.health.effective.pct<config.convoke_threshold)>=config.convoke_members&buff.abundance.stack>=3)&!buff.cat_form.up&!buff.bear_form.up&!buff.moonkin_form.up
+    - combat_potion,delay=150,name="Combat Potion",if=combat_potion.ready&config.use_potion&(!config.manual_convoke&group.count(cycle.health.effective.pct<config.convoke_threshold)>=config.convoke_members&buff.abundance.stack>=3)&!buff.cat_form.up&!buff.bear_form.up&!buff.moonkin_form.up
+    - convoke_the_spirits,global_delay=500,name="Convoke (Heal)",if=(!config.manual_convoke&group.count(cycle.health.effective.pct<config.convoke_threshold)>=config.convoke_members&buff.abundance.stack>=3)&!buff.cat_form.up&!buff.bear_form.up&!buff.moonkin_form.up
+    - natures_swiftness,delay=150,name="Nature Swiftness",cycle=members,if=cycle.health.effective.pct<config.natures_swiftness_threshold
+    - regrowth,name="Nature Swift Regrowth",cycle=members,if=buff.natures_swiftness.up&cycle.health.effective.pct<config.natures_swiftness_threshold
     - tranquility,global_delay=500,name="Tranquility",if=!config.manual_tranquility&group.count(cycle.health.effective.pct<config.tranquility_threshold)>=config.tranquility_members&!player.moving
     # Swiftmend for SotF proc (requires existing HoT on target)
     - swiftmend,name="Swiftmend for SotF/Treants",cycle=members,if=cycle.health.effective.pct<config.swiftmend_threshold&(cycle.buff.rejuvenation.up|cycle.buff.regrowth.up|cycle.buff.wild_growth.up)
@@ -402,8 +409,8 @@ lists:
 
   # Bearweave: Thrash/Mangle via Fluid Form, then fall into catweave
   bearweave:
-    - thrash,name="Thrash (BearmForm Bleed)",if=target.debuff.remains(thrash)<3|target.debuff.stacks(thrash)<3
-    - mangle,name="Mangle (BearForm)",if=talent.fluid_form&!buff.bear_form.up
+    - thrash,name="Thrash (BearmForm Bleed)"
+    - mangle,name="Mangle (BearForm)",if=talent.fluid_form&!buff.bear_form.up&target.debuff.remains(thrash)<=8|target.debuff.stacks(thrash)<3
     - call_action_list,name=catweave
 
   # Movement healing: instant-cast HoTs only
