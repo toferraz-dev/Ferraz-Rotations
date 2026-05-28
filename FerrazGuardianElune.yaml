@@ -149,7 +149,7 @@ lists:
     # Thrash: Core
     - thrash,name="Thrash"
     # Ironfur: only cast if fight has >10s left OR HP below 70% (saves rage at end of packs)
-    - ironfur,name="Ironfur",use_off_gcd=1,if=rage>=50&(fight_remains>=20|health.effective.pct<60)
+    - ironfur,name="Ironfur",use_off_gcd=1,if=rage>=45&(fight_remains>=15|health.effective.pct<70)
     # Filler: Moonfire (Replaces Swipe entirely)
     - moonfire,name="Moonfire",delay=400
 
