@@ -412,7 +412,7 @@ lists:
     - thrash,name="Thrash (BearmForm Bleed)"
     - mangle,name="Mangle (BearForm)",if=talent.fluid_form&!buff.bear_form.up&target.debuff.remains(thrash)<=8|target.debuff.stacks(thrash)<3
     - call_action_list,name=catweave
-x
+
   # Movement healing: instant-cast HoTs only
   moving:
     - lifebloom,name="Lifebloom (Moving)",cycle=members,if=cycle.health.effective.pct<config.lifebloom_threshold&cycle.buff.lifebloom.down&(group.count(cycle.buff.lifebloom.up)=0|tank1.buff.lifebloom.up)
