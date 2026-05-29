@@ -365,7 +365,7 @@ lists:
 
   # Shapeshift to clear roots; Innervate self; Stampeding Roar
   utility:
-    - cat_form,name="Shapeshift Clear",if=debuff_list.freedom.up&!buff.cat_form.up
+    - bear_form,name="Shapeshift Clear",if=debuff_list.freedom.up&!buff.bear_form.up
     - innervate,name="Innervate",if=mana.pct<config.innervate_threshold
     - stampeding_roar,name="Stampeding Roar",if=var.use_stampeding_roar&config.stampeding_roar_usage!=0
 
