@@ -435,6 +435,11 @@ lists:
     - return,if=player.dead
     - return,if=state.blocked_inputs
     - return,if=mounted
+    - return,if=buff.travel_form.up
+    - interact_target,delay=350,if=config.lootnearby&target.lootable&target.range<=5&!player.combat
+    - interact_target,delay=350,if=config.lootnearby&loot_nearby&!player.combat
+    - interact_mouseover,delay=350,if=config.lootnearby&mouseover.lootable&mouseover.range<=5&!player.combat
+    - attack_target,off_gcd=true,delay=100,if=target.exists&target.attackable&target.alive&target.range<=8&!player.auto_attacking&player.melee&player.combat
     - call_action_list,name=auto_rez,if=config.auto_brez&mouseover.dead&mouseover.friendly&mouseover.unitframe&player.combat
     - natures_cure,delay=500,cycle=members,if=cycle.dispelable.list
 
