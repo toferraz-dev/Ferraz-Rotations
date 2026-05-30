@@ -430,6 +430,10 @@ lists:
     - rejuvenation.mouseover,name="Rejuvenation (MO)",if=mouseover.buff.remains(rejuvenation)<=1.5
     - regrowth.mouseover,name="Regrowth (MO) Cast",if=!player.moving
 
+  auto_rez:
+    - revitalize.mouseover,if=mouseover.dead&mouseover.friendly&mouseover.unitframe&!player.combat
+    - rebirth.mouseover,if=mouseover.dead&mouseover.friendly&mouseover.unitframe&player.combat
+
   sanity_checks:
     - return,if=!state.rotation
     - return,if=player.dead
@@ -440,12 +444,8 @@ lists:
     - interact_target,delay=350,if=config.lootnearby&loot_nearby&!player.combat
     - interact_mouseover,delay=350,if=config.lootnearby&mouseover.lootable&mouseover.range<=5&!player.combat
     - attack_target,off_gcd=true,delay=100,if=target.exists&target.attackable&target.alive&target.range<=8&!player.auto_attacking&player.melee&player.combat
-    - call_action_list,name=auto_rez,if=config.auto_brez&mouseover.dead&mouseover.friendly&mouseover.unitframe&player.combat
     - natures_cure,delay=500,cycle=members,if=cycle.dispelable.list
-
-  auto_rez:
-    - revitalize.mouseover,if=mouseover.dead&mouseover.friendly&mouseover.unitframe&!player.combat
-    - rebirth.mouseover,if=mouseover.dead&mouseover.friendly&mouseover.unitframe&player.combat
+    - call_action_list,name=auto_rez,if=config.auto_rez&mouseover.dead&mouseover.friendly&mouseover.unitframe&player.combat
 
   main:
     # Skip if casting/channeling or during Tranquility/Convoke
