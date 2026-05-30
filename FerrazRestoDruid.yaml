@@ -293,9 +293,8 @@ variables:
 lists:
   # Auto-swap to enraged/interruptible target; AoE CC; Soothe
   interrupts:
-    - target_enemy,delay=100,name="Search Soothe",if=!target.purgeable.enrage&enemies.combat.any(cycle.purgeable.enrage)
-    - target_enemy,delay=100,name="Search Interrupt",if=!interrupt.target.check&interrupt.8y.any
     - incapacitating_roar,name="Roar (AoE CC)",if=interrupt.stun.aoe.check
+    - target_enemy,delay=100,name="Search Soothe",if=!target.purgeable.enrage&enemies.combat.any(cycle.purgeable.enrage)
     - soothe,name="Soothe Enrage",if=target.purgeable.enrage
 
   # OOC: Mark, Symbiotic, remove Moonkin via Rejuv cast, pre-spread Lifebloom/Rejuv/Regrowth
@@ -343,7 +342,7 @@ lists:
   # Active healing: SotF consumption > Lifebloom > Forced spread > Core healing
   active_healing:
     # Consume Soul of the Forest with Regrowth or Rejuvenation
-    - regrowth,name="Regrowth Emergency",cycle=members,if=cycle.health.effective.pct<30
+    - regrowth,name="Regrowth Emergency",cycle=members,if=cycle.health.effective.pct<35
     - regrowth,name="SotF Regrowth",cycle=members,if=var.has_soul&cycle.health.effective.pct<config.regrowth_threshold
     - rejuvenation,name="SotF Germination",cycle=members,if=var.has_soul&talent.germination&cycle.buff.rejuvenation.up&(cycle.buff.rejuvenation_germination.down|cycle.buff.rejuvenation_germination.remains<1.5)
     - rejuvenation,name="SotF Rejuvenation",cycle=members,if=var.has_soul&cycle.buff.rejuvenation.remains<1.5
@@ -363,6 +362,10 @@ lists:
     - rejuvenation,name="Germination",cycle=members,if=talent.germination&cycle.buff.rejuvenation.up&(cycle.buff.rejuvenation_germination.down|cycle.buff.rejuvenation_germination.remains<1.5)&cycle.health.effective.pct<config.rejuvenation_threshold
     - regrowth,name="Regrowth",cycle=members,if=cycle.health.effective.pct<config.regrowth_threshold
     - thorn_bloom,name="Thorn Bloom",if=group.count(cycle.health.effective.pct<config.thorn_bloom_threshold)>=config.thorn_bloom_members&target.range<=8
+
+    # Abundance Filler: Maintain at least 5 stacks of Abundance during downtime
+    - rejuvenation,name="Abundance Filler (Rejuv)",cycle=members,if=buff.abundance.stack<5&cycle.buff.rejuvenation.remains<1.5
+    - rejuvenation,name="Abundance Filler (Germination)",cycle=members,if=buff.abundance.stack<5&talent.germination&cycle.buff.rejuvenation.up&(cycle.buff.rejuvenation_germination.down|cycle.buff.rejuvenation_germination.remains<1.5)
 
   # Shapeshift to clear roots; Innervate self; Stampeding Roar
   utility:
@@ -427,14 +430,25 @@ lists:
     - rejuvenation.mouseover,name="Rejuvenation (MO)",if=mouseover.buff.remains(rejuvenation)<=1.5
     - regrowth.mouseover,name="Regrowth (MO) Cast",if=!player.moving
 
-  # Main — priority routing
+  sanity_checks:
+    - return,if=!state.rotation
+    - return,if=player.dead
+    - return,if=state.blocked_inputs
+    - return,if=mounted
+    - call_action_list,name=auto_rez,if=config.auto_brez&mouseover.dead&mouseover.friendly&mouseover.unitframe&player.combat
+    - natures_cure,delay=500,cycle=members,if=cycle.dispelable.list
+
+  auto_rez:
+    - revitalize.mouseover,if=mouseover.dead&mouseover.friendly&mouseover.unitframe&!player.combat
+    - rebirth.mouseover,if=mouseover.dead&mouseover.friendly&mouseover.unitframe&player.combat
+
   main:
     # Skip if casting/channeling or during Tranquility/Convoke
     - return,if=player.channeling|player.casting|player.casting.remains>0|player.channeling.remains>0|buff.tranquility.up|buff.convoke_the_spirits.up
     - call_action_list,name=spell_queue
     - call_action_list,name=sanity_checks
     - call_action_list,name=out_of_combat
-    - call_action_list,name=auto_target
+    - call_action_list,name=auto_target_ranged
     - call_action_list,name=auto_heal,if=!var.in_dps_form|!var.group_healthy
     - return,if=auto_combat.player
     - call_action_list,name=defensives,if=!var.in_dps_form|!var.group_healthy
