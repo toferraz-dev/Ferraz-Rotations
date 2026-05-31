@@ -395,7 +395,7 @@ lists:
     - rejuvenation,name="Cat Rejuvenation",cycle=members,if=cycle.buff.rejuvenation.remains<4&(buff.cat_form.up|talent.fluid_form)&(target.range>8|!var.group_healthy)
 
     # Fluid Form: cast Rake/Shred to auto-shift into Cat Form
-    - rake,name="Fluid Rake",if=talent.fluid_form&!buff.cat_form.up&debuff.rake.refreshable
+    - rake,name="Fluid Rake",if=talent.fluid_form&(!buff.cat_form.up|debuff.rake.refreshable)
     - shred,name="Fluid Shred",if=talent.fluid_form&!buff.cat_form.up
 
     # Explicit shift fallback when Fluid Form isn't available
@@ -413,7 +413,7 @@ lists:
   # Bearweave: Thrash/Mangle via Fluid Form, then fall into catweave
   bearweave:
     - thrash,name="Thrash (BearmForm Bleed)"
-    - mangle,name="Mangle (BearForm)",if=talent.fluid_form&!buff.bear_form.up&target.debuff.remains(thrash)<=8|target.debuff.stacks(thrash)<3
+    - mangle,name="Mangle (BearForm)",if=talent.fluid_form&(!buff.bear_form.up&(target.debuff.remains(thrash)<=8|target.debuff.stacks(thrash)<3))
     - call_action_list,name=catweave
 
   # Movement healing: instant-cast HoTs only
