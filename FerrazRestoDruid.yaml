@@ -434,6 +434,9 @@ lists:
     - revitalize.mouseover,if=mouseover.dead&mouseover.friendly&mouseover.unitframe&!player.combat
     - rebirth.mouseover,if=mouseover.dead&mouseover.friendly&mouseover.unitframe&player.combat
 
+  spell_queue:
+    - queue_spell, if=!player.casting|!player.channeling
+
   sanity_checks:
     - return,if=!state.rotation
     - return,if=player.dead
