@@ -402,7 +402,6 @@ lists:
     - cat_form,name="Manual Cat Shift",if=!buff.cat_form.up
     - return,if=!buff.cat_form.up
 
-    - heart_of_the_wild,name="HotW Cat",if=config.use_heart_of_the_wild&talent.heart_of_the_wild&buff.cat_form.up
     - call_action_list,name=catweave_aoe,if=active_enemies>=config.aoe_threshold
     - call_action_list,name=catweave_st,if=active_enemies<config.aoe_threshold
 
@@ -412,6 +411,9 @@ lists:
 
   # Bearweave: Thrash/Mangle via Fluid Form, then fall into catweave
   bearweave:
+    - rake,name="HotW Rake",if=buff.cat_form.down&config.use_heart_of_the_wild&cooldown.heart_of_the_wild.ready
+    - heart_of_the_wild,name="HotW Cat",if=config.use_heart_of_the_wild&buff.cat_form.up
+
     - thrash,name="Thrash (BearmForm Bleed)"
     - mangle,name="Mangle (BearForm)",if=talent.fluid_form&(!buff.bear_form.up&(target.debuff.remains(thrash)<=8|target.debuff.stacks(thrash)<3))
     - call_action_list,name=catweave
