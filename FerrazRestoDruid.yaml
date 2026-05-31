@@ -302,20 +302,24 @@ lists:
     - mark_of_the_wild,range_check=none,if=(buff.mark_of_the_wild.down.any|action.mark_of_the_wild.overlayed)&lastcast.mark_of_the_wild>=10
     - symbiotic_relationship,name="Symbiotic Tank",cycle=tanks,if=!buff.symbiotic_relationship.up&!cycle.buff.symbiotic_relationship.up&!player.casting
     # Cast Rejuv to exit Moonkin Form (forces caster form)
-    - rejuvenation,name="Rejuvenation - Remove MoonkinForm",cycle=members,if=buff.moonkin_form.up
+    - rejuvenation,name="Rejuvenation - Remove MoonkinForm",cycle=members,if=buff.moonkin_form.up|buff.cat_form.up|buff.bear_form.up
     # Lifebloom pre-combat maintenance (Everbloom auto-stacks to 3)
     - lifebloom,name="OOC Lifebloom",cycle=members,if=cycle.health.effective.pct<config.lifebloom_threshold&cycle.buff.lifebloom.down&(group.count(cycle.buff.lifebloom.up)=0|tank1.buff.lifebloom.up)&!player.combat
     - lifebloom,name="OOC Lifebloom (Tank)",cycle=tanks,if=(cycle.buff.lifebloom.down|cycle.buff.lifebloom.remains<4.5)&(cycle.buff.lifebloom.up|group.count(cycle.buff.lifebloom.up)=0)&!player.combat
     - rejuvenation,name="OOC Rejuvenation",cycle=members,if=cycle.health.effective.pct<config.rejuvenation_threshold&cycle.buff.rejuvenation.remains<1.5&!player.combat
     - regrowth,name="OOC Regrowth",cycle=members,if=cycle.health.effective.pct<config.regrowth_threshold&cycle.buff.regrowth.remains<1.5&!player.combat
+    # Forced HoT ramp when toggle is ON (ignores HP thresholds)
+    - wild_growth,name="Forced Wild Growth",if=config.force_spread&(buff.wild_growth.down|group.any(cycle.buff.wild_growth.down))
+    - rejuvenation,name="Forced Rejuvenation",cycle=members,if=config.force_spread&(cycle.buff.rejuvenation.down|cycle.buff.rejuvenation.remains<1.5)
+    - rejuvenation,name="Forced Germination",cycle=members,if=config.force_spread&cycle.buff.rejuvenation.up&cycle.buff.rejuvenation_germination.down
 
   # Ironbark on tanks/members > Barkskin > Emergency Bear Form + Frenzied Regen
   defensives:
-    - ironbark,name="Ironbark (Tank)",cycle=tanks,if=config.ironbark_target=1&cycle.health.pct<config.ironbark_threshold&cycle.buff.ironbark.down
-    - ironbark,name="Ironbark (Members)",cycle=members,if=config.ironbark_target=2&cycle.health.pct<config.ironbark_threshold&cycle.buff.ironbark.down
-    - barkskin,name="Barkskin",if=health.pct<config.barkskin_threshold
-    - bear_form,name="Panic Bear",if=health.pct<config.frenzied_regen_threshold&!buff.bear_form.up&cooldown.frenzied_regeneration.ready
-    - frenzied_regeneration,name="Frenzied Regen",if=health.pct<config.frenzied_regen_threshold&buff.bear_form.up
+    - ironbark,name="Ironbark (Tank)",cycle=tanks,if=config.ironbark_target=1&cycle.health.effective.pct<config.ironbark_threshold&cycle.buff.ironbark.down
+    - ironbark,name="Ironbark (Members)",cycle=members,if=config.ironbark_target=2&cycle.health.effective.pct<config.ironbark_threshold&cycle.buff.ironbark.down
+    - barkskin,name="Barkskin",if=health.effective.pct<config.barkskin_threshold
+    - bear_form,name="Panic Bear",if=health.effective.pct<config.frenzied_regen_threshold&!buff.bear_form.up&cooldown.frenzied_regeneration.ready
+    - frenzied_regeneration,name="Frenzied Regen",if=health.effective.pct<config.frenzied_regen_threshold&buff.bear_form.up
 
   # Shadowmeld aggro drop; Berserking haste during emergency; AoE CC racials; Darkflight
   racials:
@@ -441,15 +445,16 @@ lists:
     - return,if=!state.rotation
     - return,if=player.dead
     - return,if=state.blocked_inputs
-    - return,if=mounted
-    - return,if=buff.travel_form.up
     - interact_target,delay=350,if=config.lootnearby&target.lootable&target.range<=5&!player.combat
     - interact_target,delay=350,if=config.lootnearby&loot_nearby&!player.combat
     - interact_mouseover,delay=350,if=config.lootnearby&mouseover.lootable&mouseover.range<=5&!player.combat
-    - attack_target,off_gcd=true,delay=100,if=target.exists&target.attackable&target.alive&target.range<=8&!player.auto_attacking&player.melee&player.combat
     - natures_cure,delay=500,cycle=members,if=cycle.dispelable.list
     - call_action_list,name=auto_rez,if=config.auto_rez&mouseover.dead&mouseover.friendly&mouseover.unitframe&player.combat
 
+  auto_target_ranged:
+    - target_enemy,delay=200,off_gcd=true,if=config.auto_target_ranged.has(0)&!target.exists&enemies.combat.40y>=1
+    - target_enemy,delay=200,off_gcd=true,if=config.auto_target_ranged.has(1)&target.dead&enemies.combat.40y>=1
+    - target_enemy,delay=200,off_gcd=true,if=config.auto_target_ranged.has(2)&target.range>=40&enemies.combat.40y>=1
   main:
     # Skip if casting/channeling or during Tranquility/Convoke
     - return,if=player.channeling|player.casting|player.casting.remains>0|player.channeling.remains>0|buff.tranquility.up|buff.convoke_the_spirits.up
