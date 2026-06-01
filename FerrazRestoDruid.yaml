@@ -428,7 +428,6 @@ lists:
 
   # Mouseover emergency: NS Regrowth > Swiftmend > Rejuv > hardcast Regrowth
   mouseover_healing_emergency:
-    - regrowth.mouseover,name="Regrowth (MO) Instant",if=buff.natures_swiftness.up
     - swiftmend.mouseover,name="Swiftmend (MO)",if=mouseover.buff.remains(rejuvenation)>1|mouseover.buff.remains(regrowth) >1|mouseover.buff.remains(wild_growth)>1
     - rejuvenation.mouseover,name="Rejuvenation (MO)",if=mouseover.buff.remains(rejuvenation)<=1.5
     - regrowth.mouseover,name="Regrowth (MO) Cast",if=!player.moving
