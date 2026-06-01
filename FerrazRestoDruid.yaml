@@ -299,6 +299,8 @@ lists:
 
   # OOC: Mark, Symbiotic, remove DPS via Rejuv cast, pre-spread Lifebloom/Rejuv/Regrowth
   out_of_combat:
+    - mark_of_the_wild,range_check=none,if=(buff.mark_of_the_wild.down.any|action.mark_of_the_wild.overlayed)&lastcast.mark_of_the_wild>=10
+    - symbiotic_relationship,name="Symbiotic Tank",cycle=tanks,if=!buff.symbiotic_relationship.up&!cycle.buff.symbiotic_relationship.up
     # Cast Rejuv to exit DPS Form (forces caster form)
     - rejuvenation,name="Rejuvenation - Remove DPSForm",cycle=members,if=buff.cat_form.up|buff.bear_form.up
     # Lifebloom pre-combat maintenance (Everbloom auto-stacks to 3)
@@ -414,7 +416,7 @@ lists:
   # Bearweave: Thrash/Mangle via Fluid Form, then fall into catweave
   bearweave:
     - thrash,name="Thrash (BearmForm Bleed)"
-    - mangle,name="Mangle (BearForm)",if=talent.fluid_form&(!buff.bear_form.up&(target.debuff.remains(thrash)<=8|target.debuff.stacks(thrash)<3))
+    - mangle,name="Mangle (BearForm)",if=!buff.bear_form.up&(target.debuff.remains(thrash)<=8|target.debuff.stacks(thrash)<3)
     - call_action_list,name=catweave
 
   # Movement healing: instant-cast HoTs only
