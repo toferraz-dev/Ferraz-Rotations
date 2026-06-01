@@ -334,6 +334,7 @@ lists:
     - symbiotic_relationship,name="Symbiotic Tank",cycle=tanks,if=!buff.symbiotic_relationship.up&!cycle.buff.symbiotic_relationship.up
     - natures_swiftness,name="Nature Swiftness",range_check=none,cycle=members,if=cycle.health.effective.pct<config.natures_swiftness_threshold
     - regrowth,name="Nature Swift Regrowth",cycle=members,if=buff.natures_swiftness.up&cycle.health.effective.pct<config.natures_swiftness_threshold
+    - rejuvenation,name="Reju Out Cat For Convoke",if=(!config.manual_convoke&group.count(cycle.health.effective.pct<config.convoke_threshold)>=config.convoke_members)&(buff.cat_form.up|buff.bear_form.up)
     - trinket_1,delay=150,name="Trinket 1",if=config.use_trinket_1&trinket_1.ready&(!config.manual_convoke&group.count(cycle.health.effective.pct<config.convoke_threshold)>=config.convoke_members)&!buff.cat_form.up&!buff.bear_form.up
     - trinket_2,delay=150,name="Trinket 2",if=config.use_trinket_2&trinket_2.ready&(!config.manual_convoke&group.count(cycle.health.effective.pct<config.convoke_threshold)>=config.convoke_members)&!buff.cat_form.up&!buff.bear_form.up
     - combat_potion,delay=150,name="Combat Potion",if=combat_potion.ready&config.use_potion&(!config.manual_convoke&group.count(cycle.health.effective.pct<config.convoke_threshold)>=config.convoke_members)&!buff.cat_form.up&!buff.bear_form.up
