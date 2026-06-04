@@ -147,8 +147,8 @@ variables:
 
   # DoT/bleed state
   rip_up: debuff.rip.up
-  rip_refreshable: debuff.rip.refreshable|debuff.rip.remains<4.8
-  rake_refreshable: debuff.rake.refreshable|debuff.rake.remains<4.2
+  rip_refreshable: debuff.rip.refreshable|cluster.debuff.rip.lowest<4
+  rake_refreshable: debuff.rake.refreshable|cluster.debuff.rake.lowest<4
 
   # Emergency flag
   emergency_situation: health.effective.pct<35
