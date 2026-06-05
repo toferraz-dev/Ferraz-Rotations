@@ -180,7 +180,7 @@ lists:
 
   # Tiger's Fury > Trinkets/Potion > Berserk > Frenzy > Convoke
   cooldowns:
-    - tigers_fury,name="Tiger's Fury",if=var.energy_for_tf|buff.tigers_fury.down
+    - tigers_fury,name="Tiger's Fury",if=var.energy_for_tf|buff.tigers_fury.down|config.burst_toggle
     # Trinkets: prefer Berserk burst window, fallback to TF-only
     #- trinket_1,name="Trinket 1 (TF)",if=trinket_1.sync
     #- trinket_2,name="Trinket 2 (TF)",if=trinket_2.sync
