@@ -122,9 +122,8 @@ variables:
   eclipse_down: buff.eclipse_solar.down&buff.eclipse_lunar.down
   # Elune's Chosen hero talent (Boundless Moonlight)
   ec: talent.boundless_moonlight
-  # CA/Inc ready and not yet pressed — triggers opener (only when burst is ON)
-  # Whirling Stars: Inc has 2 charges, so check charges instead of just CD
-  opener: config.burst_toggle&talent.incarnation_chosen_of_elune&cooldown.incarnation_chosen_of_elune.charges>0&!var.cd_active
+  # Ready to cast Incarnation (waiting for FoE)
+  inc_ready_to_cast: config.burst_toggle&talent.incarnation_chosen_of_elune&cooldown.incarnation_chosen_of_elune.charges>0&var.inc_ttd_ok&!var.cd_active&(cooldown.fury_of_elune.remains<2|buff.fury_of_elune.up)
   # Currently inside CA or Incarnation
   cd_active: buff.celestial_alignment.up|buff.incarnation_chosen_of_elune.up
 
@@ -146,9 +145,9 @@ lists:
 
   # Activate trinkets/potion during burst windows (only when burst toggle is ON)
   trinkets:
-    - trinket_1,delay=150,name="Trinket 1",if=config.burst_toggle&config.use_trinket_1&trinket_1.ready&player.combat&var.trinkets_ttd_ok&cooldown.fury_of_elune.remains>0&(var.opener|var.cd_active)
-    - trinket_2,delay=150,name="Trinket 2",if=config.burst_toggle&config.use_trinket_2&trinket_2.ready&player.combat&var.trinkets_ttd_ok&cooldown.fury_of_elune.remains>0&(var.opener|var.cd_active)
-    - combat_potion,delay=150,name="Combat Potion",if=config.burst_toggle&config.use_potion&combat_potion.ready&player.combat&var.potion_ttd_ok&cooldown.fury_of_elune.remains>0&(var.opener|var.cd_active)
+    - trinket_1,delay=150,name="Trinket 1",if=config.burst_toggle&config.use_trinket_1&trinket_1.ready&player.combat&var.trinkets_ttd_ok&cooldown.fury_of_elune.remains>0&var.cd_active
+    - trinket_2,delay=150,name="Trinket 2",if=config.burst_toggle&config.use_trinket_2&trinket_2.ready&player.combat&var.trinkets_ttd_ok&cooldown.fury_of_elune.remains>0&var.cd_active
+    - combat_potion,delay=150,name="Combat Potion",if=config.burst_toggle&config.use_potion&combat_potion.ready&player.combat&var.potion_ttd_ok&cooldown.fury_of_elune.remains>0&var.cd_active
 
   # Emergency Bear Form for Frenzied Regen, then Barkskin
   defensives:
@@ -168,12 +167,15 @@ lists:
   moving_st:
     - moonfire,if=debuff.moonfire.remains<2|debuff.moonfire.refreshable
     - sunfire,if=debuff.sunfire.remains<2|debuff.sunfire.refreshable
+    # Cast instant filler when Ascendant Fires is active
+    - starfire,if=buff.ascendant_fires.up
+    - wrath,if=buff.ascendant_fires.up&var.eclipse_down
     # Dump AP with instant Starsurge; prioritize procs
     - starsurge,if=buff.starweavers_warp.up|buff.touch_the_cosmos.react
     - starsurge,if=astral_power>60
     # Fury of Elune — on CD, instant
     - fury_of_elune
-    # Last-qresort instant fillers
+    # Last-resort instant fillers
     - moonfire
     - sunfire
 
@@ -182,12 +184,13 @@ lists:
     - sunfire,if=debuff.sunfire.remains<2|debuff.sunfire.refreshable
     # Moonfire spread (skip 6+ for GCD efficiency)
     - moonfire,if=active_enemies<6&(debuff.moonfire.remains<2|debuff.moonfire.refreshable)
+    # Cast instant Starfire when Ascendant Fires is active
+    - starfire,if=buff.ascendant_fires.up
     # Starfall: primary AoE AP dump — spam aggressively (top player refreshes constantly)
     - starfall,if=buff.starweavers_weft.up|buff.touch_the_cosmos.react
     - starfall,if=astral_power>50
-    # Starsurge inside Starfall for Star Cascade cleave
+    # Starsurge inside Starfall only on free procs (no manual Starsurges in AoE)
     - starsurge,if=buff.starfall.up&(buff.touch_the_cosmos.react|buff.starweavers_warp.up)
-    - starsurge,if=buff.starfall.up&astral_power>60
     # FoE on CD
     - fury_of_elune
     - sunfire
@@ -201,8 +204,10 @@ lists:
     # Maintain DoTs
     - moonfire,if=debuff.moonfire.remains<2|debuff.moonfire.refreshable
     - sunfire,if=debuff.sunfire.remains<2|debuff.sunfire.refreshable
-    # Activate Lunar Eclipse directly when charges available (no Wrath needed in 12.0.5)
-    - lunar_eclipse,if=var.eclipse_down&cooldown.lunar_eclipse.ready
+    # Activate Lunar Eclipse directly when charges available (skip if about to cast Incarnation)
+    - lunar_eclipse,if=var.eclipse_down&cooldown.lunar_eclipse.ready&!var.inc_ready_to_cast
+    # Activate Inc — align with Fury of Elune
+    - incarnation_chosen_of_elune,if=var.inc_ready_to_cast
     # FoE on CD — Lunation passively reduces CD via Arcane casts (~28s effective CD)
     - fury_of_elune,if=var.foe_ttd_ok
     # Spend AP — free procs first (Hail of Stars: free SS/SF grants Solstice for 3s)
@@ -210,8 +215,6 @@ lists:
     # Note: free procs (Starweaver/TtC) bypass TTD — never waste a free cast
     - starsurge,if=buff.starweavers_warp.up|buff.touch_the_cosmos.react
     - starsurge,if=astral_power>60
-    # Activate Inc — only while FoE is ticking (ensures FoE was JUST cast before Inc)
-    - incarnation_chosen_of_elune,delay=500,if=config.burst_toggle&var.inc_ttd_ok&!var.cd_active&buff.fury_of_elune.up
     # Fillers — Wrath for ST when Eclipse is down, Starfire when Eclipse is up (empowered +50%)
     - wrath,if=var.eclipse_down&active_enemies<=1
     - starfire
@@ -222,47 +225,22 @@ lists:
   aoe:
     # Emergency AP dump — prevent capping when entering pull with high AP
     - starfall,if=astral_power>=80&var.starfall_ttd_ok
-    # Spread DoTs — Sunfire first (Sunseeker Mushroom procs from SF damage, generates up to 20 AP)
-    - sunfire,if=debuff.sunfire.refreshable
+    # Spread DoTs — Moonfire first (gather phase) then Sunfire (splash on group)
     - moonfire,if=active_enemies<6&debuff.moonfire.refreshable
-    # Activate Lunar Eclipse directly when charges available (no Wrath needed in 12.0.5)
-    - lunar_eclipse,if=var.eclipse_down&cooldown.lunar_eclipse.ready
+    - sunfire,if=debuff.sunfire.refreshable
+    # Activate Lunar Eclipse directly when charges available (skip if about to cast Incarnation)
+    - lunar_eclipse,if=var.eclipse_down&cooldown.lunar_eclipse.ready&!var.inc_ready_to_cast
+    # Activate Inc — align with Fury of Elune
+    - incarnation_chosen_of_elune,if=var.inc_ready_to_cast
     # FoE on CD — Radiant Moonlight (+50% dmg, -15s CD) + Lunation (Arcane spells reduce CD further)
     - fury_of_elune,if=var.foe_ttd_ok
-    # Activate Inc — only while FoE is ticking (ensures FoE was JUST cast before Inc)
-    - incarnation_chosen_of_elune,delay=500,if=config.burst_toggle&var.inc_ttd_ok&!var.cd_active&buff.fury_of_elune.up
     # Starfall — SPAM aggressively (Aetherial Kindling extends DoTs, Starweaver 40% proc→free SS)
     - starfall,if=buff.starweavers_weft.up|buff.touch_the_cosmos.react
     - starfall,if=(astral_power>50)&var.starfall_ttd_ok
-    # Starsurge weaving during Starfall (Star Cascade: 72% of SS during SF for cleave)
+    # Starsurge inside Starfall only on free procs (no manual Starsurges in AoE)
     - starsurge,if=buff.starfall.up&(buff.starweavers_warp.up|buff.touch_the_cosmos.react)
-    - starsurge,if=buff.starfall.up&astral_power>60&buff.starlord.stack<3
     - starfire
 
-  # Opener ST — DoTs > FoE > Inc > AP dump (Ascendant Eclipses: first 3 spenders +20%)
-  opener_st:
-    - sunfire,if=debuff.sunfire.refreshable
-    - moonfire,if=debuff.moonfire.refreshable
-    # FoE before Inc for AP ramp + Atmospheric Exposure debuff (+6% dmg taken)
-    - fury_of_elune,if=var.foe_ttd_ok
-    - incarnation_chosen_of_elune,delay=500,if=var.inc_ttd_ok&!var.cd_active&buff.fury_of_elune.up
-    # Inc grants both Eclipses — Ascendant Eclipses: next cast is instant, first 3 spenders +20%
-    # Dump AP aggressively during burst (Elune's Guidance: SS -10 AP, SF -12 AP)
-    - starfall,if=buff.starweavers_weft.up|buff.touch_the_cosmos.react
-    - starfall,if=active_enemies>1&astral_power>50
-    - starsurge,if=buff.starweavers_warp.up|buff.touch_the_cosmos.react|astral_power>60
-    - starfire
-
-  # Opener AoE (3+) — DoTs > FoE > Inc > Starfall spam + Starsurge weave
-  opener_aoe:
-    - sunfire,if=debuff.sunfire.refreshable
-    - moonfire,if=active_enemies<6&debuff.moonfire.refreshable
-    - fury_of_elune,if=var.foe_ttd_ok
-    - incarnation_chosen_of_elune,if=var.inc_ttd_ok&!var.cd_active&buff.fury_of_elune.up
-    # Ascendant Eclipses: first 3 spenders deal +20% — prioritize Starfall + Starsurge weave
-    - starfall,if=buff.starweavers_weft.up|buff.touch_the_cosmos.react|astral_power>50
-    - starsurge,if=buff.starfall.up&(buff.starweavers_warp.up|buff.touch_the_cosmos.react|astral_power>60)
-    - starfire
 
   # Main entry point — routes to sub-lists by priority
   main:
@@ -276,15 +254,16 @@ lists:
     - return,if=!target.valid&cfg.auto_combat.has(0)
     - return,if=!target.valid|target.dead|!target.attackable
 
+    # Pre-cast Wrath before combat starts
+    - wrath,if=!player.combat&!player.moving&target.distance<=40
+
     - call_action_list,name=auto_heal
     # Defensives
     - call_action_list,name=defensives
     # Utility
     - call_action_list,name=interrupts
     - call_action_list,name=trinkets
-    # Opener when CDs are freshly available
-    - call_action_list,name=opener_aoe,if=var.opener&active_enemies>2
-    - call_action_list,name=opener_st,if=var.opener&active_enemies<=2
+
     # Movement — instant-cast only
     - call_action_list,name=moving_aoe,if=player.moving&active_enemies>1
     - call_action_list,name=moving_st,if=player.moving&active_enemies<=1
