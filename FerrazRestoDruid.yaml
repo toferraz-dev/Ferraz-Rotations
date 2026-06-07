@@ -312,6 +312,9 @@ lists:
     - wild_growth,name="Forced Wild Growth",range_check=none,if=config.force_spread&(buff.wild_growth.down|group.any(cycle.buff.wild_growth.down))
     - rejuvenation,name="Forced Rejuvenation",cycle=members,if=config.force_spread&(cycle.buff.rejuvenation.down|cycle.buff.rejuvenation.remains<1.5)
     - rejuvenation,name="Forced Germination",cycle=members,if=config.force_spread&cycle.buff.rejuvenation.up&cycle.buff.rejuvenation_germination.down
+    # Abundance Filler: Maintain at least 5 stacks of Abundance during downtime
+    - rejuvenation,name="Abundance Filler (Rejuv)",cycle=members,if=buff.abundance.stack<6&cycle.buff.rejuvenation.remains<1.5
+    - rejuvenation,name="Abundance Filler (Germination)",cycle=members,if=buff.abundance.stack<6&talent.germination&cycle.buff.rejuvenation.up&(cycle.buff.rejuvenation_germination.down|cycle.buff.rejuvenation_germination.remains<1.5)
 
   # Ironbark on tanks/members > Barkskin > Emergency Bear Form + Frenzied Regen
   defensives:
@@ -334,7 +337,7 @@ lists:
   cooldowns:
     - mark_of_the_wild,range_check=none,if=(buff.mark_of_the_wild.down.any|action.mark_of_the_wild.overlayed)&lastcast.mark_of_the_wild>=10
     - symbiotic_relationship,name="Symbiotic Tank",cycle=tanks,if=!buff.symbiotic_relationship.up&!cycle.buff.symbiotic_relationship.up
-    - natures_swiftness,name="Nature Swiftness",range_check=none,cycle=members,if=cycle.health.effective.pct<config.natures_swiftness_threshold
+    - natures_swiftness,global_delay=300,name="Nature Swiftness",range_check=none,cycle=members,if=cycle.health.effective.pct<config.natures_swiftness_threshold
     - regrowth,name="Nature Swift Regrowth",cycle=members,if=buff.natures_swiftness.up&cycle.health.effective.pct<config.natures_swiftness_threshold
     - rejuvenation,name="Reju Out Cat For Convoke",if=(!config.manual_convoke&group.count(cycle.health.effective.pct<config.convoke_threshold)>=config.convoke_members)&(buff.cat_form.up|buff.bear_form.up)
     - trinket_1,delay=150,name="Trinket 1",if=config.use_trinket_1&trinket_1.ready&(!config.manual_convoke&group.count(cycle.health.effective.pct<config.convoke_threshold)>=config.convoke_members)&!buff.cat_form.up&!buff.bear_form.up
@@ -371,8 +374,8 @@ lists:
     - thorn_bloom,name="Thorn Bloom",if=group.count(cycle.health.effective.pct<config.thorn_bloom_threshold)>=config.thorn_bloom_members&target.range<=8
 
     # Abundance Filler: Maintain at least 5 stacks of Abundance during downtime
-    - rejuvenation,name="Abundance Filler (Rejuv)",cycle=members,if=buff.abundance.stack<5&cycle.buff.rejuvenation.remains<1.5
-    - rejuvenation,name="Abundance Filler (Germination)",cycle=members,if=buff.abundance.stack<5&talent.germination&cycle.buff.rejuvenation.up&(cycle.buff.rejuvenation_germination.down|cycle.buff.rejuvenation_germination.remains<1.5)
+    - rejuvenation,name="Abundance Filler (Rejuv)",cycle=members,if=buff.abundance.stack<6&cycle.buff.rejuvenation.remains<1.5
+    - rejuvenation,name="Abundance Filler (Germination)",cycle=members,if=buff.abundance.stack<6&talent.germination&cycle.buff.rejuvenation.up&(cycle.buff.rejuvenation_germination.down|cycle.buff.rejuvenation_germination.remains<1.5)
 
   # Shapeshift to clear roots; Innervate self; Stampeding Roar
   utility:
