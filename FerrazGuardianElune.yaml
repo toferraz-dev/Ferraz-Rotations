@@ -82,6 +82,12 @@ config:
     type: checkbox
     default: false
 
+  auto_incarn_st:
+    label: "Incarnation on Single Target"
+    section: "Cooldowns"
+    type: checkbox
+    default: false
+
 
   discord_button:
     section: "Help"
@@ -103,7 +109,7 @@ lists:
   defensives:
     - survival_instincts,name="Survival Instincts",if=health.effective.pct<config.survival_instincts_threshold&!buff.survival_instincts.up
     - frenzied_regeneration,name="Frenzied Regeneration",if=health.effective.pct<config.frenzied_regen_threshold&buff.frenzied_regeneration.down
-    - barkskin,name="Barkskin",if=(!buff.survival_instincts.up&fight_remains>=20)|player.on_last_boss
+    - barkskin,name="Barkskin",if=!buff.lunar_beam.up&((!buff.survival_instincts.up&fight_remains>=20)|player.on_last_boss)
 
   # Racial damage CDs (unconditional)
   racials:
@@ -137,9 +143,9 @@ lists:
     - trinket_2,name="Trinket 2",if=config.use_trinket_2&trinket_2.sync&buff.incarnation_guardian_of_ursoc.up
     - combat_potion,name="Combat Potion",if=combat_potion.ready&config.use_potion&buff.incarnation_guardian_of_ursoc.up
     # Incarnation/Berserk: require min enemies or boss target; never overlap (ref log spaces ~110s apart)
-    - incarnation_guardian_of_ursoc,name="Incarnation",if=debuff.thrash.stack>=2
-    # Sundering Roar: use at 5 stacks
-    - sundering_roar,name="Sundering Roar",if=debuff.thrash.stack>=5
+    - incarnation_guardian_of_ursoc,name="Incarnation",if=debuff.thrash.stack>=2&(active_enemies>=2|config.auto_incarn_st)
+    # Sundering Roar: use for snap aggro on multiple targets or at 5 stacks
+    - sundering_roar,name="Sundering Roar",if=active_enemies>=2|debuff.thrash.stack>=5
     # Lunar Beam: Use when stop moving
     - lunar_beam,name="Lunar Beam",if=player.standing.time>=1
 
@@ -150,6 +156,8 @@ lists:
     - thrash,name="Thrash"
     # Ironfur
     - ironfur,name="Ironfur",use_off_gcd=1,if=rage>=45
+    # Mangle: Only on pure single-target
+    - mangle,name="Mangle",if=active_enemies=1
     # Filler: Moonfire (Replaces Swipe entirely)
     - moonfire,name="Moonfire",delay=400
 
@@ -167,8 +175,8 @@ lists:
     - call_action_list,name=auto_heal
     - return,if=auto_combat.player
 
-    # Heart of the Wild - Shift to Cat Form (auto when Barkskin is active for safety)
-    - call_action_list,name=hotw,if=buff.barkskin.up&target.range<=8
+    # Heart of the Wild - Shift to Cat Form (auto when Lunar Beam is active for +25% Mastery damage boost)
+    - call_action_list,name=hotw,if=buff.lunar_beam.up&target.range<=8
 
     # Ensure Bear Form; skip rotation if shifting failed
     - mangle,name="Bear Form",if=!buff.bear_form.up
