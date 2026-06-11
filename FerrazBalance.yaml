@@ -151,8 +151,8 @@ lists:
 
   # Emergency Bear Form for Frenzied Regen, then Barkskin
   defensives:
-    - bear_form,if=incoming.pct<=config.frenzied_regen_hp&cooldown.frenzied_regeneration.ready&buff.frenzied_regeneration.down&!buff.bear_form.up
-    - frenzied_regeneration,if=incoming.pct<=config.frenzied_regen_hp&buff.bear_form.up
+    - bear_form,if=health.effective.pct<=config.frenzied_regen_hp&cooldown.frenzied_regeneration.ready&buff.frenzied_regeneration.down&!buff.bear_form.up
+    - frenzied_regeneration,if=health.effective.pct<=config.frenzied_regen_hp&buff.bear_form.up
     - barkskin,if=incoming.pct<=config.barkskin_hp
     # Break roots — shift to Cat Form to clear movement-impairing effects
     - cat_form,if=debuff_list.freedom.up&buff.moonkin_form.up
