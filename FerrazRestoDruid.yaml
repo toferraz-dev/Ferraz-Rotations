@@ -321,8 +321,8 @@ lists:
     - barkskin,name="Barkskin",if=incoming.pct<config.barkskin_threshold
     - ironbark,name="Ironbark (Tank)",cycle=tanks,if=config.ironbark_target=1&cycle.health.effective.pct<config.ironbark_threshold&cycle.buff.ironbark.down
     - ironbark,name="Ironbark (Members)",cycle=members,if=config.ironbark_target=2&cycle.health.effective.pct<config.ironbark_threshold&cycle.buff.ironbark.down
-    - bear_form,name="Panic Bear",if=incoming.pct<config.frenzied_regen_threshold&!buff.bear_form.up&cooldown.frenzied_regeneration.ready
-    - frenzied_regeneration,name="Frenzied Regen",if=incoming.pct<config.frenzied_regen_threshold&buff.bear_form.up
+    - bear_form,name="Panic Bear",if=health.effective.pct<config.frenzied_regen_threshold&!buff.bear_form.up&cooldown.frenzied_regeneration.ready
+    - frenzied_regeneration,name="Frenzied Regen",if=health.effective.pct<config.frenzied_regen_threshold&buff.bear_form.up
 
   # Shadowmeld aggro drop; Berserking haste during emergency; AoE CC racials; Darkflight
   racials:
