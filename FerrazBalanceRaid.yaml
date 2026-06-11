@@ -87,9 +87,9 @@ lists:
 
   # Emergency Bear Form for Frenzied Regen, then Barkskin
   defensives:
-    - bear_form,if=health.pct<=config.frenzied_regen_hp&cooldown.frenzied_regeneration.ready&buff.frenzied_regeneration.down&!buff.bear_form.up
-    - frenzied_regeneration,if=health.pct<=config.frenzied_regen_hp&buff.bear_form.up
-    - barkskin,if=health.pct<=config.barkskin_hp
+    - bear_form,if=incoming.pct<=config.frenzied_regen_hp&cooldown.frenzied_regeneration.ready&buff.frenzied_regeneration.down&!buff.bear_form.up
+    - frenzied_regeneration,if=incoming.pct<=config.frenzied_regen_hp&buff.bear_form.up
+    - barkskin,if=incoming.pct<=config.barkskin_hp
 
   # Heart of the Wild when party HP is low
   heal_support:

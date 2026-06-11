@@ -292,9 +292,9 @@ lists:
   defensives:
     - ironbark,name="Ironbark (Tank)",cycle=tanks,if=config.raid_ironbark_target=1&cycle.health.pct<config.raid_ironbark_threshold&cycle.buff.ironbark.down
     - ironbark,name="Ironbark (Members)",cycle=members,if=config.raid_ironbark_target=2&cycle.health.pct<config.raid_ironbark_threshold&cycle.buff.ironbark.down
-    - barkskin,name="Barkskin",if=health.pct<config.raid_barkskin_threshold
-    - bear_form,name="Panic Bear",if=health.pct<config.raid_frenzied_regen_threshold&!buff.bear_form.up&cooldown.frenzied_regeneration.ready
-    - frenzied_regeneration,name="Frenzied Regen",if=health.pct<config.raid_frenzied_regen_threshold&buff.bear_form.up
+    - barkskin,name="Barkskin",if=incoming.pct<config.raid_barkskin_threshold
+    - bear_form,name="Panic Bear",if=incoming.pct<config.raid_frenzied_regen_threshold&!buff.bear_form.up&cooldown.frenzied_regeneration.ready
+    - frenzied_regeneration,name="Frenzied Regen",if=incoming.pct<config.raid_frenzied_regen_threshold&buff.bear_form.up
 
   # Shadowmeld aggro drop; Thorn Bloom AoE heal
   racials:
