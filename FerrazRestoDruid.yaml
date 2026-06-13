@@ -312,9 +312,8 @@ lists:
     - wild_growth,name="Forced Wild Growth",range_check=none,if=config.force_spread&(buff.wild_growth.down|group.any(cycle.buff.wild_growth.down))
     - rejuvenation,name="Forced Rejuvenation",cycle=members,if=config.force_spread&(cycle.buff.rejuvenation.down|cycle.buff.rejuvenation.remains<1.5)
     - rejuvenation,name="Forced Germination",cycle=members,if=config.force_spread&cycle.buff.rejuvenation.up&cycle.buff.rejuvenation_germination.down
-    # Abundance Filler: Maintain at least 5 stacks of Abundance during downtime
-    - rejuvenation,name="Abundance Filler (Rejuv)",cycle=members,if=buff.abundance.stack<6&cycle.buff.rejuvenation.remains<1.5
-    - rejuvenation,name="Abundance Filler (Germination)",cycle=members,if=buff.abundance.stack<6&talent.germination&cycle.buff.rejuvenation.up&(cycle.buff.rejuvenation_germination.down|cycle.buff.rejuvenation_germination.remains<1.5)
+    # Abundance Filler: Maintain 6 stacks of Abundance
+    - call_action_list,name=abundance_maintenance
 
   # Ironbark on tanks/members > Barkskin > Emergency Bear Form + Frenzied Regen
   defensives:
@@ -373,15 +372,18 @@ lists:
     - regrowth,name="Regrowth",cycle=members,if=cycle.health.effective.pct<config.regrowth_threshold
     - thorn_bloom,name="Thorn Bloom",if=group.count(cycle.health.effective.pct<config.thorn_bloom_threshold)>=config.thorn_bloom_members&target.range<=8
 
-    # Abundance Filler: Maintain at least 5 stacks of Abundance during downtime
-    - rejuvenation,name="Abundance Filler (Rejuv)",cycle=members,if=buff.abundance.stack<6&cycle.buff.rejuvenation.remains<1.5
-    - rejuvenation,name="Abundance Filler (Germination)",cycle=members,if=buff.abundance.stack<6&talent.germination&cycle.buff.rejuvenation.up&(cycle.buff.rejuvenation_germination.down|cycle.buff.rejuvenation_germination.remains<1.5)
+    # Abundance Filler: Maintain 6 stacks of Abundance
+    - call_action_list,name=abundance_maintenance
 
   # Shapeshift to clear roots; Innervate self; Stampeding Roar
   utility:
     - bear_form,name="Shapeshift Clear",if=debuff_list.freedom.up&!buff.bear_form.up
     - innervate,name="Innervate",if=mana.pct<config.innervate_threshold
     - stampeding_roar,name="Stampeding Roar",if=var.use_stampeding_roar&config.stampeding_roar_usage!=0
+
+  abundance_maintenance:
+    - rejuvenation,name="Abundance Filler (Rejuv)",cycle=members,if=buff.abundance.stack<6&cycle.buff.rejuvenation.remains<1.5
+    - rejuvenation,name="Abundance Filler (Germination)",cycle=members,if=buff.abundance.stack<6&talent.germination&cycle.buff.rejuvenation.up&(cycle.buff.rejuvenation_germination.down|cycle.buff.rejuvenation_germination.remains<1.5)
 
   # Catweave ST: Rip > Bite > Rake > Shred
   catweave_st:
@@ -471,6 +473,8 @@ lists:
     - call_action_list,name=moving,if=player.moving&(!var.in_dps_form|!var.group_healthy)
     # Active healing (skipped while in DPS form if group is healthy)
     - call_action_list,name=active_healing,if=!var.in_dps_form|!var.group_healthy
+    # Maintain 6 stacks of Abundance during combat, dropping forms if necessary
+    - call_action_list,name=abundance_maintenance
     # DPS weaving when group is healthy and target is valid in range
     - call_action_list,name=ranged_dps,if=var.can_catweave&target.exists&target.alive&!target.friendly&target.range>8
     - call_action_list,name=bearweave,if=var.can_catweave&target.exists&target.alive&!target.friendly&target.range<=8
