@@ -94,7 +94,7 @@ config:
     type: toggle
     spell: 319217
     default: false
-    description: "Ativar HotW manualmente por tecla de atalho."
+    description: "Activate HotW manually via hotkey."
 
   discord_button:
     section: "Help"
