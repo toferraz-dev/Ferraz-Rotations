@@ -150,7 +150,7 @@ lists:
     - trinket_2,name="Trinket 2",if=config.use_trinket_2&trinket_2.sync&buff.incarnation_guardian_of_ursoc.up
     - combat_potion,name="Combat Potion",if=combat_potion.ready&config.use_potion&buff.incarnation_guardian_of_ursoc.up
     # Incarnation/Berserk: require min enemies or boss target; never overlap (ref log spaces ~110s apart)
-    - incarnation_guardian_of_ursoc,name="Incarnation",if=debuff.thrash.stack>=2&(active_enemies>=2|config.auto_incarn_st)
+    - incarnation_guardian_of_ursoc,name="Incarnation",if=debuff.thrash.stack>=2&(active_enemies>=2|config.auto_incarn_st|target.boss)
     # Sundering Roar: use for snap aggro on multiple targets or at 5 stacks
     - sundering_roar,name="Sundering Roar",if=active_enemies>=2|debuff.thrash.stack>=5
     # Lunar Beam: Use when stop moving
