@@ -88,6 +88,13 @@ config:
     type: checkbox
     default: false
 
+  use_hotw:
+    label: "Manual Heart of the Wild"
+    section: "Cooldowns"
+    type: toggle
+    spell: 319217
+    default: false
+    description: "Ativar HotW manualmente por tecla de atalho."
 
   discord_button:
     section: "Help"
@@ -175,8 +182,8 @@ lists:
     - call_action_list,name=auto_heal
     - return,if=auto_combat.player
 
-    # Heart of the Wild - Shift to Cat Form (auto when Lunar Beam is active for +25% Mastery damage boost)
-    - call_action_list,name=hotw,if=buff.lunar_beam.up&target.range<=8
+    # Heart of the Wild - Shift to Cat Form (ativado por toggle)
+    - call_action_list,name=hotw,if=config.use_hotw&target.range<=8
 
     # Ensure Bear Form; skip rotation if shifting failed
     - mangle,name="Bear Form",if=!buff.bear_form.up
