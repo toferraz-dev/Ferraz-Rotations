@@ -150,14 +150,12 @@ variables:
   rip_refreshable: debuff.rip.refreshable|cluster.debuff.rip.lowest<4
   rake_refreshable: debuff.rake.refreshable|cluster.debuff.rake.lowest<4
 
-  # Emergency flag
-  emergency_situation: health.effective.pct<35
-
   # Bearweave heal flag — enter Bear for Frenzied Regen
   needs_bearweave_heal: health.effective.pct<config.frenzied_regen_threshold&!buff.frenzied_regeneration.up&cooldown.frenzied_regeneration.ready
 
   # Energy thresholds — 50+ ideal for max Bite damage
   energy_for_bite: energy>=50
+
   energy_for_tf: energy.deficit>=50
 
   # Stampeding Roar conditions based on config
@@ -176,14 +174,11 @@ lists:
     - shred,name="Fluid Cat Return",if=buff.bear_form.up&!var.needs_bearweave_heal
     - cat_form,name="Cat Form Fallback",if=buff.bear_form.up&!var.needs_bearweave_heal
     # Regrowth only with instant-cast proc (Predatory Swiftness)
-    - regrowth,name="Regrowth (Proc)",if=var.predatory_swiftness_up&incoming.pct<config.regrowth_threshold
+    - regrowth,name="Regrowth (Proc)",if=var.predatory_swiftness_up&health.effective.pct<config.regrowth_threshold
 
   # Tiger's Fury > Trinkets/Potion > Berserk > Frenzy > Convoke
   cooldowns:
     - tigers_fury,name="Tiger's Fury",if=var.energy_for_tf|buff.tigers_fury.down|config.burst_toggle
-    # Trinkets: prefer Berserk burst window, fallback to TF-only
-    #- trinket_1,name="Trinket 1 (TF)",if=trinket_1.sync
-    #- trinket_2,name="Trinket 2 (TF)",if=trinket_2.sync
     # Potion: during Berserk burst or on boss pull
     - combat_potion,name="Potion",if=config.burst_toggle&config.use_potion&combat_potion.ready
     - berserk,name="Berserk",if=config.burst_toggle
@@ -191,8 +186,7 @@ lists:
     - frantic_frenzy,name="Frantic Frenzy"
     # Convoke during Berserk + TF, or TF-only fallback
     - convoke_the_spirits,name="Convoke (Berserk)",if=config.burst_toggle
-  trinkets:
-  # Shadowmeld post-Convoke for empowered Rake, stealth proc, or aggro drop; racial CDs during Berserk
+
   racials:
     - shadowmeld,name="Shadowmeld (Post-Convoke)",if=config.use_shadowmeld&player.combat&var.berserk_up&buff.convoke_the_spirits.down&cooldown.convoke_the_spirits.remains>115&combo_points<=2&!buff.sudden_ambush.up
     - shadowmeld,name="Shadowmeld (Prowl Proc)",if=config.use_shadowmeld&player.combat&var.berserk_up&combo_points<=2&!buff.sudden_ambush.up
