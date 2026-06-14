@@ -233,7 +233,6 @@ lists:
     # Shapeshift snare/slow clear: bear_form to break, Fluid Form shred returns Cat
     - bear_form,name="Shapeshift Clear (Snare)",if=debuff_list.freedom.up&!buff.bear_form.up
     - shred,name="Fluid Cat Return (Snare)",if=debuff_list.freedom.up&buff.bear_form.up
-    - innervate,name="Innervate (Healer)",cycle=healers,if=!cycle.buff.innervate.up
 
   # ST — Apex proc > TF > Execute Bite > Rip maintenance > Ravage > Bite dump > Rake > Shred
   st_rotation:
