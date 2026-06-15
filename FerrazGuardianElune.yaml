@@ -106,9 +106,24 @@ config:
   lunar_beam_standing_time:
     label: "Lunar Beam standing time (seconds)"
     section: "Cooldowns"
-    type: slider
-    min: 0.1
-    max: 3
+    type: dropdown
+    options:
+      - label: "0s (Immediate)"
+        value: 0.0
+      - label: "0.2s"
+        value: 0.2
+      - label: "0.5s"
+        value: 0.5
+      - label: "0.8s"
+        value: 0.8
+      - label: "1.0s"
+        value: 1.0
+      - label: "1.5s"
+        value: 1.5
+      - label: "2.0s"
+        value: 2.0
+      - label: "3.0s"
+        value: 3.0
     default: 0.5
     description: "Time to wait standing still before casting Lunar Beam."
 
