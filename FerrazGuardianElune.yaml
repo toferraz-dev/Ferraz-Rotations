@@ -121,10 +121,10 @@ lists:
 
   # Defensive priority: Dream of Cenarius Regrowth > SI > Frenzied Regen > Barkskin (on CD)
   defensives:
-    - survival_instincts,name="Survival Instincts",use_off_gcd=1,if=incoming.pct<config.survival_instincts_threshold&!buff.survival_instincts.up
-    - frenzied_regeneration,name="Frenzied Regeneration",if=incoming.pct<config.frenzied_regen_threshold&buff.frenzied_regeneration.down
     - barkskin,name="Barkskin",use_off_gcd=1,if=!config.manual_barkskin&!buff.lunar_beam.up&((!buff.survival_instincts.up&fight_remains>=20)|target.boss)
     - barkskin,name="Barkskin (Low HP)",use_off_gcd=1,if=config.manual_barkskin&health.effective.pct<60&!buff.survival_instincts.up
+    - survival_instincts,name="Survival Instincts",use_off_gcd=1,if=incoming.pct<config.survival_instincts_threshold&!buff.survival_instincts.up
+    - frenzied_regeneration,name="Frenzied Regeneration",if=incoming.pct<config.frenzied_regen_threshold&buff.frenzied_regeneration.down
 
   # Racial damage CDs (unconditional)
   racials:
