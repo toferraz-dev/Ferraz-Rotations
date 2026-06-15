@@ -121,9 +121,9 @@ lists:
 
   # Defensive priority: Dream of Cenarius Regrowth > SI > Frenzied Regen > Barkskin (on CD)
   defensives:
-    - survival_instincts,name="Survival Instincts",if=incoming.pct<config.survival_instincts_threshold&!buff.survival_instincts.up
+    - survival_instincts,name="Survival Instincts",use_off_gcd=1,if=incoming.pct<config.survival_instincts_threshold&!buff.survival_instincts.up
     - frenzied_regeneration,name="Frenzied Regeneration",if=incoming.pct<config.frenzied_regen_threshold&buff.frenzied_regeneration.down
-    - barkskin,name="Barkskin",if=!config.manual_barkskin&!buff.lunar_beam.up&((!buff.survival_instincts.up&fight_remains>=20)|player.on_last_boss)
+    - barkskin,name="Barkskin",use_off_gcd=1,if=!config.manual_barkskin&!buff.lunar_beam.up&((!buff.survival_instincts.up&fight_remains>=20)|player.on_last_boss)
 
   # Racial damage CDs (unconditional)
   racials:
@@ -157,7 +157,7 @@ lists:
     - trinket_2,name="Trinket 2",if=config.use_trinket_2&trinket_2.sync&buff.incarnation_guardian_of_ursoc.up
     - combat_potion,name="Combat Potion",if=combat_potion.ready&config.use_potion&buff.incarnation_guardian_of_ursoc.up
     # Incarnation/Berserk: require min enemies or boss target; never overlap (ref log spaces ~110s apart)
-    - incarnation_guardian_of_ursoc,name="Incarnation",if=debuff.thrash.stack>=2&(active_enemies>=2|config.auto_incarn_st|target.boss)
+    - incarnation_guardian_of_ursoc,name="Incarnation",use_off_gcd=1,if=debuff.thrash.stack>=2&(active_enemies>=2|config.auto_incarn_st|target.boss)
     # Sundering Roar: use for snap aggro on multiple targets or at 5 stacks
     - sundering_roar,name="Sundering Roar",if=active_enemies>=2|debuff.thrash.stack>=5
     # Lunar Beam: Use when stop moving
