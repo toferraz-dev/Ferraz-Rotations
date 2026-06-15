@@ -162,7 +162,7 @@ lists:
     - survival_instincts,name="Survival Instincts",if=incoming.pct<config.survival_instincts_threshold&!buff.survival_instincts.up
     - frenzied_regeneration,name="Frenzied Regeneration",if=incoming.pct<config.frenzied_regen_threshold
     - barkskin,name="Barkskin",if=!config.manual_barkskin&config.use_barkskin_on_cd&!buff.survival_instincts.up
-    - barkskin,name="Barkskin (Low HP)",if=(config.manual_barkskin|!config.use_barkskin_on_cd)&incoming.pct<60&!buff.survival_instincts.up
+    - barkskin,name="Barkskin (Low HP)",if=!config.manual_barkskin&!config.use_barkskin_on_cd&incoming.pct<60&!buff.survival_instincts.up
 
   # Racial damage CDs (unconditional)
   racials:
