@@ -31,6 +31,13 @@ config:
     max: 80
     default: 70
 
+  manual_barkskin:
+    label: "Manual Barkskin"
+    section: "Defensives"
+    type: checkbox
+    default: false
+    description: "Disable automatic Barkskin usage."
+
   # -- Movement --
   stampeding_roar_usage:
     label: "Stampeding Roar Usage"
@@ -116,7 +123,7 @@ lists:
   defensives:
     - survival_instincts,name="Survival Instincts",if=incoming.pct<config.survival_instincts_threshold&!buff.survival_instincts.up
     - frenzied_regeneration,name="Frenzied Regeneration",if=incoming.pct<config.frenzied_regen_threshold&buff.frenzied_regeneration.down
-    - barkskin,name="Barkskin",if=!buff.lunar_beam.up&((!buff.survival_instincts.up&fight_remains>=20)|player.on_last_boss)
+    - barkskin,name="Barkskin",if=!config.manual_barkskin&!buff.lunar_beam.up&((!buff.survival_instincts.up&fight_remains>=20)|player.on_last_boss)
 
   # Racial damage CDs (unconditional)
   racials:
@@ -154,7 +161,7 @@ lists:
     # Sundering Roar: use for snap aggro on multiple targets or at 5 stacks
     - sundering_roar,name="Sundering Roar",if=active_enemies>=2|debuff.thrash.stack>=5
     # Lunar Beam: Use when stop moving
-    - lunar_beam,name="Lunar Beam",if=player.standing.time>=1
+    - lunar_beam,name="Lunar Beam",if=player.standing.time>=0.5
 
   # Elune's Chosen rotation
   # Focuses on high Moonfire/Thrash uptime. Raze and Swipe are removed from this build.
