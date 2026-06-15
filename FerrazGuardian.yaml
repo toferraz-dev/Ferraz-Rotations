@@ -54,6 +54,13 @@ config:
     type: checkbox
     default: true
 
+  manual_barkskin:
+    label: "Manual Barkskin"
+    section: "Defensives"
+    type: checkbox
+    default: false
+    description: "Disable automatic Barkskin usage."
+
   ironfur_stacks_min:
     label: "Min Ironfur Stacks"
     section: "Defensives"
@@ -154,8 +161,8 @@ lists:
     - regrowth,name="Regrowth (Guardian)",if=talent.dream_of_cenarius&buff.dream_of_cenarius.up&health.effective.pct<85
     - survival_instincts,name="Survival Instincts",if=incoming.pct<config.survival_instincts_threshold&!buff.survival_instincts.up
     - frenzied_regeneration,name="Frenzied Regeneration",if=incoming.pct<config.frenzied_regen_threshold
-    - barkskin,name="Barkskin",if=config.use_barkskin_on_cd&!buff.survival_instincts.up
-    - barkskin,name="Barkskin (Low HP)",if=!config.use_barkskin_on_cd&incoming.pct<60&!buff.survival_instincts.up
+    - barkskin,name="Barkskin",if=!config.manual_barkskin&config.use_barkskin_on_cd&!buff.survival_instincts.up
+    - barkskin,name="Barkskin (Low HP)",if=!config.manual_barkskin&!config.use_barkskin_on_cd&incoming.pct<60&!buff.survival_instincts.up
 
   # Racial damage CDs (unconditional)
   racials:
