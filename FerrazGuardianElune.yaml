@@ -135,16 +135,16 @@ lists:
 
   # Auto-swap to enraged target; Skull Bash on target/MO/focus; AoE CC; Soothe
   interrupts:
-    - skull_bash,name="Skull Bash",if=interrupt.target.check
-    - skull_bash.mouseover,name="Skull Bash (MO)",if=interrupt.mouseover.check
-    - skull_bash.focus,name="Skull Bash (Focus)",if=interrupt.focus.check
+    - skull_bash,name="Skull Bash",use_off_gcd=1,if=interrupt.target.check
+    - skull_bash.mouseover,name="Skull Bash (MO)",use_off_gcd=1,if=interrupt.mouseover.check
+    - skull_bash.focus,name="Skull Bash (Focus)",use_off_gcd=1,if=interrupt.focus.check
     - incapacitating_roar,name="Roar (AoE CC)",if=interrupt.stun.aoe.check
     - soothe,name="Soothe Enrage",if=target.purgeable.enrage
 
   # Taunt: grab loose mobs (same pattern as Monk Provoke)
   taunt:
-    - growl,name="Growl",if=config.use_growl&target.threat<2&target.combat&target.threat!=-1&!player.inraid
-    - growl.mouseover,name="Growl (MO)",if=config.use_growl&mouseover.threat<2&mouseover.combat&mouseover.threat!=-1&mouseover.exists&!player.inraid
+    - growl,name="Growl",use_off_gcd=1,if=config.use_growl&target.threat<2&target.combat&target.threat!=-1&!player.inraid
+    - growl.mouseover,name="Growl (MO)",use_off_gcd=1,if=config.use_growl&mouseover.threat<2&mouseover.combat&mouseover.threat!=-1&mouseover.exists&!player.inraid
 
   # Innervate healer + Stampeding Roar
   utility:
@@ -178,7 +178,7 @@ lists:
   # Heart of the Wild - Shift to Cat Form
   hotw:
     - rake,name="Cat Form",delay=400,if=!buff.cat_form.up&cooldown.heart_of_the_wild.ready
-    - heart_of_the_wild,delay=400,name="Feral Frenzy",if=buff.cat_form.up
+    - heart_of_the_wild,delay=400,name="Feral Frenzy",use_off_gcd=1,if=buff.cat_form.up
 
   # Main — entry point
   main:
