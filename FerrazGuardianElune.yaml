@@ -103,30 +103,6 @@ config:
     default: false
     description: "Activate HotW manually via hotkey."
 
-  lunar_beam_standing_time:
-    label: "Lunar Beam standing time (seconds)"
-    section: "Cooldowns"
-    type: dropdown
-    options:
-      - label: "0s (Immediate)"
-        value: 0.0
-      - label: "0.2s"
-        value: 0.2
-      - label: "0.5s"
-        value: 0.5
-      - label: "0.8s"
-        value: 0.8
-      - label: "1.0s"
-        value: 1.0
-      - label: "1.5s"
-        value: 1.5
-      - label: "2.0s"
-        value: 2.0
-      - label: "3.0s"
-        value: 3.0
-    default: 0.5
-    description: "Time to wait standing still before casting Lunar Beam."
-
   discord_button:
     section: "Help"
     type: button
@@ -186,7 +162,7 @@ lists:
     # Sundering Roar: use for snap aggro on multiple targets or at 5 stacks
     - sundering_roar,name="Sundering Roar",if=active_enemies>=2|debuff.thrash.stack>=5
     # Lunar Beam: Use when stop moving
-    - lunar_beam,name="Lunar Beam",if=player.standing.time>=config.lunar_beam_standing_time
+    - lunar_beam,name="Lunar Beam",if=player.standing.time>=0.5
 
   # Elune's Chosen rotation
   # Focuses on high Moonfire/Thrash uptime. Raze and Swipe are removed from this build.
