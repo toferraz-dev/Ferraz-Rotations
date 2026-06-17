@@ -254,6 +254,9 @@ lists:
     - return,if=!target.valid&cfg.auto_combat.has(0)
     - return,if=!target.valid|target.dead|!target.attackable
 
+    # Ensure Moonkin Form
+    - moonkin_form,if=buff.moonkin_form.down&health.effective.pct>config.frenzied_regen_hp&!buff.frenzied_regeneration.up
+
     # Pre-cast Wrath before combat starts
     - wrath,if=!player.combat&!player.moving&target.distance<=40
 
