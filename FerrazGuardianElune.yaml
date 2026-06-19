@@ -170,9 +170,7 @@ lists:
     # Thrash: Core
     - thrash,name="Thrash"
     # Ironfur
-    - ironfur,name="Ironfur",use_off_gcd=1,if=rage>=45
-    # Mangle: Only on pure single-target
-    - mangle,name="Mangle",if=active_enemies=1
+    - ironfur,name="Ironfur",use_off_gcd=1,if=rage>=50
     # Filler: Moonfire (Replaces Swipe entirely)
     - moonfire,name="Moonfire",delay=400
 
