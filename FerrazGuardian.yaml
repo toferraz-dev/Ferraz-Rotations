@@ -14,7 +14,7 @@ config:
     label: "Recommended Talent String"
     text: "CgGAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAgZmxsMmZMziZZGmZZZgZzwoJamZWGzMzsMm5BGAAAAAghNDAAAAamlZZmZGAALYmHAYxMYwYxmBAzsBD"
 
-  # === CONFIGURAÇÕES DA ROTAÇÃO ===
+  # === ROTATION CONFIGURATIONS ===
   min_aoe_enemies:
     label: "Min enemies for AOE"
     section: "Rotation"
@@ -31,7 +31,7 @@ config:
     max: 10
     default: 3
 
-  # === CONFIGURAÇÕES DEFENSIVAS ===
+  # === DEFENSIVE CONFIGURATIONS ===
   survival_instincts_threshold:
     label: Survival Instincts %
     section: "Defensives"
@@ -77,7 +77,7 @@ config:
     max: 10
     default: 7
 
-  # === CONFIGURAÇÕES DE MOVIMENTAÇÃO ===
+  # === MOVEMENT CONFIGURATIONS ===
   stampeding_roar_usage:
     label: "Stampeding Roar Usage"
     section: "Movement"
@@ -101,7 +101,7 @@ config:
     max: 4
     default: 2
 
-  # === CONFIGURAÇÕES DE UTILITÁRIOS ===
+  # === UTILITY CONFIGURATIONS ===
   use_growl:
     label: "Auto Growl (Taunt)"
     section: "Utility"
@@ -114,7 +114,7 @@ config:
     type: checkbox
     default: true
 
-  # === CONFIGURAÇÕES DE BERLOQUES E CONSUMÍVEIS ===
+  # === TRINKET & CONSUMABLE CONFIGURATIONS ===
   use_trinket_1:
     label: "Auto Trinket 1"
     section: "Trinkets"
@@ -141,21 +141,21 @@ config:
     url: "https://discord.com/channels/857767821093634068/1467268534420766854"
 
 variables:
-  # Estado de forma e buffs do jogador
+  # Player form state and buffs
   in_bear_form: buff.bear_form.up
   incarnation_active: buff.incarnation_guardian_of_ursoc.up|buff.berserk.up
-  # Verificações de talentos para refrescar debuffs/DoTs
+  # Talent checks to refresh debuffs/DoTs
   thrash_refresh: target.debuff.remains(thrash)<4.5|target.debuff.stacks(thrash)<5
   moonfire_refresh: target.debuff.moonfire.remains<4.8
-  # Condições do Rugido Estampido com base nas opções da interface
+  # Stampeding Roar conditions based on interface settings
   use_stampeding_roar: moving.time>=config.stampeding_roar_movement_time&buff.stampeding_roar.down&((config.stampeding_roar_usage=1&player.combat)|(config.stampeding_roar_usage=2&!player.combat)|(config.stampeding_roar_usage=3))
 
 lists:
-  # Fora de combate: Garante que a Marca do Selvagem esteja ativa
+  # Out of combat: Ensures Mark of the Wild is active
   out_of_combat:
     - mark_of_the_wild,range_check=none,if=(buff.mark_of_the_wild.down.any|action.mark_of_the_wild.overlayed)&lastcast.mark_of_the_wild>=10
 
-  # Sequência de prioridades defensivas: Regrowth (Dream of Cenarius) -> Instintos de Sobrevivência (Survival Instincts) -> Regeneração Frenética (Frenzied Regeneration) -> Pele de Árvore (Barkskin)
+  # Defensive priority sequence: Regrowth (Dream of Cenarius) -> Survival Instincts -> Frenzied Regeneration -> Barkskin
   defensives:
     - regrowth,name="Regrowth (Guardian)",if=talent.dream_of_cenarius&buff.dream_of_cenarius.up&health.effective.pct<85
     - survival_instincts,name="Survival Instincts",if=incoming.pct<config.survival_instincts_threshold&!buff.survival_instincts.up
@@ -163,14 +163,14 @@ lists:
     - barkskin,name="Barkskin",if=!config.manual_barkskin&config.use_barkskin_on_cd&!buff.survival_instincts.up
     - barkskin,name="Barkskin (Low HP)",if=!config.manual_barkskin&!config.use_barkskin_on_cd&incoming.pct<60&!buff.survival_instincts.up
 
-  # Habilidades raciais ofensivas disparadas automaticamente em combate
+  # Offensive racial abilities triggered automatically in combat
   racials:
     - blood_fury,name="Blood Fury"
     - berserking,name="Berserking"
     - fireblood,name="Fireblood"
     - ancestral_call,name="Ancestral Call"
 
-  # Interrupções e Dispel: Busca automática de alvo enfurecido para Soothe; Skull Bash no alvo, mouseover ou foco; Rugido Incapacitante para CC em área
+  # Interrupts and Dispel: Auto-search for enraged target to Soothe; Skull Bash on target, mouseover, or focus; Incapacitating Roar for AoE CC
   interrupts:
     - target_enemy,delay=100,name="Search Soothe",if=!target.purgeable.enrage&enemies.combat.any(cycle.purgeable.enrage)
     - skull_bash,name="Skull Bash",if=interrupt.target.check
@@ -179,59 +179,59 @@ lists:
     - incapacitating_roar,name="Roar (AoE CC)",if=interrupt.stun.aoe.check
     - soothe,name="Soothe Enrage",if=target.purgeable.enrage
 
-  # Provocação automática (Taunt): Growl no alvo ou mouseover se threat baixo fora de raides
+  # Automatic Taunt: Growl on target or mouseover if threat is low outside raids
   taunt:
     - growl,name="Growl",if=config.use_growl&target.threat<2&target.combat&target.threat!=-1&!player.inraid
     - growl.mouseover,name="Growl (MO)",if=config.use_growl&mouseover.threat<2&mouseover.combat&mouseover.threat!=-1&mouseover.exists&!player.inraid
 
-  # Habilidades utilitárias e de movimento
+  # Utility and movement abilities
   utility:
     - stampeding_roar,name="Stampeding Roar",if=var.use_stampeding_roar&config.stampeding_roar_usage!=0
 
-  # Cooldowns Ofensivos de Dano
+  # Offensive Damage Cooldowns
   cooldowns:
-    # Sincroniza berloques e poção com a ativação da janela de burst do Encarnação
+    # Synchronize trinkets and potion with Incarnation burst window activation
     - trinket_1,name="Trinket 1",if=config.use_trinket_1&trinket_1.sync&var.incarnation_active
     - trinket_2,name="Trinket 2",if=config.use_trinket_2&trinket_2.sync&var.incarnation_active
     - combat_potion,name="Combat Potion",if=combat_potion.ready&config.use_potion&var.incarnation_active
-    # Feixe Lunar (Lunar Beam): Usado agressivamente sempre que houver 1 ou mais inimigos
+    # Lunar Beam: Used aggressively whenever there is 1 or more enemies
     - lunar_beam,name="Lunar Beam",if=active_enemies>=1
     - sundering_roar,name="Sundering Roar",if=talent.sundering_roar&debuff.thrash.stack<3
-    # Encarnação / Berserk: Lançados sob número mínimo de inimigos ou contra boss, garantindo não sobreposição
+    # Incarnation / Berserk: Cast under a minimum number of enemies or against boss, ensuring no overlap
     - incarnation_guardian_of_ursoc,name="Incarnation",if=!var.incarnation_active&(active_enemies>=config.incarnation_enemies|target.boss)
     - berserk,name="Berserk",if=!var.incarnation_active&!talent.incarnation_guardian_of_ursoc&(active_enemies>=config.incarnation_enemies|target.boss)
     - wild_guardian,name="Wild Guardian",if=(buff.ravage.up&talent.ravage)|!talent.ravage
 
-  # Rotação Druida das Garras (Druid of the Claw) — Foco em manter Couro de Ferro (Ironfur) -> Consumo de Ravage -> Procs de Galactic Guardian Moonfire -> Mangle e Thrash -> Fillers
+  # Druid of the Claw Rotation — Focus on maintaining Ironfur -> Consuming Ravage -> Galactic Guardian Moonfire procs -> Mangle and Thrash -> Fillers
   rotation_claw:
-    # Couro de Ferro (Ironfur): Manutenção proativa e empilhamento baseado na Raiva e vida efetiva
+    # Ironfur: Proactive maintenance and stacking based on Rage and effective health
     - ironfur,name="Ironfur (Maintain)",if=buff.ironfur.remains<3|buff.ironfur.stack<config.ironfur_stacks_min
     - ironfur,name="Ironfur (Stack)",if=rage>=60&buff.ironfur.stack<config.ironfur_stacks_max
     - ironfur,name="Ironfur (Heavy Damage)",if=health.effective.pct<50&buff.ironfur.stack<config.ironfur_stacks_max
 
-    # Arrasar (Ravage): Gasta o proc com prioridade absoluta
+    # Ravage: Spend the proc with absolute priority
     - ravage,name="Ravage",if=buff.ravage.up
 
-    # Fogo Lunar com Galactic Guardian: Alta prioridade para não desperdiçar procs ativos
+    # Moonfire with Galactic Guardian: High priority to not waste active procs
     - moonfire,name="Moonfire (GG)",if=buff.galactic_guardian.up&var.in_bear_form
 
-    # Surra (Thrash): Atualiza para manter os sangramentos no alvo
+    # Thrash: Refresh to maintain bleeds on target
     - thrash,name="Thrash (Refresh)",target_if=var.thrash_refresh
 
-    # Arrasar (Raze): Usado como gasto de raiva em excesso sob múltiplos inimigos
+    # Raze: Used to dump excess rage under multiple enemies
     - raze,name="Raze (Overflow)",if=active_enemies>=config.min_aoe_enemies&rage>=80
 
-    # Dilacerar (Mangle): Gerador principal de raiva
+    # Mangle: Primary rage generator
     - mangle,name="Mangle"
 
-    # Surra (Thrash): Habilidade de área padrão
+    # Thrash: Standard AoE ability
     - thrash,name="Thrash"
 
-    # Habilidades de preenchimento (fillers): Fogo Lunar (para atualização) -> Patada (Swipe)
+    # Filler abilities: Moonfire (for refresh) -> Swipe
     - moonfire,name="Moonfire (Refresh)",if=var.moonfire_refresh&var.in_bear_form
     - swipe,name="Swipe"
 
-  # Rotação Principal (Ponto de Entrada)
+  # Main Rotation (Entry Point)
   main:
     - call_action_list,name=spell_queue
     - call_action_list,name=sanity_checks
@@ -240,11 +240,11 @@ lists:
     - call_action_list,name=auto_heal
     - return,if=auto_combat.player
 
-    # Garante a Forma de Urso; aborta a rotação se a transformação falhar
+    # Ensures Bear Form; aborts rotation if shape shift fails
     - bear_form,name="Bear Form",if=!var.in_bear_form&!buff.feline_potential.up
     - return,if=!var.in_bear_form
 
-    # Prioridade de Combate: Interrupções -> Defensivos -> Taunt -> Utilitários -> Racials -> Cooldowns -> Rotação de Garra
+    # Combat Priority: Interrupts -> Defensives -> Taunt -> Utility -> Racials -> Cooldowns -> Claw Rotation
     - call_action_list,name=interrupts
     - call_action_list,name=defensives
     - call_action_list,name=taunt
