@@ -193,6 +193,7 @@ lists:
 
     # Ensure Bear Form; skip rotation if shifting failed
     - mangle,name="Bear Form",if=!buff.bear_form.up
+    - bear_form,name="Bear Form (Forced)",if=!buff.bear_form.up
     - return,if=!buff.bear_form.up
 
     # Combat priority: Interrupts > Defensives > Taunt > Utility > Racials > (valid target check) > CDs > Rotation
