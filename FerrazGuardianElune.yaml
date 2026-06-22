@@ -10,11 +10,11 @@ entry: main
 config:
   recommended_talents:
     section: "Talents"
-    type: copy_text        # aliases: copy, copytext, copy-text
+    type: copy_text
     label: "Recommended Talent String"
     text: "CgGA8cL7tpvige+kkmGM9zUPWDAAAAAAAAAAAgZmZmFzMjZWmZx4BmZZZgZzwoJyMzyMzMzsMmBAAAAAAjNzALbzMYMLDgpmZZWmZmBAwmxMDwixwAzilNAzMzsBA"
 
-  # -- Defensives --
+  # === CONFIGURAÇÕES DEFENSIVAS ===
   survival_instincts_threshold:
     label: "Survival Instincts %"
     section: "Defensives"
@@ -38,7 +38,7 @@ config:
     default: false
     description: "Disable automatic Barkskin usage."
 
-  # -- Movement --
+  # === CONFIGURAÇÕES DE MOVIMENTAÇÃO ===
   stampeding_roar_usage:
     label: "Stampeding Roar Usage"
     section: "Movement"
@@ -62,15 +62,14 @@ config:
     max: 4
     default: 2
 
-  # -- Utility --
+  # === CONFIGURAÇÕES DE UTILITÁRIOS ===
   use_growl:
     label: "Auto Growl (Taunt)"
     section: "Utility"
     type: checkbox
     default: true
 
-
-  # -- Trinkets --
+  # === CONFIGURAÇÕES DE BERLOQUES E CONSUMÍVEIS ===
   use_trinket_1:
     label: "Auto Trinket 1"
     section: "Trinkets"
@@ -111,22 +110,22 @@ config:
     url: "https://discord.com/channels/857767821093634068/1467268534420766854"
 
 variables:
-  # Stampeding Roar conditions based on config
+  # Condições para ativação do Rugido Estampido com base nas configurações da interface
   use_stampeding_roar: moving.time>=config.stampeding_roar_movement_time&buff.stampeding_roar.down&((config.stampeding_roar_usage=1&player.combat)|(config.stampeding_roar_usage=2&!player.combat)|(config.stampeding_roar_usage=3))
 
 lists:
-  # Mark of the Wild out of combat
+  # Fora de combate: Garante que a Marca do Selvagem esteja ativa no grupo
   out_of_combat:
     - mark_of_the_wild,name="Mark of the Wild",range_check=none,if=(buff.mark_of_the_wild.down.any|action.mark_of_the_wild.overlayed)&lastcast.mark_of_the_wild>=10
 
-  # Defensive priority: Dream of Cenarius Regrowth > SI > Frenzied Regen > Barkskin (on CD)
+  # Sequência de prioridades defensivas: Pele de Árvore (de acordo com as opções do menu) -> Instintos de Sobrevivência (quando o dano iminente ultrapassar o limite configurado) -> Regeneração Frenética (se a vida efetiva cair abaixo do limite)
   defensives:
     - barkskin,name="Barkskin",use_off_gcd=1,if=!config.manual_barkskin&!buff.lunar_beam.up&((!buff.survival_instincts.up&fight_remains>=20)|target.boss)
     - barkskin,name="Barkskin (Low HP)",use_off_gcd=1,if=config.manual_barkskin&health.effective.pct<60&!buff.survival_instincts.up
     - survival_instincts,name="Survival Instincts",use_off_gcd=1,if=incoming.pct<config.survival_instincts_threshold&!buff.survival_instincts.up
     - frenzied_regeneration,name="Frenzied Regeneration",if=incoming.pct<config.frenzied_regen_threshold&buff.frenzied_regeneration.down
 
-  # Racial damage CDs (unconditional)
+  # Habilidades raciais ofensivas disparadas sem condições adicionais durante o combate
   racials:
     - blood_fury,name="Blood Fury",if=debuff.thrash.stack>=2
     - berserking,name="Berserking",if=debuff.thrash.stack>=2
@@ -134,7 +133,7 @@ lists:
     - ancestral_call,name="Ancestral Call",if=debuff.thrash.stack>=2
     - thorn_bloom,name="Thorn Bloom",if=debuff.thrash.stack>=2
 
-  # Auto-swap to enraged target; Skull Bash on target/MO/focus; AoE CC; Soothe
+  # Interrupções e Dispel: Chute de Crânio (Skull Bash) no alvo principal, sob o ponteiro do mouse (mouseover) ou no foco; Rugido Incapacitante como controle em área (AoE CC); e Soothe no enfurecer (Enrage)
   interrupts:
     - skull_bash,name="Skull Bash",use_off_gcd=1,if=interrupt.target.check
     - skull_bash.mouseover,name="Skull Bash (MO)",use_off_gcd=1,if=interrupt.mouseover.check
@@ -142,44 +141,44 @@ lists:
     - incapacitating_roar,name="Roar (AoE CC)",if=interrupt.stun.aoe.check
     - soothe,name="Soothe Enrage",if=target.purgeable.enrage
 
-  # Taunt: grab loose mobs (same pattern as Monk Provoke)
+  # Provocação automática (Taunt): Mantém o aggro dos monstros se o threat estiver baixo e não estivermos em Raid
   taunt:
     - growl,name="Growl",use_off_gcd=1,if=config.use_growl&target.threat<2&target.combat&target.threat!=-1&!player.inraid
     - growl.mouseover,name="Growl (MO)",use_off_gcd=1,if=config.use_growl&mouseover.threat<2&mouseover.combat&mouseover.threat!=-1&mouseover.exists&!player.inraid
 
-  # Innervate healer + Stampeding Roar
+  # Utilitários de movimentação e auxílio
   utility:
     - stampeding_roar,name="Stampeding Roar",if=var.use_stampeding_roar&config.stampeding_roar_usage!=0
 
-  # Trinkets > Potion > Lunar Beam > Sundering Roar > Incarnation/Berserk > Wild Guardian
+  # Cooldowns de Dano e Alinhamento de Janelas de Burst
   cooldowns:
-    # Trinkets and Potion: sync with Incarnation burst window
+    # Sincroniza o uso dos berloques ativáveis e poção com a janela do encarnação
     - trinket_1,name="Trinket 1",if=config.use_trinket_1&trinket_1.sync&buff.incarnation_guardian_of_ursoc.up
     - trinket_2,name="Trinket 2",if=config.use_trinket_2&trinket_2.sync&buff.incarnation_guardian_of_ursoc.up
     - combat_potion,name="Combat Potion",if=combat_potion.ready&config.use_potion&buff.incarnation_guardian_of_ursoc.up
-    # Incarnation/Berserk: require min enemies or boss target; never overlap (ref log spaces ~110s apart)
+    # Encarnação: Requer número mínimo de inimigos ou combate contra Boss; garante que não haja sobreposição de buffs
     - incarnation_guardian_of_ursoc,name="Incarnation",use_off_gcd=1,if=debuff.thrash.stack>=2&(active_enemies>=2|config.auto_incarn_st|target.boss)
-    # Sundering Roar: use for snap aggro on multiple targets or at 5 stacks
+    # Rugido Cortante (Sundering Roar): Gera ameaça imediata em área ou quando o Thrash atingir 5 acúmulos
     - sundering_roar,name="Sundering Roar",if=active_enemies>=2|debuff.thrash.stack>=5
-    # Lunar Beam: Use when stop moving
+    # Feixe Lunar: Lançado apenas se o jogador estiver parado por pelo menos 0.5 segundos
     - lunar_beam,name="Lunar Beam",if=player.standing.time>=0.5
 
-  # Elune's Chosen rotation
-  # Focuses on high Moonfire/Thrash uptime. Raze and Swipe are removed from this build.
+  # Rotação para a build de Escolhido de Elune (Elune's Chosen)
+  # Concentra-se em manter máxima atividade de Fogo Lunar (Moonfire) e Surra (Thrash). Patada (Swipe) e Arrasar (Raze) são omitidos nesta build.
   rotation_elunes:
-    # Thrash: Core
+    # Mantém a Surra ativa para aplicar sangramento e debuffs
     - thrash,name="Thrash"
-    # Ironfur
+    # Gasta raiva para manter a Couro de Ferro (Ironfur) ativa acima de 50 de Raiva
     - ironfur,name="Ironfur",use_off_gcd=1,if=rage>=50
-    # Filler: Moonfire (Replaces Swipe entirely)
+    # Fogo Lunar como feitiço de preenchimento (filler) substituindo Patada inteiramente
     - moonfire,name="Moonfire",delay=400
 
-  # Heart of the Wild - Shift to Cat Form
+  # Transição para forma de Gato com Coração do Selvagem
   hotw:
     - rake,name="Cat Form",delay=400,if=!buff.cat_form.up&cooldown.heart_of_the_wild.ready
     - heart_of_the_wild,delay=400,name="Feral Frenzy",use_off_gcd=1,if=buff.cat_form.up
 
-  # Main — entry point
+  # Rotação Principal (Ponto de Entrada)
   main:
     - call_action_list,name=spell_queue
     - call_action_list,name=sanity_checks
@@ -188,18 +187,18 @@ lists:
     - call_action_list,name=auto_heal
     - return,if=auto_combat.player
 
-    # Heart of the Wild - Shift to Cat Form (ativado por toggle)
+    # Coração do Selvagem ativado se a opção estiver ligada e o alvo ao alcance
     - call_action_list,name=hotw,if=config.use_hotw&target.range<=8
 
-    # Ensure Bear Form; skip rotation if shifting failed
+    # Garante que o druida esteja na Forma de Urso para tankar; aborta se a transição falhar
     - mangle,name="Bear Form",if=!buff.bear_form.up
     - bear_form,name="Bear Form (Forced)",if=!buff.bear_form.up
     - return,if=!buff.bear_form.up
 
-    # Combat priority: Interrupts > Defensives > Taunt > Utility > Racials > (valid target check) > CDs > Rotation
+    # Prioridade de Combate: Defensivos -> Taunt -> Interrupções -> Utilitários -> Racials -> Checagem de Alvo -> Cooldowns -> Rotação Elunes
     - call_action_list,name=defensives
-    - call_action_list,name=interrupts
     - call_action_list,name=taunt
+    - call_action_list,name=interrupts
     - call_action_list,name=utility
     - call_action_list,name=racials
 
