@@ -10,11 +10,11 @@ entry: main
 config:
   recommended_talents:
     section: "Talents"
-    type: copy_text        # aliases: copy, copytext, copy-text
+    type: copy_text
     label: "Recommended Talent String"
     text: "CcGA8cL7tpvige+kkmGM9zUPWDAAAAAgZMzmZmZmxY2M2GbzMzMmZAAAAYJY2M8AmZUzYWMzMzsMmxMAAAAAAGYAAAA0MLz2MzMgALgZGgFGMAAAmZDD"
 
-  # -- Cooldowns --
+  # === CONFIGURAÇÕES DE COOLDOWNS ===
   burst_toggle:
     label: "Burst (Berserk + Convoke + Potion)"
     spell: 106951
@@ -28,13 +28,14 @@ config:
     type: checkbox
     default: true
 
+  # === CONFIGURAÇÕES DE BERLOQUES E CONSUMÍVEIS ===
   use_potion:
     label: "Auto Offensive Potion"
     section: "Trinkets"
     type: checkbox
     default: false
 
-  # -- Defensives --
+  # === CONFIGURAÇÕES DEFENSIVAS ===
   barkskin_threshold:
     label: "Barkskin HP %"
     section: "Defensives"
@@ -67,7 +68,7 @@ config:
     max: 80
     default: 55
 
-  # -- Damage --
+  # === CONFIGURAÇÕES DE DANO ===
   aoe_threshold:
     label: "Min Enemies for AoE"
     section: "Damage"
@@ -76,7 +77,7 @@ config:
     max: 5
     default: 3
 
-  # -- Movement --
+  # === CONFIGURAÇÕES DE MOVIMENTAÇÃO ===
   use_wild_charge:
     label: "Auto Wild Charge"
     section: "Movement"
@@ -106,7 +107,7 @@ config:
     max: 4
     default: 2
 
-  # -- Utility --
+  # === CONFIGURAÇÕES DE UTILITÁRIOS ===
   use_prowl:
     label: "Auto Prowl"
     section: "Utility"
@@ -133,11 +134,11 @@ config:
     url: "https://discord.com/channels/857767821093634068/1467268534420766854"
 
 variables:
-  # Combo point thresholds
+  # Limites de Pontos de Combo (CP)
   cp_max: combo_points>=4
   cp_full: combo_points>=5
 
-  # Buff tracking
+  # Rastreamento de buffs e procs ativos
   has_apex: buff.apex_predators_craving.up
   has_sudden_ambush: buff.sudden_ambush.up
   tigers_fury_up: buff.tigers_fury.up
@@ -145,48 +146,48 @@ variables:
   ravage_up: buff.ravage.up
   predatory_swiftness_up: buff.predatory_swiftness.up
 
-  # DoT/bleed state
+  # Rastreamento do estado dos DoTs/sangramentos
   rip_up: debuff.rip.up
   rip_refreshable: debuff.rip.refreshable|cluster.debuff.rip.lowest<4
   rake_refreshable: debuff.rake.refreshable|cluster.debuff.rake.lowest<4
 
-  # Bearweave heal flag — enter Bear for Frenzied Regen
+  # Bandeira para Bearweave: Entra em Urso se precisar de Regeneração Frenética
   needs_bearweave_heal: health.effective.pct<config.frenzied_regen_threshold&!buff.frenzied_regeneration.up&cooldown.frenzied_regeneration.ready
 
-  # Energy thresholds — 50+ ideal for max Bite damage
+  # Limite de Energia: 50+ ideal para maximizar o dano do Ferocious Bite
   energy_for_bite: energy>=50
-
   energy_for_tf: energy.deficit>=50
 
-  # Stampeding Roar conditions based on config
+  # Condições para o Rugido Estampido com base na interface
   use_stampeding_roar: moving.time>=config.stampeding_roar_movement_time&buff.stampeding_roar.down&((config.stampeding_roar_usage=1&player.combat)|(config.stampeding_roar_usage=2&!player.combat)|(config.stampeding_roar_usage=3))
 
 lists:
-  # Survival Instincts > Barkskin > Bear Form + Frenzied Regen > Regrowth
-  # Note: Fluid Form auto-returns to Cat on next Rake/Shred (no Cat Form needed)
+  # Sequência Defensiva: Instintos de Sobrevivência -> Pele de Árvore -> Forma de Urso com Regeneração Frenética -> Regrowth
   defensives:
     - survival_instincts,name="Survival Instincts",if=incoming.pct<config.survival_instincts_threshold
     - barkskin,name="Barkskin",if=incoming.pct<config.barkskin_threshold
-    # Bearweave: Bear Form required (FR not in Fluid Form spell list)
+    # Transição defensiva para Forma de Urso se precisar de cura (Frenzied Regen)
     - bear_form,name="Bear Form (Defensive)",if=var.needs_bearweave_heal&!buff.bear_form.up
     - heart_of_the_wild,name="Heart of the Wild",if=buff.bear_form.up&health.effective.pct<config.frenzied_regen_threshold
     - frenzied_regeneration,name="Frenzied Regen",if=buff.bear_form.up&health.effective.pct<config.frenzied_regen_threshold
+    # Nota: O talento Forma Fluida (Fluid Form) retorna automaticamente para Gato ao lançar Shred
     - shred,name="Fluid Cat Return",if=buff.bear_form.up&!var.needs_bearweave_heal
     - cat_form,name="Cat Form Fallback",if=buff.bear_form.up&!var.needs_bearweave_heal
-    # Regrowth only with instant-cast proc (Predatory Swiftness)
+    # Regrowth lançado apenas se houver o proc instantâneo (Predatory Swiftness) e vida baixa
     - regrowth,name="Regrowth (Proc)",if=var.predatory_swiftness_up&health.effective.pct<config.regrowth_threshold
 
-  # Tiger's Fury > Trinkets/Potion > Berserk > Frenzy > Convoke
+  # Cooldowns Ofensivos Principais: Tiger's Fury -> Poção -> Berserk -> Feral Frenzy -> Convoke
   cooldowns:
     - tigers_fury,name="Tiger's Fury",if=var.energy_for_tf|buff.tigers_fury.down|config.burst_toggle
-    # Potion: during Berserk burst or on boss pull
+    # Poção de Combate: Ativada durante o Berserk ou abertura de combate
     - combat_potion,name="Potion",if=config.burst_toggle&config.use_potion&combat_potion.ready
     - berserk,name="Berserk",if=config.burst_toggle
-    # Frantic/Feral Frenzy — after Berserk, before Convoke (used in both ST and AoE)
+    # Fúria Frenética (Frantic/Feral Frenzy) pós-Berserk
     - frantic_frenzy,name="Frantic Frenzy"
-    # Convoke during Berserk + TF, or TF-only fallback
+    # Convocar os Espíritos (Convoke) alinhado com Berserk e Tiger's Fury
     - convoke_the_spirits,name="Convoke (Berserk)",if=config.burst_toggle
 
+  # Cooldowns raciais ofensivos e utilitários de DPS
   racials:
     - shadowmeld,name="Shadowmeld (Post-Convoke)",if=config.use_shadowmeld&player.combat&var.berserk_up&buff.convoke_the_spirits.down&cooldown.convoke_the_spirits.remains>115&combo_points<=2&!buff.sudden_ambush.up
     - shadowmeld,name="Shadowmeld (Prowl Proc)",if=config.use_shadowmeld&player.combat&var.berserk_up&combo_points<=2&!buff.sudden_ambush.up
@@ -197,85 +198,83 @@ lists:
     - ancestral_call,name="Ancestral Call",if=config.burst_toggle&var.berserk_up
     - thorn_bloom,name="Thorn Bloom (AoE)",if=config.burst_toggle&var.berserk_up&active_enemies>=config.aoe_threshold
 
-  # Skull Bash on target/mouseover/focus; AoE CC; Soothe
+  # Interrupções, Controle de Área (CC) e Remoção de Enfurecer (Soothe)
   interrupts:
-    # Auto-swap to interruptible target
+    # Alterna automaticamente para o inimigo mais próximo que esteja castando para chutar
     - target_enemy,delay=100,name="Search Interrupt",if=!interrupt.target.check&interrupt.8y.any
     - skull_bash,name="Skull Bash",if=interrupt.target.check
     - skull_bash.mouseover,name="Skull Bash (MO)",if=interrupt.mouseover.check
     - skull_bash.focus,name="Skull Bash (Focus)",if=interrupt.focus.check
-    # AoE crowd control and enrage removal
+    # Controles em área e remoção de enfurecer
     - incapacitating_roar,name="Roar (AoE CC)",if=interrupt.stun.aoe.check
     - mighty_bash,name="Mighty Bash",if=interrupt.cc.check
     - soothe,name="Soothe Enrage",if=target.purgeable.enrage
 
-  # Mark of the Wild + Prowl outside combat
+  # Fora de combate: Garante Marca do Selvagem ativa e entra em Espreitar (Prowl)
   out_of_combat:
     - mark_of_the_wild,range_check=none,if=(buff.mark_of_the_wild.down.any|action.mark_of_the_wild.overlayed)&lastcast.mark_of_the_wild>=10
     - prowl,name="Prowl (OOC)",if=config.use_prowl&!buff.prowl.up&(!player.combat|buff.shadowmeld.up)
 
-  # Open from stealth — TF first for snapshot, then empowered Rake
+  # Abertura sob Stealth (Espreitar/Shadowmeld) — Tiger's Fury primeiro para snapshotting do Rake
   stealth_opener:
     - tigers_fury,name="TF Opener",if=(buff.prowl.up|buff.shadowmeld.up)&(energy.deficit>=50|buff.tigers_fury.down)
     - rake,name="Rake Opener",if=buff.prowl.up|buff.shadowmeld.up
 
-  # Wild Charge gap-close, root/snare breaking via Fluid Form, Prowl, Stampeding Roar
+  # Movimentação e Utilidades de Mobilidade
   movement:
     - wild_charge,name="Wild Charge",if=config.use_wild_charge&target.enemy&range>8&range<=25
-    # Root/snare break: shapeshift cycle via Fluid Form (bear_form > shred auto-returns Cat)
+    # Limpeza de lentidões/raízes: Transição para Urso e retorno automático para Gato via Shred
     - bear_form,name="Shapeshift Clear (Root)",if=player.rooted&!buff.bear_form.up
     - shred,name="Fluid Cat Return (Root)",if=player.rooted&buff.bear_form.up
     - prowl,name="Prowl (Movement)",if=config.use_prowl&!buff.prowl.up&!player.combat
     - stampeding_roar,name="Stampeding Roar",if=var.use_stampeding_roar&config.stampeding_roar_usage!=0
 
-  # Innervate healer, shapeshift to clear snares/slows (debuff_list.freedom pattern from Resto)
+  # Limpeza de efeitos de movimento no grupo
   utility:
-    # Shapeshift snare/slow clear: bear_form to break, Fluid Form shred returns Cat
     - bear_form,name="Shapeshift Clear (Snare)",if=debuff_list.freedom.up&!buff.bear_form.up
     - shred,name="Fluid Cat Return (Snare)",if=debuff_list.freedom.up&buff.bear_form.up
 
-  # ST — Apex proc > TF > Execute Bite > Rip maintenance > Ravage > Bite dump > Rake > Shred
+  # Rotação Single Target (ST) — Procs de Apex -> Tiger's Fury -> Mordida Feroz (Bite) na fase de execução -> Manutenção de Rip -> Gasto de AP/Energy -> Rake e Shred
   st_rotation:
-    # Apex Predator's Craving: free Ravage or Bite at any CP
+    # Proc de Apex Predator's Craving: Ravage ou Ferocious Bite grátis com qualquer CP
     - ravage,name="Ravage (Apex Proc) ST",if=var.has_apex&var.ravage_up
     - ferocious_bite,name="Bite (Apex Proc) ST",if=var.has_apex
     - tigers_fury,name="Tiger's Fury ST",if=var.energy_for_tf|buff.tigers_fury.down
-    # Execute-range Bite at 5 CP (requires 50 energy for 100% bonus damage)
+    # Mordida Feroz na fase de execução (vida < 25%) com 50+ de Energia
     - ferocious_bite,name="Bite (Execute) ST",if=var.cp_full&var.energy_for_bite&target.health.effective.pct<25
-    # Rip: apply if missing, snapshot with TF, or refresh when full CP
+    # Rasgar (Rip): Aplica se ausente, faz snapshot com Tiger's Fury ou atualiza com CP máximo
     - rip,name="Rip Apply ST",if=var.cp_max&!var.rip_up
     - rip,name="Rip Snapshot ST",if=var.cp_max&var.rip_refreshable&var.tigers_fury_up
     - rip,name="Rip Refresh ST",if=var.cp_full&var.rip_refreshable
-    # Ravage at max CP with 50 energy
+    # Lança Arrasar (Ravage) com pontos de combo cheios e energia suficiente
     - ravage,name="Ravage ST",if=var.ravage_up&var.cp_max&var.energy_for_bite
-    # Ferocious Bite — always wait for 50 energy for double damage
+    # Mordida Feroz comum: Aguarda 50+ de energia para garantir dano dobrado
     - ferocious_bite,name="Bite (Dump) ST",if=var.cp_max&var.energy_for_bite&var.rip_up
-    # Rake — Sudden Ambush empowered first, then normal refresh
+    # Estraçalhar (Rake): Lança com prioridade se sob proc de Sudden Ambush
     - rake,name="Rake (Ambush Proc) ST",if=var.has_sudden_ambush&var.rake_refreshable
     - rake,name="Rake Refresh ST",if=var.rake_refreshable
-    # Shred — Sudden Ambush empowered first, then filler
+    # Despedaçar (Shred): Lança empoderado por Sudden Ambush, senão usa como filler
     - shred,name="Shred (Ambush Proc) ST",if=var.has_sudden_ambush
     - shred,name="Shred Filler ST"
 
-  # AoE (3+) — TF > Primal Wrath > Ravage/Apex > Bite > Rake > Swipe
-  # Note: Frantic/Feral Frenzy is now handled in the cooldowns list
+  # Rotação AoE (3+) — Tiger's Fury -> Ira Primal (Primal Wrath) -> Procs de Apex -> Mordida Feroz -> Rake -> Patada (Swipe)
   aoe_rotation:
     - tigers_fury,name="Tiger's Fury AoE",if=var.energy_for_tf|buff.tigers_fury.down
-    # Primal Wrath: aggressive usage — always at full CP, or at 4+ CP to refresh bleeds
+    # Ira Primal (Primal Wrath): Sempre com pontos de combo cheios, ou acima de 4 CPs para renovar sangramentos
     - primal_wrath,name="Primal Wrath (Full CP)",if=var.cp_full
     - primal_wrath,name="Primal Wrath (Bleed Refresh)",if=var.cp_max&debuff.rip.refreshable
-    # Apex proc Ravage/Bite
+    # Procs de Apex em área
     - ravage,name="Ravage (Apex AoE)",if=var.has_apex&var.ravage_up
     - ravage,name="Ravage (AoE Finisher)",if=var.ravage_up&var.cp_max&var.energy_for_bite
     - ferocious_bite,name="Bite (Apex Proc AoE)",if=var.has_apex
     - ferocious_bite,name="Bite (Berserk Cleave)",if=var.berserk_up&var.cp_full&var.energy_for_bite
-    # Rake spread and Swipe filler
+    # Espalha Rake nos alvos que estão sem o sangramento, e depois usa Patada (Swipe) como filler
     - rake,name="Rake",if=var.rake_refreshable
     - swipe,name="Swipe AoE Builder"
 
-  # Main — entry point routing
+  # Rotação Principal (main)
   main:
-    # Skip if casting/channeling or during Convoke
+    # Evita interrupção de canalizações ativos ou durante a execução de Convoke
     - return,if=player.channeling|player.casting|player.casting.remains>0|player.channeling.remains>0|buff.convoke_the_spirits.up
     - call_action_list,name=spell_queue
     - call_action_list,name=sanity_checks
@@ -285,13 +284,13 @@ lists:
     - return,if=!player.combat
     - call_action_list,name=defensives
     - call_action_list,name=interrupts
-    # Stealth opener from Prowl/Shadowmeld in melee range
+    # Abertura sob furtividade se estiver ao alcance físico
     - call_action_list,name=stealth_opener,if=target.enemy&(buff.prowl.up|buff.shadowmeld.up)&range<=8
     - return,if=!player.combat&range>8
     - call_action_list,name=utility
     - call_action_list,name=cooldowns
     - call_action_list,name=racials,if=config.use_racials
     - call_action_list,name=movement,if=player.moving
-    # AoE or ST based on enemy count threshold
+    # Rotação dividida entre AoE ou Single Target de acordo com o número configurado de inimigos
     - call_action_list,name=aoe_rotation,if=active_enemies>=config.aoe_threshold
     - call_action_list,name=st_rotation

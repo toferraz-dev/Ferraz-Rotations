@@ -10,11 +10,11 @@ entry: main
 config:
   recommended_talents:
     section: "Talents"
-    type: copy_text        # aliases: copy, copytext, copy-text
+    type: copy_text
     label: "Recommended Talent String"
     text: "CYGAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWoMbNjxMDMmlZmZmBYGjZWGLzYGbsMzyYmZMLYYAGgltxGmmZWGAAAAsxMzMD2MwYGAzMAwA"
 
-  # -- Defensives --
+  # === CONFIGURAÇÕES DEFENSIVAS ===
   barkskin_hp:
     label: "Barkskin HP%"
     section: "Defensives"
@@ -22,6 +22,7 @@ config:
     min: 0
     max: 100
     default: 60
+
   frenzied_regen_hp:
     label: "Frenzied Regen HP%"
     section: "Defensives"
@@ -29,12 +30,14 @@ config:
     min: 0
     max: 100
     default: 30
-  # -- Healing --
+
+  # === CONFIGURAÇÕES DE CURA ===
   enable_hotw:
     label: "HotW Support (Heal Party)"
     section: "Healing"
     type: checkbox
     default: true
+
   hotw_hp_threshold:
     label: "Party HP% for HotW"
     section: "Healing"
@@ -42,12 +45,14 @@ config:
     min: 30
     max: 90
     default: 75
-  # -- Trinkets --
+
+  # === CONFIGURAÇÕES DE BERLOQUES E CONSUMÍVEIS ===
   use_trinket_1:
     label: "Auto Trinket 1"
     section: "Trinkets"
     type: checkbox
     default: true
+
   use_trinket_2:
     label: "Auto Trinket 2"
     section: "Trinkets"
@@ -62,41 +67,40 @@ config:
     url: "https://discord.com/channels/857767821093634068/1467268534420766854"
 
 variables:
-  # True when no Eclipse is active
+  # Verdadeiro quando nenhum Eclipse (Solar ou Lunar) está ativo
   eclipse_down: buff.eclipse_solar.down&buff.eclipse_lunar.down
-  # CA/Inc ready and not yet pressed — triggers opener
+  # CA ou Encarnação pronto para ser ativado (dispara a sequência de Opener)
   opener: (talent.celestial_alignment|talent.incarnation_chosen_of_elune)&cooldown.celestial_alignment.remains=0&!var.cd_active
-  # Safe to burn CDs together
+  # Janela segura para queimar os cooldowns principais alinhados
   cd_window: cooldown.force_of_nature.remains>15|(cooldown.celestial_alignment.remains<44&cooldown.incarnation_chosen_of_elune.remains<44)
   cd_window_narrow: cooldown.force_of_nature.remains>30|((cooldown.celestial_alignment.remains>10|cooldown.incarnation_chosen_of_elune.remains>10)&(cooldown.celestial_alignment.remains<20&cooldown.incarnation_chosen_of_elune.remains<20))
-  # Currently inside CA or Incarnation
+  # Ativo quando estiver sob efeito de Celestial Alignment ou Incarnation
   cd_active: buff.celestial_alignment.up|buff.incarnation_chosen_of_elune.up
 
 lists:
-
-  # Solar Beam on target, mouseover, or focus
+  # Raio Solar (Solar Beam) no alvo, mouseover ou foco
   interrupts:
     - solar_beam,if=interrupt.target.check
     - solar_beam.mouseover,if=interrupt.mouseover.check
     - solar_beam.focus,if=interrupt.focus.check
 
-  # Activate trinkets during burst or if CDs are far away
+  # Ativa berloques durante a janela de burst ou se os CDs principais estiverem muito distantes
   trinkets:
     - trinket_1,if=config.use_trinket_1&player.combat&trinket_1.ready&(var.cd_active|cooldown.celestial_alignment.remains>40|cooldown.incarnation_chosen_of_elune.remains>40)
     - trinket_2,if=config.use_trinket_2&player.combat&trinket_2.ready&(var.cd_active|cooldown.celestial_alignment.remains>40|cooldown.incarnation_chosen_of_elune.remains>40)
 
-  # Emergency Bear Form for Frenzied Regen, then Barkskin
+  # Forma de Urso emergencial para Regeneração Frenética, e Pele de Árvore (Barkskin)
   defensives:
     - bear_form,if=health.effective.pct<=config.frenzied_regen_hp&cooldown.frenzied_regeneration.ready&buff.frenzied_regeneration.down&!buff.bear_form.up
     - frenzied_regeneration,if=health.effective.pct<=config.frenzied_regen_hp&buff.bear_form.up
     - barkskin,if=incoming.pct<=config.barkskin_hp
 
-  # Heart of the Wild when party HP is low
+  # Ativação da Marca do Selvagem e Coração do Selvagem se a vida do grupo cair
   heal_support:
     - mark_of_the_wild,range_check=none,if=(buff.mark_of_the_wild.down.any|action.mark_of_the_wild.overlayed)&lastcast.mark_of_the_wild>=10
     - heart_of_the_wild,if=config.enable_hotw&group.lowest.health.pct<config.hotw_hp_threshold&!buff.heart_of_the_wild.up
 
-  # Movement ST — instant-cast only: DoTs > Starsurge > FoE > WM > New Moon > filler
+  # Rotação ST em Movimento — Apenas habilidades instantâneas: DoTs -> Starsurge -> Fury of Elune -> Cogumelo Selvagem -> Lua Nova
   moving_st:
     - moonfire,if=debuff.moonfire.remains<2|debuff.moonfire.refreshable
     - sunfire,if=debuff.sunfire.remains<2|debuff.sunfire.refreshable
@@ -108,7 +112,7 @@ lists:
     - moonfire
     - sunfire
 
-  # Movement AoE — instant-cast only
+  # Rotação AoE em Movimento — Apenas habilidades instantâneas
   moving_aoe:
     - sunfire,if=debuff.sunfire.remains<2|debuff.sunfire.refreshable
     - moonfire,if=active_enemies<6&(debuff.moonfire.remains<2|debuff.moonfire.refreshable)
@@ -122,74 +126,65 @@ lists:
     - sunfire
     - moonfire,if=active_enemies<6
 
-  # Grove ST — DoTs > Solar Eclipse > FoE > FoN > Spenders > CA/Inc > Moons > WM > Wrath
+  # Rotação ST de Grove — DoTs -> Eclipse Solar (preferencial de Grove) -> Fury of Elune -> Force of Nature -> Cooldowns -> Moons -> Wrath
   st:
-    # Maintain DoTs (also refresh during Eclipse-down to avoid clipping)
+    # Mantém DoTs ativos (atualiza também fora de Eclipse para evitar clipping)
     - moonfire,if=debuff.moonfire.remains<2|debuff.moonfire.refreshable&var.eclipse_down
     - sunfire,if=debuff.sunfire.remains<2|debuff.sunfire.refreshable&var.eclipse_down
-    # Enter Solar Eclipse (Grove prefers Solar over Lunar)
+    # Força Eclipse Solar (Grove prioriza Solar sobre Lunar)
     - solar_eclipse,if=var.eclipse_down
-    # FoE on CD; guard Atmospheric Exposure overlap
+    # Fury of Elune no tempo de recarga (controlando o overlap de debuffs)
     - fury_of_elune,if=!talent.sundered_firmament|(debuff.atmospheric_exposure.remains<2&(buff.eclipse_lunar.remains>5))|fight_remains<20
-    # Force of Nature during burst or if Inc is far away
+    # Força da Natureza (Force of Nature) durante burst ou se Incarnation estiver distante
     - force_of_nature,if=var.cd_active|cooldown.incarnation_chosen_of_elune.remains>30
-    # Spend AP — procs first, then dump at 60+
+    # Gasta AP — consome procs de graça primeiro, e depois gasta acima de 60 de Poder Astral
     - starfall,if=active_enemies>=2&(buff.starweavers_weft.up|buff.touch_the_cosmos.react)
     - starsurge,if=buff.starweavers_warp.up|buff.touch_the_cosmos.react
     - starsurge,if=astral_power>60&active_enemies<=1
-    # Activate CA/Inc; wait for Ascendant Stars to fade
+    # Ativa Alinhamento Celestial ou Encarnação; aguarda o buff de Ascendant Stars sumir
     - incarnation_chosen_of_elune,global_delay=500,if=!var.cd_active&buff.ascendant_stars.down&(!talent.elunes_guidance|cooldown.lunar_eclipse.charges_fractional<1.5)
-    # Moon charges — don't cap; wait for Atmospheric Exposure to fade
+    # Cargas de Lua — evita estagnar cargas; aguarda debuffs acabarem
     - full_moon,if=astral_power.deficit>40&debuff.atmospheric_exposure.remains<action.full_moon.execute_time+0.5
     - half_moon,if=astral_power.deficit>20&debuff.atmospheric_exposure.remains<action.half_moon.execute_time+0.5
     - new_moon,if=astral_power.deficit>10&debuff.atmospheric_exposure.remains<action.new_moon.execute_time+0.5
-    # Wild Mushroom — don't cap charges
+    # Cogumelo Selvagem (Wild Mushroom) para geração de AP, evitando estagnar cargas
     - wild_mushroom,if=buff.eclipse_lunar.up|cooldown.wild_mushroom.full_recharge_time<cooldown.celestial_alignment.remains
-    # Filler: Starfire inside Lunar Eclipse (non-CA), otherwise Wrath (Grove primary)
+    # Preenchimento (Filler): Fogo Estelar em Eclipse Lunar puro, senão Ira (Wrath)
     - starfire,if=buff.eclipse_lunar.up&!buff.celestial_alignment.up&!buff.incarnation_chosen_of_elune.up
     - wrath
 
-  # AoE (2+) — DoT spread > Solar Eclipse > FoE > FoN > CA/Inc > Starfall > Starsurge > WM > filler
+  # Rotação AoE (2+) — Espalha DoTs -> Eclipse Solar -> Fury of Elune -> Force of Nature -> Burst -> Starfall -> Starsurge -> Cogumelos
   aoe:
-    # Spread DoTs (refresh during Eclipse-down)
     - sunfire,if=debuff.sunfire.remains<2|debuff.sunfire.refreshable&var.eclipse_down
     - moonfire,if=active_enemies<6&(debuff.moonfire.remains<2|debuff.moonfire.refreshable&var.eclipse_down)
-    # Enter Solar Eclipse
     - solar_eclipse,if=var.eclipse_down
-    # Fury of Elune — high priority AoE cleave
     - fury_of_elune,if=!talent.sundered_firmament|debuff.atmospheric_exposure.remains<2
-    # Force of Nature
     - force_of_nature,if=var.cd_active|cooldown.incarnation_chosen_of_elune.remains>30
-    # Activate CA/Inc
     - incarnation_chosen_of_elune,global_delay=500,if=!var.cd_active&(var.eclipse_down|fight_remains<20)
-    # Starfall — main AoE dump
     - starfall,if=buff.starweavers_weft.up|buff.touch_the_cosmos.react
     - starfall,if=(astral_power>50)&target.time_to_die>5
-    # Starsurge for Star Cascade cleave / Starlord stacks
     - starsurge,if=buff.starfall.up&(buff.starweavers_warp.up|buff.touch_the_cosmos.react)
     - starsurge,if=buff.starfall.up&astral_power>80&buff.starlord.stack<3
-    # Wild Mushroom
     - wild_mushroom,if=buff.eclipse_lunar.up|buff.eclipse_solar.up|cooldown.wild_mushroom.full_recharge_time<cooldown.celestial_alignment.remains
-    # Filler: Starfire at 3+, otherwise Wrath
     - starfire,if=active_enemies>=3
     - wrath
 
-  # Opener ST (Grove) — DoTs > Solar Eclipse > Starsurge ramp > FoE > FoN > CA/Inc > dump > Wrath
+  # Opener ST de Grove — Pré-ramping de DoTs e Starsurge -> CDs principais -> Burst de AP -> Ira (Wrath)
   opener_st:
     - moonfire,if=debuff.moonfire.remains<2|debuff.moonfire.refreshable&var.eclipse_down
     - sunfire,if=debuff.sunfire.remains<2|debuff.sunfire.refreshable&var.eclipse_down
     - solar_eclipse,if=var.eclipse_down
-    # Build Ascendant Stars / Starlord stacks before burst
+    # Acumula buffs de Starlord e Ascendant Stars antes de disparar o burst principal
     - starsurge,if=buff.ascendant_stars.up|buff.touch_the_cosmos.react
     - fury_of_elune
     - force_of_nature
     - incarnation_chosen_of_elune,global_delay=500,if=!var.cd_active
-    # Dump AP during burst
+    # Descarrega o Poder Astral acumulado durante a janela de burst
     - starfall,if=active_enemies>1&(buff.touch_the_cosmos.react|astral_power>80)
     - starsurge,if=buff.touch_the_cosmos.react|astral_power>80
     - wrath
 
-  # Opener AoE (Grove, 2+) — Sunfire > MF spread > FoE > FoN > CA/Inc > Solar Eclipse > dump
+  # Opener AoE de Grove — Espalha DoTs -> CDs -> Entrada em Eclipse Solar -> Descarrega AP
   opener_aoe:
     - sunfire,if=debuff.sunfire.refreshable
     - moonfire,if=active_enemies<6&debuff.moonfire.refreshable
@@ -197,34 +192,35 @@ lists:
     - force_of_nature
     - incarnation_chosen_of_elune,global_delay=500,if=!var.cd_active
     - solar_eclipse,if=var.eclipse_down
-    # Dump Starlord / Ascendant stacks
     - starfall,if=astral_power>50|buff.ascendant_stars.up
     - starsurge,if=buff.starfall.up&buff.ascendant_stars.up
     - wrath,if=buff.ascendant_stars.up
 
-  # Main — entry point routing to sub-lists
+  # Ponto de Entrada Principal (main) com prioridades
   main:
     - call_action_list,name=spell_queue
     - call_action_list,name=sanity_checks
     - call_action_list,name=auto_target_ranged
-
+ 
     - return,if=!target.valid&!((cfg.auto_combat.has(1)&target.quest_mob&target.enemy&!target.dead)|(cfg.auto_combat.has(2)&target.combat&target.enemy&!target.dead)|(cfg.auto_combat.has(3)&target.targeting_party&target.enemy&!target.dead))
     - return,if=!target.valid&cfg.auto_combat.has(0)
     - return,if=!target.valid|target.dead|!target.attackable
 
     - call_action_list,name=auto_heal
     - call_action_list,name=heal_support
-    # Re-enter Moonkin if HP is safe after Bear emergency
+    # Garante Forma de Nexo (Moonkin Form)
     - moonkin_form,if=buff.moonkin_form.down&health.pct>config.frenzied_regen_hp&!buff.frenzied_regeneration.up
+
+    # Lança Ira (Wrath) pré-combate
+    - wrath,if=!player.combat&!player.moving&target.distance<=40
+
     - call_action_list,name=interrupts
     - call_action_list,name=defensives
     - call_action_list,name=trinkets
-    # Opener when CDs are available
+    # Sequência de Abertura se os CDs estiverem prontos
     - call_action_list,name=opener_aoe,if=var.opener&active_enemies>1
     - call_action_list,name=opener_st,if=var.opener&active_enemies<=1
-    # Movement — instant-cast only
     - call_action_list,name=moving_aoe,if=player.moving&active_enemies>1
     - call_action_list,name=moving_st,if=player.moving&active_enemies<=1
-    # Standard rotation
     - call_action_list,name=st,if=active_enemies<=1
     - call_action_list,name=aoe,if=active_enemies>1
