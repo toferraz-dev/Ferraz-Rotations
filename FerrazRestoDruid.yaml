@@ -1,6 +1,6 @@
-version: 4.2
+version: 4.3
 author: Ferraz
-patch: "12.0.5"
+patch: "12.0.7"
 spec: 105
 name: Ferraz Restoration Druid M+ (Wildstalker)
 description: |
@@ -12,7 +12,7 @@ config:
     section: "Talents"
     type: copy_text
     label: "Recommended Talent String"
-    text: "CkGA8cL7tpvige+kkmGM9zUPWPMmZbMjZmxsN8AMzswsYbGAAAAAAAAAAsNoZzw0MjhxsYmZmxMMGAAAAAAAMAAEAAwsNzWzyML2YmZeAMzsAaGAgZGAGA"
+    text: "CkGA8cL7tpvige+kkmGM9zUPWPMmZZMjZmxsN8AMzswsYbGAAAAAAAAAAsMoZbGmmZMwsYmZmZZGegBAAAAgBAYGAACAAY2mZrZZmNbMzMwMzGoZAAmZAYA"
 
   # === DEFENSIVE CONFIGURATIONS ===
   barkskin_threshold:
@@ -402,6 +402,10 @@ lists:
 
   # Catweaving Transition and Entry (Physical DPS)
   catweave:
+    # Priority DoTs (Mantém os DoTs principais do log rolando)
+    - sunfire,name="Sunfire (Cat Transition)",if=debuff.sunfire.refreshable
+    - moonfire,name="Moonfire (Cat Transition)",if=debuff.moonfire.refreshable
+
     # Refresh Rejuv on injured members before fully committing to Cat
     - rejuvenation,name="Cat Rejuvenation",cycle=members,if=(buff.bear_form.up|buff.cat_form.up)&(target.range>8|!var.group_healthy)
 
@@ -411,12 +415,15 @@ lists:
     - return,if=!buff.cat_form.up
 
     - heart_of_the_wild,name="HotW Cat",if=config.use_heart_of_the_wild&talent.heart_of_the_wild&buff.cat_form.up
+    - convoke_the_spirits,name="Convoke (Offensive)",if=buff.cat_form.up&cooldown.convoke_the_spirits.ready&target.time_to_die>10
     - call_action_list,name=catweave_aoe,if=active_enemies>=config.aoe_threshold
     - call_action_list,name=catweave_st,if=active_enemies<config.aoe_threshold
 
   # Ranged DoT maintenance in caster form
   ranged_dps:
+    - sunfire,name="Sunfire AoE Refresh",if=debuff.sunfire.refreshable
     - moonfire,name="Moonfire ST Refresh",if=debuff.moonfire.refreshable
+    - wrath,name="Wrath Filler"
 
   # Defensive rotation and debuffs in Bear Form (Bearweave)
   bearweave:
