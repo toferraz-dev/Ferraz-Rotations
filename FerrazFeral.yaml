@@ -145,8 +145,8 @@ lists:
     - mark_of_the_wild,range_check=none,if=(buff.mark_of_the_wild.down.any|action.mark_of_the_wild.overlayed)&lastcast.mark_of_the_wild>=10
     - regrowth,range_check=none,if=health.pct<=config.regrowth_ooc_hp_pct&!player.combat
 
-    - bear_form,range_check=none,if=health.pct<=35&!buff.bear_form.up
-    - heart_of_the_wild,range_check=none,if=buff.bear_form.up
+    - bear_form,range_check=none,if=health.pct<=35&!buff.bear_form.up&player.combat
+    - heart_of_the_wild,range_check=none,if=buff.bear_form.up&player.combat
 
     - shred,if=player.combat&target.attackable&target.range<=8&buff.cat_form.down&talent.fluid_form.enabled
     - rake,if=player.combat&target.attackable&target.range<=8&buff.cat_form.down&talent.fluid_form.enabled
