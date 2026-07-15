@@ -95,8 +95,6 @@ variables:
 
 lists:
   defensives:
-    - bear_form,range_check=none,if=health.pct<=35&!buff.bear_form.up
-    - heart_of_the_wild,range_check=none,if=buff.bear_form.up&health.pct<=35
     - barkskin,range_check=none,if=incoming.pct>=config.barkskin_dmg_pct
     - survival_instincts,range_check=none,if=incoming.pct>=config.survival_instincts_dmg_pct&incoming.mitigated.pct>=config.survival_instincts_dmg_pct
     - bear_form,name="Shapeshift Clear",if=debuff_list.freedom.up&!buff.bear_form.up
@@ -146,6 +144,9 @@ lists:
 
     - mark_of_the_wild,range_check=none,if=(buff.mark_of_the_wild.down.any|action.mark_of_the_wild.overlayed)&lastcast.mark_of_the_wild>=10
     - regrowth,range_check=none,if=health.pct<=config.regrowth_ooc_hp_pct&!player.combat
+
+    - bear_form,range_check=none,if=health.pct<=35&!buff.bear_form.up
+    - heart_of_the_wild,range_check=none,if=buff.bear_form.up
 
     - shred,if=player.combat&target.attackable&target.range<=8&buff.cat_form.down&talent.fluid_form.enabled
     - rake,if=player.combat&target.attackable&target.range<=8&buff.cat_form.down&talent.fluid_form.enabled
