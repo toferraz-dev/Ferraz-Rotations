@@ -145,7 +145,7 @@ lists:
     - mark_of_the_wild,range_check=none,if=(buff.mark_of_the_wild.down.any|action.mark_of_the_wild.overlayed)&lastcast.mark_of_the_wild>=10
     - regrowth,range_check=none,if=health.pct<=config.regrowth_ooc_hp_pct&!player.combat
 
-    - bear_form,range_check=none,if=health.pct<=35&!buff.bear_form.up&player.combat
+    - bear_form,range_check=none,if=health.pct<=25&!buff.bear_form.up&player.combat
     - heart_of_the_wild,range_check=none,if=buff.bear_form.up&player.combat
 
     - shred,if=player.combat&target.attackable&target.range<=8&buff.cat_form.down&talent.fluid_form.enabled
@@ -169,7 +169,7 @@ lists:
     - regrowth,delay=500,range_check=none,if=buff.predatory_swiftness.up&player.solo&health.pct<=config.predatory_swiftness_heal_solo_hp_pct&lastcast.regrowth>=2
     - regrowth,delay=500,range_check=none,if=buff.predatory_swiftness.up&player.group&health.pct<=config.predatory_swiftness_heal_group_hp_pct&lastcast.regrowth>=2
 
-    - regrowth,delay=500,cycle=members,if=cycle.health.pct<=10&buff.predatory_swiftness.up&player.group&lastcast.regrowth>=2
+    - regrowth,delay=500,cycle=members,if=cycle.health.pct<=15&buff.predatory_swiftness.up&player.group&lastcast.regrowth>=2
 
     - return,if=auto_combat.target
 
