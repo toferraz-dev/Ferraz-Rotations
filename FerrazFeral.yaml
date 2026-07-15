@@ -168,6 +168,8 @@ lists:
     - regrowth,delay=500,range_check=none,if=buff.predatory_swiftness.up&player.solo&health.pct<=config.predatory_swiftness_heal_solo_hp_pct&lastcast.regrowth>=2
     - regrowth,delay=500,range_check=none,if=buff.predatory_swiftness.up&player.group&health.pct<=config.predatory_swiftness_heal_group_hp_pct&lastcast.regrowth>=2
 
+    - regrowth,delay=500,cycle=members,if=cycle.health.pct<=10&buff.predatory_swiftness.up&player.group&lastcast.regrowth>=2
+
     - return,if=auto_combat.target
 
     - rake,range_check=none,if=buff.prowl.up&target.range<=8
