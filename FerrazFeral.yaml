@@ -95,6 +95,8 @@ variables:
 
 lists:
   defensives:
+    - bear_form,range_check=none,if=health.pct<=35&!buff.bear_form.up
+    - heart_of_the_wild,range_check=none,if=buff.bear_form.up&health.pct<=35
     - barkskin,range_check=none,if=incoming.pct>=config.barkskin_dmg_pct
     - survival_instincts,range_check=none,if=incoming.pct>=config.survival_instincts_dmg_pct&incoming.mitigated.pct>=config.survival_instincts_dmg_pct
     - bear_form,name="Shapeshift Clear",if=debuff_list.freedom.up&!buff.bear_form.up
