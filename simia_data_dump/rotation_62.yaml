@@ -1,0 +1,189 @@
+# =============================================================================
+# Mage Arcane - Spec ID 62
+# =============================================================================
+
+version: 3
+spec: 62
+entry: main
+
+config:
+  prismatic_barrier_hp_pct:
+    section: "Defensive HP Percentage"
+    label: "Prismatic Barrier HP%"
+    type: slider
+    min: 0
+    max: 100
+    default: 50
+
+  prismatic_barrier_dmg_pct:
+    section: "Defensives Prediction Damage"
+    label: "Prismatic Barrier (Incoming Dmg%)"
+    type: slider
+    min: 0
+    max: 100
+    default: 40
+
+  ice_block_hp_pct:
+    section: "Defensive HP Percentage"
+    label: "Ice Block HP%"
+    type: slider
+    min: 0
+    max: 100
+    default: 20
+
+  ice_block_dmg_pct:
+    section: "Defensives Prediction Damage"
+    label: "Ice Block (Incoming Dmg%)"
+    type: slider
+    min: 0
+    max: 100
+    default: 75
+
+variables:
+  opener: 1
+  # variable,name=pulse_aoe_count,op=set,value=2+talent.orb_mastery
+  pulse_aoe_count: 2+talent.orb_mastery
+  funnel: 0
+  sf_touch_surge: 0
+  # variable,name=pooling,op=reset,default=1
+  pooling: 1
+  # variable,name=time_for_pooling,op=set,value=(((fight_remains%%95)<(7+(2*talent.arcane_pulse)))|((fight_remains%%95)>(20+(2*talent.arcane_pulse))))&variable.pooling
+  # After opener ends, always 1. During opener, use modulo check ANDed with pooling.
+  time_for_pooling: "!var.opener|((((fight_remains%%95)<(7+(2*talent.arcane_pulse)))|((fight_remains%%95)>(20+(2*talent.arcane_pulse))))&var.pooling)"
+  # variable,name=did_not_pool,op=set,value=((fight_remains%%95)<(7+(2*talent.arcane_pulse)))|((fight_remains%%95)>(20+(2*talent.arcane_pulse)))&variable.pooling
+  did_not_pool: "(((fight_remains%%95)<(7+(2*talent.arcane_pulse)))|((fight_remains%%95)>(20+(2*talent.arcane_pulse))))&var.pooling"
+
+lists:
+  defensives:
+    # --- Prediction Damage: pre-fire on a predicted incoming hit (% of effective HP) ---
+    - prismatic_barrier,range_check=none,if=incoming.pct>=config.prismatic_barrier_dmg_pct
+    - ice_block,range_check=none,if=incoming.pct>=config.ice_block_dmg_pct&incoming.mitigated.pct>=config.ice_block_dmg_pct
+
+    # --- HP Percentage: react when already low ---
+    - prismatic_barrier,range_check=none,if=health.pct<=config.prismatic_barrier_hp_pct
+    - ice_block,range_check=none,if=health.pct<=config.ice_block_hp_pct
+
+  
+
+  cooldowns:
+    # arcane_orb,if=(talent.splintering_sorcery|variable.sf_touch_surge)&variable.opener&variable.time_for_pooling,line_cd=30
+    - arcane_orb,if=(talent.splintering_sorcery|var.sf_touch_surge)&var.opener&var.time_for_pooling,line_cd=30
+    # arcane_orb,if=talent.splintering_sorcery&prev_off_gcd.touch_of_the_magi&time<5&buff.arcane_salvo.react<=14,line_cd=999
+    - arcane_orb,if=talent.splintering_sorcery&prev_off_gcd.touch_of_the_magi&combat.time<5&buff.arcane_salvo.react<=14,line_cd=999
+    # arcane_orb,if=!variable.did_not_pool,line_cd=999
+    - arcane_orb,if=!var.did_not_pool,line_cd=999
+    # arcane_missiles,if=talent.spellfire_spheres&!variable.sf_touch_surge&variable.opener,line_cd=30
+    - arcane_missiles,if=talent.spellfire_spheres&!var.sf_touch_surge&var.opener,line_cd=30
+    # Spellslinger builds Salvo before going into cds the first time.
+    - arcane_pulse,if=(talent.splintering_sorcery|variable.sf_touch_surge)&buff.arcane_salvo.react<20&(variable.opener|(talent.orb_mastery&cooldown.arcane_surge.remains<(gcd.max*(mana.pct%(8+(8*(enemies_around_target>variable.pulse_aoe_count)))))))&(enemies_around_target>=variable.pulse_aoe_count)
+    # arcane_blast,if=(talent.splintering_sorcery|variable.sf_touch_surge)&buff.arcane_salvo.react<20&((variable.opener&variable.time_for_pooling)|(!variable.opener&talent.orb_mastery&cooldown.arcane_surge.remains<(gcd.max*(mana.pct%(8+(8*(active_enemies>=2)))))))
+    - arcane_blast,if=(talent.splintering_sorcery|var.sf_touch_surge)&buff.arcane_salvo.react<20&((var.opener&var.time_for_pooling)|(!var.opener&talent.orb_mastery&cooldown.arcane_surge.remains<(gcd.max*(mana.pct%(8+(8*(enemies_around_target>=2)))))))
+    # wait,sec=0.05,if=(prev_gcd.1.arcane_surge&gcd.remains=0)|(prev_off_gcd.touch_of_the_magi&gcd.remains=0)|(prev_off_gcd.presence_of_mind&gcd.remains=0),line_cd=1
+    - wait,sec=0.05,if=(prev_gcd.1.arcane_surge&gcd.remains=0)|(prev_off_gcd.touch_of_the_magi&gcd.remains=0)|(prev_off_gcd.presence_of_mind&gcd.remains=0),line_cd=1
+    # Spellslinger uses Touch after Surge, Sunfury holds touch for the end of Surge to capture Soul and the run-off of resources after Soul.
+    - touch_of_the_magi,use_off_gcd=1,if=((talent.splintering_sorcery|variable.sf_touch_surge)&buff.arcane_surge.up)|(talent.spellfire_spheres&!variable.sf_touch_surge&buff.arcane_surge.up&buff.arcane_surge.remains<(5+gcd.remains))|(cooldown.touch_of_the_magi.ready&cooldown.arcane_surge.remains>30&buff.arcane_surge.down)
+    - arcane_surge
+    # TODO: Reassess Evo usage for all builds.
+    - evocation,if=mana.pct<10&buff.arcane_surge.down&debuff.touch_of_the_magi.down&cooldown.arcane_surge.remains>10
+
+  spellslinger:
+    - arcane_orb,if=buff.arcane_charge.stack<(3+(enemies_around_target>=2))&(((buff.clearcasting.react=0&talent.high_voltage)|(buff.clearcasting.react&buff.arcane_salvo.react>=12))|(enemies_around_target>=2))&cooldown.touch_of_the_magi.remains>gcd.max*4
+    - arcane_barrage,if=buff.arcane_salvo.react>=20&(buff.arcane_charge.stack=4|talent.orb_barrage)&cooldown.touch_of_the_magi.remains>gcd.max*(4-(2*(enemies_around_target>=2)))
+    - arcane_barrage,if=enemies_around_target>=2&buff.arcane_charge.stack=4&buff.clearcasting.react&buff.overpowered_missiles.react&talent.high_voltage&buff.arcane_salvo.react>5&buff.arcane_salvo.react<14&cooldown.touch_of_the_magi.remains>gcd.max*4
+    - arcane_missiles,if=buff.clearcasting.react&((buff.arcane_salvo.stack<(10+(5*(buff.overpowered_missiles.react=0))))|(buff.arcane_charge.stack<2&talent.high_voltage&enemies_around_target>=2)),chain=1
+    - presence_of_mind,use_off_gcd=1,if=buff.arcane_charge.stack<2&(buff.clearcasting.react=0|!talent.high_voltage&cooldown.arcane_orb.charges_fractional<0.95)&!prev_gcd.1.arcane_orb&!prev_gcd.1.arcane_missiles
+    - arcane_blast,if=buff.presence_of_mind.up
+    # arcane_pulse,if=((active_enemies>=variable.pulse_aoe_count)&!variable.funnel)|((buff.arcane_charge.stack<3)&mana.pct>30)
+    - arcane_pulse,if=((enemies_around_target>=var.pulse_aoe_count)&!var.funnel)|((buff.arcane_charge.stack<3)&mana.pct>30)
+    - arcane_blast
+    # arcane_barrage,if=!prev_gcd.1.arcane_surge|prev_off_gcd.touch_of_the_magi&buff.arcane_salvo.react=20
+    - arcane_barrage,if=!prev_gcd.1.arcane_surge|prev_off_gcd.touch_of_the_magi&buff.arcane_salvo.react=20
+
+  spellslinger_orbm:
+    # arcane_orb,if=(prev_gcd.1.arcane_barrage|active_enemies>=4)&((buff.clearcasting.react&buff.arcane_salvo.react<=14)|(buff.clearcasting.react=0&(cooldown.arcane_orb.charges_fractional>1.9)&buff.arcane_salvo.react<=18))
+    - arcane_orb,if=(prev_gcd.1.arcane_barrage|enemies_around_target>=4)&((buff.clearcasting.react&buff.arcane_salvo.react<=14)|(buff.clearcasting.react=0&(cooldown.arcane_orb.charges_fractional>1.9)&buff.arcane_salvo.react<=18))
+    # arcane_barrage,if=(buff.arcane_charge.stack=4|talent.orb_barrage)&buff.arcane_salvo.react>=20&cooldown.touch_of_the_magi.remains>gcd.max*(4-(2*(active_enemies>=2)))|(((buff.arcane_surge.remains<gcd.max&buff.arcane_surge.up)|(debuff.touch_of_the_magi.remains<gcd.max&debuff.touch_of_the_magi.up))&buff.arcane_salvo.react>=15)
+    - arcane_barrage,if=(buff.arcane_charge.stack=4|talent.orb_barrage)&buff.arcane_salvo.react>=20&cooldown.touch_of_the_magi.remains>gcd.max*(4-(2*(enemies_around_target>=2)))|(((buff.arcane_surge.remains<gcd.max&buff.arcane_surge.up)|(debuff.touch_of_the_magi.remains<gcd.max&debuff.touch_of_the_magi.up))&buff.arcane_salvo.react>=15)
+    # arcane_missiles,if=(talent.high_voltage|talent.overpowered_missiles|(buff.clearcasting.react=3))&buff.clearcasting.react&buff.arcane_salvo.react<=(10+(5*(buff.overpowered_missiles.react=0)))&!prev_gcd.1.arcane_orb&(buff.arcane_surge.down|(talent.high_voltage&active_enemies=1))&(active_enemies<2|talent.overpowered_missiles),chain=1
+    - arcane_missiles,if=(talent.high_voltage|talent.overpowered_missiles|(buff.clearcasting.react=3))&buff.clearcasting.react&buff.arcane_salvo.react<=(10+(5*(buff.overpowered_missiles.react=0)))&!prev_gcd.1.arcane_orb&(buff.arcane_surge.down|(talent.high_voltage&enemies_around_target=1))&(enemies_around_target<2|talent.overpowered_missiles),chain=1
+    # arcane_barrage,if=buff.arcane_salvo.react<7&buff.arcane_surge.down&buff.touch_of_the_magi.down&buff.arcane_charge.stack=4&talent.resonance&talent.arcane_pulse
+    - arcane_barrage,if=buff.arcane_salvo.react<7&buff.arcane_surge.down&debuff.touch_of_the_magi.down&buff.arcane_charge.stack=4&talent.resonance&talent.arcane_pulse
+    - presence_of_mind,use_off_gcd=1,if=buff.arcane_charge.stack<2&(buff.clearcasting.react=0|!talent.high_voltage&cooldown.arcane_orb.charges_fractional<0.95)&!prev_gcd.1.arcane_orb&!prev_gcd.1.arcane_missiles
+    - arcane_blast,if=buff.presence_of_mind.up
+    # arcane_pulse,if=((active_enemies>=variable.pulse_aoe_count)&!variable.funnel)|((buff.arcane_charge.stack<3)&mana.pct>30)
+    - arcane_pulse,if=((enemies_around_target>=var.pulse_aoe_count)&!var.funnel)|((buff.arcane_charge.stack<3)&mana.pct>30)
+    - arcane_blast
+    # arcane_barrage,if=(time>5&!prev_gcd.1.arcane_surge)|(prev_off_gcd.touch_of_the_magi&buff.arcane_salvo.react=20)
+    - arcane_barrage,if=(combat.time>5&!prev_gcd.1.arcane_surge)|(prev_off_gcd.touch_of_the_magi&buff.arcane_salvo.react=20)
+
+  sunfury:
+    - arcane_barrage,if=(buff.arcane_charge.stack=4&var.sunfury_hold_for_cds&((((buff.clearcasting.react&talent.high_voltage)|(cooldown.arcane_orb.charges_fractional>0.95&enemies_around_target>=3))&((buff.arcane_salvo.react>=6&buff.arcane_salvo.react<7)|(buff.arcane_salvo.react>=12&buff.arcane_salvo.react<13)|(buff.arcane_salvo.react>=18&buff.arcane_salvo.react<19)|((buff.arcane_salvo.react<19)&!talent.resonance&enemies_around_target>=3)))|buff.arcane_salvo.stack=25))|prev_off_gcd.touch_of_the_magi|(debuff.touch_of_the_magi.remains<gcd.max&debuff.touch_of_the_magi.up&buff.arcane_charge.stack=4)|buff.arcane_soul.up
+    - arcane_missiles,if=buff.clearcasting.react&((((cooldown.touch_of_the_magi.remains>gcd.max*(8-(4*var.sf_touch_surge))&buff.overpowered_missiles.react=0)|buff.arcane_surge.up|buff.arcane_charge.stack<3|buff.clearcasting.react>1)&buff.arcane_salvo.react<(15-(5*(buff.overpowered_missiles.react&buff.arcane_surge.down))))|(debuff.touch_of_the_magi.up&buff.arcane_surge.up)),chain=1
+    - arcane_orb,if=buff.arcane_charge.stack<2
+    # arcane_pulse,if=((active_enemies>=variable.pulse_aoe_count)&!variable.funnel)|((buff.arcane_charge.stack<3)&mana.pct>30)
+    - arcane_pulse,if=((enemies_around_target>=var.pulse_aoe_count)&!var.funnel)|((buff.arcane_charge.stack<3)&mana.pct>30)
+    - arcane_explosion,if=enemies_around_target>3&buff.arcane_charge.stack<2&!talent.impetus
+    - arcane_blast
+    # arcane_barrage,if=(variable.sf_touch_surge&(!prev_gcd.1.arcane_surge|prev_off_gcd.touch_of_the_magi&buff.arcane_salvo.react=25))|!variable.sf_touch_surge
+    - arcane_barrage,if=(var.sf_touch_surge&(!prev_gcd.1.arcane_surge|prev_off_gcd.touch_of_the_magi&buff.arcane_salvo.react=25))|!var.sf_touch_surge
+
+
+  main:
+    # _shared.yaml lists
+    - call_action_list,name=spell_queue
+    - call_action_list,name=sanity_checks
+    - call_action_list,name=auto_target_ranged
+
+    - arcane_intellect,range_check=none,if=(buff.arcane_intellect.down|action.arcane_intellect.overlayed)&lastcast.arcane_intellect>=10
+
+    # Combat Check
+    - return,if=auto_combat.player
+
+    # Defensives
+    - call_action_list,name=defensives
+
+
+    # Interrupts
+    - counterspell,if=interrupt.target.check
+    - counterspell.mouseover,if=interrupt.mouseover.check
+    - counterspell.focus,if=interrupt.focus.check
+    # CC Interrupt
+    - dragons_breath,if=interrupt.cc.check
+    # Racial Interrupts
+    - quaking_palm,if=interrupt.cc.check
+    - haymaker,if=interrupt.cc.check
+    - war_stomp,if=interrupt.stun.aoe.check
+    - bull_rush,if=interrupt.stun.aoe.check
+    - tail_swipe,if=interrupt.stun.aoe.check
+
+    - call_action_list,name=auto_heal
+
+    # Target Check
+    - return,if=auto_combat.target
+
+    - trinket_1,if=trinket_1.sync
+    - trinket_2,if=trinket_2.sync
+
+    # Steroid racials and potions are used with cds based on cooldown and overlap with the most effects.
+    # - invoke_external_buff,name=power_infusion,if=(buff.arcane_surge.up&(debuff.touch_of_the_magi.up&(talent.splintering_sorcery|variable.sf_touch_surge)|(talent.spellfire_spheres&buff.arcane_surge.up&buff.arcane_surge.remains<(9+gcd.remains))))|fight_remains<16
+    # - potion,if=(cooldown.arcane_surge.ready&buff.arcane_salvo.react=20+(5*talent.spellfire_spheres))|(buff.arcane_surge.up&(prev_gcd.1.arcane_surge|fight_remains<90))|fight_remains<30
+    - berserking,if=(buff.arcane_surge.up&debuff.touch_of_the_magi.up)|fight_remains<13
+    - blood_fury,if=(buff.arcane_surge.up&(debuff.touch_of_the_magi.up&(talent.splintering_sorcery|variable.sf_touch_surge)|(talent.spellfire_spheres&buff.arcane_surge.up&buff.arcane_surge.remains<(9+gcd.remains))))|fight_remains<16
+    - fireblood,if=(buff.arcane_surge.up&((debuff.touch_of_the_magi.up&(talent.splintering_sorcery|variable.sf_touch_surge))|(talent.spellfire_spheres&buff.arcane_surge.up&buff.arcane_surge.remains<(2+gcd.remains))))|fight_remains<9
+    - ancestral_call,if=(buff.arcane_surge.up&(debuff.touch_of_the_magi.up&(talent.splintering_sorcery|variable.sf_touch_surge)|(talent.spellfire_spheres&buff.arcane_surge.up&buff.arcane_surge.remains<(9+gcd.remains))))|fight_remains<16
+    # End of fight conditions for spending your last bit of resources.
+    - arcane_barrage,if=fight_remains<gcd.max*2
+    # Original SimC: arcane_missiles,if=fight_remains<execute_time*(1+buff.clearcasting.react)&...
+    - arcane_missiles,if=fight_remains<action.arcane_missiles.execute_time*(1+buff.clearcasting.react)&buff.clearcasting.react&buff.arcane_salvo.stack>=13+(5*talent.spellfire_salvo)&!talent.orb_mastery,chain=1
+    # Original SimC: arcane_orb,if=fight_remains<execute_time*(1+buff.clearcasting.react)&...
+    - arcane_orb,if=fight_remains<action.arcane_orb.execute_time*(1+buff.clearcasting.react)&buff.clearcasting.react&buff.arcane_salvo.stack>=13+(5*talent.spellfire_salvo)&talent.orb_mastery
+    - variable,name=opener,op=set,if=debuff.touch_of_the_magi.up&variable.opener,value=0
+    - variable,name=sunfury_hold_for_cds,op=set,value=((buff.arcane_surge.down&cooldown.touch_of_the_magi.remains>gcd.max*(4-(enemies_around_target>=3)-((2*(buff.overpowered_missiles.react&buff.clearcasting.react))<?((cooldown.arcane_orb.charges_fractional>0.95|buff.clearcasting.react)&enemies_around_target>=3)))&cooldown.arcane_surge.remains>gcd.max*(4-(enemies_around_target>=3)-((2*(buff.overpowered_missiles.react&buff.clearcasting.react))<?((cooldown.arcane_orb.charges_fractional>0.95|buff.clearcasting.react)&enemies_around_target>=3))))|((buff.clearcasting.react|((buff.arcane_salvo.react=25|cooldown.arcane_orb.charges_fractional>0.95)&enemies_around_target>=3))&buff.arcane_surge.remains>gcd.max*(6-(2*(buff.overpowered_missiles.react<?(enemies_around_target>=3))))))
+    - call_action_list,name=cooldowns
+    - call_action_list,name=spellslinger_orbm,if=talent.splintering_sorcery&talent.orb_mastery
+    - call_action_list,name=spellslinger,if=talent.splintering_sorcery&!talent.orb_mastery
+    # call_action_list,name=sunfury,if=!talent.splintering_sorcery
+    - call_action_list,name=sunfury,if=!talent.splintering_sorcery
+    # arcane_barrage,if=(time>5&!prev_gcd.1.arcane_surge)|(prev_off_gcd.touch_of_the_magi&buff.arcane_salvo.react=(20+(5*talent.spellfire_salvo)))
+    - arcane_barrage,if=(combat.time>5&!prev_gcd.1.arcane_surge)|(prev_off_gcd.touch_of_the_magi&buff.arcane_salvo.react=(20+(5*talent.spellfire_salvo)))
+

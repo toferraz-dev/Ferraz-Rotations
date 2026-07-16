@@ -1,0 +1,190 @@
+version: 1.0
+author: Kontroved
+spec: 66
+name: Protection Paladin
+description: "Protection Paladin by Kontroved"
+
+config:
+  features2:
+    label: "Features"
+    type: multi_select
+    options:
+      - label: "Auto Swap (CC/Interrupt)"
+        value: 0
+      - label: "hold AS for interrupt (DMG loss!)"
+        value: 1
+      - label: "Blessed Hammer ooc"
+        value: 2
+    default: [0,2]
+    show_override: true
+  divine_toll_interrupt:
+    label: "hold divine toll for interrupt (DMG loss!)"
+    type: checkbox
+    default: false
+    show_override: true
+  divine_toll_interrupt_numbers:
+    label: "# of interrupts"
+    type: slider
+    min: 0
+    max: 5
+    default: 3
+  # Defensive Settings
+  wog_free_2_hp_pct:
+    label: "WoG Free 2/2 HP%"
+    type: slider
+    min: 0
+    max: 100
+    default: 60
+
+  wog_free_1_hp_pct:
+    label: "WoG Free 1/2 HP%"
+    type: slider
+    min: 0
+    max: 100
+    default: 50
+
+  wog_hp_pct:
+    label: "WoG HP%"
+    type: slider
+    min: 0
+    max: 100
+    default: 20
+
+  ardent_defender_hp_pct:
+    label: "Ardent Defender HP%"
+    type: slider
+    min: 0
+    max: 100
+    default: 40
+
+  guardian_hp_pct:
+    label: "Guardian HP%"
+    type: slider
+    min: 0
+    max: 100
+    default: 30
+
+  lay_on_hands_hp_pct:
+    label: "Lay on Hands HP%"
+    type: slider
+    min: 0
+    max: 100
+    default: 15
+
+  divine_shield_hp_pct:
+    label: "Divine Shield HP%"
+    type: slider
+    min: 0
+    max: 100
+    default: 10
+
+  word_of_glory_hp_pct:
+    label: "WoG Party HP%"
+    type: slider
+    min: 0
+    max: 100
+    default: 20
+
+  blessing_of_sacrifice_hp_pct:
+    label: "Blessing of Sac Party HP%"
+    type: slider
+    min: 0
+    max: 100
+    default: 20
+
+  lay_on_hands_party_hp_pct:
+    label: "Lay on Hands Party HP%"
+    type: slider
+    min: 0
+    max: 100
+    default: 10
+variables:
+  ## Features
+  auto_swap: config.features2.has(0)
+  hold_as: config.features2.has(1)
+  pre_combat: config.features2.has(2)
+  divine_toll_hold: config.divine_toll_interrupt
+  divine_toll_number: config.divine_toll_interrupt_numbers
+  metigation_tankbuster: buff.ardent_defender.up|buff.guardian_of_ancient_kings.up|buff.sentinel.up|buff.divine_shield.up|buff.blessing_of_spellwarding.up
+  ## State tracking
+  interrupt_swap_going: (interrupts.5y.ready|interrupts.5y.count>=1)&!interrupts.target.ready&(cooldown.rebuke.ready|cooldown.avengers_shield.ready)&enemies.5y>=1&var.auto_swap
+  stun_swap_going: (interrupts.10y.stun.ready|interrupts.10y.count>=1)&!interrupts.target.stun.ready&cooldown.hammer_of_justice.ready&enemies.inrange(10)>=1&var.auto_swap
+  tankbuster_casting: nameplates.casting.Terrifying_Slam|nameplates.casting.Gloom_Bite|nameplates.casting.Electrocrush|nameplates.casting.Wallop|nameplates.casting.Sludge_Claws|nameplates.casting.Thunder_Punch|nameplates.casting.Pierce_Armor|nameplates.casting.Shield_Slam|nameplates.casting.Divine_Judgment
+lists:
+  combat_checks:
+    - return,if=!target.valid&!((config.auto_combat.has(1)&target.quest_mob&target.enemy&!target.dead)|(config.auto_combat.has(2)&target.combat&target.enemy&!target.dead)|(config.auto_combat.has(3)&target.targeting_party&target.enemy&!target.dead))
+    - return,if=!target.valid&config.auto_combat.has(0)
+  party:
+    - cleanse_toxins,cycle=party,if=cycle.dispelable.list
+    - intercession.mouseover,if=mouseover.dead&mouseover.friendly&player.combat
+    - redemption.mouseover,if=mouseover.dead&mouseover.friendly&!player.combat
+    - devotion_aura, range_check=none,if=buff.devotion_aura.down
+    - word_of_glory,range_check=none,cycle=party,if=cycle.health.pct<=config.word_of_glory_hp_pct
+    - blessing_of_sacrifice,range_check=none,cycle=party,if=cycle.health.pct<=config.blessing_of_sacrifice_hp_pct&cycle.range>0
+    - lay_on_hands,range_check=none,cycle=party,if=cycle.health.pct<=config.lay_on_hands_party_hp_pct
+  healing:
+    - word_of_glory,name="WoG Free 2/2",if=buff.shining_light.stack>=2&health.pct<=config.wog_free_2_hp_pct
+    - word_of_glory,name="WoG Free 1/2",if=buff.shining_light.stack=1&health.pct<=config.wog_free_1_hp_pct
+    - word_of_glory,name="WoG HP",if=holy_power>=3&health.pct<=config.wog_hp_pct
+  defensives:
+    - ardent_defender,if=health.pct<=config.ardent_defender_hp_pct&buff.ardent_defender.down&buff.divine_shield.down&buff.avenging_wrath.down
+    - guardian_of_ancient_kings,name="Guardian",if=health.pct<=config.guardian_hp_pct&buff.guardian_of_ancient_kings.down&buff.divine_shield.down
+    - lay_on_hands,if=health.pct<=config.lay_on_hands_hp_pct&buff.divine_shield.down
+    - divine_shield,if=health.pct<=config.divine_shield_hp_pct&buff.guardian_of_ancient_kings.down
+    
+  pre_combat:
+    - blessed_hammer,range_check=none,if=holy_power<5
+
+  interrupts:
+    - target_enemy,delay=100,name="auto_target Interrupt",if=(interrupts.5y.ready|interrupts.5y.count>=1)&!interrupts.target.ready&enemies.inrange(5)>=1&var.auto_swap
+    - target_enemy,delay=300,name="range tab",if=(!interrupts.target.ready&!interrupts.target.stun.ready)&target.range>5&!var.interrupt_swap_going&enemies.inrange(8)>=1
+    - divine_toll,ignore_usable=true,if=interrupts.10y.count>=var.divine_toll_number&cooldown.divine_toll.remains<1
+    - avengers_shield.mouseover,ignore_usable=true,if=interrupts.mouseover.ready
+    - avengers_shield,ignore_usable=true,if=interrupts.target.ready
+    - rebuke,if=(config.interrupt_target&(config.interrupt_all&target.casting.interruptible|interrupts.target.ready)&target.casting.elapsed>=0.8&(target.casting.remains<1|target.channeling))&!cooldown.avengers_shield.ready
+    - rebuke.mouseover,if=(config.interrupt_mouseover&(config.interrupt_all&mouseover.casting.interruptible|interrupts.mouseover.ready)&interrupts.mouseover.ready&mouseover.casting.elapsed>=0.8&(mouseover.casting.remains<1|mouseover.channeling))&!cooldown.avengers_shield.ready
+    - rebuke.focus,if=config.interrupt_focus&(config.interrupt_all&focus.casting.interruptible|interrupts.focus.ready)&interrupts.focus.ready&focus.casting.elapsed>=0.8&(focus.casting.remains<1|focus.channeling)
+    - hammer_of_justice,name="HOJ (CC)",if=interrupts.target.stun.ready&!interrupts.target.ready
+    - hammer_of_justice.mouseover,name="HOJ MO (CC)",if=interrupts.mouseover.stun.ready&!interrupts.mouseover.ready
+    - blind,if=interrupts.10y.stun.count>=2|interrupts.10y.count>=2
+  st:
+    - consecration,if=!player.moving&enemies.inrange(8)>=1&buff.consecration.down
+    - avenging_wrath
+    - divine_toll,if=!var.divine_toll_hold&buff.avenging_wrath.up|cooldown.avenging_wrath.remains>40
+    - hammer_of_light
+    - shield_of_the_righteous,if=buff.shield_of_the_righteous.remains<2|holy_power>=4
+    - hammer_of_wrath
+    - judgment
+    - avengers_shield
+    - hammer_of_the_righteous
+    - blessed_hammer
+  aoe:
+    - consecration,if=!player.moving&enemies.inrange(8)>=1&buff.consecration.down
+    - hammer_of_light
+    - avengers_shield,if=!var.interrupt_swap_going&!var.hold_as
+    - avenging_wrath
+    - divine_toll,if=!var.divine_toll_hold&buff.avenging_wrath.up|cooldown.avenging_wrath.remains>40
+    - shield_of_the_righteous,if=buff.shield_of_the_righteous.remains<2|holy_power>=4
+    - hammer_of_wrath
+    - judgment
+    - hammer_of_the_righteous
+    - blessed_hammer
+  taunt:
+    - hand_of_reckoning,name="Taunt",if=target.threat<2&target.combat&target.threat!=-1
+    - hand_of_reckoning.mouseover,name="Taunt MO",if=mouseover.threat<2&mouseover.combat&mouseover.threat!=-1&mouseover.exists
+  # tankbuster:
+  #   - ardent_defender,if=!var.metigation_tankbuster&var.tankbuster_casting
+  main:
+    - call_action_list,name=pre_combat,if=var.pre_combat&!player.combat&state.rotation&!player.mounted
+    - call_action_list,name=party,if=state.rotation
+    - call_action_list,name=spell_queue
+    - call_action_list,name=sanity_checks
+    - call_action_list,name=auto_heal
+    - call_action_list,name=combat_checks
+    - call_action_list,name=defensives
+    - call_action_list,name=healing
+    - call_action_list,name=taunt
+    - call_action_list,name=interrupts
+    - call_action_list,name=auto_target
+    - call_action_list,name=aoe,enemies.8y>=2
+    - call_action_list,name=st

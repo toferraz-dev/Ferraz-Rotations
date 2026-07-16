@@ -1,0 +1,179 @@
+version: 1.5
+author: Kontroved
+spec: 255
+name: Survival Hunter by Kontro
+description: Survival Hunter Rotation by Kontroved
+
+entry: main
+config:
+  features:
+    label: "Features"
+    type: multi_select
+    options:
+      - label: "Precombat Usage"
+        value: 0
+      - label: "Misdirect[\"Sentinel Hunter Tools ADDON\"]"
+        value: 1
+      - label: "target swap (Interrupt & Stun)"
+        value: 2
+    default: [0,2]
+  pets:
+    label: "Pets"
+    type: dropdown
+    options:
+      - label: "Pet 1"
+        value: 0
+      - label: "Pet 2"
+        value: 1
+      - label: "Pet 3"
+        value: 2
+      - label: "Pet 4"
+        value: 3
+      - label: "Pet 5"
+        value: 4
+    default: 0
+  # Defensive Settings
+  survival_of_the_fittest_hp_pct:
+    label: "Survival of the Fittest HP %"
+    type: slider
+    min: 0
+    max: 100
+    default: 45
+  roar_of_sacrifice_hp_pct:
+    label: "Roar of Sacrifice HP %"
+    type: slider
+    min: 0
+    max: 100
+    default: 30
+  exhilaration_hp_pct:
+    label: "Exhilaration HP %"
+    type: slider
+    min: 0
+    max: 100
+    default: 20
+  ttd_cd_usage:
+    label: "TTD CD Usage Threshold"
+    type: slider
+    min: 0
+    max: 30
+    default: 10
+
+variables:
+    version: 1.4
+    #features
+    auto_swap: config.features.has(2)
+    pre_combat_usage: config.features.has(0)
+    misdirect_usage: config.features.has(1)
+    #pets
+    call_pet1: config.pets.has(0)
+    call_pet2: config.pets.has(1)
+    call_pet3: config.pets.has(2)
+    call_pet4: config.pets.has(3)
+    call_pet5: config.pets.has(4)
+    #defensives
+    survival_of_the_fittest_hp_pct: config.survival_of_the_fittest_hp_pct
+    roar_of_sacrifice_hp_pct: config.roar_of_sacrifice_hp_pct
+    exhilaration_hp_pct: config.exhilaration_hp_pct
+
+lists:
+  combat_checks:
+    - return,if=!target.valid&!((config.auto_combat.has(1)&target.quest_mob&target.enemy&!target.dead)|(config.auto_combat.has(2)&target.combat&target.enemy&!target.dead)|(config.auto_combat.has(3)&target.targeting_party&target.enemy&!target.dead))
+    - return,if=!target.valid&config.auto_combat.has(0)
+
+  defensives:
+    - roar_of_sacrifice,if=health.pct<=roar_of_sacrifice_hp_pct
+    - survival_of_the_fittest,if=health.pct<=survival_of_the_fittest_hp_pct
+
+  self_heals:
+    - exhilaration,if=health.pct<=exhilaration_hp_pct
+
+  interrupts:
+      # Primary Interrupt
+    - muzzle,name="Interrupt Target",if=config.interrupt_target&((config.interrupt_all&target.casting.interruptible)|interrupts.target.ready)&target.casting.elapsed>=0.2&(target.casting.remains<1|target.channeling)
+    - muzzle.mouseover,name="Interrupt Mouseover",if=config.interrupt_mouseover&((config.interrupt_all&mouseover.casting.interruptible)|interrupts.mouseover.ready)&interrupts.mouseover.ready&mouseover.casting.elapsed>=0.2&(mouseover.casting.remains<1|mouseover.channeling)
+    - muzzle.focus,name="Interrupt Focus",if=config.interrupt_focus&((config.interrupt_all&focus.casting.interruptible)|interrupts.focus.ready)&interrupts.focus.ready&focus.casting.elapsed>=0.2&(focus.casting.remains<1|focus.channeling)
+       # CC Interrupt
+    - intimidation,name="Stun Interrupt Target",if=interrupts.target.stun.ready&target.casting.elapsed>=0.1
+    - target_enemy,delay=100name="auto_target Stun",if=(interrupts.5y.stun.ready|interrupts.5y.stun.count>=1)&!interrupts.target.stun.ready&cooldown.intimidation.ready<1&enemies.inrange(5)>=1&var.auto_swap
+    - target_enemy,delay=100,name="auto_target Interrupt",if=(interrupts.5y.ready|interrupts.5y.count>=1)&!interrupts.target.ready&cooldown.muzzle.remais<1&enemies.inrange(5)>=1&var.auto_swap
+
+  pre_combat:
+    - hunters_mark,if=nameplates.debuff.hunters_mark.count=0
+    - misdirection,ignore_usable=true,range_check=none,if=!buff.misdirection.up
+
+  pet_stuff: 
+    - mend_pet,if=pet.health.pct<40 
+    - revive_pet,if=!pet.alive
+    - call_pet_1,ignore_usable=true,range_check=none,if=!pet.exists&var.call_pet1
+    - call_pet_2,ignore_usable=true,range_check=none,if=!pet.exists&var.call_pet2
+    - call_pet_3,ignore_usable=true,range_check=none,if=!pet.exists&var.call_pet3
+    - call_pet_4,ignore_usable=true,range_check=none,if=!pet.exists&var.call_pet4
+    - call_pet_5,ignore_usable=true,range_check=none,if=!pet.exists&var.call_pet5
+
+  utility:
+    - tranquilizing_shot,if=target.has_magic_buff|target.target.has_enrage
+
+  pl_apl_st:
+    - kill_command,if=buff.tip_of_the_spear.stack=0|(buff.tip_of_the_spear.stack<2&buff.howl_of_the_pack_leader.up)
+    - kill_command,if=cooldown.takedown.remains<gcd&buff.tip_of_the_spear.stack<2&!talent.twin_fangs
+    - takedown,if=buff.tip_of_the_spear.up&target.range<=5&!player.moving
+    - flamefang_pitch
+    - boomstick,if=buff.tip_of_the_spear.up
+    - wildfire_bomb,if=buff.wyverns_cry.up&buff.tip_of_the_spear.up
+    - raptor_swipe,if=buff.tip_of_the_spear.up
+    - raptor_strike,if=buff.tip_of_the_spear.up&buff.raptor_swipe.up|!buff.raptor_swipe.up
+    - kill_command
+    - hatchet_toss,if=focus.max
+  pl_apl_aoe:
+    - kill_command,if=buff.tip_of_the_spear.stack=0|(buff.tip_of_the_spear.stack<2&buff.howl_of_the_pack_leader.up)
+    - kill_command,if=cooldown.takedown.remains<gcd&buff.tip_of_the_spear.stack<2&!talent.twin_fangs
+    - takedown,if=buff.tip_of_the_spear.up&target.range<=5&!player.moving
+    - boomstick,if=buff.tip_of_the_spear.up
+    - wildfire_bomb,if=buff.tip_of_the_spear.up&cooldown.wildfire_bomb.charges_fractional>1.5
+    - wildfire_bomb,if=buff.wyverns_cry.remains&buff.tip_of_the_spear.up
+    - flamefang_pitch
+    - raptor_swipe,if=buff.tip_of_the_spear.up
+    - raptor_strike,if=(buff.tip_of_the_spear.up&buff.raptor_swipe.up)|!buff.raptor_swipe.up
+    - kill_command
+    - hatchet_toss,if=focus.max
+  sent_apl_st:
+    - kill_command,if=buff.tip_of_the_spear.stack=0
+    - boomstick,if=buff.tip_of_the_spear.up
+    - wildfire_bomb,if=buff.tip_of_the_spear.up&(debuff.sentinels_mark.up|cooldown.wildfire_bomb.full_recharge_time<4+gcd)
+    - kill_command,if=cooldown.takedown.remains<gcd&buff.tip_of_the_spear.stack<2&!talent.twin_fangs
+    - takedown,if=buff.tip_of_the_spear.up&target.range<=5&!player.moving
+    - boomstick,if=buff.tip_of_the_spear.up
+    - moonlight_chakram,if=buff.tip_of_the_spear.up
+    - flamefang_pitch,if=talent.flamefang_pitch
+    - raptor_swipe,if=buff.tip_of_the_spear.up
+    - raptor_strike,if=(buff.tip_of_the_spear.up&buff.raptor_swipe.up)|!buff.raptor_swipe.up
+    - kill_command
+    - hatchet_toss,if=focus.max
+  sent_apl_aoe:
+    - kill_command,if=buff.tip_of_the_spear.stack=0
+    - boomstick,if=buff.tip_of_the_spear.up
+    - wildfire_bomb,if=buff.tip_of_the_spear.up&(debuff.sentinels_mark.up|cooldown.wildfire_bomb.full_recharge_time<4+gcd)
+    - kill_command,if=cooldown.takedown.remains<gcd&buff.tip_of_the_spear.stack<2&!talent.twin_fangs
+    - takedown,if=buff.tip_of_the_spear.up
+    - boomstick,if=buff.tip_of_the_spear.up
+    - moonlight_chakram,if=buff.tip_of_the_spear.up
+    - flamefang_pitch,if=talent.flamefang_pitch
+    - raptor_swipe,if=buff.tip_of_the_spear.up
+    - raptor_strike,if=(buff.tip_of_the_spear.up&buff.raptor_swipe.up)|!buff.raptor_swipe.up
+    - kill_command
+    - hatchet_toss,if=focus.max
+  main:
+    - call_action_list,name=spell_queue
+    - call_action_list,name=pet_stuff,if=state.rotation&!player.mounted
+    - call_action_list,name=pre_combat,if=target.enemy&target.alive&var.pre_combat_usage&!player.combat&state.rotation&!player.mounted
+    - call_action_list,name=sanity_checks
+    - call_action_list,name=auto_heal
+    - call_action_list,name=combat_checks
+    - call_action_list,name=interrupts
+    - call_action_list,name=auto_target
+    - call_action_list,name=defensives
+    - call_action_list,name=self_heals
+    - call_action_list,name=pl_apl_aoe, if=active_enemies>2&talent.howl_of_the_pack_leader
+    - call_action_list,name=pl_apl_st, if=talent.howl_of_the_pack_leader
+    - call_action_list,name=sent_apl_aoe, if=active_enemies>2
+    - call_action_list,name=sent_apl_st

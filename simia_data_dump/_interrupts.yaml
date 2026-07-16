@@ -1,0 +1,526 @@
+version: 1
+
+# Spells that should be interrupted
+# Format:
+#   spell_id: "Name"                              - Simple interrupt
+#   spell_id: { name: "X", channel_only: true }   - Only interrupt if channeling
+#   spell_id: { name: "X", stun: true }           - Can be stunned (ignores notInterruptible)
+#
+# Expressions:
+#   config.interrupt_target&(config.interrupt_all&target.casting.interruptible|interrupts.target.ready)       - Target casting interruptible spell
+#   config.interrupt_target&interrupts.target.stun.ready  - Target casting stun-able spell (ignores notInterruptible)
+#   interrupts.10y.ready          - Any enemy in 10y casting interruptible
+#   interrupts.10y.stun.ready     - Any enemy in 10y casting stun-able
+#   interrupts.10y.count          - Count of enemies in 10y casting interruptible
+#   interrupts.10y.stun.count     - Count of enemies in 10y casting stun-able
+
+interrupts:
+  # Player Spells
+  30451: "Arcane Blast"
+  5143: { name: "Arcane Missiles", channel_only: true }
+  118: "Polymorph"
+  383121: "Mass Polymorph"
+  133: "Fireball"
+  11366: "Pyroblast"
+  2948: "Scorch"
+  353082: "Ring of Fire"
+  116: "Frostbolt"
+  199786: "Glacial Spike"
+  205021: { name: "Ray of Frost", channel_only: true }
+  352278: "Ice Wall"
+  390612: "Frostbomb"
+  2061: "Flash Heal"
+  47540: { name: "Penance", channel_only: true }
+  421453: "Ultimate Penance"
+  8092: "Mind Blast"
+  289666: "Greater Heal"
+  14914: "Holy Fire"
+  64843: "Divine Hymn"
+  228260: "Void Form"
+  15407: { name: "Mind Flay", channel_only: true }
+  34914: "Vampiric Touch"
+  450215: "Void Blast"
+  116858: "Chaos Bolt"
+  5782: "Fear"
+  234153: { name: "Drain Life", channel_only: true }
+  30283: "Shadow Fury"
+  48181: "Haunt"
+  1259790: "Unstable Affliction"
+  111771: "Demonic Gateway"
+  264178: "Demonbolt"
+  265187: "Summon Demonic Tyrant"
+  410126: "Searing Glare"
+  82326: "Holy Light"
+  19750: "Flash of Light"
+  339: "Entangling Roots"
+  194153: "Starfire"
+  8936: "Regrowth"
+  33786: "Cyclone"
+  48438: "Wild Growth"
+  391528: "Convoke the Spirits"
+  305483: "Lightning Lasso"
+  8004: "Healing Surge"
+  77472: "Healing Wave"
+  1064: "Chain Heal"
+  51505: "Lava Burst"
+  188196: "Lightning Bolt"
+  191634: "Stormkeeper"
+  115175: { name: "Soothing Mist", channel_only: true }
+  116670: "Vivify"
+  124682: "Enveloping Mist"
+  117952: { name: "Crackling Jade Lightning", channel_only: true }
+  198898: "Song of Chi-Ji"
+  355936: "Dream Breath"
+  373861: "Temporal Anomaly"
+  361469: "Living Flame"
+  356995: { name: "Disintegrate", channel_only: true }
+  360806: "Sleep Walk"
+  473662: "Consume"
+  982: "Revive Pet"
+
+  # Awakening the Machine
+  450597: { name: "Web Blast", stun: true }
+  462802: { name: "Sonic Pulse", stun: true }
+  450449: "Regenerating Carapace"
+  450914: "Blood-Infused Carapace"
+
+  # Priory of the Sacred Flame
+  423664: "Embrace the Light"
+  423536: "Holy Smite"
+  451605: "Burning Light"
+  427357: "Holy Smite"
+  424419: "Battle Cry"
+  427356: { name: "Greater Heal", stun: true }
+  444743: { name: "Fireball Volley", stun: true }
+  424421: "Fireball"
+  424420: "Cinderblast"
+  427359: { name: "Defend", stun: true }
+  423051: "Burning Light"
+
+  # Cinderbrew Meadery
+  441351: "Bee-stial Wrath"
+  441627: { name: "Rejuvenating Honey", stun: true }
+  441242: { name: "Free Samples?", stun: true }
+  440687: { name: "Honey Volley", stun: true }
+  453909: "Boiling Flames"
+
+  # Rookery
+  430109: { name: "Lightning Bolt", stun: true }
+  430238: "Void Bolt"
+  427260: "Lightning Surge"
+
+  # Darkflame Cleft
+  425536: { name: "Mole Frenzy", stun: true }
+  423479: "Wicklighter Bolt"
+  428563: { name: "Flame Bolt", stun: true }
+  426295: "Flaming Tether"
+  426145: "Paranoid Mind"
+  422541: { name: "Drain Light", stun: true }
+  427176: { name: "Drain Light", stun: true }
+  427157: { name: "Call Darkflame", channel_only: true }
+
+  # Operation: Floodgate
+  462771: "Surveying Beam"
+  465871: "Blood Bolt"
+  1214780: "Maximum Distortion"
+  468631: "Harpoon"
+  471733: "Restorative Algae"
+  465595: "Lightning"
+  465120: { name: "Wind Up", stun: true }
+  461796: { name: "Reload", stun: true }
+  471736: { name: "Jettison Kelp", stun: true }
+  1217456: { name: "Jettison Kelp", stun: true }
+  1214468: { name: "Trickshot", stun: true }
+
+  # Ara-Kara
+  434786: "Web Bolt"
+  434793: { name: "Resonant Barrage", stun: true }
+  434796: { name: "Resonant Barrage", stun: true }
+  434802: "Horrifying Shrill"
+  436322: "Poison Bolt"
+  448248: { name: "Revolting Volley", stun: true }
+  433841: "Venom Volley"
+  442210: "Silken Restraints"
+
+  # City of Threads
+  443427: "Web Bolt"
+  443432: { name: "Silk Binding", stun: true }
+  443430: { name: "Silk Binding", stun: true }
+  443433: "Twist Thoughts"
+  443434: "Twist Thoughts"
+  443435: "Twist Thoughts"
+  442536: "Grimweave Blast"
+  452162: { name: "Mending Web", stun: true }
+  446086: "Void Wave"
+  434122: "Void Bolt"
+
+  # The Dawnbreaker
+  431303: "Night Bolt"
+  431309: "Ensnaring Shadows"
+  450756: "Abyssal Howl"
+  451113: "Web Bolt"
+  431333: { name: "Tormenting Beam", stun: true }
+  432520: "Umbral Barrier"
+  451114: "Congealed Shadow"
+  451097: "Silken Shell"
+  428086: "Shadow Bolt"
+  452145: { name: "Animate Shadows", stun: true }
+  452127: { name: "Animate Shadows", stun: true }
+  449734: "Acidic Eruption"
+
+  # The Stonevault
+  426283: "Arcing Void"
+  449455: { name: "Howling Fear", stun: true }
+  445207: "Piercing Wail"
+  429109: { name: "Restoring Metals", stun: true }
+  429110: "Alloy Bolt"
+  429545: { name: "Censoring Gear", stun: true }
+  430098: "Molten Metal"
+  428161: "Molten Metal"
+  430097: "Molten Metal"
+
+  # Eco-Dome Al'dani
+  1229474: "Gorge"
+  1229510: { name: "Arcing Zap", stun: true }
+  1222815: "Arcane Bolt"
+  1222356: { name: "Warp", stun: true }
+  354297: "Gorge"
+
+  # Dawn of the Infinite
+  415770: { name: "Infinite Bolt Volley", stun: true }
+  415437: "Enervate"
+  415435: "Infinite Bolt"
+  413606: { name: "Corroding Volley", stun: true }
+  413607: { name: "Corroding Volley", stun: true }
+  400180: { name: "Corroding Volley", stun: true }
+  412922: { name: "Binding Grasps", stun: true }
+  412924: { name: "Binding Grasps", stun: true }
+  417481: { name: "Displace Chronosequence", stun: true }
+  413427: "Time Beam"
+  411994: "Chrono Melt"
+  418200: "Infinite Burn"
+  411300: "Fish Bolt Volley"
+  412378: "Dizzying Sands"
+  412233: "Rock Bolt Volley"
+  407891: { name: "Healing Wave", stun: true }
+
+  # Brackenhide Hollow
+  367484: { name: "Vicious Clawmangle", stun: true }
+  373804: "Touch of Decay"
+  372711: "Infuse Corruption"
+  373897: "Decaying Roots"
+  382249: "Earth Bolt"
+  382712: "Necrotic Breath"
+  382435: "Rotchanting Totem"
+  382474: "Decay Surge"
+  384638: "Master's Call"
+  377950: "Greater Healing Rapids"
+  381770: "Gushing Ooze"
+  384633: "Brackenhide Hollow"
+  376800: "Brackenhide Hollow"
+  367500: "Hideous Cackle"
+  374544: "Burst of Decay"
+  383062: { name: "Brackenhide Hollow", stun: true }
+  383069: { name: "Brackenhide Hollow", stun: true }
+  375065: { name: "Brackenhide Hollow", stun: true }
+  373899: "Brackenhide Hollow"
+  384899: { name: "Brackenhide Hollow", stun: true }
+  385029: "Screech"
+  372151: { name: "Brackenhide Hollow", stun: true }
+
+  # Halls of Infusion
+  375950: "Ice Shards"
+  374699: "Cauterize"
+  395694: "Elemental Focus"
+  377348: "Tidal Divergence"
+  375384: "Rumbling Earth"
+  385141: "Thunderstorm"
+  389443: "Purifying Blast"
+  374080: "Blasting Gust"
+  384014: "Static Surge"
+  374066: "Earth Shield"
+  374045: "Expulse"
+  374339: "Demoralizing Shout"
+  374563: "Dazzle"
+  374706: "Pyretic Burst"
+  377341: "Tidal Divergence"
+  377384: "Boiling Rage"
+  377402: "Aqueous Barrier"
+  388882: { name: "Inundate", stun: true }
+  376171: { name: "Refreshing Tides", stun: true }
+
+  # Neltharus
+  372561: { name: "Binding Spear", stun: true }
+  378282: { name: "Molten Core", stun: true }
+  378818: { name: "Magma Conflagration", channel_only: true, stun: true }
+  395427: "Burning Roar"
+  396925: "Lava Bolt"
+  384161: "Mote of Combustion"
+  372538: "Melt"
+  372223: "Mending Clay"
+  372615: "Ember Reach"
+
+  # Ruby Life Pools
+  384194: "Ruby Life Pools"
+  372743: "Ruby Life Pools"
+  373680: "Ruby Life Pools"
+  373017: "Ruby Life Pools"
+  372735: { name: "Ruby Life Pools", stun: true }
+  385536: { name: "Ruby Life Pools", stun: true }
+  372749: { name: "Ruby Life Pools", stun: true }
+  385063: "Ruby Life Pools"
+  392398: "Ruby Life Pools"
+  392451: { name: "Ruby Life Pools", stun: true }
+  392924: { name: "Ruby Life Pools", stun: true }
+
+  # Azure Vault
+  387564: "Azure Vault"
+  386546: "Azure Vault"
+  377488: "Azure Vault"
+  370764: { name: "Azure Vault", stun: true }
+  373932: "Azure Vault"
+  375596: { name: "Azure Vault", stun: true }
+  386549: { name: "Azure Vault", stun: true }
+  389804: "Azure Vault"
+  374885: "Azure Vault"
+  370225: { name: "Azure Vault", stun: true }
+  397726: { name: "Azure Vault", stun: true }
+
+  # Nohkud Offensive
+  387616: "Grasp of the Dead"
+  387608: "Necrotic Eruption"
+  387613: { name: "Death Bolt", stun: true }
+  386028: { name: "Thunder Clap", stun: true }
+  387125: "Thunderstrike"
+  386223: "Nohkud Offensive"
+  386026: "Nohkud Offensive"
+  386015: "Nohkud Offensive"
+  399507: "Nohkud Offensive"
+  397394: { name: "Deadly Thunder", stun: true }
+  386024: { name: "Nohkud Offensive", stun: true }
+  384808: "Nohkud Offensive"
+  376725: "Nohkud Offensive"
+  383823: { name: "Nohkud Offensive", stun: true }
+  384365: "Nohkud Offensive"
+  386012: { name: "Nohkud Offensive", stun: true }
+  387411: "Nohkud Offensive"
+  387440: { name: "Nohkud Offensive", stun: true }
+  373395: "Bloodcurdling Shout"
+  381530: "Nohkud Offensive"
+  387629: { name: "Nohkud Offensive", stun: true }
+
+  # Uldaman: Legacy of Tyr
+  369399: "Stone Bolt"
+  369465: { name: "Hail of Stone", stun: true }
+  369365: "Curse of Stone"
+  369823: "Spiked Carapace"
+  369603: "Defensive Bulwark"
+  369602: "Defensive Bulwark"
+  369675: "Chain Lightning"
+  369674: "Stone Spike"
+  369400: "Earthen Ward"
+  377500: "Hasten"
+
+  # Algeth'ar Academy
+  387932: { name: "Astral Whirlwind", stun: true }
+  388884: { name: "Arcane Rain", stun: true }
+  388886: { name: "Arcane Rain", stun: true }
+  388392: "Monotonous Lecture"  # Random target channeled Magic sleep for 8s
+  396812: "Mystic Blast"
+  396640: { name: "Healing Touch", stun: true }
+  377389: { name: "Call of the Flock", stun: true }  # 60yd AoE Sonic hit that enrages nearby enemies, granting 50% attack speed for 10s
+  390938: "Agitation"  # Stacking 15% physical damage done increase
+  388866: "Manavoid"
+  387975: "Arcane Missiles"
+  387910: { name: "Astral Whirl", stun: true }
+  387955: "Celestial Shield"
+  388862: { name: "Surge", stun: true }  # Random target arcane hit
+
+  # Mists of Tirna Scithe
+  337220: "Mists of Tirna Scithe"
+  323057: "Mists of Tirna Scithe"
+  322450: "Mists of Tirna Scithe"
+  337235: "Mists of Tirna Scithe"
+  337253: "Mists of Tirna Scithe"
+  337251: "Mists of Tirna Scithe"
+  322938: { name: "Mists of Tirna Scithe", stun: true }
+  322767: { name: "Mists of Tirna Scithe", stun: true }
+  324776: { name: "Mists of Tirna Scithe", stun: true }
+  324914: { name: "Mists of Tirna Scithe", stun: true }
+  321828: "Mists of Tirna Scithe"
+  326046: { name: "Mists of Tirna Scithe", stun: true }
+  340544: { name: "Mists of Tirna Scithe", stun: true }
+  324987: { name: "Mists of Tirna Scithe", stun: true }
+  325021: { name: "Mists of Tirna Scithe", stun: true }
+  331743: { name: "Bucking Rampage", stun: true }
+  331718: { name: "Spear Flurry", stun: true }
+  326021: { name: "Acid Globule", stun: true }
+
+  # The Necrotic Wake
+  338553: { name: "The Necrotic Wake", stun: true }
+  323190: { name: "The Necrotic Wake", stun: true }
+  320462: "The Necrotic Wake"
+  328667: { name: "The Necrotic Wake", stun: true }
+  320571: "The Necrotic Wake"
+  322274: "The Necrotic Wake"
+  335143: { name: "The Necrotic Wake", stun: true }
+  321807: { name: "The Necrotic Wake", stun: true }
+  324293: { name: "The Necrotic Wake", stun: true }
+  333623: { name: "The Necrotic Wake", stun: true }
+  320170: "The Necrotic Wake"
+  334748: { name: "The Necrotic Wake", stun: true }
+  334749: { name: "The Necrotic Wake", stun: true }
+  338353: "The Necrotic Wake"
+  327130: { name: "The Necrotic Wake", stun: true }
+  327240: { name: "The Necrotic Wake", stun: true }
+
+  # Theater of Pain
+  1217138: "Necrotic Bolt"
+  1216475: "Necrotic Bolt"
+  330784: "Necrotic Bolt"
+  330810: "Blind Soul"
+  341771: "Grave Spike"
+  342675: { name: "Bone Spear", stun: true }
+  341977: { name: "Meat Shield", stun: true }
+  330868: { name: "Necrotic Bolt Volley", stun: true }
+  341969: { name: "Withering Discharge", stun: true }
+
+  # Siege of Boralus
+  256957: "Watertight Shell"
+  257063: "Brackish Bolt"
+  275826: "Bolstering Shout"
+  454440: "Stinky Vomit"
+  272571: "Choking Waters"
+  272581: "Water Bolt"
+
+  # Motherlode
+  262092: "Inhale Vapors"
+  1213893: { name: "Active Mech", stun: true }
+  258674: { name: "Throw Wrench", stun: true }
+  280604: { name: "Iced Spritzer", stun: true }
+  269302: { name: "Toxic Blades", stun: true }
+  263202: { name: "Rock Lance", stun: true }
+  263215: "Tectonic Barrier"
+  268702: "Furious Quake"
+  268797: { name: "Transmute: Enemy to Goo", stun: true }
+  267354: { name: "Fan of Knives", stun: true }
+
+  # Mechagon: Workshop
+  301088: "Detonate"
+  1215412: { name: "Corrosive Gunk", stun: true }
+  293827: "Giga-Wallop"
+  294195: "Arcing Zap"
+  293930: "Overclock"
+  293729: "Tune Up"
+
+  # Grim Batol
+  451261: "Earth Bolt"
+  451871: { name: "Mass Tremor", stun: true }
+  76369: "Shadowflame Bolt"
+  76711: { name: "Sear Mind", stun: true }
+  447966: "Shadowflame Bolt"
+
+  # Tazavesh
+  350922: "Tazavesh"
+  353836: "Tazavesh"
+  357188: "Tazavesh"
+  352347: "Tazavesh"
+  351119: "Tazavesh"
+  355934: { name: "Tazavesh", stun: true }
+  356031: "Tazavesh"
+  355915: "Tazavesh"
+  356324: "Tazavesh"
+  356407: "Tazavesh"
+  355640: { name: "Tazavesh", stun: true }
+  355641: "Tazavesh"
+  355642: { name: "Salvo", stun: true }
+  355644: { name: "Salvo", stun: true }
+  347775: "Tazavesh"
+  355234: "Tazavesh"
+  355132: { name: "Tazavesh", stun: true }
+  356133: { name: "Tazavesh", stun: true }
+  349934: "Tazavesh"
+  349933: "Tazavesh"
+  346980: { name: "Tazavesh", stun: true }
+  357284: { name: "Tazavesh", stun: true }
+  357260: { name: "Tazavesh", stun: true }
+  347721: { name: "Tazavesh", stun: true }
+  355225: "Tazavesh"
+
+  # Halls of Atonement
+  323552: "Halls of Atonement"
+  323538: "Halls of Atonement"
+  326829: "Halls of Atonement"
+  325876: "Halls of Atonement"
+  325700: { name: "Halls of Atonement", channel_only: true, stun: true }
+  326607: "Halls of Atonement"
+  325701: "Halls of Atonement"
+  325523: "Deadly Thrust"
+  326450: { name: "Loyal Feast", stun: true }
+
+  # Magister Terrace
+  468962: "Arcane Bolt"  # Random target arcane hit
+  468966: "Polymorph"  # Random target Magic debuff that pacifies and slows by 60% for 6s
+  1254294: "Pyroblast"  # Random target fire hit
+  1256015: "Shadow Bolt"  # Random target shadow hit
+  1264693: "Terror Wave"  # 20yd AoE shadow hit and 3s Magic fear
+
+  # Maisara Caverns
+  1266381: "Hooked Snare"  # Disengage followed by random target 4s phys DoT and root
+  1257781: { name: "Shredding Talons", stun: true }  # Random target leap and channeled frontal, ticks every 1s for 5s
+  1256008: "Hex"  # Random target Magic debuff that incapacitates for 6s
+  1263292: { name: "Shrink", stun: true }  # Random target channel that deals shadow damage and shrinks the player, touching a full-size player stuns for 4s
+  1257716: { name: "Reanimation", stun: true }  # On death starts a 12s channel that revives the mob if completed
+  1259255: "Spirit Rend"  # Random target shadow hit and 8s Magic DoT
+  1264327: "Shadowfrost Blast"  # Tank targeted shadowfrost hit
+  1259182: "Piercing Screech"  # Tank targeted line attack that deals physical damage
+
+  # Nexus-Point
+  1285445: { name: "Arcane Explosion", stun: true }  # Channeled AoE arcane hits, ticks every 2s for 12s
+  1252204: { name: "Leech Veil", stun: true }  # At 45% health channel a shield into a random ally and heal, stop by using a CC or breaking the shield
+  1271094: "Umbra Bolt"  # Random target shadow hit
+  1258681: "Nullify"  # Random target shadow hit
+  1263892: "Holy Bolt"  # Random target holy hit
+
+  # Windrunner Spire
+  1216135: "Spirit Bolt"  # Random target shadow hit
+  1216848: { name: "Fire Spit", stun: true }  # Random target fire channel, ticks every 1s for 9s
+  1216819: "Fungal Bolt"  # Random target nature hit
+  473794: "Poison Blades"  # Causes melee attacks and ability hits to apply a stacking Poison DoT for 5s
+  473657: "Shadow Bolt"  # Random target shadow hit
+  473668: "Pulsing Shriek"  # Channeled AoE shadow hits with a shield that prevents interrupts, ticks every 2s for 16s
+  1216454: { name: "Arrow Rain", stun: true }  # Channel that fires off multiple random target 3yd circles that deal phys dam to anyone hit
+  1216643: { name: "Gore Whirl", stun: true }  # Channeled 6yd AoE around the mob that deals physical damage to players hit, ticks every 0.5s for 8s
+  1216592: "Chain Lightning"  # Random target nature hit that jumps to a nearby player
+
+  # Algeth'ar Academy
+  1279627: "Arcane Bolt"  # Random target arcane hit
+  1270294: "Mystic Brand"  # Random target arcane hit and 50% arcane damage taken increase for 20s
+
+  # Seat of Triumvirate
+  1262510: "Umbral Bolt"  # Random target shadow hit
+  1262523: "Summon Voidcaller"  # Summons a Bound Voidcaller
+  1277339: { name: "Shadowmend", stun: true }  # Teleports to a random nearby location and begins to heal for 3% max health, ticks every 1s for 10s
+  1262526: "Abyssal Enhancement"  # Magic buff that causes melee attacks to deal bonus shadow damage that chains to nearby players for 15s
+
+  # Skyreach
+  1255377: "Repel"  # 100yd AoE nature hit and knockback
+  152953: "Blinding Light"  # 100yd AoE stun for 5s
+  1254669: "Solar Bolt"  # Random target fire hit
+
+  # Maisara Caverns (Boss)
+  1250708: "Necrotic Convergence"  # AoE shadow channel that ramps over time, can't be interrupted until the bosses shield is destroyed, ticks every 2s for 1min
+  1254010: "Eternal Suffering"  # 16yd slow zone around Malignant Souls, grants stacking 25% damage/healing/move speed increase for 25s when interrupted
+
+  # Nexus-Point (Boss)
+  1257595: "Divine Guile"  # Boss disguises amongst Fractured Images, dealing AoE holy damage every 2s until interrupted
+
+  # Windrunner Spire (Boss)
+  472724: "Shadow Bolt"  # Random target shadow hit, cast by Kalis
+
+  # Seat of Triumvirate (Boss)
+  248831: "Dread Screech"  # AoE shadow hit and 4s disorient if not interrupted, cast by Shadewing
+  244750: "Mind Blast"  # Tank targeted shadow hit
+
+  # Skyreach (Boss)
+  154396: "Solar Blast"  # Tank targeted fire hit

@@ -1,0 +1,493 @@
+version: 1
+author: Tek
+class: Arcane Mage
+spec: 62
+name: TeK GOAT ARCANE MAGE
+entry: main
+
+# ============================================================================
+# CONFIG
+# ============================================================================
+config:
+  prismatic_barrier_hp_pct:
+    label: "Prismatic Barrier HP%"
+    section: "Defensives"
+    type: slider
+    min: 0
+    max: 100
+    default: 50
+
+  prismatic_barrier_proactive:
+    label: "Proactive Barrier (keep up in combat)"
+    section: "Defensives"
+    type: checkbox
+    default: true
+
+  greater_invis_hp_pct:
+    label: "Greater Invisibility HP%"
+    section: "Defensives"
+    type: slider
+    min: 0
+    max: 100
+    default: 35
+
+  ice_cold_hp_pct:
+    label: "Ice Cold HP%"
+    section: "Defensives"
+    type: slider
+    min: 0
+    max: 100
+    default: 20
+
+  healthstone_hp_pct:
+    label: "Healthstone / Health Pot HP%"
+    section: "Defensives"
+    type: slider
+    min: 0
+    max: 100
+    default: 40
+
+  use_defensives_on_casts:
+    label: "Auto-Defensive on Dangerous Casts"
+    section: "Defensives"
+    type: checkbox
+    default: true
+
+  hero_tree:
+    label: "Hero Talent Tree"
+    section: "Build"
+    type: dropdown
+    default: 0
+    options:
+      - label: "Auto-detect"
+        value: 0
+      - label: "Sunfury"
+        value: 1
+      - label: "Spellslinger"
+        value: 2
+
+  orb_mastery:
+    label: "Orb Mastery Talented"
+    section: "Build"
+    type: dropdown
+    default: 0
+    options:
+      - label: "Auto-detect"
+        value: 0
+      - label: "Yes"
+        value: 1
+      - label: "No"
+        value: 2
+
+  use_racials:
+    label: "Use Racials"
+    section: "Cooldowns"
+    type: checkbox
+    default: true
+
+  use_potions:
+    label: "Use Potions"
+    section: "Cooldowns"
+    type: checkbox
+    default: true
+
+  fresh_pack_salvo_threshold:
+    label: "Fresh Pack Burst Threshold (skip pooling below this Salvo)"
+    section: "Cooldowns"
+    type: slider
+    min: 0
+    max: 20
+    default: 15
+
+# ============================================================================
+# VARIABLES
+# ============================================================================
+variables:
+  # Hero tree detection
+  is_sunfury: "(config.hero_tree=1)|(config.hero_tree=0&talent.spellfire_spheres)"
+  is_spellslinger: "(config.hero_tree=2)|(config.hero_tree=0&talent.splintering_sorcery)"
+  has_orb_mastery: "(config.orb_mastery=1)|(config.orb_mastery=0&talent.orb_mastery)"
+
+  # =========================================================================
+  # OPENER / FRESH PACK BURST BYPASS
+  # =========================================================================
+  #
+  # first_burst:
+  #   True during the very first cooldown cycle of a combat session.
+  #   combat.time < 10s AND we haven't applied Touch yet.
+  #   → Skip Salvo pooling entirely, go straight to Surge → TotM.
+  #
+  # fresh_pack:
+  #   True when we engage a new enemy pack mid-combat and CDs are ready
+  #   but Salvo is below the pooling threshold (configurable, default 15).
+  #   Detection: target has no player debuffs AND nearby enemies are mostly
+  #   at high HP AND both Surge + TotM are available.
+  #   → Skip the 20-stack requirement and burst immediately.
+  #
+  # skip_salvo_pooling:
+  #   Master bypass — true if EITHER first_burst or fresh_pack is true.
+  #   Used to gate the Salvo building line in cooldowns and to allow
+  #   Surge/TotM to fire without waiting for 20 stacks.
+  # =========================================================================
+
+  first_burst: "player.combat.time<10&debuff.touch_of_the_magi.down"
+
+  fresh_pack: "player.combat.time>=10&debuff.touch_of_the_magi.down&cooldown.arcane_surge.ready&cooldown.touch_of_the_magi.ready&buff.arcane_salvo.stack<config.fresh_pack_salvo_threshold"
+
+  skip_salvo_pooling: "var.first_burst|var.fresh_pack"
+
+  # Legacy opener alias (kept for movement list compatibility)
+  opener: "var.first_burst"
+
+  # Trinket detection
+  steroid_trinket_equipped: "equipped.lily_of_the_eternal_weave|equipped.sunblood_amethyst|equipped.astral_gladiators_badge_of_ferocity|equipped.arazs_ritual_forge|equipped.freightrunners_flask|equipped.emberwing_feather|equipped.vaelgors_final_stare|equipped.galactic_gladiators_badge_of_ferocity|equipped.nevermelting_ice_crystal|equipped.ever_collapsing_void_fissure|equipped.signet_of_the_priory|equipped.incorporeal_essencegorger|equipped.sealed_chaos_urn"
+  steroid_20s: "equipped.signet_of_the_priory|equipped.incorporeal_essencegorger|equipped.sealed_chaos_urn"
+  steroid_15s: "equipped.lily_of_the_eternal_weave|equipped.sunblood_amethyst|equipped.astral_gladiators_badge_of_ferocity|equipped.arazs_ritual_forge|equipped.freightrunners_flask|equipped.emberwing_feather|equipped.vaelgors_final_stare|equipped.galactic_gladiators_badge_of_ferocity"
+  steroid_12s: "equipped.nevermelting_ice_crystal|equipped.ever_collapsing_void_fissure"
+  nonsteroid_trinket_equipped: "equipped.mereldars_toll|equipped.perfidious_projector|equipped.chaotic_nethergate|equipped.wraps_of_cosmic_madness|equipped.astalors_anguish_agitator"
+
+  # Cleave / AoE detection
+  cleave: "active_enemies>=2"
+  aoe: "active_enemies>=3"
+  big_aoe: "active_enemies>3"
+
+  # Sunfury pooling logic
+  sunfury_hold_for_cds: "((buff.arcane_surge.down&cooldown.touch_of_the_magi.remains>gcd.max*(4-(active_enemies>=3)-((2*(buff.overpowered_missiles.react&buff.clearcasting.react))<?((cooldown.arcane_orb.charges_fractional>0.95|buff.clearcasting.react)&active_enemies>=3)))&cooldown.arcane_surge.remains>gcd.max*(4-(active_enemies>=3)-((2*(buff.overpowered_missiles.react&buff.clearcasting.react))<?((cooldown.arcane_orb.charges_fractional>0.95|buff.clearcasting.react)&active_enemies>=3))))|((buff.clearcasting.react|((buff.arcane_salvo.stack=25|cooldown.arcane_orb.charges_fractional>0.95)&active_enemies>=3))&buff.arcane_surge.remains>gcd.max*(6-(2*(buff.overpowered_missiles.react<?(active_enemies>=3))))))"
+
+  # Burst timing
+  burst_imminent: "cooldown.arcane_surge.remains<gcd.max*3|cooldown.touch_of_the_magi.remains<gcd.max*3"
+  burst_soon: "cooldown.arcane_surge.remains<gcd.max*6|cooldown.touch_of_the_magi.remains<gcd.max*6"
+
+  # Utility
+  pom_unavailable: "cooldown.presence_of_mind.remains>gcd.max*2&!buff.presence_of_mind.up"
+
+# ============================================================================
+# LISTS
+# ============================================================================
+lists:
+
+  # ==================================================================
+  # EMERGENCY — instant defensives, called inline during burst/rotation
+  # ==================================================================
+  emergency:
+    - ice_cold,range_check=none,interrupt=true,if=health.pct<=config.ice_cold_hp_pct
+    - greater_invisibility,range_check=none,interrupt=true,if=health.pct<=config.greater_invis_hp_pct&cooldown.ice_cold.down
+    - healthstone,range_check=none,if=health.pct<=config.healthstone_hp_pct&healthstone.ready
+    - health_potion,range_check=none,if=health.pct<=config.healthstone_hp_pct&health_potion.ready
+
+  # ==================================================================
+  # DEFENSIVES — full defensive chain
+  # ==================================================================
+  defensives:
+    # Emergency first
+    - ice_cold,range_check=none,if=health.pct<=config.ice_cold_hp_pct
+    - greater_invisibility,range_check=none,if=health.pct<=config.greater_invis_hp_pct&cooldown.ice_cold.down
+    - healthstone,range_check=none,if=health.pct<=config.healthstone_hp_pct&healthstone.ready
+    - health_potion,range_check=none,if=health.pct<=config.healthstone_hp_pct&health_potion.ready
+
+    # Proactive Barrier
+    - prismatic_barrier,range_check=none,if=config.prismatic_barrier_proactive&buff.prismatic_barrier.down&player.combat
+
+    # Dangerous cast detection
+    - prismatic_barrier,range_check=none,if=config.use_defensives_on_casts&defensives.ready&buff.prismatic_barrier.down
+    - greater_invisibility,range_check=none,if=config.use_defensives_on_casts&defensives.ready&buff.prismatic_barrier.up&buff.arcane_surge.down
+    - prismatic_barrier,range_check=none,if=config.use_defensives_on_casts&defensives.ready.aoe&buff.prismatic_barrier.down
+
+    # Reactive HP thresholds
+    - prismatic_barrier,range_check=none,if=health.pct<=config.prismatic_barrier_hp_pct&buff.prismatic_barrier.down
+    - greater_invisibility,range_check=none,if=health.pct<=config.greater_invis_hp_pct&buff.arcane_surge.down
+    - ice_cold,range_check=none,if=health.pct<=config.ice_cold_hp_pct
+
+  # ==================================================================
+  # MOVEMENT — instant casts while moving
+  # ==================================================================
+  movement:
+    - call_action_list,name=emergency
+
+    # Presence of Mind → Arcane Blast while moving
+    - presence_of_mind,range_check=none,if=!buff.presence_of_mind.up&cooldown.presence_of_mind.ready
+    - arcane_blast,if=buff.presence_of_mind.up
+
+    # Arcane Orb for charges
+    - arcane_orb,if=arcane_charges<=1
+
+    # Touch of the Magi (oGCD, can fire while moving)
+    - touch_of_the_magi,if=talent.splintering_sorcery&buff.arcane_surge.up&debuff.touch_of_the_magi.down
+    - touch_of_the_magi,if=talent.spellfire_spheres&buff.arcane_surge.up&buff.arcane_surge.remains<(5+gcd.remains)&debuff.touch_of_the_magi.down
+    - touch_of_the_magi,if=cooldown.touch_of_the_magi.ready&cooldown.arcane_surge.remains>30&buff.arcane_surge.down&debuff.touch_of_the_magi.down
+
+    # Barrage — dump resources
+    - arcane_barrage,if=buff.arcane_soul.up
+    - arcane_barrage,if=buff.arcane_salvo.stack=25&arcane_charges>=4
+    - arcane_barrage,if=buff.arcane_salvo.stack>=20&arcane_charges>=4&!var.burst_imminent
+
+    # Supernova filler
+    - supernova,if=talent.supernova
+
+    # Barrage if no PoM available
+    - arcane_barrage,if=var.pom_unavailable&arcane_charges>=3&!var.burst_soon
+    - arcane_barrage,if=var.pom_unavailable&arcane_charges>=3&buff.arcane_salvo.stack<8&!var.burst_imminent
+
+    # Hard stop — don't cast anything else while moving
+    - return
+
+  # ==================================================================
+  # TRINKETS
+  # ==================================================================
+  trinkets:
+    # Spellslinger steroid trinkets
+    - trinket_1,if=trinket_1.sync&var.is_spellslinger&((buff.arcane_surge.up&((var.steroid_12s&debuff.touch_of_the_magi.up)|var.steroid_15s))|(cooldown.arcane_surge.ready&var.steroid_20s))
+    - trinket_2,if=trinket_2.sync&var.is_spellslinger&((buff.arcane_surge.up&((var.steroid_12s&debuff.touch_of_the_magi.up)|var.steroid_15s))|(cooldown.arcane_surge.ready&var.steroid_20s))
+
+    # Sunfury steroid trinkets
+    - trinket_1,if=trinket_1.sync&var.is_sunfury&buff.arcane_surge.up&((var.steroid_12s&debuff.touch_of_the_magi.up)|(var.steroid_15s&buff.arcane_surge.remains<(9+gcd.remains))|(var.steroid_20s&buff.arcane_surge.remains<(14+gcd.remains)))
+    - trinket_2,if=trinket_2.sync&var.is_sunfury&buff.arcane_surge.up&((var.steroid_12s&debuff.touch_of_the_magi.up)|(var.steroid_15s&buff.arcane_surge.remains<(9+gcd.remains))|(var.steroid_20s&buff.arcane_surge.remains<(14+gcd.remains)))
+
+    # End-of-fight steroid dumps
+    - trinket_1,if=trinket_1.sync&fight_remains<21&var.steroid_20s
+    - trinket_2,if=trinket_2.sync&fight_remains<21&var.steroid_20s
+    - trinket_1,if=trinket_1.sync&fight_remains<16&var.steroid_15s
+    - trinket_2,if=trinket_2.sync&fight_remains<16&var.steroid_15s
+    - trinket_1,if=trinket_1.sync&fight_remains<13&var.steroid_12s
+    - trinket_2,if=trinket_2.sync&fight_remains<13&var.steroid_12s
+
+    # Non-steroid trinkets
+    - trinket_1,if=trinket_1.sync&var.nonsteroid_trinket_equipped&((buff.arcane_surge.down&cooldown.arcane_surge.remains>20)|!var.steroid_trinket_equipped)
+    - trinket_2,if=trinket_2.sync&var.nonsteroid_trinket_equipped&((buff.arcane_surge.down&cooldown.arcane_surge.remains>20)|!var.steroid_trinket_equipped)
+
+  # ==================================================================
+  # COOLDOWNS
+  # ==================================================================
+  cooldowns:
+    - call_action_list,name=emergency
+
+    # Mirror Image — on CD
+    - mirror_image,range_check=none,if=cooldown.mirror_image.ready
+
+    # ------------------------------------------------------------------
+    # OPENER ORB (Spellslinger OrbM) — first burst only
+    # ------------------------------------------------------------------
+    - arcane_orb,if=talent.splintering_sorcery&var.first_burst&lastcast.arcane_orb>15
+
+    # ------------------------------------------------------------------
+    # OPENER MISSILES (Sunfury) — first burst only
+    # ------------------------------------------------------------------
+    - arcane_missiles,if=talent.spellfire_spheres&var.first_burst&buff.clearcasting.react
+
+    # ------------------------------------------------------------------
+    # SALVO BUILDING — only when NOT bypassing pooling
+    # Normal cycles: build to 20 stacks before entering CDs.
+    # First burst / fresh pack: skip this entirely → go straight to Surge.
+    # ------------------------------------------------------------------
+    - arcane_blast,if=!var.skip_salvo_pooling&talent.splintering_sorcery&buff.arcane_salvo.stack<20&(talent.orb_mastery&cooldown.arcane_surge.remains<(gcd.max*(mana.pct/(8+(8*(var.cleave))))))
+
+    # ------------------------------------------------------------------
+    # ARCANE SURGE
+    # Normal: fires when Salvo building line above is satisfied (stack>=20)
+    #         or when Surge just comes off CD naturally.
+    # Bypass: fires immediately because the building line was skipped.
+    # ------------------------------------------------------------------
+    - arcane_surge
+
+    # ------------------------------------------------------------------
+    # TOUCH OF THE MAGI
+    # Spellslinger: immediately after Surge
+    # ------------------------------------------------------------------
+    - touch_of_the_magi,if=talent.splintering_sorcery&buff.arcane_surge.up&debuff.touch_of_the_magi.down
+
+    # Sunfury: end of Surge window
+    - touch_of_the_magi,if=talent.spellfire_spheres&buff.arcane_surge.up&buff.arcane_surge.remains<(5+gcd.remains)&debuff.touch_of_the_magi.down
+
+    # Off-CD maintenance when Surge is far away
+    - touch_of_the_magi,if=cooldown.touch_of_the_magi.ready&cooldown.arcane_surge.remains>30&buff.arcane_surge.down&debuff.touch_of_the_magi.down
+
+    # Evocation
+    - evocation,if=mana.pct<10&buff.arcane_surge.down&debuff.touch_of_the_magi.down&cooldown.arcane_surge.remains>10
+
+  # ==================================================================
+  # SPELLSLINGER (no Orb Mastery)
+  # ==================================================================
+  spellslinger:
+    - call_action_list,name=emergency
+
+    # Orb for charges
+    - arcane_orb,if=arcane_charges<(3+(var.cleave))&(((buff.clearcasting.stack=0&talent.high_voltage)|(buff.clearcasting.react&buff.arcane_salvo.stack>=12))|(var.cleave))&cooldown.touch_of_the_magi.remains>gcd.max*4
+
+    # Barrage at 20 Salvo
+    - arcane_barrage,if=buff.arcane_salvo.stack>=20&(arcane_charges=4|talent.orb_barrage)&cooldown.touch_of_the_magi.remains>gcd.max*4
+
+    # AoE Barrage with CC recoup
+    - arcane_barrage,if=var.cleave&arcane_charges=4&buff.clearcasting.react&buff.overpowered_missiles.react&talent.high_voltage&buff.arcane_salvo.stack>5&buff.arcane_salvo.stack<14&cooldown.touch_of_the_magi.remains>gcd.max*4
+
+    # Missiles for charges with HV and Salvo stacks
+    - arcane_missiles,if=buff.clearcasting.react&((buff.arcane_salvo.stack<(10+(5*(buff.overpowered_missiles.react=0))))|(arcane_charges<2&talent.high_voltage&var.cleave))
+
+    # PoM for quick charges after Barrage
+    - presence_of_mind,if=arcane_charges<2&(buff.clearcasting.stack=0|(!talent.high_voltage&cooldown.arcane_orb.charges_fractional<0.95))&!prev_gcd.1.arcane_orb&!prev_gcd.1.arcane_missiles
+    - arcane_blast,if=buff.presence_of_mind.up
+
+    # Filler
+    - arcane_blast
+    - arcane_barrage
+
+  # ==================================================================
+  # SPELLSLINGER ORB MASTERY
+  # ==================================================================
+  spellslinger_orbm:
+    - call_action_list,name=emergency
+
+    # Orb after Barrage or in big AoE
+    - arcane_orb,if=(prev_gcd.1.arcane_barrage|active_enemies>=4)&((buff.clearcasting.react|(buff.clearcasting.stack=0&cooldown.arcane_orb.remains<gcd.max*0.5&buff.arcane_surge.up&arcane_charges=0))&buff.arcane_salvo.stack<=14)
+
+    # Barrage at 20 Salvo or end of Surge with 10+
+    - arcane_barrage,if=((arcane_charges=4|talent.orb_barrage)&buff.arcane_salvo.stack>=20&cooldown.touch_of_the_magi.remains>gcd.max*4)|(buff.arcane_surge.remains<gcd.max&buff.arcane_surge.up&buff.arcane_salvo.stack>=10)
+
+    # Missiles only with HV or OPM in minimal situations
+    - arcane_missiles,if=(talent.high_voltage|talent.overpowered_missiles)&buff.clearcasting.react&buff.arcane_salvo.stack<=(10+(5*(buff.overpowered_missiles.react=0)))&!prev_gcd.1.arcane_orb&(buff.arcane_surge.down|(talent.high_voltage&active_enemies=1))&(active_enemies<2|talent.overpowered_missiles)
+
+    # PoM for quick charges
+    - presence_of_mind,if=arcane_charges<2&(buff.clearcasting.stack=0|(!talent.high_voltage&cooldown.arcane_orb.charges_fractional<0.95))&!prev_gcd.1.arcane_orb&!prev_gcd.1.arcane_missiles
+    - arcane_blast,if=buff.presence_of_mind.up
+
+    # Filler
+    - arcane_blast
+    - arcane_barrage
+
+  # ==================================================================
+  # SUNFURY
+  # ==================================================================
+  sunfury:
+    - call_action_list,name=emergency
+
+    # Barrage: Salvo dumps in increments, TotM interaction, Soul
+    - arcane_barrage,if=(arcane_charges=4&var.sunfury_hold_for_cds&((((buff.clearcasting.react&talent.high_voltage)|(cooldown.arcane_orb.charges_fractional>0.95&active_enemies>=3))&((buff.arcane_salvo.stack>=0&buff.arcane_salvo.stack<7)|(buff.arcane_salvo.stack>=10&buff.arcane_salvo.stack<12)|(buff.arcane_salvo.stack>=15&buff.arcane_salvo.stack<17)))|buff.arcane_salvo.stack=25))|prev_gcd.1.touch_of_the_magi|(debuff.touch_of_the_magi.remains<gcd.max&debuff.touch_of_the_magi.up&arcane_charges=4)|buff.arcane_soul.up
+
+    # Missiles with CC
+    - arcane_missiles,if=buff.clearcasting.react&((((cooldown.touch_of_the_magi.remains>gcd.max*8&buff.overpowered_missiles.react=0)|buff.arcane_surge.up|arcane_charges<3|buff.clearcasting.stack>1)&buff.arcane_salvo.stack<(15-(5*(buff.overpowered_missiles.react&buff.arcane_surge.down))))|(debuff.touch_of_the_magi.up&buff.arcane_surge.up))
+
+    # Orb for charges
+    - arcane_orb,if=arcane_charges<2
+
+    # Filler
+    - arcane_blast
+    - arcane_barrage
+
+  # ==================================================================
+  # MAIN — entry point
+  # ==================================================================
+  main:
+    - call_action_list,name=sanity_checks
+
+    # Spell queue (addon priority queue)
+    - call_action_list,name=spell_queue
+
+    # ============================================================
+    # HARD STOPS
+    # ============================================================
+    - return,if=!state.rotation
+    - return,if=player.dead
+    - return,if=state.blocked_inputs
+    - return,if=mounted
+    - return,if=buff.travel_form.up
+
+    # ============================================================
+    # OUT-OF-COMBAT UTILITY (looting, auto-target)
+    # ============================================================
+    - interact_target,if=!player.combat&target.lootable&target.range<=5
+    - interact_target,if=!player.combat&loot_nearby
+    - interact_mouseover,if=!player.combat&mouseover.lootable&mouseover.range<=5
+
+    - call_action_list,name=auto_target
+
+    # ============================================================
+    # PRECOMBAT — safe buffs only (never pulls a mob)
+    # ============================================================
+    - arcane_intellect,range_check=none,if=buff.arcane_intellect.down
+
+    # ============================================================
+    # COMBAT GATE — BEFORE any offensive precombat spells
+    # ============================================================
+    - return,if=!player.combat&config.auto_combat.has(0)
+    - return,if=!player.combat&!((config.auto_combat.has(1)&target.quest_mob&target.enemy)|(config.auto_combat.has(2)&target.combat&target.enemy)|(config.auto_combat.has(3)&player.auto_attacking&target.enemy))
+
+    # ============================================================
+    # PRECOMBAT OFFENSIVE — only reachable if auto-combat gate passed
+    # ============================================================
+    - mirror_image,range_check=none,if=!player.combat&cooldown.mirror_image.ready
+    - combat_potion,range_check=none,if=!player.combat&config.use_potions&talent.spellfire_spheres&combat_potion.ready
+    - arcane_surge,if=!player.combat&cooldown.arcane_surge.ready&talent.spellfire_spheres
+    - arcane_blast,if=!player.combat&talent.splintering_sorcery
+
+    # ============================================================
+    # DEFENSIVES
+    # ============================================================
+    - call_action_list,name=defensives
+
+    # ============================================================
+    # INTERRUPTS
+    # ============================================================
+    - counterspell,if=config.interrupt_target&(config.interrupt_all&target.casting.interruptible|interrupts.target.ready)&target.casting.elapsed>=0.2&(target.casting.remains<1|target.channeling)
+    - counterspell.mouseover,if=config.interrupt_mouseover&(config.interrupt_all&mouseover.casting.interruptible|interrupts.mouseover.ready)&mouseover.casting.elapsed>=0.2&(mouseover.casting.remains<1|mouseover.channeling)
+    - counterspell.focus,if=config.interrupt_focus&(config.interrupt_all&focus.casting.interruptible|interrupts.focus.ready)&focus.casting.elapsed>=0.2&(focus.casting.remains<1|focus.channeling)
+
+    # ============================================================
+    # UTILITY
+    # ============================================================
+    - spellsteal,if=target.has_stealable&target.enemy
+    - remove_curse,cycle=party,if=cycle.dispelable.curse
+
+    # ============================================================
+    # IN-COMBAT TARGET RE-ACQUISITION
+    # ============================================================
+    - target_enemy,if=player.combat&!target.valid&enemies.combat.40y>=1
+    - target_enemy,if=player.combat&target.dead&enemies.combat.40y>=1
+
+    # No valid target — stop
+    - return,if=!target.valid
+
+    # ============================================================
+    # MOVEMENT
+    # ============================================================
+    - call_action_list,name=movement,if=player.moving&player.combat
+
+    # ============================================================
+    # IN-COMBAT POTION
+    # ============================================================
+    - combat_potion,range_check=none,if=config.use_potions&combat_potion.ready&((cooldown.arcane_surge.ready&buff.arcane_salvo.stack>=(20+(5*talent.spellfire_spheres)))|(buff.arcane_surge.up&(prev_gcd.1.arcane_surge|fight_remains<90))|fight_remains<30)
+
+    # ============================================================
+    # RACIALS
+    # ============================================================
+    - berserking,range_check=none,if=config.use_racials&((buff.arcane_surge.up&debuff.touch_of_the_magi.up)|fight_remains<13)
+    - blood_fury,range_check=none,if=config.use_racials&((buff.arcane_surge.up&((debuff.touch_of_the_magi.up&talent.splintering_sorcery)|(talent.spellfire_spheres&buff.arcane_surge.remains<(9+gcd.remains))))|fight_remains<16)
+    - fireblood,range_check=none,if=config.use_racials&((buff.arcane_surge.up&((debuff.touch_of_the_magi.up&talent.splintering_sorcery)|(talent.spellfire_spheres&buff.arcane_surge.remains<(2+gcd.remains))))|fight_remains<9)
+    - ancestral_call,range_check=none,if=config.use_racials&((buff.arcane_surge.up&((debuff.touch_of_the_magi.up&talent.splintering_sorcery)|(talent.spellfire_spheres&buff.arcane_surge.remains<(9+gcd.remains))))|fight_remains<16)
+
+    # ============================================================
+    # TRINKETS
+    # ============================================================
+    - call_action_list,name=trinkets
+
+    # ============================================================
+    # END-OF-FIGHT RESOURCE DUMP
+    # ============================================================
+    - arcane_barrage,if=fight_remains<gcd.max*2
+    - arcane_missiles,if=fight_remains<(action.arcane_missiles.execute_time*(1+buff.clearcasting.react))&buff.clearcasting.react&buff.arcane_salvo.stack>=(13+(5*talent.spellfire_salvo))&!talent.orb_mastery
+    - arcane_orb,if=fight_remains<(action.arcane_orb.execute_time*(1+buff.clearcasting.react))&buff.clearcasting.react&buff.arcane_salvo.stack>=(13+(5*talent.spellfire_salvo))&talent.orb_mastery
+
+    # ============================================================
+    # COOLDOWNS (Mirror Image, Surge, TotM, Opener logic)
+    # ============================================================
+    - call_action_list,name=cooldowns
+
+    # ============================================================
+    # HERO TREE ROTATION
+    # ============================================================
+    - call_action_list,name=spellslinger_orbm,if=var.is_spellslinger&var.has_orb_mastery
+    - call_action_list,name=spellslinger,if=var.is_spellslinger&!var.has_orb_mastery
+    - call_action_list,name=sunfury,if=var.is_sunfury
+
+    # ============================================================
+    # FALLBACK
+    # ============================================================
+    - arcane_barrage

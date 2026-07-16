@@ -1,0 +1,149 @@
+# Global Spell Morph Database
+# Maps base spell -> morph variants
+# Source: SimulationCraft Midnight (sc_*.cpp in D:\Simc\simc\engine\class_modules)
+#
+# Format: base_spell: variant (or base_spell: [variant1, variant2])
+# When a rotation line references a base spell, all variants are checked for usability.
+# The first usable variant is used (allowing WoW's morph system to work transparently).
+#
+# Per-rotation morphs: section can override or extend these entries.
+#
+# AUDIT 2026-05-15: removed buff-gated XOR pairs (separate SimC actions, separate
+# spellbook entries, both keybinds usable simultaneously — see simia_client/CLAUDE.md
+# "Shared Cooldown + Mutually Exclusive Ready"). Kept only:
+#   1. set_replacement_action calls (DK, Warrior)
+#   2. Inline execute()/cost()/impact() override on the base action
+#   3. Talent-time create_action() redirects (variant fully replaces base in spellbook)
+
+# Death Knight (all backed by set_replacement_action in sc_death_knight.cpp)
+death_and_decay: [deaths_due, desecrate]
+clawing_shadows: vampiric_strike
+scourge_strike: vampiric_strike
+heart_strike: vampiric_strike
+deaths_advance: death_charge
+festering_strike: festering_scythe
+frost_strike: frostbane
+death_coil: necrotic_coil
+epidemic: graveyard
+outbreak: pestilence
+dark_transformation: blightfall
+
+frostwyrms_fury: 1265384  # Recall via Chosen of Frostbrood (apex). Base: 279302
+
+# Demon Hunter
+eye_beam: abyssal_gaze         # sc_demon_hunter.cpp:4037 — inline execute() override on buff.demonsurge_demonic_intensity
+immolation_aura: consuming_fire # demonsurge runtime trigger (sc_demon_hunter.cpp:4766)
+sigil_of_flame: sigil_of_doom   # demonsurge runtime trigger
+# Removed (buff-gated XOR — separate APL actions, both usable as cast targets):
+#   throw_glaive: reavers_glaive
+#   blade_dance: death_sweep
+#   chaos_strike: annihilation
+#   voidblade: [pierce_the_veil, hungering_slash]
+#   pierce_the_veil: reapers_toll
+#   the_hunt: predators_wake
+#   shear: fracture
+#   consume: devour
+#   reap: [cull, eradicate]
+
+# Druid
+maul: ravage              # Wildstalker hero: ravage_maul buff swaps button at runtime (sc_druid.cpp:5770)
+ferocious_bite: ravage    # Wildstalker hero: ravage_fb buff swaps button
+incarnation_guardian_of_ursoc: wild_guardian  # sc_druid.cpp:5134/7762 — buff-triggered runtime morph
+# heart_of_the_wild: 1261868
+# Removed:
+#   solar_eclipse <-> lunar_eclipse  (XOR via eclipse_override buff, separate actions)
+#   new_moon: [half_moon, full_moon] (sequential stages, not alternates)
+#   call_of_the_elder_druid: heart_of_the_wild (variant unused in rotations)
+#   efflorescence: mass_blooming     (variant unused)
+#   ancient_of_lore: blossom_burst   (variant unused)
+
+# Evoker
+living_flame: chrono_flames   # Chronowarden talent: variant used in rotation_1468
+disintegrate: eruption        # Flameshaper talent: same keybind, variant replaces base
+# Removed:
+#   reversion: merithras_blessing (variant unused)
+#   azure_strike: azure_sweep     (separate APL actions in SimC)
+#   stasis: 370564                (UNCERTAIN, variant unused)
+
+# Hunter
+kill_shot: black_arrow                          # sc_hunter.cpp:7479-7482 — talent-time create_action redirect
+trueshot: [wailing_arrow, moonlight_chakram]    # talent-time replacements (Dark Ranger / Sentinel)
+bestial_wrath: wailing_arrow                    # TODO verify — variant used in rotation_253
+takedown: moonlight_chakram                     # TODO verify — variant used in rotation_255
+# Removed:
+#   play_dead: wake_up                          (variants unused)
+#   wildfire_bomb: [pheromone_bomb, ...]        (SimC variants unused in rotations)
+#   pheromone_bomb / shrapnel_bomb / volatile_bomb cross-aliases (unused)
+#   kill_command: spearhead                     (variants unused)
+#   command_pet: masters_call                   (variants unused)
+#   raptor_strike: raptor_swipe                 (variant unused)
+
+# Mage
+blink: reflection      # Sunfury hero: talent-time replacement, same keybind
+shimmer: reflection    # Sunfury hero: talent-time replacement
+ice_block: ice_cold    # Ice Cold talent: talent-time replacement
+# Note: removed frostbolt: glacial_spike (glacial_spike is separate APL action, not a morph)
+
+# Monk — all removed
+# Removed:
+#   celestial_conduit: unity_within (separate APL actions in SimC)
+#   invoke_niuzao_the_black_ox: mighty_stomp (variant unused)
+#   expel_harm: serene_vitality (variant unused)
+
+# Paladin
+word_of_glory: eternal_flame   # Holy talent replacement
+holy_bulwark: sacred_weapon    # Templar talent replacement (variant used in rotation_65, 66)
+# divine_toll: hammer_of_light   # sc_paladin.cpp:1836-1839 — runtime impact() dispatch on buff.hammer_of_wrath - This is not needed as we call it individually on paladin protection rotation
+wake_of_ashes: hammer_of_light # Lightsmith talent: buff-gated replacement
+# Removed:
+#   crusader_strike: holy_shock    (separate spec actions)
+#   avenging_crusader: crusader_strike (separate)
+#   blessing_of_summer: [...]      (variants unused)
+#   consecration: consecrated_blade (variant unused)
+#   templar_strike: templar_slash  (separate APL actions)
+#   avenging_wrath: radiant_glory  (variant unused as cast target)
+#   judgment: hammer_of_wrath      (separate spec actions)
+
+# Priest — all removed
+# Removed:
+#   shadowform: voidform           (separate spec/form actions)
+#   boon_of_the_ascended: ascended_nova (variant unused)
+#   fae_guardians: direct_mask     (variant unused)
+#   smite: void_blast              (separate APL actions)
+#   mind_blast: void_blast         (separate APL actions)
+#   flash_heal: [shadow_mend, benediction] (separate APL actions)
+#   power_word_shield: void_shield (separate APL actions)
+#   voidform: void_volley          (separate APL actions)
+#   mind_flay: mind_flay_insanity  (separate APL actions)
+
+# Rogue — all removed (talent-buff XOR via coup_de_grace + escalating_blade)
+# Removed:
+#   dispatch: coup_de_grace
+#   eviscerate: coup_de_grace
+
+# Shaman
+natures_swiftness: ancestral_swiftness          # talent-time replacement (Farseer/Totemic)
+healing_rain: [surging_totem, downpour]         # Totemic hero / Downpour talent — same keybind chain
+surging_totem: downpour                         # Downpour talent replaces Surging Totem
+# Removed:
+#   lightning_bolt: [tempest, elemental_blast]  (separate APL actions, both used as cast targets)
+#   sundering: primordial_storm                 (XOR via primordial_storm buff)
+#   chain_lightning: fire_nova                  (separate APL actions)
+
+# Warlock — all removed (Diabolist/Hellcaller proc XOR patterns)
+# Removed:
+#   shadow_bolt: [drain_soul, infernal_bolt, malefic_grasp]
+#   incinerate: infernal_bolt
+#   immolate: wither
+#   corruption: wither
+#   drain_soul: malefic_grasp
+#   hand_of_guldan: ruination
+#   chaos_bolt: ruination
+
+# Warrior
+slam: heroic_strike  # sc_warrior.cpp:3528-3530 — set_replacement_action(buff.master_of_warfare_proc)
+# Removed:
+#   raging_blow: crushing_blow   (XOR via reckless_abandon + recklessness)
+#   bloodthirst: bloodbath       (XOR via reckless_abandon + recklessness)
+#   execute: condemn             (variant unused; condemn was BfA-era)
+#   thunder_clap: thunder_blast  (XOR — see simia_client/CLAUDE.md "Shared Cooldown + Mutually Exclusive Ready")

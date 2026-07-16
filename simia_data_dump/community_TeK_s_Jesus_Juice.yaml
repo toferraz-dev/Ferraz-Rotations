@@ -1,0 +1,466 @@
+version: 1.5
+author: TeK
+spec: 264
+name: TeK's Jesus Juice
+description: |
+  Resto Shaman healer rotation. Keeps everyone alive through M+ and Raids.
+  Farseer & Totemic builds. 3 sliders control all healing thresholds.
+
+entry: main
+
+movement_allowed: true
+
+morphs:
+  surging_totem: downpour
+
+config:
+
+  # HEALING TRIGGERS
+
+  emergency_hp:
+    label: "Emergency HP %"
+    type: slider
+    min: 10
+    max: 40
+    default: 25
+
+  tank_heal_hp:
+    label: "Tank Heal HP %"
+    type: slider
+    min: 40
+    max: 90
+    default: 70
+
+  member_heal_hp:
+    label: "Member Heal HP %"
+    type: slider
+    min: 50
+    max: 95
+    default: 80
+
+  # UTILITY
+
+  auto_purge:
+    label: "Auto Purge"
+    type: checkbox
+    default: true
+
+  auto_interrupt:
+    label: "Auto Interrupt"
+    type: checkbox
+    default: true
+
+  auto_dispel:
+    label: "Auto Dispel"
+    type: checkbox
+    default: true
+
+  auto_resurrect:
+    label: "Auto Resurrect (OOC)"
+    type: checkbox
+    default: true
+
+  bloodlust_usage:
+    label: "Bloodlust/Heroism Usage"
+    type: dropdown
+    options:
+      - label: "On Cooldown"
+        value: 1
+      - label: "Boss Only"
+        value: 2
+      - label: "Manual Only"
+        value: 0
+    default: 2
+
+  # EARTH SHIELD TARGETS
+
+  earth_shield_target:
+    label: "Earth Shield Target"
+    type: dropdown
+    options:
+      - label: "Self Only"
+        value: 1
+      - label: "Tanks Only"
+        value: 2
+      - label: "Lowest HP Party Member"
+        value: 3
+      - label: "Disabled"
+        value: 0
+    default: 1
+
+  ghost_wolf_usage:
+    label: "Ghost Wolf Usage"
+    type: dropdown
+    options:
+      - label: "Disabled"
+        value: 0
+      - label: "Only in combat"
+        value: 1
+      - label: "Only out of combat"
+        value: 2
+      - label: "Always when moving"
+        value: 3
+    default: 1
+
+  ghost_wolf_movement_time:
+    label: "Ghost Wolf after moving"
+    type: slider
+    min: 0
+    max: 4
+    default: 2
+
+  wind_rush_totem_usage:
+    label: "Wind Rush Totem Usage"
+    type: dropdown
+    options:
+      - label: "Disabled"
+        value: 0
+      - label: "Group movement needed"
+        value: 1
+      - label: "Always on cooldown"
+        value: 2
+    default: 1
+
+  # MOUSEOVER
+
+  mouseover_enabled:
+    label: "Enable Mouseover Healing"
+    type: checkbox
+    default: true
+
+  # HERO TALENT BUILD
+
+  hero_talent_build:
+    label: "Hero Talent Build"
+    type: dropdown
+    options:
+      - label: "Farseer"
+        value: 1
+      - label: "Totemic"
+        value: 2
+      - label: "Auto-detect"
+        value: 0
+    default: 0
+
+  # TRINKETS
+
+  trinket_usage:
+    label: "Trinket Usage"
+    type: dropdown
+    options:
+      - label: "On Cooldown"
+        value: 1
+      - label: "With Major Cooldowns"
+        value: 2
+      - label: "When group damaged"
+        value: 3
+      - label: "Manual Only"
+        value: 0
+    default: 1
+
+variables:
+
+  # Build Detection
+  farseer_build: config.hero_talent_build=1|talent.call_of_the_ancestors.enabled
+  totemic_build: config.hero_talent_build=2|talent.totemic_rebound.enabled|talent.downpour.enabled
+
+  # Cooldown Tracking
+  natures_swiftness_ready: cooldown.natures_swiftness.ready
+  unleash_life_ready: cooldown.unleash_life.ready
+  unleash_life_buff: buff.unleash_life.up
+  ancestral_swiftness_ready: cooldown.ancestral_swiftness.ready
+  riptide_ready: cooldown.riptide.ready
+  healing_wave_ready: cooldown.healing_wave.ready
+
+  # SIMPLE HEALING CONDITIONS (Holy Paladin style)
+  group_needs_healing: group.count(cycle.health.pct<85)>=2
+  personal_needs_healing: health.pct<85
+
+  # Defensive and Emergency Triggers
+  defensive_needed: group.count(cycle.health.pct<config.emergency_hp)>=2
+  player_critical_health: health.pct<20
+  player_low_health: health.pct<config.emergency_hp
+  tank_emergency: group.tanks.lowest.health.pct<config.emergency_hp
+  aoe_defensive_needed: group.count(cycle.health.pct<config.emergency_hp)>=3
+  group_heavy_damage: group.count(cycle.health.pct<config.member_heal_hp)>=3
+
+  # Interrupt Timing (casting.elapsed and casting.remains are in MILLISECONDS)
+  interrupt_timing_safe: target.casting.elapsed>=300&target.casting.remains>500
+  interrupt_timing_urgent: target.casting.elapsed>=500&target.casting.remains>300&target.casting.remains<=500
+  interrupt_timing_dangerous: target.casting.remains>0&target.casting.remains<=300
+  interrupt_8y_count: interrupts.8y.count>=1
+  priority_interrupts: interrupts.8y.stun.count>=1
+  stun_8y_count: interrupts.8y.stun.count>=1
+
+  # Healing Rotation Helpers
+  chain_heal_ready: cooldown.chain_heal.ready&group.count(cycle.health.pct<config.member_heal_hp)>=3
+  need_preheal: target.casting&target.casting_target.health.pct<config.member_heal_hp
+  tidal_waves_fading: buff.tidal_waves.up&buff.tidal_waves.remains<3
+
+  # Movement
+  player_moving_long: player.moving.time>=3
+  use_ghost_wolf: player.moving&player.moving.time>=config.ghost_wolf_movement_time&buff.ghost_wolf.down&((config.ghost_wolf_usage=1&player.combat)|(config.ghost_wolf_usage=2&!player.combat)|(config.ghost_wolf_usage=3))
+
+  # Mouseover Validation
+  mo_friendly_valid: mouseover.exists&mouseover.alive&mouseover.friendly&mouseover.range>0&mouseover.range<=40
+
+  # Player Status Tracking
+  player_can_cast: "!player.casting&!player.channeling&!player.stunned&!player.silenced&!player.incapacitated"
+
+  # Racial Settings
+  racial_defensive_hp: 50
+  racial_emergency_hp: 35
+
+  # Interrupt Tracking
+  interrupt_target_ready: interrupts.target.ready
+  interrupt_mouseover_ready: interrupts.mouseover.ready
+
+  # =============================================
+  # MAIN SECTION VARIABLES
+  # Each variable below maps 1:1 to an inline condition from the working main section
+  # =============================================
+
+  # Buff maintenance
+  main_lightning_shield: "!buff.lightning_shield.up"
+  main_earthliving_weapon: "!mainhand.enchant.up&!player.mounted&!buff.ghost_wolf.up"
+  main_flametongue_weapon: "!mainhand.enchant.up&!player.mounted&!buff.ghost_wolf.up&!talent.earthliving_weapon.enabled"
+  main_windfury_weapon: "!mainhand.enchant.up&!player.mounted&!buff.ghost_wolf.up&!talent.earthliving_weapon.enabled&!talent.flametongue_weapon.enabled"
+  main_skyfury: "!buff.skyfury.up&!player.mounted&!buff.ghost_wolf.up"
+
+  # Earth Shield
+  main_earth_shield_self: config.earth_shield_target=1&!buff.earth_shield.up&(!group.in_party|config.earth_shield_target!=2)
+  main_earth_shield_tank: config.earth_shield_target=2
+  main_earth_shield_lowest: config.earth_shield_target=3
+
+  # Movement
+  main_ghost_wolf: var.use_ghost_wolf&!player.casting&!player.channeling
+  main_cancel_ghost_wolf: buff.ghost_wolf.up&(!player.moving|var.group_needs_healing|var.personal_needs_healing)
+
+  # Healing triggers (simple)
+  needs_tank_healing: group.tanks.lowest.health.pct<config.tank_heal_hp
+  needs_member_healing: group.lowest.health.pct<config.member_heal_hp
+  needs_emergency: group.lowest.health.pct<config.emergency_hp
+  no_healing_needed: "!var.needs_tank_healing&!var.needs_member_healing"
+
+  # Mouseover healing
+  main_mouseover_healing: config.mouseover_enabled&var.mo_friendly_valid&!player.casting&!player.channeling
+  main_flame_shock: player.combat&target.valid&var.no_healing_needed&debuff.flame_shock.down
+  main_lava_burst: player.combat&target.valid&var.no_healing_needed&(debuff.flame_shock.ticking|buff.lava_surge.up)
+  main_chain_lightning: player.combat&target.valid&var.no_healing_needed&active_enemies>=2
+  main_lightning_bolt: player.combat&target.valid&var.no_healing_needed
+
+  # Fallback (DPS only - prevent stalls)
+  main_fallback_flame_shock: player.combat&target.valid&debuff.flame_shock.down
+  main_fallback_lava_burst: player.combat&target.valid&(debuff.flame_shock.ticking|buff.lava_surge.up)
+  main_fallback_chain_lightning: player.combat&target.valid&active_enemies>=2
+  main_fallback_lightning_bolt: player.combat&target.valid&active_enemies>0
+
+lists:
+
+  sanity_checks:
+    - return,if=player.dead
+    - return,if=mounted
+    - return,if=!state.rotation
+    - return,if=state.blocked_inputs
+    - return,if=player.loot_nearby
+
+  interrupts:
+    - wind_shear,if=config.auto_interrupt&var.interrupt_target_ready&var.interrupt_timing_safe&!prev_gcd.1.wind_shear&!prev_gcd.2.wind_shear
+    - wind_shear,if=config.auto_interrupt&var.interrupt_target_ready&var.interrupt_timing_urgent&!prev_gcd.1.wind_shear
+    - wind_shear,if=config.auto_interrupt&var.interrupt_target_ready&var.interrupt_timing_dangerous
+    - wind_shear.mouseover,if=config.auto_interrupt&var.interrupt_mouseover_ready&var.interrupt_timing_safe&!prev_gcd.1.wind_shear&!prev_gcd.2.wind_shear
+    - capacitor_totem.cursor,if=config.auto_interrupt&var.interrupt_8y_count&var.interrupt_timing_safe&!prev_gcd.1.capacitor_totem&!prev_gcd.2.capacitor_totem
+    - capacitor_totem.cursor,if=config.auto_interrupt&var.priority_interrupts&totem.capacitor_totem.down&var.interrupt_timing_safe&!prev_gcd.1.capacitor_totem
+    - earthgrab_totem.cursor,if=config.auto_interrupt&var.stun_8y_count&var.interrupt_timing_safe&!prev_gcd.1.earthgrab_totem&!prev_gcd.2.earthgrab_totem
+
+  out_of_combat:
+    - lightning_shield.player,if=!buff.lightning_shield.up
+    - earthliving_weapon,range_check=none,if=!mainhand.enchant.up&!player.mounted&!buff.ghost_wolf.up&!player.casting
+    - flametongue_weapon,range_check=none,if=!mainhand.enchant.up&!player.mounted&!buff.ghost_wolf.up&!player.casting&!talent.earthliving_weapon.enabled
+    - windfury_weapon,range_check=none,if=!mainhand.enchant.up&!player.mounted&!buff.ghost_wolf.up&!player.casting&!talent.earthliving_weapon.enabled&!talent.flametongue_weapon.enabled
+    - skyfury.player,range_check=none,if=!buff.skyfury.up&!player.mounted&!buff.ghost_wolf.up&!player.casting
+    - earth_shield.player,if=config.earth_shield_target=1&!buff.earth_shield.up&(!group.in_party|config.earth_shield_target!=2)
+    - earth_shield,cycle=tanks,if=config.earth_shield_target=2&cycle.buff.earth_shield.down&cycle.range>0&cycle.range<=40
+    - earth_shield,cycle=lowest,if=config.earth_shield_target=3&cycle.buff.earth_shield.down&cycle.range>0&cycle.range<=40
+    - ancestral_spirit,cycle=dead,if=config.auto_resurrect&group.in_party&!player.combat&cycle.range>0&cycle.range<=40
+    - resurrection,cycle=dead,if=config.auto_resurrect&group.in_party&!player.combat&cycle.range>0&cycle.range<=40
+    - riptide,cycle=members,if=group.in_party&cycle.health.pct<config.member_heal_hp&!player.combat&cycle.range>0&cycle.range<=40
+    - healing_wave,cycle=members,if=group.in_party&cycle.health.pct<config.member_heal_hp&!player.combat&cycle.range>0&cycle.range<=40
+
+  pre_pull_setup:
+    - water_shield.player,if=!buff.water_shield.up
+    - earth_shield.player,if=!buff.earth_shield.up&config.earth_shield_target=1
+    - earth_shield,cycle=tanks,if=config.earth_shield_target=2&cycle.buff.earth_shield.down&cycle.range>0&cycle.range<=40
+
+  defensive_cooldowns:
+    - astral_shift.player,if=player.combat&((health.pct<config.emergency_hp)|var.defensive_needed)
+    - spirit_link_totem.cursor,if=player.combat&group.in_party&group.count(cycle.health.pct<config.emergency_hp)>=3&var.player_can_cast
+    - spirit_link_totem.cursor,if=player.combat&group.in_party&var.player_critical_health&var.player_can_cast
+    - spirit_link_totem.cursor,if=player.combat&group.in_party&var.tank_emergency&var.player_can_cast    - earth_elemental,if=player.combat&((health.pct<40)|var.player_critical_health|var.defensive_needed)
+
+  major_cooldowns:
+    - ascendance,if=player.combat&(var.needs_emergency|var.group_heavy_damage|var.tank_emergency)    - healing_tide_totem,if=player.combat&(var.needs_emergency|var.group_heavy_damage|var.tank_emergency)    - spiritwalkers_grace,if=player.combat&player.moving&buff.spiritwalkers_grace.down&var.needs_member_healing
+
+  farseer_rotation:
+    - riptide,cycle=tanks,if=var.tank_emergency&var.riptide_ready&!player.moving
+    - healing_wave,cycle=tanks,if=var.tank_emergency&var.healing_wave_ready&!player.moving
+    - unleash_life,cycle=tanks,if=var.tank_emergency&var.unleash_life_ready&!var.unleash_life_buff&!player.moving
+    - healing_stream_totem,if=(cooldown.healing_stream_totem.charges=cooldown.healing_stream_totem.max_charges|var.defensive_needed|var.player_low_health|var.tank_emergency)&var.player_can_cast    
+    - unleash_life,if=var.unleash_life_ready&!var.unleash_life_buff&(var.group_needs_healing|var.personal_needs_healing|var.need_preheal|var.tank_emergency)
+    - ancestral_swiftness,if=var.ancestral_swiftness_ready
+    - chain_heal,cycle=members,if=var.chain_heal_ready&(cycle.buff.riptide.up|var.unleash_life_buff)
+    - riptide,cycle=members,if=cycle.health.pct<config.member_heal_hp&cycle.buff.riptide.down&cycle.range>0&cycle.range<=40
+    - riptide,cycle=members,if=cycle.buff.riptide.refreshable&var.riptide_ready&!player.moving&cycle.range>0&cycle.range<=40
+    - riptide,cycle=casting_target,if=var.need_preheal&var.riptide_ready&!player.moving
+    - riptide,if=var.riptide_ready&var.tidal_waves_fading&!var.unleash_life_buff
+    - healing_wave,cycle=members,if=cycle.health.pct<config.member_heal_hp&cycle.range>0&cycle.range<=40&var.unleash_life_buff
+
+  totemic_rotation:
+    - riptide,cycle=tanks,if=var.tank_emergency&var.riptide_ready&!player.moving
+    - healing_wave,cycle=tanks,if=var.tank_emergency&var.healing_wave_ready&!player.moving
+    - unleash_life,cycle=tanks,if=var.tank_emergency&var.unleash_life_ready&!var.unleash_life_buff&!player.moving
+    - healing_stream_totem,if=(cooldown.healing_stream_totem.charges=cooldown.healing_stream_totem.max_charges|var.defensive_needed|var.player_low_health|var.tank_emergency)&var.player_can_cast
+    - unleash_life,if=var.unleash_life_ready&!var.unleash_life_buff&(var.group_needs_healing|var.personal_needs_healing|var.need_preheal|var.tank_emergency)
+    - surging_totem.cursor,if=cooldown.surging_totem.ready&(var.group_needs_healing|var.group_heavy_damage|var.player_low_health|var.need_preheal|var.tank_emergency)&var.player_can_cast
+    - totemic_projection,if=totem.surging_totem.up&player.moving&var.player_can_cast
+    - downpour,if=totem.surging_totem.up&group.count(cycle.health.pct<70)>=2
+    - chain_heal,cycle=members,if=var.chain_heal_ready&(cycle.buff.riptide.up|var.unleash_life_buff)
+    - riptide,cycle=members,if=cycle.health.pct<config.member_heal_hp&cycle.buff.riptide.down&cycle.range>0&cycle.range<=40
+    - riptide,cycle=members,if=cycle.buff.riptide.refreshable&var.riptide_ready&!player.moving&cycle.range>0&cycle.range<=40
+    - riptide,cycle=casting_target,if=var.need_preheal&var.riptide_ready&!player.moving
+    - riptide,if=var.riptide_ready&var.tidal_waves_fading&!var.unleash_life_buff
+    - healing_wave,cycle=members,if=cycle.health.pct<config.member_heal_hp&cycle.range>0&cycle.range<=40&var.unleash_life_buff
+
+  utility:
+    - purge,if=config.auto_purge&target.purgeable
+    - purge.mouseover,if=config.auto_purge&mouseover.purgeable
+    - tremor_totem,if=(player.dispelable.fear|player.dispelable.sleep|player.dispelable.charm)&var.player_can_cast    - wind_shear,if=config.auto_interrupt&target.casting.interruptible&var.interrupt_timing_safe
+    - earthgrab_totem.cursor,if=enemies.8y.count>=3&var.player_can_cast    - capacitor_totem.cursor,if=interrupts.8y.count>=2&var.player_can_cast&var.interrupt_timing_safe    - wind_rush_totem.cursor,if=config.wind_rush_totem_usage=2|((config.wind_rush_totem_usage=1)&group.moving_count>=3&var.player_moving_long)    - bloodlust,if=config.bloodlust_usage=1|(config.bloodlust_usage=2&target.is_boss)
+    - heroism,if=config.bloodlust_usage=1|(config.bloodlust_usage=2&target.is_boss)
+
+  dispel:
+    - purify_spirit,cycle=members,if=config.auto_dispel&cycle.dispelable.magic&cycle.range>0&cycle.range<=40&!prev_gcd.1.purify_spirit&!prev_gcd.2.purify_spirit
+    - purify_spirit.player,if=config.auto_dispel&player.dispelable.magic&!prev_gcd.1.purify_spirit
+    - cleanse_spirit,cycle=members,if=config.auto_dispel&(cycle.dispelable.curse|cycle.dispelable.poison)&cycle.range>0&cycle.range<=40&!prev_gcd.1.cleanse_spirit&!prev_gcd.2.cleanse_spirit
+
+  movement:
+    - spiritwalkers_grace,if=player.moving&buff.spiritwalkers_grace.down&var.personal_needs_healing
+    - riptide.player,if=player.moving&var.personal_needs_healing&var.riptide_ready
+    - healing_wave.player,if=player.moving&var.player_low_health&buff.natures_swiftness.up
+    - ghost_wolf,range_check=none,if=var.use_ghost_wolf&!player.casting&!player.channeling&!var.personal_needs_healing
+    - riptide,cycle=members,if=player.moving&cycle.health.pct<config.member_heal_hp&cycle.range>0&cycle.range<=40
+
+  mouseover_friendly:
+    - ancestral_spirit.mouseover,if=mouseover.dead&config.auto_resurrect&!player.combat&mouseover.range>0&mouseover.range<=40
+    - natures_swiftness,if=mouseover.health.pct<config.emergency_hp&var.natures_swiftness_ready&!player.moving
+    - riptide.mouseover,if=mouseover.health.pct<config.member_heal_hp&var.riptide_ready&!player.moving
+    - unleash_life.mouseover,if=mouseover.health.pct<config.member_heal_hp&var.unleash_life_ready&!var.unleash_life_buff&!player.moving
+    - healing_wave.mouseover,if=mouseover.health.pct<config.member_heal_hp&var.healing_wave_ready
+    - purify_spirit.mouseover,if=mouseover.dispelable
+
+  trinkets:
+    - trinket_1,if=trinket_1.ready&config.trinket_usage!=0&((config.trinket_usage=1)|(config.trinket_usage=2&(buff.ascendance.up|buff.healing_tide_totem.up))|(config.trinket_usage=3&var.group_heavy_damage))
+    - trinket_2,if=trinket_2.ready&config.trinket_usage!=0&((config.trinket_usage=1)|(config.trinket_usage=2&(buff.ascendance.up|buff.healing_tide_totem.up))|(config.trinket_usage=3&var.group_heavy_damage))
+
+  racial_defensive:
+    - stoneform,if=player.dispelable.list
+    - fireblood,if=player.dispelable.list
+    - will_of_the_forsaken,if=player.feared|player.charmed
+    - escape_artist,if=player.rooted
+    - will_to_survive,if=player.stunned
+    - gift_of_the_naaru,if=health.pct<var.racial_emergency_hp
+    - regeneratin,if=health.pct<var.racial_emergency_hp&!player.combat
+    - stoneform,if=health.pct<var.racial_defensive_hp
+    - fireblood,if=health.pct<var.racial_defensive_hp
+
+  racial_offensive:
+    - berserking,if=buff.ascendance.up|buff.healing_tide_totem.up
+    - blood_fury,if=buff.ascendance.up|buff.healing_tide_totem.up
+    - ancestral_call,if=buff.ascendance.up|buff.healing_tide_totem.up
+    - fireblood,if=buff.ascendance.up|buff.healing_tide_totem.up&!player.dispelable.list
+
+  # =============================================
+  # MAIN SECTION ACTION LISTS
+  # Each action list below maps 1:1 to a group of spell actions from the working main
+  # =============================================
+
+  main_buff_maintenance:
+    - lightning_shield.player,if=var.main_lightning_shield
+
+  main_weapon_imbues:
+    - earthliving_weapon,range_check=none,if=var.main_earthliving_weapon
+    - flametongue_weapon,range_check=none,if=var.main_flametongue_weapon
+    - windfury_weapon,range_check=none,if=var.main_windfury_weapon
+    - skyfury.player,range_check=none,if=var.main_skyfury
+
+  main_earth_shield:
+    - earth_shield.player,if=var.main_earth_shield_self
+    - earth_shield,cycle=tanks,if=var.main_earth_shield_tank&cycle.buff.earth_shield.up&cycle.buff.earth_shield.remains<5&cycle.range>0&cycle.range<=40
+    - earth_shield,cycle=tanks,if=var.main_earth_shield_tank&cycle.buff.earth_shield.down&group.count(cycle.buff.earth_shield.up)=0&cycle.range>0&cycle.range<=40
+    - earth_shield,cycle=lowest,if=var.main_earth_shield_lowest&cycle.buff.earth_shield.down&cycle.range>0&cycle.range<=40
+
+  main_movement:
+    - ghost_wolf,range_check=none,if=var.main_ghost_wolf
+    - cancel_buff,if=var.main_cancel_ghost_wolf
+
+  auto_target:
+    - target_enemy,if=player.combat&(!target.exists|target.dead|target.friendly)&active_enemies>0
+    - target_enemy,if=player.combat&target.exists&target.dead&active_enemies>0
+    - target_enemy,if=player.combat&!target.valid&active_enemies>0
+
+  tank_healing:
+    - natures_swiftness,if=group.tanks.lowest.health.pct<config.emergency_hp&cooldown.natures_swiftness.ready
+    - riptide,cycle=tanks,if=cycle.health.pct<config.tank_heal_hp&cooldown.riptide.ready
+    - unleash_life,cycle=tanks,if=cycle.health.pct<config.tank_heal_hp&cooldown.unleash_life.ready
+    - healing_wave,cycle=tanks,if=cycle.health.pct<config.tank_heal_hp
+
+  member_healing:
+    - natures_swiftness,if=var.needs_emergency&cooldown.natures_swiftness.ready
+    - astral_shift.player,if=health.pct<config.emergency_hp&cooldown.astral_shift.ready
+    - riptide,cycle=lowest,if=group.lowest.health.pct<config.member_heal_hp&cooldown.riptide.ready
+    - unleash_life,if=group.lowest.health.pct<config.member_heal_hp&cooldown.unleash_life.ready
+    - healing_rain.cursor,if=group.count(cycle.health.pct<config.member_heal_hp)>=3&!buff.healing_rain.up
+    - chain_heal,cycle=lowest,if=group.count(cycle.health.pct<config.member_heal_hp)>=3
+    - healing_wave,cycle=lowest,if=group.lowest.health.pct<config.member_heal_hp
+    - riptide.player,if=health.pct<config.member_heal_hp&cooldown.riptide.ready
+    - healing_wave.player,if=health.pct<config.member_heal_hp
+    - riptide,cycle=casting_target,if=target.casting_target.health.pct<config.member_heal_hp&cooldown.riptide.ready
+
+  main_dps_rotation:
+    - flame_shock,if=var.main_flame_shock
+    - lava_burst,if=var.main_lava_burst
+    - chain_lightning,if=var.main_chain_lightning
+    - lightning_bolt,if=var.main_lightning_bolt
+
+  main_fallback_actions:
+    - flame_shock,if=var.main_fallback_flame_shock
+    - lava_burst,if=var.main_fallback_lava_burst
+    - chain_lightning,if=var.main_fallback_chain_lightning
+    - lightning_bolt,if=var.main_fallback_lightning_bolt
+
+  main:
+    - call_action_list,name=sanity_checks
+    - call_action_list,name=pre_pull_setup,if=!player.combat&target.exists&target.is_boss
+    - call_action_list,name=out_of_combat,if=!player.combat
+    - call_action_list,name=main_movement
+    - call_action_list,name=auto_target,if=player.combat
+    - return,if=player.channeling
+    - call_action_list,name=interrupts
+    - call_action_list,name=dispel
+    - call_action_list,name=defensive_cooldowns
+    - call_action_list,name=racial_defensive
+    - call_action_list,name=major_cooldowns
+    - call_action_list,name=trinkets
+    - call_action_list,name=main_buff_maintenance
+    - call_action_list,name=main_weapon_imbues
+    - call_action_list,name=main_earth_shield
+    - call_action_list,name=tank_healing,if=var.needs_tank_healing
+    - call_action_list,name=farseer_rotation,if=var.farseer_build&var.needs_member_healing
+    - call_action_list,name=totemic_rotation,if=var.totemic_build&var.needs_member_healing
+    - call_action_list,name=member_healing,if=var.needs_member_healing
+    - call_action_list,name=mouseover_friendly,if=var.main_mouseover_healing
+    - call_action_list,name=main_dps_rotation
+    - call_action_list,name=main_fallback_actions
+    - call_action_list,name=movement,if=player.moving
+    - call_action_list,name=utility
+    - call_action_list,name=racial_offensive,if=buff.ascendance.up|buff.healing_tide_totem.up

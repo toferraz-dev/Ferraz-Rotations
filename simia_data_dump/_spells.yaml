@@ -1,0 +1,453 @@
+version: 1
+
+# Player spell metadata - burst buff expressions from old _spelldata.yaml
+#
+# burst_buffs: checked by player.burst.active / player.burst.count
+# Also used for trinket sync when sync: true
+# Returns true if ANY of these expressions evaluate to true
+
+burst_buffs:
+  # Death Knight
+  - lastcast.dancing_rune_weapon<=10
+  - buff.dancing_rune_weapon.remains>=5
+  - buff.pillar_of_frost.remains>=5
+  - buff.breath_of_sindragosa.remains>=5
+  - pet.buff.dark_transformation.remains>=5
+  - player.buff.dark_transformation.remains>=5
+
+  # Priest
+  - buff.voidform.remains>=5
+  - buff.power_infusion.remains>=5&cooldown.power_infusion.remains>60
+
+  # Warrior
+  - buff.avatar.remains>=5
+  - debuff.colossus_smash.remains>=5
+  - buff.recklessness.remains>=5
+
+  # Demon Hunter
+  - buff.metamorphosis.remains>=5
+  - buff.1217607.remains>=5
+
+  # Rogue
+  - buff.adrenaline_rush.remains>=5
+  - buff.shadow_blades.up&buff.shadow_dance.up
+
+  # Hunter
+  - buff.bestial_wrath.remains>=5
+  - buff.trueshot.remains>=5
+  - buff.aspect_of_the_eagle.remains>=5
+
+  # Druid
+  - buff.berserk.remains>=5
+  - buff.incarnation_chosen_of_elune.remains>=5
+  - buff.incarnation_guardian_of_ursoc.remains>=5
+  - buff.incarnation_avatar_of_ashamane.remains>=5
+
+  # Paladin
+  - buff.avenging_wrath.remains>=5
+
+  # Shaman
+  - buff.ascendance.remains>=5
+  - buff.doom_winds.remains>=5&!action.ascendance.known
+
+  # Warlock
+  - buff.summon_darkglare.remains>=5
+  - buff.summon_demonic_tyrant.remains>=5
+
+  # Monk
+  - buff.storm_earth_and_fire.remains>=5
+  - buff.serenity.remains>=5
+
+  # Evoker
+  - buff.dragonrage.remains>=5
+
+
+spell_durations:
+  # Druid
+  celestial_alignment: 90              # Balance base; orbital_strike talent reduces further (DBC-driven)
+  incarnation_chosen_of_elune: 180     # replaces celestial_alignment when talented
+  berserk: 180                         # Feral base; heart_of_the_lion may reduce (verify)
+  incarnation_avatar_of_ashamane: 180  # Feral base
+  convoke_the_spirits: 120             # Feral base; ashamanes_guidance reduces (verify factor)
+
+  # Death Knight
+  soul_reaper: 6                       # Unholy
+
+  # Hunter
+  trueshot: 120                        # MM
+
+  # Rogue
+  secret_technique: 45                 # Subtlety
+
+  # Warlock
+  summon_infernal: 180                 # Destro
+
+  # Demon Hunter
+  # Fracture is charge-based — the charges path returns the per-charge recharge
+  # at runtime. This literal only covers the edge case where the spell is at
+  # max charges (and live ch.cooldownDuration = 0) before we've cached anything.
+  fracture: 4.5
+
+  # Racial / shared
+  berserking: 180
+
+# Composite dot-duration MULTIPLIERS for refreshable (pandemic) accuracy.
+# -------------------------------------------------------------------------
+# `dot.X.refreshable` / `debuff.X.refreshable` is true when remains <= 0.3 *
+# duration. SimC uses composite_dot_duration = base * (resource/talent factors);
+# we only have the static DBC base. For resource-scaled dots that makes the
+# pandemic window far too small (e.g. Rupture base 4s -> window 1.2s instead of
+# the real 7.2s at 5 combo points), so the rotation under-refreshes.
+#
+# Each entry is a MULTIPLIER expression applied to the DBC base:
+#   composite_seconds = DBC_base_seconds * eval(expression)
+# It can reference live state (combo_points, talents, buffs, etc.). When an
+# entry is absent the engine falls back to the live APPLIED aura duration, which
+# already bakes in modifiers for the currently-applied dot.
+#
+# Source of the formula: SimC class modules' composite_dot_duration overrides
+# (engine/class_modules/sc_*.cpp, midnight). e.g. Rogue rupture_t:
+#   duration = data().duration() * ( 1 + combo_points )   => multiplier "1 + combo_points"
+dot_durations:
+  # Rogue (Assassination) — base * (1 + combo_points)
+  rupture: 1 + combo_points
+  # Druid (Feral) — base * (1 + combo_points)  (4s + 4s/cp)
+  rip: 1 + combo_points
+
+  # Templates for the other resource-scaled finisher dots (verify per spec in
+  # SimC before enabling; uncomment as needed):
+  # internal_bleeding: 1 + combo_points   # Assassination
+  # crimson_tempest:   1 + combo_points   # Assassination (AoE)
+  # primal_wrath:      1 + combo_points   # Feral (AoE Rip)
+
+# Spells/actions that are off-GCD. Steps using these names default to the
+# off-GCD pick slot (parallel to main rotation). Override per-step with off_gcd=false.
+#
+# Source: SimC engine/dbc/generated/sc_spell_data.inc, extracted by
+#   tools/extract_off_gcd_spells.py
+# Filter: canonical player-class row for each normalized name must have
+#   gcd_msec == 0 AND at least one of cooldown / cast_time / charges > 0.
+#   Canonical = highest _spell_level (modern reworks bump the learning level
+#   when an ability gets a new ID); lowest ID breaks ties. This keeps Bestial
+#   Wrath (modern 186254, level 34, gcd=0) over the legacy 19574 (gcd=1500),
+#   and keeps Obliterate / Death Coil / Frostbolt out (canonical rows have gcd>0).
+#
+# Apostrophe-s collapses without a separator: "Harrier's Cry" -> harriers_cry,
+# matching SimC's normalization convention (NOT harrier_s_cry).
+#
+# health_potion / petattack are SimC action aliases not in the DBC; kept manually.
+off_gcd_spells:
+  - combat_potion
+  - health_potion
+  - petattack
+  - acid_spit  # id=263446 cd=10000 cast=0 ch=0
+  - activating_specialization  # id=200749 cd=0 cast=5000 ch=0
+  - adrenaline_rush  # id=186286 cd=180000 cast=0 ch=0 rows=3
+  - agile_reflexes  # id=160011 cd=90000 cast=0 ch=0
+  - alexstraszas_fury  # id=235870 cd=45000 cast=0 ch=0 rows=2
+  - alter_time  # id=108978 cd=60000 cast=0 ch=0 rows=18
+  - ancestral_call  # id=274738 cd=120000 cast=0 ch=0
+  - ancestral_guidance  # id=108281 cd=120000 cast=0 ch=0 rows=2
+  - ancestral_swiftness  # id=443454 cd=30000 cast=0 ch=0 rows=3
+  - angered_earth  # id=36213 cd=5000 cast=0 ch=0
+  - ankle_crack  # id=50433 cd=10000 cast=0 ch=0
+  - ardent_defender  # id=31850 cd=90000 cast=0 ch=0 rows=2
+  - aspect_of_the_cheetah  # id=186257 cd=180000 cast=0 ch=0 rows=4
+  - aspect_of_the_eagle  # id=186289 cd=90000 cast=0 ch=0
+  - aspect_of_the_turtle  # id=186265 cd=180000 cast=0 ch=0
+  - astral_shift  # id=108271 cd=120000 cast=0 ch=0 rows=2
+  - atrophic_poison  # id=381637 cd=0 cast=1500 ch=0 rows=2
+  - avatar  # id=107574 cd=90000 cast=0 ch=0
+  - axe_toss  # id=89766 cd=30000 cast=0 ch=0 rows=3
+  - barkskin  # id=22812 cd=60000 cast=0 ch=0
+  - battle_stance  # id=386164 cd=3000 cast=0 ch=0
+  - berserk  # id=50334 cd=180000 cast=0 ch=0 rows=7
+  - berserker_rage  # id=18499 cd=60000 cast=0 ch=0
+  - berserker_shout  # id=384100 cd=60000 cast=0 ch=0 rows=2
+  - berserker_stance  # id=386196 cd=3000 cast=0 ch=0
+  - berserking  # id=26297 cd=180000 cast=0 ch=0 rows=4
+  # - bestial_wrath  # id=186254 cd=90000 cast=0 ch=0 rows=6
+  - black_attunement  # id=403264 cd=3000 cast=0 ch=0 rows=2
+  - black_ox_brew  # id=115399 cd=120000 cast=0 ch=0
+  - blazing_speed  # id=108843 cd=25000 cast=0 ch=0 rows=2
+  - blazing_trail  # id=123780 cd=0 cast=1500 ch=0
+  - blighted_arrow  # id=1239356 cd=0 cast=3000 ch=0 rows=6
+  - blood_fury  # id=20572 cd=120000 cast=0 ch=0 rows=4
+  - bloodlust  # id=2825 cd=300000 cast=0 ch=0
+  - bloody_screech  # id=24423 cd=6000 cast=0 ch=0
+  - blur  # id=198589 cd=500 cast=0 ch=1 rows=3
+  - boon_of_the_covenants  # id=387168 cd=120000 cast=0 ch=0 rows=2
+  - bristle  # id=263869 cd=60000 cast=0 ch=0
+  - bronze_attunement  # id=403265 cd=3000 cast=0 ch=0 rows=2
+  - burning_anger  # id=112793 cd=0 cast=1500 ch=0 rows=2
+  - burrow_attack  # id=93433 cd=14000 cast=0 ch=0 rows=2
+  - camouflage  # id=199483 cd=60000 cast=0 ch=0
+  - catlike_reflexes  # id=263892 cd=90000 cast=0 ch=0 rows=2
+  - challenging_shout  # id=1161 cd=120000 cast=0 ch=0
+  - chaotic_blades  # id=337567 cd=120000 cast=0 ch=0 rows=2
+  - charm_woodland_creature  # id=127757 cd=30000 cast=0 ch=0
+  - chi_torpedo  # id=115008 cd=0 cast=0 ch=2 rows=2
+  - cloak_of_shadows  # id=31224 cd=120000 cast=0 ch=0 rows=2
+  - cobra_spit  # id=206685 cd=0 cast=2000 ch=0
+  - cold_snap  # id=235219 cd=300000 cast=0 ch=0
+  - combustion  # id=190319 cd=120000 cast=0 ch=0
+  - corrupted_blood  # id=434574 cd=3000 cast=0 ch=0
+  - counter_shot  # id=147362 cd=24000 cast=0 ch=0
+  - counterspell  # id=2139 cd=25000 cast=0 ch=0
+  - crackling_jade_shock  # id=117962 cd=90000 cast=0 ch=0 rows=2
+  - crimson_banish  # id=63943 cd=0 cast=1500 ch=0
+  - crippling_poison  # id=3408 cd=0 cast=1500 ch=0 rows=3
+  - crittermorph  # id=56599 cd=0 cast=1500 ch=0
+  - dark_command  # id=56222 cd=8000 cast=0 ch=0
+  - dark_pact  # id=108416 cd=60000 cast=0 ch=0 rows=3
+  - darkflight  # id=68992 cd=90000 cast=0 ch=0
+  - dash  # id=61684 cd=20000 cast=0 ch=0 rows=2
+  - deadly_sting  # id=160060 cd=6000 cast=0 ch=0
+  - death_charge  # id=444347 cd=1000 cast=0 ch=1 rows=3
+  - death_pact  # id=48743 cd=120000 cast=0 ch=0
+  - deaths_advance  # id=48265 cd=1000 cast=0 ch=1 rows=4
+  - defensive_stance  # id=386208 cd=3000 cast=0 ch=0
+  - demonfire  # id=270481 cd=0 cast=2000 ch=0
+  - demonfire_blast  # id=265279 cd=0 cast=2000 ch=0
+  - demonic_healthstone  # id=452930 cd=60000 cast=0 ch=0
+  - desperate_prayer  # id=19236 cd=90000 cast=0 ch=0
+  - detect_traps  # id=2836 cd=1500 cast=0 ch=0
+  - devour_magic  # id=19505 cd=15000 cast=0 ch=0 rows=3
+  - diabolic_bolt  # id=438823 cd=0 cast=2000 ch=0
+  - die_by_the_sword  # id=118038 cd=120000 cast=0 ch=0
+  - disengage  # id=781 cd=1000 cast=0 ch=1 rows=4
+  - disguise  # id=63899 cd=0 cast=1500 ch=0 rows=2
+  - disrupt  # id=183752 cd=15000 cast=0 ch=0 rows=3
+  - disrupting_shout  # id=386071 cd=90000 cast=0 ch=0
+  - divine_protection  # id=498 cd=60000 cast=0 ch=0 rows=2
+  - doom_bolt  # id=85692 cd=0 cast=3000 ch=0
+  - doom_bolt_volley  # id=423734 cd=0 cast=2000 ch=0 rows=2
+  - doom_winds  # id=384352 cd=60000 cast=0 ch=0 rows=7
+  - dragons_guile  # id=263887 cd=90000 cast=0 ch=0
+  - dust_cloud  # id=50285 cd=10000 cast=0 ch=0
+  - elemental_blast_overload  # id=120588 cd=0 cast=2000 ch=0
+  - ember_blast  # id=275382 cd=0 cast=3000 ch=0 rows=6
+  - empty_nest  # id=1214849 cd=60000 cast=0 ch=0
+  - enraged_regeneration  # id=184364 cd=120000 cast=0 ch=0
+  - equip_transmog_outfit  # id=1247613 cd=3000 cast=0 ch=0 rows=3
+  - escape_artist  # id=20589 cd=60000 cast=0 ch=0
+  - essence_of_ardenweald  # id=331117 cd=1000 cast=0 ch=0 rows=2
+  - evaporation  # id=147971 cd=0 cast=1500 ch=0
+  - evasion  # id=5277 cd=120000 cast=0 ch=0 rows=2
+  - fade  # id=586 cd=30000 cast=0 ch=0 rows=2
+  - feed_pet  # id=6991 cd=10000 cast=0 ch=0 rows=2
+  - feign_death  # id=5384 cd=30000 cast=0 ch=0 rows=5
+  - feint  # id=1966 cd=1000 cast=0 ch=1
+  - fel_domination  # id=333889 cd=180000 cast=0 ch=0
+  - fel_firebolt  # id=104318 cd=0 cast=2000 ch=0 rows=2
+  - felguard  # id=56285 cd=0 cast=1500 ch=0
+  - felstorm  # id=89751 cd=30000 cast=0 ch=0 rows=4
+  - fighting_pose  # id=125874 cd=0 cast=1500 ch=0
+  - find_treasure  # id=199736 cd=1500 cast=0 ch=0
+  - fire_blast  # id=108853 cd=500 cast=0 ch=1 rows=6
+  - fire_from_the_heavens  # id=58247 cd=0 cast=1500 ch=0 rows=2
+  - fireblood  # id=265221 cd=120000 cast=0 ch=0 rows=2
+  - flee  # id=89792 cd=20000 cast=0 ch=0 rows=2
+  - fortifying_brew  # id=115203 cd=360000 cast=0 ch=0 rows=3
+  - foul_menagerie  # id=58723 cd=1500 cast=1500 ch=0
+  - freeze  # id=33395 cd=25000 cast=0 ch=0 rows=5
+  - frost_breath  # id=54644 cd=10000 cast=0 ch=0 rows=3
+  # - frostbolt  # id=288548 cd=0 cast=2000 ch=0 rows=10
+  - frozen_touch  # id=205030 cd=30000 cast=0 ch=0
+  - furious_bite  # id=263840 cd=10000 cast=0 ch=0
+  - fury_of_the_aspects  # id=390386 cd=300000 cast=0 ch=0
+  - gargoyle_strike  # id=51963 cd=0 cast=2500 ch=0
+  - geist  # id=58707 cd=1500 cast=1500 ch=0
+  - ggo_test_void_blink  # id=307072 cd=0 cast=380 ch=0
+  - gift_of_the_naaru  # id=28880 cd=120000 cast=0 ch=0 rows=10
+  - glide  # id=131347 cd=1000 cast=0 ch=0 rows=5
+  - gnaw  # id=47481 cd=90000 cast=0 ch=0 rows=2
+  - grappling_hook  # id=195457 cd=800 cast=0 ch=1 rows=3
+  - grimoire_of_service  # id=108501 cd=90000 cast=0 ch=0 rows=2
+  - grove_guardians  # id=102693 cd=1000 cast=0 ch=3 rows=2
+  - growl  # id=6795 cd=8000 cast=0 ch=0 rows=2
+  - guardian_of_ancient_kings  # id=86659 cd=0 cast=0 ch=1 rows=3
+  - gushing_wound  # id=58279 cd=0 cast=1500 ch=0 rows=11
+  - hand_of_divinity  # id=414273 cd=0 cast=1500 ch=0 rows=2
+  - hand_of_reckoning  # id=62124 cd=0 cast=0 ch=1
+  - harpoon  # id=190925 cd=1000 cast=0 ch=1 rows=8
+  - harriers_cry  # id=466904 cd=360000 cast=0 ch=0
+  - hawk_feast  # id=112792 cd=0 cast=1500 ch=0 rows=2
+  - healing_elixir  # id=428439 cd=0 cast=0 ch=2 rows=4
+  - healthstone  # id=6262 cd=60000 cast=0 ch=0
+  - heavens  # id=112660 cd=0 cast=1500 ch=0
+  - heroic_leap  # id=6544 cd=1500 cast=0 ch=1 rows=8
+  - heroism  # id=32182 cd=300000 cast=0 ch=0 rows=5
+  - honor  # id=125739 cd=0 cast=1500 ch=0
+  - honorable_medallion  # id=195710 cd=180000 cast=0 ch=0
+  - ice_cold  # id=414658 cd=0 cast=0 ch=1 rows=2
+  - icebound_fortitude  # id=48792 cd=120000 cast=0 ch=0
+  - ignore_pain  # id=190456 cd=1000 cast=0 ch=0 rows=2
+  - illusion  # id=131784 cd=600000 cast=0 ch=0
+  - incarnation_avatar_of_ashamane  # id=102543 cd=180000 cast=0 ch=0 rows=2
+  - incarnation_chosen_of_elune  # id=102560 cd=1000 cast=0 ch=1 rows=3
+  - incarnation_guardian_of_ursoc  # id=102558 cd=180000 cast=0 ch=0 rows=2
+  - infected_bite  # id=263853 cd=6000 cast=0 ch=0
+  - infernal_strike  # id=189110 cd=1000 cast=0 ch=1 rows=2
+  - innervate  # id=29166 cd=180000 cast=0 ch=0
+  - inspired_hymns  # id=148074 cd=0 cast=1500 ch=0
+  - instant_poison  # id=315584 cd=0 cast=1500 ch=0 rows=3
+  - intercept  # id=198304 cd=1500 cast=0 ch=1
+  - ironfur
+  - ironbark  # id=102342 cd=90000 cast=0 ch=0
+  - keep_it_rolling  # id=381989 cd=360000 cast=0 ch=0
+  - kick  # id=1766 cd=15000 cast=0 ch=0
+  - last_stand  # id=12975 cd=180000 cast=0 ch=0 rows=2
+  - lay_on_hands  # id=633 cd=600000 cast=0 ch=0 rows=2
+  - leap  # id=47482 cd=30000 cast=0 ch=0 rows=2
+  - leap_of_faith  # id=73325 cd=1000 cast=0 ch=1 rows=5
+  - lesser_proportion  # id=58188 cd=0 cast=1500 ch=0
+  - lichborne  # id=49039 cd=120000 cast=0 ch=0 rows=2
+  - life_cocoon  # id=116849 cd=750 cast=0 ch=1
+  - lifecycles  # id=197916 cd=45000 cast=0 ch=0 rows=3
+  - lights_hand  # id=1223935 cd=0 cast=1500 ch=0
+  - lingering_ancestors  # id=148080 cd=0 cast=1500 ch=0
+  - lock_jaw  # id=263423 cd=10000 cast=0 ch=0
+  - luminous_charger  # id=55115 cd=0 cast=1500 ch=0
+  - mark_for_death  # id=1293340 cd=20000 cast=0 ch=0
+  - masters_call  # id=53271 cd=45000 cast=0 ch=0 rows=4
+  - meteor  # id=117588 cd=60000 cast=0 ch=0 rows=10
+  - meteor_strike  # id=171017 cd=60000 cast=0 ch=0 rows=3
+  - mighty_victory  # id=58281 cd=0 cast=1500 ch=0
+  - mind_freeze  # id=47528 cd=15000 cast=0 ch=0
+  - mind_sear  # id=394976 cd=1000 cast=0 ch=0 rows=7
+  - misdirection  # id=34477 cd=30000 cast=0 ch=0 rows=3
+  - monstrous_bite  # id=54680 cd=8000 cast=0 ch=0
+  - monstrous_blow  # id=91797 cd=90000 cast=0 ch=0
+  - murloc_stampede  # id=388694 cd=180000 cast=0 ch=0 rows=3
+  - muzzle  # id=187707 cd=15000 cast=0 ch=0
+  - natures_swiftness  # id=132158 cd=60000 cast=0 ch=0 rows=3
+  - nether_flux  # id=461264 cd=15000 cast=0 ch=0 rows=3
+  - numbing_poison  # id=5761 cd=0 cast=1500 ch=0 rows=3
+  - obsidian_scales  # id=363916 cd=1000 cast=0 ch=1
+  - obsidian_skin  # id=263867 cd=60000 cast=0 ch=0 rows=2
+  - pain_suppression  # id=33206 cd=1500 cast=0 ch=1
+  - pick_lock  # id=1804 cd=0 cast=1500 ch=0
+  - pillar_of_frost  # id=51271 cd=45000 cast=0 ch=0 rows=2
+  - pillar_of_light  # id=147974 cd=0 cast=1500 ch=0
+  - pin  # id=50245 cd=10000 cast=0 ch=0
+  - play_dead  # id=209997 cd=30000 cast=0 ch=0
+  - power_infusion  # id=10060 cd=120000 cast=0 ch=0
+  - presence_of_mind  # id=205025 cd=45000 cast=0 ch=0
+  - primal_rage  # id=264667 cd=360000 cast=0 ch=0 rows=6
+  - provoke  # id=115546 cd=8000 cast=0 ch=0 rows=3
+  - prowl  # id=24450 cd=10000 cast=0 ch=0 rows=3
+  - pterrordax_swoop  # id=281954 cd=900000 cast=0 ch=0
+  - pulverize  # id=118345 cd=40000 cast=0 ch=0
+  - pummel  # id=6552 cd=15000 cast=0 ch=0 rows=2
+  - purifying_brew  # id=119582 cd=1000 cast=0 ch=2
+  - quell  # id=351338 cd=20000 cast=0 ch=0
+  - raise_dead  # id=46585 cd=120000 cast=0 ch=0 rows=3
+  - ravage  # id=263857 cd=6000 cast=0 ch=0 rows=6
+  - ravenous_frenzy  # id=323546 cd=180000 cast=0 ch=0 rows=4
+  - reap_souls  # id=216698 cd=5000 cast=0 ch=0
+  - rebuke  # id=96231 cd=15000 cast=0 ch=0
+  - recklessness  # id=1719 cd=90000 cast=0 ch=0
+  - reincarnation  # id=20608 cd=1800000 cast=0 ch=0 rows=2
+  - righteous_fury  # id=25780 cd=1500 cast=0 ch=0
+  - rising_tiger_kick  # id=125152 cd=0 cast=1500 ch=0
+  - rite_of_adjuration  # id=433583 cd=0 cast=2000 ch=0 rows=3
+  - roll  # id=109132 cd=800 cast=0 ch=2 rows=4
+  - rune_of_razorice  # id=53343 cd=0 cast=5000 ch=0 rows=2
+  - rune_of_sanguination  # id=326805 cd=0 cast=5000 ch=0 rows=4
+  - rune_of_spellwarding  # id=326855 cd=0 cast=5000 ch=0 rows=4
+  - rune_of_the_apocalypse  # id=327082 cd=0 cast=5000 ch=0 rows=2
+  - rune_of_the_fallen_crusader  # id=53344 cd=0 cast=5000 ch=0
+  - rune_of_the_stoneskin_gargoyle  # id=62158 cd=0 cast=5000 ch=0
+  - rune_of_unending_thirst  # id=326977 cd=0 cast=5000 ch=0 rows=2
+  - savage_rend  # id=263854 cd=6000 cast=0 ch=0
+  - searing_bolt  # id=3606 cd=0 cast=2000 ch=0 rows=3
+  - searing_volley  # id=458147 cd=0 cast=2000 ch=0
+  - seduction  # id=6358 cd=30000 cast=1700 ch=0 rows=2
+  - seethe  # id=171014 cd=10000 cast=0 ch=0
+  - sense_power  # id=361021 cd=1000 cast=0 ch=0 rows=2
+  - serpents_swiftness  # id=263904 cd=90000 cast=0 ch=0
+  - sha  # id=148071 cd=0 cast=1500 ch=0
+  - shackle_undead  # id=58251 cd=0 cast=1500 ch=0
+  - shadow  # id=107905 cd=0 cast=1500 ch=0
+  - shadow_blades  # id=121471 cd=90000 cast=0 ch=0 rows=22
+  - shadow_dance  # id=185313 cd=6000 cast=0 ch=1 rows=3
+  - shadow_lock  # id=171138 cd=24000 cast=0 ch=0 rows=2
+  - shadowmeld  # id=58984 cd=120000 cast=0 ch=0
+  - shadowy_friends  # id=126797 cd=0 cast=1500 ch=0
+  - shell_shield  # id=26064 cd=60000 cast=0 ch=0
+  - shield_wall  # id=871 cd=8000 cast=0 ch=1 rows=2
+  - shift  # id=1234796 cd=800 cast=0 ch=1 rows=4
+  - shimmer  # id=212653 cd=500 cast=0 ch=1
+  - shocking_blast  # id=275384 cd=0 cast=2000 ch=0
+  - silence  # id=15487 cd=30000 cast=0 ch=0 rows=3
+  - singe_magic  # id=89808 cd=15000 cast=0 ch=0 rows=3
+  - skeleton  # id=147963 cd=1500 cast=1500 ch=0
+  - skeleton_pinkie  # id=312890 cd=0 cast=1500 ch=0
+  - soar  # id=367961 cd=240000 cast=1500 ch=0 rows=4
+  - soulburn  # id=385899 cd=6000 cast=0 ch=0 rows=2
+  - soulwell  # id=58275 cd=0 cast=1500 ch=0
+  - spatial_paradox  # id=406732 cd=180000 cast=0 ch=0 rows=3
+  - spear_hand_strike  # id=116705 cd=15000 cast=0 ch=0
+  - spectral_wolf  # id=58261 cd=0 cast=1500 ch=0
+  - spell_lock  # id=19647 cd=24000 cast=0 ch=0 rows=2
+  - spell_reflection  # id=23920 cd=1000 cast=0 ch=1 rows=7
+  - spirit_mend  # id=90361 cd=30000 cast=0 ch=0
+  - spirit_raptors  # id=148079 cd=0 cast=1500 ch=0
+  - spirit_walk  # id=58875 cd=60000 cast=0 ch=0 rows=6
+  - spiritwalkers_grace  # id=79206 cd=120000 cast=0 ch=0 rows=3
+  - stars  # id=62134 cd=0 cast=1500 ch=0
+  - stealth  # id=1784 cd=2000 cast=0 ch=0 rows=4
+  - stoneform  # id=20594 cd=120000 cast=0 ch=0 rows=2
+  - stormbringer  # id=222251 cd=0 cast=3000 ch=0
+  - stormfury  # id=157375 cd=40000 cast=0 ch=0 rows=2
+  - suffering  # id=17735 cd=10000 cast=0 ch=0 rows=4
+  - survival_instincts  # id=61336 cd=6000 cast=0 ch=1 rows=2
+  - symbols_of_death  # id=212283 cd=500 cast=0 ch=1 rows=2
+  - talon_rend  # id=263852 cd=10000 cast=0 ch=0
+  - taunt  # id=355 cd=8000 cast=0 ch=0 rows=7
+  - tendon_rip  # id=160065 cd=10000 cast=0 ch=0 rows=2
+  - the_sun  # id=171891 cd=1500 cast=1500 ch=0
+  - the_ursol_chameleon  # id=58158 cd=1500 cast=1500 ch=0
+  - the_valkyr  # id=126695 cd=0 cast=1500 ch=0
+  - thistle_tea  # id=381623 cd=1000 cast=0 ch=3 rows=2
+  - thunder_focus_tea  # id=116680 cd=1000 cast=0 ch=1
+  - thunder_strike  # id=68163 cd=0 cast=1500 ch=0
+  - tigers_fury  # id=5217 cd=30000 cast=0 ch=0
+  - time_dilation  # id=357170 cd=1000 cast=0 ch=1 rows=2
+  - time_of_need  # id=368412 cd=120000 cast=0 ch=0 rows=3
+  - time_warp  # id=80353 cd=300000 cast=0 ch=0 rows=5
+  - tip_the_scales  # id=370553 cd=120000 cast=0 ch=0 rows=2
+  - titans_thunder  # id=207068 cd=60000 cast=0 ch=0 rows=6
+  - torch_magic  # id=171021 cd=10000 cast=0 ch=0
+  - torment  # id=185245 cd=0 cast=0 ch=1
+  - totemic_projection  # id=108287 cd=10000 cast=0 ch=0
+  - touch_of_karma  # id=122470 cd=90000 cast=0 ch=0 rows=3
+  - toxic_sting  # id=263858 cd=6000 cast=0 ch=0
+  - tricks_of_the_trade  # id=57934 cd=30000 cast=0 ch=0 rows=4
+  - trueshot  # id=288613 cd=120000 cast=0 ch=0
+  - unbound_elemental  # id=147970 cd=0 cast=1500 ch=0
+  - unending_resolve  # id=104773 cd=180000 cast=0 ch=0
+  - vampiric_blood  # id=55233 cd=90000 cast=0 ch=0
+  - vampiric_embrace  # id=15286 cd=120000 cast=0 ch=0 rows=3
+  - vanish  # id=1856 cd=1000 cast=0 ch=1 rows=13
+  - visage  # id=351239 cd=1500 cast=0 ch=0 rows=3
+  - visage_form  # id=379034 cd=0 cast=3000 ch=0 rows=2
+  - void_flay  # id=451435 cd=0 cast=1500 ch=0
+  - void_spike  # id=373279 cd=0 cast=2000 ch=0 rows=2
+  - wake_up  # id=210000 cd=30000 cast=0 ch=0
+  - war_stomp  # id=20549 cd=90000 cast=500 ch=0
+  - warp_time  # id=35346 cd=10000 cast=0 ch=0
+  - water_jet  # id=135029 cd=20000 cast=1000 ch=0
+  - web_spray  # id=160067 cd=10000 cast=0 ch=0
+  - whiplash  # id=6360 cd=6000 cast=0 ch=0
+  - wicked_cleave  # id=432120 cd=1000 cast=1000 ch=0 rows=2
+  - wicked_throw  # id=470489 cd=1000 cast=1000 ch=0
+  - wild_charge  # id=16979 cd=15000 cast=0 ch=0 rows=7
+  - will_of_the_forsaken  # id=7744 cd=120000 cast=0 ch=0
+  - will_to_survive  # id=59752 cd=180000 cast=0 ch=0 rows=11
+  - wind_shear  # id=57994 cd=12000 cast=0 ch=0
+  - winged_agility  # id=264360 cd=90000 cast=0 ch=0
+  - winged_vengeance  # id=58244 cd=0 cast=1500 ch=0
+  - wound_poison  # id=8679 cd=0 cast=1500 ch=0 rows=4
+  - zenith  # id=1249625 cd=16000 cast=0 ch=2

@@ -1,0 +1,374 @@
+# =============================================================================
+# Druid Restoration - Spec ID 105
+# =============================================================================
+
+version: 3
+spec: 105
+
+config:
+  # =================================================================================================
+  #     DEFENSIVE & SURVIVAL
+  # =================================================================================================
+  barkskin_threshold:
+    section: "Defensive HP Percentage"
+    label: "Barkskin HP %"
+    type: slider
+    min: 25
+    max: 99
+    default: 55
+
+  barkskin_dmg_pct:
+    section: "Defensives Prediction Damage"
+    label: "Barkskin (Incoming Dmg%)"
+    type: slider
+    min: 0
+    max: 100
+    default: 40
+
+  frenzied_regen_threshold:
+    section: "Defensive HP Percentage"
+    label: "Frenzied Regen HP %"
+    type: slider
+    min: 25
+    max: 99
+    default: 40
+
+  ironbark_threshold:
+    section: "Defensive HP Percentage"
+    label: "Ironbark HP %"
+    type: slider
+    min: 25
+    max: 99
+    default: 55
+
+  # =================================================================================================
+  #     MAJOR COOLDOWNS
+  # =================================================================================================
+  convoke_threshold:
+    label: "Convoke HP %"
+    type: slider
+    min: 25
+    max: 99
+    default: 65
+
+  convoke_members:
+    label: "Convoke - Min Members"
+    type: slider
+    min: 1
+    max: 5
+    default: 3
+
+  tranquility_threshold:
+    label: "Tranquility HP %"
+    type: slider
+    min: 25
+    max: 99
+    default: 65
+
+  tranquility_members:
+    label: "Tranquility - Min Members"
+    type: slider
+    min: 1
+    max: 5
+    default: 3
+
+  ns_threshold:
+    label: "Nature's Swiftness HP %"
+    type: slider
+    min: 25
+    max: 99
+    default: 45
+
+  # =================================================================================================
+  #     HEALING - AOE & GROUP
+  # =================================================================================================
+  use_mouseover:
+    label: "MO Healing (Emergency)"
+    type: checkbox
+    default: true
+
+  mouseover_emergency_hp:
+    label: "MO Emergency HP %"
+    type: slider
+    min: 10
+    max: 99
+    default: 65
+
+  wild_growth_threshold:
+    label: "Wild Growth HP %"
+    type: slider
+    min: 25
+    max: 99
+    default: 95
+
+  wild_growth_members:
+    label: "Wild Growth - Min Members"
+    type: slider
+    min: 1
+    max: 5
+    default: 3
+
+  # =================================================================================================
+  #     HEALING - MAINTENANCE
+  # =================================================================================================
+  lifebloom_target:
+    label: "Lifebloom Target"
+    type: unit_select
+    max: 1
+    filter: all
+    show_override: true
+
+  # =================================================================================================
+  #     HEALING - SINGLE TARGET
+  # =================================================================================================
+  swiftmend_threshold:
+    label: "Swiftmend HP %"
+    type: slider
+    min: 25
+    max: 99
+    default: 70
+
+  regrowth_threshold:
+    label: "Regrowth HP %"
+    type: slider
+    min: 25
+    max: 99
+    default: 80
+
+  rejuvenation_threshold:
+    label: "Rejuvenation HP %"
+    type: slider
+    min: 25
+    max: 99
+    default: 95
+
+  rejuvenation_spread:
+    type: toggle
+    label: "Rejuvenation Spread"
+    spell: 774
+    description: "Spread Rejuvenation to group members below threshold"
+
+  # =================================================================================================
+  #     DAMAGE & CATWEAVING
+  # =================================================================================================
+  catweave_group_hp:
+    label: "Enter Cat - Group HP %"
+    type: slider
+    min: 25
+    max: 99
+    default: 80
+
+  catweave_injured_max:
+    label: "Exit Cat - Max Injured"
+    type: slider
+    min: 0
+    max: 5
+    default: 2
+
+  aoe_threshold:
+    label: "AoE - Min Enemies"
+    type: slider
+    min: 2
+    max: 5
+    default: 3
+
+  force_dps:
+    label: "Force DPS (Ignore Group HP)"
+    type: checkbox
+    default: false
+
+  # =================================================================================================
+  #     UTILITY & ITEMS
+  # =================================================================================================
+  innervate_threshold:
+    label: "Innervate Mana %"
+    type: slider
+    min: 25
+    max: 99
+    default: 75
+
+  use_dispell:
+    label: "Enable Dispell"
+    type: checkbox
+    default: true
+
+  shadowmeld_usage:
+    label: "Shadowmeld Usage"
+    type: dropdown
+    options:
+      - "Disabled"
+      - "M+ Only"
+      - "Dungeon & Raid"
+      - "Boss Only"
+    default: 2
+
+variables:
+  shadowmeld_allowed: "(config.shadowmeld_usage=1&player.inmythicplus)|(config.shadowmeld_usage=2&(player.indungeon|player.inraid))|(config.shadowmeld_usage=3&target.classification>=5)"
+  group_healthy: group.count(cycle.health.effective.pct<config.catweave_group_hp)<config.catweave_injured_max
+  can_catweave: (var.group_healthy|config.force_dps)&player.combat
+  mo_friendly_valid: mouseover.exists&mouseover.alive&mouseover.friendly&mouseover.range>0&mouseover.range<=40
+  # Abundance ≥8 stacks = Regrowth is near-free mana and guaranteed crit (8% per stack from Abundance talent)
+  high_abundance: buff.abundance.stack>=8
+  # Tree of Life active (from Reforestation proc at 3 Swiftmend stacks, or manual Incarnation)
+  tree_active: buff.incarnation_tree_of_life.up
+
+lists:
+  spell_queue:
+    - queue_spell,if=!buff.cat_form.up&!buff.bear_form.up
+
+  sanity_checks:
+    - return,if=player.dead
+    - return,if=mounted
+    - return,if=!state.rotation
+    - return,if=state.blocked_inputs
+    - return,if=player.cc
+    - return,if=player.loot_nearby
+    - call_action_list,name=trinkets,if=player.combat
+  
+  interrupts:
+    - skull_bash,if=interrupt.target.check
+    - skull_bash.mouseover,if=interrupt.mouseover.check
+    - skull_bash.focus,if=interrupt.focus.check
+    # CC Interrupt
+    - mighty_bash,if=interrupt.cc.check
+    # AoE Interrupt
+    - incapacitating_roar,if=interrupt.stun.aoe.check
+    # Racial Interrupts
+    - quaking_palm,if=interrupt.cc.check
+    - haymaker,if=interrupt.cc.check
+    - war_stomp,if=interrupt.stun.aoe.check
+    - bull_rush,if=interrupt.stun.aoe.check
+    - tail_swipe,if=interrupt.stun.aoe.check
+    - soothe,if=target.purgeable.enrage
+  
+  out_of_combat:
+    - mark_of_the_wild,if=(group.count(cycle.buff.mark_of_the_wild.down.any)>0|action.mark_of_the_wild.overlayed)&lastcast.mark_of_the_wild>=10
+    - symbiotic_relationship,cycle=tanks,if=cycle.buff.symbiotic_relationship.down.any
+    - rejuvenation,cycle=members,if=cycle.health.effective.pct<config.rejuvenation_threshold&cycle.buff.rejuvenation.remains<1.5&!player.combat
+    - regrowth,cycle=members,if=cycle.health.effective.pct<config.regrowth_threshold&cycle.buff.regrowth.remains<1.5&!player.combat
+    
+    
+  defensives:
+    # --- Prediction Damage: pre-fire on a predicted incoming hit (% of effective HP) ---
+    - barkskin,range_check=none,if=incoming.pct>=config.barkskin_dmg_pct
+
+    # --- HP Percentage: react when already low ---
+    - natures_cure,cycle=members,if=config.use_dispell&cycle.dispelable.list
+    - ironbark,cycle=members,if=cycle.health.effective.pct<config.ironbark_threshold&cycle.buff.ironbark.down
+    - barkskin,if=health.pct<config.barkskin_threshold
+    - bear_form,if=health.pct<config.frenzied_regen_threshold&!buff.bear_form.up&cooldown.frenzied_regeneration.ready
+    - frenzied_regeneration,if=health.pct<config.frenzied_regen_threshold&buff.bear_form.up
+
+  racials:
+    - shadowmeld,if=var.shadowmeld_allowed&target.threat>=3&!player.casting
+
+  cooldowns:
+    # Convoke: pre-ramp with Rejuvs first (Abundance ≥3 ensures HoTs are out for maximum value)
+    # Log analysis: player always spreads 4-6 Rejuvs before every Convoke
+    - convoke_the_spirits,if=group.count(cycle.health.effective.pct<config.convoke_threshold)>=config.convoke_members&buff.abundance.stack>=3&!buff.cat_form.up&!buff.bear_form.up
+    # Tranquility: cast Wild Growth before (handled by active_healing ordering) for Mastery stacking
+    - tranquility,if=group.count(cycle.health.effective.pct<config.tranquility_threshold)>=config.tranquility_members&!player.moving
+    # Nature's Swiftness: emergency save - instant Regrowth follows in active_healing
+    # Log analysis: always followed by instant Regrowth → Ironbark on same target
+    - natures_swiftness,if=group.count(cycle.health.effective.pct<config.ns_threshold)>=1
+
+
+  active_healing:
+    # === MAINTENANCE ===
+    # Lifebloom maintenance - user-selected target (Everbloom: keep 3 stacks)
+    - lifebloom,cycle=config.lifebloom_target,if=config.lifebloom_target&player.combat&talent.everbloom.rank>=1&(cycle.buff.lifebloom.stack<3|cycle.buff.lifebloom.remains<=5)
+    - lifebloom,cycle=config.lifebloom_target,if=config.lifebloom_target&player.combat&!talent.everbloom.enabled&cycle.buff.lifebloom.down
+    # Lifebloom fallback - no target selected, default to tanks
+    - lifebloom,cycle=tanks,if=!config.lifebloom_target&player.combat&talent.everbloom.rank>=1&(cycle.buff.lifebloom.stack<3|cycle.buff.lifebloom.remains<=5)
+    - lifebloom,cycle=tanks,if=!config.lifebloom_target&player.combat&!talent.everbloom.enabled&cycle.buff.lifebloom.down
+    # Efflorescence maintenance - keep active at all times (Lifetreading auto-repositions under Lifebloom target)
+    - efflorescence,if=player.combat&buff.efflorescence.remains<2&!buff.cat_form.up&!buff.bear_form.up
+    # === PROC CONSUMPTION (highest priority after maintenance) ===
+    # Clearcasting (Omen of Clarity) proc - free Regrowth on lowest HP member
+    - regrowth,cycle=members,if=buff.clearcasting.up&cycle.health.effective.pct<config.regrowth_threshold
+    # Nature's Swiftness follow-up: instant Regrowth on lowest
+    - regrowth,cycle=members,if=buff.natures_swiftness.up&cycle.health.effective.pct<config.regrowth_threshold
+    # Tree of Life active (Reforestation proc) - Regrowth is instant, spam on injured targets
+    - regrowth,cycle=members,if=var.tree_active&cycle.health.effective.pct<config.regrowth_threshold
+    # === SWIFTMEND → WILD GROWTH COMBO ===
+    # Swiftmend procs Soul of the Forest (+50% next Wild Growth healing)
+    # Log analysis: player ALWAYS casts Swiftmend immediately before Wild Growth
+    - swiftmend,cycle=members,if=cycle.health.effective.pct<config.swiftmend_threshold
+    - wild_growth,if=group.count(cycle.health.effective.pct<config.wild_growth_threshold)>=config.wild_growth_members
+    # === ABUNDANCE-AWARE HEALING ===
+    # High Abundance (≥8 Rejuv stacks) - Regrowth is near-free mana and guaranteed crit
+    # Log analysis: player spams Regrowth after ramping 8-12 Rejuvs
+    - regrowth,cycle=members,if=var.high_abundance&cycle.health.effective.pct<config.regrowth_threshold
+    # Rejuvenation spreading - builds Abundance stacks for cheap Regrowth (toggle-gated)
+    - rejuvenation,cycle=members,if=config.rejuvenation_spread&cycle.buff.rejuvenation.remains<1.5&cycle.health.effective.pct<config.rejuvenation_threshold
+    # Regular Regrowth fallback (low Abundance, no procs)
+    - regrowth,cycle=members,if=cycle.health.effective.pct<config.regrowth_threshold
+    
+  utility:
+    # Innervate: use at low mana OR during ramp windows before Convoke (free Rejuv spreading)
+    # Log analysis: Innervate used at 00:54 and 04:25, both followed by mass Rejuv spam
+    - innervate,if=player.combat&(mana.pct<config.innervate_threshold|cooldown.convoke_the_spirits.remains<10)
+
+  catweave_st:
+    - rip,if=combo_points>=5&debuff.rip.refreshable&target.range<=8
+    - ferocious_bite,if=combo_points>=5&debuff.rip.remains>10&target.range<=8
+    - rake,if=debuff.rake.refreshable&combo_points<=3&target.range<=8
+    - shred,if=combo_points<5&target.range<=8
+
+  catweave_aoe:
+    - rip,if=combo_points>=5&debuff.rip.refreshable&target.range<=8
+    - thrash,if=active_enemies>=config.aoe_threshold&target.range<=8
+    - swipe,if=active_enemies>=config.aoe_threshold&target.range<=8
+    - rake,if=debuff.rake.refreshable&combo_points<=3&target.range<=8
+    - shred,if=target.range<=8
+
+  catweave:
+    # With Fluid Form, rake/shred auto-shift to Cat, wrath/starfire auto-shift to Moonkin
+    # Bail out if group needs healing
+    - rejuvenation,cycle=members,if=cycle.buff.rejuvenation.remains<4&(buff.cat_form.up|talent.fluid_form.enabled)&(target.range>8|!var.group_healthy)
+    # Caster DoTs before shifting (Moonfire + Sunfire)
+    - sunfire,if=debuff.sunfire.remains<2&debuff.sunfire.refreshable&!buff.cat_form.up
+    - moonfire,if=debuff.moonfire.remains<2&debuff.moonfire.refreshable&!buff.cat_form.up
+    # Ranged DPS: Fluid Form auto-shifts to Moonkin Form for wrath/starfire
+    - starfire,if=talent.fluid_form.enabled&!buff.cat_form.up&target.range>8&active_enemies>=config.aoe_threshold
+    - wrath,if=!buff.cat_form.up&target.range>8
+    # Without Fluid Form: explicit shift + bail if not in range
+    - cat_form,if=!buff.cat_form.up&target.range<=8&!talent.fluid_form.enabled
+    - return,if=!buff.cat_form.up&!talent.fluid_form.enabled
+    - call_action_list,name=catweave_aoe,if=active_enemies>=config.aoe_threshold
+    - call_action_list,name=catweave_st
+
+  moving:
+    - convoke_the_spirits,if=group.count(cycle.health.effective.pct<config.convoke_threshold)>=config.convoke_members&!buff.cat_form.up&!buff.bear_form.up
+    - lifebloom,cycle=config.lifebloom_target,if=config.lifebloom_target&player.combat&cycle.buff.lifebloom.down
+    - lifebloom,cycle=tanks,if=!config.lifebloom_target&player.combat&cycle.buff.lifebloom.down
+    - rejuvenation,cycle=members,if=cycle.buff.rejuvenation.down&cycle.health.effective.pct<config.rejuvenation_threshold
+
+  mouseover_healing_emergency:
+    - natures_cure.mouseover,if=config.use_dispell&mouseover.dispelable.list&mouseover.range>=0&mouseover.range<=40
+    - regrowth.mouseover,if=buff.natures_swiftness.up&mouseover.range>=0&mouseover.range<=40
+    - swiftmend.mouseover,if=mouseover.range>=0&mouseover.range<=40
+    - rejuvenation.mouseover,if=mouseover.buff.remains(rejuvenation)<1.5&mouseover.range>=0&mouseover.range<=40
+    - regrowth.mouseover,if=mouseover.range>=0&mouseover.range<=40
+    
+  main:
+    - return,if=player.channeling
+    - return,if=buff.tranquility.up
+    - return,if=buff.convoke_the_spirits.up
+    - call_action_list,name=spell_queue
+    - call_action_list,name=sanity_checks
+    - call_action_list,name=auto_target,if=player.combat
+    - call_action_list,name=auto_heal,if=player.combat
+    - call_action_list,name=out_of_combat
+    - return,if=!player.combat
+    - call_action_list,name=interrupts
+    - call_action_list,name=racials
+    - call_action_list,name=defensives
+    - call_action_list,name=utility
+    - call_action_list,name=cooldowns
+    - call_action_list,name=mouseover_healing_emergency,if=config.use_mouseover&var.mo_friendly_valid&(mouseover.health.effective.pct<config.mouseover_emergency_hp|mouseover.dispelable.list)&!player.casting&!player.channeling
+    - call_action_list,name=moving,if=player.moving
+    - call_action_list,name=active_healing
+    - call_action_list,name=catweave,if=var.can_catweave&target.exists&target.alive&!target.friendly
+    # Wrath filler for mana regen when no healing needed and catweave conditions not met
+    - wrath,if=player.combat&target.exists&target.alive&!target.friendly&!buff.cat_form.up&!buff.bear_form.up&!player.moving&mana.pct>=70

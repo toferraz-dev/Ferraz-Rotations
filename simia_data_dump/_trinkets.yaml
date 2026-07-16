@@ -1,0 +1,205 @@
+version: 7
+date: 1776566900
+
+# Trinket definitions
+# Unlisted trinkets will check for burst buffs by default (player.burst.active)
+#
+# Options:
+# - if: condition that must be true to use trinket
+# - check_burst: false = skip burst buff check (default: true for unlisted trinkets)
+# - disabled: true = never use this trinket
+# - pre_burst: true = "trick trinket". While equipped and about to come off CD
+#     (cooldown <= 10s) AND its trinket_buff is NOT active, the rotation engine
+#     holds every spell the user has toggled as a cooldown so this trinket
+#     fires first. Releases when cooldown > 10s again or the trinket buff comes
+#     up. Requires trinket_buff to know when the burst window opened.
+# - trinket_buff: <spell_id> = the buff the trinket puts up. Used by pre_burst
+#     as the "burst window active" signal — once this buff is on the player,
+#     the CD hold releases and the rotation unleashes cooldowns.
+# - no_move: true = never suggest this trinket while the player is moving.
+#     Trinket-only gate for cast-time trinkets (e.g. Puzzle Box) that would
+#     fizzle mid-move. Does NOT interact with pre_burst or the CD hold — the
+#     two flags are independent. If both are set, pre_burst keeps holding CDs
+#     while no_move keeps the trinket off the suggestion until you stop.
+#
+# Usage in rotation:
+#   trinket_1,if=trinket1.sync    # Uses _trinkets.yaml logic + burst check
+#   trinket_1,if=trinket1.usable  # Simple CD check (ignores _trinkets.yaml)
+trinkets:
+  # This trinket activates when we have certain stacks, at higher stacks means more stats.
+  242396:
+    name: "Unyielding Netherprism"
+    if: buff.latent_energy.stack>=2
+    check_burst: true
+
+  # Tank trinket, one side is armor other is critical, we want to stay in crtiical, so use when we have inner resilience buff to flip
+  219309:
+    name: "Tome of Light's Devotion"
+    if: buff.inner_resilience.up
+
+  # Trick trinket with two independent flags:
+  #   pre_burst: while cooldown <= 10s and the Int buff (383781) is not active,
+  #     the rotation holds every spell the user has toggled as CD so the Puzzle
+  #     Box stays the opener. Releases when cd > 10s or the buff comes up.
+  #   no_move: blocks the trinket suggestion while moving (cast-time fizzle).
+  # The two are independent: moving + ready trinket still holds CDs via
+  # pre_burst — the trinket just waits for you to stand still to actually fire.
+  193701:
+    name: "Algethar Puzzle Box"
+    pre_burst: true
+    trinket_buff: 383781
+    no_move: true
+
+  # Damage trinkets - custom conditions, skip burst check
+  0:
+    name: "Skarmorak Shard"
+    if: active_enemies>=3
+    check_burst: false
+
+  # Defensive trinkets - use when low HP, skip burst check
+  1:
+    name: "Nerubian Pheromone Secreter"
+    if: player.hp<=50
+    check_burst: false
+
+  ##########################
+  ### DISABLED TRINKETS ####
+  ##########################
+
+  249806:
+    name: "Radiant Plume"
+    disabled: true
+  
+  260235:
+    name: "Umbral Plume"
+    disabled: true
+
+  248583:
+    name: "Drum of Renewed Bonds"
+    disabled: true
+
+  178751:
+    name: "Unbound Changeling"
+    disabled: true
+
+  # Generic items that we always want to exclude
+  # The War Within
+  242664:
+    name: "Cloth DISC"
+    disabled: true
+  245964:
+    name: "Leather DISC"
+    disabled: true
+  245965:
+    name: "Mail DISC"
+    disabled: true
+  245966:
+    name: "Plate DISC"
+    disabled: true
+  215133:
+    name: "Binding of Binding"
+    disabled: true
+  218422:
+    name: "Forged Aspirant's Medallion"
+    disabled: true
+  218716:
+    name: "Forged Gladiator's Medallion"
+    disabled: true
+  218717:
+    name: "Forged Gladiator's Sigil of Adaptation"
+    disabled: true
+  219381:
+    name: "Fate Weaver"
+    disabled: true
+  219931:
+    name: "Algari Competitor's Medallion"
+    disabled: true
+  228844:
+    name: "Test Pilot's Go-Pack"
+    disabled: true
+  230193:
+    name: "Mister Lock-N-Stalk"
+    disabled: true
+  235222:
+    name: "Apogee Invengor's Goggles"
+    disabled: true
+  235223:
+    name: "Psychogenic Prognosticator's Lenses"
+    disabled: true
+  235224:
+    name: "Mekgineer's Mindbending Headgear"
+    disabled: true
+  235226:
+    name: "Inventor's Ingenious Trifocals"
+    disabled: true
+  237494:
+    name: "Hallowed Tome"
+    disabled: true
+  243365:
+    name: "Maw of the Void"
+    disabled: true
+  237495:
+    name: "Baleful Excerpt"
+    disabled: true
+
+  # TWW Engineering Epic Quality Wrists
+  221805:
+    disabled: true
+  221806:
+    disabled: true
+  221807:
+    disabled: true
+  221808:
+    disabled: true
+
+  # TWW Engineering Uncommon Quality Wrists
+  217155:
+    disabled: true
+  217156:
+    disabled: true
+  217157:
+    disabled: true
+  217158:
+    disabled: true
+
+  # Dragonflight
+  207783:
+    name: "Cruel Dreamcarver"
+    disabled: true
+  204388:
+    name: "Draconic Cauterizing Magma"
+    disabled: true
+  201962:
+    name: "Heat of Primal Winter"
+    disabled: true
+  203729:
+    name: "Ominous Chromatic Essence"
+    disabled: true
+  200563:
+    name: "Primal Ritual Shell"
+    disabled: true
+  193000:
+    name: "Ring-Bound Hourglass"
+    disabled: true
+  193757:
+    name: "Ruby Whelp Shell"
+    disabled: true
+  202612:
+    name: "Screaming Black Dragonscale"
+    disabled: true
+  209948:
+    name: "Spring's Keeper"
+    disabled: true
+  195220:
+    name: "Uncanny Pocketwatch"
+    disabled: true
+
+  # DF Engineering Epic Quality Wrists
+  198322:
+    disabled: true
+  198327:
+    disabled: true
+  198332:
+    disabled: true
+  198333:
+    disabled: true

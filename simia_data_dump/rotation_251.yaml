@@ -1,0 +1,326 @@
+# =============================================================================
+# Death Knight - Frost - 251
+# =============================================================================
+# Bonegrinder has two ids
+# Talent 377098
+# Bonegrinder Critical: 377101
+# Bonegrinder Frost Damage: 377103
+# Chosen of Frostbrood
+# 1265639 - Chosen of Frostbrood (buff that allows FWF recall)
+# 1265630 - Chosen of Frostbrood (Haste Buff)
+# 279302 - Frostwyrm's Fury (base)
+# 1265384 - Frostwyrm's Fury Recall — see _morphs.yaml
+
+version: 3
+spec: 251
+
+config:
+  darksuccor_solo_hp_pct:
+    section: "Defensive HP Percentage"
+    label: "Death Strike Dark Succor (Solo)"
+    type: slider
+    min: 0
+    max: 100
+    default: 75
+
+  darksuccor_group_hp_pct:
+    section: "Defensive HP Percentage"
+    label: "Death Strike Dark Succor (Group)"
+    type: slider
+    min: 0
+    max: 100
+    default: 25
+
+  deathstrike_solo_hp_pct:
+    section: "Defensive HP Percentage"
+    label: "Death Strike (Solo)"
+    type: slider
+    min: 0
+    max: 100
+    default: 50
+
+  deathstrike_group_hp_pct:
+    section: "Defensive HP Percentage"
+    label: "Death Strike (Group)"
+    type: slider
+    min: 0
+    max: 100
+    default: 15
+
+  death_pact_hp_pct:
+    section: "Defensive HP Percentage"
+    label: "Death Pact"
+    type: slider
+    min: 0
+    max: 100
+    default: 15
+
+  icebound_fortitude_hp_pct:
+    section: "Defensive HP Percentage"
+    label: "Icebound Fortitude HP (%)"
+    type: slider
+    min: 0
+    max: 100
+    default: 50
+
+  icebound_fortitude_dmg_pct:
+    section: "Defensives Prediction Damage"
+    label: "Icebound Fortitude (Incoming Dmg%)"
+    type: slider
+    min: 0
+    max: 100
+    default: 50
+
+variables:
+
+  enemies_count: "(target.range<=8)*active_enemies+(target.range>8)*enemies_around_target"
+
+  # variable,name=sending_cds,value=(variable.st_planning|variable.adds_remain)
+  # raid_event stripped from st_planning/adds_remain; combined always true
+  sending_cds: 1
+
+  # variable,name=cooldown_check,value=(talent.pillar_of_frost&buff.pillar_of_frost.up)|!talent.pillar_of_frost|fight_remains<20
+  cooldown_check: "(talent.pillar_of_frost&buff.pillar_of_frost.up)|!talent.pillar_of_frost|fight_remains<20"
+
+  # variable,name=fwf_buffs,value=(buff.pillar_of_frost.remains<gcd.max|(buff.unholy_strength.up&buff.unholy_strength.remains<gcd.max)|(talent.bonegrinder.rank=2&buff.bonegrinder_frost.up&buff.bonegrinder_frost.remains<gcd.max))&(active_enemies>1|debuff.razorice.react=5|talent.shattering_blade)
+  # buff.bonegrinder_frost → numeric 377103 (SimC-internal, doesn't resolve via SpellName.csv)
+  fwf_buffs: "(buff.pillar_of_frost.remains<gcd.max|(buff.unholy_strength.up&buff.unholy_strength.remains<gcd.max)|(talent.bonegrinder.rank=2&buff.377103.up&buff.377103.remains<gcd.max))&(active_enemies>1|debuff.razorice.react=5|talent.shattering_blade)"
+
+  # variable,name=rune_pooling,value=hero_tree.deathbringer&cooldown.reapers_mark.remains<6&rune<3&variable.sending_cds
+  rune_pooling: "hero_tree.deathbringer&cooldown.reapers_mark.remains<6&rune<3&var.sending_cds"
+
+  # variable,name=rp_pooling,value=talent.breath_of_sindragosa&cooldown.breath_of_sindragosa.remains<4*gcd.max&runic_power<60+(35+5*buff.icy_onslaught.up)-(10*rune)&variable.sending_cds
+  rp_pooling: "talent.breath_of_sindragosa&cooldown.breath_of_sindragosa.remains<4*gcd.max&runic_power<60+(35+5*buff.icy_onslaught.up)-(10*rune)&var.sending_cds"
+
+  # variable,name=frostscythe_priority,value=3
+  frostscythe_prio: 3
+
+  # variable,name=breath_of_sindragosa_check,value=!talent.breath_of_sindragosa|(cooldown.breath_of_sindragosa.remains>20|(cooldown.breath_of_sindragosa.remains<1*gcd.max&runic_power>=(60-20*hero_tree.deathbringer)))
+  breath_of_sindragosa_check: "!talent.breath_of_sindragosa|(cooldown.breath_of_sindragosa.remains>20|(cooldown.breath_of_sindragosa.remains<1*gcd.max&runic_power>=(60-20*hero_tree.deathbringer)))"
+
+lists:
+  # --------------------------------------------------------------------------
+  # HIGH PRIORITY ACTIONS
+  # --------------------------------------------------------------------------
+  high_prio_actions:
+    # antimagic_shell,if=runic_power.deficit>40&death_knight.first_ams_cast<time
+    # Removed: death_knight.first_ams_cast (unsupported)
+    #- antimagic_shell,if=runic_power.deficit>40
+
+  # --------------------------------------------------------------------------
+  # COOLDOWNS
+  # --------------------------------------------------------------------------
+  cooldowns:
+    # remorseless_winter,if=variable.sending_cds&(active_enemies>1|talent.gathering_storm)|(buff.gathering_storm.stack=10&buff.remorseless_winter.remains<gcd.max)&fight_remains>10
+    - remorseless_winter,if=var.sending_cds&(active_enemies>1|talent.gathering_storm)|(buff.gathering_storm.stack=10&buff.remorseless_winter.remains<gcd.max)&fight_remains>10
+
+    # reapers_mark,target_if=first:debuff.reapers_mark_debuff.down,if=cooldown.pillar_of_frost.remains<=gcd.max&(!talent.breath_of_sindragosa|cooldown.breath_of_sindragosa.remains>20|cooldown.breath_of_sindragosa.remains<gcd.max&runic_power>=40)|fight_remains<20
+    # target_if dropped (first:debuff.reapers_mark_debuff.down); _debuff suffix stripped
+    - reapers_mark,if=debuff.reapers_mark.down&(cooldown.pillar_of_frost.remains<=gcd.max&(!talent.breath_of_sindragosa|cooldown.breath_of_sindragosa.remains>20|cooldown.breath_of_sindragosa.remains<gcd.max&runic_power>=40)|fight_remains<20)
+
+    # pillar_of_frost,if=variable.sending_cds&(!hero_tree.deathbringer|cooldown.reapers_mark.remains>10)&(!talent.breath_of_sindragosa|cooldown.breath_of_sindragosa.remains>20|cooldown.breath_of_sindragosa.up&runic_power>=60)|fight_remains<20
+    - pillar_of_frost,range_check=mob_count_8y,if=var.sending_cds&(!hero_tree.deathbringer|cooldown.reapers_mark.remains>10)&(!talent.breath_of_sindragosa|cooldown.breath_of_sindragosa.remains>20|cooldown.breath_of_sindragosa.up&runic_power>=60)|fight_remains<20
+
+    # breath_of_sindragosa,use_off_gcd=1,if=!buff.breath_of_sindragosa.up&(buff.pillar_of_frost.up|fight_remains<20)
+    - breath_of_sindragosa,range_check=mob_count_8y,if=!buff.breath_of_sindragosa.up&(buff.pillar_of_frost.up|fight_remains<20)
+
+    # frostwyrms_fury,if=((talent.apocalypse_now|talent.chosen_of_frostbrood)&!buff.chosen_of_frostbrood_fwf.up)&variable.sending_cds&(!talent.breath_of_sindragosa&buff.pillar_of_frost.up|buff.breath_of_sindragosa.up)&!debuff.reapers_mark_debuff.up&!buff.exterminate.up|(fight_remains<20&!buff.chosen_of_frostbrood_haste.up)
+    # buff.chosen_of_frostbrood_fwf → 1265639; buff.chosen_of_frostbrood_haste → 1265630; _debuff suffix stripped
+    - frostwyrms_fury,range_check=mob_count_8y,if=((talent.apocalypse_now|talent.chosen_of_frostbrood)&!buff.1265639.up)&var.sending_cds&(!talent.breath_of_sindragosa&buff.pillar_of_frost.up|buff.breath_of_sindragosa.up)&!debuff.reapers_mark.up&!buff.exterminate.up|(fight_remains<20&!buff.1265630.up)
+    # frostwyrms_fury,if=buff.chosen_of_frostbrood_fwf.up&variable.fwf_buffs
+    - frostwyrms_fury,range_check=mob_count_8y,if=buff.1265639.up&var.fwf_buffs
+
+    # Recall lines mirror frostwyrms_fury conditions (range_check=none for recall variant)
+    - 1265384,range_check=mob_count_8y,if=((talent.apocalypse_now|talent.chosen_of_frostbrood)&!buff.1265639.up)&var.sending_cds&(!talent.breath_of_sindragosa&buff.pillar_of_frost.up|buff.breath_of_sindragosa.up)&!debuff.reapers_mark.up&!buff.exterminate.up|(fight_remains<20&!buff.1265630.up)
+    - 1265384,range_check=none,if=buff.1265639.up&var.fwf_buffs
+
+    # frostwyrms_fury,if=!(talent.apocalypse_now|talent.chosen_of_frostbrood)&active_enemies=1&(talent.pillar_of_frost&buff.pillar_of_frost.up&!talent.obliteration|!talent.pillar_of_frost)&(!raid_event.adds.exists|raid_event.adds.in>cooldown.frostwyrms_fury.duration+raid_event.adds.duration)&variable.fwf_buffs|fight_remains<3
+    # raid_event conditions removed
+    - frostwyrms_fury,range_check=mob_count_8y,if=!(talent.apocalypse_now|talent.chosen_of_frostbrood)&active_enemies=1&(talent.pillar_of_frost&buff.pillar_of_frost.up&!talent.obliteration|!talent.pillar_of_frost)&var.fwf_buffs|fight_remains<3
+    - 1265384,range_check=none,if=!(talent.apocalypse_now|talent.chosen_of_frostbrood)&active_enemies=1&(talent.pillar_of_frost&buff.pillar_of_frost.up&!talent.obliteration|!talent.pillar_of_frost)&var.fwf_buffs|fight_remains<3
+
+    # frostwyrms_fury,if=!(talent.apocalypse_now|talent.chosen_of_frostbrood)&active_enemies>=2&(talent.pillar_of_frost&buff.pillar_of_frost.up|raid_event.adds.exists&raid_event.adds.up&raid_event.adds.in<cooldown.pillar_of_frost.remains-raid_event.adds.in-raid_event.adds.duration)&variable.fwf_buffs
+    # raid_event conditions removed
+    - frostwyrms_fury,range_check=mob_count_8y,if=!(talent.apocalypse_now|talent.chosen_of_frostbrood)&active_enemies>=2&(talent.pillar_of_frost&buff.pillar_of_frost.up)&var.fwf_buffs
+    - 1265384,range_check=none,if=!(talent.apocalypse_now|talent.chosen_of_frostbrood)&active_enemies>=2&(talent.pillar_of_frost&buff.pillar_of_frost.up)&var.fwf_buffs
+
+    # frostwyrms_fury,if=!(talent.apocalypse_now|talent.chosen_of_frostbrood)&talent.obliteration&(talent.pillar_of_frost&buff.pillar_of_frost.up&!main_hand.2h|!buff.pillar_of_frost.up&main_hand.2h&cooldown.pillar_of_frost.remains|!talent.pillar_of_frost)&variable.fwf_buffs&(!raid_event.adds.exists|raid_event.adds.in>cooldown.frostwyrms_fury.duration+raid_event.adds.duration)
+    # raid_event conditions removed
+    - frostwyrms_fury,range_check=mob_count_8y,if=!(talent.apocalypse_now|talent.chosen_of_frostbrood)&talent.obliteration&(talent.pillar_of_frost&buff.pillar_of_frost.up&!main_hand.2h|!buff.pillar_of_frost.up&main_hand.2h&cooldown.pillar_of_frost.remains|!talent.pillar_of_frost)&var.fwf_buffs
+    - 1265384,range_check=none,if=!(talent.apocalypse_now|talent.chosen_of_frostbrood)&talent.obliteration&(talent.pillar_of_frost&buff.pillar_of_frost.up&!main_hand.2h|!buff.pillar_of_frost.up&main_hand.2h&cooldown.pillar_of_frost.remains|!talent.pillar_of_frost)&var.fwf_buffs
+
+    # raise_dead,use_off_gcd=1
+    - raise_dead,range_check=none,if=!pet.alive
+
+    # empower_rune_weapon,if=(rune<2|!buff.killing_machine.react)&runic_power<35+(talent.icy_onslaught*buff.icy_onslaught.stack*5)
+    - empower_rune_weapon,range_check=mob_count_8y,if=(rune<2|!buff.killing_machine.react)&runic_power<35+(talent.icy_onslaught*buff.icy_onslaught.stack*5)
+    # empower_rune_weapon,if=cooldown.empower_rune_weapon.full_recharge_time<=6&buff.killing_machine.react<2-(talent.killing_streak)
+    - empower_rune_weapon,range_check=mob_count_8y,if=cooldown.empower_rune_weapon.full_recharge_time<=6&buff.killing_machine.react<2-talent.killing_streak
+    # empower_rune_weapon,if=talent.breath_of_sindragosa&(cooldown.empower_rune_weapon.full_recharge_time-30<=cooldown.breath_of_sindragosa.remains+6)&(cooldown.breath_of_sindragosa.remains<=6)&(buff.killing_machine.react<2-(talent.killing_streak))
+    - empower_rune_weapon,range_check=mob_count_8y,if=talent.breath_of_sindragosa&(cooldown.empower_rune_weapon.full_recharge_time-30<=cooldown.breath_of_sindragosa.remains+6)&(cooldown.breath_of_sindragosa.remains<=6)&(buff.killing_machine.react<2-talent.killing_streak)
+    # empower_rune_weapon,if=talent.obliteration&buff.pillar_of_frost.remains>4*gcd.max&rune<=2&buff.killing_machine.react=1
+    - empower_rune_weapon,range_check=mob_count_8y,if=talent.obliteration&buff.pillar_of_frost.remains>4*gcd.max&rune<=2&buff.killing_machine.react=1
+
+    # Custom: avoid overcapping even when CDs are OFF
+    - empower_rune_weapon,ignore_cds_toggle=true,range_check=mob_count_8y,if=(rune<2|!buff.killing_machine.react)&runic_power<35+(talent.icy_onslaught*buff.icy_onslaught.stack*5)&cooldown_bypass.empower_rune_weapon.full_recharge_time<=3&!state.cds
+    - empower_rune_weapon,ignore_cds_toggle=true,range_check=mob_count_8y,if=cooldown_bypass.empower_rune_weapon.full_recharge_time<=6&buff.killing_machine.react<2-talent.killing_streak&cooldown_bypass.empower_rune_weapon.full_recharge_time<=3&!state.cds
+    - empower_rune_weapon,ignore_cds_toggle=true,range_check=mob_count_8y,if=talent.breath_of_sindragosa&(cooldown_bypass.empower_rune_weapon.full_recharge_time-30<=cooldown_bypass.breath_of_sindragosa.remains+6)&(cooldown_bypass.breath_of_sindragosa.remains<=6)&(buff.killing_machine.react<2-talent.killing_streak)&cooldown_bypass.empower_rune_weapon.full_recharge_time<=3&!state.cds
+    - empower_rune_weapon,ignore_cds_toggle=true,range_check=mob_count_8y,if=talent.obliteration&buff.pillar_of_frost.remains>4*gcd.max&rune<=2&buff.killing_machine.react=1&cooldown.empower_rune_weapon.full_recharge_time<=3&!state.cds
+
+  # --------------------------------------------------------------------------
+  # RACIALS
+  # --------------------------------------------------------------------------
+  racials:
+    # blood_fury,use_off_gcd=1,if=variable.cooldown_check
+    - blood_fury,range_check=none,if=var.cooldown_check
+    # berserking,use_off_gcd=1,if=variable.cooldown_check
+    - berserking,range_check=none,if=var.cooldown_check
+    # arcane_pulse,if=variable.cooldown_check
+    - arcane_pulse,range_check=none,if=var.cooldown_check
+    # lights_judgment,if=variable.cooldown_check
+    - lights_judgment,if=var.cooldown_check
+    # ancestral_call,use_off_gcd=1,if=variable.cooldown_check
+    - ancestral_call,range_check=none,if=var.cooldown_check
+    # fireblood,use_off_gcd=1,if=variable.cooldown_check
+    - fireblood,range_check=none,if=var.cooldown_check
+    # bag_of_tricks,if=talent.obliteration&!buff.pillar_of_frost.up&buff.unholy_strength.up
+    - bag_of_tricks,if=talent.obliteration&!buff.pillar_of_frost.up&buff.unholy_strength.up
+    # bag_of_tricks,if=!talent.obliteration&buff.pillar_of_frost.up&(buff.unholy_strength.up&buff.unholy_strength.remains<gcd*3|buff.pillar_of_frost.remains<gcd*3)
+    - bag_of_tricks,if=!talent.obliteration&buff.pillar_of_frost.up&(buff.unholy_strength.up&buff.unholy_strength.remains<gcd*3|buff.pillar_of_frost.remains<gcd*3)
+
+  # --------------------------------------------------------------------------
+  # SINGLE TARGET
+  # --------------------------------------------------------------------------
+  single_target:
+    # obliterate,if=buff.killing_machine.react=2|(buff.killing_machine.react&rune>=3)
+    - obliterate,if=buff.killing_machine.react=2|(buff.killing_machine.react&rune>=3)
+
+    # howling_blast,if=buff.rime.react&talent.frostbound_will
+    - howling_blast,if=buff.rime.react&talent.frostbound_will
+
+    # frost_strike,target_if=max:(talent.shattering_blade&debuff.razorice.react=5),if=debuff.razorice.react=5&talent.shattering_blade&!variable.rp_pooling
+    # target_if dropped
+    - frost_strike,if=debuff.razorice.react=5&talent.shattering_blade&!var.rp_pooling
+
+    # howling_blast,if=buff.rime.react
+    - howling_blast,if=buff.rime.react
+
+    # frost_strike,if=!talent.shattering_blade&!variable.rp_pooling&runic_power.deficit<30
+    - frost_strike,if=!talent.shattering_blade&!var.rp_pooling&runic_power.deficit<30
+
+    # obliterate,if=buff.killing_machine.react&!variable.rune_pooling
+    - obliterate,if=buff.killing_machine.react&!var.rune_pooling
+
+    # frost_strike,if=!variable.rp_pooling
+    - frost_strike,if=!var.rp_pooling
+
+    # obliterate,if=!variable.rune_pooling&!(talent.obliteration&buff.pillar_of_frost.up)
+    - obliterate,if=!var.rune_pooling&!(talent.obliteration&buff.pillar_of_frost.up)
+
+    # howling_blast,if=!buff.killing_machine.react&(talent.obliteration&buff.pillar_of_frost.up)
+    - howling_blast,if=!buff.killing_machine.react&(talent.obliteration&buff.pillar_of_frost.up)
+
+  # --------------------------------------------------------------------------
+  # AOE
+  # --------------------------------------------------------------------------
+  aoe:
+    # frostscythe,if=buff.killing_machine.react=2&active_enemies>=variable.frostscythe_priority
+    - frostscythe,range_check=mob_count_8y,if=buff.killing_machine.react=2&active_enemies>=var.frostscythe_prio
+
+    # frost_strike,target_if=max:(talent.shattering_blade&debuff.razorice.react=5),if=debuff.razorice.react=5&buff.frostbane.react
+    # target_if dropped
+    - frost_strike,if=debuff.razorice.react=5&buff.frostbane.react
+
+    # frostscythe,if=buff.killing_machine.react&rune>=3&active_enemies>=variable.frostscythe_priority
+    - frostscythe,range_check=mob_count_8y,if=buff.killing_machine.react&rune>=3&active_enemies>=var.frostscythe_prio
+
+    # obliterate,target_if=max:(hero_tree.rider_of_the_apocalypse&debuff.chains_of_ice_trollbane_slow.react),if=buff.killing_machine.react=2|(buff.killing_machine.react&rune>=3)
+    # target_if dropped
+    - obliterate,if=buff.killing_machine.react=2|(buff.killing_machine.react&rune>=3)
+
+    # howling_blast,if=buff.rime.react&talent.frostbound_will|!dot.frost_fever.ticking
+    - howling_blast,if=buff.rime.react&talent.frostbound_will|!dot.frost_fever.ticking
+
+    # frost_strike,target_if=max:(talent.shattering_blade&debuff.razorice.react=5),if=debuff.razorice.react=5&talent.shattering_blade&active_enemies<5&!variable.rp_pooling&!talent.frostbane
+    # target_if dropped
+    - frost_strike,if=debuff.razorice.react=5&talent.shattering_blade&active_enemies<5&!var.rp_pooling&!talent.frostbane
+
+    # frostscythe,if=buff.killing_machine.react&!variable.rune_pooling&active_enemies>=variable.frostscythe_priority
+    - frostscythe,range_check=mob_count_8y,if=buff.killing_machine.react&!var.rune_pooling&active_enemies>=var.frostscythe_prio
+
+    # obliterate,target_if=max:(hero_tree.rider_of_the_apocalypse&debuff.chains_of_ice_trollbane_slow.react),if=buff.killing_machine.react&!variable.rune_pooling
+    # target_if dropped
+    - obliterate,if=buff.killing_machine.react&!var.rune_pooling
+
+    # howling_blast,if=buff.rime.react
+    - howling_blast,if=buff.rime.react
+
+    # glacial_advance,if=!variable.rp_pooling
+    - glacial_advance,range_check=mob_count_8y,if=!var.rp_pooling
+
+    # frostscythe,if=!variable.rune_pooling&!(talent.obliteration&buff.pillar_of_frost.up)&active_enemies>=variable.frostscythe_priority
+    - frostscythe,range_check=mob_count_8y,if=!var.rune_pooling&!(talent.obliteration&buff.pillar_of_frost.up)&active_enemies>=var.frostscythe_prio
+
+    # obliterate,target_if=max:(hero_tree.rider_of_the_apocalypse&debuff.chains_of_ice_trollbane_slow.react),if=!variable.rune_pooling&!(talent.obliteration&buff.pillar_of_frost.up)
+    # target_if dropped
+    - obliterate,if=!var.rune_pooling&!(talent.obliteration&buff.pillar_of_frost.up)
+
+    # howling_blast,if=!buff.killing_machine.react&(talent.obliteration&buff.pillar_of_frost.up)
+    - howling_blast,if=!buff.killing_machine.react&(talent.obliteration&buff.pillar_of_frost.up)
+
+  # --------------------------------------------------------------------------
+  # DEFENSIVES
+  # --------------------------------------------------------------------------
+  defensives:
+    # --- Prediction Damage: pre-fire on a predicted incoming hit (% of effective HP) ---
+    - icebound_fortitude,range_check=none,if=incoming.pct>=config.icebound_fortitude_dmg_pct
+
+    # --- HP Percentage: react when already low ---
+    - death_strike,if=player.solo&buff.dark_succor.up&health.pct<=config.darksuccor_solo_hp_pct
+    - death_strike,if=player.group&buff.dark_succor.up&health.pct<=config.darksuccor_group_hp_pct
+    - death_strike,if=player.solo&!buff.dark_succor.up&health.pct<=config.deathstrike_solo_hp_pct
+    - death_strike,if=player.group&!buff.dark_succor.up&health.pct<=config.deathstrike_group_hp_pct
+    - death_pact,range_check=none,if=health.pct<=config.death_pact_hp_pct
+    - icebound_fortitude,range_check=none,if=health.pct<=config.icebound_fortitude_hp_pct
+
+  # --------------------------------------------------------------------------
+  # MAIN
+  # --------------------------------------------------------------------------
+  main:
+    - call_action_list,name=spell_queue
+    - call_action_list,name=sanity_checks
+    - call_action_list,name=auto_target
+
+    - return,if=auto_combat.player
+
+    - mind_freeze,if=interrupt.target.check
+    - mind_freeze.mouseover,if=interrupt.mouseover.check
+    - mind_freeze.focus,if=interrupt.focus.check
+
+    - asphyxiate,if=interrupt.cc.check
+
+    - blinding_sleet,if=interrupt.stun.aoe.check
+    - quaking_palm,if=interrupt.cc.check
+    - haymaker,if=interrupt.cc.check
+    - war_stomp,if=interrupt.stun.aoe.check
+    - bull_rush,if=interrupt.stun.aoe.check
+    - tail_swipe,if=interrupt.stun.aoe.check
+
+    - call_action_list,name=auto_heal
+
+    - return,if=auto_combat.target
+
+    - trinket_1,if=trinket_1.sync
+    - trinket_2,if=trinket_2.sync
+
+    - call_action_list,name=defensives
+
+    # Custom: use reapers_mark under Pillar even when CDs are toggled off
+    - reapers_mark,ignore_cds_toggle=true,if=debuff.reapers_mark.down&buff.pillar_of_frost.up&!state.cds
+
+    - call_action_list,name=high_prio_actions
+    - call_action_list,name=cooldowns
+    - call_action_list,name=racials
+
+    - run_action_list,name=aoe,if=var.enemies_count>=3
+    - run_action_list,name=single_target
