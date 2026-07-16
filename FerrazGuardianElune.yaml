@@ -1,11 +1,20 @@
-version: 4.2
+version: 4.3
 author: Ferraz
-patch: "12.0.5"
+patch: "12.0.7"
 spec: 104
 name: Ferraz Guardian Druid M+ (Elunes)
 description: |
   Ferraz Guardian Druid M+ (Elunes)
+  (Powered by Advanced 104 Core Engine)
 entry: main
+
+spell_overrides:
+  incarnation_guardian_of_ursoc: "!buff.incarnation_guardian_of_ursoc.up"
+  mangle: "buff.bear_form.down|rage<=30&buff.gore.up&cooldown.77758.down&enemies.8y<=3"
+  barkskin: "(!player.inmythicplus|fight_remains>=20|player.on_last_boss)&(variable.tank_buster_remains<=1|variable.tank_buster_casting|variable.tank_buster_remains>34)"
+  moonfire: "!talent.lunar_calling.enabled|cooldown.77758.down|enemies.8y=0"
+  1261867: "enemies.40y>=1&enemies.40y<=3&!buff.incarnation_guardian_of_ursoc.up"
+  sundering_roar: "(cooldown.77758.remains|cooldown.77758.duration>gcd)&(dot.thrash.stack>=5&buff.incarnation_guardian_of_ursoc.up)|(cooldown_bypass.incarnation_guardian_of_ursoc.remains>=50&lastcast.incarnation_guardian_of_ursoc>=5)"
 
 config:
   recommended_talents:
@@ -14,22 +23,45 @@ config:
     label: "Recommended Talent String"
     text: "CgGA8cL7tpvige+kkmGM9zUPWDAAAAAAAAAAAgZmZmFzMjZWmZx4BmZZZgZzwoJyMzyMzMzsMmBAAAAAAjNzALbzMYMLDgpmZZWmZmBAwmxMDwixwAzilNAzMzsBA"
 
-  # === DEFENSIVE CONFIGURATIONS ===
   survival_instincts_threshold:
-    label: "Survival Instincts %"
+    label: "Survival Instincts HP %"
     section: "Defensives"
     type: slider
     min: 10
-    max: 70
-    default: 50
+    max: 100
+    default: 40
+
+  survival_instincts_dmg_pct:
+    section: "Defensives"
+    label: "Survival Instincts (Incoming Dmg%)"
+    type: slider
+    min: 0
+    max: 100
+    default: 55
 
   frenzied_regen_threshold:
-    label: "Frenzied Regeneration %"
+    label: "Frenzied Regeneration HP %"
     section: "Defensives"
     type: slider
-    min: 30
-    max: 80
-    default: 70
+    min: 10
+    max: 100
+    default: 75
+
+  barkskin_threshold:
+    label: "Barkskin HP %"
+    section: "Defensives"
+    type: slider
+    min: 10
+    max: 100
+    default: 50
+
+  barkskin_dmg_pct:
+    section: "Defensives"
+    label: "Barkskin (Incoming Dmg%)"
+    type: slider
+    min: 0
+    max: 100
+    default: 40
 
   manual_barkskin:
     label: "Manual Barkskin"
@@ -38,7 +70,6 @@ config:
     default: false
     description: "Disable automatic Barkskin usage."
 
-  # === MOVEMENT CONFIGURATIONS ===
   stampeding_roar_usage:
     label: "Stampeding Roar Usage"
     section: "Movement"
@@ -62,14 +93,36 @@ config:
     max: 4
     default: 2
 
-  # === UTILITY CONFIGURATIONS ===
   use_growl:
     label: "Auto Growl (Taunt)"
     section: "Utility"
     type: checkbox
     default: true
 
-  # === TRINKET & CONSUMABLE CONFIGURATIONS ===
+  travel_form_mode:
+    label: "Auto Travel Form"
+    section: "Utility"
+    type: checkbox
+    default: true
+
+  lunar_beam_moving_check:
+    label: "Lunar Beam (Moving Check)"
+    section: "Utility"
+    type: checkbox
+    default: true
+
+  MO_moonfire:
+    label: "Moonfire on MO"
+    section: "Utility"
+    type: checkbox
+    default: true
+
+  allow_pull_with_mo:
+    label: "Pull with MO"
+    section: "Utility"
+    type: checkbox
+    default: true
+
   use_trinket_1:
     label: "Auto Trinket 1"
     section: "Trinkets"
@@ -110,22 +163,26 @@ config:
     url: "https://discord.com/channels/857767821093634068/1467268534420766854"
 
 variables:
-  # Stampeding Roar conditions based on interface settings
   use_stampeding_roar: moving.time>=config.stampeding_roar_movement_time&buff.stampeding_roar.down&((config.stampeding_roar_usage=1&player.combat)|(config.stampeding_roar_usage=2&!player.combat)|(config.stampeding_roar_usage=3))
 
 lists:
-  # Out of combat: Ensures Mark of the Wild is active in the group
+  set_tank_var:
+    - variable,name=tank_buster_remains,value=999
+    - variable,name=tank_buster_remains,value=encounter.void_slash.remains,if=encounter.void_slash.up&encounter.void_slash.remains<variable.tank_buster_remains
+    - variable,name=tank_buster_remains,value=encounter.bone_hack.remains,if=encounter.bone_hack.up&encounter.bone_hack.remains<variable.tank_buster_remains
+    - variable,name=tank_buster_remains,value=encounter.rampage.remains,if=encounter.rampage.up&encounter.rampage.remains<variable.tank_buster_remains
+    - variable,name=tank_buster_casting,value=target.casting.void_slash|target.casting.bone_hack|target.casting.rampage
+
   out_of_combat:
     - mark_of_the_wild,name="Mark of the Wild",range_check=none,if=(buff.mark_of_the_wild.down.any|action.mark_of_the_wild.overlayed)&lastcast.mark_of_the_wild>=10
 
-  # Defensive priority sequence: Barkskin (according to menu options) -> Survival Instincts (when incoming damage exceeds threshold) -> Frenzied Regeneration (if effective health drops below threshold)
   defensives:
-    - barkskin,name="Barkskin",use_off_gcd=1,if=!config.manual_barkskin&!buff.lunar_beam.up&((!buff.survival_instincts.up&fight_remains>=20)|target.boss)
-    - barkskin,name="Barkskin (Low HP)",use_off_gcd=1,if=config.manual_barkskin&health.effective.pct<60&!buff.survival_instincts.up
-    - survival_instincts,name="Survival Instincts",use_off_gcd=1,if=incoming.pct<config.survival_instincts_threshold&!buff.survival_instincts.up
-    - frenzied_regeneration,name="Frenzied Regeneration",if=incoming.pct<config.frenzied_regen_threshold&buff.frenzied_regeneration.down
+    - barkskin,name="Barkskin (Pred)",off_gcd=true,ignore_queue=true,range_check=none,if=!config.manual_barkskin&incoming.mitigated.pct>=config.barkskin_dmg_pct
+    - survival_instincts,name="Survival (Pred)",off_gcd=true,ignore_queue=true,range_check=none,if=incoming.mitigated.pct>=config.survival_instincts_dmg_pct
+    - survival_instincts,name="Survival (HP)",off_gcd=true,ignore_queue=true,range_check=none,if=health.pct<=config.survival_instincts_threshold
+    - frenzied_regeneration,name="Frenzied Regen",off_gcd=true,ignore_queue=true,range_check=none,if=health.pct<=config.frenzied_regen_threshold&buff.frenzied_regeneration.down
+    - barkskin,name="Barkskin (HP)",off_gcd=true,ignore_queue=true,range_check=none,if=!config.manual_barkskin&health.pct<=config.barkskin_threshold
 
-  # Offensive racial abilities triggered without additional conditions during combat
   racials:
     - blood_fury,name="Blood Fury",if=debuff.thrash.stack>=2
     - berserking,name="Berserking",if=debuff.thrash.stack>=2
@@ -133,75 +190,103 @@ lists:
     - ancestral_call,name="Ancestral Call",if=debuff.thrash.stack>=2
     - thorn_bloom,name="Thorn Bloom",if=debuff.thrash.stack>=2
 
-  # Interrupts and Dispel: Skull Bash on main target, mouseover, or focus; Incapacitating Roar as AoE CC; and Soothe on Enrage
   interrupts:
-    - skull_bash,name="Skull Bash",use_off_gcd=1,if=interrupt.target.check
-    - skull_bash.mouseover,name="Skull Bash (MO)",use_off_gcd=1,if=interrupt.mouseover.check
-    - skull_bash.focus,name="Skull Bash (Focus)",use_off_gcd=1,if=interrupt.focus.check
+    - skull_bash,name="Skull Bash",off_gcd=true,ignore_queue=true,if=interrupt.target.check
+    - skull_bash.mouseover,name="Skull Bash (MO)",off_gcd=true,ignore_queue=true,if=interrupt.mouseover.check
+    - skull_bash.focus,name="Skull Bash (Focus)",off_gcd=true,ignore_queue=true,if=interrupt.focus.check
     - incapacitating_roar,name="Roar (AoE CC)",if=interrupt.stun.aoe.check
     - soothe,name="Soothe Enrage",if=target.purgeable.enrage
+    - quaking_palm,if=interrupt.cc.check
+    - haymaker,if=interrupt.cc.check
+    - war_stomp,if=interrupt.stun.aoe.check
+    - bull_rush,if=interrupt.stun.aoe.check
+    - tail_swipe,if=interrupt.stun.aoe.check
 
-  # Automatic Taunt: Maintains threat if threat is low and not in a raid
   taunt:
-    - growl,name="Growl",use_off_gcd=1,if=config.use_growl&target.threat<2&target.combat&target.threat!=-1&!player.inraid
-    - growl.mouseover,name="Growl (MO)",use_off_gcd=1,if=config.use_growl&mouseover.threat<2&mouseover.combat&mouseover.threat!=-1&mouseover.exists&!player.inraid
+    - growl,name="Growl",off_gcd=true,ignore_queue=true,if=config.use_growl&target.threat<2&target.combat&target.threat!=-1&!player.inraid
+    - growl.mouseover,name="Growl (MO)",off_gcd=true,ignore_queue=true,if=config.use_growl&mouseover.threat<2&mouseover.combat&mouseover.threat!=-1&mouseover.exists&!player.inraid
 
-  # Movement and utility abilities
   utility:
-    - stampeding_roar,name="Stampeding Roar",if=var.use_stampeding_roar&config.stampeding_roar_usage!=0
+    - stampeding_roar,name="Stampeding Roar",off_gcd=true,ignore_queue=true,if=var.use_stampeding_roar&config.stampeding_roar_usage!=0
 
-  # Damage Cooldowns and Burst Window Alignment
   cooldowns:
-    # Synchronizes the use of on-use trinkets and potion with the Incarnation window
-    - trinket_1,name="Trinket 1",if=config.use_trinket_1&trinket_1.sync&buff.incarnation_guardian_of_ursoc.up
-    - trinket_2,name="Trinket 2",if=config.use_trinket_2&trinket_2.sync&buff.incarnation_guardian_of_ursoc.up
+    - trinket_1,name="Trinket 1",if=config.use_trinket_1&trinket_1.sync
+    - trinket_2,name="Trinket 2",if=config.use_trinket_2&trinket_2.sync
     - combat_potion,name="Combat Potion",if=combat_potion.ready&config.use_potion&buff.incarnation_guardian_of_ursoc.up
-    # Incarnation: Requires minimum number of enemies or combat against Boss; ensures no buff overlap
-    - incarnation_guardian_of_ursoc,name="Incarnation",use_off_gcd=1,if=debuff.thrash.stack>=2&(active_enemies>=2|config.auto_incarn_st|target.boss)
-    # Sundering Roar: Generates immediate AoE threat or when Thrash reaches 5 stacks
-    - sundering_roar,name="Sundering Roar",if=active_enemies>=2|debuff.thrash.stack>=5
-    # Lunar Beam: Cast only if player has been standing still for at least 0.5 seconds
-    - lunar_beam,name="Lunar Beam",if=player.standing.time>=0.5
+    - sundering_roar,if=talent.lunar_calling.enabled&(dot.thrash.stack>=5&buff.incarnation_guardian_of_ursoc.up)|(cooldown_bypass.incarnation_guardian_of_ursoc.remains>=45&!buff.incarnation_guardian_of_ursoc.up)
+    - bristling_fur,if=cooldown.mangle.remains&cooldown.77758.remains&(rage<60&talent.killing_blow.enabled|rage<40&!talent.killing_blow.enabled)&!buff.ravage.up
+    - barkskin,if=buff.bear_form.up&!config.manual_barkskin
+    - lunar_beam,if=target.combat&(!config.lunar_beam_moving_check|player.moving.time<=1)&((cooldown.incarnation_guardian_of_ursoc.up|cooldown.berserk.up)|((cooldown.incarnation_guardian_of_ursoc.remains>60|cooldown.berserk.remains>60)&!talent.lunation.enabled|(cooldown.incarnation_guardian_of_ursoc.remains>30|cooldown.berserk.remains>30)&talent.lunation.enabled))
+    - convoke_the_spirits,if=buff.bear_form.up&(((buff.lunar_beam.up|cooldown.lunar_beam.remains>15)&talent.lunation.enabled)|!talent.lunation.enabled)
+    - sundering_roar,if=(dot.thrash.stack>4&talent.flashing_claws.rank=2|dot.thrash.stack>3&talent.flashing_claws.rank=1|dot.thrash.stack>2&!talent.flashing_claws.enabled)
+    - berserk,if=!cooldown.1261867.up&(talent.heart_of_the_wild.enabled)|!talent.ravage.enabled|!talent.heart_of_the_wild.enabled
+    - incarnation_guardian_of_ursoc,if=!cooldown.1261867.up&(talent.heart_of_the_wild.enabled)|!talent.ravage.enabled|!talent.heart_of_the_wild.enabled
+    - wild_guardian,if=(buff.ravage.up&talent.ravage.enabled)|!talent.ravage.enabled&buff.lunar_beam.up
 
-  # Elune's Chosen Build Rotation
-  # Focuses on maintaining maximum Moonfire and Thrash activity. Swipe and Raze are omitted in this build.
-  rotation_elunes:
-    # Maintains Thrash active to apply bleed and debuffs
-    - thrash,name="Thrash"
-    # Spends rage to keep Ironfur active above 50 Rage
-    - ironfur,name="Ironfur",use_off_gcd=1,if=rage>=50
-    # Moonfire as filler spell, replacing Swipe entirely
-    - moonfire,name="Moonfire",delay=400
+  bear:
+    - bear_form,range_check=none,if=!buff.bear_form.up&!buff.feline_potential.up
+    - mangle,if=rage<=30
+    - 77758,range_check=mob_count_8y,if=talent.lunar_calling.enabled
+    - ravage,if=buff.ravage.up&rage>=40&!talent.killing_blow.enabled
+    - ravage,if=buff.ravage.up&rage>=60&talent.killing_blow.enabled
+    - moonfire,if=buff.galactic_guardian.up&buff.bear_form.up&talent.boundless_moonlight.enabled&!talent.red_moon.enabled&!talent.wild_guardian.enabled&target.combat
+    - raze,if=!talent.fount_of_strength.enabled&!talent.wild_guardian.enabled&talent.raze.enabled
+    - raze,if=!buff.ravage.up&rage>=90&talent.fount_of_strength.enabled
+    - ironfur,off_gcd=true,ignore_queue=true,if=!buff.ironfur.up&!buff.ravage.up&talent.wild_guardian.enabled
+    - ironfur,off_gcd=true,ignore_queue=true,if=!buff.ironfur.up&!talent.wild_guardian.enabled|rage>=80&!talent.wild_guardian.enabled
+    - 77758,range_check=mob_count_8y,target_if=refreshable|(dot.thrash.stack<5&talent.flashing_claws.rank=2|dot.thrash.stack<4&talent.flashing_claws.rank=1|dot.thrash.stack<3&!talent.flashing_claws.enabled)
+    - 77758,range_check=mob_count_8y
+    - mangle,if=dot.red_moon.ticking&talent.red_moon.enabled
+    - mangle,if=((buff.incarnation_guardian_of_ursoc.up|buff.berserk.up)&buff.ursine_potential.stack<6&talent.wildpower_surge.enabled)
+    - mangle,if=(buff.incarnation_guardian_of_ursoc.up|buff.berserk.up)|talent.red_moon.enabled&(cooldown.red_moon.remains>3&(((rage<88)&!talent.fount_of_strength.enabled)|((rage<83)&!talent.fount_of_strength.enabled&talent.soul_of_the_forest.enabled)|((rage<108)&talent.fount_of_strength.enabled)|((rage<103)&talent.fount_of_strength.enabled&talent.soul_of_the_forest.enabled)))
+    - mangle,if=!talent.red_moon.enabled&(((rage<88)&!talent.fount_of_strength.enabled)|((rage<83)&!talent.fount_of_strength.enabled&talent.soul_of_the_forest.enabled)|((rage<108)&talent.fount_of_strength.enabled)|((rage<103)&talent.fount_of_strength.enabled&talent.soul_of_the_forest.enabled))
+    
+    # heart of the wild fluid form
+    - rake,if=!buff.cat_form.up&talent.fluid_form.enabled&cooldown.1261867.up&talent.heart_of_the_wild.enabled&cooldown_bypass.incarnation_guardian_of_ursoc.remains>=30
+    - cat_form,range_check=none,if=!buff.cat_form.up&!talent.fluid_form.enabled&cooldown.1261867.up&talent.heart_of_the_wild.enabled&cooldown_bypass.incarnation_guardian_of_ursoc.remains>=30
+    - rake,if=!buff.cat_form.up&talent.fluid_form.enabled&cooldown.1261867.up&talent.heart_of_the_wild.enabled&(active_enemies<=5&talent.moonkin_form.enabled|!talent.moonkin_form.enabled)&(rage<30&!talent.fount_of_strength.enabled|talent.fount_of_strength.enabled)
+    - rake,if=!buff.cat_form.up&talent.fluid_form.enabled&buff.ursine_potential.stack=6&talent.wildpower_surge.enabled&active_enemies<=2
+    - rake,if=(buff.ursine_potential.stack=6&!buff.cat_form.up&talent.fluid_form.enabled)
+    - cat_form,range_check=none,if=!buff.cat_form.up&!talent.fluid_form.enabled&cooldown.1261867.up&talent.heart_of_the_wild.enabled&(active_enemies<=5&talent.moonkin_form.enabled|!talent.moonkin_form.enabled)&(rage<30&!talent.fount_of_strength.enabled|talent.fount_of_strength.enabled)
+    - moonkin_form,if=!buff.moonkin_form.up&cooldown.1261867.up&active_enemies>=6&talent.moonkin_form.enabled
+    
+    - ferocious_bite,if=(buff.cat_form.up&buff.feline_potential.up&(buff.incarnation_guardian_of_ursoc.up|buff.berserk.up)&!dot.rip.refreshable)
+    - rip,if=(buff.cat_form.up&buff.feline_potential.up)&active_enemies<=2
+    - shred,if=(buff.ursine_potential.stack=6&!buff.cat_form.up&!dot.rake.refreshable&talent.fluid_form.enabled)
+    
+    - moonfire,if=buff.galactic_guardian.up&buff.bear_form.up&talent.boundless_moonlight.enabled&!talent.red_moon.enabled&!talent.wild_guardian.enabled&target.combat
+    - moonfire,if=(talent.lunation.enabled)&buff.bear_form.up&!talent.red_moon.enabled&!talent.raze.enabled&!talent.wild_guardian.enabled&target.combat
+    - moonfire,if=(talent.lunation.enabled)&buff.bear_form.up&!talent.red_moon.enabled&target.combat
+    - moonfire,if=talent.lunar_calling.enabled&buff.bear_form.up&target.combat
+    - 213764,if=!talent.lunation.enabled|talent.lunation.enabled&talent.red_moon.enabled
 
-  # Transition to Cat Form with Heart of the Wild
-  hotw:
-    - rake,name="Cat Form",delay=400,if=!buff.cat_form.up&cooldown.heart_of_the_wild.ready
-    - heart_of_the_wild,delay=400,name="Feral Frenzy",use_off_gcd=1,if=buff.cat_form.up
-
-  # Main Rotation (Entry Point)
   main:
+    - call_action_list,name=set_tank_var
     - call_action_list,name=spell_queue
     - call_action_list,name=sanity_checks
-    - call_action_list,name=out_of_combat
+    - call_action_list,name=out_of_combat,if=!player.combat
     - call_action_list,name=auto_target
-    - call_action_list,name=auto_heal
+    
+    - bear_form,range_check=none,if=buff.bear_form.down&!talent.fluid_form&(target.attackable|enemies.40y)
+    
+    # manual heart of the wild
+    - 1261868,if=!auto_combat.player&buff.cat_form.up&config.use_hotw
+    - mangle,if=talent.fluid_form.enabled&buff.bear_form.down&(target.attackable|target.quest_mob)
+    - moonfire.mouseover,if=config.MO_moonfire&config.allow_pull_with_mo&mouseover.enemy&mouseover.alive&mouseover.debuff.moonfire.down
+    
     - return,if=auto_combat.player
-
-    # Heart of the Wild activated if option is enabled and target is within range
-    - call_action_list,name=hotw,if=config.use_hotw&target.range<=8
-
-    # Ensures Bear Form for tanking; aborts if transition fails
-    - mangle,name="Bear Form",if=!buff.bear_form.up
-    - bear_form,name="Bear Form (Forced)",if=!buff.bear_form.up
-    - return,if=!buff.bear_form.up
-
-    # Combat Priority: Defensives -> Taunt -> Interrupts -> Utility -> Racials -> Target Check -> Cooldowns -> Elunes Rotation
     - call_action_list,name=defensives
+    
     - call_action_list,name=taunt
     - call_action_list,name=interrupts
     - call_action_list,name=utility
     - call_action_list,name=racials
+    
+    - call_action_list,name=auto_heal
 
-    - return,if=!target.exists|target.dead|!target.enemy
+    - ironfur,off_gcd=true,ignore_queue=true,delay=300,if=buff.ironfur.remains<2|rage>=80
+    - moonfire,if=target.range>8&buff.bear_form.up&target.combat
+    - moonfire.mouseover,if=config.MO_moonfire&mouseover.enemy&mouseover.alive&mouseover.debuff.moonfire.down&mouseover.combat
+    
     - call_action_list,name=cooldowns
-    - call_action_list,name=rotation_elunes
+    - call_action_list,name=bear,if=buff.bear_form.up
