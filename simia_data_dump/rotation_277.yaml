@@ -1,0 +1,92 @@
+# Havoc Demon Hunter Rotation
+# Spec ID: 577
+# Assisted Combat ID: 328
+version: 3
+entry: main
+
+# Original conversion from Assisted Combat export
+# UnknownConditionType(70) conditions were removed or simplified
+
+variables:
+  # Metamorphosis is active
+  in_meta: buff.metamorphosis.up
+
+  # Essence Break debuff on target
+  essence_break_up: target.debuff.essence_break.up
+
+config:
+
+lists:
+  # Cooldowns and burst abilities
+  cooldowns:
+    # Original: Metamorphosis (191427) => talent("Metamorphosis (191427)") && castable("Metamorphosis (191427)") && UnknownConditionType(70)
+    # UnknownConditionType(70) removed - likely was a fight timing condition
+    - metamorphosis,if=talent.metamorphosis&state.cds
+    # Original: The Hunt (370965) => talent("The Hunt (370965)") && castable("The Hunt (370965)") && UnknownConditionType(70)
+    - the_hunt,if=talent.the_hunt&state.cds
+
+  # Meta burst window
+  meta_burst:
+    # Original: Blade Dance (188499) => talent("Blade Dance (188499)") && castable("Blade Dance (188499)") && aura("Metamorphosis (162264)").up && target.aura("Essence Break (320338)").up && target.distanceTo(player) <= 5
+    - blade_dance,if=var.essence_break_up&active_enemies>=1
+    # Original: Chaos Strike (162794) => talent("Chaos Strike (162794)") && castable("Chaos Strike (162794)") && aura("Metamorphosis (162264)").up && target.aura("Essence Break (320338)").up
+    - annihilation,if=var.essence_break_up
+    # Original: Essence Break (258860) => talent("Essence Break (258860)") && castable("Essence Break (258860)") && target.distanceTo(player) <= 8 && aura("Metamorphosis (162264)").up
+    - essence_break,if=talent.essence_break&active_enemies>=1
+    # Original: Blade Dance (188499) => talent("Blade Dance (188499)") && castable("Blade Dance (188499)") && aura("Metamorphosis (162264)").up && target.distanceTo(player) <= 5
+    - death_sweep,if=combat.enemies.5y>=1
+    # Original: Chaos Strike (162794) => talent("Chaos Strike (162794)") && castable("Chaos Strike (162794)") && aura("Metamorphosis (162264)").up
+    - annihilation
+
+  # Reaver's Glaive priority (Aldrachi Reaver hero talent)
+  reavers:
+    # Original: Throw Glaive (185123) => talent("Throw Glaive (185123)") && castable("Throw Glaive (185123)") && aura("Reaver's Glaive (444686)").up
+    - throw_glaive,if=buff.reavers_glaive.up
+
+  # Main single target / cleave rotation
+  main_rotation:
+    - call_action_list,name=reavers
+    # Original: Immolation Aura (258920) => talent("Immolation Aura (258920)") && castable("Immolation Aura (258920)") && enemies.near(player, 8) >= 3
+    - immolation_aura,if=talent.immolation_aura&active_enemies>=3
+    # Original: Eye Beam (198013) => talent("Eye Beam (198013)") && castable("Eye Beam (198013)") && target.distanceTo(player) <= 8
+    - eye_beam,if=talent.eye_beam&active_enemies>=1
+    # Original: Blade Dance (188499) => talent("Blade Dance (188499)") && castable("Blade Dance (188499)") && target.distanceTo(player) <= 5
+    - blade_dance,if=!var.in_meta&active_enemies>=1
+    - death_sweep,if=var.in_meta&active_enemies>=1
+    # Original: Vengeful Retreat (198793) => talent("Vengeful Retreat (198793)") && castable("Vengeful Retreat (198793)") && aura("Inertia (427640)").up && UnknownConditionType(70)
+    # Original: Vengeful Retreat (198793) => talent("Vengeful Retreat (198793)") && castable("Vengeful Retreat (198793)") && aura("Exergy (206476)").up && UnknownConditionType(70)
+    # Vengeful Retreat with Inertia/Exergy - UnknownConditionType(70) removed
+    # - vengeful_retreat,if=talent.vengeful_retreat&(buff.inertia.up|buff.exergy.up)
+    # Original: Felblade (232893) => talent("Felblade (232893)") && castable("Felblade (232893)") && UnknownConditionType(70)
+    - felblade,if=talent.felblade
+    # Original: Fel Rush (344865) => talent("Fel Rush (344865)") && castable("Fel Rush (344865)") && aura("Inertia (1215159)").up && UnknownConditionType(70)
+    # Fel Rush with Inertia - UnknownConditionType(70) removed
+    # - fel_rush,if=talent.fel_rush&buff.inertia.up
+    # Original: Chaos Strike (162794) => talent("Chaos Strike (162794)") && castable("Chaos Strike (162794)")
+    - chaos_strike,if=!var.in_meta
+    - annihilation,if=var.in_meta
+    # Original: Immolation Aura (258920) => talent("Immolation Aura (258920)") && castable("Immolation Aura (258920)") && enemies.near(player, 8) >= 1
+    - immolation_aura,if=talent.immolation_aura&active_enemies>=1
+    # Original: Throw Glaive (185123) => talent("Throw Glaive (185123)") && castable("Throw Glaive (185123)")
+    - throw_glaive
+    # Original: Chaos Strike (162794) - fallback filler
+    - demons_bite
+
+  trinkets:
+    - trinket_1,if=trinket_1.sync
+    - trinket_2,if=trinket_2.sync
+
+  main:
+    # _shared.yaml lists
+    - call_action_list,name=spell_queue
+    - call_action_list,name=sanity_checks
+    - call_action_list,name=auto_target
+    - call_action_list,name=auto_interrupt
+    # Cooldowns when enabled
+    - call_action_list,name=cooldowns
+    # Trinkets
+    - call_action_list,name=trinkets
+    # Meta burst rotation takes priority during Metamorphosis
+    - call_action_list,name=meta_burst,if=var.in_meta
+    # Standard rotation
+    - run_action_list,name=main_rotation

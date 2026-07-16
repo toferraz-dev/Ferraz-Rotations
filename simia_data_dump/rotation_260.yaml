@@ -1,0 +1,269 @@
+# Rogue Outlaw Rotation
+# Spec ID: 260
+version: 3
+spec: 260
+entry: main
+
+variables:
+  shadowmeld_allowed: "(config.shadowmeld_usage=1&player.inmythicplus)|(config.shadowmeld_usage=2&(player.indungeon|player.inraid))|(config.shadowmeld_usage=3&target.classification>=5)"
+
+  # variable,name=ambush_condition,value=(talent.hidden_opportunity|combo_points.deficit>=2+talent.improved_ambush)&energy>=50
+  ambush_condition: "(talent.hidden_opportunity|combo_points.deficit>=2+talent.improved_ambush)&energy>=50"
+
+  # variable,name=finish_condition,value=combo_points>=cp_max_spend-1-(hero_tree.fatebound&!cooldown.between_the_eyes.ready)
+  # cp_max_spend not supported — use combo_points.max; hero_tree.fatebound → talent.hand_of_fate
+  finish_condition: "combo_points>=combo_points.max-1-(talent.hand_of_fate&!cooldown.between_the_eyes.ready)"
+
+  # variable,name=blade_flurry_sync,value=spell_targets.blade_flurry<2&raid_event.adds.in>20|buff.blade_flurry.up
+  # raid_event not supported — dropped
+  blade_flurry_sync: "active_enemies<2|buff.blade_flurry.up"
+
+  # Roll the Bones stage (1-4). Only one stage buff is active at a time.
+  rtb_buffs: "buff.jackpot.up*4+buff.triple_threat.up*3+buff.double_trouble.up*2+buff.one_of_a_kind.up"
+
+  # Remaining time on the active stage buff (sum works since only one is active at a time)
+  rtb_remains: "buff.jackpot.remains+buff.triple_threat.remains+buff.double_trouble.remains+buff.one_of_a_kind.remains"
+
+config:
+  crimson_vial_hp_pct:
+    section: "Defensive HP Percentage"
+    label: "Crimson Vial HP%"
+    type: slider
+    min: 0
+    max: 100
+    default: 65
+
+  poison_mh:
+    label: "Poison MH"
+    type: dropdown
+    options:
+      - "Numbing"
+      - "Crippling"
+      - "None"
+      - "Atrophic"
+    default: 0
+
+  poison_oh:
+    label: "Poison OH"
+    type: dropdown
+    options:
+      - "Instant"
+      - "Wound"
+      - "None"
+    default: 0
+
+  vanish_enabled:
+    label: "Auto Vanish"
+    type: checkbox
+    default: false
+
+  bladerush_melee_only:
+    label: "Blade Rush in Melee Only"
+    type: checkbox
+    default: true
+
+  stealth_mode:
+    label: "Stealth Mode"
+    type: dropdown
+    options:
+      - "Enemy Around"
+      - "Always"
+      - "Never"
+    default: 0
+
+  shadowmeld_usage:
+    label: "Shadowmeld Usage"
+    type: dropdown
+    options:
+      - "Disabled"
+      - "M+ Only"
+      - "Dungeon & Raid"
+      - "Boss Only"
+    default: 2
+
+lists:
+  # Defensives
+  defensives:
+    # --- Prediction Damage: (no self-mitigation defensives in this spec) ---
+
+    # --- HP Percentage: react when already low ---
+    # crimson_vial
+    - crimson_vial,range_check=none,if=health.pct<=config.crimson_vial_hp_pct
+
+  # Cooldowns
+  cds:
+    # adrenaline_rush,if=!buff.adrenaline_rush.up&(!variable.finish_condition|!talent.improved_adrenaline_rush)&(raid_event.adds.remains>5|raid_event.adds.in<5|raid_event.adds.in>30)
+    # raid_event not supported — condition dropped
+    - adrenaline_rush,if=!buff.adrenaline_rush.up&(!var.finish_condition|!talent.improved_adrenaline_rush)
+
+    # blade_flurry,if=spell_targets>=2&buff.blade_flurry.remains<gcd
+    - blade_flurry,if=active_enemies>=2&buff.blade_flurry.remains<gcd
+
+    # preparation,if=cooldown.adrenaline_rush.remains>30&!cooldown.between_the_eyes.ready&(!cooldown.killing_spree.ready|!hero_tree.trickster)|fight_remains<30
+    # hero_tree.trickster → talent.unseen_blade
+    - preparation,if=cooldown_bypass.adrenaline_rush.remains>30&!cooldown.between_the_eyes.ready&(!cooldown.killing_spree.ready|!talent.unseen_blade)|fight_remains<30
+
+    # keep_it_rolling,if=rtb_buffs=2&buff.roll_the_bones.remains<cooldown.adrenaline_rush.remains&!buff.loaded_dice.up&(cooldown.preparation.remains|!talent.preparation)|rtb_buffs>=3
+    # rtb_buffs → var.rtb_buffs; buff.roll_the_bones.remains → var.rtb_remains (container buff, not a real WoW buff)
+    - keep_it_rolling,if=var.rtb_buffs=2&var.rtb_remains<cooldown.adrenaline_rush.remains&!buff.loaded_dice.up&(cooldown.preparation.remains|!talent.preparation)|var.rtb_buffs>=3
+
+    # roll_the_bones,if=!buff.roll_the_bones.up|rtb_buffs=1
+    # buff.roll_the_bones.up → var.rtb_buffs=0 (container buff); rtb_buffs → var.rtb_buffs
+    - roll_the_bones,if=var.rtb_buffs=0|var.rtb_buffs=1
+
+    # blade_rush,if=set_bonus.mid1_4pc&!buff.whirl_of_blades.up|spell_targets=1&energy.base_time_to_max>2|spell_targets>=2
+    # energy.base_time_to_max not supported — use energy.time_to_max
+    # config.bladerush_melee_only gates the cast to target.range<=5 (avoids dashing in from far)
+    - blade_rush,if=(!config.bladerush_melee_only|target.range<=5)&(set_bonus.mid1_4pc&!buff.whirl_of_blades.up|active_enemies=1&energy.time_to_max>2|active_enemies>=2)
+
+    # vanish,if=!variable.finish_condition&talent.hidden_opportunity&!buff.audacity.up&!buff.opportunity.up
+    - vanish,if=config.vanish_enabled&!var.finish_condition&talent.hidden_opportunity&!buff.audacity.up&!buff.opportunity.up
+
+    # shadowmeld,if=!variable.finish_condition&talent.hidden_opportunity&!buff.audacity.up&!buff.opportunity.up
+    - shadowmeld,if=var.shadowmeld_allowed&!var.finish_condition&talent.hidden_opportunity&!buff.audacity.up&!buff.opportunity.up
+
+    # potion,if=buff.bloodlust.react|fight_remains<30|buff.adrenaline_rush.up
+    # potion not supported — removed
+
+    # blood_fury
+    - blood_fury
+
+    # berserking
+    - berserking
+
+    # fireblood
+    - fireblood
+
+    # ancestral_call
+    - ancestral_call
+
+    # Trinkets
+    - call_action_list,name=trinkets
+
+  # Finishers
+  finish:
+    # dispatch,if=!buff.slice_and_dice.up
+    - dispatch,if=!buff.slice_and_dice.up
+
+    # between_the_eyes,if=cooldown.adrenaline_rush.remains>30|buff.adrenaline_rush.up|!talent.supercharger|!talent.zero_in
+    - between_the_eyes,if=cooldown.adrenaline_rush.remains>30|buff.adrenaline_rush.up|!talent.supercharger|!talent.zero_in
+
+    # pool_resource,for_next=1
+    - pool_resource,for_next=1,if=cooldown.killing_spree.ready
+
+    # killing_spree
+    - killing_spree
+
+    # coup_de_grace
+    - coup_de_grace
+
+    # dispatch
+    - dispatch
+
+  # Builders
+  build:
+    # ambush,if=talent.hidden_opportunity&buff.audacity.up
+    - ambush,if=talent.hidden_opportunity&buff.audacity.up
+
+    # blade_flurry,if=talent.deft_maneuvers&spell_targets>=3
+    - blade_flurry,if=talent.deft_maneuvers&active_enemies>=3
+
+    # coup_de_grace,if=buff.disorienting_strikes.up
+    - coup_de_grace,if=buff.disorienting_strikes.up
+
+    # pistol_shot,if=talent.audacity&talent.hidden_opportunity&buff.opportunity.up&!buff.audacity.up
+    - pistol_shot,if=talent.audacity&talent.hidden_opportunity&buff.opportunity.up&!buff.audacity.up
+
+    # pistol_shot,if=talent.fan_the_hammer&buff.opportunity.up&(buff.opportunity.stack>=buff.opportunity.max_stack|buff.opportunity.remains<2)
+    # buff.opportunity.max_stack not supported — hardcoded to 6
+    - pistol_shot,if=talent.fan_the_hammer&buff.opportunity.up&(buff.opportunity.stack>=6|buff.opportunity.remains<2)
+
+    # pistol_shot,if=talent.fan_the_hammer&buff.opportunity.up&(combo_points.deficit>=(1+talent.quick_draw+(talent.quick_draw*talent.fan_the_hammer.rank))&(combo_points>1|rtb_buffs<2|!talent.deal_fate))
+    # rtb_buffs → var.rtb_buffs
+    - pistol_shot,if=talent.fan_the_hammer&buff.opportunity.up&(combo_points.deficit>=(1+talent.quick_draw+(talent.quick_draw*talent.fan_the_hammer.rank))&(combo_points>1|var.rtb_buffs<2|!talent.deal_fate))
+
+    # pistol_shot,if=!talent.fan_the_hammer&buff.opportunity.up&(energy.base_deficit>energy.regen*1.5|combo_points.deficit<=1|talent.quick_draw.enabled|talent.audacity.enabled&!buff.audacity.up)
+    # energy.base_deficit not supported — use energy.deficit; .enabled suffix is supported (same as bare talent check)
+    - pistol_shot,if=!talent.fan_the_hammer&buff.opportunity.up&(energy.deficit>energy.regen*1.5|combo_points.deficit<=1|talent.quick_draw|talent.audacity&!buff.audacity.up)
+
+    # pool_resource,for_next=1
+    - pool_resource,for_next=1,if=talent.hidden_opportunity
+
+    # ambush,if=talent.hidden_opportunity
+    - ambush,if=talent.hidden_opportunity
+
+    # sinister_strike
+    - sinister_strike
+
+  # Trinkets
+  trinkets:
+    # use_items,slots=trinket1,if=buff.between_the_eyes.up|trinket.1.has_stat.any_dps|fight_remains<=20
+    # use_items,slots=trinket2,if=buff.between_the_eyes.up|trinket.2.has_stat.any_dps|fight_remains<=20
+    # trinket property conditions not supported — use generic sync
+    - trinket_1,if=trinket_1.sync
+    - trinket_2,if=trinket_2.sync
+
+  # Main entry point
+  main:
+    # spell_queue, sanity_checks, auto_target always first
+    - call_action_list,name=spell_queue
+    - call_action_list,name=sanity_checks
+    - call_action_list,name=auto_target
+
+    # Restealth based on config: Enemy Around (range check), Always (force), Never (skip)
+    # actions=stealth
+    - stealth,range_check=mob_count_40y,if=config.stealth_mode=0&!buff.stealth.up
+    - stealth,range_check=none,if=config.stealth_mode=1&!buff.stealth.up
+
+    # Poisons (out of combat only)
+    - numbing_poison,range_check=none,if=config.poison_mh=0&pred.buff.numbing_poison.remains<120&!player.combat
+    - instant_poison,range_check=none,if=config.poison_oh=0&pred.buff.instant_poison.remains<120&!player.combat
+    - wound_poison,range_check=none,if=config.poison_oh=1&pred.buff.wound_poison.remains<120&!player.combat
+    - crippling_poison,range_check=none,if=config.poison_mh=1&pred.buff.crippling_poison.remains<120&!player.combat
+    - atrophic_poison,range_check=none,if=config.poison_mh=3&pred.buff.atrophic_poison.remains<120&!player.combat
+
+    # Combat Check
+    - return,if=auto_combat.player
+
+    - call_action_list,name=auto_heal
+    - call_action_list,name=defensives
+
+    # Interrupts
+    # kick
+    - kick,if=interrupt.target.check
+    - kick.mouseover,if=interrupt.mouseover.check
+    - kick.focus,if=interrupt.focus.check
+    # CC Interrupt
+    - cheap_shot,if=interrupt.cc.check
+    - kidney_shot,if=interrupt.cc.check
+    # Racial Interrupts
+    - quaking_palm,if=interrupt.cc.check
+    - haymaker,if=interrupt.cc.check
+    - war_stomp,if=interrupt.stun.aoe.check
+    - bull_rush,if=interrupt.stun.aoe.check
+    - tail_swipe,if=interrupt.stun.aoe.check
+
+    # Target Check
+    - return,if=auto_combat.target
+
+    # actions+=/call_action_list,name=cds
+    - call_action_list,name=cds,if=state.cds
+
+    # actions+=/run_action_list,name=finish,if=variable.finish_condition
+    - run_action_list,name=finish,if=var.finish_condition
+
+    # actions+=/call_action_list,name=build
+    - call_action_list,name=build
+
+    # arcane_torrent,if=energy.base_deficit>=15+energy.regen
+    # energy.base_deficit not supported — use energy.deficit
+    - arcane_torrent,if=energy.deficit>=15+energy.regen
+
+    # arcane_pulse
+    - arcane_pulse
+
+    # lights_judgment
+    - lights_judgment
+
+    # bag_of_tricks
+    - bag_of_tricks

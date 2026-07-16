@@ -1,0 +1,168 @@
+
+spec: 64
+name: "Mage Frost simc"
+author: Khan
+version: "1.4.2"
+description: "SimC APL + buffs, defensives, interrupts, utility - Midnight 12.0"
+
+movement_allowed: buff.ice_floes.up
+
+config:
+
+  aoe_threshold:
+    section: "Combat"
+    type: slider
+    min: 2
+    max: 8
+    value: 3
+
+  use_cds:
+    section: "Cooldowns"
+    type: checkbox
+    value: true
+
+  auto_spellsteal:
+    section: "Utility"
+    type: checkbox
+    value: true
+
+  ice_barrier_hp:
+    section: "Defensives"
+    type: slider
+    min: 0
+    max: 100
+    value: 100
+
+  ice_block_hp:
+    section: "Defensives"
+    type: slider
+    min: 1
+    max: 100
+    value: 15
+
+lists:
+
+  out_of_combat:
+
+    - arcane_intellect,range_check=none,if=!buff.arcane_intellect.up|buff.arcane_intellect.remains<300
+    - ice_barrier,range_check=none,if=!buff.ice_barrier.up&cooldown.ice_barrier.ready
+    - summon_water_elemental,range_check=none,if=talent.summon_water_elemental&!pet.alive
+
+  defensives:
+
+    - ice_block,if=health.pct<=config.ice_block_hp&!buff.ice_block.up
+    # Cold Snap: reset Ice Block / Ice Barrier CDs when HP is critically low
+    - cold_snap,if=talent.cold_snap&(!cooldown.ice_block.ready|!cooldown.ice_barrier.ready)&health.pct<=config.ice_block_hp*2
+    # Ice Barrier in-combat: cast when HP drops to or below threshold (0 = disabled)
+    - ice_barrier,if=config.ice_barrier_hp>0&health.pct<=config.ice_barrier_hp&!buff.ice_barrier.up&cooldown.ice_barrier.ready
+
+  interrupts:
+    - counterspell,if=interrupt.target.check
+    - counterspell.mouseover,if=interrupt.mouseover.check
+    - counterspell.focus,if=interrupt.focus.check
+    - counterspell,if=interrupt.stun.aoe.check
+    # Racial: arcane_torrent (Blood Elf — silences, acts as interrupt)
+    - arcane_torrent,if=interrupt.target.check
+    - arcane_torrent.mouseover,if=interrupt.mouseover.check
+    - arcane_torrent.focus,if=interrupt.focus.check
+
+  utility:
+    - spellsteal,range_check=target,if=config.auto_spellsteal&target.has_stealable
+
+  cds:
+    - use_items,if=combat.time=0|talent.frostfire_bolt|prev_gcd.1.frozen_orb|prev_gcd.1.ray_of_frost|debuff.freezing.stack<6&cooldown.ray_of_frost.charges>=1|fight_remains<20
+    # Mirror Image: 2-min DPS CD, talent-gated
+    - mirror_image,if=talent.mirror_image&cooldown.mirror_image.ready
+    - blood_fury,if=combat.time=0|talent.frostfire_bolt|prev_gcd.1.frozen_orb|prev_gcd.1.ray_of_frost|debuff.freezing.stack<6&cooldown.ray_of_frost.charges>=1|fight_remains<20
+    - berserking,if=combat.time=0|talent.frostfire_bolt|prev_gcd.1.frozen_orb|prev_gcd.1.ray_of_frost|debuff.freezing.stack<6&cooldown.ray_of_frost.charges>=1|fight_remains<20
+    - fireblood,if=combat.time=0|talent.frostfire_bolt|prev_gcd.1.frozen_orb|prev_gcd.1.ray_of_frost|debuff.freezing.stack<6&cooldown.ray_of_frost.charges>=1|fight_remains<20
+    - ancestral_call,if=combat.time=0|talent.frostfire_bolt|prev_gcd.1.frozen_orb|prev_gcd.1.ray_of_frost|debuff.freezing.stack<6&cooldown.ray_of_frost.charges>=1|fight_remains<20
+    # Opener: Frostfire build
+    - flurry,if=talent.frostfire_bolt
+    - glacial_spike,if=talent.frostfire_bolt
+    - flurry,if=talent.frostfire_bolt
+    - ray_of_frost,if=talent.frostfire_bolt
+    - frozen_orb,if=talent.frostfire_bolt
+    # Opener: Spellslinger build — detected via Splintering Sorcery root node
+    - flurry,if=talent.splintering_sorcery
+    - frozen_orb,if=talent.splintering_sorcery
+    - ray_of_frost,if=talent.splintering_sorcery
+    # End-of-fight dump
+    - ray_of_frost,if=fight_remains<12
+    - ice_lance,if=fight_remains<gcd.max*1.5
+
+  ff_aoe:
+    - blizzard,if=buff.freezing_rain.up
+    - flurry,if=buff.brain_freeze.up&buff.thermal_void.down
+    - frozen_orb
+    - glacial_spike
+    - comet_storm,if=talent.comet_storm
+    - blizzard,if=enemies_around_target>=(5-talent.freezing_rain-talent.freezing_winds)&(cooldown.frozen_orb.remains>12*spell_haste|!talent.freezing_rain)
+    - ice_lance,if=buff.fingers_of_frost.up
+    - ice_lance,if=debuff.freezing.stack>=10
+    - flurry,if=cooldown_react
+    - ray_of_frost,if=!buff.frostfire_empowerment.up
+    - frostbolt
+    - call_action_list,name=movement
+
+  ff_st:
+    - flurry,if=buff.brain_freeze.up&buff.thermal_void.down
+    - frozen_orb
+    - glacial_spike
+    - comet_storm,if=talent.comet_storm
+    - ice_lance,if=buff.fingers_of_frost.up
+    - ice_lance,if=debuff.freezing.stack>=10
+    - flurry,if=cooldown_react
+    - ray_of_frost,if=active_enemies=1|!buff.frostfire_empowerment.up
+    - frostbolt
+    - call_action_list,name=movement
+
+  movement:
+    - blizzard,if=buff.freezing_rain.up
+    - cone_of_cold,if=talent.cone_of_frost
+    - ice_lance
+
+  ss_aoe:
+    - comet_storm,if=talent.comet_storm&buff.splinterstorm.down
+    - blizzard,if=buff.freezing_rain.up
+    - flurry,if=buff.brain_freeze.up&buff.thermal_void.down
+    - frozen_orb
+    - ice_lance,if=buff.fingers_of_frost.up
+    - glacial_spike
+    - ice_lance,if=debuff.freezing.stack>=6
+    - cone_of_cold,if=talent.cone_of_frost&enemies_around_target>=4
+    - blizzard,if=enemies_around_target>=5&talent.freezing_winds&talent.freezing_rain
+    - flurry,if=cooldown_react
+    - ray_of_frost
+    - frostbolt
+    - call_action_list,name=movement
+
+  ss_st:
+    - comet_storm,if=talent.comet_storm&buff.splinterstorm.down
+    - flurry,if=buff.brain_freeze.up&buff.thermal_void.down
+    - frozen_orb
+    - ice_lance,if=buff.fingers_of_frost.up
+    - glacial_spike
+    - ice_lance,if=debuff.freezing.stack>=6
+    - ray_of_frost
+    - flurry,if=cooldown_react
+    - frostbolt
+    - call_action_list,name=movement
+
+  main:
+    - call_action_list,name=spell_queue
+    - call_action_list,name=sanity_checks
+    - call_action_list,name=auto_target_ranged
+    - call_action_list,name=auto_heal,if=player.combat
+    - call_action_list,name=out_of_combat
+    - return,if=!target.valid&!((config.auto_combat.has(1)&target.quest_mob&target.enemy&!target.dead)|(config.auto_combat.has(2)&target.combat&target.enemy&!target.dead)|(config.auto_combat.has(3)&target.targeting_party&target.enemy&!target.dead))
+    - return,if=!target.valid&config.auto_combat.has(0)
+    - call_action_list,name=defensives
+    - call_action_list,name=interrupts
+    - call_action_list,name=utility
+    - call_action_list,name=cds,if=config.use_cds
+    - run_action_list,name=ff_aoe,if=talent.frostfire_bolt&enemies_around_target>=config.aoe_threshold
+    - run_action_list,name=ff_st,if=talent.frostfire_bolt
+    - run_action_list,name=ss_aoe,if=talent.splintering_sorcery&enemies_around_target>=config.aoe_threshold
+    - run_action_list,name=ss_st,if=talent.splintering_sorcery
+    - run_action_list,name=ss_st

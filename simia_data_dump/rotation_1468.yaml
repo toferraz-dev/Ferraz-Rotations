@@ -1,0 +1,248 @@
+# =============================================================================
+# Evoker Preservation - Spec ID 1468
+# =============================================================================
+# Sources:
+#   https://www.method.gg/guides/preservation-evoker/playstyle-and-rotation
+#   https://www.icy-veins.com/wow/preservation-evoker-pve-healing-rotation-cooldowns-abilities
+#   https://www.wowhead.com/guide/classes/evoker/preservation/overview-pve-healer
+
+version: 3
+spec: 1468
+entry: main
+
+# morphs:
+#   reversion: merithras_blessing
+#   living_flame: chrono_flames
+
+# Hover allows casting Living Flame and other cast-time spells while moving
+movement_allowed: buff.hover.up
+
+config:
+  # Defensives
+  obsidian_scales_hp_pct:
+    section: "Defensive HP Percentage"
+    label: "Obsidian Scales HP%"
+    type: slider
+    min: 0
+    max: 100
+    default: 50
+
+  obsidian_scales_dmg_pct:
+    section: "Defensives Prediction Damage"
+    label: "Obsidian Scales (Incoming Dmg%)"
+    type: slider
+    min: 0
+    max: 100
+    default: 45
+
+  renewing_blaze_hp_pct:
+    section: "Defensive HP Percentage"
+    label: "Renewing Blaze HP%"
+    type: slider
+    min: 0
+    max: 100
+    default: 55
+
+  renewing_blaze_dmg_pct:
+    section: "Defensives Prediction Damage"
+    label: "Renewing Blaze (Incoming Dmg%)"
+    type: slider
+    min: 0
+    max: 100
+    default: 50
+
+  # Healing thresholds
+  emergency_hp_pct:
+    label: "Emergency HP%"
+    type: slider
+    min: 0
+    max: 100
+    default: 30
+
+  healing_hp_pct:
+    label: "Healing HP%"
+    type: slider
+    min: 0
+    max: 100
+    default: 65
+
+  aoe_hp_pct:
+    label: "AoE Healing HP%"
+    type: slider
+    min: 0
+    max: 100
+    default: 85
+
+  # Cooldown thresholds
+  major_cd_hp_pct:
+    label: "Major Cooldown HP%"
+    type: slider
+    min: 0
+    max: 100
+    default: 55
+
+  # DPS toggle
+  dps_enabled:
+    label: "DPS when group is healthy"
+    type: checkbox
+    default: true
+
+variables:
+  is_dungeon: "group.count(cycle.health.pct<=100)<=5"
+
+lists:
+  # ==========================================================================
+  # Defensives
+  # ==========================================================================
+  defensives:
+    # --- Prediction Damage: pre-fire on a predicted incoming hit (% of effective HP) ---
+    - obsidian_scales,range_check=none,if=incoming.pct>=config.obsidian_scales_dmg_pct
+    - renewing_blaze,range_check=none,if=buff.renewing_blaze.down&incoming.pct>=config.renewing_blaze_dmg_pct&incoming.mitigated.pct>=config.renewing_blaze_dmg_pct
+
+    # --- HP Percentage: react when already low ---
+    - obsidian_scales,range_check=none,if=health.pct<=config.obsidian_scales_hp_pct
+    - renewing_blaze,range_check=none,if=health.pct<=config.renewing_blaze_hp_pct&buff.renewing_blaze.down
+    - zephyr,range_check=none,if=group.count(cycle.health.effective.pct<config.major_cd_hp_pct)>=3
+    - emerald_blossom.player,range_check=none,if=health.effective.pct<=60
+
+
+  # ==========================================================================
+  # Major Cooldowns
+  # ==========================================================================
+  cooldowns:
+    # Rewind - use proactively when falling behind (guide: don't hold it too long)
+    - rewind,range_check=none,if=group.count(cycle.health.effective.pct<config.major_cd_hp_pct)>=2
+    # Dream Flight - fly through allies healing them
+    - dream_flight,range_check=none,if=group.count(cycle.health.effective.pct<config.major_cd_hp_pct)>=3
+    # Tip the Scales — dungeon: pair with Spiritbloom for instant burst (WCL: all M+ players do this)
+    - tip_the_scales,range_check=none,if=var.is_dungeon&cooldown.spiritbloom.ready&group.lowest.health.effective.pct<config.healing_hp_pct
+    # Tip the Scales — raid: pair with Dream Breath for instant AoE
+    - tip_the_scales,range_check=none,if=!var.is_dungeon&cooldown.dream_breath.ready&group.count(cycle.health.effective.pct<config.aoe_hp_pct)>=2
+    # Tip the Scales - emergency fallback (multiple members very low)
+    - tip_the_scales,range_check=none,if=group.count(cycle.health.effective.pct<config.emergency_hp_pct)>=2
+
+  
+  healing:
+    - time_dilation,cycle=tank,if=cycle.health.effective.pct<95&buff.time_dilation.down
+    - time_dilation,cycle=members,if=cycle.health.effective.pct<50&buff.time_dilation.down
+
+    - verdant_embrace,cycle=members,if=cycle.health.effective.pct<config.emergency_hp_pct
+    - living_flame,cycle=members,if=cycle.health.effective.pct<config.emergency_hp_pct&cooldown.verdant_embrace.remains>0
+
+    - fire_breath,empower_to=1,if=!player.moving&target.time_to_die>8&buff.essence_burst.down
+    - fire_breath,ignore_usable=true,ignore_cooldown=true,casting_check=fire_breath,if=player.empower_stage>=1
+
+    - call_action_list,name=healing_dungeon,if=var.is_dungeon
+    - call_action_list,name=healing_raid,if=!var.is_dungeon
+
+  healing_dungeon:
+    - stasis,range_check=none,if=buff.stasis.up&group.lowest.health.effective.pct<config.healing_hp_pct
+
+    - spiritbloom,empower_to=1,if=buff.tip_the_scales.up
+    - spiritbloom,empower_to=3,if=!player.moving&group.lowest.health.effective.pct<config.emergency_hp_pct
+    - spiritbloom,empower_to=2,if=!player.moving&group.lowest.health.effective.pct<config.healing_hp_pct
+    - spiritbloom,empower_to=1,if=!player.moving&group.lowest.health.effective.pct<config.healing_hp_pct
+    - spiritbloom,ignore_usable=true,ignore_cooldown=true,casting_check=spiritbloom,if=player.empower_stage>=1
+
+    - echo,cycle=members,if=cycle.buff.echo.down&cycle.health.effective.pct<95
+
+    - reversion,cycle=tanks,if=cycle.buff.reversion.down
+    - reversion,cycle=members,if=cycle.health.effective.pct<95&cycle.buff.reversion.down
+
+    - dream_breath,empower_to=4,if=!player.moving&buff.tip_the_scales.up&group.lowest.health.effective.pct<config.emergency_hp_pct
+    - dream_breath,empower_to=1,if=!player.moving&group.lowest.health.effective.pct<config.aoe_hp_pct
+    - dream_breath,ignore_usable=true,ignore_cooldown=true,casting_check=dream_breath,if=player.empower_stage>=1
+
+    - verdant_embrace,cycle=members,if=cycle.health.effective.pct<config.healing_hp_pct
+
+    - emerald_blossom,cycle=members,if=cycle.health.effective.pct<config.aoe_hp_pct&buff.essence_burst.up
+
+    - living_flame,cycle=members,if=cycle.health.effective.pct<config.healing_hp_pct
+    - chrono_flames,cycle=members,if=cycle.health.effective.pct<config.healing_hp_pct
+
+
+    - stasis,range_check=none,if=buff.stasis.down&group.lowest.health.effective.pct>90&cooldown.spiritbloom.ready
+
+  healing_raid:
+    - echo,cycle=members,if=cycle.buff.echo.down&cycle.health.effective.pct<95
+
+    - reversion,cycle=members,if=buff.merithras_blessing.up&cycle.buff.echo.up&cycle.buff.reversion.down
+    - reversion,override=366155,cycle=members,if=buff.merithras_blessing.up&cycle.buff.reversion.down
+
+    - dream_breath,empower_to=4,if=!player.moving&buff.tip_the_scales.up&group.count(cycle.health.effective.pct<config.aoe_hp_pct)>=2
+    - dream_breath,empower_to=4,if=!player.moving&group.count(cycle.health.effective.pct<config.emergency_hp_pct)>=2
+    - dream_breath,empower_to=1,if=!player.moving&group.count(cycle.health.effective.pct<config.aoe_hp_pct)>=1
+    - dream_breath,ignore_usable=true,ignore_cooldown=true,casting_check=dream_breath,if=player.empower_stage>=1
+
+  
+    - emerald_blossom,cycle=members,if=buff.essence_burst.up&cycle.health.effective.pct<config.aoe_hp_pct
+    - emerald_blossom,cycle=members,if=cycle.health.effective.pct<80
+
+    - verdant_embrace,cycle=members,if=cycle.health.effective.pct<config.healing_hp_pct
+
+    - reversion,cycle=tanks,if=cycle.buff.reversion.down
+
+    - living_flame,cycle=members,if=cycle.health.effective.pct<config.healing_hp_pct&cycle.buff.echo.down
+    - chrono_flames,cycle=members,if=cycle.health.effective.pct<config.healing_hp_pct&cycle.buff.echo.down
+    - living_flame,cycle=members,if=cycle.health.effective.pct<config.healing_hp_pct
+    - chrono_flames,cycle=members,if=cycle.health.effective.pct<config.healing_hp_pct
+
+  dps:
+    - fire_breath,empower_to=4,if=!player.moving&target.time_to_die>8&talent.font_of_magic
+    - fire_breath,empower_to=3,if=!player.moving&target.time_to_die>6
+    - fire_breath,ignore_usable=true,ignore_cooldown=true,casting_check=fire_breath,if=player.empower_stage>=1
+    - disintegrate,if=!player.moving&talent.energy_loop&target.time_to_die>4
+    - living_flame,if=!player.moving&buff.leaping_flames.up
+    - chrono_flames,if=!player.moving&buff.leaping_flames.up
+    - living_flame,if=!player.moving
+    - chrono_flames,if=!player.moving
+    - azure_strike
+
+  # ==========================================================================
+  # MAIN
+  # ==========================================================================
+  main:
+    # _shared.yaml lists
+    - call_action_list,name=spell_queue
+    - call_action_list,name=sanity_checks
+    - call_action_list,name=auto_target
+
+    # Buff maintenance
+    - blessing_of_the_bronze,range_check=none,if=buff.blessing_of_the_bronze.down
+
+    # Interrupts
+    - quell,if=interrupt.target.check
+    - quell.mouseover,if=interrupt.mouseover.check
+    - quell.focus,if=interrupt.focus.check
+    # AoE Interrupt
+    - tail_swipe,if=interrupt.stun.aoe.check
+    # Racial Interrupts
+    - quaking_palm,if=interrupt.cc.check
+    - haymaker,if=interrupt.cc.check
+    - war_stomp,if=interrupt.stun.aoe.check
+    - bull_rush,if=interrupt.stun.aoe.check
+
+    - call_action_list,name=auto_heal
+
+    # Combat Check
+    - return,if=auto_combat.player
+
+    # Defensives
+    - call_action_list,name=defensives
+
+    # Trinkets
+    - trinket_1,if=trinket_1.sync
+    - trinket_2,if=trinket_2.sync
+    # Dispels
+    - call_action_list,name=auto_dispel
+    # Major Cooldowns
+    - call_action_list,name=cooldowns
+
+    # Temporal Anomaly - use on cooldown for shields and Echo spread (core spell)
+    - temporal_anomaly,range_check=none
+
+    # Healing
+    - call_action_list,name=healing
+
+    # DPS Filler (only when group is healthy)
+    - call_action_list,name=dps,if=config.dps_enabled

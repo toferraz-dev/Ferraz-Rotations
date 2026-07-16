@@ -1,0 +1,32 @@
+version: 3
+spec: 257
+
+# =============================================================================
+# Priest - Holy
+# =============================================================================
+
+entry: main
+
+config:
+
+variables:
+
+lists:
+  main:
+    - power_word_fortitude,range_check=none,if=(buff.power_word_fortitude.down|action.power_word_fortitude.overlayed)&lastcast.power_word_fortitude>=10
+
+    # CC Interrupt
+    - holy_word_chastise,if=interrupt.cc.check
+    # AoE Interrupt
+    - psychic_scream,if=interrupt.stun.aoe.check
+    # Racial Interrupts
+    - quaking_palm,if=interrupt.cc.check
+    - haymaker,if=interrupt.cc.check
+    - war_stomp,if=interrupt.stun.aoe.check
+    - bull_rush,if=interrupt.stun.aoe.check
+    - tail_swipe,if=interrupt.stun.aoe.check
+
+    - call_action_list,name=auto_heal
+
+    - smite,if=lastcast.flash_heal
+    - flash_heal

@@ -1,0 +1,26 @@
+version: 1
+
+# Cast-based buff/debuff predictions
+#
+# When the player casts a spell listed here and the cast reaches >= 1% completion,
+# pred.buff.X.up (or pred.debuff.X.up) returns true immediately — before the aura
+# actually appears. The prediction holds for 0.1s after the cast completes, then
+# falls back to the real aura state.
+#
+# Format:  cast_id: { name: "SpellName", buff: buff_id }
+#       or cast_id: { name: "SpellName", debuff: debuff_id }
+#
+# Usage in rotation: !pred.buff.rite_of_sanctification.up
+
+predictions:
+  433568: { name: "Rite of Sanctification", buff: 433550 }
+  315584: { name: "Instant Poison", buff: 315584 }
+  8679:   { name: "Wound Poison", buff: 8679 }
+  3408:   { name: "Crippling Poison", buff: 3408 }
+  5761:   { name: "Numbing Poison", buff: 5761 }
+  381637: { name: "Atrophic Poison", buff: 381637 }
+  2823:   { name: "Deadly Poison", buff: 2823 }
+  381664: { name: "Amplifying Poison", buff: 381664 }
+  124682: { name: "Enveloping Mist", buff: 124682 }
+  395160: { name: "Bombardments", debuff: 434473 }
+  395152: { name: "Ebon Might", buff: 395296 }

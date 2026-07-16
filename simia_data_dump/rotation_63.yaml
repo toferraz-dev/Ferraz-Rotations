@@ -1,0 +1,303 @@
+# =============================================================================
+# Mage Fire - Spec ID 63
+# =============================================================================
+
+version: 3
+spec: 63
+entry: main
+
+config:
+  blazing_barrier_hp_pct:
+    section: "Defensive HP Percentage"
+    label: "Blazing Barrier HP%"
+    type: slider
+    min: 0
+    max: 100
+    default: 50
+
+  blazing_barrier_dmg_pct:
+    section: "Defensives Prediction Damage"
+    label: "Blazing Barrier (Incoming Dmg%)"
+    type: slider
+    min: 0
+    max: 100
+    default: 40
+
+  ice_block_hp_pct:
+    section: "Defensive HP Percentage"
+    label: "Ice Block HP%"
+    type: slider
+    min: 0
+    max: 100
+    default: 20
+
+  ice_block_dmg_pct:
+    section: "Defensives Prediction Damage"
+    label: "Ice Block (Incoming Dmg%)"
+    type: slider
+    min: 0
+    max: 100
+    default: 75
+
+variables:
+  cast_remains_time: 0.2
+  # variable,name=pooling_time,value=10*gcd.max
+  pooling_time: "10*gcd.max"
+  scorch_execute: target.health.pct<30&talent.scorch
+  hs_predicted: buff.hot_streak.up|(buff.heating_up.up&lastcast.fire_blast<0.5)
+  # variable,name=flamestriking,op=reset,default=1
+  flamestriking: 1
+  # variable,name=combustion_precast_time,value=(action.scorch.cast_time*!buff.pyroclasm.up*scorch_execute.active)+(action.fireball.cast_time*!buff.pyroclasm.up*!scorch_execute.active)+(action.pyroblast.cast_time*buff.pyroclasm.up)-variable.cast_remains_time
+  combustion_precast_time: "(action.scorch.cast_time*!buff.pyroclasm.up*var.scorch_execute)+(action.fireball.cast_time*!buff.pyroclasm.up*!var.scorch_execute)+(action.pyroblast.cast_time*buff.pyroclasm.up)-var.cast_remains_time"
+  # variable,name=ff_combustion_flamestrike,if=!talent.spellfire_spheres,value=4+(999*!talent.fuel_the_fire)
+  ff_combustion_flamestrike: "!talent.spellfire_spheres*(4+(999*!talent.fuel_the_fire))+talent.spellfire_spheres*999"
+  # variable,name=ff_filler_flamestrike,if=!talent.spellfire_spheres,value=8+(999*!talent.fuel_the_fire)
+  ff_filler_flamestrike: "!talent.spellfire_spheres*(8+(999*!talent.fuel_the_fire))+talent.spellfire_spheres*999"
+  # variable,name=sf_combustion_flamestrike,if=talent.spellfire_spheres,value=4+(999*!talent.fuel_the_fire)
+  sf_combustion_flamestrike: "talent.spellfire_spheres*(4+(999*!talent.fuel_the_fire))+!talent.spellfire_spheres*999"
+  # variable,name=sf_filler_flamestrike,if=talent.spellfire_spheres,value=4+(999*!talent.fuel_the_fire)
+  sf_filler_flamestrike: "talent.spellfire_spheres*(4+(999*!talent.fuel_the_fire))+!talent.spellfire_spheres*999"
+  # variable,name=combustion_delay,value=(18*talent.firestarter)-(10*(expected_combat_length<60)+10*(expected_combat_length<30))-10*(((expected_combat_length%%60)>=25)&((expected_combat_length%%60)<=40))
+  # NOTE: expected_combat_length not supported, simplified (assume long fight)
+  combustion_delay: "18*talent.firestarter"
+  # variable,name=15ssteroid_trinket_equipped,op=set,value=equipped.nevermelting_ice_crystal|...
+  # DELETED: trinket-specific variable not supported
+  # variable,name=10ssteroid_trinket_equipped,op=set,value=equipped.ever_collapsing_void_fissure
+  # DELETED: trinket-specific variable not supported
+
+lists:
+  defensives:
+    # --- Prediction Damage: pre-fire on a predicted incoming hit (% of effective HP) ---
+    - blazing_barrier,range_check=none,if=incoming.mitigated.pct>=config.blazing_barrier_dmg_pct
+    - ice_block,range_check=none,if=incoming.mitigated.pct>=config.ice_block_dmg_pct
+
+    # --- HP Percentage: react when already low ---
+    - blazing_barrier,range_check=none,if=health.pct<=config.blazing_barrier_hp_pct
+    - ice_block,range_check=none,if=health.pct<=config.ice_block_hp_pct
+
+  cds:
+    # variable,name=combustion_precast_time,value=(action.scorch.cast_time*!buff.pyroclasm.up*scorch_execute.active)+(action.fireball.cast_time*!buff.pyroclasm.up*!scorch_execute.active)+(action.pyroblast.cast_time*buff.pyroclasm.up)-variable.cast_remains_time
+    # NOTE: handled in variables section
+    # potion,if=time>=(0+(4*(talent.firestarter&talent.spellfire_spheres)+4*(talent.savor_the_moment)+4*(talent.pyroclasm&talent.firestarter&talent.spellfire_spheres)))|buff.combustion.remains>6|fight_remains<35
+    # DELETED: potion not supported
+    # use_items,if=buff.combustion.remains>6|cooldown.combustion.remains<3&time>=variable.combustion_delay-2&talent.frostfire_bolt&variable.15ssteroid_trinket_equipped|fight_remains<20
+    # DELETED: use_items not supported (trinkets handled in main)
+    # ancestral_call,if=buff.combustion.remains>6|fight_remains<20
+    - ancestral_call,if=buff.combustion.remains>6|fight_remains<20
+    # berserking,if=buff.combustion.remains>6|fight_remains<20
+    - berserking,if=buff.combustion.remains>6|fight_remains<20
+    # blood_fury,if=buff.combustion.remains>6|fight_remains<20
+    - blood_fury,if=buff.combustion.remains>6|fight_remains<20
+    # fireblood,if=buff.combustion.remains>6|fight_remains<10
+    - fireblood,if=buff.combustion.remains>6|fight_remains<10
+    # Named trinkets
+    # use_item,name=vaelgors_final_stare,if=buff.combustion.remains>6&buff.bloodlust.up|fight_remains<20
+    - use_item,name=vaelgors_final_stare,if=buff.combustion.remains>6&buff.bloodlust.up|fight_remains<20
+    # use_item,name=emberwing_feather,if=buff.combustion.remains>6|fight_remains<20
+    - use_item,name=emberwing_feather,if=buff.combustion.remains>6|fight_remains<20
+    # use_item,name=vaelgors_final_stare,if=buff.combustion.remains>6|fight_remains<20
+    - use_item,name=vaelgors_final_stare,if=buff.combustion.remains>6|fight_remains<20
+    # use_item,name=galactic_gladiators_badge_of_ferocity,if=buff.combustion.remains>6|fight_remains<20
+    - use_item,name=galactic_gladiators_badge_of_ferocity,if=buff.combustion.remains>6|fight_remains<20
+    # use_item,name=ever_collapsing_void_fissure,if=buff.combustion.remains>6|fight_remains<20
+    - use_item,name=ever_collapsing_void_fissure,if=buff.combustion.remains>6|fight_remains<20
+    # use_item,name=nevermelting_ice_crystal,if=buff.combustion.remains>6|fight_remains<20
+    - use_item,name=nevermelting_ice_crystal,if=buff.combustion.remains>6|fight_remains<20
+    # use_item,name=freightrunners_flask,if=buff.combustion.remains>6|fight_remains<20
+    - use_item,name=freightrunners_flask,if=buff.combustion.remains>6|fight_remains<20
+    # NOTE: astral_gladiators_badge_of_ferocity removed from SimC cds list (generic trinket_1/trinket_2 sync still covers it if equipped)
+    # invoke_external_buff,name=power_infusion,if=buff.power_infusion.down&(buff.combustion.remains>6|fight_remains<25)
+    # DELETED: invoke_external_buff not supported
+
+  # ============================================================================
+  # FIREBLAST
+  # ============================================================================
+  fireblast:
+    # fire_blast,use_off_gcd=1,use_while_casting=1,if=cooldown_react&cooldown.fire_blast.charges_fractional>=2.9&talent.firestarter
+    # NOTE: cooldown_react removed (assume true)
+    - fire_blast,use_off_gcd=1,use_while_casting=1,if=cooldown.fire_blast.charges_fractional>=2.9&talent.firestarter
+    # fire_blast,use_off_gcd=1,use_while_casting=1,if=cooldown_react&!buff.hot_streak.react&(buff.combustion.up|buff.hyperthermia.up)&(hot_streak_spells_in_flight+buff.heating_up.react=1)&gcd.remains<gcd.max
+    # NOTE: cooldown_react removed (assume true), hot_streak_spells_in_flight -> var.hs_predicted approximation
+    - fire_blast,use_off_gcd=1,use_while_casting=1,if=!buff.hot_streak.up&(buff.combustion.up|buff.hyperthermia.up)&buff.heating_up.up&!var.hs_predicted&gcd.remains<gcd.max
+    # fire_blast,use_off_gcd=1,use_while_casting=1,if=cooldown_react&!buff.hot_streak.react&(action.fireball.executing&action.fireball.execute_remains>0.1|buff.pyroclasm.react&action.pyroblast.executing&action.pyroblast.execute_remains>0.1)&((!scorch_execute.active|!talent.scorch)&buff.heating_up.react)&(hot_streak_spells_in_flight+buff.heating_up.react=1)&gcd.remains<gcd.max
+    # NOTE: hot_streak_spells_in_flight -> var.hs_predicted approximation; scorch_execute.active -> var.scorch_execute
+    - fire_blast,use_off_gcd=1,use_while_casting=1,if=!buff.hot_streak.up&(player.casting.fireball&player.casting.remains>0.1|buff.pyroclasm.up&player.casting.pyroblast&player.casting.remains>0.1)&((!var.scorch_execute|!talent.scorch)&buff.heating_up.up)&!var.hs_predicted&gcd.remains<gcd.max
+    # fire_blast,use_off_gcd=1,use_while_casting=1,if=cooldown_react&!buff.hot_streak.react&scorch_execute.active&(hot_streak_spells_in_flight+buff.heating_up.react=0)&action.scorch.executing&buff.heat_shimmer.down&gcd.remains<gcd.max
+    # NOTE: hot_streak_spells_in_flight -> simplified (heating_up.down & !hs_predicted); scorch_execute.active -> var.scorch_execute
+    - fire_blast,use_off_gcd=1,use_while_casting=1,if=!buff.hot_streak.up&var.scorch_execute&buff.heating_up.down&!var.hs_predicted&player.casting.scorch&buff.heat_shimmer.down&gcd.remains<gcd.max
+    # fire_blast,use_off_gcd=1,use_while_casting=1,if=cooldown_react&!buff.hot_streak.react&time<variable.combustion_delay&(talent.firestarter|action.fireball.executing&action.fireball.execute_remains>0.1|buff.pyroclasm.react&action.pyroblast.executing&action.pyroblast.execute_remains>0.1)&(hot_streak_spells_in_flight+buff.heating_up.react=1)&gcd.remains<gcd.max&cooldown.combustion.ready
+    # NOTE: hot_streak_spells_in_flight -> var.hs_predicted approximation
+    - fire_blast,use_off_gcd=1,use_while_casting=1,if=!buff.hot_streak.up&combat.time<var.combustion_delay&(talent.firestarter|player.casting.fireball&player.casting.remains>0.1|buff.pyroclasm.up&player.casting.pyroblast&player.casting.remains>0.1)&buff.heating_up.up&!var.hs_predicted&gcd.remains<gcd.max&cooldown.combustion.ready
+    # fire_blast,use_off_gcd=1,use_while_casting=1,if=cooldown_react&(time>=variable.combustion_delay&(cooldown.combustion.remains<=variable.combustion_precast_time))&buff.combustion.down&talent.spontaneous_combustion&(action.scorch.executing|action.fireball.executing|action.pyroblast.executing|action.flamestrike.executing)
+    - fire_blast,use_off_gcd=1,use_while_casting=1,if=(combat.time>=var.combustion_delay&(cooldown.combustion.remains<=var.combustion_precast_time))&buff.combustion.down&talent.spontaneous_combustion&(player.casting.scorch|player.casting.fireball|player.casting.pyroblast|player.casting.flamestrike)
+    # fire_blast,use_off_gcd=1,use_while_casting=1,if=talent.frostfire_bolt&target.health.pct<30&buff.combustion.down&cooldown.combustion.remains>5
+    - fire_blast,use_off_gcd=1,use_while_casting=1,if=talent.frostfire_bolt&target.health.pct<30&buff.combustion.down&cooldown.combustion.remains>5
+    # fire_blast,use_off_gcd=1,use_while_casting=1,if=fight_remains<1
+    - fire_blast,use_off_gcd=1,use_while_casting=1,if=fight_remains<1
+
+  # ============================================================================
+  # FROSTFIRE COMBUSTION
+  # ============================================================================
+  ff_combustion:
+    # combustion,use_off_gcd=1,use_while_casting=1,if=buff.combustion.down&action.fireball.executing&(action.fireball.execute_remains<variable.cast_remains_time)|action.meteor.in_flight&(action.meteor.in_flight_remains<0.3)|action.pyroblast.executing&(action.pyroblast.execute_remains<variable.cast_remains_time)|prev_gcd.1.meteor
+    # NOTE: action.X.in_flight/in_flight_remains not supported, simplified to prev_gcd.1.meteor
+    - combustion,use_off_gcd=1,use_while_casting=1,if=buff.combustion.down&player.casting&player.casting.remains<var.cast_remains_time|prev_gcd.1.meteor
+    # flamestrike,if=talent.fuel_the_fire&enemies_around_target>=variable.ff_combustion_flamestrike&variable.flamestriking&(buff.pyroclasm.up&!buff.hot_streak.react&buff.combustion.down)
+    - flamestrike,if=talent.fuel_the_fire&enemies_around_target>=var.ff_combustion_flamestrike&var.flamestriking&(buff.pyroclasm.up&!buff.hot_streak.up&buff.combustion.down)
+    # pyroblast,if=buff.pyroclasm.up&!buff.hot_streak.react&buff.combustion.down
+    - pyroblast,if=buff.pyroclasm.up&!buff.hot_streak.up&buff.combustion.down
+    # fireball,if=buff.combustion.down
+    - fireball,if=buff.combustion.down
+    # meteor,if=(talent.burnout&buff.combustion.remains<8)|(!talent.burnout&buff.combustion.remains>2)
+    - meteor,if=(talent.burnout&buff.combustion.remains<8)|(!talent.burnout&buff.combustion.remains>2)
+    # flamestrike,if=talent.fuel_the_fire&enemies_around_target>=variable.ff_combustion_flamestrike&variable.flamestriking&(buff.hot_streak.react)
+    - flamestrike,if=talent.fuel_the_fire&enemies_around_target>=var.ff_combustion_flamestrike&var.flamestriking&buff.hot_streak.up
+    # pyroblast,if=buff.hot_streak.react
+    - pyroblast,if=buff.hot_streak.up
+    # flamestrike,if=talent.fuel_the_fire&enemies_around_target>=variable.ff_combustion_flamestrike&variable.flamestriking&(buff.pyroclasm.up&cast_time<buff.combustion.remains)
+    - flamestrike,if=talent.fuel_the_fire&enemies_around_target>=var.ff_combustion_flamestrike&var.flamestriking&(buff.pyroclasm.up&action.flamestrike.cast_time<buff.combustion.remains)
+    # pyroblast,if=buff.pyroclasm.up&cast_time<buff.combustion.remains
+    - pyroblast,if=buff.pyroclasm.up&action.pyroblast.cast_time<buff.combustion.remains
+    # scorch,if=buff.heat_shimmer.react|talent.scald&scorch_execute.active&buff.frostfire_empowerment.down
+    - scorch,if=buff.heat_shimmer.up|talent.scald&var.scorch_execute&buff.frostfire_empowerment.down
+    # fireball
+    - fireball
+    # call_action_list,name=fireblast,if=!talent.pyroclasm|(buff.pyroclasm.stack<2|action.pyroblast.executing&action.pyroblast.execute_remains>0.2&buff.pyroclasm.stack=2|cooldown.fire_blast.charges_fractional>=2|buff.combustion.remains<action.pyroblast.cast_time)&(active_enemies<variable.sf_combustion_flamestrike&variable.flamestriking|buff.pyroclasm.down|!action.flamestrike.executing)
+    - call_action_list,name=fireblast,if=!talent.pyroclasm|(buff.pyroclasm.stack<2|player.casting.pyroblast&player.casting.remains>0.2&buff.pyroclasm.stack=2|cooldown.fire_blast.charges_fractional>=2|buff.combustion.remains<action.pyroblast.cast_time)&(enemies_around_target<var.sf_combustion_flamestrike&var.flamestriking|buff.pyroclasm.down|!player.casting.flamestrike)
+
+  # ============================================================================
+  # FROSTFIRE FILLER
+  # ============================================================================
+  ff_filler:
+    # meteor,if=time>=(variable.combustion_delay-gcd.max)
+    - meteor,if=combat.time>=(var.combustion_delay-gcd.max)
+    # pyroblast,if=buff.hot_streak.up&talent.firestarter&time<variable.combustion_delay
+    - pyroblast,if=buff.hot_streak.up&talent.firestarter&combat.time<var.combustion_delay
+    # flamestrike,if=talent.fuel_the_fire&enemies_around_target>=variable.ff_filler_flamestrike&variable.flamestriking&(buff.hot_streak.react&(cooldown.combustion.remains>=5|time<variable.combustion_delay))
+    - flamestrike,if=talent.fuel_the_fire&enemies_around_target>=var.ff_filler_flamestrike&var.flamestriking&(buff.hot_streak.up&(cooldown.combustion.remains>=5|combat.time<var.combustion_delay))
+    # pyroblast,if=buff.hot_streak.react&(cooldown.combustion.remains>=(5-(5*buff.pyroclasm.up))|time<variable.combustion_delay)&target.health.pct>30
+    - pyroblast,if=buff.hot_streak.up&(cooldown.combustion.remains>=(5-(5*buff.pyroclasm.up))|combat.time<var.combustion_delay)&target.health.pct>30
+    # flamestrike,if=talent.fuel_the_fire&enemies_around_target>=variable.ff_filler_flamestrike&variable.flamestriking&(buff.pyroclasm.up&cooldown.combustion.remains>12|buff.pyroclasm.stack=2)
+    - flamestrike,if=talent.fuel_the_fire&enemies_around_target>=var.ff_filler_flamestrike&var.flamestriking&(buff.pyroclasm.up&cooldown.combustion.remains>12|buff.pyroclasm.stack=2)
+    # pyroblast,if=buff.pyroclasm.up&cooldown.combustion.remains>12|buff.pyroclasm.stack=2
+    - pyroblast,if=buff.pyroclasm.up&cooldown.combustion.remains>12|buff.pyroclasm.stack=2
+    # scorch,if=buff.heat_shimmer.react
+    - scorch,if=buff.heat_shimmer.up
+    # fireball
+    - fireball
+    # call_action_list,name=fireblast
+    - call_action_list,name=fireblast
+
+  # ============================================================================
+  # SUNFURY COMBUSTION
+  # ============================================================================
+  sf_combustion:
+    # combustion,use_off_gcd=1,use_while_casting=1,if=action.scorch.executing&(action.scorch.execute_remains<variable.cast_remains_time)|action.fireball.executing&(action.fireball.execute_remains<variable.cast_remains_time)|action.pyroblast.executing&(action.pyroblast.execute_remains<variable.cast_remains_time)|action.flamestrike.executing&(action.flamestrike.execute_remains<variable.cast_remains_time)|action.meteor.in_flight&(action.meteor.in_flight_remains<0.3|buff.bloodlust.up)&!talent.sunfury_execution
+    # NOTE: action.X.in_flight/in_flight_remains not supported, simplified to player.casting check + prev_gcd.1.meteor fallback
+    - combustion,use_off_gcd=1,use_while_casting=1,if=player.casting&player.casting.remains<var.cast_remains_time|prev_gcd.1.meteor&!talent.sunfury_execution
+    # meteor,if=buff.bloodlust.up&buff.combustion.down
+    - meteor,if=buff.bloodlust.up&buff.combustion.down
+    # flamestrike,if=talent.fuel_the_fire&enemies_around_target>=variable.sf_combustion_flamestrike&variable.flamestriking&(buff.combustion.down&!buff.hot_streak.react&buff.pyroclasm.up)
+    - flamestrike,if=talent.fuel_the_fire&enemies_around_target>=var.sf_combustion_flamestrike&var.flamestriking&(buff.combustion.down&!buff.hot_streak.up&buff.pyroclasm.up)
+    # pyroblast,if=buff.combustion.down&!buff.hot_streak.react&buff.pyroclasm.up
+    - pyroblast,if=buff.combustion.down&!buff.hot_streak.up&buff.pyroclasm.up
+    # scorch,if=buff.combustion.down&(scorch_execute.active|active_enemies>=4)
+    - scorch,if=buff.combustion.down&(var.scorch_execute|enemies_around_target>=4)
+    # fireball,if=buff.combustion.down&(!prev_gcd.1.meteor|buff.bloodlust.down)
+    - fireball,if=buff.combustion.down&(!prev_gcd.1.meteor|buff.bloodlust.down)
+    # meteor,if=buff.combustion.remains>2
+    - meteor,if=buff.combustion.remains>2
+    # flamestrike,if=talent.fuel_the_fire&enemies_around_target>=variable.sf_combustion_flamestrike&variable.flamestriking&(buff.hot_streak.react|prev_gcd.1.scorch&buff.heating_up.react&time-action.scorch.last_used<0.2)
+    # NOTE: time-action.scorch.last_used -> lastcast.scorch
+    - flamestrike,if=talent.fuel_the_fire&enemies_around_target>=var.sf_combustion_flamestrike&var.flamestriking&(buff.hot_streak.up|prev_gcd.1.scorch&buff.heating_up.up&lastcast.scorch<0.2)
+    # pyroblast,if=buff.hot_streak.react|prev_gcd.1.scorch&buff.heating_up.react&time-action.scorch.last_used<0.2
+    # NOTE: time-action.scorch.last_used -> lastcast.scorch
+    - pyroblast,if=buff.hot_streak.up|prev_gcd.1.scorch&buff.heating_up.up&lastcast.scorch<0.2
+    # flamestrike,if=talent.fuel_the_fire&enemies_around_target>=variable.sf_combustion_flamestrike&variable.flamestriking&(buff.pyroclasm.up&!buff.hot_streak.up&cast_time<buff.combustion.remains)
+    - flamestrike,if=talent.fuel_the_fire&enemies_around_target>=var.sf_combustion_flamestrike&var.flamestriking&(buff.pyroclasm.up&!buff.hot_streak.up&action.flamestrike.cast_time<buff.combustion.remains)
+    # pyroblast,if=buff.pyroclasm.up&!buff.hot_streak.up&cast_time<buff.combustion.remains
+    - pyroblast,if=buff.pyroclasm.up&!buff.hot_streak.up&action.pyroblast.cast_time<buff.combustion.remains
+    # scorch
+    - scorch
+    # fireball
+    - fireball
+    # call_action_list,name=fireblast,if=!talent.pyroclasm|(buff.pyroclasm.stack<2|action.pyroblast.executing&action.pyroblast.execute_remains>0.2&buff.pyroclasm.stack=2|cooldown.fire_blast.charges_fractional>=2|buff.combustion.remains<action.pyroblast.cast_time)&(enemies_around_target<variable.sf_combustion_flamestrike&variable.flamestriking|buff.pyroclasm.down|!action.flamestrike.executing)
+    - call_action_list,name=fireblast,if=!talent.pyroclasm|(buff.pyroclasm.stack<2|player.casting.pyroblast&player.casting.remains>0.2&buff.pyroclasm.stack=2|cooldown.fire_blast.charges_fractional>=2|buff.combustion.remains<action.pyroblast.cast_time)&(enemies_around_target<var.sf_combustion_flamestrike&var.flamestriking|buff.pyroclasm.down|!player.casting.flamestrike)
+
+  # ============================================================================
+  # SUNFURY FILLER
+  # ============================================================================
+  sf_filler:
+    # meteor,if=enemies_around_target>=4&time>variable.combustion_delay&cooldown.combustion.remains<=gcd.max+variable.combustion_precast_time&buff.bloodlust.down
+    - meteor,if=enemies_around_target>=4&combat.time>var.combustion_delay&cooldown.combustion.remains<=gcd.max+var.combustion_precast_time&buff.bloodlust.down
+    # pyroblast,if=buff.hot_streak.up&talent.firestarter&time<variable.combustion_delay
+    - pyroblast,if=buff.hot_streak.up&talent.firestarter&combat.time<var.combustion_delay
+    # flamestrike,if=talent.fuel_the_fire&enemies_around_target>=variable.sf_filler_flamestrike&variable.flamestriking&(buff.hot_streak.react|prev_gcd.1.scorch&buff.heating_up.react&time-action.scorch.last_used<0.2|buff.hyperthermia.up)
+    # NOTE: time-action.scorch.last_used -> lastcast.scorch
+    - flamestrike,if=talent.fuel_the_fire&enemies_around_target>=var.sf_filler_flamestrike&var.flamestriking&(buff.hot_streak.up|prev_gcd.1.scorch&buff.heating_up.up&lastcast.scorch<0.2|buff.hyperthermia.up)
+    # pyroblast,if=buff.hot_streak.react|prev_gcd.1.scorch&buff.heating_up.react&time-action.scorch.last_used<0.2|buff.hyperthermia.up
+    # NOTE: time-action.scorch.last_used -> lastcast.scorch
+    - pyroblast,if=buff.hot_streak.up|prev_gcd.1.scorch&buff.heating_up.up&lastcast.scorch<0.2|buff.hyperthermia.up
+    # flamestrike,if=talent.fuel_the_fire&enemies_around_target>=variable.sf_filler_flamestrike&variable.flamestriking&buff.pyroclasm.up&((cooldown.combustion.remains>=12|time<variable.combustion_delay&(talent.firestarter|time>(variable.combustion_delay-action.flamestrike.cast_time)))|buff.pyroclasm.stack=2)
+    - flamestrike,if=talent.fuel_the_fire&enemies_around_target>=var.sf_filler_flamestrike&var.flamestriking&buff.pyroclasm.up&((cooldown.combustion.remains>=12|combat.time<var.combustion_delay&(talent.firestarter|combat.time>(var.combustion_delay-action.flamestrike.cast_time)))|buff.pyroclasm.stack=2)
+    # pyroblast,if=buff.pyroclasm.up&(cooldown.combustion.remains>=12|time<variable.combustion_delay&(talent.firestarter|time>(variable.combustion_delay-action.pyroblast.cast_time)))|buff.pyroclasm.stack=2
+    - pyroblast,if=buff.pyroclasm.up&(cooldown.combustion.remains>=12|combat.time<var.combustion_delay&(talent.firestarter|combat.time>(var.combustion_delay-action.pyroblast.cast_time)))|buff.pyroclasm.stack=2
+    # meteor,if=(!talent.blast_zone&talent.sunfury_execution&cooldown.combustion.remains<12&buff.pyroclasm.stack<2)|(talent.blast_zone&time>variable.combustion_delay)
+    - meteor,if=(!talent.blast_zone&talent.sunfury_execution&cooldown.combustion.remains<12&buff.pyroclasm.stack<2)|(talent.blast_zone&combat.time>var.combustion_delay)
+    # scorch,if=talent.scald&scorch_execute.active|buff.heat_shimmer.react&(firestarter.active|prev_gcd.1.pyroblast|prev_gcd.1.flamestrike)
+    # NOTE: scorch_execute.active -> var.scorch_execute; firestarter.active -> talent.firestarter&target.health.pct>=90
+    - scorch,if=talent.scald&var.scorch_execute|buff.heat_shimmer.up&((talent.firestarter&target.health.pct>=90)|prev_gcd.1.pyroblast|prev_gcd.1.flamestrike)
+    # fireball
+    - fireball
+    # call_action_list,name=fireblast
+    - call_action_list,name=fireblast
+
+  # ============================================================================
+  # MAIN
+  # ============================================================================
+  main:
+    # _shared.yaml lists
+    - call_action_list,name=spell_queue
+    - call_action_list,name=sanity_checks
+    - call_action_list,name=auto_target
+
+    - arcane_intellect,range_check=none,if=(buff.arcane_intellect.down|action.arcane_intellect.overlayed)&lastcast.arcane_intellect>=10
+
+    # Combat Check
+    - return,if=auto_combat.player
+
+    # Defensives
+    - call_action_list,name=defensives
+
+    # Interrupts
+    - counterspell,if=interrupt.target.check
+    - counterspell.mouseover,if=interrupt.mouseover.check
+    - counterspell.focus,if=interrupt.focus.check
+    # CC Interrupt
+    - dragons_breath,if=interrupt.cc.check
+    # Racial Interrupts
+    - quaking_palm,if=interrupt.cc.check
+    - haymaker,if=interrupt.cc.check
+    - war_stomp,if=interrupt.stun.aoe.check
+    - bull_rush,if=interrupt.stun.aoe.check
+    - tail_swipe,if=interrupt.stun.aoe.check
+
+    - call_action_list,name=auto_heal
+
+    # Target Check
+    - return,if=auto_combat.target
+
+    - trinket_1,if=trinket_1.sync
+    - trinket_2,if=trinket_2.sync
+
+    # call_action_list,name=cds
+    - call_action_list,name=cds
+
+    # run_action_list,name=ff_combustion,if=talent.frostfire_bolt&((time>=variable.combustion_delay)&(cooldown.combustion.remains<=variable.combustion_precast_time|buff.combustion.up|cooldown.combustion.ready))
+    - run_action_list,name=ff_combustion,if=talent.frostfire_bolt&((combat.time>=var.combustion_delay)&(cooldown.combustion.remains<=var.combustion_precast_time|buff.combustion.up|cooldown.combustion.ready))
+    # run_action_list,name=sf_combustion,if=!talent.frostfire_bolt&((time>=variable.combustion_delay)&(cooldown.combustion.remains<=variable.combustion_precast_time|buff.combustion.up|cooldown.combustion.ready))
+    - run_action_list,name=sf_combustion,if=!talent.frostfire_bolt&((combat.time>=var.combustion_delay)&(cooldown.combustion.remains<=var.combustion_precast_time|buff.combustion.up|cooldown.combustion.ready))
+    # run_action_list,name=ff_filler,if=talent.frostfire_bolt
+    - run_action_list,name=ff_filler,if=talent.frostfire_bolt
+    # run_action_list,name=sf_filler
+    - run_action_list,name=sf_filler

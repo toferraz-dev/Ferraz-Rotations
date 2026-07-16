@@ -1,0 +1,334 @@
+version: 1
+
+# Tagged auras - merged from old _spelldata.yaml (defensive_buffs) + _defensives.yaml (dangerous_debuffs)
+#
+# Two sections: buffs (on friendly units) and debuffs (on any unit)
+#
+# Buff expressions:
+#   [unit.]buff_list[.<tag>].up|down|remains|count
+#   Units: (none)=player, target., focus., mouseover., cycle.
+#
+# Debuff expressions:
+#   [unit.]debuff_list[.<tag>].up|down|remains|count
+#   Units: (none)=player, target., focus., mouseover., cycle.
+#
+# Examples:
+#   buff_list.immunity.up              - Player has an immunity buff
+#   target.buff_list.defensive, major.up          - Target has a defensive, major defensive buff
+#   debuff_list.magic.up               - Player has a magic dangerous debuff
+#   debuff_list.physical.heavy.up      - Player has a heavy physical debuff (AND match)
+#   cycle.debuff_list.remains>5        - Cycle target's debuff remaining time
+
+buffs:
+  # ========== Immunities ==========
+  642:     { name: "Divine Shield", tags: [immunity] }                  # Paladin
+  45438:   { name: "Ice Block", tags: [immunity, magic] }               # Mage
+  186265:  { name: "Aspect of the Turtle", tags: [immunity] }           # Hunter
+  110959:  { name: "Greater Invisibility", tags: [defensive, major, magic] }       # Mage (60% DR, !immunity)
+  196555:  { name: "Netherwalk", tags: [immunity] }                     # Demon Hunter
+  228050:  { name: "Guardian of the Forgotten Queen", tags: [immunity] } # Paladin (PvP)
+  1246384: { name: "Divine Shield", tags: [immunity] }                  # NPC: General Amias Bellamy, War Chaplain Senn (Midnight)
+
+  # ========== Death Knight ==========
+  48707:  { name: "Anti-Magic Shell", tags: [defensive, major, magic] }
+  48792:  { name: "Icebound Fortitude", tags: [defensive, major] }
+  55233:  { name: "Vampiric Blood", tags: [defensive, major, healing] }
+  # 49028:  { name: "Dancing Rune Weapon", tags: [defensive, major, parry] }        # Also offensive
+  49039:  { name: "Lichborne", tags: [defensive, major] }
+  194679: { name: "Rune Tap", tags: [defensive, minor] }
+  51052:  { name: "Anti-Magic Zone", tags: [defensive, major, magic] }
+
+  # ========== Warrior ==========
+  871:    { name: "Shield Wall", tags: [defensive, major] }
+  12975:  { name: "Last Stand", tags: [defensive, major, healing] }
+  23920:  { name: "Spell Reflection", tags: [defensive, major, magic, spell_reflect] }
+  # 190456: { name: "Ignore Pain", tags: [defensive, minor] }
+  # 184364: { name: "Enraged Regeneration", tags: [defensive, major, healing] }
+  97462:  { name: "Rallying Cry", tags: [defensive, major] }
+  118038: { name: "Die by the Sword", tags: [defensive, major, parry] }
+  147833: { name: "Intervene", tags: [defensive, minor] }
+  # 386208: { name: "Defensive Stance", tags: [defensive, minor] }
+
+  # ========== Paladin ==========
+  498:    { name: "Divine Protection", tags: [defensive, major] }
+  31850:  { name: "Ardent Defender", tags: [defensive, major] }
+  86659:  { name: "Guardian of Ancient Kings", tags: [defensive, major] }
+  6940:   { name: "Blessing of Sacrifice", tags: [defensive, minor] }
+  1022:   { name: "Blessing of Protection", tags: [defensive, major, physical] }
+  184662: { name: "Shield of Vengeance", tags: [defensive, major] }
+  31821:  { name: "Aura Mastery", tags: [defensive, major] }
+  204018: { name: "Blessing of Spellwarding", tags: [defensive, major, magic] }
+
+  # ========== Druid ==========
+  22812:  { name: "Barkskin", tags: [defensive, major] }
+  61336:  { name: "Survival Instincts", tags: [defensive, major] }
+  102342: { name: "Ironbark", tags: [defensive, major] }
+  200851: { name: "Rage of the Sleeper", tags: [defensive, major] }              # Guardian
+  102558: { name: "Incarnation: Guardian of Ursoc", tags: [defensive, major] }   # Guardian
+  # 22842:  { name: "Frenzied Regeneration", tags: [defensive, minor, healing] }
+
+  # ========== Monk ==========
+  120954: { name: "Fortifying Brew", tags: [defensive, major] }
+  122278: { name: "Dampen Harm", tags: [defensive, major] }
+  122783: { name: "Diffuse Magic", tags: [defensive, major, magic] }
+  125174: { name: "Touch of Karma", tags: [defensive, major] }
+  116849: { name: "Life Cocoon", tags: [defensive, major, healing] }
+  322507: { name: "Celestial Brew", tags: [defensive, major] }                   # Brewmaster
+  115176: { name: "Zen Meditation", tags: [defensive, major] }
+
+  # ========== Demon Hunter ==========
+  187827: { name: "Metamorphosis (Vengeance)", tags: [defensive, major] }
+  212800: { name: "Blur", tags: [defensive, major] }
+  263648: { name: "Soul Barrier", tags: [defensive, minor, healing] }
+  # 203720: { name: "Demon Spikes", tags: [defensive, minor, physical] }
+  207744: { name: "Fiery Brand", tags: [defensive, major] }                      # Vengeance
+  209426: { name: "Darkness", tags: [defensive, major] }
+
+  # ========== Rogue ==========
+  5277:   { name: "Evasion", tags: [defensive, major, parry] }
+  31224:  { name: "Cloak of Shadows", tags: [defensive, major, magic] }
+  1966:   { name: "Feint", tags: [defensive, minor] }
+
+  # ========== Hunter ==========
+  264735: { name: "Survival of the Fittest", tags: [defensive, major] }
+  392956: { name: "Fortitude of the Bear", tags: [defensive, major] }
+  109304: { name: "Exhilaration", tags: [defensive, minor, healing] }
+
+  # ========== Mage ==========
+  414659: { name: "Ice Cold", tags: [defensive, major] }                         # Replaces Ice Block when talented
+  342246: { name: "Alter Time", tags: [defensive, major] }
+  235313: { name: "Blazing Barrier", tags: [defensive, minor] }
+  11426:  { name: "Ice Barrier", tags: [defensive, minor] }
+  235450: { name: "Prismatic Barrier", tags: [defensive, minor, magic] }
+
+  # ========== Priest ==========
+  33206:  { name: "Pain Suppression", tags: [defensive, major] }
+  47788:  { name: "Guardian Spirit", tags: [defensive, major, healing] }
+  586:    { name: "Fade", tags: [defensive, minor] }
+  19236:  { name: "Desperate Prayer", tags: [defensive, minor, healing] }
+  271466: { name: "Luminous Barrier", tags: [defensive, major, healing] }
+  47585:  { name: "Dispersion", tags: [defensive, major] }
+
+  # ========== Warlock ==========
+  104773: { name: "Unending Resolve", tags: [defensive, major] }
+  108416: { name: "Dark Pact", tags: [defensive, major, healing] }
+
+  # ========== Shaman ==========
+  108271: { name: "Astral Shift", tags: [defensive, major] }
+  207399: { name: "Ancestral Protection Totem", tags: [defensive, major] }
+  325174: { name: "Spirit Link Totem", tags: [defensive, major] }
+  974:    { name: "Earth Shield", tags: [defensive, minor, healing] }
+
+  # ========== Evoker ==========
+  374227: { name: "Zephyr", tags: [defensive, major] }
+  363916: { name: "Obsidian Scales", tags: [defensive, major] }
+  374348: { name: "Renewing Blaze", tags: [defensive, major, healing] }
+  378441: { name: "Time Stop", tags: [immunity] }
+  370960: { name: "Emerald Communion", tags: [defensive, major, healing] }
+
+debuffs:
+  # ========== Test =========
+  # 25771: { name: "Forbearance", tags: [freedom] }
+  # ========== Magister Terrace ==========
+  1282055: { name: "Ethereal Shackles", tags: [magic, freedom] }
+  468966:  { name: "Polymorph", tags: [magic] }
+  1255187: { name: "Holy Fire", tags: [magic, dwarf] }
+  1254595: { name: "Energy Release", tags: [non_phys] }
+  1244907: { name: "Runic Glaive", tags: [non_phys, show_all] }
+  1245068: { name: "Consuming Void", tags: [magic, dwarf] }
+  1264693: { name: "Terror Wave", tags: [magic] }
+  1264687: { name: "Devouring Strike", tags: [non_phys] }
+  1248219: { name: "Void Bomb", tags: [non_phys] }
+  467068:  { name: "Energy Infusion", tags: [non_phys] }
+
+  # ========== Maisara Caverns ==========
+  1257088: { name: "Necrotic Wave", tags: [non_phys] }
+  1266381: { name: "Hooked Snare", tags: [physical, freedom] }
+  1256561: { name: "Crunch Armor", tags: [physical] }
+  1256008: { name: "Hex", tags: [magic] }
+  1258806: { name: "Ritual Firebrand", tags: [magic, dwarf] }
+  1256059: { name: "Rending Gore", tags: [bleed, dwarf] }
+  1263292: { name: "Shrink", tags: [non_phys] }
+  1259255: { name: "Spirit Rend", tags: [magic, dwarf] }
+  1259631: { name: "Staggering Blow", tags: [physical] }
+  1259786: { name: "Ritual Sacrifice", tags: [non_phys] }           # initial stun, not freedom-able
+  1259789: { name: "Ritual Sacrifice", tags: [non_phys, freedom] }
+  1259794: { name: "Ritual Sacrifice", tags: [non_phys] }           # initial stun, not freedom-able
+  1259731: { name: "Cries of the Fallen", tags: [magic, freedom] }
+  1254175: { name: "Cries of the Fallen", tags: [magic, freedom] }
+  1271623: { name: "Frost Nova", tags: [magic, freedom] }
+
+  # ========== Nexus-Point ==========
+  1282745: { name: "Null Sunder", tags: [non_phys] }
+  1257701: { name: "Searing Rend", tags: [non_phys] }
+  1281657: { name: "Blistering Smite", tags: [non_phys], damage: 167789 }
+  1249815: { name: "Transference", tags: [magic, dwarf] }
+  1257123: { name: "Daze", tags: [non_phys] }
+  1265334: { name: "Corespark Surge", tags: [non_phys] }
+  1257105: { name: "Erratic Zap", tags: [non_phys] }
+  1281636: { name: "Creeping Void", tags: [curse, dwarf] }
+  1252062: { name: "Entropic Leech", tags: [non_phys], damage: 305071 }
+  1282724: { name: "Dusk Frights", tags: [non_phys] }
+  1252429: { name: "Nullwark Blast", tags: [non_phys] }
+  1252406: { name: "Dreadbellow", tags: [non_phys] }
+  1277557: { name: "Burning Radiance", tags: [magic, dwarf, show_all] }
+  1269283: { name: "Suppression Field", tags: [non_phys, freedom] }
+  249081:  { name: "Suppression Field", tags: [non_phys, freedom] }
+  1263775: { name: "Fixate", tags: [physical] }
+
+  # ========== Windrunner Spire ==========
+  1216298: { name: "Soul Torment", tags: [magic, dwarf] }
+  1216133: { name: "Shear Armor", tags: [physical] }
+  1216822: { name: "Poison Spray", tags: [poison, dwarf] }
+  1216985: { name: "Puncturing Bite", tags: [bleed, dwarf, trash], damage: 360 }
+  1219224: { name: "Freezing Trap", tags: [non_phys] }
+  1216963: { name: "Spore Dispersal", tags: [non_phys], damage: 254225 }
+  1216462: { name: "Precise Cut", tags: [physical] }
+  473794:  { name: "Poison Blades", tags: [poison, dwarf] }
+  473776:  { name: "Fetid Spew", tags: [non_phys] }
+  468659:  { name: "Throw Axe", tags: [bleed, dwarf] }
+  1253739: { name: "Shred Flesh", tags: [bleed, dwarf] }
+
+  # ========== Algeth'ar Academy ==========
+  390918:  { name: "Detonation Seeds", tags: [physical] }
+  1282244: { name: "Vile Bite", tags: [bleed, dwarf, show_all] }
+  378011:  { name: "Deadly Winds", tags: [physical] }
+  377344:  { name: "Peck", tags: [bleed, dwarf] }
+  388940:  { name: "Vicious Ambush", tags: [non_phys], damage: 264395 }
+  388863:  { name: "Mana Void", tags: [non_phys] }
+  388392:  { name: "Monotonous Lecture", tags: [magic] }
+  1270294: { name: "Mystic Brand", tags: [non_phys] }
+  386181:  { name: "Mana Bombs", tags: [magic, show_all] }
+
+  # ========== Seat of Triumvirate ==========
+  1262514: { name: "Relentless Pursuit", tags: [bleed, dwarf] }
+  1262509: { name: "Chains of Subjugation", tags: [non_phys, freedom] }
+  1262506: { name: "Leeching Void", tags: [non_phys] }
+  1262519: { name: "Backstab", tags: [bleed, dwarf, show_all] }
+  1280330: { name: "Rift Essence", tags: [magic, dwarf] }
+  1262429: { name: "Eruption", tags: [non_phys] }
+  1262508: { name: "Void Infusion", tags: [non_phys] }
+
+  # ========== Skyreach ==========
+  1254475: { name: "Blade Rush", tags: [bleed, dwarf, show_all], damage: 50845 }
+  1254672: { name: "Fiery Talon", tags: [non_phys, show_all] }
+  152953:  { name: "Blinding Light", tags: [non_phys] }
+  1253446: { name: "Solar Flame", tags: [non_phys] }
+  1254686: { name: "Mark of Death", tags: [physical] }
+  1254687: { name: "Mark of Death", tags: [physical] }
+  1254380: { name: "Shear", tags: [physical] }
+
+  # ========== Magister Terrace (Boss) ==========
+  1214038: { name: "Ethereal Shackles", tags: [magic, freedom] }
+  1243905: { name: "Unstable Energy", tags: [non_phys] }
+  1225792: { name: "Runic Mark", tags: [non_phys] }
+  1246446: { name: "Null Reaction", tags: [non_phys] }
+  1225193: { name: "Wave of Silence", tags: [non_phys] }
+  1253709: { name: "Neural Link", tags: [non_phys] }
+  1280113: { name: "Hulking Fragment", tags: [magic, dwarf] }
+  1215897: { name: "Devouring Entropy", tags: [non_phys] }
+  1215157: { name: "Unstable Void Essence", tags: [non_phys] }
+  1284633: { name: "Stygian Ichor", tags: [non_phys] }              # ground damage zone only, no movement impair
+  1269631: { name: "Entropy Orb", tags: [non_phys, freedom] }
+  1284958: { name: "Cosmic Sting", tags: [non_phys] }
+
+  # ========== Maisara Caverns (Boss) ==========
+  1266480: { name: "Flanking Spear", tags: [bleed, dwarf] }
+  1246666: { name: "Infected Pinions", tags: [disease, dwarf] }
+  1260643: { name: "Barrage", tags: [magic] }                       # damage channel only; slow is from Vilebranch Sting (1260709)
+  1251554: { name: "Drain Soul", tags: [non_phys] }
+  1251204: { name: "Wrest Phantoms", tags: [non_phys] }
+  1254010: { name: "Eternal Suffering", tags: [non_phys] }
+  1260709: { name: "Vilebranch Sting", tags: [magic, freedom] }
+  1251775: { name: "Final Pursuit", tags: [non_phys] }              # phantom fixates on player (enemy AI), no movement impair applied
+  1252675: { name: "Crush Souls", tags: [non_phys] }
+  1253844: { name: "Withering Soul", tags: [non_phys] }
+  1255629: { name: "Spectral Residue", tags: [non_phys] }           # speed increase buff, not a movement impair
+  1251813: { name: "Lingering Dread", tags: [non_phys] }
+
+  # ========== Nexus-Point (Boss) ==========
+  1251772: { name: "Reflux Charge", tags: [non_phys] }
+  1257509: { name: "Corespark Detonation", tags: [non_phys] }
+  1247937: { name: "Umbral Lash", tags: [non_phys] }
+  1249014: { name: "Eclipsing Step", tags: [non_phys] }
+  1247976: { name: "Lightscar Flare", tags: [non_phys] }
+  1253950: { name: "Searing Rend", tags: [non_phys] }
+  1253855: { name: "Brilliant Dispersion", tags: [non_phys] }
+  1271956: { name: "Mirrored Rend", tags: [non_phys] }
+  1271511: { name: "Core Exposure", tags: [non_phys] }
+  1249645: { name: "Null Sunder", tags: [non_phys] }
+  1257745: { name: "Searing Rend", tags: [non_phys] }
+  1257091: { name: "Corespark Surge", tags: [non_phys] }
+
+  # ========== Windrunner Spire (Boss) ==========
+  466559:  { name: "Flaming Updraft", tags: [non_phys] }
+  466064:  { name: "Searing Beak", tags: [non_phys] }
+  469633:  { name: "Flaming Twisters", tags: [non_phys] }
+  472745:  { name: "Splattering Spew", tags: [non_phys] }
+  474105:  { name: "Curse of Darkness", tags: [curse, dwarf] }
+  472736:  { name: "Debilitating Shriek", tags: [non_phys] }
+  472054:  { name: "Reckless Leap", tags: [physical] }
+  1253026: { name: "Intimidating Shout", tags: [non_phys] }
+  1216042: { name: "Squall Leap", tags: [non_phys] }
+  468429:  { name: "Bullseye Windblast", tags: [non_phys] }
+  472662:  { name: "Tempest Slash", tags: [physical] }
+  1253979: { name: "Gust Shot", tags: [non_phys] }
+
+  # ========== Algeth'ar Academy (Boss) ==========
+  388544:  { name: "Barkbreaker", tags: [physical] }
+  388623:  { name: "Branch Out", tags: [bleed, dwarf] }
+  389033:  { name: "Lasher Toxin", tags: [poison, dwarf] }
+  376997:  { name: "Savage Peck", tags: [physical] }
+  391977:  { name: "Oversurge", tags: [non_phys] }
+  386173:  { name: "Mana Bombs", tags: [non_phys] }
+  389011:  { name: "Overwhelming Power", tags: [non_phys] }
+
+  # ========== Seat of Triumvirate (Boss) ==========
+  1263399: { name: "Oozing Slam", tags: [non_phys] }
+  248831:  { name: "Dread Screech", tags: [non_phys] }
+  245742:  { name: "Shadow Pounce", tags: [bleed, dwarf] }
+  246026:  { name: "Void Bomb", tags: [non_phys] }
+  1263523: { name: "Overload", tags: [non_phys] }
+  1265689: { name: "Grim Chorus", tags: [non_phys] }
+
+  # ========== Skyreach (Boss) ==========
+  153757:  { name: "Fan of Blades", tags: [bleed, dwarf] }
+  1279002: { name: "Blast Wave", tags: [non_phys] }
+  154110:  { name: "Fiery Smash", tags: [non_phys] }
+  1253519: { name: "Burning Claws", tags: [non_phys] }
+  1253543: { name: "Scorching Ray", tags: [non_phys], damage: 177958 }
+  154044:  { name: "Lens Flare", tags: [non_phys] }
+
+  # ========== Pit of Saron ==========
+  1258434: { name: "Curse of Torment", tags: [curse, dwarf] }
+  1258458: { name: "Rotting Strikes", tags: [disease, dwarf] }
+  1258439: { name: "Frostbane Slash", tags: [magic, show_on_me] }
+  1258435: { name: "Sunderstrike", tags: [physical] }
+  1258997: { name: "Plungegrip", tags: [physical, freedom] }
+  1258437: { name: "Permeating Cold", tags: [magic, freedom] }
+
+  # ========== Pit of Saron (Boss) ==========
+  1264453: { name: "Lumbering Fixation", tags: [physical] }
+  1261921: { name: "Cryoshards", tags: [magic, freedom] }
+  1262029: { name: "Glacial Overload", tags: [non_phys] }
+  1261847: { name: "Cryostomp", tags: [non_phys] }                  # damage + spawns Cryoshards (1261921); no direct CC on the stomp itself
+  1264027: { name: "Shade Shift", tags: [non_phys] }
+  1264186: { name: "Shadowbind", tags: [curse, freedom] }
+  1264363: { name: "Get 'Em, Ick!", tags: [physical] }
+  1276648: { name: "Bone Infusion", tags: [non_phys], damage: 162704 }
+  1262582: { name: "Scourgelord's Brand", tags: [non_phys] }
+  1262929: { name: "Rotting Strikes", tags: [disease, dwarf] }
+  # --- Auto-added from not_even_close (verify tags/placement) ---
+  159381: { name: "Searing Quills", tags: [aoe, avoid], damage: 453008 }
+  388866: { name: "Mana Void (1 tick + hit)", tags: [trash], damage: 71183 }
+  472758: { name: "Splattering Spew", tags: [aoe], damage: 137282 }
+  1224299: { name: "Astral Grasp", tags: [], damage: 183042 }
+  1249806: { name: "Arcing Mana", tags: [trash], damage: 121011 }
+  1252875: { name: "Eclipsing Step", tags: [aoe], damage: 223718 }
+  1254338: { name: "Ignition", tags: [aoe, trash], damage: 152535 }
+  1255503: { name: "Brilliant Dispersion", tags: [aoe], damage: 183042 }
+  1262441: { name: "Eruption", tags: [aoe, trash], damage: 233887 }
+  1263542: { name: "Mass Void Infusion", tags: [aoe], damage: 183042 }
+  1264246: { name: "Shade Shift", tags: [aoe], damage: 162704 }
+  1278754: { name: "Focused Guard", tags: [aoe, trash], damage: 183042 }
+  1282051: { name: "Arcane Beam", tags: [trash], damage: 152538 }

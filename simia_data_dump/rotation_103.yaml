@@ -1,0 +1,370 @@
+# =============================================================================
+# Druid Feral - Spec ID 103 (Midnight 12.0.1)
+# =============================================================================
+# Source: SimC Default APL (druid_feral.simc)
+# https://github.com/dreamgrove/dreamgrove/blob/master/sims/cat/feral.txt
+#
+# IMPORTANT: Spell ID collisions — some spells share names across forms in SpellDB.
+# Use explicit spell IDs to avoid resolving to the wrong form's version.
+#   Swipe:  cat = 106785, bear = 213764  → use 106785
+#   Thrash: cat = 106832, bear = 77758   → use 106832 (if ambiguous)
+#
+# Snapshot icon IDs (debuff.X.icon) — used for Tiger's Fury snapshot tracking:
+#   Rake:     normal=132122  TF-empowered=7195159
+#   Rip:      normal=132152  TF-empowered=7195161
+#   Moonfire: normal=136096  TF-empowered=7195166
+#
+# Icon-based pandemic logic:
+#   persistent_multiplier >= pmultiplier  →  buff.tigers_fury.up|debuff.X.icon!=TF_ICON
+#   persistent_multiplier >  pmultiplier  →  buff.tigers_fury.up&debuff.X.icon!=TF_ICON
+
+version: 3
+spec: 103
+entry: main
+
+config:
+  survival_instincts_hp_pct:
+    section: "Defensive HP Percentage"
+    label: "Survival Instincts HP%"
+    type: slider
+    min: 0
+    max: 100
+    default: 40
+  survival_instincts_dmg_pct:
+    section: "Defensives Prediction Damage"
+    label: "Survival Instincts (Incoming Dmg%)"
+    type: slider
+    min: 0
+    max: 100
+    default: 55
+  barkskin_hp_pct:
+    section: "Defensive HP Percentage"
+    label: "Barkskin HP%"
+    type: slider
+    min: 0
+    max: 100
+    default: 50
+  barkskin_dmg_pct:
+    section: "Defensives Prediction Damage"
+    label: "Barkskin (Incoming Dmg%)"
+    type: slider
+    min: 0
+    max: 100
+    default: 40
+  regrowth_ooc_hp_pct:
+    section: "Defensive HP Percentage"
+    label: "Regrowth OOC HP%"
+    type: slider
+    min: 0
+    max: 100
+    default: 60
+  predatory_swiftness_heal_solo_hp_pct:
+    section: "Defensive HP Percentage"
+    label: "Regrowth (Predatory Swiftness) HP% (Solo)"
+    type: slider
+    min: 0
+    max: 100
+    default: 80
+  predatory_swiftness_heal_group_hp_pct:
+    section: "Defensive HP Percentage"
+    label: "Regrowth (Predatory Swiftness) HP% (Group)"
+    type: slider
+    min: 0
+    max: 100
+    default: 40
+  travel_form_mode:
+    label: "Auto Travel Form"
+    type: checkbox
+    default: true
+  shadowmeld_usage:
+    label: "Shadowmeld Usage"
+    type: dropdown
+    options:
+      - "Disabled"
+      - "M+ Only"
+      - "Dungeon & Raid"
+      - "Boss Only"
+    default: 2
+
+variables:
+  shadowmeld_allowed: "(config.shadowmeld_usage=1&player.inmythicplus)|(config.shadowmeld_usage=2&(player.indungeon|player.inraid))|(config.shadowmeld_usage=3&target.classification>=5)"
+
+  # SimC uses buff.bs_inc as shorthand for berserk OR incarnation
+  bs_inc: buff.berserk.up|buff.incarnation_avatar_of_ashamane.up
+  bs_inc_remains: buff.berserk.remains+buff.incarnation_avatar_of_ashamane.remains
+  # cooldown.bs_inc aliases (only one of berserk/incarnation is talented; non-talented returns 0)
+  bs_inc_cd_remains: cooldown.berserk.remains>?cooldown.incarnation_avatar_of_ashamane.remains
+  bs_inc_cd_duration: cooldown.berserk.duration>?cooldown.incarnation_avatar_of_ashamane.duration
+
+  # variable,name=regrowth,op=reset
+  regrowth: 0
+
+  # variable,name=dotc_rake_threshold,op=set,value=5
+  # variable,name=dotc_rake_threshold,op=set,if=talent.wild_slashes&!talent.infected_wounds,value=3
+  # variable,name=dotc_rake_threshold,op=set,if=!talent.wild_slashes&talent.infected_wounds,value=8
+  dotc_rake_threshold: 5-2*(talent.wild_slashes&!talent.infected_wounds)+3*(!talent.wild_slashes&talent.infected_wounds)
+
+  # variable,name=bs_inc_cd,op=setif,condition=!variable.use_custom_timers,value=cooldown.bs_inc.remains+10,value_else=variable.nextBSTimer-time+10
+  bs_inc_cd: var.bs_inc_cd_remains+10
+
+  # variable,name=convoke_cd,value=cooldown.convoke_the_spirits.remains+10
+  convoke_cd: cooldown.convoke_the_spirits.remains+10
+
+  # variable,name=convokeCountRemaining,value=floor(((fight_remains-variable.convoke_cd)%cooldown.convoke_the_spirits.duration)+(fight_remains>cooldown.convoke_the_spirits.remains))
+  convokeCountRemaining: floor(((fight_remains-var.convoke_cd)%cooldown.convoke_the_spirits.duration)+(fight_remains>cooldown.convoke_the_spirits.remains))
+
+  # variable,name=zerkCountRemaining,value=floor(((fight_remains-variable.bs_inc_cd)%cooldown.bs_inc.duration)+(fight_remains>cooldown.bs_inc.remains))
+  zerkCountRemaining: floor(((fight_remains-var.bs_inc_cd)%var.bs_inc_cd_duration)+(fight_remains>var.bs_inc_cd_remains))
+
+  # variable,name=firstHoldBerserkCondition,value=variable.zerkCountRemaining=1&(variable.convokeCountRemaining=1&cooldown.convoke_the_spirits.remains>10|variable.potCountRemaining=1&cooldown.potion.remains)
+  firstHoldBerserkCondition: var.zerkCountRemaining=1&var.convokeCountRemaining=1&cooldown.convoke_the_spirits.remains>10
+
+  # variable,name=secondHoldBerserkCondition,value=cooldown.convoke_the_spirits.remains>20&variable.convokeCountRemaining=variable.zerkCountRemaining&variable.zerkCountRemaining=floor(((fight_remains-variable.convoke_cd)%cooldown.bs_inc.duration)+(fight_remains>cooldown.convoke_the_spirits.remains))
+  secondHoldBerserkCondition: cooldown.convoke_the_spirits.remains>20&var.convokeCountRemaining=var.zerkCountRemaining&var.zerkCountRemaining=floor(((fight_remains-var.convoke_cd)%var.bs_inc_cd_duration)+(fight_remains>cooldown.convoke_the_spirits.remains))
+
+  # variable,name=holdBerserk,value=variable.firstHoldBerserkCondition|variable.secondHoldBerserkCondition|variable.use_custom_timers&variable.nextBSTimer-5>time&!variable.zerkNow
+  holdBerserk: var.firstHoldBerserkCondition|var.secondHoldBerserkCondition
+
+  # variable,name=holdConvoke,value=variable.convokeCountRemaining=1&variable.zerkCountRemaining=1&!buff.bs_inc.up|variable.zerkCountRemaining>0&talent.ashamanes_guidance&cooldown.bs_inc.remains<50&variable.use_custom_timers
+  holdConvoke: var.convokeCountRemaining=1&var.zerkCountRemaining=1&!var.bs_inc
+
+  # Icon-based snapshot helpers: is the existing DoT TF-empowered?
+  rake_tf: debuff.rake.icon=7195159
+  rip_tf: debuff.rip.icon=7195161
+  moonfire_tf: debuff.moonfire.icon=7195166
+
+  # Single-target Rip preemption — used by APC FB guard so both lines stay in sync.
+  # (a) pandemic + TF up → snapshot extend
+  # (b) pandemic + TF won't return before rip falls → SimC fallback (refresh anyway, lose snapshot to keep uptime)
+  # (c) out of pandemic + TF up + rip not TF-empowered → one-shot preempt to convert rip to TF snapshot
+  # (d) TF about to expire → clip rip to extend the empowered snapshot for another full duration
+  rip_preempt: "active_enemies=1&combo_points>=5&dot.rip.up&(dot.rip.refreshable&(buff.tigers_fury.up|dot.rip.remains<cooldown.tigers_fury.remains)|buff.tigers_fury.up&!var.rip_tf|buff.tigers_fury.up&buff.tigers_fury.remains<2)"
+
+lists:
+  defensives:
+    # --- Prediction Damage: pre-fire on a predicted incoming hit (% of effective HP) ---
+    - barkskin,range_check=none,if=incoming.pct>=config.barkskin_dmg_pct
+    - survival_instincts,range_check=none,if=incoming.pct>=config.survival_instincts_dmg_pct&incoming.mitigated.pct>=config.survival_instincts_dmg_pct
+
+    # --- HP Percentage: react when already low ---
+    - survival_instincts,range_check=none,if=health.pct<=config.survival_instincts_hp_pct
+    - barkskin,range_check=none,if=health.pct<=config.barkskin_hp_pct
+
+  # =========================================================================
+  # cooldown list
+  # =========================================================================
+  cooldown:
+    # use_item,slot=trinket1,if=trinket.1.has_use_damage&...
+    # use_item,slot=trinket2,if=trinket.2.has_use_damage&...
+    # trinket property conditions not supported — commented out
+
+    # berserking
+    - berserking
+
+    # potion,if=buff.bs_inc.up|fight_remains<32|buff.tigers_fury.up&!variable.holdPot
+    # potion — not supported
+
+    # use_items — trinket property conditions not supported
+    # use_item,slot=trinket1,use_off_gcd=1,if=trinket.1.has_use_buff&...
+    # use_item,slot=trinket2,use_off_gcd=1,if=trinket.2.has_use_buff&...
+    # use_item,slot=trinket1,if=fight_remains<=(21<?trinket.1.proc.any_dps.duration)
+    # use_item,slot=trinket2,if=fight_remains<=(21<?trinket.2.proc.any_dps.duration)
+
+    # incarnation,if=buff.tigers_fury.up&!variable.holdBerserk&!variable.use_custom_timers|variable.zerkNow
+    - incarnation,if=buff.tigers_fury.up&!var.holdBerserk
+
+    # berserk,if=buff.tigers_fury.up&!variable.holdBerserk&!variable.use_custom_timers|variable.zerkNow
+    - berserk,if=buff.tigers_fury.up&!var.holdBerserk
+
+    # feral_frenzy,if=!talent.frantic_frenzy&combo_points<=2+(2*buff.bs_inc.up)
+    - feral_frenzy,if=!talent.frantic_frenzy&combo_points<=2+(2*var.bs_inc)
+
+    # frantic_frenzy,if=(!fight_style.dungeonroute&!fight_style.dungeonslice|raid_event.adds.remains>5)&(buff.tigers_fury.up&spell_targets>=2|combo_points<=2+(2*buff.bs_inc.up))
+    - frantic_frenzy,if=buff.tigers_fury.up|combo_points<=2+(2*var.bs_inc)
+
+    # convoke_the_spirits,if=fight_remains<5|buff.bs_inc.up&buff.bs_inc.remains<5-talent.ashamanes_guidance|buff.tigers_fury.up&!variable.holdConvoke&(prev_gcd.1.rip|prev_gcd.1.ferocious_bite)|variable.use_custom_timers&variable.nextTFTimer+cooldown.convoke_the_spirits.duration-10>variable.nextBSTimer&combo_points<=2
+    # Ashamane (60s convoke) branch: prev_gcd check fails because frantic_frenzy fires between finisher and convoke in our cooldown list, and combo_points<=2 window closes too fast after FF. Drop both gates and just require TF up + berserk not aligning within 15s. Also added prev_gcd.1.primal_wrath for AoE finisher case.
+    - convoke_the_spirits,if=fight_remains<5|var.bs_inc&var.bs_inc_remains<5-talent.ashamanes_guidance|buff.tigers_fury.up&!var.holdConvoke&(prev_gcd.1.rip|prev_gcd.1.ferocious_bite|prev_gcd.1.primal_wrath)|talent.ashamanes_guidance&buff.tigers_fury.up&!var.holdConvoke&var.bs_inc_cd_remains>15
+
+  # =========================================================================
+  # finisher list (single target)
+  # =========================================================================
+  finisher:
+    # rip,if=combo_points>=5&refreshable&(buff.tigers_fury.up|dot.rip.remains<variable.tfRemains)
+    # SimC pandemic refresh + one-shot pre-pandemic preempt to convert a non-TF rip into a TF-snapshotted rip.
+    # The preempt branch is gated by !var.rip_tf so it fires exactly once per TF window (locks out the moment rip becomes empowered).
+    # Simia addition (last OR): in TF's final 2s, clip rip to extend the TF-empowered snapshot for another ~22s.
+    - rip,if=combo_points>=5&(dot.rip.refreshable&(buff.tigers_fury.up|dot.rip.remains<cooldown.tigers_fury.remains)|buff.tigers_fury.up&!var.rip_tf&dot.rip.up|buff.tigers_fury.up&buff.tigers_fury.remains<2&dot.rip.up)
+
+    # pool_resource,for_next=1
+    # ferocious_bite,max_energy=1,if=combo_points>=5
+    - return,if=combo_points>=5&energy<50
+    - ferocious_bite,if=combo_points>=5
+    - ravage,if=combo_points>=5
+
+  # =========================================================================
+  # aoe_finisher list
+  # =========================================================================
+  aoe_finisher:
+    # primal_wrath,target_if=min:remains,if=combo_points>=5&spell_targets.primal_wrath>1&(dot.primal_wrath.remains<6.5&!buff.bs_inc.up|dot.primal_wrath.refreshable)
+    - primal_wrath,if=combo_points>=5&active_enemies>1&(dot.rip.remains<6.5&!var.bs_inc|dot.rip.refreshable)
+
+    # ferocious_bite,if=buff.ravage.up&combo_points>=5&!talent.primal_wrath&spell_targets>=2+(3*!talent.rampant_ferocity)
+    - ravage,if=combo_points>=5&!talent.primal_wrath&active_enemies>=2+(3*!talent.rampant_ferocity)
+
+    # rip,target_if=min:remains,if=combo_points>=5&!talent.primal_wrath&refreshable
+    - rip,if=combo_points>=5&!talent.primal_wrath&(dot.rip.down|dot.rip.refreshable&(buff.tigers_fury.up|!var.rip_tf))
+
+    # ferocious_bite,target_if=min:dot.rip.remains,if=combo_points>=5&(talent.rampant_ferocity|buff.ravage.up&spell_targets<8|dot.bloodseeker_vines.ticking&spell_targets<5)
+    - ferocious_bite,if=combo_points>=5&(talent.rampant_ferocity|buff.ravage.up&active_enemies<8|dot.bloodseeker_vines.ticking&active_enemies<5)
+    - ravage,if=combo_points>=5&(talent.rampant_ferocity|active_enemies<8|dot.bloodseeker_vines.ticking&active_enemies<5)
+
+    # primal_wrath,if=combo_points>=5
+    - primal_wrath,if=combo_points>=5
+
+    # ferocious_bite,target_if=min:dot.rip.remains,if=combo_points>=5
+    - ferocious_bite,if=combo_points>=5
+    - ravage,if=combo_points>=5
+
+  # =========================================================================
+  # builder list (single target)
+  # =========================================================================
+  builder:
+    # prowl,if=!buff.shadowmeld.up&(action.rake.pmultiplier<1.6|dot.rake.refreshable)
+    - prowl,if=!buff.shadowmeld.up&(!var.rake_tf|dot.rake.refreshable)
+
+    # shadowmeld,if=!buff.prowl.up&(action.rake.pmultiplier<1.6|dot.rake.refreshable)
+    - shadowmeld,if=var.shadowmeld_allowed&!buff.prowl.up&(!var.rake_tf|dot.rake.refreshable)
+
+    # rake,if=(buff.tigers_fury.up|remains<variable.tfRemains)&(refreshable&persistent_multiplier>=pmultiplier|remains<2|persistent_multiplier>pmultiplier)
+    # The `|TF.up & !rake_tf` inner branch is the one-shot non-empowered preempt (locks out via var.rake_tf after first cast).
+    - rake,if=(buff.tigers_fury.up|dot.rake.remains<cooldown.tigers_fury.remains)&(dot.rake.refreshable&(buff.tigers_fury.up|!var.rake_tf)|dot.rake.remains<2|buff.tigers_fury.up&!var.rake_tf)
+
+    # moonfire_cat,if=(buff.tigers_fury.up|remains<variable.tfRemains)&(refreshable&persistent_multiplier>=pmultiplier|remains<2|persistent_multiplier>pmultiplier)
+    # The `|TF.up & !moonfire_tf` inner branch is the one-shot non-empowered preempt (locks out via var.moonfire_tf after first cast).
+    - moonfire,if=talent.lunar_inspiration&(buff.tigers_fury.up|dot.moonfire.remains<cooldown.tigers_fury.remains)&(dot.moonfire.refreshable&(buff.tigers_fury.up|!var.moonfire_tf)|dot.moonfire.remains<2|buff.tigers_fury.up&!var.moonfire_tf)
+
+    # shred
+    - shred
+
+  # =========================================================================
+  # aoe_builder list
+  # =========================================================================
+  aoe_builder:
+    # rake,target_if=refreshable,if=(talent.doubleclawed_rake&(!talent.lunar_inspiration|!talent.panthers_guile|active_dot.rake<5))|hero_tree.wildstalker&(active_dot.rake<2+!talent.panthers_guile+talent.lunar_inspiration)
+    - rake,if=dot.rake.refreshable&((talent.doubleclawed_rake&(!talent.lunar_inspiration|!talent.panthers_guile|active_dot.rake<5))|hero_tree.wildstalker&(active_dot.rake<2+!talent.panthers_guile+talent.lunar_inspiration))
+
+    # moonfire_cat,target_if=refreshable
+    - moonfire,if=talent.lunar_inspiration&dot.moonfire.refreshable
+
+    # swipe_cat,if=hero_tree.druid_of_the_claw&buff.bs_inc.up|buff.clearcasting.react&spell_targets>2&(hero_tree.druid_of_the_claw|spell_targets<7)
+    - 106785,if=hero_tree.druid_of_the_claw&var.bs_inc|buff.clearcasting.react&active_enemies>2&(hero_tree.druid_of_the_claw|active_enemies<7)
+
+    # swipe_cat,if=buff.sudden_ambush.up&spell_targets.swipe_cat>=5+(2*hero_tree.wildstalker)
+    - 106785,if=buff.sudden_ambush.up&active_enemies>=5+(2*hero_tree.wildstalker)
+
+    # rake,target_if=refreshable,if=hero_tree.wildstalker|spell_targets.swipe_cat<=variable.dotc_rake_threshold
+    - rake,if=dot.rake.refreshable&(hero_tree.wildstalker|active_enemies<=var.dotc_rake_threshold)
+
+    # rake,target_if=min:pmultiplier,if=persistent_multiplier>pmultiplier&spell_targets=2
+    - rake,if=buff.tigers_fury.up&!var.rake_tf&active_enemies=2
+
+    # shred,if=combo_points<=1&spell_targets=2&talent.panthers_guile
+    - shred,if=combo_points<=1&active_enemies=2&talent.panthers_guile
+
+    # swipe_cat,if=combo_points>1|spell_targets>2|!talent.panthers_guile
+    - 106785,if=combo_points>1|active_enemies>2|!talent.panthers_guile
+
+  # =========================================================================
+  # main list
+  # =========================================================================
+  main:
+    - call_action_list,name=spell_queue
+    - call_action_list,name=sanity_checks
+    - call_action_list,name=auto_target
+
+    - mark_of_the_wild,range_check=none,if=(buff.mark_of_the_wild.down.any|action.mark_of_the_wild.overlayed)&lastcast.mark_of_the_wild>=10
+    - regrowth,range_check=none,if=health.pct<=config.regrowth_ooc_hp_pct&!player.combat
+
+    # Auto Travel Form
+    - travel_form,after=200,range_check=none,if=config.travel_form_mode&!player.combat&player.inopenworld&mount_usable&buff.travel_form.down&!target.quest_mob&!target.dummy
+
+    # Enter Cat Form: with Fluid Form shift via ability; without, shift manually
+    - shred,if=player.combat&target.attackable&target.range<=8&buff.cat_form.down&talent.fluid_form.enabled
+    - rake,if=player.combat&target.attackable&target.range<=8&buff.cat_form.down&talent.fluid_form.enabled
+    # cat_form,if=!buff.cat_form.up&!talent.fluid_form
+    - cat_form,range_check=none,if=buff.cat_form.down&(target.attackable|enemies.40y)
+
+    # prowl,if=buff.bs_inc.down&!buff.prowl.up&!buff.shadowmeld.up
+    - prowl,range_check=none,if=!var.bs_inc&buff.prowl.down&buff.shadowmeld.down&(target.attackable|enemies.40y)
+
+    # Interrupts
+    - skull_bash,if=interrupt.target.check
+    - skull_bash.mouseover,if=interrupt.mouseover.check
+    - skull_bash.focus,if=interrupt.focus.check
+    - mighty_bash,if=interrupt.cc.check
+    - incapacitating_roar,if=interrupt.stun.aoe.check
+    - quaking_palm,if=interrupt.cc.check
+    - haymaker,if=interrupt.cc.check
+    - war_stomp,if=interrupt.stun.aoe.check
+    - bull_rush,if=interrupt.stun.aoe.check
+    - tail_swipe,if=interrupt.stun.aoe.check
+
+    - call_action_list,name=auto_heal
+
+    # Combat Check
+    - return,if=auto_combat.player
+
+    # Defensives
+    - call_action_list,name=defensives
+
+    # Predatory Swiftness healing
+    - regrowth,delay=500,range_check=none,if=buff.predatory_swiftness.up&player.solo&health.pct<=config.predatory_swiftness_heal_solo_hp_pct&lastcast.regrowth>=2
+    - regrowth,delay=500,range_check=none,if=buff.predatory_swiftness.up&player.group&health.pct<=config.predatory_swiftness_heal_group_hp_pct&lastcast.regrowth>=2
+
+    # Target Check
+    - return,if=auto_combat.target
+
+    # rake,if=buff.prowl.up|buff.shadowmeld.up
+    - rake,range_check=none,if=(buff.prowl.up|buff.shadowmeld.up)&target.range<=8
+    - return,if=buff.prowl.up
+
+    # =====================================================================
+    # SimC main rotation dispatch
+    # =====================================================================
+
+    # tigers_fury,if=(cooldown.bs_inc.remains<=1|cooldown.bs_inc.remains>10)&(cooldown.frantic_frenzy.remains<buff.tigers_fury.duration-1.5|cooldown.frantic_frenzy.remains>22|!talent.frantic_frenzy|spell_targets=1|fight_style.dungeonroute|fight_style.dungeonslice)&!variable.use_custom_timers|variable.tfNow
+    - tigers_fury,if=(var.bs_inc_cd_remains<=1|var.bs_inc_cd_remains>10)&(cooldown.frantic_frenzy.remains<buff.tigers_fury.duration-1.5|cooldown.frantic_frenzy.remains>22|!talent.frantic_frenzy|active_enemies=1)
+
+    # chomp,if=buff.chomp_enabler.up
+    - chomp,if=buff.chomp_enabler.up
+
+    # call_action_list,name=cooldown
+    - call_action_list,name=cooldown
+
+    # ferocious_bite,if=buff.apex_predators_craving.up
+    # Guard: block APC FB when single-target Rip needs to refresh (snapshot extend / pre-pandemic preemption / forced refresh).
+    - ferocious_bite,if=buff.apex_predators_craving.up&!var.rip_preempt
+    - ravage,if=buff.apex_predators_craving.up&!var.rip_preempt
+
+    # Trinkets
+    - trinket_1,if=trinket_1.sync
+    - trinket_2,if=trinket_2.sync
+
+    # call_action_list,name=finisher,if=spell_targets=1
+    - call_action_list,name=finisher,if=active_enemies=1
+
+    # call_action_list,name=aoe_finisher,if=spell_targets>=2
+    - call_action_list,name=aoe_finisher,if=active_enemies>=2
+
+    # call_action_list,name=builder,if=spell_targets=1&combo_points<=4
+    - call_action_list,name=builder,if=active_enemies=1&combo_points<=4
+
+    # call_action_list,name=aoe_builder,if=spell_targets>1&combo_points<=4
+    - call_action_list,name=aoe_builder,if=active_enemies>1&combo_points<=4
+
+    # regrowth,if=buff.predatory_swiftness.up&variable.regrowth
+    - regrowth,range_check=none,if=buff.predatory_swiftness.up&var.regrowth
+
+    # Fallback: Tiger's Fury if nothing else to do
+    - tigers_fury

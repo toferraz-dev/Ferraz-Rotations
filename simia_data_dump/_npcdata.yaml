@@ -1,0 +1,112 @@
+# NPC Data Configuration
+# Per-NPC flags for target validation and crowd control decisions
+#
+# Flags:
+#   BypassCombat: true - NPC always bypasses combat checks (treated as valid target)
+#   ShouldStun: true - NPC should be stunned when possible
+#   ShouldSlow: true - NPC should be slowed when possible
+#   IgnoreCount: true - NPC excluded from AOE/mob count; target.valid returns false (blocks damage), interrupt/stun still work
+#
+# SimC conditions:
+#   target.npcid - NPC ID from GUID (0 if player/pet)
+#   target.bypass_combat - true if BypassCombat flag set
+#   target.should_stun - true if ShouldStun flag set
+#   target.should_slow - true if ShouldSlow flag set
+#   target.ignore_count - true if IgnoreCount flag set
+#   target.valid - comprehensive target validation (returns false for IgnoreCount mobs)
+#   player.boss_fight - true if Boss1-5 unit frame exists
+
+npcs:
+  # ============================================================================
+  # Training Dummies (always bypass combat)
+  # ============================================================================
+  # Stormwind / Orgrimmar
+  249245: { BypassCombat: true }  # Dummies
+  31146: { BypassCombat: true }  # Raider's Training Dummy
+  31144: { BypassCombat: true }  # Training Dummy
+  32666: { BypassCombat: true }  # Training Dummy
+  32667: { BypassCombat: true }  # Training Dummy
+  32541: { BypassCombat: true }  # Initiate's Training Dummy
+  32542: { BypassCombat: true }  # Veteran's Training Dummy
+  32543: { BypassCombat: true }  # Veteran's Training Dummy (Boss Level)
+  32545: { BypassCombat: true }  # Initiate's Training Dummy
+  32546: { BypassCombat: true }  # Ebon Knight's Training Dummy
+  54344: { BypassCombat: true }  # Dungeoneer's Training Dummy
+  114332: { BypassCombat: true }  # Training Dummy
+  153292: { BypassCombat: true }  # Training Dummy
+  153285: { BypassCombat: true }  # Training Dummy
+
+  # Garrison
+  87317: { BypassCombat: true }  # Raid Training Dummy
+  87318: { BypassCombat: true }  # Tank Training Dummy
+  87320: { BypassCombat: true }  # Raid Training Dummy (Boss Level)
+  87321: { BypassCombat: true }  # Tank Training Dummy (Boss Level)
+  87322: { BypassCombat: true }  # Tank Training Dummy (Weak Boss Level)
+  87761: { BypassCombat: true }  # Healing Training Dummy (Alliance)
+  88289: { BypassCombat: true }  # Healing Training Dummy (Horde)
+  88314: { BypassCombat: true }  # Training Dummy
+  88316: { BypassCombat: true }  # Training Dummy
+  88835: { BypassCombat: true }  # Tanking Dummy
+  88836: { BypassCombat: true }  # Tanking Dummy
+  88837: { BypassCombat: true }  # Dungeoneer's Training Dummy
+  88906: { BypassCombat: true }  # Combat Dummy
+
+  # Portal room
+  242759: { BypassCombat: true }  # Training Dummy
+  242190: { BypassCombat: true }  # Training Dummy
+  242758: { BypassCombat: true }  # Training Dummy
+
+  # Valdrakken / Dragonflight
+  194643: { BypassCombat: true }  # Training Dummy
+  194644: { BypassCombat: true }  # Training Dummy
+  194648: { BypassCombat: true }  # Training Dummy
+  194649: { BypassCombat: true }  # Training Dummy
+  197833: { BypassCombat: true }  # Dungeoneer's Training Dummy
+
+  # War Within
+  198594: { BypassCombat: true }  # Training Dummy
+  220822: { BypassCombat: true }  # Training Dummy
+  220823: { BypassCombat: true }  # Training Dummy
+  219250: { BypassCombat: true }  # Training Dummy
+  225982: { BypassCombat: true }  # Training Dummy
+  225977: { BypassCombat: true }  # Training Dummy
+  225976: { BypassCombat: true }  # Training Dummy
+  225983: { BypassCombat: true }  # Training Dummy
+  225984: { BypassCombat: true }  # Training Dummy
+  225978: { BypassCombat: true }  # Training Dummy
+  225985: { BypassCombat: true }  # Training Dummy
+
+  # Midnight
+  243208: { BypassCombat: true }  # Training Dummy
+  243167: { BypassCombat: true }  # Training Dummy
+  243168: { BypassCombat: true }  # Training Dummy
+  243166: { BypassCombat: true }  # Training Dummy
+  243207: { BypassCombat: true }  # Training Dummy
+  243206: { BypassCombat: true }  # Training Dummy
+  243205: { BypassCombat: true }  # Training Dummy
+
+  # PvP
+  243211: { BypassCombat: true }  # Training Dummy
+  
+  # Dungeons and Raids
+  65310: { BypassCombat: true }  # Turnip Punching Bag (toy)
+  66374: { BypassCombat: true }  # Anatomical Dummy (toy)
+  196394: { BypassCombat: true }  # Tuskarr Training Dummy (toy)
+  196406: { BypassCombat: true }  # Rubbery Fish Head (toy)
+  199057: { BypassCombat: true }  # Black Dragon's Challenge Dummy (toy)
+
+  # Nexus Point
+  259569: { BypassCombat: true }  # Mana Battery
+  248769: { BypassCombat: true }  # Smudge
+
+
+  # ============================================================================
+  # Encounter-specific NPCs
+  # ============================================================================
+  # Nokhud Offensive
+  386490:  # Nokhud Saboteur
+    BypassCombat: true
+    ShouldStun: true
+    ShouldSlow: true
+
+  260906: { IgnoreCount: true }  # Termination Matrix

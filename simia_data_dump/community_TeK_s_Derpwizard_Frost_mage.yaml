@@ -1,0 +1,133 @@
+version: 3
+spec: 64
+name: TeK's Derpwizard Frost mage
+entry: main
+
+config:
+  ice_barrier_hp_pct:
+    label: "Ice Barrier HP%"
+    type: slider
+    min: 0
+    max: 100
+    default: 70
+  ice_block_hp_pct:
+    label: "Ice Block HP%"
+    type: slider
+    min: 0
+    max: 100
+    default: 15
+  auto_blink:
+    label: "Auto Blink (Movement)"
+    type: bool
+    default: true
+
+variables:
+  racial_cd: combat.time<1|talent.frostfire_bolt|prev_gcd.1.frozen_orb|prev_gcd.1.ray_of_frost|debuff.freezing.stack<6&cooldown.ray_of_frost.charges>=1|fight_remains<20
+
+lists:
+
+  defensives:
+    - ice_barrier,range_check=none,if=health.pct<=config.ice_barrier_hp_pct
+    - ice_block,range_check=none,if=health.pct<=config.ice_block_hp_pct
+
+  cds:
+    - blood_fury,if=var.racial_cd
+    - berserking,if=var.racial_cd
+    - fireblood,if=var.racial_cd
+    - ancestral_call,if=var.racial_cd
+    - trinket_1,if=trinket_1.sync
+    - trinket_2,if=trinket_2.sync
+    - flurry,if=talent.frostfire_bolt&combat.time<3
+    - frostbolt,if=talent.frostfire_bolt&combat.time<5&prev_gcd.1.flurry&buff.icicles.stack>=5
+    - flurry,if=talent.frostfire_bolt&combat.time<7&prev_gcd.1.frostbolt
+    - ray_of_frost,if=talent.frostfire_bolt&combat.time<9&prev_gcd.2.frostbolt
+    - frozen_orb,if=talent.frostfire_bolt&combat.time<11&prev_gcd.1.ray_of_frost
+    - ice_lance,if=!talent.frostfire_bolt&active_enemies<=3&talent.flash_freeze&talent.splinterstorm&combat.time<3
+    - ray_of_frost,if=!talent.frostfire_bolt&active_enemies<=3&talent.splinterstorm&combat.time<5
+    - flurry,if=!talent.frostfire_bolt&active_enemies>=4&talent.wintertide&talent.splinterstorm&combat.time<3
+    - frozen_orb,if=!talent.frostfire_bolt&active_enemies>=4&talent.splinterstorm&combat.time<5
+    - ray_of_frost,if=!talent.frostfire_bolt&active_enemies>=4&talent.splinterstorm&combat.time<7
+    - ray_of_frost,if=fight_remains<12
+    - ice_lance,if=fight_remains<gcd.max*1.5
+
+  ff_aoe:
+    - blizzard,if=buff.freezing_rain.up
+    - flurry,if=buff.brain_freeze.up&buff.thermal_void.down
+    - frozen_orb
+    - frostbolt,if=buff.icicles.stack>=5
+    - comet_storm,if=talent.comet_storm
+    - blizzard,if=active_enemies>=(5-talent.freezing_rain-talent.freezing_winds)&(cooldown.frozen_orb.remains>10|!talent.freezing_rain)
+    - ice_lance,if=buff.fingers_of_frost.up
+    - ice_lance,if=debuff.freezing.stack>=10
+    - flurry
+    - ray_of_frost,if=!buff.frostfire_empowerment.up
+    - frostbolt
+    - call_action_list,name=movement
+
+  ff_st:
+    - flurry,if=buff.brain_freeze.up&buff.thermal_void.down
+    - frozen_orb
+    - frostbolt,if=buff.icicles.stack>=5
+    - comet_storm,if=talent.comet_storm
+    - ice_lance,if=buff.fingers_of_frost.up
+    - ice_lance,if=debuff.freezing.stack>=10
+    - flurry
+    - ray_of_frost,if=active_enemies=1|!buff.frostfire_empowerment.up
+    - frostbolt
+    - call_action_list,name=movement
+
+  ss_aoe:
+    - comet_storm,if=talent.comet_storm
+    - blizzard,if=buff.freezing_rain.up
+    - flurry,if=buff.brain_freeze.up&buff.thermal_void.down
+    - ice_lance,if=buff.fingers_of_frost.stack>=2
+    - frozen_orb
+    - ray_of_frost,if=prev_gcd.1.frozen_orb
+    - frostbolt,if=buff.icicles.stack>=5
+    - ice_lance,if=buff.fingers_of_frost.up
+    - ice_lance,if=debuff.freezing.stack>=6
+    - ice_nova,if=talent.cone_of_frost
+    - cone_of_cold,if=talent.cone_of_frost
+    - blizzard,if=active_enemies>=5&talent.freezing_winds&talent.freezing_rain
+    - flurry
+    - ray_of_frost,if=buff.icicles.stack<3|combat.time<25
+    - frostbolt
+    - call_action_list,name=movement
+
+  ss_st:
+    - comet_storm,if=talent.comet_storm
+    - flurry,if=buff.brain_freeze.up&buff.thermal_void.down
+    - ice_lance,if=buff.fingers_of_frost.stack>=2
+    - frozen_orb
+    - ray_of_frost,if=prev_gcd.1.frozen_orb
+    - frostbolt,if=buff.icicles.stack>=5
+    - ice_lance,if=buff.fingers_of_frost.up
+    - ice_lance,if=debuff.freezing.stack>=6
+    - flurry
+    - ray_of_frost,if=buff.icicles.stack<3|combat.time<25
+    - frostbolt
+    - call_action_list,name=movement
+
+  movement:
+    - shimmer,if=player.moving&config.auto_blink
+    - blink,if=player.moving&config.auto_blink
+    - blizzard,if=buff.freezing_rain.up
+    - ice_nova,if=talent.cone_of_frost
+    - cone_of_cold,if=talent.cone_of_frost
+    - ice_lance
+
+  main:
+    - call_action_list,name=spell_queue
+    - call_action_list,name=sanity_checks
+    - call_action_list,name=auto_target
+    - arcane_intellect,range_check=none,if=buff.arcane_intellect.down&!player.combat
+    - summon_water_elemental,if=(!pet.exists|pet.dead)&!player.combat&!talent.lonely_winter
+    - blizzard,if=!player.combat&target.attackable&(talent.frostfire_bolt|active_enemies>=4&talent.freezing_rain)
+    - frostbolt,if=!player.combat&target.attackable&buff.icicles.stack>=5
+    - frostbolt,if=!player.combat&target.attackable
+    - call_action_list,name=defensives
+    - call_action_list,name=cds
+    - call_action_list,name=ff_aoe,if=talent.frostfire_bolt&active_enemies>=3
+    - call_action_list,name=ff_st,if=talent.frostfire_bolt
+    - call_action_list,name=ss_aoe,if=active_enemies>=4
+    - call_action_list,name=ss_st

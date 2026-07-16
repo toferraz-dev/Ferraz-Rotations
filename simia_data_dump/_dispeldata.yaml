@@ -1,0 +1,430 @@
+# Dispel Data Configuration
+# =========================
+# This file defines dispel capabilities by spec, and filtering rules for debuffs.
+#
+# Sections:
+# - dispel_specs: Maps spec ID to friendly dispel spell (removing debuffs from allies)
+# - offensive_dispels: Maps spec ID to offensive dispel spell (removing buffs from enemies)
+# - dispel_list: Filtering rules for specific debuffs (block, allow, or conditional)
+
+# ============================================================================
+# Friendly Dispels - Removing debuffs from allies
+# ============================================================================
+# Format: spec_id -> { spell, spell_id, base: [types], talents: { talent_name: [types] } }
+# Types: magic, disease, poison, curse
+
+dispel_specs:
+  # ============================================================================
+  # Priest
+  # ============================================================================
+  256:  # Discipline
+    spell: purify
+    spell_id: 527
+    base: [magic]
+    talents:
+      improved_purify: [disease]
+  257:  # Holy
+    spell: purify
+    spell_id: 527
+    base: [magic]
+    talents:
+      improved_purify: [disease]
+  258:  # Shadow
+    spell: purify_disease
+    spell_id: 213634
+    base: [disease]
+
+  # ============================================================================
+  # Monk
+  # ============================================================================
+  268:  # Brewmaster
+    spell: detox
+    spell_id: 218164
+    base: [poison, disease]
+  269:  # Windwalker
+    spell: detox
+    spell_id: 218164
+    base: [poison, disease]
+  270:  # Mistweaver
+    spell: detox
+    spell_id: 115450
+    base: [magic]
+    talents:
+      improved_detox: [poison, disease]
+
+  # ============================================================================
+  # Evoker
+  # ============================================================================
+  1467:  # Devastation
+    spells:
+      - spell: expunge
+        spell_id: 365585
+        base: [poison]
+      - spell: cauterizing_flame
+        spell_id: 374251
+        base: [poison, curse, disease, bleed]
+  1468:  # Preservation
+    spells:
+      - spell: naturalize
+        spell_id: 360823
+        base: [magic, poison]
+      - spell: cauterizing_flame
+        spell_id: 374251
+        base: [poison, curse, disease, bleed]
+  1473:  # Augmentation
+    spells:
+      - spell: expunge
+        spell_id: 365585
+        base: [poison]
+      - spell: cauterizing_flame
+        spell_id: 374251
+        base: [poison, curse, disease, bleed]
+
+  # ============================================================================
+  # Paladin
+  # ============================================================================
+  65:  # Holy
+    spell: cleanse
+    spell_id: 4987
+    base: [magic, poison, disease]
+  66:  # Protection
+    spell: cleanse_toxins
+    spell_id: 213644
+    base: [poison, disease]
+  70:  # Retribution
+    spell: cleanse_toxins
+    spell_id: 213644
+    base: [poison, disease]
+
+  # ============================================================================
+  # Shaman
+  # ============================================================================
+  262:  # Elemental
+    spell: cleanse_spirit
+    spell_id: 51886
+    base: [curse]
+  263:  # Enhancement
+    spell: cleanse_spirit
+    spell_id: 51886
+    base: [curse]
+  264:  # Restoration
+    spell: purify_spirit
+    spell_id: 77130
+    base: [magic, curse]
+
+  # ============================================================================
+  # Druid
+  # ============================================================================
+  102:  # Balance
+    spell: remove_corruption
+    spell_id: 2782
+    base: [poison, curse]
+  103:  # Feral
+    spell: remove_corruption
+    spell_id: 2782
+    base: [poison, curse]
+  104:  # Guardian
+    spell: remove_corruption
+    spell_id: 2782
+    base: [poison, curse]
+  105:  # Restoration
+    spell: natures_cure
+    spell_id: 88423
+    base: [magic, poison, curse]
+
+  # ============================================================================
+  # Mage
+  # ============================================================================
+  62:  # Arcane
+    spell: remove_curse
+    spell_id: 475
+    base: [curse]
+  63:  # Fire
+    spell: remove_curse
+    spell_id: 475
+    base: [curse]
+  64:  # Frost
+    spell: remove_curse
+    spell_id: 475
+    base: [curse]
+
+  # ============================================================================
+  # Warlock (via Imp pet - Singe Magic)
+  # ============================================================================
+  265:  # Affliction
+    spell: singe_magic
+    spell_id: 89808
+    base: [magic]
+  266:  # Demonology
+    spell: singe_magic
+    spell_id: 89808
+    base: [magic]
+  267:  # Destruction
+    spell: singe_magic
+    spell_id: 89808
+    base: [magic]
+
+# ============================================================================
+# Offensive Dispels - Removing buffs from enemies
+# ============================================================================
+# Format: spec_id -> { spell, spell_id, types: [types], steals: bool }
+# Types: magic, enrage
+
+offensive_dispels:
+  # ============================================================================
+  # Mage - Spellsteal
+  # ============================================================================
+  62:  # Arcane
+    spell: spellsteal
+    spell_id: 30449
+    types: [magic]
+    steals: true
+  63:  # Fire
+    spell: spellsteal
+    spell_id: 30449
+    types: [magic]
+    steals: true
+  64:  # Frost
+    spell: spellsteal
+    spell_id: 30449
+    types: [magic]
+    steals: true
+
+  # ============================================================================
+  # Shaman - Purge
+  # ============================================================================
+  262:  # Elemental
+    spell: purge
+    spell_id: 370
+    types: [magic]
+  263:  # Enhancement
+    spell: purge
+    spell_id: 370
+    types: [magic]
+  264:  # Restoration
+    spell: purge
+    spell_id: 370
+    types: [magic]
+
+  # ============================================================================
+  # Hunter - Tranquilizing Shot
+  # ============================================================================
+  253:  # Beast Mastery
+    spell: tranquilizing_shot
+    spell_id: 19801
+    types: [enrage, magic]
+  254:  # Marksmanship
+    spell: tranquilizing_shot
+    spell_id: 19801
+    types: [enrage, magic]
+  255:  # Survival
+    spell: tranquilizing_shot
+    spell_id: 19801
+    types: [enrage, magic]
+
+  # ============================================================================
+  # Druid - Soothe
+  # ============================================================================
+  102:  # Balance
+    spell: soothe
+    spell_id: 2908
+    types: [enrage]
+  103:  # Feral
+    spell: soothe
+    spell_id: 2908
+    types: [enrage]
+  104:  # Guardian
+    spell: soothe
+    spell_id: 2908
+    types: [enrage]
+  105:  # Restoration
+    spell: soothe
+    spell_id: 2908
+    types: [enrage]
+
+  # ============================================================================
+  # Demon Hunter - Consume Magic
+  # ============================================================================
+  577:  # Havoc
+    spell: consume_magic
+    spell_id: 278326
+    types: [magic]
+  581:  # Vengeance
+    spell: consume_magic
+    spell_id: 278326
+    types: [magic]
+
+  # ============================================================================
+  # Priest - Dispel Magic (offensive)
+  # ============================================================================
+  256:  # Discipline
+    spell: dispel_magic
+    spell_id: 528
+    types: [magic]
+  257:  # Holy
+    spell: dispel_magic
+    spell_id: 528
+    types: [magic]
+  258:  # Shadow
+    spell: dispel_magic
+    spell_id: 528
+    types: [magic]
+
+  # ============================================================================
+  # Warlock - Singe Magic (Command Demon when Imp is active)
+  # ============================================================================
+  # Note: Warlock offensive dispel is through Command Demon when Imp is active
+  # 265:  # Affliction - uses pet
+  # 266:  # Demonology - uses pet
+  # 267:  # Destruction - uses pet
+
+  # ============================================================================
+  # Evoker - All specs have access to enrage dispel via talent
+  # ============================================================================
+  1467:  # Devastation
+    spell: overawe
+    spell_id: 374346
+    types: [enrage]
+  1468:  # Preservation
+    spell: overawe
+    spell_id: 374346
+    types: [enrage]
+  1473:  # Augmentation
+    spell: overawe
+    spell_id: 374346
+    types: [enrage]
+
+  # ============================================================================
+  # Rogue - Shiv (with Numbing Poison applied can dispel enrage)
+  # ============================================================================
+  259:  # Assassination
+    spell: shiv
+    spell_id: 5938
+    types: [enrage]
+  260:  # Outlaw
+    spell: shiv
+    spell_id: 5938
+    types: [enrage]
+  261:  # Subtlety
+    spell: shiv
+    spell_id: 5938
+    types: [enrage]
+
+# ============================================================================
+# Legacy Dispel Spells (for backward compatibility with target.dispelable.SPELL)
+# ============================================================================
+# Maps spell_id -> allowed dispel types
+# This section is used by the existing target.dispelable.SPELL_NAME syntax
+
+dispel_spells:
+  # Priest
+  527: [magic, disease]       # Purify (Disc/Holy with talent)
+  213634: [disease]           # Purify Disease (Shadow)
+  528: [magic]                # Dispel Magic (offensive)
+
+  # Monk
+  218164: [poison, disease]   # Detox (Brew/WW)
+  115450: [magic, poison, disease]  # Detox (MW)
+
+  # Evoker
+  365585: [poison]            # Expunge
+  360823: [magic, poison]     # Naturalize (Preservation)
+  374251: [poison, curse, disease, bleed]  # Cauterizing Flame
+  374346: [enrage]            # Overawe
+
+  # Paladin
+  4987: [magic, poison, disease]  # Cleanse (Holy)
+  213644: [poison, disease]   # Cleanse Toxins (Prot/Ret)
+
+  # Shaman
+  51886: [curse]              # Cleanse Spirit
+  77130: [magic, curse]       # Purify Spirit (Resto)
+  370: [magic]                # Purge (offensive)
+
+  # Druid
+  2782: [poison, curse]       # Remove Corruption
+  88423: [magic, poison, curse]  # Nature's Cure (Resto)
+  2908: [enrage]              # Soothe (offensive)
+
+  # Mage
+  475: [curse]                # Remove Curse
+  30449: [magic]              # Spellsteal (offensive, steals)
+
+  # Warlock
+  89808: [magic]              # Singe Magic (Imp)
+
+  # Hunter
+  19801: [enrage, magic]      # Tranquilizing Shot
+
+  # Demon Hunter
+  278326: [magic]             # Consume Magic
+
+  # Rogue
+  5938: [enrage]              # Shiv
+
+# ============================================================================
+# Dispel List - Exception rules for specific debuffs
+# ============================================================================
+# By default, ALL dispellable debuffs are dispelled automatically.
+# This list defines EXCEPTIONS to that default behavior.
+#
+# Format: debuff_spell_id -> rule
+# Rules:
+#   false              - Block: Never dispel this debuff
+#   "expression"       - Condition: Only dispel if expression evaluates true
+#
+# Expression can use spell NAME or numeric ID:
+#   "cycle.debuff.mystic_vapors.elapsed>=3"  # By spell name
+#   "cycle.debuff.387564.elapsed>=3"         # By spell ID
+#
+# Examples:
+#   389179: false                             # Block - never dispel this
+#   387564: "cycle.debuff.387564.elapsed>=3"  # Condition - wait 3 seconds
+
+dispel_list:
+
+  # Example entries:
+  # 389179: false                             # Block this debuff entirely
+  # 387564: "cycle.debuff.387564.elapsed>=3"  # Wait 3s before dispelling
+  438618: "cycle.debuff.438618.stacks>=2"
+  387564: "cycle.debuff.387564.elapsed>=3"  # Mystic Vapors
+  473713: "cycle.debuff.473713.remains<=3"  # Kinetic Explosive Gel
+  429493: "cycle.debuff.429493.remains<=4"  # Unstable Corruption
+  320788: "cycle.debuff.320788.remains<=3"  # Frozen Binds
+  443436: "cycle.debuff.443436.elapsed>=4"
+  443437: "cycle.debuff.443437.elapsed>=4"
+  261440: "cycle.debuff.261440.elapsed>=4"
+  388777: "cycle.debuff.388777.stacks>=5&cycle.debuff.388777.remains<=2"
+  323347: "cycle.debuff.323347.stacks>=8"
+  322410: "cycle.debuff.322410.remains<=7&cycle.debuff.322410.stacks>=3"
+  374352: "cycle.debuff.374352.remains<=5"
+  319898: "cycle.debuff.319898.stacks>=2"
+  319070: "cycle.debuff.319070.stacks>=2"
+  330700: "cycle.debuff.330700.stacks>=2"
+  271564: "cycle.debuff.271564.stacks>=3"
+  326092: "cycle.debuff.326092.stacks>=3"
+  269301: "cycle.debuff.269301.stacks>=3"
+  374389: "cycle.debuff.374389.stacks>=3"
+  377510: "cycle.debuff.377510.stacks>=4"
+  417807: "cycle.debuff.417807.stacks>=5"
+  225908: "cycle.debuff.225908.stacks>=10"
+  404141: "cycle.debuff.403912.up"  # Linked to 404141
+  424889: "nameplates.casting.424888"  # Linked to 424889
+  448561: "cycle.debuff.448561.elapsed>=1.5"
+  1235060: "cycle.debuff.1235060.stacks>=10"  # Anima Tainted Armor
+  1233865: "cycle.health.pct<=15" # Absorb Null Corona
+  1233887: "cycle.health.pct<=15" # Null Corona (variant)
+  218164: "cycle.debuff.218164.stacks>=8"
+  1262930: "cycle.debuff.1262930.stacks>=8"
+  1258459: "cycle.debuff.1258459.stacks>=8"
+  1282244: "cycle.debuff.1282244.stacks>=6" #important Bleed. dont want to waist on 1 stack
+  
+
+  389179: false
+  407496: false
+  405042: false
+  424581: false
+  389011: false
+  432031: false
+  433662: false
+  461487: false

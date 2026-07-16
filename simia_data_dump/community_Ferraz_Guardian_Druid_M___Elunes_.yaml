@@ -1,0 +1,207 @@
+version: 4.2
+author: Ferraz
+patch: "12.0.5"
+spec: 104
+name: Ferraz Guardian Druid M+ (Elunes)
+description: |
+  Ferraz Guardian Druid M+ (Elunes)
+entry: main
+
+config:
+  recommended_talents:
+    section: "Talents"
+    type: copy_text
+    label: "Recommended Talent String"
+    text: "CgGA8cL7tpvige+kkmGM9zUPWDAAAAAAAAAAAgZmZmFzMjZWmZx4BmZZZgZzwoJyMzyMzMzsMmBAAAAAAjNzALbzMYMLDgpmZZWmZmBAwmxMDwixwAzilNAzMzsBA"
+
+  # === DEFENSIVE CONFIGURATIONS ===
+  survival_instincts_threshold:
+    label: "Survival Instincts %"
+    section: "Defensives"
+    type: slider
+    min: 10
+    max: 70
+    default: 50
+
+  frenzied_regen_threshold:
+    label: "Frenzied Regeneration %"
+    section: "Defensives"
+    type: slider
+    min: 30
+    max: 80
+    default: 70
+
+  manual_barkskin:
+    label: "Manual Barkskin"
+    section: "Defensives"
+    type: checkbox
+    default: false
+    description: "Disable automatic Barkskin usage."
+
+  # === MOVEMENT CONFIGURATIONS ===
+  stampeding_roar_usage:
+    label: "Stampeding Roar Usage"
+    section: "Movement"
+    type: dropdown
+    options:
+      - label: "Disabled"
+        value: 0
+      - label: "Only in combat"
+        value: 1
+      - label: "Only out of combat"
+        value: 2
+      - label: "Always when moving"
+        value: 3
+    default: 2
+
+  stampeding_roar_movement_time:
+    label: "Roar after moving (seconds)"
+    section: "Movement"
+    type: slider
+    min: 0
+    max: 4
+    default: 2
+
+  # === UTILITY CONFIGURATIONS ===
+  use_growl:
+    label: "Auto Growl (Taunt)"
+    section: "Utility"
+    type: checkbox
+    default: true
+
+  # === TRINKET & CONSUMABLE CONFIGURATIONS ===
+  use_trinket_1:
+    label: "Auto Trinket 1"
+    section: "Trinkets"
+    type: checkbox
+    default: false
+
+  use_trinket_2:
+    label: "Auto Trinket 2"
+    section: "Trinkets"
+    type: checkbox
+    default: false
+
+  use_potion:
+    label: "Auto Offensive Potion"
+    section: "Trinkets"
+    type: checkbox
+    default: false
+
+  auto_incarn_st:
+    label: "Incarnation on Single Target"
+    section: "Cooldowns"
+    type: checkbox
+    default: false
+
+  use_hotw:
+    label: "Manual Heart of the Wild"
+    section: "Cooldowns"
+    type: toggle
+    spell: 319217
+    default: false
+    description: "Activate HotW manually via hotkey."
+
+  discord_button:
+    section: "Help"
+    type: button
+    label: "Discord - Ferraz"
+    text: "Join Discord - Ferraz"
+    url: "https://discord.com/channels/857767821093634068/1467268534420766854"
+
+variables:
+  # Stampeding Roar conditions based on interface settings
+  use_stampeding_roar: moving.time>=config.stampeding_roar_movement_time&buff.stampeding_roar.down&((config.stampeding_roar_usage=1&player.combat)|(config.stampeding_roar_usage=2&!player.combat)|(config.stampeding_roar_usage=3))
+
+lists:
+  # Out of combat: Ensures Mark of the Wild is active in the group
+  out_of_combat:
+    - mark_of_the_wild,name="Mark of the Wild",range_check=none,if=(buff.mark_of_the_wild.down.any|action.mark_of_the_wild.overlayed)&lastcast.mark_of_the_wild>=10
+
+  # Defensive priority sequence: Barkskin (according to menu options) -> Survival Instincts (when incoming damage exceeds threshold) -> Frenzied Regeneration (if effective health drops below threshold)
+  defensives:
+    - barkskin,name="Barkskin",use_off_gcd=1,if=!config.manual_barkskin&!buff.lunar_beam.up&((!buff.survival_instincts.up&fight_remains>=20)|target.boss)
+    - barkskin,name="Barkskin (Low HP)",use_off_gcd=1,if=config.manual_barkskin&health.effective.pct<60&!buff.survival_instincts.up
+    - survival_instincts,name="Survival Instincts",use_off_gcd=1,if=incoming.pct<config.survival_instincts_threshold&!buff.survival_instincts.up
+    - frenzied_regeneration,name="Frenzied Regeneration",if=incoming.pct<config.frenzied_regen_threshold&buff.frenzied_regeneration.down
+
+  # Offensive racial abilities triggered without additional conditions during combat
+  racials:
+    - blood_fury,name="Blood Fury",if=debuff.thrash.stack>=2
+    - berserking,name="Berserking",if=debuff.thrash.stack>=2
+    - fireblood,name="Fireblood",if=debuff.thrash.stack>=2
+    - ancestral_call,name="Ancestral Call",if=debuff.thrash.stack>=2
+    - thorn_bloom,name="Thorn Bloom",if=debuff.thrash.stack>=2
+
+  # Interrupts and Dispel: Skull Bash on main target, mouseover, or focus; Incapacitating Roar as AoE CC; and Soothe on Enrage
+  interrupts:
+    - skull_bash,name="Skull Bash",use_off_gcd=1,if=interrupt.target.check
+    - skull_bash.mouseover,name="Skull Bash (MO)",use_off_gcd=1,if=interrupt.mouseover.check
+    - skull_bash.focus,name="Skull Bash (Focus)",use_off_gcd=1,if=interrupt.focus.check
+    - incapacitating_roar,name="Roar (AoE CC)",if=interrupt.stun.aoe.check
+    - soothe,name="Soothe Enrage",if=target.purgeable.enrage
+
+  # Automatic Taunt: Maintains threat if threat is low and not in a raid
+  taunt:
+    - growl,name="Growl",use_off_gcd=1,if=config.use_growl&target.threat<2&target.combat&target.threat!=-1&!player.inraid
+    - growl.mouseover,name="Growl (MO)",use_off_gcd=1,if=config.use_growl&mouseover.threat<2&mouseover.combat&mouseover.threat!=-1&mouseover.exists&!player.inraid
+
+  # Movement and utility abilities
+  utility:
+    - stampeding_roar,name="Stampeding Roar",if=var.use_stampeding_roar&config.stampeding_roar_usage!=0
+
+  # Damage Cooldowns and Burst Window Alignment
+  cooldowns:
+    # Synchronizes the use of on-use trinkets and potion with the Incarnation window
+    - trinket_1,name="Trinket 1",if=config.use_trinket_1&trinket_1.sync&buff.incarnation_guardian_of_ursoc.up
+    - trinket_2,name="Trinket 2",if=config.use_trinket_2&trinket_2.sync&buff.incarnation_guardian_of_ursoc.up
+    - combat_potion,name="Combat Potion",if=combat_potion.ready&config.use_potion&buff.incarnation_guardian_of_ursoc.up
+    # Incarnation: Requires minimum number of enemies or combat against Boss; ensures no buff overlap
+    - incarnation_guardian_of_ursoc,name="Incarnation",use_off_gcd=1,if=debuff.thrash.stack>=2&(active_enemies>=2|config.auto_incarn_st|target.boss)
+    # Sundering Roar: Generates immediate AoE threat or when Thrash reaches 5 stacks
+    - sundering_roar,name="Sundering Roar",if=active_enemies>=2|debuff.thrash.stack>=5
+    # Lunar Beam: Cast only if player has been standing still for at least 0.5 seconds
+    - lunar_beam,name="Lunar Beam",if=player.standing.time>=0.5
+
+  # Elune's Chosen Build Rotation
+  # Focuses on maintaining maximum Moonfire and Thrash activity. Swipe and Raze are omitted in this build.
+  rotation_elunes:
+    # Maintains Thrash active to apply bleed and debuffs
+    - thrash,name="Thrash"
+    # Spends rage to keep Ironfur active above 50 Rage
+    - ironfur,name="Ironfur",use_off_gcd=1,if=rage>=50
+    # Moonfire as filler spell, replacing Swipe entirely
+    - moonfire,name="Moonfire",delay=400
+
+  # Transition to Cat Form with Heart of the Wild
+  hotw:
+    - rake,name="Cat Form",delay=400,if=!buff.cat_form.up&cooldown.heart_of_the_wild.ready
+    - heart_of_the_wild,delay=400,name="Feral Frenzy",use_off_gcd=1,if=buff.cat_form.up
+
+  # Main Rotation (Entry Point)
+  main:
+    - call_action_list,name=spell_queue
+    - call_action_list,name=sanity_checks
+    - call_action_list,name=out_of_combat
+    - call_action_list,name=auto_target
+    - call_action_list,name=auto_heal
+    - return,if=auto_combat.player
+
+    # Heart of the Wild activated if option is enabled and target is within range
+    - call_action_list,name=hotw,if=config.use_hotw&target.range<=8
+
+    # Ensures Bear Form for tanking; aborts if transition fails
+    - mangle,name="Bear Form",if=!buff.bear_form.up
+    - bear_form,name="Bear Form (Forced)",if=!buff.bear_form.up
+    - return,if=!buff.bear_form.up
+
+    # Combat Priority: Defensives -> Taunt -> Interrupts -> Utility -> Racials -> Target Check -> Cooldowns -> Elunes Rotation
+    - call_action_list,name=defensives
+    - call_action_list,name=taunt
+    - call_action_list,name=interrupts
+    - call_action_list,name=utility
+    - call_action_list,name=racials
+
+    - return,if=!target.exists|target.dead|!target.enemy
+    - call_action_list,name=cooldowns
+    - call_action_list,name=rotation_elunes

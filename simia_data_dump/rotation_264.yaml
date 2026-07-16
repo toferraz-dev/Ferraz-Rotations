@@ -1,0 +1,503 @@
+# =============================================================================
+# Shaman Restoration - Spec ID 264 (Midnight S1)
+#
+# Hero trees:
+#   Farseer  -> talent.call_of_the_ancestors  (Ancestral Swiftness, ancestors replicate casts)
+#   Totemic  -> talent.surging_totem          (Surging Totem replaces Healing Rain pulses)
+#
+# Midnight pruning (verified against Wowhead "Removed Abilities" list):
+#   REMOVED: Healing Surge, Cloudburst Totem, Ancestral Protection Totem,
+#            Earthen Wall Totem, High Tide, Mana Tide, Spiritwalker's Tidal Totem,
+#            Master of the Elements, Tidebringer, Undulation, Wellspring,
+#            Totemic Recall, Stone Bulwark Totem, Thunderstorm
+#
+# Bread and butter (per Lauren / Earthshrine S1 guide):
+#   - Send Ancestral Swiftness + Unleash Life ON COOLDOWN (max ancestor uptime,
+#     Stormstream apex rank 3 also procs Stormstream off AS / NS without consuming HST charge)
+#   - Tidal Waves UP before every HW / Chain Heal (cast time reduction)
+#   - Riptide on cooldown - drives Tidal Waves + Stormstream apex RNG procs
+#   - Ascendance is THE main cooldown (choice-noded with Healing Tide Totem)
+#   - Flow of the Tides: prefer Chain Heal on Riptide-affected allies
+#
+# Verified buffs (logs at tools/monks/{Farseer,Totemic}/<char>/*_Buffs.csv):
+#   Tidal Waves (51564) - Riptide grants 2 stacks; consumed by Healing Wave / Chain Heal
+#   Unleash Life (73685) - 10s; next CH / HW / Riptide gets +25%
+#   Coalescing Water (470076) - talent proc; built/consumed on heals
+#   Ancestral Swiftness (443454) - Farseer instant-cast next nature spell + ancestor
+#   Lava Surge (77756) - instant Lava Burst proc
+#   Spiritwalker's Grace (79206) - 15s cast-while-moving
+#
+# Apex talents:
+#   Stormstream Totem (1267016) - procs from Riptide RNG / Ancestral or Nature's Swiftness, stacks 2x / 60s
+#                                 buff 1267089 = banked-cast tracker
+#   Surging Totem    (444995)   - Totemic only; replaces Healing Rain
+# =============================================================================
+
+version: 3
+spec: 264
+entry: main
+
+movement_allowed: buff.spiritwalkers_grace.up
+
+config:
+  astral_shift_hp_pct:
+    section: "Defensive HP Percentage"
+    label: "Astral Shift HP%"
+    type: slider
+    min: 0
+    max: 100
+    default: 50
+
+  astral_shift_dmg_pct:
+    section: "Defensives Prediction Damage"
+    label: "Astral Shift (Incoming Dmg%)"
+    type: slider
+    min: 0
+    max: 100
+    default: 50
+
+  spirit_link_hp_pct:
+    section: "Major Cooldowns"
+    label: "Spirit Link HP%"
+    type: slider
+    min: 25
+    max: 99
+    default: 55
+
+  healing_tide_hp_pct:
+    section: "Major Cooldowns"
+    label: "Healing Tide HP%"
+    type: slider
+    min: 25
+    max: 99
+    default: 70
+
+  ascendance_hp_pct:
+    section: "Major Cooldowns"
+    label: "Ascendance HP%"
+    type: slider
+    min: 25
+    max: 99
+    default: 75
+
+  chain_heal_hp_pct:
+    section: "Healing"
+    label: "Chain Heal HP%"
+    type: slider
+    min: 25
+    max: 99
+    default: 85
+
+  riptide_threshold:
+    section: "Healing"
+    label: "Riptide HP%"
+    type: slider
+    min: 25
+    max: 99
+    default: 95
+
+  earth_shield_target:
+    section: "Healing"
+    label: "Earth Shield Target"
+    type: unit_select
+    max: 1
+    filter: tanks
+    show_override: true
+
+  riptide_spread:
+    section: "Healing"
+    type: toggle
+    label: "Riptide Spread"
+    spell: 61295
+    description: "Spread Riptide on injured allies"
+
+  healing_wave_threshold:
+    section: "Healing"
+    label: "Healing Wave HP%"
+    type: slider
+    min: 25
+    max: 99
+    default: 80
+
+  use_dispell:
+    section: "Utility"
+    label: "Enable Purify Spirit"
+    type: checkbox
+    default: true
+
+  use_mouseover:
+    section: "Utility"
+    label: "MO Healing (Emergency)"
+    type: checkbox
+    default: true
+
+  mouseover_emergency_hp:
+    section: "Utility"
+    label: "MO Emergency HP %"
+    type: slider
+    min: 10
+    max: 99
+    default: 65
+
+  dps_enabled:
+    section: "DPS"
+    label: "DPS Filler"
+    type: checkbox
+    default: true
+
+  aoe_threshold:
+    section: "DPS"
+    label: "AoE - Min Enemies"
+    type: slider
+    min: 2
+    max: 5
+    default: 3
+
+variables:
+  # Group size: <=5 = dungeon/M+, >5 = raid
+  is_dungeon: "player.inmythicplus|(group.count(cycle.health.pct<=100)<=5)"
+
+  # Hero tree detection
+  is_farseer: "talent.call_of_the_ancestors"
+  is_totemic: "talent.surging_totem"
+
+  # Mouseover validation
+  mo_friendly_valid: "mouseover.exists&mouseover.alive&mouseover.friendly&mouseover.range>0&mouseover.range<=40"
+
+  # Tidal Waves (51564) - Riptide grants 2 stacks; consumed by HW / CH
+  tidal_waves_active: "buff.tidal_waves.up"
+
+  # Unleash Life buff window - boost next CH / HW / Riptide
+  unleash_life_active: "buff.unleash_life.up"
+
+  # Ancestral Swiftness (443454) - Farseer instant + Ancestor spawn
+  ancestral_swiftness_active: "buff.ancestral_swiftness.up"
+
+lists:
+  spell_queue:
+    - queue_spell
+
+  sanity_checks:
+    - return,if=player.dead
+    - return,if=mounted
+    - return,if=!state.rotation
+    - return,if=state.blocked_inputs
+    - return,if=player.cc
+    - return,if=player.loot_nearby
+    - call_action_list,name=trinkets,if=player.combat
+
+  trinkets:
+    - trinket_1,if=trinket_1.sync
+    - trinket_2,if=trinket_2.sync
+
+  defensives:
+    # --- Prediction Damage: pre-fire on a predicted incoming hit (% of effective HP) ---
+    - astral_shift,range_check=none,if=incoming.pct>=config.astral_shift_dmg_pct
+
+    # --- HP Percentage: react when already low ---
+    - astral_shift,range_check=none,if=health.pct<=config.astral_shift_hp_pct
+
+  interrupts:
+    - wind_shear,if=interrupt.target.check
+    - wind_shear.mouseover,if=interrupt.mouseover.check
+    - wind_shear.focus,if=interrupt.focus.check
+    - capacitor_totem.player,if=interrupt.stun.aoe.check
+    - quaking_palm,if=interrupt.cc.check
+    - haymaker,if=interrupt.cc.check
+    - war_stomp,if=interrupt.stun.aoe.check
+    - bull_rush,if=interrupt.stun.aoe.check
+    - tail_swipe,if=interrupt.stun.aoe.check
+
+  dispel:
+    - purify_spirit,cycle=members,if=config.use_dispell&cycle.dispelable.list
+
+  # ==========================================================================
+  # Major Cooldowns
+  # Mana Tide Totem was pruned in Midnight - no mana sustain CD anymore.
+  # Ascendance and Healing Tide Totem are a CHOICE node - only one is talented.
+  # Spirit Link Totem is always available.
+  # ==========================================================================
+  cooldowns:
+    # Spirit Link Totem - emergency redistribute + 15% DR
+    - spirit_link_totem,range_check=none,if=group.count(cycle.health.effective.pct<config.spirit_link_hp_pct)>=2
+
+    # Healing Tide Totem - massive raid HoT (3min CD, choice-noded with Ascendance)
+    - healing_tide_totem,range_check=none,if=talent.healing_tide_totem&group.count(cycle.health.effective.pct<config.healing_tide_hp_pct)>=3
+
+    # Ascendance - 15s burst, HW always crits + cleaves, CH cleaves to 3 extra (1min CD)
+    # On cast: instant heal to all injured allies within 20y (split evenly).
+    # Resurgence procs make Ascendance + HW mana-neutral.
+    - ascendance,range_check=none,if=talent.ascendance&group.count(cycle.health.effective.pct<config.ascendance_hp_pct)>=3
+
+    # Primordial Wave - instant Riptide + cleaved Healing Wave (talent)
+    - primordial_wave,cycle=members,if=talent.primordial_wave&group.count(cycle.health.effective.pct<85)>=3&cycle.health.effective.pct<config.healing_wave_threshold
+
+  # ==========================================================================
+  # Shields maintenance.
+  # Water Shield (Instinctive Imbuements 1270350): grants +3% Int while up,
+  #   re-applies weapon imbuements (Earthliving Weapon), AND auto-applies
+  #   Earth Shield on self if Elemental Orbit is talented. Single button to
+  #   maintain everything passive — keep up always.
+  # Earth Shield (974): only one non-self target per shaman. User picks the
+  #   recipient via config.earth_shield_target — a unit_select that auto-
+  #   populates live tank names from the roster (max 1, exposed in overlay
+  #   right-click menu). When nothing is selected we pin the fallback to
+  #   tank1 (deterministic roster slot) — chasing tanks.lowest would strip
+  #   and re-cast every time the other tank dipped lower.
+  # ==========================================================================
+  shields:
+    - water_shield,range_check=none,if=buff.water_shield.down
+    # earth_shield,cycle=tanks,if=cycle.buff.earth_shield.down&group.count(cycle.tank&cycle.buff.earth_shield.up)=0&player.combat
+    # buff "earth_shield" name collides with 20+ rows in SpellName.csv — use numeric ID 974 so buff tracking actually resolves
+    - earth_shield,cycle=config.earth_shield_target,if=config.earth_shield_target&cycle.buff.974.down&player.combat
+    - earth_shield,target=tank1,if=!config.earth_shield_target&tank1.exists&tank1.buff.974.down&player.combat
+
+  # ==========================================================================
+  # Stormstream / Healing Stream Totem
+  # Stormstream Totem = apex upgrade of HST. Procs from Riptide / Nature's Swiftness
+  #   (buff 1267089, max 2 stacks / 60s). BANK procs - only spend when:
+  #     a) stacks=2 (about to overflow next proc - waste prevention)
+  #     b) group emergency (handled in healing lists, not here)
+  # Healing Stream Totem = baseline filler.
+  #   With Stormstream talent: only cast to prevent charge cap (waste prevention).
+  #   Without:                 cast at max charges OR proactively on group damage.
+  # ==========================================================================
+  totems_filler:
+    # Stormstream waste prevention - cast when stacks would overflow next proc.
+    # No totem-up guard: if a Stormstream is already out we either stack a 2nd
+    # one or refresh, but we MUST consume the stack so the next proc isn't lost.
+    - stormstream_totem,range_check=none,if=talent.stormstream_totem&player.buff.stacks(1267089)>=2
+    # Surging Totem (Totemic apex) - replaces Healing Rain; keep up always
+    - surging_totem,range_check=none,if=var.is_totemic&!totem.surging_totem.up
+    # Totemic Projection (Totemic) - move Surging Totem to group whenever it's
+    # placed somewhere the group isn't standing. Only relevant for Totemic.
+    - totemic_projection,range_check=none,if=var.is_totemic&talent.totemic_projection&totem.surging_totem.up&totem.surging_totem.remains>4&group.count(cycle.health.effective.pct<config.chain_heal_hp_pct)>=3
+    # HST charge-cap prevention - fires regardless of talent (don't waste a charge)
+    - healing_stream_totem,range_check=none,if=!totem.healing_stream_totem.up&cooldown.healing_stream_totem.charges_fractional>=cooldown.healing_stream_totem.max_charges
+    # HST proactive (Totemic) - Lively Totems hero talent procs a Chain Heal cleave on
+    # every HST cast. So Totemic wants HST on CD regardless of Stormstream apex.
+    - healing_stream_totem,range_check=none,if=var.is_totemic&!totem.healing_stream_totem.up&group.count(cycle.health.effective.pct<95)>=2
+    # HST proactive (Farseer w/o Stormstream apex) - normal totem filler
+    - healing_stream_totem,range_check=none,if=!talent.stormstream_totem&!totem.healing_stream_totem.up&group.count(cycle.health.effective.pct<90)>=2
+
+  # ==========================================================================
+  # Healing - Raid (Farseer / Standard)
+  # Priority order per Wowhead Midnight S1 guide (Harreks):
+  #   1. Riptide on CD (Tidal Waves stacks, Stormstream RNG, drives Flow of the Tides)
+  #   2. Stormstream Totem procs - SPEND ASAP (don't lose HST casts; 60s buff but waste)
+  #   3. Unleash Life on CD (boosts next HW/CH/Riptide; gives cast-time reduction)
+  #   4. Inside Ascendance: HW/CH consume UL+TW FIRST, then AS/NS (else AS wastes UL cast time)
+  #   5. AS/NS on CD (guaranteed Stormstream proc; ancestor for Farseer)
+  #   6. Downpour (talent), Healing Rain (Farseer + talent)
+  #   7. Chain Heal w/ UL + Flow-of-the-Tides Riptided target (best case)
+  #   8. Chain Heal AoE (>=3 low) / Healing Wave (1-2 low or mana save)
+  # ==========================================================================
+  healing_raid:
+    # Riptide spread toggle / maintenance (manual override)
+    - riptide,cycle=members,if=config.riptide_spread&cycle.buff.riptide.down&cycle.health.effective.pct<config.riptide_threshold
+
+    # Riptide on CD - top filler; drives Tidal Waves, Stormstream RNG, Flow of the Tides
+    - riptide,cycle=members,if=cooldown.riptide.ready&cycle.buff.riptide.down&cycle.health.effective.pct<config.riptide_threshold
+
+    # Stormstream Totem - SPEND PROCS (buff 1267089). Top priority per Wowhead: don't sit on them.
+    - stormstream_totem,range_check=none,if=talent.stormstream_totem&player.buff.stacks(1267089)>=1&group.count(cycle.health.effective.pct<config.chain_heal_hp_pct)>=2
+
+    # Unleash Life ON CD - +25% to next HW/CH/Riptide + cast-time reduction + Farseer ancestor
+    - unleash_life,cycle=members,if=talent.unleash_life&cooldown.unleash_life.ready&cycle.health.effective.pct<98
+
+    # ==== Ascendance burst window ====
+    # HW always crits + cleaves to 1 ally at 50%, CH cleaves to 3 extra (10% reduction/jump),
+    # both with -25% mana. Resurgence procs from HW crits make it mana-neutral.
+    # CRITICAL ORDER: consume UL+TW with HW/CH FIRST, then NS - else NS wastes UL cast-time bonus.
+    # CH for >=3 injured, HW for 1-2 (mana free with crits) per Wowhead "Ascendance Sequence".
+    - chain_heal,cycle=members,if=buff.ascendance.up&var.unleash_life_active&group.count(cycle.health.effective.pct<config.chain_heal_hp_pct)>=3&cycle.health.effective.pct<config.chain_heal_hp_pct&!player.moving
+    - healing_wave,cycle=members,if=buff.ascendance.up&var.unleash_life_active&cycle.health.effective.pct<config.healing_wave_threshold&!player.moving
+    - chain_heal,cycle=members,if=buff.ascendance.up&group.count(cycle.health.effective.pct<config.chain_heal_hp_pct)>=3&cycle.health.effective.pct<config.chain_heal_hp_pct&!player.moving
+    - healing_wave,cycle=members,if=buff.ascendance.up&cycle.buff.riptide.up&cycle.health.effective.pct<99&!player.moving
+    - healing_wave,cycle=members,if=buff.ascendance.up&cycle.health.effective.pct<config.healing_wave_threshold&!player.moving
+
+    # AS/NS on CD - guaranteed Stormstream proc + (Farseer) ancestor.
+    # Hold while UL buff is up to avoid wasting UL's cast-time reduction on an instant cast.
+    - ancestral_swiftness,if=talent.ancestral_swiftness&cooldown.ancestral_swiftness.ready&!var.unleash_life_active&group.count(cycle.health.effective.pct<98)>=1
+    - natures_swiftness,if=var.is_totemic&cooldown.natures_swiftness.ready&!var.unleash_life_active&group.count(cycle.health.effective.pct<98)>=1
+
+    # Downpour (talent) - cast on group damage
+    - downpour,range_check=none,if=talent.downpour&group.count(cycle.health.effective.pct<config.chain_heal_hp_pct)>=3
+
+    # Healing Rain - skip when Surging Totem replaces it (Totemic) and requires talent for Farseer
+    - healing_rain,range_check=none,if=!var.is_totemic&talent.healing_rain&group.count(cycle.health.effective.pct<config.chain_heal_hp_pct)>=3&!player.moving
+
+    # Chain Heal best case - UL buffed AND landing on a Riptided target (Flow of the Tides +100% jump)
+    - chain_heal,cycle=members,if=var.unleash_life_active&talent.flow_of_the_tides&cycle.buff.riptide.up&group.count(cycle.health.effective.pct<config.chain_heal_hp_pct)>=2&cycle.health.effective.pct<config.chain_heal_hp_pct&!player.moving
+
+    # Chain Heal with Unleash Life buff - consume the +25% before it expires (10s window)
+    - chain_heal,cycle=members,if=var.unleash_life_active&group.count(cycle.health.effective.pct<config.chain_heal_hp_pct)>=2&cycle.health.effective.pct<config.chain_heal_hp_pct&!player.moving
+
+    # Chain Heal - Flow of the Tides preference: pick a Riptided target for the +100% jump
+    - chain_heal,cycle=members,if=talent.flow_of_the_tides&cycle.buff.riptide.up&group.count(cycle.health.effective.pct<config.chain_heal_hp_pct)>=3&cycle.health.effective.pct<config.chain_heal_hp_pct&!player.moving
+
+    # Chain Heal - generic AoE (3+ injured)
+    - chain_heal,cycle=members,if=group.count(cycle.health.effective.pct<config.chain_heal_hp_pct)>=3&cycle.health.effective.pct<config.chain_heal_hp_pct&!player.moving
+
+    # Healing Wave with Tidal Waves - faster cast (consumes 1 stack)
+    - healing_wave,cycle=members,if=var.tidal_waves_active&cycle.health.effective.pct<config.healing_wave_threshold&!player.moving
+
+    # Healing Wave fallback
+    - healing_wave,cycle=members,if=cycle.health.effective.pct<config.healing_wave_threshold&!player.moving
+
+  # ==========================================================================
+  # Healing - Dungeon / M+ (tighter, fewer raid totems, sharper single-target)
+  # Same priority spine as raid but lower group-count thresholds.
+  # Healing Surge does NOT exist in Midnight - emergencies are AS+instant HW.
+  # ==========================================================================
+  healing_dungeon:
+    # Riptide on CD - keep Tidal Waves rolling + Stormstream RNG
+    - riptide,cycle=members,if=cooldown.riptide.ready&cycle.buff.riptide.down&cycle.health.effective.pct<config.riptide_threshold
+
+    # Stormstream - SPEND PROCS first (lower threshold for M+; 2+ injured = real pressure)
+    - stormstream_totem,range_check=none,if=talent.stormstream_totem&player.buff.stacks(1267089)>=1&group.count(cycle.health.effective.pct<config.chain_heal_hp_pct)>=2
+
+    # Unleash Life on CD
+    - unleash_life,cycle=members,if=talent.unleash_life&cooldown.unleash_life.ready&cycle.health.effective.pct<98
+
+    # ==== Ascendance burst window (M+) ====
+    # Same ordering as raid: consume UL+TW with HW/CH first, then AS/NS.
+    # M+ has fewer targets so HW is usually correct over CH (no jump benefit on same target).
+    - healing_wave,cycle=members,if=buff.ascendance.up&var.unleash_life_active&cycle.health.effective.pct<config.healing_wave_threshold&!player.moving
+    - healing_wave,cycle=members,if=buff.ascendance.up&cycle.buff.riptide.up&cycle.health.effective.pct<99&!player.moving
+    - healing_wave,cycle=members,if=buff.ascendance.up&cycle.health.effective.pct<config.healing_wave_threshold&!player.moving
+
+    # AS/NS on CD - guaranteed Stormstream proc. Hold while UL up to preserve cast-time bonus.
+    - ancestral_swiftness,if=talent.ancestral_swiftness&cooldown.ancestral_swiftness.ready&!var.unleash_life_active&group.count(cycle.health.effective.pct<98)>=1
+    - natures_swiftness,if=var.is_totemic&cooldown.natures_swiftness.ready&!var.unleash_life_active&group.count(cycle.health.effective.pct<98)>=1
+
+    # Chain Heal best case - UL buffed + Riptided target (Flow of the Tides)
+    - chain_heal,cycle=members,if=var.unleash_life_active&talent.flow_of_the_tides&cycle.buff.riptide.up&cycle.health.effective.pct<config.chain_heal_hp_pct&!player.moving
+
+    # Chain Heal with UL buff
+    - chain_heal,cycle=members,if=var.unleash_life_active&cycle.health.effective.pct<config.chain_heal_hp_pct&!player.moving
+
+    # Chain Heal - Flow of the Tides preference
+    - chain_heal,cycle=members,if=talent.flow_of_the_tides&cycle.buff.riptide.up&group.count(cycle.health.effective.pct<config.chain_heal_hp_pct)>=2&cycle.health.effective.pct<config.chain_heal_hp_pct&!player.moving
+
+    # Chain Heal - generic M+ AoE
+    - chain_heal,cycle=members,if=group.count(cycle.health.effective.pct<config.chain_heal_hp_pct)>=2&cycle.health.effective.pct<config.chain_heal_hp_pct&!player.moving
+
+    # Healing Wave with Tidal Waves
+    - healing_wave,cycle=members,if=var.tidal_waves_active&cycle.health.effective.pct<config.healing_wave_threshold&!player.moving
+
+    # Healing Wave fallback
+    - healing_wave,cycle=members,if=cycle.health.effective.pct<config.healing_wave_threshold&!player.moving
+
+  # ==========================================================================
+  # DPS (shared raid + dungeon)
+  # Per guide:
+  #   Single target: Flame Shock -> Lava Burst (Lava Surge first) -> Lightning Bolt
+  #   AoE         : Chain Lightning
+  #   Acid Rain damage from Healing Rain / Surging Totem is tuned low - lower priority
+  # ==========================================================================
+  dps:
+    # Flame Shock - required for guaranteed Lava Burst crit
+    - flame_shock,if=target.exists&debuff.flame_shock.refreshable
+    # Lava Burst on Lava Surge proc (instant) - top priority
+    - lava_burst,if=buff.lava_surge.up
+    # Chain Lightning AoE - cheapest AoE damage
+    - chain_lightning,if=enemies_around_target>=config.aoe_threshold
+    # Lava Burst hard cast on Flame Shocked target (always crits with FS)
+    - lava_burst,if=debuff.flame_shock.up
+    # Lightning Bolt filler single target
+    - lightning_bolt
+
+  # ==========================================================================
+  # Out-of-combat healing (no Healing Surge in Midnight - HW is the only direct heal)
+  # ==========================================================================
+  out_of_combat:
+    - skyfury,range_check=none,if=(buff.skyfury.down.any|action.skyfury.overlayed)&lastcast.skyfury>=10
+    # Water Shield first — Instinctive Imbuements (1270350) makes this also apply
+    # weapon imbues and (with Elemental Orbit) self-Earth Shield. Always pre-pull.
+    - water_shield,range_check=none,if=buff.water_shield.down
+    # earth_shield,cycle=tanks,if=cycle.buff.earth_shield.down&group.count(cycle.tank&cycle.buff.earth_shield.up)=0
+    - earth_shield,cycle=config.earth_shield_target,if=config.earth_shield_target&cycle.buff.974.down
+    - earth_shield,target=tank1,if=!config.earth_shield_target&tank1.exists&tank1.buff.974.down
+    - riptide,cycle=members,if=cycle.health.effective.pct<config.riptide_threshold&cycle.buff.riptide.down
+    - healing_wave,cycle=members,if=cycle.health.effective.pct<config.healing_wave_threshold&!player.moving
+
+  # ==========================================================================
+  # Movement healing - instants + Spiritwalker's Grace gating
+  # Spiritwalker's Grace (2min CD) makes all spells castable while moving for 15s.
+  # Save for real emergencies where the rotation cannot stand still.
+  # ==========================================================================
+  moving:
+    # Spiritwalker's Grace - emergency cast-while-moving when group is taking heavy damage
+    - spiritwalkers_grace,range_check=none,if=buff.spiritwalkers_grace.down&group.count(cycle.health.effective.pct<config.chain_heal_hp_pct)>=3
+    # Riptide - always an instant
+    - riptide,cycle=members,if=cooldown.riptide.ready&cycle.buff.riptide.down&cycle.health.effective.pct<config.riptide_threshold
+    # HST charge cap on the move (no Stormstream apex)
+    - healing_stream_totem,range_check=none,if=!talent.stormstream_totem&!totem.healing_stream_totem.up&cooldown.healing_stream_totem.charges_fractional>=1
+    # Unleash Life - instant, keep ancestor uptime
+    - unleash_life,cycle=members,if=talent.unleash_life&cooldown.unleash_life.ready&cycle.health.effective.pct<98
+    # Ancestral / Nature's Swiftness - instant + ancestor + apex Stormstream proc
+    - ancestral_swiftness,if=talent.ancestral_swiftness&cooldown.ancestral_swiftness.ready&group.count(cycle.health.effective.pct<98)>=1
+    - natures_swiftness,if=var.is_totemic&cooldown.natures_swiftness.ready&group.count(cycle.health.effective.pct<98)>=1
+    # AS / NS makes next HW instant - cast it on the lowest member
+    - healing_wave,cycle=members,if=var.ancestral_swiftness_active&cycle.health.effective.pct<config.healing_wave_threshold
+    # Totemic Projection - move Surging Totem onto allies without breaking stride
+    - totemic_projection,range_check=none,if=var.is_totemic&talent.totemic_projection&totem.surging_totem.up&totem.surging_totem.remains>4&group.count(cycle.health.effective.pct<config.chain_heal_hp_pct)>=3
+
+  # ==========================================================================
+  # Mouseover Emergency Healing
+  # Healing Surge is gone - we use AS-empowered Healing Wave (instant) for ST emergency.
+  # ==========================================================================
+  mouseover_healing_emergency:
+    - purify_spirit.mouseover,if=config.use_dispell&mouseover.dispelable.list&mouseover.range>=0&mouseover.range<=40
+    # Instant Healing Wave via Ancestral / Nature's Swiftness
+    - healing_wave.mouseover,if=var.ancestral_swiftness_active&mouseover.range>=0&mouseover.range<=40
+    - riptide.mouseover,if=mouseover.buff.remains(riptide)<2&mouseover.range>=0&mouseover.range<=40
+    # Tidal-Waves empowered Healing Wave (1.5s cast)
+    - healing_wave.mouseover,if=var.tidal_waves_active&mouseover.range>=0&mouseover.range<=40
+    - healing_wave.mouseover,if=mouseover.range>=0&mouseover.range<=40
+
+  # ==========================================================================
+  # Main
+  # ==========================================================================
+  main:
+    - return,if=player.channeling
+
+    - call_action_list,name=spell_queue
+    - call_action_list,name=sanity_checks
+    - call_action_list,name=auto_target
+
+    # Skyfury raid buff
+    - skyfury,range_check=none,if=(buff.skyfury.down.any|action.skyfury.overlayed)&lastcast.skyfury>=10
+
+    # Out of combat
+    - call_action_list,name=out_of_combat,if=!player.combat
+    - return,if=!player.combat
+
+    - call_action_list,name=interrupts
+    - call_action_list,name=auto_heal
+
+    - return,if=auto_combat.player
+
+    - call_action_list,name=defensives
+    - call_action_list,name=dispel
+    - call_action_list,name=shields
+
+    # Mouseover Emergency
+    - call_action_list,name=mouseover_healing_emergency,if=config.use_mouseover&var.mo_friendly_valid&(mouseover.health.effective.pct<config.mouseover_emergency_hp|mouseover.dispelable.list)&!player.casting&!player.channeling
+
+    # Movement healing
+    - call_action_list,name=moving,if=player.moving
+
+    # Cooldowns + totem filler
+    - call_action_list,name=cooldowns
+    - call_action_list,name=totems_filler
+
+    # Healing - branch by group size
+    - call_action_list,name=healing_dungeon,if=var.is_dungeon
+    - call_action_list,name=healing_raid,if=!var.is_dungeon
+
+    - return,if=auto_combat.target
+
+    # DPS filler
+    - call_action_list,name=dps,if=config.dps_enabled
