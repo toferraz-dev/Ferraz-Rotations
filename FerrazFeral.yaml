@@ -64,19 +64,14 @@ config:
     max: 100
     default: 40
 
-  shadowmeld_usage:
-    section: "Utility"
-    label: "Shadowmeld Usage"
-    type: dropdown
-    options:
-      - "Disabled"
-      - "M+ Only"
-      - "Dungeon & Raid"
-      - "Boss Only"
-    default: 2
+  travel_form_mode:
+    label: "Auto Travel Form"
+    type: checkbox
+    default: true
 
 variables:
   bs_inc: buff.berserk.up|buff.incarnation_avatar_of_ashamane.up
+  bs_inc_remains: buff.berserk.remains+buff.incarnation_avatar_of_ashamane.remains
   bs_inc_cd_remains: cooldown.berserk.remains>?cooldown.incarnation_avatar_of_ashamane.remains
   bs_inc_cd_duration: cooldown.berserk.duration>?cooldown.incarnation_avatar_of_ashamane.duration
   regrowth: 0
@@ -87,6 +82,8 @@ variables:
   zerkCountRemaining: floor(((fight_remains-var.bs_inc_cd)%var.bs_inc_cd_duration)+(fight_remains>var.bs_inc_cd_remains))
   firstHoldBerserkCondition: var.zerkCountRemaining=1&var.convokeCountRemaining=1&cooldown.convoke_the_spirits.remains>10
   secondHoldBerserkCondition: cooldown.convoke_the_spirits.remains>20&var.convokeCountRemaining=var.zerkCountRemaining&var.zerkCountRemaining=floor(((fight_remains-var.convoke_cd)%var.bs_inc_cd_duration)+(fight_remains>cooldown.convoke_the_spirits.remains))
+  holdBerserk: var.firstHoldBerserkCondition|var.secondHoldBerserkCondition
+  holdConvoke: var.convokeCountRemaining=1&var.zerkCountRemaining=1&!var.bs_inc
   rake_tf: debuff.rake.icon=7195159
   rip_tf: debuff.rip.icon=7195161
   moonfire_tf: debuff.moonfire.icon=7195166
@@ -102,6 +99,7 @@ lists:
     - barkskin,off_gcd=true,ignore_queue=true,range_check=none,if=health.pct<=config.barkskin_hp_pct
 
   cooldown:
+    - feral_frenzy,if=!talent.frantic_frenzy&combo_points<=2+(2*var.bs_inc)
     - frantic_frenzy,if=buff.tigers_fury.up|combo_points<=2+(2*var.bs_inc)
 
   finisher:
@@ -130,12 +128,12 @@ lists:
   aoe_builder:
     - rake,if=dot.rake.refreshable&((talent.doubleclawed_rake&(!talent.lunar_inspiration|!talent.panthers_guile|active_dot.rake<5))|hero_tree.wildstalker&(active_dot.rake<2+!talent.panthers_guile+talent.lunar_inspiration))
     - moonfire,if=talent.lunar_inspiration&dot.moonfire.refreshable
-    - swipe,if=hero_tree.druid_of_the_claw&var.bs_inc|buff.clearcasting.react&active_enemies>2&(hero_tree.druid_of_the_claw|active_enemies<7)
-    - swipe,if=buff.sudden_ambush.up&active_enemies>=5+(2*hero_tree.wildstalker)
+    - 106785,if=hero_tree.druid_of_the_claw&var.bs_inc|buff.clearcasting.react&active_enemies>2&(hero_tree.druid_of_the_claw|active_enemies<7)
+    - 106785,if=buff.sudden_ambush.up&active_enemies>=5+(2*hero_tree.wildstalker)
     - rake,if=dot.rake.refreshable&(hero_tree.wildstalker|active_enemies<=var.dotc_rake_threshold)
     - rake,if=buff.tigers_fury.up&!var.rake_tf&active_enemies=2
     - shred,if=combo_points<=1&active_enemies=2&talent.panthers_guile
-    - swipe,if=combo_points>1|active_enemies>2|!talent.panthers_guile
+    - 106785,if=combo_points>1|active_enemies>2|!talent.panthers_guile
 
   main:
     - call_action_list,name=spell_queue
@@ -145,6 +143,8 @@ lists:
     - mark_of_the_wild,range_check=none,if=(buff.mark_of_the_wild.down.any|action.mark_of_the_wild.overlayed)&lastcast.mark_of_the_wild>=10
     - regrowth,range_check=none,if=health.pct<=config.regrowth_ooc_hp_pct&!player.combat
 
+    - travel_form,after=200,range_check=none,if=config.travel_form_mode&!player.combat&player.inopenworld&mount_usable&buff.travel_form.down&!target.quest_mob&!target.dummy
+
     - bear_form,range_check=none,if=health.pct<=25&!buff.bear_form.up&player.combat
     - heart_of_the_wild,range_check=none,if=buff.bear_form.up&player.combat
 
@@ -153,7 +153,6 @@ lists:
     - cat_form,range_check=none,if=buff.cat_form.down&(target.attackable|enemies.40y)
 
     - prowl,range_check=none,if=!var.bs_inc&buff.prowl.down&buff.shadowmeld.down&(target.attackable|enemies.40y)
-    - shadowmeld,if=player.combat&!buff.prowl.up&!var.bs_inc&config.shadowmeld_usage>1
 
     - skull_bash,off_gcd=true,ignore_queue=true,if=interrupt.target.check
     - skull_bash.mouseover,off_gcd=true,ignore_queue=true,if=interrupt.mouseover.check
@@ -183,6 +182,9 @@ lists:
 
     - ferocious_bite,if=buff.apex_predators_craving.up&!var.rip_preempt
     - ravage,if=buff.apex_predators_craving.up&!var.rip_preempt
+
+    - trinket_1,if=trinket_1.sync
+    - trinket_2,if=trinket_2.sync
 
     - call_action_list,name=finisher,if=active_enemies=1
     - call_action_list,name=aoe_finisher,if=active_enemies>=2
