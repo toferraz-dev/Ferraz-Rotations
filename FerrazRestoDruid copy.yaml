@@ -2,9 +2,9 @@ version: 4.3
 author: Ferraz
 patch: "12.0.7"
 spec: 105
-name: Ferraz Restoration Druid M+ (Wildstalker)
+name: Ferraz Restoration Druid M+ (Backup)
 description: |
-  Ferraz Restoration Druid M+ (Wildstalker)
+  Ferraz Restoration Druid M+ (Backup)
 entry: main
 
 config:
