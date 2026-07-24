@@ -183,9 +183,6 @@ lists:
     - ferocious_bite,if=buff.apex_predators_craving.up&!var.rip_preempt
     - ravage,if=buff.apex_predators_craving.up&!var.rip_preempt
 
-    - trinket_1,if=trinket_1.sync
-    - trinket_2,if=trinket_2.sync
-
     - call_action_list,name=finisher,if=active_enemies=1
     - call_action_list,name=aoe_finisher,if=active_enemies>=2
     - call_action_list,name=builder,if=active_enemies=1&combo_points<=4
