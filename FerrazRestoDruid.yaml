@@ -111,6 +111,14 @@ config:
     max: 99
     default: 80
 
+  abundance_min_stacks:
+    label: "Abundance Stacks (Pad)"
+    section: "Healing"
+    type: slider
+    min: 1
+    max: 10
+    default: 6
+
   wild_growth_threshold:
     label: "Wild Growth HP %"
     section: "Healing"
@@ -370,8 +378,8 @@ lists:
     - stampeding_roar,name="Stampeding Roar",if=var.use_stampeding_roar&config.stampeding_roar_usage!=0
 
   abundance_maintenance:
-    - rejuvenation,name="Abundance Filler (Rejuv)",cycle=members,if=buff.abundance.stack<6&pred.cycle.buff.rejuvenation.refreshable
-    - rejuvenation,name="Abundance Filler (Germination)",cycle=members,if=buff.abundance.stack<6&talent.germination&pred.cycle.buff.rejuvenation.up&(cycle.buff.rejuvenation_germination.down|cycle.buff.rejuvenation_germination.refreshable)
+    - rejuvenation,name="Abundance Filler (Rejuv)",cycle=members,if=buff.abundance.stack<config.abundance_min_stacks&pred.cycle.buff.rejuvenation.refreshable
+    - rejuvenation,name="Abundance Filler (Germination)",cycle=members,if=buff.abundance.stack<config.abundance_min_stacks&talent.germination&pred.cycle.buff.rejuvenation.up&(cycle.buff.rejuvenation_germination.down|cycle.buff.rejuvenation_germination.refreshable)
 
   # Cat Form DPS Rotation (Single Target)
   catweave_st:
