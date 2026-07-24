@@ -27,7 +27,7 @@ config:
     type: slider
     min: 25
     max: 99
-    default: 65
+    default: 85
 
   frenzied_regen_threshold:
     label: "Frenzied Regen HP %"
@@ -35,7 +35,7 @@ config:
     type: slider
     min: 25
     max: 99
-    default: 40
+    default: 60
 
   ironbark_threshold:
     label: "Ironbark HP %"
@@ -43,7 +43,7 @@ config:
     type: slider
     min: 25
     max: 99
-    default: 60
+    default: 80
 
   ironbark_target:
     label: "Ironbark Target"
@@ -63,7 +63,7 @@ config:
     type: slider
     min: 25
     max: 99
-    default: 70
+    default: 85
 
   convoke_members:
     label: "Convoke - Min Members"
@@ -79,7 +79,7 @@ config:
     type: slider
     min: 25
     max: 99
-    default: 65
+    default: 75
 
   tranquility_members:
     label: "Tranquility - Min Members"
@@ -134,15 +134,8 @@ config:
     type: slider
     min: 10
     max: 99
-    default: 45
+    default: 60
 
-  lifebloom_threshold:
-    label: "Lifebloom HP %"
-    section: "Healing"
-    type: slider
-    min: 25
-    max: 99
-    default: 70
 
   swiftmend_threshold:
     label: "Swiftmend HP %"
@@ -150,7 +143,7 @@ config:
     type: slider
     min: 25
     max: 99
-    default: 70
+    default: 80
 
   regrowth_threshold:
     label: "Regrowth HP %"
@@ -158,7 +151,7 @@ config:
     type: slider
     min: 25
     max: 99
-    default: 85
+    default: 90
 
   rejuvenation_threshold:
     label: "Rejuvenation HP %"
@@ -175,7 +168,7 @@ config:
     type: slider
     min: 25
     max: 99
-    default: 85
+    default: 95
 
   aoe_threshold:
     label: "AoE - Min Enemies"
@@ -301,9 +294,8 @@ lists:
     - symbiotic_relationship,name="Symbiotic Tank",cycle=tanks,if=!buff.symbiotic_relationship.up&!cycle.buff.symbiotic_relationship.up
     # Casts Rejuvenation to exit combat forms if necessary
     - rejuvenation,name="Rejuvenation - Remove DPSForm",cycle=members,if=buff.cat_form.up|buff.bear_form.up
-    # Pre-combat Lifebloom maintenance (Everbloom auto-stacks to 3)
-    - lifebloom,name="OOC Lifebloom",cycle=members,if=cycle.health.effective.pct<config.lifebloom_threshold&pred.cycle.buff.lifebloom.down&(group.count(pred.cycle.buff.lifebloom.up)=0|tank1.pred.cycle.buff.lifebloom.up)
-    - lifebloom,name="OOC Lifebloom (Tank)",cycle=tanks,if=(pred.cycle.buff.lifebloom.down|pred.cycle.buff.lifebloom.remains<3)&(pred.cycle.buff.lifebloom.up|group.count(pred.cycle.buff.lifebloom.up)=0)
+    # Pre-combat Lifebloom maintenance on tanks
+    - lifebloom,name="OOC Lifebloom (Tank)",cycle=tanks,if=pred.cycle.buff.lifebloom.down|pred.cycle.buff.lifebloom.refreshable
     - rejuvenation,name="OOC Rejuvenation",cycle=members,if=cycle.health.effective.pct<config.rejuvenation_threshold&pred.cycle.buff.rejuvenation.refreshable
     - regrowth,name="OOC Regrowth",cycle=members,if=cycle.health.effective.pct<config.regrowth_threshold&pred.cycle.buff.regrowth.refreshable
     # Forces HoT spread if the toggle is active (ignores normal HP thresholds)
@@ -354,9 +346,8 @@ lists:
     - rejuvenation,name="SotF Germination",cycle=members,if=var.has_soul&talent.germination&pred.cycle.buff.rejuvenation.up&(cycle.buff.rejuvenation_germination.down|cycle.buff.rejuvenation_germination.refreshable)
     - rejuvenation,name="SotF Rejuvenation",cycle=members,if=var.has_soul&pred.cycle.buff.rejuvenation.refreshable
 
-    # Lifebloom on tanks (Everbloom stacks to 3)
-    - lifebloom,name="Lifebloom",cycle=members,if=cycle.health.effective.pct<config.lifebloom_threshold&pred.cycle.buff.lifebloom.down&(group.count(pred.cycle.buff.lifebloom.up)=0|tank1.pred.cycle.buff.lifebloom.up)
-    - lifebloom,name="Lifebloom (Tank)",cycle=tanks,if=pred.cycle.buff.lifebloom.refreshable&(pred.cycle.buff.lifebloom.up|group.count(pred.cycle.buff.lifebloom.up)=0)
+    # Lifebloom on tanks
+    - lifebloom,name="Lifebloom (Tank)",cycle=tanks,if=pred.cycle.buff.lifebloom.down|pred.cycle.buff.lifebloom.refreshable
 
     # Forces HoT spread if the toggle is active (ignores normal HP thresholds)
     - wild_growth,name="Forced Wild Growth",range_check=none,if=config.force_spread&(pred.buff.wild_growth.down|group.any(pred.cycle.buff.wild_growth.down))
@@ -431,8 +422,7 @@ lists:
 
   # Healing on the Move: Instant spells only (HoTs and Lifebloom)
   moving:
-    - lifebloom,name="Lifebloom (Moving)",cycle=members,if=cycle.health.effective.pct<config.lifebloom_threshold&pred.cycle.buff.lifebloom.down&(group.count(pred.cycle.buff.lifebloom.up)=0|tank1.pred.cycle.buff.lifebloom.up)
-    - lifebloom,name="Lifebloom Tank (Moving)",cycle=tanks,if=pred.cycle.buff.lifebloom.refreshable&(pred.cycle.buff.lifebloom.up|group.count(pred.cycle.buff.lifebloom.up)=0)
+    - lifebloom,name="Lifebloom Tank (Moving)",cycle=tanks,if=pred.cycle.buff.lifebloom.down|pred.cycle.buff.lifebloom.refreshable
     - rejuvenation,name="Rejuvenation (Moving)",cycle=members,if=pred.cycle.buff.rejuvenation.refreshable&cycle.health.effective.pct<config.rejuvenation_threshold
     - rejuvenation,name="Germination (Moving)",cycle=members,if=talent.germination&pred.cycle.buff.rejuvenation.up&(cycle.buff.rejuvenation_germination.down|cycle.buff.rejuvenation_germination.refreshable)&cycle.health.effective.pct<config.rejuvenation_threshold
 
