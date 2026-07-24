@@ -326,7 +326,7 @@ lists:
   cooldowns:
     - mark_of_the_wild,range_check=none,if=(buff.mark_of_the_wild.down.any|action.mark_of_the_wild.overlayed)&lastcast.mark_of_the_wild>=10
     - symbiotic_relationship,name="Symbiotic Tank",cycle=tanks,if=!buff.symbiotic_relationship.up&!cycle.buff.symbiotic_relationship.up
-    - natures_swiftness,name="Nature Swiftness",off_gcd=true,ignore_queue=true,range_check=none,cycle=members,if=cycle.health.effective.pct<config.natures_swiftness_threshold
+    - natures_swiftness.player,name="Nature Swiftness",off_gcd=true,ignore_queue=true,range_check=none,if=group.count(cycle.health.effective.pct<config.natures_swiftness_threshold)>=1
     - regrowth,name="Nature Swift Regrowth",cycle=members,if=buff.natures_swiftness.up&cycle.health.effective.pct<config.natures_swiftness_threshold
     - rejuvenation,name="Reju Out Cat For Convoke",if=(group.count(cycle.health.effective.pct<config.convoke_threshold)>=config.convoke_members)&(buff.cat_form.up|buff.bear_form.up)
     - trinket_1,delay=150,name="Trinket 1",if=config.use_trinket_1&trinket_1.ready&(group.count(cycle.health.effective.pct<config.convoke_threshold)>=config.convoke_members)&!buff.cat_form.up&!buff.bear_form.up
@@ -336,10 +336,12 @@ lists:
     - tranquility,global_delay=500,name="Tranquility",if=!config.manual_tranquility&group.count(cycle.health.effective.pct<config.tranquility_threshold)>=config.tranquility_members&!player.moving
     # Swiftmend to obtain Soul of the Forest buff (requires active HoT on target)
     - swiftmend,name="Swiftmend for SotF/Treants",cycle=members,if=cycle.health.effective.pct<config.swiftmend_threshold&(pred.cycle.buff.rejuvenation.up|pred.cycle.buff.regrowth.up|pred.cycle.buff.wild_growth.up)
-    - regrowth,name="Clearcasting Regrowth",cycle=members,if=buff.clearcasting.up&(pred.cycle.buff.regrowth.down|cycle.health.effective.pct<99)
 
   # Sequential Active Healing: SotF consumption -> Lifebloom maintenance -> AoE and ST heals
   active_healing:
+    # Treant usage and Clearcasting synergized with Wild Synthesis
+    - regrowth,name="Clearcasting Regrowth",cycle=members,if=buff.clearcasting.up&(pred.cycle.buff.regrowth.down|cycle.health.effective.pct<99)
+
     # Consumes the Soul of the Forest proc
     - regrowth,name="Regrowth Emergency",cycle=members,if=cycle.health.effective.pct<65
     - regrowth,name="SotF Regrowth",cycle=members,if=var.has_soul&cycle.health.effective.pct<config.regrowth_threshold
@@ -361,13 +363,10 @@ lists:
     - regrowth,name="Regrowth",cycle=members,if=cycle.health.effective.pct<config.regrowth_threshold
     - thorn_bloom,name="Thorn Bloom",if=group.count(cycle.health.effective.pct<config.thorn_bloom_threshold)>=config.thorn_bloom_members&target.range<=8
 
-    # Abundance Maintenance: Keeps 6 Abundance stacks on the group
-    - call_action_list,name=abundance_maintenance
-
   # Utilities, Mobility, and Mana Recovery
   utility:
     - bear_form,name="Shapeshift Clear",if=debuff_list.freedom.up&!buff.bear_form.up
-    - innervate,name="Innervate",if=mana.pct<config.innervate_threshold
+    - innervate.player,name="Innervate",range_check=none,if=mana.pct<config.innervate_threshold
     - stampeding_roar,name="Stampeding Roar",if=var.use_stampeding_roar&config.stampeding_roar_usage!=0
 
   abundance_maintenance:
@@ -425,6 +424,7 @@ lists:
     - lifebloom,name="Lifebloom Tank (Moving)",cycle=tanks,if=pred.cycle.buff.lifebloom.down|pred.cycle.buff.lifebloom.refreshable
     - rejuvenation,name="Rejuvenation (Moving)",cycle=members,if=pred.cycle.buff.rejuvenation.refreshable&cycle.health.effective.pct<config.rejuvenation_threshold
     - rejuvenation,name="Germination (Moving)",cycle=members,if=talent.germination&pred.cycle.buff.rejuvenation.up&(cycle.buff.rejuvenation_germination.down|cycle.buff.rejuvenation_germination.refreshable)&cycle.health.effective.pct<config.rejuvenation_threshold
+    - call_action_list,name=abundance_maintenance,if=!var.can_catweave
 
   # Emergency Mouseover Healing on unit frames
   mouseover_healing_emergency:
@@ -437,7 +437,7 @@ lists:
     - rebirth.mouseover,if=mouseover.dead&mouseover.friendly&mouseover.unitframe&player.combat
 
   spell_queue:
-    - queue_spell, if=!player.casting|!player.channeling
+    - queue_spell,delay=500
 
   sanity_checks:
     - return,if=!state.rotation
@@ -469,7 +469,8 @@ lists:
     - call_action_list,name=moving,if=player.moving&(!var.in_dps_form|!var.group_healthy)
     # Sequential Active Healing: SotF consumption -> Lifebloom maintenance -> AoE and ST heals
     - call_action_list,name=active_healing,if=!var.in_dps_form|!var.group_healthy
-    - call_action_list,name=abundance_maintenance
     # DPS weaving when the group is healthy
     - call_action_list,name=ranged_dps,if=var.can_catweave&target.exists&target.alive&!target.friendly&target.range>8
     - call_action_list,name=bearweave,if=var.can_catweave&target.exists&target.alive&!target.friendly&target.range<=8
+    # Downtime Filler: Pad Abundance if there is no valid enemy to attack
+    - call_action_list,name=abundance_maintenance,if=!target.exists|target.friendly|target.range>40
