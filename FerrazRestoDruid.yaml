@@ -68,8 +68,8 @@ config:
     section: "Cooldowns"
     type: slider
     min: 1
-    max: 5
-    default: 3
+    max: 4
+    default: 2
 
   tranquility_threshold:
     label: "Tranquility HP %"
@@ -84,8 +84,8 @@ config:
     section: "Cooldowns"
     type: slider
     min: 1
-    max: 5
-    default: 3
+    max: 4
+    default: 2
 
   manual_tranquility:
     label: "Manual Tranquility"
@@ -115,7 +115,7 @@ config:
     type: slider
     min: 1
     max: 10
-    default: 6
+    default: 5
 
   auto_prowl:
     label: "Auto Prowl (Stealth)"
@@ -136,7 +136,7 @@ config:
     section: "Healing"
     type: slider
     min: 1
-    max: 5
+    max: 4
     default: 2
 
   # === SINGLE TARGET (ST) HEALING CONFIGURATIONS ===
@@ -243,7 +243,7 @@ config:
     section: "Racials"
     type: slider
     min: 1
-    max: 5
+    max: 4
     default: 1
 
   # === TRINKET & CONSUMABLE CONFIGURATIONS ===
@@ -263,7 +263,7 @@ config:
     label: "Auto Offensive Potion"
     section: "Trinkets"
     type: checkbox
-    default: false
+    default: true
 
   force_spread:
     label: "Force HoT Spread"
@@ -330,7 +330,7 @@ lists:
   # Racial Abilities and Specific Mobility
   racials:
     - shadowmeld,name="Shadowmeld (Aggro Drop)",if=player.combat&player.aggro&!player.casting
-    - berserking,name="Berserking (Haste CD)",if=(group.count(cycle.health.effective.pct<config.convoke_threshold)>=config.convoke_members)&!buff.cat_form.up&!buff.bear_form.up
+    - berserking,name="Berserking (Haste CD)",if=(group.count(cycle.health.effective.pct<config.convoke_threshold&!cycle.tank)>=config.convoke_members)&!buff.cat_form.up&!buff.bear_form.up
     - war_stomp,name="War Stomp (AoE CC)",if=interrupt.stun.aoe.check
     - bull_rush,name="Bull Rush (AoE CC)",if=interrupt.stun.aoe.check
     - haymaker,name="Haymaker (Interrupt/Knockback)",if=interrupt.target.check
@@ -342,12 +342,12 @@ lists:
     - symbiotic_relationship,name="Symbiotic Tank",cycle=tanks,if=!buff.symbiotic_relationship.up&!cycle.buff.symbiotic_relationship.up
     - natures_swiftness.player,name="Nature Swiftness",off_gcd=true,ignore_queue=true,range_check=none,if=group.count(cycle.health.effective.pct<config.natures_swiftness_threshold)>=1
     - regrowth,name="Nature Swift Regrowth",cycle=members,if=buff.natures_swiftness.up&cycle.health.effective.pct<config.natures_swiftness_threshold
-    - rejuvenation,name="Reju Out Cat For Convoke",if=(group.count(cycle.health.effective.pct<config.convoke_threshold)>=config.convoke_members)&(buff.cat_form.up|buff.bear_form.up)
-    - trinket_1,delay=150,name="Trinket 1",if=config.use_trinket_1&trinket_1.ready&(group.count(cycle.health.effective.pct<config.convoke_threshold)>=config.convoke_members)&!buff.cat_form.up&!buff.bear_form.up
-    - trinket_2,delay=150,name="Trinket 2",if=config.use_trinket_2&trinket_2.ready&(group.count(cycle.health.effective.pct<config.convoke_threshold)>=config.convoke_members)&!buff.cat_form.up&!buff.bear_form.up
-    - combat_potion,delay=150,name="Combat Potion",if=combat_potion.ready&config.use_potion&(group.count(cycle.health.effective.pct<config.convoke_threshold)>=config.convoke_members)&!buff.cat_form.up&!buff.bear_form.up
-    - convoke_the_spirits,global_delay=500,name="Convoke (Heal)",if=(group.count(cycle.health.effective.pct<config.convoke_threshold)>=config.convoke_members)&!buff.cat_form.up&!buff.bear_form.up
-    - tranquility,global_delay=500,name="Tranquility",if=!config.manual_tranquility&group.count(cycle.health.effective.pct<config.tranquility_threshold)>=config.tranquility_members&!player.moving
+    - rejuvenation,name="Reju Out Cat For Convoke",if=(group.count(cycle.health.effective.pct<config.convoke_threshold&!cycle.tank)>=config.convoke_members)&(buff.cat_form.up|buff.bear_form.up)
+    - trinket_1,delay=150,name="Trinket 1",if=config.use_trinket_1&trinket_1.ready&(group.count(cycle.health.effective.pct<config.convoke_threshold&!cycle.tank)>=config.convoke_members)&!buff.cat_form.up&!buff.bear_form.up
+    - trinket_2,delay=150,name="Trinket 2",if=config.use_trinket_2&trinket_2.ready&(group.count(cycle.health.effective.pct<config.convoke_threshold&!cycle.tank)>=config.convoke_members)&!buff.cat_form.up&!buff.bear_form.up
+    - combat_potion,delay=150,name="Combat Potion",if=combat_potion.ready&config.use_potion&(group.count(cycle.health.effective.pct<config.convoke_threshold&!cycle.tank)>=config.convoke_members)&!buff.cat_form.up&!buff.bear_form.up
+    - convoke_the_spirits,global_delay=500,name="Convoke (Heal)",if=(group.count(cycle.health.effective.pct<config.convoke_threshold&!cycle.tank)>=config.convoke_members)&!buff.cat_form.up&!buff.bear_form.up
+    - tranquility,global_delay=500,name="Tranquility",if=!config.manual_tranquility&group.count(cycle.health.effective.pct<config.tranquility_threshold&!cycle.tank)>=config.tranquility_members&!player.moving
     # Swiftmend to obtain Soul of the Forest buff (requires active HoT on target)
     - swiftmend,name="Swiftmend for SotF/Treants",cycle=members,if=cycle.health.effective.pct<config.swiftmend_threshold&(cycle.buff.rejuvenation.up|pred.cycle.buff.regrowth.up|pred.cycle.buff.wild_growth.up)
 
@@ -371,11 +371,11 @@ lists:
     - rejuvenation,name="Forced Germination",cycle=members,if=config.force_spread&cycle.buff.rejuvenation.up&cycle.buff.rejuvenation_germination.down
 
     # Core periodic and direct healing logic
-    - wild_growth,name="Wild Growth",range_check=none,if=group.count(cycle.health.effective.pct<config.wild_growth_threshold)>=config.wild_growth_members
+    - wild_growth,name="Wild Growth",range_check=none,if=group.count(cycle.health.effective.pct<config.wild_growth_threshold&!cycle.tank)>=config.wild_growth_members
     - rejuvenation,name="Rejuvenation",cycle=members,if=cycle.buff.rejuvenation.refreshable&cycle.health.effective.pct<config.rejuvenation_threshold
     - rejuvenation,name="Germination",cycle=members,if=talent.germination&cycle.buff.rejuvenation.up&(cycle.buff.rejuvenation_germination.down|cycle.buff.rejuvenation_germination.refreshable)&cycle.health.effective.pct<config.rejuvenation_threshold
     - regrowth,name="Regrowth",cycle=members,if=cycle.health.effective.pct<config.regrowth_threshold
-    - thorn_bloom,name="Thorn Bloom",if=group.count(cycle.health.effective.pct<config.thorn_bloom_threshold)>=config.thorn_bloom_members&target.range<=8
+    - thorn_bloom,name="Thorn Bloom",if=group.count(cycle.health.effective.pct<config.thorn_bloom_threshold&!cycle.tank)>=config.thorn_bloom_members&target.range<=8
 
   # Utilities, Mobility, and Mana Recovery
   utility:
@@ -429,8 +429,8 @@ lists:
 
   # Defensive rotation and debuffs in Bear Form (Bearweave)
   bearweave:
-    - thrash,name="Thrash (BearmForm Bleed)",if=dot.thrash.refreshable
-    - mangle,name="Mangle (BearForm)",if=buff.bear_form.up&(dot.thrash.remains<=8|dot.thrash.stack<3)
+    - thrash,name="Thrash (BearmForm Bleed)",if=dot.thrash.stack<3|dot.thrash.remains<=8
+    - mangle,name="Mangle (BearForm)",if=!buff.bear_form.up&(dot.thrash.remains<=8|dot.thrash.stack<3)
     - call_action_list,name=catweave
 
   # Healing on the Move: Instant spells only (HoTs and Lifebloom)
