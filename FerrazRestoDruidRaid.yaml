@@ -403,8 +403,8 @@ lists:
 
   # Main Rotation (main) with combat priorities
   main:
-    # Aborts if casting or channeling crucial abilities (Tranquility/Convoke)
-    - return,if=player.channeling|player.casting|player.casting.remains>0|player.channeling.remains>0|buff.tranquility.up|buff.convoke_the_spirits.up
+    # Aborts if channeling crucial abilities (Tranquility/Convoke)
+    - return,if=(player.channeling&player.casting.spell_id=740)|(player.channeling&player.casting.spell_id=323764)|buff.tranquility.up|buff.convoke_the_spirits.up
     - call_action_list,name=spell_queue
     - call_action_list,name=sanity_checks
     - call_action_list,name=out_of_combat

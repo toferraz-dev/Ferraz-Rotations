@@ -451,7 +451,7 @@ lists:
     - rebirth.mouseover,if=mouseover.dead&mouseover.friendly&mouseover.unitframe&player.combat
 
   spell_queue:
-    - queue_spell,delay=500
+    - queue_spell,delay=500,if=!player.casting&!player.channeling
 
   sanity_checks:
     - return,if=!state.rotation
@@ -461,12 +461,12 @@ lists:
     - interact_target,delay=350,if=config.lootnearby&loot_nearby&!player.combat
     - interact_mouseover,delay=350,if=config.lootnearby&mouseover.lootable&mouseover.range<=5&!player.combat
     - natures_cure,delay=500,cycle=members,if=cycle.dispelable.list
-    - call_action_list,name=auto_rez,if=config.auto_rez&mouseover.dead&mouseover.friendly&mouseover.unitframe&player.combat
+    - call_action_list,name=auto_rez,if=config.auto_rez&mouseover.dead&mouseover.friendly&mouseover.unitframe
 
   # Main Rotation (main) with combat priorities
   main:
     # Aborts if channeling crucial abilities (Tranquility/Convoke)
-    - return,if=player.channeling.tranquility|player.channeling.convoke_the_spirits|buff.tranquility.up|buff.convoke_the_spirits.up
+    - return,if=(player.channeling&player.casting.spell_id=740)|(player.channeling&player.casting.spell_id=323764)|buff.tranquility.up|buff.convoke_the_spirits.up
     - call_action_list,name=spell_queue
     - call_action_list,name=sanity_checks
     - call_action_list,name=out_of_combat,if=!player.combat
@@ -485,6 +485,6 @@ lists:
     - call_action_list,name=active_healing,if=!var.in_dps_form|!var.group_healthy
     # DPS weaving when the group is healthy
     - call_action_list,name=ranged_dps,if=var.can_catweave&target.exists&target.alive&!target.friendly&target.range>8
-    - call_action_list,name=bearweave,if=var.can_catweave&target.exists&target.alive&!target.friendly&target.range<=8
+    - call_action_list,name=bearweave,if=var.can_catweave&target.exists&target.alive&!target.friendly&target.range<=7
     # Downtime Filler: Pad Abundance if there is no valid enemy to attack
     - call_action_list,name=abundance_maintenance,if=!target.exists|target.friendly|target.range>40
