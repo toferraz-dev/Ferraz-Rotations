@@ -198,7 +198,7 @@ lists:
   # Only casts if the queued spell is usable (valid, off CD, has charges)
   # ============================================================================
   spell_queue:
-    - queue_spell, if=!player.casting|!player.channeling
+    - queue_spell, if=!player.casting&!player.channeling
 
   # ============================================================================
   # Sanity Checks - Pre-rotation guards (call first in main)\

@@ -380,7 +380,7 @@ lists:
   # Utilities, Mobility, and Mana Recovery
   utility:
     - bear_form,name="Shapeshift Clear",if=debuff_list.freedom.up&!buff.bear_form.up
-    - innervate.player,name="Innervate",range_check=none,if=mana.pct<config.innervate_threshold
+    - innervate.player,name="Innervate",range_check=none,if=mana.pct<config.innervate_threshold&fight_remains>15
     - stampeding_roar,name="Stampeding Roar",if=var.use_stampeding_roar&config.stampeding_roar_usage!=0
 
   abundance_maintenance:
