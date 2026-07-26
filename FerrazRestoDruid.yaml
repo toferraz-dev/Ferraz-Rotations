@@ -357,7 +357,7 @@ lists:
     - regrowth,name="Clearcasting Regrowth",cycle=members,if=buff.clearcasting.up&(pred.cycle.buff.regrowth.down|cycle.health.effective.pct<99)
 
     # Consumes the Soul of the Forest proc
-    - regrowth,name="Regrowth Emergency",cycle=members,if=cycle.health.effective.pct<65
+    - regrowth,name="Regrowth Emergency",cycle=members,if=cycle.health.effective.pct<50
     - regrowth,name="SotF Regrowth",cycle=members,if=var.has_soul&cycle.health.effective.pct<config.regrowth_threshold
     - rejuvenation,name="SotF Germination",cycle=members,if=var.has_soul&talent.germination&cycle.buff.rejuvenation.up&(cycle.buff.rejuvenation_germination.down|cycle.buff.rejuvenation_germination.refreshable)
     - rejuvenation,name="SotF Rejuvenation",cycle=members,if=var.has_soul&cycle.buff.rejuvenation.refreshable
