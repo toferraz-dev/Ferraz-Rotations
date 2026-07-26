@@ -427,7 +427,7 @@ lists:
   bearweave:
     - thrash,name="Thrash (BearmForm Bleed)",if=dot.thrash.stack<3|dot.thrash.remains<=8
     - mangle,name="Mangle (BearForm)",if=!buff.bear_form.up&(dot.thrash.remains<=8|dot.thrash.stack<3)
-    - call_action_list,name=catweave,if=dot.thrash.stack>=3
+    - call_action_list,name=catweave
 
   # Healing on the Move: Instant spells only (HoTs and Lifebloom)
   moving:
@@ -462,7 +462,7 @@ lists:
   # Main Rotation (main) with combat priorities
   main:
     # Aborts if channeling crucial abilities (Tranquility/Convoke)
-    - return,if=(player.channeling&player.casting.spell_id=740)|(player.channeling&player.casting.spell_id=323764)|buff.tranquility.up|buff.convoke_the_spirits.up
+    - return,if=(player.channeling&player.casting.spell_id=740)|(player.channeling&(player.casting.spell_id=323764|player.casting.spell_id=391528))|buff.tranquility.up|buff.convoke_the_spirits.up
     - call_action_list,name=spell_queue
     - call_action_list,name=sanity_checks
     - call_action_list,name=out_of_combat,if=!player.combat
