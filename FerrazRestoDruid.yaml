@@ -404,10 +404,6 @@ lists:
 
   # Catweaving Transition and Entry (Physical DPS)
   catweave:
-    # Priority DoTs (Mantém os DoTs principais do log rolando)
-    - sunfire,name="Sunfire (Cat Transition)",if=debuff.sunfire.refreshable
-    - moonfire,name="Moonfire (Cat Transition)",if=debuff.moonfire.refreshable
-
     # Refresh Rejuv on injured members before fully committing to Cat
     - rejuvenation,name="Cat Rejuvenation",cycle=members,if=(buff.bear_form.up|buff.cat_form.up)&(target.range>8|!var.group_healthy)
 
@@ -431,7 +427,7 @@ lists:
   bearweave:
     - thrash,name="Thrash (BearmForm Bleed)",if=dot.thrash.stack<3|dot.thrash.remains<=8
     - mangle,name="Mangle (BearForm)",if=!buff.bear_form.up&(dot.thrash.remains<=8|dot.thrash.stack<3)
-    - call_action_list,name=catweave
+    - call_action_list,name=catweave,if=dot.thrash.stack>=3
 
   # Healing on the Move: Instant spells only (HoTs and Lifebloom)
   moving:
@@ -485,6 +481,6 @@ lists:
     - call_action_list,name=active_healing,if=!var.in_dps_form|!var.group_healthy
     # DPS weaving when the group is healthy
     - call_action_list,name=ranged_dps,if=var.can_catweave&target.exists&target.alive&!target.friendly&target.range>8
-    - call_action_list,name=bearweave,if=var.can_catweave&target.exists&target.alive&!target.friendly&target.range<=7
+    - call_action_list,name=bearweave,if=var.can_catweave&target.exists&target.alive&!target.friendly&target.range<=8
     # Downtime Filler: Pad Abundance if there is no valid enemy to attack
     - call_action_list,name=abundance_maintenance,if=!target.exists|target.friendly|target.range>40
