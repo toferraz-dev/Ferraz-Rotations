@@ -340,7 +340,7 @@ lists:
   cooldowns:
     - mark_of_the_wild,range_check=none,if=(buff.mark_of_the_wild.down.any|action.mark_of_the_wild.overlayed)&lastcast.mark_of_the_wild>=10
     - symbiotic_relationship,name="Symbiotic Tank",cycle=tanks,if=!buff.symbiotic_relationship.up&!cycle.buff.symbiotic_relationship.up
-    - natures_swiftness.player,name="Nature Swiftness",off_gcd=true,ignore_queue=true,range_check=none,if=group.count(cycle.health.effective.pct<config.natures_swiftness_threshold)>=1
+    - natures_swiftness,name="Nature Swiftness",off_gcd=true,ignore_queue=true,delay=150,range_check=none,if=group.count(cycle.health.effective.pct<config.natures_swiftness_threshold)>=1
     - regrowth,name="Nature Swift Regrowth",cycle=members,if=buff.natures_swiftness.up&cycle.health.effective.pct<config.natures_swiftness_threshold
     - rejuvenation,name="Reju Out Cat For Convoke",if=(group.count(cycle.health.effective.pct<config.convoke_threshold&!cycle.tank)>=config.convoke_members)&(buff.cat_form.up|buff.bear_form.up)
     - trinket_1,delay=150,name="Trinket 1",if=config.use_trinket_1&trinket_1.ready&(group.count(cycle.health.effective.pct<config.convoke_threshold&!cycle.tank)>=config.convoke_members)&!buff.cat_form.up&!buff.bear_form.up
@@ -380,7 +380,7 @@ lists:
   # Utilities, Mobility, and Mana Recovery
   utility:
     - bear_form,name="Shapeshift Clear",if=debuff_list.freedom.up&!buff.bear_form.up
-    - innervate.player,name="Innervate",range_check=none,if=mana.pct<config.innervate_threshold&fight_remains>15
+    - innervate,name="Innervate",off_gcd=true,ignore_queue=true,delay=150,range_check=none,if=mana.pct<config.innervate_threshold&fight_remains>15
     - stampeding_roar,name="Stampeding Roar",if=var.use_stampeding_roar&config.stampeding_roar_usage!=0
 
   abundance_maintenance:
