@@ -84,9 +84,9 @@ variables:
   secondHoldBerserkCondition: cooldown.convoke_the_spirits.remains>20&var.convokeCountRemaining=var.zerkCountRemaining&var.zerkCountRemaining=floor(((fight_remains-var.convoke_cd)%var.bs_inc_cd_duration)+(fight_remains>cooldown.convoke_the_spirits.remains))
   holdBerserk: var.firstHoldBerserkCondition|var.secondHoldBerserkCondition
   holdConvoke: var.convokeCountRemaining=1&var.zerkCountRemaining=1&!var.bs_inc
-  rake_tf: debuff.rake.icon=7195159
-  rip_tf: debuff.rip.icon=7195161
-  moonfire_tf: debuff.moonfire.icon=7195166
+  rake_tf: debuff.rake.visual_id=491160
+  rip_tf: debuff.rip.visual_id=491158
+  moonfire_tf: debuff.moonfire.visual_id=500891
 
   rip_preempt: "active_enemies=1&combo_points>=5&dot.rip.up&(dot.rip.refreshable&(buff.tigers_fury.up|dot.rip.remains<cooldown.tigers_fury.remains)|buff.tigers_fury.up&!var.rip_tf|buff.tigers_fury.up&buff.tigers_fury.remains<2)"
 
