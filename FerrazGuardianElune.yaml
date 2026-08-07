@@ -285,7 +285,7 @@ lists:
     - call_action_list,name=auto_heal
 
     - ironfur,off_gcd=true,ignore_queue=true,delay=300,if=buff.ironfur.remains<2|rage>=80
-    - moonfire,if=target.range>8&buff.bear_form.up&target.combat
+    - moonfire,if=!target.in_melee&buff.bear_form.up&target.combat
     - moonfire.mouseover,if=config.MO_moonfire&mouseover.enemy&mouseover.alive&mouseover.debuff.moonfire.down&mouseover.combat
     
     - call_action_list,name=cooldowns

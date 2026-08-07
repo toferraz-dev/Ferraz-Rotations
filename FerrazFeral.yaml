@@ -148,8 +148,8 @@ lists:
     - bear_form,range_check=none,if=health.pct<=25&!buff.bear_form.up&player.combat
     - heart_of_the_wild,range_check=none,if=buff.bear_form.up&player.combat
 
-    - shred,if=player.combat&target.attackable&target.range<=8&buff.cat_form.down&talent.fluid_form.enabled
-    - rake,if=player.combat&target.attackable&target.range<=8&buff.cat_form.down&talent.fluid_form.enabled
+    - shred,if=player.combat&target.attackable&target.in_melee&buff.cat_form.down&talent.fluid_form.enabled
+    - rake,if=player.combat&target.attackable&target.in_melee&buff.cat_form.down&talent.fluid_form.enabled
     - cat_form,range_check=none,if=buff.cat_form.down&(target.attackable|enemies.40y)
 
     - prowl,range_check=none,if=!var.bs_inc&buff.prowl.down&buff.shadowmeld.down&(target.attackable|enemies.40y)
@@ -171,7 +171,7 @@ lists:
 
     - return,if=auto_combat.target
 
-    - rake,range_check=none,if=buff.prowl.up&target.range<=8
+    - rake,range_check=none,if=buff.prowl.up&target.in_melee
     - return,if=buff.prowl.up
 
     - tigers_fury,off_gcd=true,ignore_queue=true,if=(var.bs_inc_cd_remains<=1|var.bs_inc_cd_remains>10)&(cooldown.frantic_frenzy.remains<buff.tigers_fury.duration-1.5|cooldown.frantic_frenzy.remains>22|!talent.frantic_frenzy|active_enemies=1)

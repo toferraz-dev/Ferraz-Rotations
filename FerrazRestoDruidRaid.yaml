@@ -317,6 +317,7 @@ lists:
   # Sequential Active Healing: SotF consumption -> Lifebloom maintenance -> AoE and ST heals
   active_healing:
     # Consumes the Soul of the Forest proc
+    - wild_growth,name="SotF Wild Growth",range_check=none,if=var.has_soul&group.count(cycle.health.effective.pct<config.raid_wild_growth_threshold)>=config.raid_wild_growth_members
     - regrowth,name="SotF Regrowth",cycle=members,if=var.has_soul&cycle.health.effective.pct<config.raid_regrowth_threshold
     - rejuvenation,name="SotF Germination",cycle=members,if=var.has_soul&talent.germination&cycle.buff.rejuvenation.up&(cycle.buff.rejuvenation_germination.down|cycle.buff.rejuvenation_germination.remains<1.5)
     - rejuvenation,name="SotF Rejuvenation",cycle=members,if=var.has_soul&cycle.buff.rejuvenation.remains<1.5
@@ -376,9 +377,11 @@ lists:
 
   # Ranged DoT maintenance in caster form
   ranged_dps:
+    - starsurge,name="Starsurge",if=buff.moonkin_form.up
     - sunfire,name="Sunfire Aoe Dot",if=debuff.sunfire.refreshable
     - moonfire,name="Moonfire ST Refresh",if=debuff.moonfire.refreshable
-    - wrath, name="Wrath"
+    - starfire,name="Starfire AoE",if=active_enemies>=3
+    - wrath,name="Wrath"
 
   # Bear Form rotation for debuffs (Bearweave)
   bearweave:
@@ -424,4 +427,4 @@ lists:
     # DPS weaving when the group is healthy
     - call_action_list,name=ranged_dps,if=config.raid_ranged_dps&var.can_catweave&target.exists&target.alive&!target.friendly&((config.raid_melee_dps&target.range>8)|!config.raid_melee_dps)
     - call_action_list,name=bearweave,if=config.raid_melee_dps&var.can_catweave&target.exists&target.alive&!target.friendly&target.range<=8&active_enemies>=2
-    - call_action_list,name=catweave,if=config.raid_melee_dps&var.can_catweave&target.exists&target.alive&!target.friendly&target.range<=8
+    - call_action_list,name=catweave,if=config.raid_melee_dps&var.can_catweave&target.exists&target.alive&!target.friendly&target.in_melee

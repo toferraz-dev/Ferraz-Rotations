@@ -375,7 +375,7 @@ lists:
     - rejuvenation,name="Rejuvenation",cycle=members,if=cycle.buff.rejuvenation.refreshable&cycle.health.effective.pct<config.rejuvenation_threshold
     - rejuvenation,name="Germination",cycle=members,if=talent.germination&cycle.buff.rejuvenation.up&(cycle.buff.rejuvenation_germination.down|cycle.buff.rejuvenation_germination.refreshable)&cycle.health.effective.pct<config.rejuvenation_threshold
     - regrowth,name="Regrowth",cycle=members,if=cycle.health.effective.pct<config.regrowth_threshold
-    - thorn_bloom,name="Thorn Bloom",if=group.count(cycle.health.effective.pct<config.thorn_bloom_threshold&!cycle.tank)>=config.thorn_bloom_members&target.range<=8
+    - thorn_bloom,name="Thorn Bloom",if=group.count(cycle.health.effective.pct<config.thorn_bloom_threshold&!cycle.tank)>=config.thorn_bloom_members&target.in_melee
 
   # Utilities, Mobility, and Mana Recovery
   utility:
@@ -405,7 +405,7 @@ lists:
   # Catweaving Transition and Entry (Physical DPS)
   catweave:
     # Refresh Rejuv on injured members before fully committing to Cat
-    - rejuvenation,name="Cat Rejuvenation",cycle=members,if=(buff.bear_form.up|buff.cat_form.up)&(target.range>8|!var.group_healthy)
+    - rejuvenation,name="Cat Rejuvenation",cycle=members,if=(buff.bear_form.up|buff.cat_form.up)&(!target.in_melee|!var.group_healthy)
 
     # Fluid Form: Casts Rake/Shred to automatically shapeshift
     - rake,name="Fluid Rake",if=!buff.cat_form.up
@@ -480,7 +480,7 @@ lists:
     # Sequential Active Healing: SotF consumption -> Lifebloom maintenance -> AoE and ST heals
     - call_action_list,name=active_healing,if=!var.in_dps_form|!var.group_healthy
     # DPS weaving when the group is healthy
-    - call_action_list,name=ranged_dps,if=var.can_catweave&target.exists&target.alive&!target.friendly&target.range>8
-    - call_action_list,name=bearweave,if=var.can_catweave&target.exists&target.alive&!target.friendly&target.range<=8
+    - call_action_list,name=ranged_dps,if=var.can_catweave&target.exists&target.alive&!target.friendly&!target.in_melee
+    - call_action_list,name=bearweave,if=var.can_catweave&target.exists&target.alive&!target.friendly&target.in_melee
     # Downtime Filler: Pad Abundance if there is no valid enemy to attack
     - call_action_list,name=abundance_maintenance,if=!target.exists|target.friendly|target.range>40
