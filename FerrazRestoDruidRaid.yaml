@@ -299,7 +299,7 @@ lists:
   # Racial Abilities and Specific Utilities
   racials:
     - shadowmeld,name="Shadowmeld (Aggro Drop)",if=player.combat&player.aggro&!player.casting
-    - thorn_bloom,name="Thorn Bloom",if=group.count(cycle.health.effective.pct<config.raid_thorn_bloom_threshold)>=config.raid_thorn_bloom_members&target.range<=8
+    - thorn_bloom,name="Thorn Bloom",if=group.count(cycle.health.effective.pct<config.raid_thorn_bloom_threshold)>=config.raid_thorn_bloom_members&target.in_melee
 
   # Main Healing Cooldown Alignment: NS -> Trinkets/Potion -> Convoke -> NS Regrowth -> Tranquility -> Swiftmend
   cooldowns:
@@ -322,7 +322,7 @@ lists:
     - rejuvenation,name="SotF Germination",cycle=members,if=var.has_soul&talent.germination&cycle.buff.rejuvenation.up&(cycle.buff.rejuvenation_germination.down|cycle.buff.rejuvenation_germination.remains<1.5)
     - rejuvenation,name="SotF Rejuvenation",cycle=members,if=var.has_soul&cycle.buff.rejuvenation.remains<1.5
 
-    - thorn_bloom,name="Thorn Bloom",if=group.count(cycle.health.effective.pct<config.raid_thorn_bloom_threshold)>=config.raid_thorn_bloom_members&target.range<=8
+    - thorn_bloom,name="Thorn Bloom",if=group.count(cycle.health.effective.pct<config.raid_thorn_bloom_threshold)>=config.raid_thorn_bloom_members&target.in_melee
 
     # Lifebloom on tanks (Everbloom stacks to 3)
     - lifebloom,name="Lifebloom",cycle=members,if=cycle.health.effective.pct<config.raid_lifebloom_threshold&cycle.buff.lifebloom.down&(group.count(cycle.buff.lifebloom.up)=0|tank1.buff.lifebloom.up)
@@ -365,7 +365,7 @@ lists:
 
   # Catweaving Transition and Entry (Physical DPS)
   catweave:
-    - rejuvenation,name="Cat Rejuvenation",cycle=members,if=cycle.buff.rejuvenation.remains<4&(buff.cat_form.up|talent.fluid_form)&(target.range>8|!var.group_healthy)
+    - rejuvenation,name="Cat Rejuvenation",cycle=members,if=cycle.buff.rejuvenation.remains<4&(buff.cat_form.up|talent.fluid_form)&(!target.in_melee|!var.group_healthy)
     # Fluid Form: Casts Rake/Shred to automatically shapeshift
     - rake,name="Fluid Rake",if=talent.fluid_form&!buff.cat_form.up&debuff.rake.refreshable
     - shred,name="Fluid Shred",if=talent.fluid_form&!buff.cat_form.up
@@ -425,6 +425,6 @@ lists:
     # Active healing in combat
     - call_action_list,name=active_healing
     # DPS weaving when the group is healthy
-    - call_action_list,name=ranged_dps,if=config.raid_ranged_dps&var.can_catweave&target.exists&target.alive&!target.friendly&((config.raid_melee_dps&target.range>8)|!config.raid_melee_dps)
-    - call_action_list,name=bearweave,if=config.raid_melee_dps&var.can_catweave&target.exists&target.alive&!target.friendly&target.range<=8&active_enemies>=2
+    - call_action_list,name=ranged_dps,if=config.raid_ranged_dps&var.can_catweave&target.exists&target.alive&!target.friendly&((config.raid_melee_dps&!target.in_melee)|!config.raid_melee_dps)
+    - call_action_list,name=bearweave,if=config.raid_melee_dps&var.can_catweave&target.exists&target.alive&!target.friendly&target.in_melee&active_enemies>=2
     - call_action_list,name=catweave,if=config.raid_melee_dps&var.can_catweave&target.exists&target.alive&!target.friendly&target.in_melee
