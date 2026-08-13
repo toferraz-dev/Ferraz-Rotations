@@ -1,0 +1,48 @@
+# Tassiana - Guardian - 2026-08-13 12:25 - US/Area 52
+# SimC Addon 12.1.0-02
+# WoW 12.1.0.69283, TOC 120100
+# Requires SimulationCraft 1000-01 or newer
+
+druid="Tassiana"
+level=90
+race=harronir
+region=us
+server=area_52
+role=tank
+professions=leatherworking=29/skinning=100
+spec=guardian
+
+talents=CgGADBD3hSPCL9Y9gz68WcKvMAAAAAAAAAAAAgZmxsMPwMjZWMLGmZZZgZzwoJamZWmZmZmlxMAAAAAAMjlZALbzMYMLDgpAAAAbYmBYxMYAbWAYmBwA
+
+omnium_talents=136814:1/136821:1/136817:1/136819:1/136822:1
+
+# Branches of the Luminous Bloom (289)
+head=,id=250024,enchant_id=7961,gem_id=240888,bonus_id=6652/13440/13338/13575/12806/13534
+# Pendant of Aching Grief (289)
+neck=,id=251096,gem_id=240983,bonus_id=13440/6652/13668/12699/12806
+# Silvermoon Agent's Mantle (285)
+shoulder=,id=244572,enchant_id=8031,bonus_id=12214/13667/12497/12066/12385/8960/8792/13622,content_tuning=3615,crafted_stats=40/49,crafting_quality=5
+# Potion-Stained Cloak (289)
+back=,id=193712,bonus_id=13440/6652/13577/12699/12806
+# Vest of the Void's Embrace (289)
+chest=,id=151313,enchant_id=7987,bonus_id=13440/43/13577/12699/12806
+# Bindings of the Luminous Bloom (289)
+wrist=,id=250020,bonus_id=12806/6652/12667/13440/3174
+# Arbortenders of the Luminous Bloom (289)
+hands=,id=250025,bonus_id=6652/13440/13337/13574/12806
+# Silvermoon Agent's Utility Belt (285)
+waist=,id=244573,gem_id=240888,bonus_id=12214/13667/12497/12066/12685/8960/8792/13622/12666,content_tuning=3615,crafted_stats=36/49,crafting_quality=5
+# Shifting Stalker Hide Pants (289)
+legs=,id=151314,enchant_id=8159,bonus_id=13440/6652/13577/12699/12806
+# Eclipse Espadrilles (289)
+feet=,id=251210,enchant_id=7993,bonus_id=13440/6652/13577/12699/12806
+# Omission of Light (289)
+finger1=,id=251093,enchant_id=8025,gem_id=240888,bonus_id=13440/6652/13668/12699/12806
+# Band of the Triumvirate (289)
+finger2=,id=151311,enchant_id=8025,gem_id=240894,bonus_id=13440/6652/13668/12699/12806
+# Emberwing Feather (298)
+trinket1=,id=250144,bonus_id=13440/6652/12699/13654
+# Gaze of the Alnseer (298)
+trinket2=,id=249343,bonus_id=6652/13335/13654
+# Toxin-Coated Warstaff (302)
+main_hand=,id=273783,enchant_id=8039,bonus_id=13439/6652/12701/12836,content_tuning=3025
