@@ -1,0 +1,5196 @@
+{
+  "version": "1.0.0",
+  "lastUpdated": "2026-08-10",
+  "operators": {
+    "boolean": [
+      {
+        "symbol": "&",
+        "name": "AND",
+        "description": "Both sides must be true. Short-circuits: if left is false, right is skipped.",
+        "example": "buff.icy_veins.up&cooldown.frozen_orb.ready"
+      },
+      {
+        "symbol": "|",
+        "name": "OR",
+        "description": "Either side must be true. Short-circuits: if left is true, right is skipped.",
+        "example": "buff.icy_veins.up|buff.bloodlust.up"
+      },
+      {
+        "symbol": "!",
+        "name": "NOT",
+        "description": "Negates the following expression.",
+        "example": "!buff.icy_veins.up"
+      }
+    ],
+    "comparison": [
+      {
+        "symbol": "<",
+        "name": "Less Than",
+        "example": "health.pct<30"
+      },
+      {
+        "symbol": "<=",
+        "name": "Less Than or Equal",
+        "example": "target.health.pct<=35"
+      },
+      {
+        "symbol": ">",
+        "name": "Greater Than",
+        "example": "energy>50"
+      },
+      {
+        "symbol": ">=",
+        "name": "Greater Than or Equal",
+        "example": "combo_points>=5"
+      },
+      {
+        "symbol": "=",
+        "name": "Equal",
+        "aliases": [
+          "=="
+        ],
+        "example": "active_enemies=1"
+      },
+      {
+        "symbol": "!=",
+        "name": "Not Equal",
+        "example": "target.casting.spell_id!=0"
+      }
+    ],
+    "arithmetic": [
+      {
+        "symbol": "+",
+        "name": "Add",
+        "example": "cooldown.X.remains+gcd"
+      },
+      {
+        "symbol": "-",
+        "name": "Subtract",
+        "example": "energy.max-energy"
+      },
+      {
+        "symbol": "*",
+        "name": "Multiply",
+        "example": "gcd*2"
+      },
+      {
+        "symbol": "/",
+        "name": "Divide",
+        "example": "health.pct/100"
+      },
+      {
+        "symbol": ">?",
+        "name": "Min",
+        "description": "SimC min: a>?b = min(a,b)",
+        "example": "cooldown.X.remains>?5"
+      },
+      {
+        "symbol": "<?",
+        "name": "Max",
+        "description": "SimC max: a<?b = max(a,b)",
+        "example": "cooldown.X.remains<?10"
+      }
+    ],
+    "grouping": [
+      {
+        "symbol": "()",
+        "description": "Parentheses for grouping and precedence control.",
+        "example": "(buff.X.up|buff.Y.up)&cooldown.Z.ready"
+      }
+    ]
+  },
+  "categories": [
+    {
+      "id": "buffs",
+      "name": "Buffs",
+      "description": "Check buffs on the player. By default only checks player-applied buffs. Add .any suffix to check all sources.",
+      "syntax": "buff.SPELL.PROPERTY",
+      "parameters": {
+        "SPELL": "Spell name in snake_case (e.g., icy_veins, bloodlust)"
+      },
+      "properties": [
+        {
+          "name": "up",
+          "aliases": [
+            "react"
+          ],
+          "returnType": "bool",
+          "description": "Buff is currently active.",
+          "example": "buff.icy_veins.up"
+        },
+        {
+          "name": "down",
+          "returnType": "bool",
+          "description": "Buff is NOT active.",
+          "example": "buff.shield_wall.down"
+        },
+        {
+          "name": "stack",
+          "aliases": [
+            "stacks"
+          ],
+          "returnType": "number",
+          "description": "Current stack count (0 if not active).",
+          "example": "buff.bone_shield.stack>=5"
+        },
+        {
+          "name": "remains",
+          "returnType": "number",
+          "description": "Seconds remaining (0 if not active).",
+          "example": "buff.icy_veins.remains<5"
+        },
+        {
+          "name": "duration",
+          "returnType": "number",
+          "description": "Total duration of the buff in seconds.",
+          "example": "buff.icy_veins.duration"
+        },
+        {
+          "name": "elapsed",
+          "returnType": "number",
+          "description": "Seconds since the buff was applied.",
+          "example": "buff.icy_veins.elapsed>10"
+        },
+        {
+          "name": "refreshable",
+          "returnType": "bool",
+          "description": "Remaining time is less than 30% of duration (pandemic window).",
+          "example": "buff.renew.refreshable"
+        },
+        {
+          "name": "stealable",
+          "returnType": "bool",
+          "description": "Buff can be spell-stolen.",
+          "example": "buff.arcane_intellect.stealable"
+        },
+        {
+          "name": "mine",
+          "returnType": "bool",
+          "description": "Buff was applied by the player.",
+          "example": "buff.power_word_fortitude.mine"
+        },
+        {
+          "name": "magic",
+          "returnType": "bool",
+          "description": "Buff has Magic dispel type.",
+          "example": "buff.X.magic"
+        },
+        {
+          "name": "curse",
+          "returnType": "bool",
+          "description": "Buff has Curse dispel type.",
+          "example": "buff.X.curse"
+        },
+        {
+          "name": "disease",
+          "returnType": "bool",
+          "description": "Buff has Disease dispel type.",
+          "example": "buff.X.disease"
+        },
+        {
+          "name": "poison",
+          "returnType": "bool",
+          "description": "Buff has Poison dispel type.",
+          "example": "buff.X.poison"
+        },
+        {
+          "name": "icon",
+          "returnType": "number",
+          "description": "Texture file ID of the buff icon.",
+          "example": "buff.X.icon"
+        }
+      ],
+      "suffixes": [
+        {
+          "name": ".any",
+          "description": "Check buffs from ANY source, not just player-applied. Append after the property.",
+          "example": "buff.bloodlust.up.any"
+        }
+      ],
+      "notes": "Without .any, only checks buffs cast by the player. Use .any for external buffs like Bloodlust."
+    },
+    {
+      "id": "debuffs",
+      "name": "Debuffs",
+      "description": "Check debuffs on the current target. By default only checks player-applied debuffs.",
+      "syntax": "debuff.SPELL.PROPERTY",
+      "parameters": {
+        "SPELL": "Spell name in snake_case (e.g., rip, shadow_word_pain)"
+      },
+      "properties": [
+        {
+          "name": "up",
+          "returnType": "bool",
+          "description": "Debuff is currently active on target.",
+          "example": "debuff.rip.up"
+        },
+        {
+          "name": "ticking",
+          "returnType": "bool",
+          "description": "Same as .up. Debuff is ticking on target.",
+          "example": "debuff.shadow_word_pain.ticking"
+        },
+        {
+          "name": "down",
+          "returnType": "bool",
+          "description": "Debuff is NOT active on target.",
+          "example": "debuff.rip.down"
+        },
+        {
+          "name": "stack",
+          "aliases": [
+            "stacks"
+          ],
+          "returnType": "number",
+          "description": "Current stack count.",
+          "example": "debuff.vulnerability.stack>=3"
+        },
+        {
+          "name": "remains",
+          "returnType": "number",
+          "description": "Seconds remaining.",
+          "example": "debuff.rip.remains<5"
+        },
+        {
+          "name": "duration",
+          "returnType": "number",
+          "description": "Total duration in seconds.",
+          "example": "debuff.rip.duration"
+        },
+        {
+          "name": "elapsed",
+          "returnType": "number",
+          "description": "Seconds since applied.",
+          "example": "debuff.rip.elapsed>3"
+        },
+        {
+          "name": "refreshable",
+          "returnType": "bool",
+          "description": "Within pandemic refresh window (30% of duration).",
+          "example": "debuff.rip.refreshable"
+        },
+        {
+          "name": "stealable",
+          "returnType": "bool",
+          "description": "Debuff can be stolen.",
+          "example": "debuff.X.stealable"
+        },
+        {
+          "name": "mine",
+          "returnType": "bool",
+          "description": "Debuff was applied by the player.",
+          "example": "debuff.X.mine"
+        },
+        {
+          "name": "magic",
+          "returnType": "bool",
+          "description": "Has Magic dispel type.",
+          "example": "debuff.X.magic"
+        },
+        {
+          "name": "curse",
+          "returnType": "bool",
+          "description": "Has Curse dispel type.",
+          "example": "debuff.X.curse"
+        },
+        {
+          "name": "disease",
+          "returnType": "bool",
+          "description": "Has Disease dispel type.",
+          "example": "debuff.X.disease"
+        },
+        {
+          "name": "poison",
+          "returnType": "bool",
+          "description": "Has Poison dispel type.",
+          "example": "debuff.X.poison"
+        },
+        {
+          "name": "icon",
+          "returnType": "number",
+          "description": "Texture file ID.",
+          "example": "debuff.X.icon"
+        }
+      ],
+      "suffixes": [
+        {
+          "name": ".any",
+          "description": "Check debuffs from ANY source.",
+          "example": "debuff.rip.up.any"
+        }
+      ],
+      "notes": "Without .any, only checks player-applied debuffs on the target."
+    },
+    {
+      "id": "dots",
+      "name": "DoTs",
+      "description": "Convenience alias for debuffs on the target. Subset of debuff properties.",
+      "syntax": "dot.SPELL.PROPERTY",
+      "parameters": {
+        "SPELL": "DoT spell name in snake_case"
+      },
+      "properties": [
+        {
+          "name": "up",
+          "returnType": "bool",
+          "description": "DoT is active on target.",
+          "example": "dot.shadow_word_pain.up"
+        },
+        {
+          "name": "ticking",
+          "returnType": "bool",
+          "description": "Same as .up.",
+          "example": "dot.rip.ticking"
+        },
+        {
+          "name": "down",
+          "returnType": "bool",
+          "description": "DoT is NOT active.",
+          "example": "dot.moonfire.down"
+        },
+        {
+          "name": "remains",
+          "returnType": "number",
+          "description": "Seconds remaining.",
+          "example": "dot.corruption.remains<5"
+        },
+        {
+          "name": "stack",
+          "aliases": [
+            "stacks"
+          ],
+          "returnType": "number",
+          "description": "Stack count.",
+          "example": "dot.agony.stack>=5"
+        },
+        {
+          "name": "refreshable",
+          "returnType": "bool",
+          "description": "Within pandemic window.",
+          "example": "dot.moonfire.refreshable"
+        },
+        {
+          "name": "duration",
+          "returnType": "number",
+          "description": "Total duration.",
+          "example": "dot.rip.duration"
+        }
+      ],
+      "notes": "dot.X is equivalent to debuff.X — it checks debuffs on the target."
+    },
+    {
+      "id": "cooldowns",
+      "name": "Cooldowns",
+      "description": "Check spell cooldown status.",
+      "syntax": "cooldown.SPELL.PROPERTY",
+      "parameters": {
+        "SPELL": "Spell name in snake_case"
+      },
+      "properties": [
+        {
+          "name": "ready",
+          "aliases": [
+            "up"
+          ],
+          "returnType": "bool",
+          "description": "Spell is off cooldown and ready to use.",
+          "example": "cooldown.mortal_strike.ready"
+        },
+        {
+          "name": "down",
+          "returnType": "bool",
+          "description": "Spell is on cooldown.",
+          "example": "cooldown.combustion.down"
+        },
+        {
+          "name": "remains",
+          "returnType": "number",
+          "description": "Seconds until cooldown expires.",
+          "example": "cooldown.fireball.remains<3"
+        },
+        {
+          "name": "charges",
+          "returnType": "number",
+          "description": "Current available charges.",
+          "example": "cooldown.fire_blast.charges>=1"
+        },
+        {
+          "name": "max_charges",
+          "returnType": "number",
+          "description": "Maximum charges.",
+          "example": "cooldown.fire_blast.max_charges"
+        },
+        {
+          "name": "charges_fractional",
+          "returnType": "number",
+          "description": "Charges as a decimal (includes partial recharge).",
+          "example": "cooldown.fire_blast.charges_fractional>=1.5"
+        },
+        {
+          "name": "full_recharge_time",
+          "returnType": "number",
+          "description": "Seconds until ALL charges are recovered.",
+          "example": "cooldown.fire_blast.full_recharge_time<10"
+        },
+        {
+          "name": "duration",
+          "returnType": "number",
+          "description": "Cooldown duration in seconds. For charge-based spells, returns per-charge cooldown.",
+          "example": "cooldown.combustion.duration>60"
+        },
+        {
+          "name": "cast_count",
+          "returnType": "number",
+          "description": "Number of times the spell has been cast (from C_Spell.GetSpellCastCount).",
+          "example": "cooldown.fireball.cast_count>=3"
+        },
+        {
+          "name": "blocked",
+          "returnType": "bool",
+          "description": "Spell is user-blocked: Enabled=false in the spell list, session-blocked via /block, or CD-classified while the global CDs toggle is off. Queued spells bypass the block state. Blocked spells also report remains=99999, ready=0, duration=99999, charges=0 on the regular cooldown.* prefix — use cooldown_bypass.* to see the real CD.",
+          "example": "cooldown.combustion.blocked"
+        },
+        {
+          "name": "is_cooldown",
+          "returnType": "bool",
+          "description": "Spell is classified as a cooldown (member of cdSpells — either user-marked as CD or in the spec's default cooldown list). Independent of the effective block state; combine with state.cds to distinguish 'blocked via CDs off' (is_cooldown & !state.cds) from 'user-disabled' (blocked & !is_cooldown).",
+          "example": "cooldown.combustion.is_cooldown & !state.cds"
+        }
+      ]
+    },
+    {
+      "id": "cooldown_bypass",
+      "name": "Cooldown Bypass",
+      "description": "Same as cooldown.* but ignores the blocked flag. Returns real cooldown data even when the spell is user-blocked.",
+      "syntax": "cooldown_bypass.SPELL.PROPERTY",
+      "parameters": {
+        "SPELL": "Spell name in snake_case"
+      },
+      "properties": [
+        {
+          "name": "ready",
+          "aliases": [
+            "up"
+          ],
+          "returnType": "bool",
+          "description": "Spell is really off cooldown (ignores blocked state).",
+          "example": "cooldown_bypass.combustion.ready"
+        },
+        {
+          "name": "down",
+          "returnType": "bool",
+          "description": "Spell is really on cooldown (ignores blocked state).",
+          "example": "cooldown_bypass.combustion.down"
+        },
+        {
+          "name": "remains",
+          "returnType": "number",
+          "description": "Real seconds until cooldown expires (ignores blocked state).",
+          "example": "cooldown_bypass.big_damage.remains<5"
+        },
+        {
+          "name": "charges",
+          "returnType": "number",
+          "description": "Real current available charges (ignores blocked state).",
+          "example": "cooldown_bypass.fire_blast.charges>=1"
+        },
+        {
+          "name": "max_charges",
+          "returnType": "number",
+          "description": "Maximum charges.",
+          "example": "cooldown_bypass.fire_blast.max_charges"
+        },
+        {
+          "name": "charges_fractional",
+          "returnType": "number",
+          "description": "Real charges including partial progress (ignores blocked state).",
+          "example": "cooldown_bypass.fire_blast.charges_fractional>=1.5"
+        },
+        {
+          "name": "full_recharge_time",
+          "returnType": "number",
+          "description": "Real seconds until all charges recovered (ignores blocked state).",
+          "example": "cooldown_bypass.fire_blast.full_recharge_time<10"
+        },
+        {
+          "name": "duration",
+          "returnType": "number",
+          "description": "Cooldown duration in seconds.",
+          "example": "cooldown_bypass.combustion.duration"
+        },
+        {
+          "name": "cast_count",
+          "returnType": "number",
+          "description": "Number of times the spell has been cast (from C_Spell.GetSpellCastCount).",
+          "example": "cooldown_bypass.fireball.cast_count>=3"
+        },
+        {
+          "name": "blocked",
+          "returnType": "bool",
+          "description": "Same as cooldown.SPELL.blocked — spell is user-blocked.",
+          "example": "cooldown_bypass.combustion.blocked"
+        }
+      ],
+      "notes": "Use cooldown_bypass when you need the real CD state of a blocked spell (e.g., pooling resources for a CD that is toggled off but might be re-enabled)."
+    },
+    {
+      "id": "talents",
+      "name": "Talents",
+      "description": "Check if a talent is learned and its rank.",
+      "syntax": "talent.SPELL",
+      "parameters": {
+        "SPELL": "Talent name in snake_case"
+      },
+      "properties": [
+        {
+          "name": "(bare)",
+          "returnType": "bool",
+          "description": "Talent is learned (rank > 0).",
+          "example": "talent.soul_reaper"
+        },
+        {
+          "name": "enabled",
+          "returnType": "bool",
+          "description": "Same as bare — talent is learned.",
+          "example": "talent.soul_reaper.enabled"
+        },
+        {
+          "name": "rank",
+          "returnType": "number",
+          "description": "Talent rank (0 = not learned, 1+ = learned).",
+          "example": "talent.soul_reaper.rank>=2"
+        }
+      ]
+    },
+    {
+      "id": "actions",
+      "name": "Actions",
+      "description": "Check spell action properties like cast time and charges.",
+      "syntax": "action.SPELL.PROPERTY",
+      "parameters": {
+        "SPELL": "Spell name in snake_case"
+      },
+      "properties": [
+        {
+          "name": "cast_time",
+          "returnType": "number",
+          "description": "Cast time in seconds.",
+          "example": "action.fireball.cast_time<2"
+        },
+        {
+          "name": "execute_time",
+          "returnType": "number",
+          "description": "Max of cast time and GCD.",
+          "example": "action.fireball.execute_time"
+        },
+        {
+          "name": "charges",
+          "returnType": "number",
+          "description": "Current available charges.",
+          "example": "action.fire_blast.charges>=1"
+        },
+        {
+          "name": "blocked",
+          "returnType": "bool",
+          "description": "Spell/action is user-blocked (Enabled=false, session-blocked via /block, or CD-classified while the global CDs toggle is off). Queued spells bypass the block state. Mirrors cooldown.SPELL.blocked.",
+          "example": "action.combustion.blocked"
+        },
+        {
+          "name": "is_cooldown",
+          "returnType": "bool",
+          "description": "Spell/action is classified as a cooldown (member of cdSpells). Use with state.cds to detect 'blocked via CDs off' specifically: action.X.is_cooldown & !state.cds. Mirrors cooldown.SPELL.is_cooldown.",
+          "example": "action.combustion.is_cooldown"
+        },
+        {
+          "name": "cooldown.remains",
+          "returnType": "number",
+          "description": "Cooldown remaining.",
+          "example": "action.combustion.cooldown.remains<5"
+        },
+        {
+          "name": "cooldown.ready",
+          "aliases": [
+            "cooldown.up"
+          ],
+          "returnType": "bool",
+          "description": "Spell is off cooldown.",
+          "example": "action.combustion.cooldown.ready"
+        },
+        {
+          "name": "cooldown.down",
+          "returnType": "bool",
+          "description": "Spell is on cooldown.",
+          "example": "action.combustion.cooldown.down"
+        },
+        {
+          "name": "overlayed",
+          "returnType": "bool",
+          "description": "Action-bar proc glow is active for this spell (from IsSpellOverlayed). Checks the override spell too, so it covers SimC's demonsurge_available-style gates.",
+          "example": "action.metamorphosis.overlayed"
+        }
+      ]
+    },
+    {
+      "id": "resources",
+      "name": "Resources",
+      "description": "Check player resource levels. Each resource supports .current (default), .max, .deficit, .pct, .regen, .time_to_max.",
+      "syntax": "RESOURCE[.PROPERTY]",
+      "expressions": [
+        {
+          "name": "rage",
+          "class": "Warrior/Druid",
+          "example": "rage>=50"
+        },
+        {
+          "name": "energy",
+          "class": "Rogue/Monk/Druid",
+          "example": "energy>=35"
+        },
+        {
+          "name": "mana",
+          "class": "All casters",
+          "example": "mana.pct>=20"
+        },
+        {
+          "name": "focus",
+          "class": "Hunter",
+          "example": "focus>=40"
+        },
+        {
+          "name": "combo_points",
+          "class": "Rogue/Druid",
+          "example": "combo_points>=5"
+        },
+        {
+          "name": "runic_power",
+          "class": "Death Knight",
+          "example": "runic_power>=80"
+        },
+        {
+          "name": "rune",
+          "class": "Death Knight",
+          "example": "rune>=3"
+        },
+        {
+          "name": "soul_shards",
+          "aliases": [
+            "soul_shard"
+          ],
+          "class": "Warlock",
+          "example": "soul_shards>=3"
+        },
+        {
+          "name": "holy_power",
+          "class": "Paladin",
+          "example": "holy_power>=3"
+        },
+        {
+          "name": "chi",
+          "class": "Monk",
+          "example": "chi>=3"
+        },
+        {
+          "name": "insanity",
+          "class": "Priest (Shadow)",
+          "example": "insanity>=60"
+        },
+        {
+          "name": "stagger",
+          "class": "Monk (Brewmaster)",
+          "example": "stagger.pct>50"
+        },
+        {
+          "name": "arcane_charges",
+          "class": "Mage (Arcane)",
+          "example": "arcane_charges>=3"
+        },
+        {
+          "name": "fury",
+          "class": "Demon Hunter",
+          "example": "fury>=40"
+        },
+        {
+          "name": "pain",
+          "class": "Demon Hunter (Vengeance)",
+          "example": "pain>=60"
+        },
+        {
+          "name": "maelstrom",
+          "class": "Shaman",
+          "example": "maelstrom>=60"
+        },
+        {
+          "name": "astral_power",
+          "aliases": [
+            "lunar_power"
+          ],
+          "class": "Druid (Balance)",
+          "example": "astral_power>=40"
+        },
+        {
+          "name": "essence",
+          "class": "Evoker",
+          "example": "essence>=2"
+        }
+      ],
+      "properties": [
+        {
+          "name": "(bare)",
+          "returnType": "number",
+          "description": "Current value (same as .current).",
+          "example": "energy"
+        },
+        {
+          "name": "current",
+          "returnType": "number",
+          "description": "Current amount.",
+          "example": "energy.current"
+        },
+        {
+          "name": "max",
+          "returnType": "number",
+          "description": "Maximum amount.",
+          "example": "energy.max"
+        },
+        {
+          "name": "deficit",
+          "returnType": "number",
+          "description": "Missing amount (max - current).",
+          "example": "energy.deficit>=40"
+        },
+        {
+          "name": "pct",
+          "returnType": "number",
+          "description": "Percentage of max (0-100).",
+          "example": "mana.pct>=20"
+        },
+        {
+          "name": "regen",
+          "returnType": "number",
+          "description": "Regeneration rate per second (mana/energy/focus only).",
+          "example": "energy.regen"
+        },
+        {
+          "name": "time_to_max",
+          "returnType": "number",
+          "description": "Seconds until full (mana/energy/focus only).",
+          "example": "energy.time_to_max<3"
+        },
+        {
+          "name": "charged",
+          "returnType": "number",
+          "description": "Charged combo points (combo_points only, Rogue Supercharger talent, player only). Via GetUnitChargedPowerPoints.",
+          "example": "combo_points.charged>=1"
+        }
+      ],
+      "notes": "Resources can also be accessed with player. prefix: player.rage, player.energy, etc."
+    },
+    {
+      "id": "player",
+      "name": "Player",
+      "description": "Player-specific properties: health, power, status, casting, CC states, stats, role, instance info.",
+      "syntax": "player.PROPERTY",
+      "groups": [
+        {
+          "name": "Health",
+          "expressions": [
+            {
+              "syntax": "player.health.pct",
+              "aliases": [
+                "health.pct"
+              ],
+              "returnType": "number",
+              "description": "Player health percentage (0-100).",
+              "example": "player.health.pct<50"
+            },
+            {
+              "syntax": "player.health.current",
+              "returnType": "number",
+              "description": "Current health points.",
+              "example": "player.health.current<100000"
+            },
+            {
+              "syntax": "player.health.max",
+              "returnType": "number",
+              "description": "Maximum health.",
+              "example": "player.health.max"
+            },
+            {
+              "syntax": "player.health.deficit",
+              "returnType": "number",
+              "description": "Missing health (max - current).",
+              "example": "player.health.deficit>50000"
+            },
+            {
+              "syntax": "player.health.effective.pct",
+              "returnType": "number",
+              "description": "Effective healable health % (healthPct - healAbsorbPct + incomingHealsPct). Healer triage metric.",
+              "example": "player.health.effective.pct<50"
+            }
+          ]
+        },
+        {
+          "name": "Absorbs & Incoming Heals",
+          "expressions": [
+            {
+              "syntax": "player.absorb",
+              "aliases": [
+                "absorb"
+              ],
+              "returnType": "number",
+              "description": "Damage absorb shield amount (UnitGetTotalAbsorbs). Shields like Power Word: Shield.",
+              "example": "absorb>0"
+            },
+            {
+              "syntax": "player.absorb.pct",
+              "aliases": [
+                "absorb.pct"
+              ],
+              "returnType": "number",
+              "description": "Damage absorb as % of max health.",
+              "example": "absorb.pct>10"
+            },
+            {
+              "syntax": "player.heal_absorb",
+              "aliases": [
+                "heal_absorb"
+              ],
+              "returnType": "number",
+              "description": "Heal absorb amount (UnitGetTotalHealAbsorbs). Debuffs that eat incoming healing.",
+              "example": "heal_absorb>0"
+            },
+            {
+              "syntax": "player.heal_absorb.pct",
+              "aliases": [
+                "heal_absorb.pct"
+              ],
+              "returnType": "number",
+              "description": "Heal absorb as % of max health.",
+              "example": "heal_absorb.pct>5"
+            },
+            {
+              "syntax": "player.incoming_heals",
+              "aliases": [
+                "incoming_heals"
+              ],
+              "returnType": "number",
+              "description": "Total incoming heals from all casters (UnitGetIncomingHeals).",
+              "example": "incoming_heals>0"
+            },
+            {
+              "syntax": "player.incoming_heals.pct",
+              "aliases": [
+                "incoming_heals.pct"
+              ],
+              "returnType": "number",
+              "description": "Incoming heals as % of max health.",
+              "example": "incoming_heals.pct>10"
+            }
+          ]
+        },
+        {
+          "name": "Status",
+          "expressions": [
+            {
+              "syntax": "player.alive",
+              "aliases": [
+                "alive"
+              ],
+              "returnType": "bool",
+              "description": "Player is alive.",
+              "example": "player.alive"
+            },
+            {
+              "syntax": "player.dead",
+              "aliases": [
+                "dead"
+              ],
+              "returnType": "bool",
+              "description": "Player is dead.",
+              "example": "player.dead"
+            },
+            {
+              "syntax": "player.moving",
+              "aliases": [
+                "moving"
+              ],
+              "returnType": "bool",
+              "description": "Player is currently moving.",
+              "example": "player.moving"
+            },
+            {
+              "syntax": "player.moving.time",
+              "aliases": [
+                "moving.time"
+              ],
+              "returnType": "number",
+              "description": "Seconds spent moving.",
+              "example": "moving.time>2"
+            },
+            {
+              "syntax": "player.standing",
+              "aliases": [
+                "standing"
+              ],
+              "returnType": "bool",
+              "description": "Player is standing still.",
+              "example": "standing"
+            },
+            {
+              "syntax": "player.standing.time",
+              "aliases": [
+                "standing.time"
+              ],
+              "returnType": "number",
+              "description": "Seconds spent standing still.",
+              "example": "standing.time>1"
+            },
+            {
+              "syntax": "player.combat",
+              "aliases": [
+                "combat"
+              ],
+              "returnType": "bool",
+              "description": "Player is in combat.",
+              "example": "combat"
+            },
+            {
+              "syntax": "player.combat.time",
+              "aliases": [
+                "combat.time"
+              ],
+              "returnType": "number",
+              "description": "Seconds spent in combat.",
+              "example": "combat.time>10"
+            },
+            {
+              "syntax": "player.auto_attacking",
+              "aliases": [
+                "auto_attacking"
+              ],
+              "returnType": "bool",
+              "description": "Player is auto-attacking.",
+              "example": "auto_attacking"
+            },
+            {
+              "syntax": "player.mounted",
+              "aliases": [
+                "mounted"
+              ],
+              "returnType": "bool",
+              "description": "Player is mounted.",
+              "example": "!mounted"
+            },
+            {
+              "syntax": "player.loot_nearby",
+              "returnType": "bool",
+              "description": "Lootable corpse nearby.",
+              "example": "player.loot_nearby"
+            },
+            {
+              "syntax": "player.in_vehicle",
+              "returnType": "bool",
+              "description": "Player is in a vehicle.",
+              "example": "!player.in_vehicle"
+            }
+          ]
+        },
+        {
+          "name": "Casting",
+          "expressions": [
+            {
+              "syntax": "player.casting",
+              "aliases": [
+                "casting"
+              ],
+              "returnType": "bool",
+              "description": "Player is casting a spell.",
+              "example": "casting"
+            },
+            {
+              "syntax": "player.channeling",
+              "aliases": [
+                "channeling"
+              ],
+              "returnType": "bool",
+              "description": "Player is channeling a spell.",
+              "example": "channeling"
+            },
+            {
+              "syntax": "player.casting.spell_id",
+              "aliases": [
+                "casting.spell_id"
+              ],
+              "returnType": "number",
+              "description": "Spell ID being cast.",
+              "example": "casting.spell_id=12345"
+            },
+            {
+              "syntax": "player.casting.remains",
+              "aliases": [
+                "casting.remains"
+              ],
+              "returnType": "number",
+              "description": "Milliseconds until cast finishes.",
+              "example": "casting.remains<500"
+            },
+            {
+              "syntax": "player.casting.elapsed",
+              "aliases": [
+                "casting.elapsed"
+              ],
+              "returnType": "number",
+              "description": "Milliseconds into cast.",
+              "example": "casting.elapsed>1000"
+            },
+            {
+              "syntax": "player.empower_stage",
+              "aliases": [
+                "empower_stage"
+              ],
+              "returnType": "number",
+              "description": "Current empower stage (Evoker).",
+              "example": "empower_stage>=2"
+            }
+          ]
+        },
+        {
+          "name": "Crowd Control",
+          "expressions": [
+            {
+              "syntax": "player.stunned",
+              "aliases": [
+                "stunned"
+              ],
+              "returnType": "bool",
+              "description": "Player is stunned.",
+              "example": "stunned"
+            },
+            {
+              "syntax": "player.stunned.remains",
+              "aliases": [
+                "stunned.remains"
+              ],
+              "returnType": "number",
+              "description": "Seconds of stun remaining.",
+              "example": "stunned.remains>2"
+            },
+            {
+              "syntax": "player.stunned.elapsed",
+              "returnType": "number",
+              "description": "Seconds since stun started.",
+              "example": "stunned.elapsed"
+            },
+            {
+              "syntax": "player.rooted",
+              "aliases": [
+                "rooted"
+              ],
+              "returnType": "bool",
+              "description": "Player is rooted.",
+              "example": "rooted"
+            },
+            {
+              "syntax": "player.rooted.remains",
+              "returnType": "number",
+              "description": "Seconds of root remaining.",
+              "example": "rooted.remains"
+            },
+            {
+              "syntax": "player.feared",
+              "aliases": [
+                "feared"
+              ],
+              "returnType": "bool",
+              "description": "Player is feared.",
+              "example": "feared"
+            },
+            {
+              "syntax": "player.feared.remains",
+              "returnType": "number",
+              "description": "Seconds of fear remaining.",
+              "example": "feared.remains"
+            },
+            {
+              "syntax": "player.silenced",
+              "aliases": [
+                "silenced"
+              ],
+              "returnType": "bool",
+              "description": "Player is silenced.",
+              "example": "silenced"
+            },
+            {
+              "syntax": "player.silenced.remains",
+              "returnType": "number",
+              "description": "Seconds of silence remaining.",
+              "example": "silenced.remains"
+            },
+            {
+              "syntax": "player.incapacitated",
+              "returnType": "bool",
+              "description": "Player is incapacitated.",
+              "example": "player.incapacitated"
+            },
+            {
+              "syntax": "player.charmed",
+              "returnType": "bool",
+              "description": "Player is charmed.",
+              "example": "player.charmed"
+            },
+            {
+              "syntax": "player.disarmed",
+              "returnType": "bool",
+              "description": "Player is disarmed.",
+              "example": "player.disarmed"
+            },
+            {
+              "syntax": "player.cc",
+              "returnType": "bool",
+              "description": "Player is in ANY crowd control.",
+              "example": "!player.cc"
+            }
+          ]
+        },
+        {
+          "name": "Stats",
+          "expressions": [
+            {
+              "syntax": "player.haste_pct",
+              "aliases": [
+                "haste",
+                "haste_pct"
+              ],
+              "returnType": "number",
+              "description": "Haste percentage.",
+              "example": "haste_pct>30"
+            },
+            {
+              "syntax": "player.crit_pct",
+              "aliases": [
+                "crit",
+                "crit_pct"
+              ],
+              "returnType": "number",
+              "description": "Critical strike percentage.",
+              "example": "crit_pct>25"
+            },
+            {
+              "syntax": "player.versa_pct",
+              "aliases": [
+                "versatility",
+                "versa_pct"
+              ],
+              "returnType": "number",
+              "description": "Versatility percentage.",
+              "example": "versa_pct>15"
+            },
+            {
+              "syntax": "player.mastery_pct",
+              "aliases": [
+                "mastery",
+                "mastery_pct"
+              ],
+              "returnType": "number",
+              "description": "Mastery percentage.",
+              "example": "mastery_pct>50"
+            }
+          ]
+        },
+        {
+          "name": "Role & Spec",
+          "expressions": [
+            {
+              "syntax": "player.melee",
+              "returnType": "bool",
+              "description": "Player is a melee spec.",
+              "example": "player.melee"
+            },
+            {
+              "syntax": "player.ranged",
+              "returnType": "bool",
+              "description": "Player is a ranged spec.",
+              "example": "player.ranged"
+            },
+            {
+              "syntax": "player.tank",
+              "returnType": "bool",
+              "description": "Player is a tank spec.",
+              "example": "player.tank"
+            },
+            {
+              "syntax": "player.healer",
+              "returnType": "bool",
+              "description": "Player is a healer spec.",
+              "example": "player.healer"
+            },
+            {
+              "syntax": "player.dps",
+              "returnType": "bool",
+              "description": "Player is a DPS spec.",
+              "example": "player.dps"
+            },
+            {
+              "syntax": "player.evoker",
+              "returnType": "bool",
+              "description": "Player is an Evoker.",
+              "example": "player.evoker"
+            }
+          ]
+        },
+        {
+          "name": "Instance & Content",
+          "expressions": [
+            {
+              "syntax": "player.indungeon",
+              "returnType": "bool",
+              "description": "Player is in a dungeon.",
+              "example": "player.indungeon"
+            },
+            {
+              "syntax": "player.inraid",
+              "returnType": "bool",
+              "description": "Player is in a raid.",
+              "example": "player.inraid"
+            },
+            {
+              "syntax": "player.inmythicplus",
+              "returnType": "bool",
+              "description": "Player is in a Mythic+ dungeon.",
+              "example": "player.inmythicplus"
+            },
+            {
+              "syntax": "player.inarena",
+              "returnType": "bool",
+              "description": "Player is in an arena.",
+              "example": "player.inarena"
+            },
+            {
+              "syntax": "player.inpvp",
+              "returnType": "bool",
+              "description": "Player is in any PvP content.",
+              "example": "player.inpvp"
+            },
+            {
+              "syntax": "player.ininstancedpvp",
+              "returnType": "bool",
+              "description": "Player is in instanced PvP.",
+              "example": "player.ininstancedpvp"
+            },
+            {
+              "syntax": "player.inpvecontent",
+              "returnType": "bool",
+              "description": "Player is in PvE content.",
+              "example": "player.inpvecontent"
+            },
+            {
+              "syntax": "player.indelve",
+              "returnType": "bool",
+              "description": "Player is in a Delve.",
+              "example": "player.indelve"
+            },
+            {
+              "syntax": "player.inscenario",
+              "returnType": "bool",
+              "description": "Player is in a scenario.",
+              "example": "player.inscenario"
+            },
+            {
+              "syntax": "player.keystonelevel",
+              "returnType": "number",
+              "description": "Current Mythic+ keystone level (0 if not in M+).",
+              "example": "player.keystonelevel>=10"
+            },
+            {
+              "syntax": "player.raid_difficulty",
+              "returnType": "number",
+              "description": "Raw raid difficulty ID from GetInstanceInfo (14=Normal, 15=Heroic, 16=Mythic, 17=LFR; 0 outside raids).",
+              "example": "player.raid_difficulty=16"
+            },
+            {
+              "syntax": "player.raid_difficulty.lfr",
+              "returnType": "bool",
+              "description": "In LFR raid (difficulty 17).",
+              "example": "player.raid_difficulty.lfr"
+            },
+            {
+              "syntax": "player.raid_difficulty.normal",
+              "returnType": "bool",
+              "description": "In Normal raid (difficulty 14).",
+              "example": "player.raid_difficulty.normal"
+            },
+            {
+              "syntax": "player.raid_difficulty.heroic",
+              "returnType": "bool",
+              "description": "In Heroic raid (difficulty 15).",
+              "example": "player.raid_difficulty.heroic"
+            },
+            {
+              "syntax": "player.raid_difficulty.mythic",
+              "returnType": "bool",
+              "description": "In Mythic raid (difficulty 16).",
+              "example": "player.raid_difficulty.mythic"
+            },
+            {
+              "syntax": "player.on_last_boss",
+              "returnType": "bool",
+              "description": "Engaged on the M+ dungeon's final boss (boss unit frame is up and matches the last scenario-criteria step). Drives the per-spell TTD gate: on the last boss, the TTD gate is disabled so CDs dump freely.",
+              "example": "player.on_last_boss"
+            }
+          ]
+        },
+        {
+          "name": "Burst",
+          "expressions": [
+            {
+              "syntax": "player.burst.active",
+              "returnType": "bool",
+              "description": "Any burst buff (from _spells.yaml) is currently active.",
+              "example": "player.burst.active"
+            },
+            {
+              "syntax": "player.burst.count",
+              "returnType": "number",
+              "description": "Count of active burst buffs.",
+              "example": "player.burst.count>=2"
+            }
+          ]
+        },
+        {
+          "name": "Dispels (Self)",
+          "expressions": [
+            {
+              "syntax": "player.has_magic_debuff",
+              "returnType": "bool",
+              "description": "Player has a Magic debuff.",
+              "example": "player.has_magic_debuff"
+            },
+            {
+              "syntax": "player.has_curse",
+              "returnType": "bool",
+              "description": "Player has a Curse debuff.",
+              "example": "player.has_curse"
+            },
+            {
+              "syntax": "player.has_disease",
+              "returnType": "bool",
+              "description": "Player has a Disease debuff.",
+              "example": "player.has_disease"
+            },
+            {
+              "syntax": "player.has_poison",
+              "returnType": "bool",
+              "description": "Player has a Poison debuff.",
+              "example": "player.has_poison"
+            },
+            {
+              "syntax": "player.dispelable",
+              "returnType": "bool",
+              "description": "Player has any dispelable debuff (auto-detect).",
+              "example": "player.dispelable"
+            },
+            {
+              "syntax": "player.dispelable.SPELL",
+              "returnType": "bool",
+              "description": "Player has debuff dispelable by SPELL.",
+              "example": "player.dispelable.remove_curse"
+            },
+            {
+              "syntax": "player.dispelable.list.SPELL",
+              "returnType": "bool",
+              "description": "Same as above but uses dispel_list filtering.",
+              "example": "player.dispelable.list.purify"
+            }
+          ]
+        },
+        {
+          "name": "Misc",
+          "expressions": [
+            {
+              "syntax": "player.auto_combat",
+              "returnType": "bool",
+              "description": "Config-based auto-combat check.",
+              "example": "player.auto_combat"
+            },
+            {
+              "syntax": "player.boss_fight",
+              "aliases": [
+                "boss_fight"
+              ],
+              "returnType": "bool",
+              "description": "Any boss unit frame exists.",
+              "example": "boss_fight"
+            },
+            {
+              "syntax": "player.guid",
+              "returnType": "number",
+              "description": "Player GUID.",
+              "example": "player.guid"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "target",
+      "name": "Target",
+      "description": "Check properties of the current target.",
+      "syntax": "target.PROPERTY",
+      "groups": [
+        {
+          "name": "Health",
+          "expressions": [
+            {
+              "syntax": "target.health.pct",
+              "returnType": "number",
+              "description": "Target health percentage (0-100).",
+              "example": "target.health.pct<20"
+            },
+            {
+              "syntax": "target.health.current",
+              "returnType": "number",
+              "description": "Current health points.",
+              "example": "target.health.current"
+            },
+            {
+              "syntax": "target.health.deficit",
+              "returnType": "number",
+              "description": "Missing health.",
+              "example": "target.health.deficit>100000"
+            },
+            {
+              "syntax": "target.health.effective.pct",
+              "returnType": "number",
+              "description": "Target effective healable health %.",
+              "example": "target.health.effective.pct<50"
+            }
+          ]
+        },
+        {
+          "name": "Absorbs & Incoming Heals",
+          "expressions": [
+            {
+              "syntax": "target.absorb",
+              "returnType": "number",
+              "description": "Target damage absorb shield amount.",
+              "example": "target.absorb>0"
+            },
+            {
+              "syntax": "target.absorb.pct",
+              "returnType": "number",
+              "description": "Target damage absorb as % of max health.",
+              "example": "target.absorb.pct>10"
+            },
+            {
+              "syntax": "target.heal_absorb",
+              "returnType": "number",
+              "description": "Target heal absorb amount.",
+              "example": "target.heal_absorb>0"
+            },
+            {
+              "syntax": "target.heal_absorb.pct",
+              "returnType": "number",
+              "description": "Target heal absorb as % of max health."
+            },
+            {
+              "syntax": "target.incoming_heals",
+              "returnType": "number",
+              "description": "Target total incoming heals."
+            },
+            {
+              "syntax": "target.incoming_heals.pct",
+              "returnType": "number",
+              "description": "Target incoming heals as % of max health."
+            }
+          ]
+        },
+        {
+          "name": "Status",
+          "expressions": [
+            {
+              "syntax": "target.exists",
+              "returnType": "bool",
+              "description": "A target is selected (has GUID).",
+              "example": "target.exists"
+            },
+            {
+              "syntax": "target.alive",
+              "returnType": "bool",
+              "description": "Target is alive.",
+              "example": "target.alive"
+            },
+            {
+              "syntax": "target.dead",
+              "returnType": "bool",
+              "description": "Target is dead.",
+              "example": "target.dead"
+            },
+            {
+              "syntax": "target.enemy",
+              "returnType": "bool",
+              "description": "Target is an enemy.",
+              "example": "target.enemy"
+            },
+            {
+              "syntax": "target.friendly",
+              "returnType": "bool",
+              "description": "Target is friendly.",
+              "example": "target.friendly"
+            },
+            {
+              "syntax": "target.attackable",
+              "returnType": "bool",
+              "description": "Target is enemy and not dead.",
+              "example": "target.attackable"
+            },
+            {
+              "syntax": "target.valid",
+              "returnType": "bool",
+              "description": "Comprehensive check: exists, enemy, alive, in combat (PvE).",
+              "example": "target.valid"
+            },
+            {
+              "syntax": "target.boss",
+              "returnType": "bool",
+              "description": "Target is a boss.",
+              "example": "target.boss"
+            },
+            {
+              "syntax": "target.combat",
+              "returnType": "bool",
+              "description": "Target is in combat (extended check).",
+              "example": "target.combat"
+            },
+            {
+              "syntax": "target.los",
+              "returnType": "bool",
+              "description": "Target is in line of sight.",
+              "example": "target.los"
+            },
+            {
+              "syntax": "target.moving",
+              "returnType": "bool",
+              "description": "Target is moving.",
+              "example": "target.moving"
+            },
+            {
+              "syntax": "target.tank",
+              "returnType": "bool",
+              "description": "Target role is tank.",
+              "example": "target.tank"
+            },
+            {
+              "syntax": "target.healer",
+              "returnType": "bool",
+              "description": "Target role is healer.",
+              "example": "target.healer"
+            },
+            {
+              "syntax": "target.dps",
+              "returnType": "bool",
+              "description": "Target role is DPS.",
+              "example": "target.dps"
+            },
+            {
+              "syntax": "target.classification",
+              "returnType": "number",
+              "description": "Unit classification (minus/trivial/normal/rare/elite/rareelite/worldboss).",
+              "example": "target.classification>=3"
+            },
+            {
+              "syntax": "target.threat",
+              "returnType": "number",
+              "description": "Threat level (0-3, -1 if none).",
+              "example": "target.threat>=2"
+            },
+            {
+              "syntax": "target.quest_mob",
+              "returnType": "bool",
+              "description": "Target is a quest mob.",
+              "example": "target.quest_mob"
+            },
+            {
+              "syntax": "target.npcid",
+              "returnType": "number",
+              "description": "NPC ID from GUID.",
+              "example": "target.npcid=12345"
+            },
+            {
+              "syntax": "target.targeting_party",
+              "returnType": "bool",
+              "description": "Target is targeting a party/raid member.",
+              "example": "target.targeting_party"
+            }
+          ]
+        },
+        {
+          "name": "Range & TTD",
+          "expressions": [
+            {
+              "syntax": "target.range",
+              "returnType": "number",
+              "description": "EDGE distance in yards: center distance minus both units' combat reach. Correct for spell yard gates — the server likewise adds both reaches to a spell's max range. NOT usable as a melee test (see target.in_melee), and NOT usable for AoE radii or geometry (see target.distance): it is not a metric and clamps at 0.",
+              "example": "target.range<=30"
+            },
+            {
+              "syntax": "target.distance",
+              "returnType": "number",
+              "description": "CENTER distance in yards — no reach subtracted, no clamp. This is the space AoE radii and boss mechanics are measured in, and the only one valid for geometry or clustering. target.distance minus target.range always equals the two combat reaches summed.",
+              "example": "target.distance<=8"
+            },
+            {
+              "syntax": "target.in_melee",
+              "returnType": "bool",
+              "description": "True when the target is in melee range, computed as the client does: CENTER distance <= max(reachA + reachB + 4/3, 5.0), plus 1.0 when either unit carries the melee-range flag. Use this instead of comparing target.range to a constant.",
+              "example": "target.in_melee"
+            },
+            {
+              "syntax": "target.melee_gap",
+              "returnType": "number",
+              "description": "Yards still to close before reaching melee: exactly 0 while in melee, positive when short of it, never negative. This is how to express 'N yards away from melee', and it is size-invariant — at max melee target.range reads 4.5 on a small mob but 2.33 on a 9-reach boss, while melee_gap reads 0 on both.",
+              "example": "target.melee_gap>=2"
+            },
+            {
+              "syntax": "target.time_to_die",
+              "aliases": [
+                "time_to_die"
+              ],
+              "returnType": "number",
+              "description": "Estimated seconds until target dies.",
+              "example": "target.time_to_die>15"
+            }
+          ]
+        },
+        {
+          "name": "Casting",
+          "expressions": [
+            {
+              "syntax": "target.casting",
+              "returnType": "bool",
+              "description": "Target is casting.",
+              "example": "target.casting"
+            },
+            {
+              "syntax": "target.channeling",
+              "returnType": "bool",
+              "description": "Target is channeling.",
+              "example": "target.channeling"
+            },
+            {
+              "syntax": "target.casting.spell_id",
+              "returnType": "number",
+              "description": "Spell ID being cast.",
+              "example": "target.casting.spell_id"
+            },
+            {
+              "syntax": "target.casting.remains",
+              "returnType": "number",
+              "description": "Milliseconds remaining on cast.",
+              "example": "target.casting.remains<2000"
+            },
+            {
+              "syntax": "target.casting.elapsed",
+              "returnType": "number",
+              "description": "Milliseconds into cast.",
+              "example": "target.casting.elapsed"
+            },
+            {
+              "syntax": "target.casting.interruptible",
+              "returnType": "bool",
+              "description": "Cast can be interrupted.",
+              "example": "target.casting.interruptible"
+            },
+            {
+              "syntax": "target.casting.important",
+              "returnType": "bool",
+              "description": "Cast is marked as important (uninterruptible).",
+              "example": "target.casting.important"
+            },
+            {
+              "syntax": "target.casting.targeting_me",
+              "returnType": "bool",
+              "description": "Cast targets the player.",
+              "example": "target.casting.targeting_me"
+            },
+            {
+              "syntax": "target.casting.SPELL",
+              "returnType": "bool",
+              "description": "Target is casting a specific spell (dynamic).",
+              "example": "target.casting.death_bolt"
+            }
+          ]
+        },
+        {
+          "name": "Dispels (Target)",
+          "expressions": [
+            {
+              "syntax": "target.has_stealable",
+              "returnType": "bool",
+              "description": "Target has a stealable buff.",
+              "example": "target.has_stealable"
+            },
+            {
+              "syntax": "target.has_magic_buff",
+              "returnType": "bool",
+              "description": "Target has a magic buff.",
+              "example": "target.has_magic_buff"
+            },
+            {
+              "syntax": "target.has_enrage",
+              "returnType": "bool",
+              "description": "Target has an enrage buff.",
+              "example": "target.has_enrage"
+            },
+            {
+              "syntax": "target.purgeable",
+              "returnType": "bool",
+              "description": "Target has any purgeable buff (auto-detect).",
+              "example": "target.purgeable"
+            },
+            {
+              "syntax": "target.purgeable.list",
+              "returnType": "bool",
+              "description": "Purgeable with dispel_list filtering.",
+              "example": "target.purgeable.list"
+            },
+            {
+              "syntax": "target.purgeable.magic",
+              "returnType": "bool",
+              "description": "Target has purgeable magic buff.",
+              "example": "target.purgeable.magic"
+            },
+            {
+              "syntax": "target.purgeable.enrage",
+              "returnType": "bool",
+              "description": "Target has purgeable enrage buff.",
+              "example": "target.purgeable.enrage"
+            },
+            {
+              "syntax": "target.dispelable.SPELL",
+              "returnType": "bool",
+              "description": "Target has buff dispelable by SPELL.",
+              "example": "target.dispelable.spellsteal"
+            }
+          ]
+        },
+        {
+          "name": "NPC Data",
+          "expressions": [
+            {
+              "syntax": "target.bypass_combat",
+              "returnType": "bool",
+              "description": "NPC should bypass combat requirements (from _npcdata.yaml).",
+              "example": "target.bypass_combat"
+            },
+            {
+              "syntax": "target.should_stun",
+              "returnType": "bool",
+              "description": "NPC should be stunned (from _npcdata.yaml).",
+              "example": "target.should_stun"
+            },
+            {
+              "syntax": "target.should_slow",
+              "returnType": "bool",
+              "description": "NPC should be slowed (from _npcdata.yaml).",
+              "example": "target.should_slow"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "focus",
+      "name": "Focus",
+      "description": "Check properties of the focus target. Same properties as target.",
+      "syntax": "focus.PROPERTY",
+      "groups": [
+        {
+          "name": "Health & Status",
+          "expressions": [
+            {
+              "syntax": "focus.exists",
+              "returnType": "bool",
+              "description": "Focus target exists.",
+              "example": "focus.exists"
+            },
+            {
+              "syntax": "focus.alive",
+              "returnType": "bool",
+              "description": "Focus target is alive.",
+              "example": "focus.alive"
+            },
+            {
+              "syntax": "focus.dead",
+              "returnType": "bool",
+              "description": "Focus target is dead.",
+              "example": "focus.dead"
+            },
+            {
+              "syntax": "focus.health.pct",
+              "returnType": "number",
+              "description": "Focus health percentage.",
+              "example": "focus.health.pct<50"
+            },
+            {
+              "syntax": "focus.health.current",
+              "returnType": "number",
+              "description": "Focus current health.",
+              "example": "focus.health.current"
+            },
+            {
+              "syntax": "focus.health.deficit",
+              "returnType": "number",
+              "description": "Focus missing health.",
+              "example": "focus.health.deficit"
+            },
+            {
+              "syntax": "focus.health.effective.pct",
+              "returnType": "number",
+              "description": "Focus effective healable health %."
+            },
+            {
+              "syntax": "focus.absorb",
+              "returnType": "number",
+              "description": "Focus damage absorb shield amount."
+            },
+            {
+              "syntax": "focus.absorb.pct",
+              "returnType": "number",
+              "description": "Focus damage absorb as % of max health."
+            },
+            {
+              "syntax": "focus.heal_absorb",
+              "returnType": "number",
+              "description": "Focus heal absorb amount."
+            },
+            {
+              "syntax": "focus.heal_absorb.pct",
+              "returnType": "number",
+              "description": "Focus heal absorb as % of max health."
+            },
+            {
+              "syntax": "focus.incoming_heals",
+              "returnType": "number",
+              "description": "Focus total incoming heals."
+            },
+            {
+              "syntax": "focus.incoming_heals.pct",
+              "returnType": "number",
+              "description": "Focus incoming heals as % of max health."
+            },
+            {
+              "syntax": "focus.enemy",
+              "returnType": "bool",
+              "description": "Focus is an enemy.",
+              "example": "focus.enemy"
+            },
+            {
+              "syntax": "focus.friendly",
+              "returnType": "bool",
+              "description": "Focus is friendly.",
+              "example": "focus.friendly"
+            },
+            {
+              "syntax": "focus.attackable",
+              "returnType": "bool",
+              "description": "Focus is attackable.",
+              "example": "focus.attackable"
+            },
+            {
+              "syntax": "focus.valid",
+              "returnType": "bool",
+              "description": "Comprehensive validation.",
+              "example": "focus.valid"
+            },
+            {
+              "syntax": "focus.range",
+              "returnType": "number",
+              "description": "EDGE distance to focus in yards (both combat reaches subtracted). For spell range gates.",
+              "example": "focus.range<=40"
+            },
+            {
+              "syntax": "focus.distance",
+              "returnType": "number",
+              "description": "CENTER distance to focus in yards. For AoE radii and geometry.",
+              "example": "focus.distance<=8"
+            },
+            {
+              "syntax": "focus.los",
+              "returnType": "bool",
+              "description": "Focus is in line of sight.",
+              "example": "focus.los"
+            },
+            {
+              "syntax": "focus.time_to_die",
+              "returnType": "number",
+              "description": "Estimated TTD.",
+              "example": "focus.time_to_die>10"
+            },
+            {
+              "syntax": "focus.moving",
+              "returnType": "bool",
+              "description": "Focus is moving.",
+              "example": "focus.moving"
+            },
+            {
+              "syntax": "focus.tank",
+              "returnType": "bool",
+              "description": "Focus role is tank.",
+              "example": "focus.tank"
+            },
+            {
+              "syntax": "focus.healer",
+              "returnType": "bool",
+              "description": "Focus role is healer.",
+              "example": "focus.healer"
+            },
+            {
+              "syntax": "focus.dps",
+              "returnType": "bool",
+              "description": "Focus role is DPS.",
+              "example": "focus.dps"
+            },
+            {
+              "syntax": "focus.boss",
+              "returnType": "bool",
+              "description": "Focus is a boss.",
+              "example": "focus.boss"
+            },
+            {
+              "syntax": "focus.combat",
+              "returnType": "bool",
+              "description": "Focus is in combat.",
+              "example": "focus.combat"
+            },
+            {
+              "syntax": "focus.npcid",
+              "returnType": "number",
+              "description": "NPC ID.",
+              "example": "focus.npcid"
+            }
+          ]
+        },
+        {
+          "name": "Casting",
+          "expressions": [
+            {
+              "syntax": "focus.casting",
+              "returnType": "bool",
+              "description": "Focus is casting.",
+              "example": "focus.casting"
+            },
+            {
+              "syntax": "focus.channeling",
+              "returnType": "bool",
+              "description": "Focus is channeling.",
+              "example": "focus.channeling"
+            },
+            {
+              "syntax": "focus.casting.spell_id",
+              "returnType": "number",
+              "description": "Spell ID being cast.",
+              "example": "focus.casting.spell_id"
+            },
+            {
+              "syntax": "focus.casting.remains",
+              "returnType": "number",
+              "description": "Cast time remaining (ms).",
+              "example": "focus.casting.remains"
+            },
+            {
+              "syntax": "focus.casting.interruptible",
+              "returnType": "bool",
+              "description": "Cast is interruptible.",
+              "example": "focus.casting.interruptible"
+            },
+            {
+              "syntax": "focus.casting.important",
+              "returnType": "bool",
+              "description": "Cast is important.",
+              "example": "focus.casting.important"
+            },
+            {
+              "syntax": "focus.casting.targeting_me",
+              "returnType": "bool",
+              "description": "Cast targets the player.",
+              "example": "focus.casting.targeting_me"
+            },
+            {
+              "syntax": "focus.casting.SPELL",
+              "returnType": "bool",
+              "description": "Focus is casting specific spell.",
+              "example": "focus.casting.death_bolt"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "mouseover",
+      "name": "Mouseover",
+      "description": "Check properties of the mouseover unit. Same properties as target.",
+      "syntax": "mouseover.PROPERTY",
+      "groups": [
+        {
+          "name": "Health & Status",
+          "expressions": [
+            {
+              "syntax": "mouseover.exists",
+              "returnType": "bool",
+              "description": "Mouseover target exists.",
+              "example": "mouseover.exists"
+            },
+            {
+              "syntax": "mouseover.alive",
+              "returnType": "bool",
+              "description": "Mouseover is alive.",
+              "example": "mouseover.alive"
+            },
+            {
+              "syntax": "mouseover.dead",
+              "returnType": "bool",
+              "description": "Mouseover is dead.",
+              "example": "mouseover.dead"
+            },
+            {
+              "syntax": "mouseover.health.pct",
+              "returnType": "number",
+              "description": "Mouseover health percentage.",
+              "example": "mouseover.health.pct<30"
+            },
+            {
+              "syntax": "mouseover.health.current",
+              "returnType": "number",
+              "description": "Mouseover current health.",
+              "example": "mouseover.health.current"
+            },
+            {
+              "syntax": "mouseover.health.deficit",
+              "returnType": "number",
+              "description": "Mouseover missing health.",
+              "example": "mouseover.health.deficit"
+            },
+            {
+              "syntax": "mouseover.health.effective.pct",
+              "returnType": "number",
+              "description": "Mouseover effective healable health %."
+            },
+            {
+              "syntax": "mouseover.absorb",
+              "returnType": "number",
+              "description": "Mouseover damage absorb shield amount."
+            },
+            {
+              "syntax": "mouseover.absorb.pct",
+              "returnType": "number",
+              "description": "Mouseover damage absorb as % of max health."
+            },
+            {
+              "syntax": "mouseover.heal_absorb",
+              "returnType": "number",
+              "description": "Mouseover heal absorb amount."
+            },
+            {
+              "syntax": "mouseover.heal_absorb.pct",
+              "returnType": "number",
+              "description": "Mouseover heal absorb as % of max health."
+            },
+            {
+              "syntax": "mouseover.incoming_heals",
+              "returnType": "number",
+              "description": "Mouseover total incoming heals."
+            },
+            {
+              "syntax": "mouseover.incoming_heals.pct",
+              "returnType": "number",
+              "description": "Mouseover incoming heals as % of max health."
+            },
+            {
+              "syntax": "mouseover.enemy",
+              "returnType": "bool",
+              "description": "Mouseover is an enemy.",
+              "example": "mouseover.enemy"
+            },
+            {
+              "syntax": "mouseover.friendly",
+              "returnType": "bool",
+              "description": "Mouseover is friendly.",
+              "example": "mouseover.friendly"
+            },
+            {
+              "syntax": "mouseover.attackable",
+              "returnType": "bool",
+              "description": "Mouseover is attackable.",
+              "example": "mouseover.attackable"
+            },
+            {
+              "syntax": "mouseover.valid",
+              "returnType": "bool",
+              "description": "Comprehensive validation.",
+              "example": "mouseover.valid"
+            },
+            {
+              "syntax": "mouseover.range",
+              "returnType": "number",
+              "description": "EDGE distance to mouseover in yards (both combat reaches subtracted). For spell range gates.",
+              "example": "mouseover.range<=40"
+            },
+            {
+              "syntax": "mouseover.distance",
+              "returnType": "number",
+              "description": "CENTER distance to mouseover in yards. For AoE radii and geometry.",
+              "example": "mouseover.distance<=8"
+            },
+            {
+              "syntax": "mouseover.los",
+              "returnType": "bool",
+              "description": "Mouseover in line of sight.",
+              "example": "mouseover.los"
+            },
+            {
+              "syntax": "mouseover.time_to_die",
+              "returnType": "number",
+              "description": "Estimated TTD.",
+              "example": "mouseover.time_to_die>5"
+            },
+            {
+              "syntax": "mouseover.moving",
+              "returnType": "bool",
+              "description": "Mouseover is moving.",
+              "example": "mouseover.moving"
+            },
+            {
+              "syntax": "mouseover.tank",
+              "returnType": "bool",
+              "description": "Mouseover role is tank.",
+              "example": "mouseover.tank"
+            },
+            {
+              "syntax": "mouseover.healer",
+              "returnType": "bool",
+              "description": "Mouseover role is healer.",
+              "example": "mouseover.healer"
+            },
+            {
+              "syntax": "mouseover.dps",
+              "returnType": "bool",
+              "description": "Mouseover role is DPS.",
+              "example": "mouseover.dps"
+            },
+            {
+              "syntax": "mouseover.boss",
+              "returnType": "bool",
+              "description": "Mouseover is a boss.",
+              "example": "mouseover.boss"
+            },
+            {
+              "syntax": "mouseover.combat",
+              "returnType": "bool",
+              "description": "Mouseover is in combat.",
+              "example": "mouseover.combat"
+            },
+            {
+              "syntax": "mouseover.npcid",
+              "returnType": "number",
+              "description": "NPC ID.",
+              "example": "mouseover.npcid"
+            },
+            {
+              "syntax": "mouseover.unitframe",
+              "returnType": "bool",
+              "description": "True if the mouseover came from a UI unit frame (party/raid frame), false if from the 3D world. Use to restrict healer spells to unit frames only, preventing accidental casts on world units. Note: the .focus_mouseover cast target already implies unitframe — this is for explicit condition checks.",
+              "example": "riptide.mouseover,if=mouseover.exists&mouseover.unitframe"
+            }
+          ]
+        },
+        {
+          "name": "Casting",
+          "expressions": [
+            {
+              "syntax": "mouseover.casting",
+              "returnType": "bool",
+              "description": "Mouseover is casting.",
+              "example": "mouseover.casting"
+            },
+            {
+              "syntax": "mouseover.channeling",
+              "returnType": "bool",
+              "description": "Mouseover is channeling.",
+              "example": "mouseover.channeling"
+            },
+            {
+              "syntax": "mouseover.casting.interruptible",
+              "returnType": "bool",
+              "description": "Cast is interruptible.",
+              "example": "mouseover.casting.interruptible"
+            },
+            {
+              "syntax": "mouseover.casting.important",
+              "returnType": "bool",
+              "description": "Cast is important.",
+              "example": "mouseover.casting.important"
+            },
+            {
+              "syntax": "mouseover.casting.targeting_me",
+              "returnType": "bool",
+              "description": "Cast targets the player.",
+              "example": "mouseover.casting.targeting_me"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "pet",
+      "name": "Pet",
+      "description": "Check pet properties and pet buffs.",
+      "syntax": "pet.PROPERTY",
+      "groups": [
+        {
+          "name": "Status",
+          "expressions": [
+            {
+              "syntax": "pet.exists",
+              "returnType": "bool",
+              "description": "Pet exists.",
+              "example": "pet.exists"
+            },
+            {
+              "syntax": "pet.alive",
+              "returnType": "bool",
+              "description": "Pet is alive.",
+              "example": "pet.alive"
+            },
+            {
+              "syntax": "pet.dead",
+              "returnType": "bool",
+              "description": "Pet is dead.",
+              "example": "pet.dead"
+            },
+            {
+              "syntax": "pet.health.pct",
+              "returnType": "number",
+              "description": "Pet health percentage.",
+              "example": "pet.health.pct<30"
+            },
+            {
+              "syntax": "pet.health.current",
+              "returnType": "number",
+              "description": "Pet current health.",
+              "example": "pet.health.current"
+            },
+            {
+              "syntax": "pet.health.deficit",
+              "returnType": "number",
+              "description": "Pet missing health.",
+              "example": "pet.health.deficit"
+            },
+            {
+              "syntax": "pet.health.effective.pct",
+              "returnType": "number",
+              "description": "Pet effective healable health %."
+            },
+            {
+              "syntax": "pet.absorb",
+              "returnType": "number",
+              "description": "Pet damage absorb shield amount."
+            },
+            {
+              "syntax": "pet.absorb.pct",
+              "returnType": "number",
+              "description": "Pet damage absorb as % of max health."
+            },
+            {
+              "syntax": "pet.nearby_enemies",
+              "aliases": [
+                "pet.nearbyenemies"
+              ],
+              "returnType": "number",
+              "description": "Enemies within 8y of pet.",
+              "example": "pet.nearby_enemies>=2"
+            },
+            {
+              "syntax": "pet.attacking_target",
+              "returnType": "bool",
+              "description": "True if pet is targeting the player's current target (pet.targetGuid == target.guid).",
+              "example": "petattack,if=target.distance<=8&!pet.attacking_target"
+            },
+            {
+              "syntax": "pet.npcid",
+              "returnType": "number",
+              "description": "Pet NPC ID.",
+              "example": "pet.npcid"
+            }
+          ]
+        },
+        {
+          "name": "Buffs",
+          "description": "Check buffs on the pet. Same properties as player buffs.",
+          "syntax": "pet.buff.SPELL.PROPERTY",
+          "expressions": [
+            {
+              "syntax": "pet.buff.SPELL.up",
+              "returnType": "bool",
+              "description": "Buff is active on pet.",
+              "example": "pet.buff.frenzy.up"
+            },
+            {
+              "syntax": "pet.buff.SPELL.down",
+              "returnType": "bool",
+              "description": "Buff is NOT active on pet.",
+              "example": "pet.buff.frenzy.down"
+            },
+            {
+              "syntax": "pet.buff.SPELL.stack",
+              "returnType": "number",
+              "description": "Stack count.",
+              "example": "pet.buff.frenzy.stack>=3"
+            },
+            {
+              "syntax": "pet.buff.SPELL.remains",
+              "returnType": "number",
+              "description": "Seconds remaining.",
+              "example": "pet.buff.frenzy.remains<5"
+            },
+            {
+              "syntax": "pet.buff.SPELL.duration",
+              "returnType": "number",
+              "description": "Total duration.",
+              "example": "pet.buff.frenzy.duration"
+            },
+            {
+              "syntax": "pet.buff.SPELL.elapsed",
+              "returnType": "number",
+              "description": "Seconds since applied.",
+              "example": "pet.buff.frenzy.elapsed"
+            },
+            {
+              "syntax": "pet.buff.SPELL.refreshable",
+              "returnType": "bool",
+              "description": "Within pandemic window.",
+              "example": "pet.buff.frenzy.refreshable"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "gcd",
+      "name": "GCD",
+      "description": "Global cooldown properties.",
+      "syntax": "gcd[.PROPERTY]",
+      "expressions": [
+        {
+          "syntax": "gcd",
+          "returnType": "number",
+          "description": "Current GCD duration in seconds.",
+          "example": "gcd"
+        },
+        {
+          "syntax": "gcd.max",
+          "returnType": "number",
+          "description": "Base GCD for current spec.",
+          "example": "gcd.max"
+        },
+        {
+          "syntax": "gcd.remains",
+          "returnType": "number",
+          "description": "Seconds until GCD expires.",
+          "example": "gcd.remains<0.5"
+        }
+      ]
+    },
+    {
+      "id": "combat_encounter",
+      "name": "Combat & Encounter",
+      "description": "Enemy counts, fight time, and encounter info.",
+      "syntax": "Various",
+      "expressions": [
+        {
+          "syntax": "active_enemies",
+          "aliases": [
+            "spell_targets"
+          ],
+          "returnType": "number",
+          "description": "Number of nearby enemies (nameplate count).",
+          "example": "active_enemies>=3"
+        },
+        {
+          "syntax": "enemies.Xy",
+          "returnType": "number",
+          "description": "Enemies within X yards (e.g., enemies.8y, enemies.15y).",
+          "example": "enemies.8y>=2"
+        },
+        {
+          "syntax": "enemies.combat.Xy",
+          "returnType": "number",
+          "description": "Enemies in combat within X yards.",
+          "example": "enemies.combat.40y>=1"
+        },
+        {
+          "syntax": "enemies.around.angle.N",
+          "returnType": "number",
+          "description": "Count of enemies the player is facing within N° max half-angle (|bearing−facing| ≤ N). OM world pos + facing required.",
+          "example": "enemies.around.angle.45>=3"
+        },
+        {
+          "syntax": "enemies.around.angle.N.Y",
+          "returnType": "number",
+          "description": "Facing cone N° half-angle AND within Y yards edge-to-edge of player. Optional trailing y (e.g. .20y).",
+          "example": "enemies.around.angle.45.20>=3"
+        },
+        {
+          "syntax": "enemies.around_target",
+          "aliases": [
+            "enemies_around_target"
+          ],
+          "returnType": "number",
+          "description": "Enemies clustered near current target (default 8y world center distance).",
+          "example": "enemies.around_target>=3"
+        },
+        {
+          "syntax": "enemies.around_target.range.N",
+          "returnType": "number",
+          "description": "Cluster near target with max center distance N yards (1..100).",
+          "example": "enemies.around_target.range.12>=3"
+        },
+        {
+          "syntax": "player.facing",
+          "returnType": "number",
+          "description": "Player absolute yaw in radians (OM). Not relative to a peer.",
+          "example": "player.facing"
+        },
+        {
+          "syntax": "player.facing.target",
+          "returnType": "bool",
+          "description": "Player faces target. Default ±90° (front hemisphere). Single path: unit.facing.peer[.N].",
+          "example": "player.facing.target"
+        },
+        {
+          "syntax": "player.facing.target.N",
+          "returnType": "bool",
+          "description": "Player faces target with |bearing−facing| ≤ N degrees (N=1..180). Same path as bare form.",
+          "example": "player.facing.target.35"
+        },
+        {
+          "syntax": "player.facing.focus[.N]",
+          "returnType": "bool",
+          "description": "Player faces focus (default ±90° or .N half-angle).",
+          "example": "player.facing.focus.45"
+        },
+        {
+          "syntax": "player.facing.mouseover[.N]",
+          "returnType": "bool",
+          "description": "Player faces mouseover (default ±90° or .N half-angle).",
+          "example": "player.facing.mouseover"
+        },
+        {
+          "syntax": "player.facing.pet[.N]",
+          "returnType": "bool",
+          "description": "Player faces pet (default ±90° or .N half-angle).",
+          "example": "player.facing.pet"
+        },
+        {
+          "syntax": "target.facing.player[.N]",
+          "returnType": "bool",
+          "description": "Target faces player (default ±90° or .N half-angle).",
+          "example": "target.facing.player.60"
+        },
+        {
+          "syntax": "focus.facing.player[.N]",
+          "returnType": "bool",
+          "description": "Focus faces player (default ±90° or .N half-angle).",
+          "example": "focus.facing.player"
+        },
+        {
+          "syntax": "mouseover.facing.player[.N]",
+          "returnType": "bool",
+          "description": "Mouseover faces player (default ±90° or .N half-angle).",
+          "example": "mouseover.facing.player"
+        },
+        {
+          "syntax": "fight_remains",
+          "returnType": "number",
+          "description": "Estimated seconds until all nameplate enemies die.",
+          "example": "fight_remains>30"
+        },
+        {
+          "syntax": "boss_fight",
+          "returnType": "bool",
+          "description": "Any boss unit frame exists.",
+          "example": "boss_fight"
+        },
+        {
+          "syntax": "combat.time",
+          "returnType": "number",
+          "description": "Seconds spent in combat.",
+          "example": "combat.time>10"
+        },
+        {
+          "syntax": "moving.time",
+          "returnType": "number",
+          "description": "Seconds spent moving.",
+          "example": "moving.time>2"
+        },
+        {
+          "syntax": "standing.time",
+          "returnType": "number",
+          "description": "Seconds spent standing still.",
+          "example": "standing.time>1"
+        },
+        {
+          "syntax": "boss1.time_to_die",
+          "returnType": "number",
+          "description": "TTD for boss1 unit frame (boss1-boss5).",
+          "example": "boss1.time_to_die>30"
+        }
+      ]
+    },
+    {
+      "id": "tank_refs",
+      "name": "Deterministic Tank References",
+      "description": "Access specific tanks by index (tank1-tank3). Sorted by roster index for stable, deterministic ordering. Dead/out-of-range tanks keep their index.",
+      "syntax": "tankN.PROPERTY",
+      "groups": [
+        {
+          "name": "Tank Existence & State",
+          "expressions": [
+            {
+              "syntax": "tank1.exists",
+              "returnType": "bool",
+              "description": "1 if tank1 is assigned.",
+              "example": "tank1.exists"
+            },
+            {
+              "syntax": "tank1.dead",
+              "returnType": "bool",
+              "description": "1 if tank1 is dead.",
+              "example": "tank1.dead"
+            },
+            {
+              "syntax": "tank1.range",
+              "returnType": "number",
+              "description": "Distance to tank1 in yards.",
+              "example": "tank1.range<=40"
+            },
+            {
+              "syntax": "tank1.time_to_die",
+              "returnType": "number",
+              "description": "Estimated seconds until tank1 dies.",
+              "example": "tank1.time_to_die<10"
+            },
+            {
+              "syntax": "tank1.tank",
+              "returnType": "bool",
+              "description": "Always 1 (tank1 is a tank).",
+              "example": "tank1.tank"
+            },
+            {
+              "syntax": "group.tanks.count",
+              "returnType": "number",
+              "description": "Number of tanks in group (0-3).",
+              "example": "group.tanks.count>=2"
+            }
+          ]
+        },
+        {
+          "name": "Tank Health",
+          "expressions": [
+            {
+              "syntax": "tank1.health.pct",
+              "returnType": "number",
+              "description": "Tank1 health percentage.",
+              "example": "tank1.health.pct<50"
+            },
+            {
+              "syntax": "tank1.health.current",
+              "returnType": "number",
+              "description": "Tank1 current health.",
+              "example": "tank1.health.current"
+            },
+            {
+              "syntax": "tank1.health.max",
+              "returnType": "number",
+              "description": "Tank1 max health.",
+              "example": "tank1.health.max"
+            },
+            {
+              "syntax": "tank1.health.deficit",
+              "returnType": "number",
+              "description": "Tank1 missing health.",
+              "example": "tank1.health.deficit>100000"
+            }
+          ]
+        },
+        {
+          "name": "Tank Auras (key for tank-swap logic)",
+          "expressions": [
+            {
+              "syntax": "tank1.buff.SPELL.up",
+              "returnType": "bool",
+              "description": "Tank1 has buff.",
+              "example": "tank1.buff.ironfur.up"
+            },
+            {
+              "syntax": "tank1.buff.SPELL.remains",
+              "returnType": "number",
+              "description": "Buff remaining on tank1.",
+              "example": "tank1.buff.ironfur.remains<3"
+            },
+            {
+              "syntax": "tank1.buff.SPELL.stack",
+              "returnType": "number",
+              "description": "Buff stacks on tank1.",
+              "example": "tank1.buff.ironfur.stack"
+            },
+            {
+              "syntax": "tank1.debuff.SPELL.up",
+              "returnType": "bool",
+              "description": "Tank1 has debuff.",
+              "example": "tank1.debuff.mystic_venom.up"
+            },
+            {
+              "syntax": "tank1.debuff.SPELL.remains",
+              "returnType": "number",
+              "description": "Debuff remaining on tank1.",
+              "example": "tank1.debuff.mystic_venom.remains"
+            },
+            {
+              "syntax": "tank1.debuff.SPELL.stack",
+              "returnType": "number",
+              "description": "Debuff stacks on tank1.",
+              "example": "tank1.debuff.mystic_venom.stack>=3"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "encounter_timeline",
+      "name": "Encounter Timeline",
+      "description": "Query upcoming boss abilities from the WoW Encounter Timeline (C_EncounterTimeline, 12.0+). Spell names use snake_case; numeric spell IDs also work.",
+      "syntax": "encounter.SPELL.PROPERTY / encounter.FILTER.PROPERTY",
+      "expressions": [
+        {
+          "syntax": "encounter.active",
+          "returnType": "bool",
+          "description": "True if any timeline events currently exist.",
+          "example": "encounter.active"
+        },
+        {
+          "syntax": "encounter.SPELL.remains",
+          "returnType": "number",
+          "description": "Seconds until a specific ability fires. 0 if not on timeline.",
+          "example": "encounter.germinate.remains<5"
+        },
+        {
+          "syntax": "encounter.SPELL.up",
+          "returnType": "bool",
+          "description": "True if the ability is currently on the timeline.",
+          "example": "encounter.shattering_twilight.up"
+        },
+        {
+          "syntax": "encounter.SPELL.duration",
+          "returnType": "number",
+          "description": "Original event duration in seconds.",
+          "example": "encounter.germinate.duration"
+        },
+        {
+          "syntax": "encounter.SPELL.severity",
+          "returnType": "number",
+          "description": "Event severity: 0=Low, 1=Medium, 2=High.",
+          "example": "encounter.germinate.severity>=2"
+        },
+        {
+          "syntax": "encounter.SPELL.icons",
+          "returnType": "number",
+          "description": "EncounterEventIconmask bitmask for the event.",
+          "example": "encounter.germinate.icons"
+        },
+        {
+          "syntax": "encounter.SPELL.track",
+          "returnType": "number",
+          "description": "Timeline track number for the event.",
+          "example": "encounter.germinate.track"
+        },
+        {
+          "syntax": "encounter.next.remains",
+          "returnType": "number",
+          "description": "Seconds until the next timeline event (any type).",
+          "example": "encounter.next.remains<3"
+        },
+        {
+          "syntax": "encounter.next.duration",
+          "returnType": "number",
+          "description": "Duration of the next timeline event.",
+          "example": "encounter.next.duration"
+        },
+        {
+          "syntax": "encounter.next.severity",
+          "returnType": "number",
+          "description": "Severity of the next timeline event.",
+          "example": "encounter.next.severity>=1"
+        },
+        {
+          "syntax": "encounter.next.icons",
+          "returnType": "number",
+          "description": "Icon bitmask of the next timeline event.",
+          "example": "encounter.next.icons"
+        },
+        {
+          "syntax": "encounter.next.spell_id",
+          "returnType": "number",
+          "description": "Spell ID of the next timeline event.",
+          "example": "encounter.next.spell_id"
+        },
+        {
+          "syntax": "encounter.next.up",
+          "returnType": "bool",
+          "description": "True if any next event exists.",
+          "example": "encounter.next.up"
+        },
+        {
+          "syntax": "encounter.next_deadly.remains",
+          "returnType": "number",
+          "description": "Seconds until the next event with DeadlyEffect icon.",
+          "example": "encounter.next_deadly.remains<5"
+        },
+        {
+          "syntax": "encounter.next_deadly.duration",
+          "returnType": "number",
+          "description": "Duration of the next deadly event.",
+          "example": "encounter.next_deadly.duration"
+        },
+        {
+          "syntax": "encounter.next_deadly.severity",
+          "returnType": "number",
+          "description": "Severity of the next deadly event.",
+          "example": "encounter.next_deadly.severity"
+        },
+        {
+          "syntax": "encounter.next_deadly.icons",
+          "returnType": "number",
+          "description": "Icon bitmask of the next deadly event.",
+          "example": "encounter.next_deadly.icons"
+        },
+        {
+          "syntax": "encounter.next_deadly.spell_id",
+          "returnType": "number",
+          "description": "Spell ID of the next deadly event.",
+          "example": "encounter.next_deadly.spell_id"
+        },
+        {
+          "syntax": "encounter.next_deadly.up",
+          "returnType": "bool",
+          "description": "True if a deadly event is on the timeline.",
+          "example": "encounter.next_deadly.up"
+        },
+        {
+          "syntax": "encounter.next_tank.remains",
+          "returnType": "number",
+          "description": "Seconds until the next event targeting tanks.",
+          "example": "encounter.next_tank.remains<5"
+        },
+        {
+          "syntax": "encounter.next_tank.duration",
+          "returnType": "number",
+          "description": "Duration of the next tank event.",
+          "example": "encounter.next_tank.duration"
+        },
+        {
+          "syntax": "encounter.next_tank.severity",
+          "returnType": "number",
+          "description": "Severity of the next tank event.",
+          "example": "encounter.next_tank.severity"
+        },
+        {
+          "syntax": "encounter.next_tank.icons",
+          "returnType": "number",
+          "description": "Icon bitmask of the next tank event.",
+          "example": "encounter.next_tank.icons"
+        },
+        {
+          "syntax": "encounter.next_tank.spell_id",
+          "returnType": "number",
+          "description": "Spell ID of the next tank event.",
+          "example": "encounter.next_tank.spell_id"
+        },
+        {
+          "syntax": "encounter.next_tank.up",
+          "returnType": "bool",
+          "description": "True if a tank event is on the timeline.",
+          "example": "encounter.next_tank.up"
+        },
+        {
+          "syntax": "encounter.next_healer.remains",
+          "returnType": "number",
+          "description": "Seconds until the next event targeting healers.",
+          "example": "encounter.next_healer.remains<5"
+        },
+        {
+          "syntax": "encounter.next_healer.duration",
+          "returnType": "number",
+          "description": "Duration of the next healer event.",
+          "example": "encounter.next_healer.duration"
+        },
+        {
+          "syntax": "encounter.next_healer.severity",
+          "returnType": "number",
+          "description": "Severity of the next healer event.",
+          "example": "encounter.next_healer.severity"
+        },
+        {
+          "syntax": "encounter.next_healer.icons",
+          "returnType": "number",
+          "description": "Icon bitmask of the next healer event.",
+          "example": "encounter.next_healer.icons"
+        },
+        {
+          "syntax": "encounter.next_healer.spell_id",
+          "returnType": "number",
+          "description": "Spell ID of the next healer event.",
+          "example": "encounter.next_healer.spell_id"
+        },
+        {
+          "syntax": "encounter.next_healer.up",
+          "returnType": "bool",
+          "description": "True if a healer event is on the timeline.",
+          "example": "encounter.next_healer.up"
+        },
+        {
+          "syntax": "encounter.next_dps.remains",
+          "returnType": "number",
+          "description": "Seconds until the next event targeting DPS.",
+          "example": "encounter.next_dps.remains<5"
+        },
+        {
+          "syntax": "encounter.next_dps.duration",
+          "returnType": "number",
+          "description": "Duration of the next DPS event.",
+          "example": "encounter.next_dps.duration"
+        },
+        {
+          "syntax": "encounter.next_dps.severity",
+          "returnType": "number",
+          "description": "Severity of the next DPS event.",
+          "example": "encounter.next_dps.severity"
+        },
+        {
+          "syntax": "encounter.next_dps.icons",
+          "returnType": "number",
+          "description": "Icon bitmask of the next DPS event.",
+          "example": "encounter.next_dps.icons"
+        },
+        {
+          "syntax": "encounter.next_dps.spell_id",
+          "returnType": "number",
+          "description": "Spell ID of the next DPS event.",
+          "example": "encounter.next_dps.spell_id"
+        },
+        {
+          "syntax": "encounter.next_dps.up",
+          "returnType": "bool",
+          "description": "True if a DPS event is on the timeline.",
+          "example": "encounter.next_dps.up"
+        }
+      ],
+      "notes": "SPELL can be a snake_case spell name (e.g., germinate, shattering_twilight) or a numeric spell ID (e.g., 450289). Name resolution requires the spell to appear on the active encounter timeline at least once. For spell-specific queries, if the spell is not on the timeline, all properties return 0/false. The next_* filters find the soonest event matching the given icon type."
+    },
+    {
+      "id": "cluster",
+      "name": "Cluster (Target Proximity)",
+      "description": "Enemies clustered near your current target, detected via screen proximity and range filtering.",
+      "syntax": "cluster.debuff.SPELL.property / enemies.around_target",
+      "expressions": [
+        {
+          "syntax": "enemies.around_target",
+          "aliases": [
+            "enemies_around_target"
+          ],
+          "returnType": "number",
+          "description": "Count of enemies clustered near current target (default 8y world center).",
+          "example": "enemies.around_target>=3"
+        },
+        {
+          "syntax": "enemies.around_target.range.N",
+          "returnType": "number",
+          "description": "Cluster near target with max center distance N yards.",
+          "example": "enemies.around_target.range.12>=3"
+        },
+        {
+          "syntax": "cluster.debuff.SPELL.count",
+          "returnType": "number",
+          "description": "Number of cluster enemies with this debuff (player-source only).",
+          "example": "cluster.debuff.rip.count<enemies.around_target"
+        },
+        {
+          "syntax": "cluster.debuff.SPELL.count.any",
+          "returnType": "number",
+          "description": "Number of cluster enemies with this debuff (any source).",
+          "example": "cluster.debuff.rip.count.any<3"
+        },
+        {
+          "syntax": "cluster.debuff.SPELL.lowest",
+          "returnType": "number",
+          "description": "Lowest remaining duration of debuff among cluster enemies (player-source).",
+          "example": "cluster.debuff.moonfire.lowest<3"
+        },
+        {
+          "syntax": "cluster.debuff.SPELL.lowest.any",
+          "returnType": "number",
+          "description": "Lowest remaining duration of debuff among cluster enemies (any source).",
+          "example": "cluster.debuff.moonfire.lowest.any<3"
+        },
+        {
+          "syntax": "cluster.debuff.SPELL.highest",
+          "returnType": "number",
+          "description": "Highest remaining duration of debuff among cluster enemies (player-source).",
+          "example": "cluster.debuff.moonfire.highest>10"
+        },
+        {
+          "syntax": "cluster.debuff.SPELL.highest.any",
+          "returnType": "number",
+          "description": "Highest remaining duration of debuff among cluster enemies (any source).",
+          "example": "cluster.debuff.moonfire.highest.any>10"
+        },
+        {
+          "syntax": "cluster.buff.SPELL.count",
+          "returnType": "number",
+          "description": "Number of cluster enemies with this buff (player-source only).",
+          "example": "cluster.buff.mark_of_the_wild.count>=2"
+        },
+        {
+          "syntax": "cluster.buff.SPELL.count.any",
+          "returnType": "number",
+          "description": "Number of cluster enemies with this buff (any source).",
+          "example": "cluster.buff.mark_of_the_wild.count.any>=2"
+        },
+        {
+          "syntax": "cluster.buff.SPELL.lowest",
+          "returnType": "number",
+          "description": "Lowest remaining duration of buff among cluster enemies (player-source).",
+          "example": "cluster.buff.curse.lowest<3"
+        },
+        {
+          "syntax": "cluster.buff.SPELL.lowest.any",
+          "returnType": "number",
+          "description": "Lowest remaining duration of buff among cluster enemies (any source).",
+          "example": "cluster.buff.curse.lowest.any<3"
+        },
+        {
+          "syntax": "cluster.buff.SPELL.highest",
+          "returnType": "number",
+          "description": "Highest remaining duration of buff among cluster enemies (player-source).",
+          "example": "cluster.buff.curse.highest>10"
+        },
+        {
+          "syntax": "cluster.buff.SPELL.highest.any",
+          "returnType": "number",
+          "description": "Highest remaining duration of buff among cluster enemies (any source).",
+          "example": "cluster.buff.curse.highest.any>10"
+        }
+      ]
+    },
+    {
+      "id": "prev_gcd_lastcast",
+      "name": "Prev GCD & Last Cast",
+      "description": "Check what was cast recently.",
+      "syntax": "prev_gcd.N.SPELL / lastcast.SPELL",
+      "expressions": [
+        {
+          "syntax": "prev_gcd.1.SPELL",
+          "returnType": "bool",
+          "description": "Previous GCD was this spell.",
+          "example": "prev_gcd.1.fireball"
+        },
+        {
+          "syntax": "prev_gcd.2.SPELL",
+          "returnType": "bool",
+          "description": "2 GCDs ago was this spell.",
+          "example": "prev_gcd.2.frostbolt"
+        },
+        {
+          "syntax": "prev_gcd.3.SPELL",
+          "returnType": "bool",
+          "description": "3 GCDs ago was this spell.",
+          "example": "prev_gcd.3.ice_lance"
+        },
+        {
+          "syntax": "lastcast.SPELL",
+          "returnType": "number",
+          "description": "Seconds since last cast of this spell (9999 if never).",
+          "example": "lastcast.fireball<5"
+        }
+      ]
+    },
+    {
+      "id": "active_dots",
+      "name": "Active DoTs",
+      "description": "Count enemies with a specific DoT applied.",
+      "syntax": "active_dot.SPELL",
+      "expressions": [
+        {
+          "syntax": "active_dot.SPELL",
+          "returnType": "number",
+          "description": "Count of enemies with this DoT (player-applied).",
+          "example": "active_dot.rip>=3"
+        },
+        {
+          "syntax": "active_dot.SPELL.any",
+          "returnType": "number",
+          "description": "Count from any source.",
+          "example": "active_dot.moonfire.any"
+        }
+      ]
+    },
+    {
+      "id": "dot_refreshable_count",
+      "name": "DoT Refreshable Count",
+      "description": "Count enemies where a player-applied DoT is ticking AND refreshable (within pandemic window).",
+      "syntax": "dot_refreshable_count.SPELL",
+      "expressions": [
+        {
+          "syntax": "dot_refreshable_count.SPELL",
+          "returnType": "number",
+          "description": "Count of enemies with your DoT that is refreshable (< 30% duration remaining).",
+          "example": "dot_refreshable_count.wither>0"
+        }
+      ]
+    },
+    {
+      "id": "usable",
+      "name": "Usable",
+      "description": "Check if a spell is usable (has resources and off cooldown).",
+      "syntax": "usable.SPELL",
+      "expressions": [
+        {
+          "syntax": "usable.SPELL",
+          "returnType": "bool",
+          "description": "Spell is usable (not silenced, off CD, has resources).",
+          "example": "usable.mortal_strike"
+        }
+      ]
+    },
+    {
+      "id": "range",
+      "name": "Range",
+      "description": "Check if a spell is in range of a unit.",
+      "syntax": "range.SPELL.UNIT",
+      "expressions": [
+        {
+          "syntax": "range.SPELL.target",
+          "returnType": "bool",
+          "description": "Spell is in range of target.",
+          "example": "range.mortal_strike.target"
+        },
+        {
+          "syntax": "range.SPELL.focus",
+          "returnType": "bool",
+          "description": "Spell is in range of focus.",
+          "example": "range.heal.focus"
+        },
+        {
+          "syntax": "range.SPELL.mouseover",
+          "returnType": "bool",
+          "description": "Spell is in range of mouseover.",
+          "example": "range.heal.mouseover"
+        }
+      ]
+    },
+    {
+      "id": "cycle",
+      "name": "Cycle (Healing)",
+      "description": "Properties of the current cycle member during cycle= iteration. Used in healing rotations.",
+      "syntax": "cycle.PROPERTY",
+      "groups": [
+        {
+          "name": "Member Properties",
+          "expressions": [
+            {
+              "syntax": "cycle.health.pct",
+              "returnType": "number",
+              "description": "Cycle member health percentage.",
+              "example": "cycle.health.pct<50"
+            },
+            {
+              "syntax": "cycle.health.current",
+              "returnType": "number",
+              "description": "Cycle member current health.",
+              "example": "cycle.health.current"
+            },
+            {
+              "syntax": "cycle.health.max",
+              "returnType": "number",
+              "description": "Cycle member max health.",
+              "example": "cycle.health.max"
+            },
+            {
+              "syntax": "cycle.health.deficit",
+              "returnType": "number",
+              "description": "Cycle member missing health.",
+              "example": "cycle.health.deficit>50000"
+            },
+            {
+              "syntax": "cycle.health.effective.pct",
+              "returnType": "number",
+              "description": "Cycle member effective healable health % (healthPct - healAbsorbPct + incomingHealsPct).",
+              "example": "cycle.health.effective.pct<50"
+            },
+            {
+              "syntax": "cycle.absorb",
+              "returnType": "number",
+              "description": "Cycle member damage absorb shield amount.",
+              "example": "cycle.absorb>0"
+            },
+            {
+              "syntax": "cycle.absorb.pct",
+              "returnType": "number",
+              "description": "Cycle member damage absorb as % of max health."
+            },
+            {
+              "syntax": "cycle.heal_absorb",
+              "returnType": "number",
+              "description": "Cycle member heal absorb amount.",
+              "example": "cycle.heal_absorb>0"
+            },
+            {
+              "syntax": "cycle.heal_absorb.pct",
+              "returnType": "number",
+              "description": "Cycle member heal absorb as % of max health."
+            },
+            {
+              "syntax": "cycle.incoming_heals",
+              "returnType": "number",
+              "description": "Cycle member total incoming heals."
+            },
+            {
+              "syntax": "cycle.incoming_heals.pct",
+              "returnType": "number",
+              "description": "Cycle member incoming heals as % of max health."
+            },
+            {
+              "syntax": "cycle.range",
+              "returnType": "number",
+              "description": "Distance to cycle member.",
+              "example": "cycle.range<=40"
+            },
+            {
+              "syntax": "cycle.tank",
+              "returnType": "bool",
+              "description": "Cycle member role is tank.",
+              "example": "cycle.tank"
+            },
+            {
+              "syntax": "cycle.healer",
+              "returnType": "bool",
+              "description": "Cycle member role is healer.",
+              "example": "cycle.healer"
+            },
+            {
+              "syntax": "cycle.dps",
+              "returnType": "bool",
+              "description": "Cycle member role is DPS.",
+              "example": "cycle.dps"
+            },
+            {
+              "syntax": "cycle.spec_id",
+              "returnType": "number",
+              "description": "Cycle member numeric specialization ID. Use with = or != to check a specific spec.",
+              "example": "cycle.spec_id=1473"
+            },
+            {
+              "syntax": "cycle.time_to_die",
+              "returnType": "number",
+              "description": "Estimated TTD of cycle member.",
+              "example": "cycle.time_to_die>5"
+            }
+          ]
+        },
+        {
+          "name": "Auras",
+          "expressions": [
+            {
+              "syntax": "cycle.buff.SPELL.up",
+              "returnType": "bool",
+              "description": "Buff active on cycle member.",
+              "example": "cycle.buff.renew.up"
+            },
+            {
+              "syntax": "cycle.buff.SPELL.down",
+              "returnType": "bool",
+              "description": "Buff NOT active on cycle member.",
+              "example": "cycle.buff.renew.down"
+            },
+            {
+              "syntax": "cycle.buff.SPELL.remains",
+              "returnType": "number",
+              "description": "Buff seconds remaining.",
+              "example": "cycle.buff.renew.remains<3"
+            },
+            {
+              "syntax": "cycle.buff.SPELL.stack",
+              "returnType": "number",
+              "description": "Buff stack count.",
+              "example": "cycle.buff.atonement.stack"
+            },
+            {
+              "syntax": "cycle.buff.SPELL.refreshable",
+              "returnType": "bool",
+              "description": "Buff within pandemic window.",
+              "example": "cycle.buff.renew.refreshable"
+            },
+            {
+              "syntax": "cycle.debuff.SPELL.up",
+              "returnType": "bool",
+              "description": "Debuff active on cycle member.",
+              "example": "cycle.debuff.shadow_word_pain.up"
+            },
+            {
+              "syntax": "cycle.debuff.SPELL.remains",
+              "returnType": "number",
+              "description": "Debuff seconds remaining.",
+              "example": "cycle.debuff.shadow_word_pain.remains"
+            }
+          ]
+        },
+        {
+          "name": "Dispels",
+          "expressions": [
+            {
+              "syntax": "cycle.dispelable",
+              "returnType": "bool",
+              "description": "Cycle member has any dispelable debuff.",
+              "example": "cycle.dispelable"
+            },
+            {
+              "syntax": "cycle.dispelable.SPELL",
+              "returnType": "bool",
+              "description": "Has debuff dispelable by SPELL.",
+              "example": "cycle.dispelable.purify"
+            },
+            {
+              "syntax": "cycle.dispelable.magic",
+              "returnType": "bool",
+              "description": "Has magic debuff.",
+              "example": "cycle.dispelable.magic"
+            },
+            {
+              "syntax": "cycle.dispelable.disease",
+              "returnType": "bool",
+              "description": "Has disease debuff.",
+              "example": "cycle.dispelable.disease"
+            },
+            {
+              "syntax": "cycle.dispelable.poison",
+              "returnType": "bool",
+              "description": "Has poison debuff.",
+              "example": "cycle.dispelable.poison"
+            },
+            {
+              "syntax": "cycle.dispelable.curse",
+              "returnType": "bool",
+              "description": "Has curse debuff.",
+              "example": "cycle.dispelable.curse"
+            },
+            {
+              "syntax": "cycle.dispelable.list.SPELL",
+              "returnType": "bool",
+              "description": "With dispel_list filtering.",
+              "example": "cycle.dispelable.list.purify"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "group",
+      "name": "Group (Healing)",
+      "description": "Aggregate group member data for healing rotations.",
+      "syntax": "group.SELECTOR.PROPERTY",
+      "groups": [
+        {
+          "name": "Lowest Health Member",
+          "expressions": [
+            {
+              "syntax": "group.lowest.health.pct",
+              "returnType": "number",
+              "description": "Lowest HP% member in group.",
+              "example": "group.lowest.health.pct<50"
+            },
+            {
+              "syntax": "group.lowest.health.effective.pct",
+              "returnType": "number",
+              "description": "Lowest member's effective healable health %.",
+              "example": "group.lowest.health.effective.pct<40"
+            },
+            {
+              "syntax": "group.lowest.health.current",
+              "returnType": "number",
+              "description": "Lowest member's current HP.",
+              "example": "group.lowest.health.current"
+            },
+            {
+              "syntax": "group.lowest.health.deficit",
+              "returnType": "number",
+              "description": "Lowest member's missing HP.",
+              "example": "group.lowest.health.deficit>50000"
+            },
+            {
+              "syntax": "group.lowest.absorb",
+              "returnType": "number",
+              "description": "Lowest member's damage absorb."
+            },
+            {
+              "syntax": "group.lowest.absorb.pct",
+              "returnType": "number",
+              "description": "Lowest member's damage absorb as % of max health."
+            },
+            {
+              "syntax": "group.lowest.heal_absorb",
+              "returnType": "number",
+              "description": "Lowest member's heal absorb."
+            },
+            {
+              "syntax": "group.lowest.heal_absorb.pct",
+              "returnType": "number",
+              "description": "Lowest member's heal absorb as % of max health."
+            },
+            {
+              "syntax": "group.lowest.incoming_heals",
+              "returnType": "number",
+              "description": "Lowest member's incoming heals."
+            },
+            {
+              "syntax": "group.lowest.incoming_heals.pct",
+              "returnType": "number",
+              "description": "Lowest member's incoming heals as % of max health."
+            },
+            {
+              "syntax": "group.lowest.range",
+              "returnType": "number",
+              "description": "Distance to lowest HP member.",
+              "example": "group.lowest.range<=40"
+            },
+            {
+              "syntax": "group.lowest.dead",
+              "returnType": "bool",
+              "description": "Lowest HP member is dead.",
+              "example": "!group.lowest.dead"
+            },
+            {
+              "syntax": "group.lowest.time_to_die",
+              "returnType": "number",
+              "description": "Lowest HP member TTD.",
+              "example": "group.lowest.time_to_die>5"
+            }
+          ]
+        },
+        {
+          "name": "Role-Filtered Lowest",
+          "expressions": [
+            {
+              "syntax": "group.tanks.lowest.health.pct",
+              "returnType": "number",
+              "description": "Lowest HP% tank.",
+              "example": "group.tanks.lowest.health.pct<40"
+            },
+            {
+              "syntax": "group.tanks.lowest.health.effective.pct",
+              "returnType": "number",
+              "description": "Lowest tank effective healable health %."
+            },
+            {
+              "syntax": "group.tanks.lowest.range",
+              "returnType": "number",
+              "description": "Distance to lowest HP tank.",
+              "example": "group.tanks.lowest.range<=40"
+            },
+            {
+              "syntax": "group.healers.lowest.health.pct",
+              "returnType": "number",
+              "description": "Lowest HP% healer.",
+              "example": "group.healers.lowest.health.pct<60"
+            },
+            {
+              "syntax": "group.healers.lowest.health.effective.pct",
+              "returnType": "number",
+              "description": "Lowest healer effective healable health %."
+            },
+            {
+              "syntax": "group.dps.lowest.health.pct",
+              "returnType": "number",
+              "description": "Lowest HP% DPS.",
+              "example": "group.dps.lowest.health.pct<50"
+            },
+            {
+              "syntax": "group.dps.lowest.health.effective.pct",
+              "returnType": "number",
+              "description": "Lowest DPS effective healable health %."
+            }
+          ]
+        },
+        {
+          "name": "Buff/Missing Targeting",
+          "expressions": [
+            {
+              "syntax": "group.buff.SPELL.lowest.health.pct",
+              "returnType": "number",
+              "description": "Lowest HP member WITH buff.",
+              "example": "group.buff.atonement.lowest.health.pct"
+            },
+            {
+              "syntax": "group.buff.SPELL.lowest.range",
+              "returnType": "number",
+              "description": "Range to lowest WITH buff.",
+              "example": "group.buff.atonement.lowest.range<=40"
+            },
+            {
+              "syntax": "group.missing.SPELL.lowest.health.pct",
+              "returnType": "number",
+              "description": "Lowest HP member WITHOUT buff.",
+              "example": "group.missing.renew.lowest.health.pct<80"
+            },
+            {
+              "syntax": "group.missing.SPELL.lowest.range",
+              "returnType": "number",
+              "description": "Range to lowest WITHOUT buff.",
+              "example": "group.missing.renew.lowest.range<=40"
+            }
+          ]
+        },
+        {
+          "name": "Count",
+          "expressions": [
+            {
+              "syntax": "group.count(EXPR)",
+              "returnType": "number",
+              "description": "Count members matching a cycle expression.",
+              "example": "group.count(cycle.health.pct<50)>=2"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "nameplates",
+      "name": "Nameplates",
+      "description": "Aggregate aura and threat data across all enemy nameplates.",
+      "syntax": "nameplates.{buff|debuff}.SPELL.PROPERTY | nameplates.threat.{max|count}",
+      "expressions": [
+        {
+          "syntax": "nameplates.buff.SPELL.count",
+          "returnType": "number",
+          "description": "Count of enemies with this buff.",
+          "example": "nameplates.buff.curse.count>=2"
+        },
+        {
+          "syntax": "nameplates.buff.SPELL.lowest",
+          "returnType": "number",
+          "description": "Lowest remaining time across enemies.",
+          "example": "nameplates.buff.curse.lowest<3"
+        },
+        {
+          "syntax": "nameplates.buff.SPELL.highest",
+          "returnType": "number",
+          "description": "Highest remaining time across enemies.",
+          "example": "nameplates.buff.curse.highest>10"
+        },
+        {
+          "syntax": "nameplates.debuff.SPELL.count",
+          "returnType": "number",
+          "description": "Count of enemies with this debuff.",
+          "example": "nameplates.debuff.rip.count>=3"
+        },
+        {
+          "syntax": "nameplates.debuff.SPELL.lowest",
+          "returnType": "number",
+          "description": "Lowest remaining time.",
+          "example": "nameplates.debuff.moonfire.lowest<5"
+        },
+        {
+          "syntax": "nameplates.debuff.SPELL.highest",
+          "returnType": "number",
+          "description": "Highest remaining time.",
+          "example": "nameplates.debuff.moonfire.highest"
+        },
+        {
+          "syntax": "nameplates.threat.max",
+          "returnType": "number",
+          "description": "Highest threat situation (0-3) across all enemy nameplates; 0 if none on a threat table. Unlike target.threat, scans every enemy. 2 = an enemy is tanking-on you, 3 = you are its highest-threat target.",
+          "example": "nameplates.threat.max>=2"
+        },
+        {
+          "syntax": "nameplates.threat.count",
+          "returnType": "number",
+          "description": "Number of enemies at threat>=2 (tanking-on the player).",
+          "example": "nameplates.threat.count>=2"
+        }
+      ]
+    },
+    {
+      "id": "active_npc",
+      "name": "Active NPC",
+      "description": "Aggregate over every enemy in the current pull that carries a specific NPC ID, without needing it as target/focus/mouseover. Unlike target.npcid, this scans all enemy nameplates.",
+      "syntax": "active_npc.NPC_ID.PROPERTY[.any]",
+      "expressions": [
+        {
+          "syntax": "active_npc.NPC_ID",
+          "aliases": [
+            "active_npc.NPC_ID.up",
+            "active_npc.NPC_ID.active",
+            "active_npc.NPC_ID.exists"
+          ],
+          "returnType": "bool",
+          "description": "At least one live enemy with this NPC ID is engaged with you or your group. Bare form defaults to .up.",
+          "example": "active_npc.260906.up"
+        },
+        {
+          "syntax": "active_npc.NPC_ID.count",
+          "returnType": "number",
+          "description": "How many live copies of this NPC ID are engaged.",
+          "example": "active_npc.260906.count>=2"
+        },
+        {
+          "syntax": "active_npc.NPC_ID.ttd",
+          "aliases": [
+            "active_npc.NPC_ID.max_ttd",
+            "active_npc.NPC_ID.time_to_die"
+          ],
+          "returnType": "number",
+          "description": "Seconds until NO copy remains — i.e. how long .up stays true. Equals .max_ttd. 0 when none is active; 9999 when the copies are taking no damage.",
+          "example": "active_npc.260906.ttd>10"
+        },
+        {
+          "syntax": "active_npc.NPC_ID.min_ttd",
+          "aliases": [
+            "active_npc.NPC_ID.min_time_to_die"
+          ],
+          "returnType": "number",
+          "description": "Seconds until the SOONEST copy dies. 0 when none is active; 9999 when it is taking no damage.",
+          "example": "active_npc.260906.min_ttd<5"
+        },
+        {
+          "syntax": "active_npc.NPC_ID.range",
+          "returnType": "number",
+          "description": "EDGE distance in yards to the nearest copy; 999 when none is active. Same metric as target.range.",
+          "example": "active_npc.260906.range<=8"
+        },
+        {
+          "syntax": "active_npc.NPC_ID.health.pct",
+          "aliases": [
+            "active_npc.NPC_ID.health_pct"
+          ],
+          "returnType": "number",
+          "description": "Lowest health percentage across the active copies; 0 when none is active.",
+          "example": "active_npc.260906.health.pct<35"
+        },
+        {
+          "syntax": "active_npc.NPC_ID.PROPERTY.any",
+          "returnType": "number",
+          "description": "Same property, but also counts enemies that are not engaged with you or your group. Needed for NPCs that never enter combat (shield generators, neutral objective adds).",
+          "example": "active_npc.260906.up.any"
+        }
+      ],
+      "notes": "nameplates.npc.NPC_ID.PROPERTY is an exact alias. 'Active' means valid, alive, enemy, and in combat with you or your group (the same gate active_enemies and fight_remains use), so a patrolling pack or the next room never registers — add .any to drop that gate. The NPC-ignore-count list is NOT applied: naming an exact NPC ID always counts it."
+    },
+    {
+      "id": "casting_target",
+      "name": "Casting Target",
+      "description": "Check properties of who a unit is casting at.",
+      "syntax": "[unit.]casting_target.PROPERTY",
+      "expressions": [
+        {
+          "syntax": "casting_target.buff.SPELL.up",
+          "returnType": "bool",
+          "description": "Buff on target's casting target.",
+          "example": "target.casting_target.buff.earth_shield.up"
+        },
+        {
+          "syntax": "casting_target.buff.SPELL.remains",
+          "returnType": "number",
+          "description": "Buff remaining on casting target.",
+          "example": "target.casting_target.buff.earth_shield.remains"
+        },
+        {
+          "syntax": "casting_target.health.pct",
+          "returnType": "number",
+          "description": "Health% of casting target.",
+          "example": "target.casting_target.health.pct<30"
+        },
+        {
+          "syntax": "casting_target.health.current",
+          "returnType": "number",
+          "description": "Current HP of casting target.",
+          "example": "target.casting_target.health.current"
+        },
+        {
+          "syntax": "casting_target.health.deficit",
+          "returnType": "number",
+          "description": "Missing HP of casting target.",
+          "example": "target.casting_target.health.deficit"
+        }
+      ],
+      "notes": "Prefix with target., focus., or mouseover. to specify which caster. Example: focus.casting_target.buff.earth_shield.up"
+    },
+    {
+      "id": "pred",
+      "name": "Cast Prediction (pred)",
+      "description": "Predict that a buff or debuff will be active before the game confirms it. Returns the real aura value when the aura is already up; otherwise returns 'up' (predicted) when within the hold window. The hold window begins when the cast completes and lasts for max(ping, 100ms). Requires a `_pred.yaml` data file mapping cast spell IDs to their effect aura IDs.",
+      "syntax": "pred.{buff|debuff}.SPELL.PROPERTY  /  pred.cycle.{buff|debuff}.SPELL.PROPERTY",
+      "groups": [
+        {
+          "name": "Player Buff Prediction",
+          "expressions": [
+            {
+              "syntax": "pred.buff.SPELL.up",
+              "returnType": "bool",
+              "description": "Buff is active OR will be active after the current cast completes (≤ 0.3s remaining in cast, then held for max(ping, 100ms)).",
+              "example": "pred.buff.power_word_shield.up"
+            },
+            {
+              "syntax": "pred.buff.SPELL.down",
+              "returnType": "bool",
+              "description": "Buff is NOT active and is NOT predicted to be applied.",
+              "example": "pred.buff.power_word_shield.down"
+            },
+            {
+              "syntax": "pred.buff.SPELL.remains",
+              "returnType": "number",
+              "description": "Remaining seconds; returns 9999 during prediction window.",
+              "example": "pred.buff.power_word_shield.remains>0"
+            },
+            {
+              "syntax": "pred.buff.SPELL.refreshable",
+              "returnType": "bool",
+              "description": "Buff is within pandemic refresh window; returns false (0) during prediction.",
+              "example": "pred.buff.renew.refreshable"
+            },
+            {
+              "syntax": "pred.buff.SPELL.react",
+              "aliases": [
+                "pred.buff.SPELL.ticking"
+              ],
+              "returnType": "bool",
+              "description": "Alias for .up — buff is active or predicted.",
+              "example": "pred.buff.icy_veins.react"
+            }
+          ]
+        },
+        {
+          "name": "Target Debuff Prediction",
+          "expressions": [
+            {
+              "syntax": "pred.debuff.SPELL.up",
+              "returnType": "bool",
+              "description": "Debuff is active on target OR will be after the current cast.",
+              "example": "pred.debuff.shadow_word_pain.up"
+            },
+            {
+              "syntax": "pred.debuff.SPELL.down",
+              "returnType": "bool",
+              "description": "Debuff is NOT active and NOT predicted.",
+              "example": "pred.debuff.shadow_word_pain.down"
+            },
+            {
+              "syntax": "pred.debuff.SPELL.remains",
+              "returnType": "number",
+              "description": "Remaining seconds; returns 9999 during prediction window.",
+              "example": "pred.debuff.shadow_word_pain.remains>0"
+            },
+            {
+              "syntax": "pred.debuff.SPELL.refreshable",
+              "returnType": "bool",
+              "description": "Debuff within pandemic window; returns false (0) during prediction.",
+              "example": "pred.debuff.moonfire.refreshable"
+            },
+            {
+              "syntax": "pred.debuff.SPELL.react",
+              "aliases": [
+                "pred.debuff.SPELL.ticking"
+              ],
+              "returnType": "bool",
+              "description": "Alias for .up — debuff is active or predicted.",
+              "example": "pred.debuff.rip.react"
+            }
+          ]
+        },
+        {
+          "name": "Cycle Member Buff/Debuff Prediction",
+          "expressions": [
+            {
+              "syntax": "pred.cycle.buff.SPELL.up",
+              "returnType": "bool",
+              "description": "Cycle member's buff is active OR predicted (cast is targeting this member). Prediction fires for the entire cast duration, not just the last 0.3s. Member is matched by unit ID (press record), focus GUID, or mouseover GUID.",
+              "example": "pred.cycle.buff.renew.up"
+            },
+            {
+              "syntax": "pred.cycle.buff.SPELL.down",
+              "returnType": "bool",
+              "description": "Buff is NOT active on cycle member and NOT predicted.",
+              "example": "pred.cycle.buff.renew.down"
+            },
+            {
+              "syntax": "pred.cycle.buff.SPELL.remains",
+              "returnType": "number",
+              "description": "Buff remaining on cycle member; returns 9999 during prediction.",
+              "example": "pred.cycle.buff.renew.remains<3"
+            },
+            {
+              "syntax": "pred.cycle.buff.SPELL.refreshable",
+              "returnType": "bool",
+              "description": "Buff within pandemic window on cycle member; returns false (0) during prediction.",
+              "example": "pred.cycle.buff.renew.refreshable"
+            },
+            {
+              "syntax": "pred.cycle.debuff.SPELL.up",
+              "returnType": "bool",
+              "description": "Cycle member's debuff is active OR predicted.",
+              "example": "pred.cycle.debuff.shadow_word_pain.up"
+            },
+            {
+              "syntax": "pred.cycle.debuff.SPELL.down",
+              "returnType": "bool",
+              "description": "Debuff NOT active on cycle member and NOT predicted.",
+              "example": "pred.cycle.debuff.shadow_word_pain.down"
+            },
+            {
+              "syntax": "pred.cycle.debuff.SPELL.remains",
+              "returnType": "number",
+              "description": "Debuff remaining on cycle member; returns 9999 during prediction.",
+              "example": "pred.cycle.debuff.shadow_word_pain.remains>0"
+            }
+          ]
+        }
+      ],
+      "notes": "Requires `_pred.yaml` in the rotation directory. Format:\n```yaml\npredictions:\n  12345:        # cast spell ID\n    buff: 67890  # effect aura ID (use 'debuff:' for debuffs)\n  11111:\n    debuff: 22222\n```\nPrediction hold window: max(ping, 100ms) for pred.buff/debuff; max(ping, 300ms) for pred.cycle variants. Per-member hold — casting on member B never cancels member A's hold."
+    },
+    {
+      "id": "totems",
+      "name": "Totems",
+      "description": "Check totem uptime (Shaman).",
+      "syntax": "totem.SPELL.PROPERTY",
+      "parameters": {
+        "SPELL": "Totem spell name in snake_case"
+      },
+      "expressions": [
+        {
+          "syntax": "totem.SPELL.up",
+          "aliases": [
+            "totem.SPELL.ticking"
+          ],
+          "returnType": "bool",
+          "description": "Totem is active.",
+          "example": "totem.grounding_totem.up"
+        },
+        {
+          "syntax": "totem.SPELL.down",
+          "returnType": "bool",
+          "description": "Totem is NOT active.",
+          "example": "totem.healing_stream_totem.down"
+        },
+        {
+          "syntax": "totem.SPELL.remains",
+          "returnType": "number",
+          "description": "Seconds remaining.",
+          "example": "totem.healing_stream_totem.remains<5"
+        }
+      ]
+    },
+    {
+      "id": "minions",
+      "name": "Minions (Temporary Summons)",
+      "description": "Guardians/temporary summons you own, tracked by walking the client entity registry. Keyed by NPC id, NOT spell id — creature GUIDs pack the npc id at bits 6..28. These are separate from pet.* (the permanent pet) and from totem.* (totem slots). There is deliberately no .remains: the client stores no lifetime for guardians, so remaining time is declared as (duration - elapsed) via an alias in _common.yaml.",
+      "syntax": "minion.NPC_ID.PROPERTY",
+      "parameters": {
+        "NPC_ID": "Numeric NPC id of the summon (e.g. 27829 Ebon Gargoyle). Names only work if aliased in _common.yaml."
+      },
+      "expressions": [
+        {
+          "syntax": "minion.NPC_ID.up",
+          "returnType": "bool",
+          "description": "We currently own at least one of this summon.",
+          "example": "minion.27829.up"
+        },
+        {
+          "syntax": "minion.NPC_ID.down",
+          "returnType": "bool",
+          "description": "We own none of this summon.",
+          "example": "minion.264321.down"
+        },
+        {
+          "syntax": "minion.NPC_ID.count",
+          "returnType": "number",
+          "description": "How many we own. Army of the Dead's 8 ghouls count as 8.",
+          "example": "minion.237409.count>=6"
+        },
+        {
+          "syntax": "minion.NPC_ID.elapsed",
+          "returnType": "number",
+          "description": "Seconds since the NEWEST one appeared. Returns 0 if it was already alive when the client attached, since its age is unknowable. Prefer this over a declared .remains for anything whose lifetime can be extended in combat.",
+          "example": "minion.27829.elapsed>20"
+        },
+        {
+          "syntax": "minion.NPC_ID.max_elapsed",
+          "returnType": "number",
+          "description": "Seconds since the OLDEST one appeared — the first of a group to expire. Backs the .remains_min aliases.",
+          "example": "minion.237409.max_elapsed>25"
+        }
+      ],
+      "notes": "Known npc ids: 27829 Ebon Gargoyle (25s) | 237409 Army of the Dead ghoul (30s) | 163366 Magus of the Dead (15s) | 264321 Lord of the Dead (15s) | 221632-221635 the four Riders (10s) | 26125 the permanent DK pet (a Pet- GUID, type 10; guardians are type 8 Creature).<br>Durations are authored from SimC, not from the summon spell's own duration field — 4 of 8 disagree. Generated for reference by SimC_APL_Reverser/gen_minions.py into _minions.yaml, which is NOT loaded: the live values are hand-copied into the expressions: block of _common.yaml.<br>_common.yaml provides friendlier aliases: minion.gargoyle.remains, minion.army_ghoul.remains(.remains_min), minion.magus.remains(.remains_min), minion.lord_of_the_dead.remains, plus pet.<name>.active forms.<br>Only npc ids actually referenced by a rotation are collected at parse time and published to the entity walk, so a spec with no minion expressions scans nothing."
+    },
+    {
+      "id": "equipment",
+      "name": "Equipment & Trinkets",
+      "description": "Check equipped items, trinket cooldowns, enchants, and set bonuses.",
+      "syntax": "Various",
+      "groups": [
+        {
+          "name": "Trinkets",
+          "expressions": [
+            {
+              "syntax": "trinket_1.ready",
+              "returnType": "bool",
+              "description": "Trinket 1 is off cooldown.",
+              "example": "trinket_1.ready"
+            },
+            {
+              "syntax": "trinket_1.cd",
+              "returnType": "number",
+              "description": "Trinket 1 cooldown remaining.",
+              "example": "trinket_1.cd<10"
+            },
+            {
+              "syntax": "trinket_1.id",
+              "returnType": "number",
+              "description": "Trinket 1 item ID.",
+              "example": "trinket_1.id=12345"
+            },
+            {
+              "syntax": "trinket_1.usable",
+              "returnType": "bool",
+              "description": "Trinket 1 has on-use effect.",
+              "example": "trinket_1.usable"
+            },
+            {
+              "syntax": "trinket_1.sync",
+              "returnType": "bool",
+              "description": "Trinket 1 sync expression (from _trinkets.yaml).",
+              "example": "trinket_1.sync"
+            },
+            {
+              "syntax": "trinket_1.lastcast",
+              "returnType": "number",
+              "description": "Seconds since trinket 1 was last fired (filtered for item-shared GCD blips — only counts cooldown transitions from 0 to >= 10s). 9999 if never observed.",
+              "example": "trinket_1.lastcast<3"
+            },
+            {
+              "syntax": "trinket_2.lastcast",
+              "returnType": "number",
+              "description": "Seconds since trinket 2 was last fired (filtered for item-shared GCD blips). 9999 if never observed.",
+              "example": "trinket_2.lastcast<3"
+            },
+            {
+              "syntax": "trinket_1.has_onuse",
+              "returnType": "bool",
+              "description": "Trinket 1 slot holds an equipped item with an on-use effect (ignores cooldown). False for passive trinkets or empty slots.",
+              "example": "!trinket_1.has_onuse&!trinket_2.has_onuse"
+            },
+            {
+              "syntax": "trinket_2.has_onuse",
+              "returnType": "bool",
+              "description": "Trinket 2 slot holds an equipped item with an on-use effect (ignores cooldown).",
+              "example": "trinket_2.has_onuse"
+            },
+            {
+              "syntax": "trinket_2.ready",
+              "returnType": "bool",
+              "description": "Trinket 2 is off cooldown.",
+              "example": "trinket_2.ready"
+            },
+            {
+              "syntax": "trinket_2.cd",
+              "returnType": "number",
+              "description": "Trinket 2 cooldown remaining.",
+              "example": "trinket_2.cd"
+            },
+            {
+              "syntax": "trinket_2.id",
+              "returnType": "number",
+              "description": "Trinket 2 item ID.",
+              "example": "trinket_2.id"
+            },
+            {
+              "syntax": "trinket_2.usable",
+              "returnType": "bool",
+              "description": "Trinket 2 has on-use effect.",
+              "example": "trinket_2.usable"
+            },
+            {
+              "syntax": "trinket_2.sync",
+              "returnType": "bool",
+              "description": "Trinket 2 sync expression.",
+              "example": "trinket_2.sync"
+            }
+          ]
+        },
+        {
+          "name": "Named Trinkets (use_item)",
+          "expressions": [
+            {
+              "syntax": "use_item,name=ITEM_NAME",
+              "returnType": "action",
+              "description": "Use a trinket by name. Resolves item name to ID via ItemSearchName.csv, then checks which slot has it equipped. Automatically suppresses generic trinket_1/trinket_2 for that slot. Name uses SimC snake_case (e.g., algethar_puzzle_box). If trinket is not equipped, the line is a no-op.",
+              "example": "use_item,name=algethar_puzzle_box,if=buff.avatar.up"
+            },
+            {
+              "syntax": "use_item,name=ITEM_NAME,if=CONDITION",
+              "returnType": "action",
+              "description": "Named trinket with explicit condition. The rotation's if= condition overrides _trinkets.yaml conditions for this item.",
+              "example": "use_item,name=treacherous_transmitter,if=cooldown.recklessness.remains<2"
+            }
+          ]
+        },
+        {
+          "name": "Equipment Slots",
+          "expressions": [
+            {
+              "syntax": "helm.ready",
+              "returnType": "bool",
+              "description": "Helm on-use is ready.",
+              "example": "helm.ready"
+            },
+            {
+              "syntax": "helm.cd",
+              "returnType": "number",
+              "description": "Helm on-use cooldown remaining.",
+              "example": "helm.cd"
+            },
+            {
+              "syntax": "cloak.ready",
+              "returnType": "bool",
+              "description": "Cloak on-use is ready.",
+              "example": "cloak.ready"
+            },
+            {
+              "syntax": "wrist.ready",
+              "returnType": "bool",
+              "description": "Wrist on-use is ready.",
+              "example": "wrist.ready"
+            },
+            {
+              "syntax": "belt.ready",
+              "returnType": "bool",
+              "description": "Belt on-use is ready.",
+              "example": "belt.ready"
+            },
+            {
+              "syntax": "weapon.ready",
+              "returnType": "bool",
+              "description": "Weapon on-use is ready.",
+              "example": "weapon.ready"
+            },
+            {
+              "syntax": "main_hand.2h",
+              "returnType": "bool",
+              "description": "Main hand is a two-handed weapon.",
+              "example": "main_hand.2h"
+            }
+          ]
+        },
+        {
+          "name": "Enchants",
+          "expressions": [
+            {
+              "syntax": "mainhand.enchant.up",
+              "returnType": "bool",
+              "description": "Main hand enchant is active.",
+              "example": "mainhand.enchant.up"
+            },
+            {
+              "syntax": "mainhand.enchant.remains",
+              "returnType": "number",
+              "description": "Main hand enchant time remaining.",
+              "example": "mainhand.enchant.remains<5"
+            },
+            {
+              "syntax": "mainhand.enchant.id",
+              "returnType": "number",
+              "description": "Main hand enchant ID.",
+              "example": "mainhand.enchant.id"
+            },
+            {
+              "syntax": "offhand.enchant.up",
+              "returnType": "bool",
+              "description": "Off-hand enchant is active.",
+              "example": "offhand.enchant.up"
+            },
+            {
+              "syntax": "offhand.enchant.remains",
+              "returnType": "number",
+              "description": "Off-hand enchant remaining.",
+              "example": "offhand.enchant.remains"
+            },
+            {
+              "syntax": "offhand.enchant.id",
+              "returnType": "number",
+              "description": "Off-hand enchant ID.",
+              "example": "offhand.enchant.id"
+            }
+          ]
+        },
+        {
+          "name": "Set Bonuses & Equipped",
+          "expressions": [
+            {
+              "syntax": "set_bonus.TIER_Xpc",
+              "returnType": "bool",
+              "description": "Set bonus is active (defined in tier_sets).",
+              "example": "set_bonus.tier33_2pc"
+            },
+            {
+              "syntax": "equipped.ITEM_ID",
+              "returnType": "bool",
+              "description": "Specific item is equipped (by numeric ID).",
+              "example": "equipped.207170"
+            },
+            {
+              "syntax": "equipped.ITEM_NAME",
+              "returnType": "bool",
+              "description": "Specific item is equipped (by name, resolved via ItemSearchName.csv). Uses SimC snake_case normalization.",
+              "example": "equipped.algethar_puzzle_box"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "consumables",
+      "name": "Consumables",
+      "description": "Check consumable cooldowns.",
+      "syntax": "ITEM.{ready|cd}",
+      "expressions": [
+        {
+          "syntax": "healthstone.ready",
+          "returnType": "bool",
+          "description": "Healthstone is off cooldown.",
+          "example": "healthstone.ready"
+        },
+        {
+          "syntax": "healthstone.cd",
+          "returnType": "number",
+          "description": "Healthstone cooldown remaining.",
+          "example": "healthstone.cd"
+        },
+        {
+          "syntax": "health_potion.ready",
+          "returnType": "bool",
+          "description": "Health potion is off cooldown.",
+          "example": "health_potion.ready"
+        },
+        {
+          "syntax": "health_potion.cd",
+          "returnType": "number",
+          "description": "Health potion cooldown remaining.",
+          "example": "health_potion.cd"
+        },
+        {
+          "syntax": "mana_potion.ready",
+          "returnType": "bool",
+          "description": "Mana potion is off cooldown.",
+          "example": "mana_potion.ready"
+        },
+        {
+          "syntax": "mana_potion.cd",
+          "returnType": "number",
+          "description": "Mana potion cooldown remaining.",
+          "example": "mana_potion.cd"
+        },
+        {
+          "syntax": "combat_potion.ready",
+          "returnType": "bool",
+          "description": "Combat potion is off cooldown.",
+          "example": "combat_potion.ready"
+        },
+        {
+          "syntax": "combat_potion.cd",
+          "returnType": "number",
+          "description": "Combat potion cooldown remaining.",
+          "example": "combat_potion.cd"
+        },
+        {
+          "syntax": "rune.ready",
+          "returnType": "bool",
+          "description": "Augment rune is off cooldown.",
+          "example": "rune.ready"
+        },
+        {
+          "syntax": "rune.cd",
+          "returnType": "number",
+          "description": "Augment rune cooldown remaining.",
+          "example": "rune.cd"
+        }
+      ]
+    },
+    {
+      "id": "casts_and_auras",
+      "name": "Incoming Casts & Aura Lists",
+      "description": "Unified system for tracking enemy casts (_casts.yaml) and auras (_aura.yaml). Each selector token is a tag, an all-digit spell id, or a normalized spell name (e.g. mind_blast); tokens AND together. The spell must be cataloged in _casts.yaml; id/name just target it without inventing a tag.",
+      "syntax": "[unit.]incoming_cast.[filter.]<selector>.<property>",
+      "groups": [
+        {
+          "name": "Incoming Cast (Unit Prefix)",
+          "description": "Unit prefix specifies which enemy to check. Left-to-right: unit prefix, then incoming_cast, then optional filter (player/cycle), then tags, then property.",
+          "expressions": [
+            {
+              "syntax": "target.incoming_cast.<tags>.up",
+              "returnType": "bool",
+              "description": "Target is casting a spell matching all specified tags.",
+              "example": "target.incoming_cast.kickable.up"
+            },
+            {
+              "syntax": "target.incoming_cast.<tags>.ready",
+              "returnType": "bool",
+              "description": "Target has a matching cast (alias for .up).",
+              "example": "target.incoming_cast.kickable.ready"
+            },
+            {
+              "syntax": "target.incoming_cast.<tags>.down",
+              "returnType": "bool",
+              "description": "Target is NOT casting a matching spell.",
+              "example": "target.incoming_cast.kickable.down"
+            },
+            {
+              "syntax": "target.incoming_cast.<tags>.remains",
+              "returnType": "number",
+              "description": "Seconds until target's matching cast finishes.",
+              "example": "target.incoming_cast.kickable.remains>0.5"
+            },
+            {
+              "syntax": "target.incoming_cast.player.<tags>.up",
+              "returnType": "bool",
+              "description": "Target is casting a matching spell at the player.",
+              "example": "target.incoming_cast.player.kickable.up"
+            },
+            {
+              "syntax": "focus.incoming_cast.<tags>.up",
+              "returnType": "bool",
+              "description": "Focus is casting a spell matching all specified tags.",
+              "example": "focus.incoming_cast.kickable.up"
+            },
+            {
+              "syntax": "mouseover.incoming_cast.<tags>.up",
+              "returnType": "bool",
+              "description": "Mouseover is casting a spell matching all specified tags.",
+              "example": "mouseover.incoming_cast.stunnable.up"
+            }
+          ]
+        },
+        {
+          "name": "Incoming Cast (Range Filter)",
+          "description": "Range filter scans all nameplates within X yards. Supported ranges: 5y, 8y, 10y, 15y, 20y, 25y, 30y, 40y. Only valid without a unit prefix.",
+          "expressions": [
+            {
+              "syntax": "incoming_cast.Xy.<tags>.up",
+              "returnType": "bool",
+              "description": "Any enemy within X yards is casting a spell matching all tags.",
+              "example": "incoming_cast.10y.kickable.up"
+            },
+            {
+              "syntax": "incoming_cast.Xy.<tags>.count",
+              "returnType": "number",
+              "description": "Count of enemies within X yards casting matching spells.",
+              "example": "incoming_cast.10y.kickable.count"
+            },
+            {
+              "syntax": "incoming_cast.Xy.<tags>.remains",
+              "returnType": "number",
+              "description": "Min remaining seconds of matching casts within X yards.",
+              "example": "incoming_cast.8y.stunnable.remains"
+            }
+          ]
+        },
+        {
+          "name": "Incoming Cast (No Unit/Filter)",
+          "description": "Without a unit prefix or filter, scans all enemies within 40y.",
+          "expressions": [
+            {
+              "syntax": "incoming_cast.<tags>.up",
+              "returnType": "bool",
+              "description": "Any enemy is casting a spell matching all tags.",
+              "example": "incoming_cast.aoe.up"
+            },
+            {
+              "syntax": "incoming_cast.<tags>.down",
+              "returnType": "bool",
+              "description": "No enemy is casting a matching spell.",
+              "example": "incoming_cast.kickable.down"
+            },
+            {
+              "syntax": "incoming_cast.<tags>.remains",
+              "returnType": "number",
+              "description": "Min remaining seconds of matching casts (any enemy).",
+              "example": "incoming_cast.magic.remains>0.5"
+            },
+            {
+              "syntax": "incoming_cast.<tags>.count",
+              "returnType": "number",
+              "description": "Count of enemies casting matching spells (40y range).",
+              "example": "incoming_cast.kickable.count>=2"
+            }
+          ]
+        },
+        {
+          "name": "Incoming Cast (Target Filter)",
+          "description": "Filter by who the cast is targeting. player = targeting the player, cycle = targeting current cycle member. Goes after incoming_cast as a filter segment.",
+          "expressions": [
+            {
+              "syntax": "incoming_cast.player.<tags>.up",
+              "returnType": "bool",
+              "description": "Any enemy casting a matching spell targeting the player.",
+              "example": "incoming_cast.player.magic.up"
+            },
+            {
+              "syntax": "incoming_cast.player.<tags>.remains",
+              "returnType": "number",
+              "description": "Min remaining seconds of matching casts targeting the player.",
+              "example": "incoming_cast.player.reflectable.remains<0.5"
+            },
+            {
+              "syntax": "incoming_cast.cycle.<tags>.up",
+              "returnType": "bool",
+              "description": "Enemy casting a matching spell targeting the current cycle member.",
+              "example": "incoming_cast.cycle.magic.up"
+            },
+            {
+              "syntax": "incoming_cast.cycle.<tags>.remains",
+              "returnType": "number",
+              "description": "Min remaining seconds of matching casts targeting cycle member.",
+              "example": "incoming_cast.cycle.magic.remains"
+            },
+            {
+              "syntax": "incoming_cast.cycle.<spell_id>.up",
+              "returnType": "bool",
+              "description": "Enemy casting a specific spell (by id) at the current cycle member. Use to heal the unit targeted by a named cast.",
+              "example": "incoming_cast.cycle.342231.up"
+            },
+            {
+              "syntax": "incoming_cast.cycle.<spell_name>.up",
+              "returnType": "bool",
+              "description": "Enemy casting a specific spell (by normalized name) at the current cycle member.",
+              "example": "incoming_cast.cycle.fireball.up"
+            }
+          ]
+        },
+        {
+          "name": "Buff List (Unit Auras)",
+          "description": "Scans a unit's buff list for known buff spell IDs from _aura.yaml buffs section. Default unit is player (unprefixed). Supports unit prefixes: target., focus., mouseover., cycle. Tags can be combined with dots for AND matching.",
+          "expressions": [
+            {
+              "syntax": "buff_list.up",
+              "returnType": "bool",
+              "description": "Player has any tracked buff active (from _aura.yaml buffs).",
+              "example": "buff_list.up"
+            },
+            {
+              "syntax": "buff_list.down",
+              "returnType": "bool",
+              "description": "Player has no tracked buffs active.",
+              "example": "buff_list.down"
+            },
+            {
+              "syntax": "buff_list.remains",
+              "returnType": "number",
+              "description": "Max remaining seconds of any tracked buff on player.",
+              "example": "buff_list.remains>3"
+            },
+            {
+              "syntax": "buff_list.count",
+              "returnType": "number",
+              "description": "Count of active tracked buffs on player.",
+              "example": "buff_list.count>=2"
+            },
+            {
+              "syntax": "buff_list.<tag>.up",
+              "returnType": "bool",
+              "description": "Player has a tracked buff with the given tag. Tags: immunity, major, minor, physical, magic, healing, parry, pvp.",
+              "example": "buff_list.immunity.up"
+            },
+            {
+              "syntax": "buff_list.<tag>.down",
+              "returnType": "bool",
+              "description": "Player has no tracked buff with the given tag.",
+              "example": "buff_list.magic.down"
+            },
+            {
+              "syntax": "buff_list.<tag>.remains",
+              "returnType": "number",
+              "description": "Max remaining seconds of tag-filtered tracked buffs on player.",
+              "example": "buff_list.major.remains>5"
+            },
+            {
+              "syntax": "buff_list.<tag>.count",
+              "returnType": "number",
+              "description": "Count of tag-filtered active tracked buffs on player.",
+              "example": "buff_list.magic.count"
+            },
+            {
+              "syntax": "buff_list.<tag1>.<tag2>.up",
+              "returnType": "bool",
+              "description": "Player has a tracked buff matching ALL specified tags (AND logic).",
+              "example": "buff_list.magic.major.up"
+            },
+            {
+              "syntax": "target.buff_list.up",
+              "returnType": "bool",
+              "description": "Target has any tracked buff active.",
+              "example": "target.buff_list.up"
+            },
+            {
+              "syntax": "target.buff_list.<tag>.up",
+              "returnType": "bool",
+              "description": "Target has a tracked buff with the given tag.",
+              "example": "target.buff_list.immunity.up"
+            },
+            {
+              "syntax": "focus.buff_list.<tag>.up",
+              "returnType": "bool",
+              "description": "Focus has a tracked buff with the given tag.",
+              "example": "focus.buff_list.major.up"
+            },
+            {
+              "syntax": "mouseover.buff_list.<tag>.up",
+              "returnType": "bool",
+              "description": "Mouseover has a tracked buff with the given tag.",
+              "example": "mouseover.buff_list.immunity.up"
+            },
+            {
+              "syntax": "cycle.buff_list.<tag>.up",
+              "returnType": "bool",
+              "description": "Current cycle target has a tracked buff with the given tag.",
+              "example": "cycle.buff_list.major.up"
+            }
+          ]
+        },
+        {
+          "name": "Debuff List",
+          "description": "Scans a unit's debuff list for known debuff spell IDs from _aura.yaml debuffs section. Supports unit prefixes: player (default), target, focus, mouseover, cycle. Tags can be combined with dots for AND matching.",
+          "expressions": [
+            {
+              "syntax": "debuff_list.up",
+              "returnType": "bool",
+              "description": "Player has any tracked debuff active (from _aura.yaml debuffs).",
+              "example": "debuff_list.up"
+            },
+            {
+              "syntax": "debuff_list.down",
+              "returnType": "bool",
+              "description": "Player has no tracked debuffs active.",
+              "example": "debuff_list.down"
+            },
+            {
+              "syntax": "debuff_list.remains",
+              "returnType": "number",
+              "description": "Max remaining seconds of any tracked debuff on player.",
+              "example": "debuff_list.remains>5"
+            },
+            {
+              "syntax": "debuff_list.count",
+              "returnType": "number",
+              "description": "Count of active tracked debuffs on player.",
+              "example": "debuff_list.count>=2"
+            },
+            {
+              "syntax": "debuff_list.<tag>.up",
+              "returnType": "bool",
+              "description": "Player has a tracked debuff with the given tag. Tags: physical, magic, dot, bleed, heavy, curse, poison, disease, or any custom tag.",
+              "example": "debuff_list.physical.up"
+            },
+            {
+              "syntax": "debuff_list.<tag>.down",
+              "returnType": "bool",
+              "description": "Player has no tracked debuff with the given tag.",
+              "example": "debuff_list.magic.down"
+            },
+            {
+              "syntax": "debuff_list.<tag>.remains",
+              "returnType": "number",
+              "description": "Max remaining seconds of tag-filtered tracked debuffs on player.",
+              "example": "debuff_list.dot.remains>5"
+            },
+            {
+              "syntax": "debuff_list.<tag>.count",
+              "returnType": "number",
+              "description": "Count of tag-filtered active tracked debuffs on player.",
+              "example": "debuff_list.bleed.count"
+            },
+            {
+              "syntax": "debuff_list.<tag1>.<tag2>.up",
+              "returnType": "bool",
+              "description": "Player has a tracked debuff matching ALL specified tags (AND logic).",
+              "example": "debuff_list.physical.heavy.up"
+            },
+            {
+              "syntax": "target.debuff_list.up",
+              "returnType": "bool",
+              "description": "Target has any tracked debuff active.",
+              "example": "target.debuff_list.up"
+            },
+            {
+              "syntax": "focus.debuff_list.<tag>.up",
+              "returnType": "bool",
+              "description": "Focus has a tracked debuff with the given tag.",
+              "example": "focus.debuff_list.magic.up"
+            },
+            {
+              "syntax": "mouseover.debuff_list.up",
+              "returnType": "bool",
+              "description": "Mouseover target has any tracked debuff active.",
+              "example": "mouseover.debuff_list.up"
+            },
+            {
+              "syntax": "cycle.debuff_list.<tag>.up",
+              "returnType": "bool",
+              "description": "Current cycle target has a tracked debuff with the given tag.",
+              "example": "cycle.debuff_list.magic.up"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "incoming_damage",
+      "name": "Incoming Damage Prediction",
+      "description": "Predicts the biggest incoming hit (enemy cast landing within ~0.3s, encounter-timeline ability within ~2s, or remaining damage of a player DoT) as a percent of effective health, for triggering defensives. Damage magnitude lives on _casts.yaml (cast `damage`) and _aura.yaml debuffs (`damage` = full DoT total, scaled by live remaining fraction); tags aoe/avoid/tank/trash drive targeting, exclusion, and M+ scaling.",
+      "syntax": "incoming[.<SPELL_ID>].pct|amount|remains",
+      "groups": [
+        {
+          "name": "Aggregate (biggest predicted hit)",
+          "description": "Scans all sources and returns the single largest predicted threat. Excludes avoid-tagged (dodgeable) casts.",
+          "expressions": [
+            {
+              "syntax": "incoming.pct",
+              "returnType": "number",
+              "description": "Biggest predicted incoming hit as % of effective health (health + absorb).",
+              "example": "if=incoming.pct>=config.barkskin_dmg_pct"
+            },
+            {
+              "syntax": "incoming.amount",
+              "returnType": "number",
+              "description": "Raw (key-scaled) damage of the biggest predicted hit.",
+              "example": "if=incoming.amount>500000"
+            },
+            {
+              "syntax": "incoming.remains",
+              "returnType": "number",
+              "description": "Seconds until the biggest predicted hit lands (0 for an active DoT).",
+              "example": "if=incoming.remains<0.5"
+            }
+          ]
+        },
+        {
+          "name": "Mitigated (after my active defensives)",
+          "description": "Same prediction, scaled down by the player's currently-active defensives (self + external). Each defensive's DR (from _aura.yaml `dr:`) stacks multiplicatively; school-specific DR (e.g. Anti-Magic Shell) only applies when the hit's school matches. Gate a defensive suggestion on the raw form, then suppress follow-ups with the mitigated form.",
+          "expressions": [
+            {
+              "syntax": "incoming.mitigated.pct",
+              "returnType": "number",
+              "description": "Biggest predicted hit as % of effective health AFTER applying my active defensives.",
+              "example": "if=incoming.mitigated.pct>=40"
+            },
+            {
+              "syntax": "incoming.mitigated.amount",
+              "returnType": "number",
+              "description": "Predicted hit damage after my active defensives' damage reduction.",
+              "example": "if=incoming.mitigated.amount>500000"
+            }
+          ]
+        },
+        {
+          "name": "Per-spell",
+          "description": "Restricted to one spell id (numeric or resolvable name). The per-spell form also sees avoid-tagged casts that the aggregate excludes. Accepts the optional .mitigated modifier.",
+          "expressions": [
+            {
+              "syntax": "incoming.<SPELL_ID>.pct",
+              "returnType": "number",
+              "description": "Predicted hit from one specific spell as % of effective health.",
+              "example": "if=incoming.450289.pct>=80"
+            },
+            {
+              "syntax": "incoming.<SPELL_ID>.amount",
+              "returnType": "number",
+              "description": "Raw key-scaled damage of one specific spell's predicted hit.",
+              "example": "if=incoming.450289.amount>800000"
+            },
+            {
+              "syntax": "incoming.<SPELL_ID>.remains",
+              "returnType": "number",
+              "description": "Seconds until one specific spell's predicted hit lands.",
+              "example": "if=incoming.450289.remains<1"
+            },
+            {
+              "syntax": "incoming.<SPELL_ID>.mitigated.pct",
+              "returnType": "number",
+              "description": "One specific spell's predicted hit as % of effective health after my active defensives.",
+              "example": "if=incoming.450289.mitigated.pct>=80"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "variables",
+      "name": "Variables",
+      "description": "User-defined rotation variables and config variables.",
+      "syntax": "var.NAME / cfg.NAME",
+      "expressions": [
+        {
+          "syntax": "var.VARNAME",
+          "returnType": "number",
+          "description": "User-defined variable (from variables: section). Evaluated each tick.",
+          "example": "var.pooling"
+        },
+        {
+          "syntax": "cfg.VARNAME",
+          "returnType": "number",
+          "description": "Config variable (from config: section). Set by UI widgets.",
+          "example": "cfg.energy_threshold>=50"
+        }
+      ],
+      "notes": "Variables are defined in the rotation YAML variables: section as SimC expressions. Config variables generate UI widgets (sliders, checkboxes, dropdowns)."
+    },
+    {
+      "id": "softinteract",
+      "name": "Soft Interact",
+      "description": "Properties of the soft interact target (lootable corpses, NPCs).",
+      "syntax": "softinteract.PROPERTY",
+      "expressions": [
+        {
+          "syntax": "softinteract.exists",
+          "returnType": "bool",
+          "description": "Soft interact target exists.",
+          "example": "softinteract.exists"
+        },
+        {
+          "syntax": "softinteract.dead",
+          "returnType": "bool",
+          "description": "Soft interact target is dead.",
+          "example": "softinteract.dead"
+        },
+        {
+          "syntax": "softinteract.lootable",
+          "returnType": "bool",
+          "description": "Soft interact target is lootable.",
+          "example": "softinteract.lootable"
+        },
+        {
+          "syntax": "softinteract.health.pct",
+          "returnType": "number",
+          "description": "Health percentage.",
+          "example": "softinteract.health.pct"
+        },
+        {
+          "syntax": "softinteract.npcid",
+          "returnType": "number",
+          "description": "NPC ID.",
+          "example": "softinteract.npcid"
+        },
+        {
+          "syntax": "softinteract.guid",
+          "returnType": "number",
+          "description": "GUID.",
+          "example": "softinteract.guid"
+        }
+      ]
+    },
+    {
+      "id": "one_button",
+      "name": "One Button Assistant",
+      "description": "Check if a one-button-assistant spell matches.",
+      "syntax": "one_button_assistant.SPELL",
+      "expressions": [
+        {
+          "syntax": "one_button_assistant.SPELL",
+          "returnType": "bool",
+          "description": "One-button rotation suggests this spell.",
+          "example": "one_button_assistant.fireball"
+        },
+        {
+          "syntax": "one_button_assistant.SPELL.elapsed",
+          "returnType": "number",
+          "description": "Seconds since one-button suggested this spell.",
+          "example": "one_button_assistant.fireball.elapsed<2"
+        }
+      ]
+    },
+    {
+      "id": "state",
+      "name": "System State",
+      "description": "Check app-level state flags.",
+      "syntax": "state.PROPERTY",
+      "expressions": [
+        {
+          "syntax": "state.rotation",
+          "returnType": "bool",
+          "description": "Rotation is enabled.",
+          "example": "state.rotation"
+        },
+        {
+          "syntax": "state.cds",
+          "returnType": "bool",
+          "description": "Cooldowns are enabled.",
+          "example": "state.cds"
+        },
+        {
+          "syntax": "state.aoe",
+          "returnType": "bool",
+          "description": "AoE is enabled.",
+          "example": "state.aoe"
+        },
+        {
+          "syntax": "state.blocked_inputs",
+          "returnType": "bool",
+          "description": "Inputs are blocked.",
+          "example": "!state.blocked_inputs"
+        }
+      ]
+    }
+  ],
+  "yamlStructure": {
+    "description": "Rotation files are YAML with the following top-level structure.",
+    "topLevelKeys": [
+      {
+        "name": "spec",
+        "type": "integer",
+        "description": "Spec ID for this rotation (e.g. 71 for Arms Warrior)."
+      },
+      {
+        "name": "movement_allowed",
+        "type": "expression",
+        "description": "SimC expression. When true, cast-time spells can be cast while moving.",
+        "example": "movement_allowed: buff.ice_floes.up"
+      },
+      {
+        "name": "spell_overrides",
+        "type": "map",
+        "description": "Global per-spell condition gates. Key: spell name, value: SimC expression AND-ed with every step that uses that spell.",
+        "example": "spell_overrides:\n  combustion: \"buff.hot_streak.up&cooldown.fire_blast.charges>=1\""
+      },
+      {
+        "name": "config",
+        "type": "map",
+        "description": "Config variables that generate UI widgets."
+      },
+      {
+        "name": "variables",
+        "type": "map",
+        "description": "Named SimC expressions evaluated each tick. Reference with var.NAME."
+      },
+      {
+        "name": "tier_sets",
+        "type": "map",
+        "description": "Tier set definitions for set_bonus expressions."
+      },
+      {
+        "name": "lists",
+        "type": "map",
+        "description": "Named action lists. The 'main' list is the entry point."
+      }
+    ],
+    "configWidgetTypes": [
+      {
+        "name": "slider",
+        "fields": [
+          "min",
+          "max",
+          "value",
+          "section",
+          "label",
+          "show_override"
+        ],
+        "description": "Numeric slider. Referenced as cfg.NAME (returns number).",
+        "example": "energy_threshold:\n  section: \"Resources\"\n  type: slider\n  min: 20\n  max: 80\n  value: 50"
+      },
+      {
+        "name": "checkbox",
+        "fields": [
+          "value",
+          "section",
+          "label",
+          "show_override"
+        ],
+        "description": "Boolean toggle. Referenced as cfg.NAME (returns 0 or 1).",
+        "example": "use_defensives:\n  type: checkbox\n  value: true"
+      },
+      {
+        "name": "dropdown",
+        "fields": [
+          "options",
+          "default",
+          "section",
+          "label",
+          "show_override"
+        ],
+        "description": "Single selection dropdown. Referenced as cfg.NAME (returns selected option value).",
+        "example": "burst_mode:\n  type: dropdown\n  options:\n    - label: \"Conservative\"\n      value: 1\n    - label: \"Aggressive\"\n      value: 2\n  default: 0"
+      },
+      {
+        "name": "multi_select",
+        "fields": [
+          "options",
+          "default",
+          "section",
+          "label"
+        ],
+        "description": "Multiple selection. Use cfg.NAME.has(VALUE) to check, cfg.NAME>=1 for count.",
+        "example": "burst_tools:\n  type: multi_select\n  options:\n    - label: \"Trinket 1\"\n      value: 1\n    - label: \"Trinket 2\"\n      value: 2\n  default: [0]"
+      },
+      {
+        "name": "unit_select",
+        "fields": [
+          "filter",
+          "max",
+          "section",
+          "label"
+        ],
+        "description": "Party/raid member selector. Use with cycle=config.NAME.",
+        "example": "pi_target:\n  type: unit_select\n  filter: dps\n  max: 1"
+      },
+      {
+        "name": "toggle",
+        "fields": [
+          "spell",
+          "description",
+          "section",
+          "label"
+        ],
+        "description": "Ephemeral boolean toggle. State always starts OFF and is never saved. Shows spell icon on overlay when active. Can be hotkeyed. Referenced as cfg.NAME (returns 0 or 1). show_override is always true.",
+        "example": "reju_spread:\n  type: toggle\n  label: \"Rejuvenation Spread\"\n  spell: 774\n  description: \"Spread Rejuvenation to group members missing the HoT\""
+      },
+      {
+        "name": "number",
+        "fields": [
+          "min",
+          "max",
+          "default",
+          "section",
+          "label",
+          "show_override"
+        ],
+        "description": "Direct numeric entry (same data as slider, different widget). Referenced as cfg.NAME (returns number). If min and max are both 0, no clamping is applied. Aliases: number_input.",
+        "example": "trinket_ilvl_min:\n  section: \"Items\"\n  type: number\n  min: 0\n  max: 999\n  default: 600"
+      },
+      {
+        "name": "copy_text",
+        "fields": [
+          "text",
+          "section",
+          "label"
+        ],
+        "description": "Read-only text with a Copy button. Display-only — never saved, not referencable in conditions. Useful for talent strings, WeakAura imports, macros. Aliases: copy, copytext, copy-text.",
+        "example": "recommended_talents:\n  section: \"Talents\"\n  type: copy_text\n  label: \"Recommended Talent String\"\n  text: \"B4PAAAAAAAAAAAAAAAAAAAAAAAESLDgZmlZGTbDsZmlZmZmZmlxMmZmlZ2YmFAA\""
+      },
+      {
+        "name": "link",
+        "fields": [
+          "url",
+          "section",
+          "label"
+        ],
+        "description": "Button that opens a URL in the default browser. The label is the button text; the URL appears as a tooltip on hover. Display-only — never saved, not referencable in conditions. Alias: url.",
+        "example": "guide_link:\n  section: \"Help\"\n  type: link\n  label: \"Open Guide\"\n  url: \"https://www.wowhead.com/guide/classes/warrior/arms/rotation-cooldowns-pve-dps\""
+      },
+      {
+        "name": "note",
+        "fields": [
+          "text",
+          "section",
+          "label"
+        ],
+        "description": "Static informational text block (wraps to width). Display-only — never saved, not referencable in conditions. Use for explanations longer than what fits in a description tooltip. Aliases: info, text.",
+        "example": "pvp_note:\n  section: \"PvP\"\n  type: note\n  label: \"PvP rotation tips\"\n  text: \"This APL assumes Gladiator's Medallion. Without one, enable manual_dispel and bind it.\""
+      },
+      {
+        "name": "divider",
+        "fields": [],
+        "description": "Horizontal separator line. Display-only — never saved, not referencable in conditions. Alias: separator.",
+        "example": "divider_after_resources:\n  type: divider"
+      },
+      {
+        "name": "button",
+        "fields": [
+          "text",
+          "url",
+          "action",
+          "section",
+          "label"
+        ],
+        "description": "Clickable button. If url is set, opens the URL. Otherwise, if text is set, copies it to the clipboard. Display-only — never saved, not referencable in conditions. The action field is reserved for future named-action dispatch.",
+        "example": "copy_macro:\n  section: \"Macros\"\n  type: button\n  label: \"Copy interrupt macro\"\n  text: \"/cast [@mouseover,harm,nodead][@target] Pummel\""
+      }
+    ],
+    "actionLineSyntax": {
+      "description": "Each action is: spell_name[.cast_target],modifier=value,...,if=condition",
+      "examples": [
+        "fireball,if=target.exists",
+        "shield_wall.player,if=player.health.pct<30",
+        "blizzard.cursor,if=active_enemies>=3",
+        "wind_shear.focus,range_check=focus,if=focus.casting.interruptible",
+        "call_action_list,name=aoe,if=active_enemies>=3",
+        "run_action_list,name=single_target"
+      ]
+    },
+    "castTargets": [
+      {
+        "name": ".player",
+        "description": "Cast on self (@player macro).",
+        "example": "shield_wall.player"
+      },
+      {
+        "name": ".cursor",
+        "description": "Cast at cursor position (ground targeting).",
+        "example": "blizzard.cursor"
+      },
+      {
+        "name": ".focus",
+        "description": "Cast on focus target.",
+        "example": "wind_shear.focus"
+      },
+      {
+        "name": ".mouseover",
+        "description": "Cast on mouseover target.",
+        "example": "rejuvenation.mouseover"
+      }
+    ],
+    "specialActions": [
+      {
+        "name": "call_action_list,name=LIST",
+        "description": "Execute named list, then continue current list."
+      },
+      {
+        "name": "run_action_list,name=LIST",
+        "description": "Execute named list, then restart rotation from top."
+      },
+      {
+        "name": "return",
+        "description": "Stop processing current list (use with if= to conditionally skip)."
+      }
+    ]
+  },
+  "stepModifiers": [
+    {
+      "name": "if",
+      "type": "expression",
+      "description": "SimC expression condition. Step only runs when this is true.",
+      "example": "fireball,if=!player.moving&target.exists"
+    },
+    {
+      "name": "range_check",
+      "type": "enum",
+      "values": [
+        "target",
+        "mouseover",
+        "focus",
+        "none",
+        "mob_count_8y",
+        "mob_count_40y",
+        "SPELL_NAME"
+      ],
+      "default": "target",
+      "description": "Which unit to range-check. Use 'none' for self-buffs or ground targeting.",
+      "example": "shield_wall,range_check=none,if=health.pct<30"
+    },
+    {
+      "name": "casting_check",
+      "type": "string",
+      "values": [
+        "none",
+        "any",
+        "SPELL_NAME"
+      ],
+      "description": "Require player to be casting. 'any' = any cast, or specify a spell. Skips isCurrentSpell guard.",
+      "example": "fire_breath,casting_check=fire_breath,if=empower_stage>=2"
+    },
+    {
+      "name": "ignore_usable",
+      "type": "bool",
+      "default": false,
+      "description": "Skip usability check (cooldown + resource). Use for empowered spells.",
+      "example": "fire_breath,ignore_usable=true"
+    },
+    {
+      "name": "ignore_cooldown",
+      "type": "bool",
+      "default": false,
+      "description": "Skip only the cooldown check.",
+      "example": "spell,ignore_cooldown=true"
+    },
+    {
+      "name": "ignore_movement",
+      "type": "bool",
+      "default": false,
+      "description": "Allow this cast-time spell while moving.",
+      "example": "scorch,ignore_movement=true,if=player.moving"
+    },
+    {
+      "name": "ignore_queue",
+      "type": "bool",
+      "default": false,
+      "description": "Skip isCurrentSpell guard, allowing re-pressing to queue same spell. Use with interrupt for filler spam.",
+      "example": "living_flame,interrupt=true,ignore_queue=true"
+    },
+    {
+      "name": "ignore_blocked",
+      "type": "bool",
+      "default": false,
+      "description": "Bypass the full block gate: Enabled=off/block, CDs toggle off, and TTD gate are all ignored. Use sparingly — overrides the user's explicit disable/block.",
+      "example": "forced_spell,ignore_blocked=true,if=buff.important.up"
+    },
+    {
+      "name": "ignore_cds_toggle",
+      "type": "bool",
+      "default": false,
+      "description": "Bypass the block only when the reason is the global CDs toggle being off. User-disabled and TTD-gated spells still block. Pair with cooldown.X.is_cooldown so the line explicitly opts into firing a CD.",
+      "example": "big_cd,ignore_cds_toggle=true,if=cooldown.big_cd.is_cooldown & cooldown_bypass.big_cd.ready"
+    },
+    {
+      "name": "interrupt",
+      "type": "bool",
+      "default": false,
+      "description": "Can interrupt current cast to use this spell.",
+      "example": "counterspell,interrupt=true,if=target.casting.interruptible"
+    },
+    {
+      "name": "after",
+      "type": "number",
+      "description": "Wait N milliseconds after condition becomes true before executing. Timer resets if condition goes false.",
+      "example": "spell,after=50,if=buff.test.up"
+    },
+    {
+      "name": "delay",
+      "type": "number",
+      "description": "Minimum milliseconds between presses of this spell.",
+      "example": "spell,delay=100"
+    },
+    {
+      "name": "global_delay",
+      "type": "number",
+      "description": "Block ALL spells for N ms after pressing (for channels that need time to register).",
+      "example": "mind_flay,global_delay=200"
+    },
+    {
+      "name": "cycle",
+      "type": "string",
+      "values": [
+        "members",
+        "tanks",
+        "healers",
+        "dps",
+        "party",
+        "config.NAME"
+      ],
+      "description": "Iterate group members. Step runs on lowest-HP match.",
+      "example": "renew,cycle=members,if=cycle.buff.renew.down"
+    },
+    {
+      "name": "cycle_order",
+      "type": "string",
+      "values": [
+        "health",
+        "health.pct",
+        "player_first",
+        "buff.SPELL.remains",
+        "buff.SPELL.remains.any",
+        "debuff.SPELL.remains",
+        "debuff.SPELL.remains.any"
+      ],
+      "default": "health",
+      "description": "Override cycle iteration order. Default (health) sorts by raw HP ascending so squishy low-max-HP members come first (flat-damage triage); a 200k clothie outranks a 600k tank at the same HP%. Use health.pct for HP%-ascending order, player_first to check the player first, or buff/debuff.SPELL.remains to sort by aura duration ascending.",
+      "example": "renew,cycle=members,cycle_order=buff.renew.remains,if=cycle.buff.renew.remains<5"
+    },
+    {
+      "name": "target",
+      "type": "string",
+      "values": [
+        "lowest",
+        "tanks.lowest",
+        "healers.lowest",
+        "dps.lowest"
+      ],
+      "description": "Cast on specific group member by role/health.",
+      "example": "heal,target=lowest,if=group.lowest.health.pct<50"
+    },
+    {
+      "name": "override",
+      "type": "string",
+      "description": "Use another spell's keybind for pressing.",
+      "example": "spell_alias,override=actual_spell"
+    },
+    {
+      "name": "empower_to",
+      "type": "number",
+      "description": "Auto-handle empowered spell: press to start empowering, press again at stage N to fire. Replaces manual casting_check+ignore_usable+ignore_cooldown+empower_stage workaround.",
+      "example": "consumption,empower_to=1,if=!buff.dancing_rune_weapon.up"
+    },
+    {
+      "name": "hotkey",
+      "type": "number",
+      "description": "Override keybind scan code.",
+      "example": "spell,hotkey=49"
+    },
+    {
+      "name": "modifier",
+      "type": "number",
+      "description": "Override key modifier (16=shift, 17=ctrl, 18=alt).",
+      "example": "spell,hotkey=49,modifier=16"
+    },
+    {
+      "name": "resource",
+      "type": "string",
+      "values": [
+        "holy_power",
+        "runic_power",
+        "energy",
+        "rage",
+        "focus",
+        "combo_points",
+        "runes",
+        "soul_shards",
+        "lunar_power",
+        "maelstrom",
+        "chi",
+        "insanity",
+        "arcane_charges",
+        "fury",
+        "pain",
+        "essence"
+      ],
+      "description": "Used with pool_resource: explicitly name the resource to reserve. All steps below this line that cost this resource will be skipped while the pool_resource condition is true.",
+      "example": "pool_resource,resource=holy_power,if=raid.dead"
+    },
+    {
+      "name": "for_next",
+      "type": "number",
+      "description": "Used with pool_resource: auto-detect the resource to reserve from the next N spell steps in the list. The target steps are exempt from being blocked themselves.",
+      "example": "pool_resource,for_next=1,if=raid.dead"
+    },
+    {
+      "name": "off_gcd",
+      "type": "bool",
+      "default": false,
+      "description": "Mark step as off-GCD. Evaluated during GCD window and displayed as split icon overlay.",
+      "example": "ignore_pain,off_gcd=true,if=rage>=40"
+    },
+    {
+      "name": "line_cd",
+      "type": "number",
+      "description": "Per-line cooldown in seconds. Prevents re-evaluation of this step for the specified duration after it activates.",
+      "example": "spell,line_cd=10,if=condition"
+    },
+    {
+      "name": "snapshot",
+      "type": "bool",
+      "default": false,
+      "description": "Auto-capture a diagnostic snapshot when this step is suggested. File named SpellName_YYYYMMDD_HHMMSS.log with full cache + rotation trace. Fires once per suggestion, resets when a different spell is suggested.",
+      "example": "fireball,snapshot=true,if=buff.heating_up.up"
+    }
+  ],
+  "actionTypes": [
+    {
+      "name": "trinket1",
+      "description": "Use trinket in slot 1."
+    },
+    {
+      "name": "trinket2",
+      "description": "Use trinket in slot 2."
+    },
+    {
+      "name": "attack_target",
+      "description": "Start auto-attacking the target."
+    },
+    {
+      "name": "interact_target",
+      "description": "Interact with target."
+    },
+    {
+      "name": "stop_casting",
+      "description": "Cancel current cast."
+    },
+    {
+      "name": "loot_a_rang",
+      "description": "Use Loot-A-Rang."
+    },
+    {
+      "name": "healthstone",
+      "description": "Use Healthstone."
+    },
+    {
+      "name": "augment_rune",
+      "description": "Use Augment Rune."
+    },
+    {
+      "name": "health_potion",
+      "description": "Use Health Potion."
+    },
+    {
+      "name": "mana_potion",
+      "description": "Use Mana Potion."
+    },
+    {
+      "name": "weapon_on_use",
+      "description": "Activate weapon on-use effect."
+    },
+    {
+      "name": "wrist_on_use",
+      "description": "Activate wrist on-use effect."
+    },
+    {
+      "name": "helm_on_use",
+      "description": "Activate helm on-use effect."
+    },
+    {
+      "name": "cloak_on_use",
+      "description": "Activate cloak on-use effect."
+    },
+    {
+      "name": "belt_on_use",
+      "description": "Activate belt on-use effect."
+    },
+    {
+      "name": "target_mouseover",
+      "description": "Target the mouseover unit."
+    },
+    {
+      "name": "interact_mouseover",
+      "description": "Interact with mouseover unit."
+    },
+    {
+      "name": "target_focus",
+      "description": "Target the focus unit."
+    },
+    {
+      "name": "focus_target",
+      "description": "Set current target as focus."
+    },
+    {
+      "name": "focus_mouseover",
+      "description": "Set mouseover as focus."
+    },
+    {
+      "name": "target_enemy",
+      "description": "Target nearest enemy."
+    },
+    {
+      "name": "one_button_assist",
+      "description": "Press the one-button assistant keybind directly."
+    },
+    {
+      "name": "one_button_assist_lookup",
+      "description": "Look up and press the keybind for the spell suggested by the one-button assistant."
+    },
+    {
+      "name": "pool_resource",
+      "description": "Resource reservation gate. When its condition is true, marks a resource as reserved so lower-priority steps that would spend it are skipped. Use resource= to name the resource explicitly, or for_next=N to auto-detect it from the next N spell steps. The directly targeted spell (for_next) is exempt from the block. Never produces a suggestion — only controls what fires below it.",
+      "example": "pool_resource,for_next=1,if=raid.dead\nlay_on_hands,if=raid.dead&holy_power>=5"
+    }
+  ]
+}
