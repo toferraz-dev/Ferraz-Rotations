@@ -71,6 +71,15 @@ entry: main
 # simulation.
 # =============================================================================
 config:
+  # Build stamp, display-only. Simia has no expression that reads the `version:`
+  # and `patch:` fields at the top of the file, so this text is a manual mirror
+  # of them — update all three together.
+  about:
+    section: "Info"
+    type: note
+    label: "Rotation Info"
+    text: "Last update: 2026-08-13   |   Patch: 12.1   |   Script version: 1.0"
+
   # The exact string every number in this file was measured against. Changing
   # the build invalidates the AP floors and the Incarnation alignment.
   recommended_talents:
