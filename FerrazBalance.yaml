@@ -46,6 +46,14 @@ config:
     max: 90
     default: 75
 
+  # === AOE CONFIGURATIONS ===
+  enable_mouseover_dots:
+    label: "Spread DoTs on Mouseover"
+    section: "AoE"
+    type: checkbox
+    default: true
+    description: "In AoE, suggests Moonfire/Sunfire on the mouseover unit while enemies near the target are missing the DoT. Spreading the DoTs is the single largest AoE gain."
+
   # === COOLDOWN CONFIGURATIONS ===
   burst_toggle:
     label: "Burst (Inc + Trinkets + Pot)"
@@ -59,19 +67,19 @@ config:
     label: "Auto Trinket 1 (Before Incarnation)"
     section: "Trinkets"
     type: checkbox
-    default: false
+    default: true
 
   use_trinket_2:
     label: "Auto Trinket 2 (Before Incarnation)"
     section: "Trinkets"
     type: checkbox
-    default: false
+    default: true
 
   use_potion:
     label: "Auto Offensive Potion"
     section: "Trinkets"
     type: checkbox
-    default: false
+    default: true
 
   # === TIME TO DIE (TTD) CONFIGURATIONS ===
   ttd_incarnation:
@@ -171,6 +179,14 @@ lists:
     - mark_of_the_wild,range_check=none,if=(buff.mark_of_the_wild.down.any|action.mark_of_the_wild.overlayed)&lastcast.mark_of_the_wild>=10
     - heart_of_the_wild,if=config.enable_hotw&group.lowest.health.pct<config.hotw_hp_threshold&!buff.heart_of_the_wild.up
 
+  # Spreads the DoTs onto the mouseover unit without ever changing target.
+  # Simia has no debuff expressions for the mouseover unit, so the gate is the
+  # cluster: only suggest while an enemy near the target is missing the DoT, with
+  # a short lockout so the same mob is not dotted twice in a row.
+  mouseover_dots:
+    - sunfire.mouseover,name="Sunfire Mouseover",if=config.enable_mouseover_dots&mouseover.exists&mouseover.enemy&mouseover.attackable&!mouseover.dead&mouseover.range<=40&cluster.debuff.sunfire.count<enemies.around_target&lastcast.sunfire>=1.5
+    - moonfire.mouseover,name="Moonfire Mouseover",if=config.enable_mouseover_dots&mouseover.exists&mouseover.enemy&mouseover.attackable&!mouseover.dead&mouseover.range<=40&active_enemies<6&cluster.debuff.moonfire.count<enemies.around_target&lastcast.moonfire>=1.5
+
   # Moving ST Rotation — Instant casts only: DoTs -> Starsurge -> Fury of Elune -> Fillers
   moving_st:
     - moonfire,if=debuff.moonfire.remains<2|debuff.moonfire.refreshable
@@ -217,7 +233,10 @@ lists:
     # Spends AP — prioritizes free procs (such as Starweaver or Touch the Cosmos)
     - starfall,if=buff.starweavers_weft.up|buff.touch_the_cosmos.react
     - starsurge,if=buff.starweavers_warp.up|buff.touch_the_cosmos.react
-    - starsurge,if=astral_power>60
+    # Rattle the Stars only discounts the spender while an Eclipse is up, so the
+    # AP floor follows the Eclipse: spend early inside it, hold near the cap outside.
+    - starsurge,if=!var.eclipse_down&astral_power>=50
+    - starsurge,if=var.eclipse_down&astral_power.deficit<20
     # Fillers — Wrath if out of Eclipse, Starfire during Lunar Eclipse
     - wrath,if=var.eclipse_down&active_enemies<=1
     - starfire
@@ -229,11 +248,15 @@ lists:
     # Spreads DoTs — Moonfire first (grouping phase), then Sunfire
     - moonfire,if=active_enemies<6&debuff.moonfire.refreshable
     - sunfire,if=debuff.sunfire.refreshable
+    # Target is dotted; hand the leftovers to the mouseover
+    - call_action_list,name=mouseover_dots
     - lunar_eclipse,if=var.eclipse_down&cooldown.lunar_eclipse.ready&!var.inc_ready_to_cast
     - incarnation_chosen_of_elune,if=var.inc_ready_to_cast
     - fury_of_elune,if=var.foe_ttd_ok
     - starfall,if=buff.starweavers_weft.up|buff.touch_the_cosmos.react
-    - starfall,if=(astral_power>50)&var.starfall_ttd_ok
+    # Same Rattle the Stars floor as the ST list, one step lower for Starfall
+    - starfall,if=!var.eclipse_down&astral_power>=40&var.starfall_ttd_ok
+    - starfall,if=var.eclipse_down&astral_power.deficit<20&var.starfall_ttd_ok
     - starsurge,if=buff.starfall.up&(buff.starweavers_warp.up|buff.touch_the_cosmos.react)
     - starfire
 
