@@ -48,7 +48,7 @@
 #   1307881 Gory Fur        — three different spells share that display name
 # =============================================================================
 
-version: 5
+version: 1.0
 patch: "12.1"
 spec: 104
 name: Guardian Druid Ferraz (12.1)
@@ -102,6 +102,16 @@ spell_overrides:
 # None of the defensive defaults below have been validated by simulation.
 # =============================================================================
 config:
+  # The exact string every number in this file was measured against — it is the
+  # talents half of sim/Tassiana_guardian.simc, the profile the A/B harness runs.
+  # Changing the build invalidates the rage numbers, the Thrash stack branch and
+  # the Heart of the Wild weave.
+  recommended_talents:
+    section: "Talents"
+    type: copy_text
+    label: "Recommended Talent String"
+    text: "CgGADBD3hSPCL9Y9gz68WcKvMAAAAAAAAAAAAgZmxsMPwMjZWMLGmZZZgZzwoJamZWmZmZmlxMAAAAAAMjlZALbzMYMLDgpAAAAbYmBYxMYAbWAYmBwA"
+
   # === DEFENSIVE HP THRESHOLDS ===
   # Reactive floors: fire the cooldown once health has already dropped.
   survival_instincts_hp_pct:
