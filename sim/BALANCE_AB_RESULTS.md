@@ -71,6 +71,32 @@ Confirmações do desenho: alinhar Incarnation com Fury of Elune, segurar o Ecli
 quando o Incarnation está pronto, DoTs antes dos cooldowns e limiar de AoE em 2 alvos
 são todos a escolha certa — cada alternativa perde DPS.
 
+## Thorn Bloom (racial Harronir)
+
+O perfil declara `night_elf` (é o do MID1, mantido para o número continuar comparável
+com o APL padrão). Para medir a racial, rode com `--race harronir`.
+
+DungeonSlice, sobre o `ferraz_v2`:
+
+| posicionamento | delta |
+|---|---|
+| puro no CD | +0.02% ~ |
+| só com 2+ alvos | -0.15% ~ |
+| só dentro do burst | -0.21% ~ |
+| burst ou 3+ alvos | -0.41% |
+
+Em 5 alvos (Patchwerk) fica em **-0.24%**. O dano dela é 391 pDPS, ou **0.13%** do
+total, e o GCD de 0.5s custa mais que isso. **Não é botão de dano.**
+
+O que ela é: cura. Os coeficientes são 0.65×SP direto + 0.15×SP/s por 12s para até 8
+aliados, contra 0.5×SP + 0.125×SP/s de dano — ~5x mais cura que dano. A poça cai na
+**área do alvo** (10y), então alcança quem está em cima do pack: tank e melee.
+
+Aplicado como cura no `heal_support`, no mesmo formato do FerrazRestoDruid
+(`group.count(cycle.health.effective.pct<X)>=N`), com gate de alvo válido porque a poça
+precisa de um alvo para cair em cima. Sem `target.in_melee` — o Resto usa isso porque
+se cura junto; o Moonkin está a 40y e nunca passaria nesse gate.
+
 ## O que sobra de gap (~7.9% vs APL padrão)
 
 Comparando o breakdown em DungeonSlice (`ferraz_v2_md` vs padrão), a diferença está em
@@ -86,4 +112,5 @@ python sim/ab_test_balance.py --error 0.15 --style DungeonSlice
 ```
 
 Sem argumentos roda todas as variantes; `--targets N` muda o número de alvos;
+`--race harronir` troca a raça do perfil (necessário para as variantes `tb_*`);
 `ferraz ferraz_v2 simc_default` roda só as citadas.

@@ -103,6 +103,11 @@ def build(v):
     elif v['trinkets'] == 'simc':
         add('actions.trinkets=' + a('use_items', CD_ACTIVE))
         add('actions.trinkets+=/' + a('potion', CD_ACTIVE))
+    elif v['trinkets'] == 'free':
+        # Trinkets whenever ready, ignoring the burst window entirely: a 2min
+        # trinket held for a 3min Incarnation loses a use per fight.
+        add('actions.trinkets=use_items')
+        add('actions.trinkets+=/' + a('potion', CD_ACTIVE))
     elif v['trinkets'] == 'twopot':
         # Pre-pot plus a second potion at the end, which is how the SimC default
         # squeezes ~1.5 potions into a 300s fight.
@@ -111,6 +116,18 @@ def build(v):
         add('actions.trinkets+=/' + a('potion', CD_ACTIVE + '|fight_remains<=30'))
     else:  # 'off' -- the literal YAML default
         add('actions.trinkets=' + a('berserking', CD_ACTIVE))
+
+    # Thorn Bloom, the Harronir racial: 3min CD, 0.5s GCD, 10y puddle at the
+    # target area, up to 8 enemies. Only reachable with `--race harronir`.
+    thorn = {
+        'off': '',
+        'cd': 'thorn_bloom',
+        'burst': a('thorn_bloom', CD_ACTIVE),
+        'aoe': a('thorn_bloom', 'spell_targets>=2'),
+        'burst_or_aoe': a('thorn_bloom', CD_ACTIVE + '|spell_targets>=3'),
+    }[v['thorn']]
+    if thorn:
+        add('actions.trinkets+=/' + thorn)
 
     def emit(name, lines):
         """Write one action list, fixing up the '=' vs '+=/' on the first entry."""
@@ -221,7 +238,7 @@ DEFAULTS = dict(inc_foe_align=True, eclipse_yields_to_inc=True, cds_first=False,
                 starweaver_lines=True, ss_ap=SS_AP, sf_ap=SF_AP, wrath_filler=True,
                 foe_gate='', trinkets='ferraz', aoe_threshold=2, opener_simc=False,
                 eclipse_timings=False, ascendant_fires=False, spender='floor',
-                multidot=False, prepot=False, st_starfall='off')
+                multidot=False, prepot=False, st_starfall='off', thorn='off')
 
 VARIANTS = {
     'ferraz':        ({}, 'A rotacao atual do FerrazBalance.yaml'),
@@ -239,6 +256,8 @@ VARIANTS = {
                       'Fury of Elune com o gate do APL padrao'),
     'no_trinkets':   (dict(trinkets='off'), 'Trinkets/pocao desligados, como o default do YAML'),
     'trinkets_simc': (dict(trinkets='simc'), 'Trinkets sem exigir Fury of Elune em CD'),
+    'trinkets_free': (dict(spender='approx', trinkets='free'), 'Trinkets sempre que prontos, fora do burst'),
+    'v2_trinkets_burst': (dict(spender='approx'), 'ferraz_v2: trinkets presos ao burst (atual)'),
     'aoe_at_3':      (dict(aoe_threshold=3), 'So entra na lista aoe com 3+ alvos'),
     'aoe_at_4':      (dict(aoe_threshold=4), 'So entra na lista aoe com 4+ alvos'),
     'opener_simc':   (dict(opener_simc=True), 'Tres Wraths de precombat, como o SimC'),
@@ -266,6 +285,11 @@ VARIANTS = {
     'ferraz_v2':     (dict(spender='approx'), 'A rotacao com as mudancas aplicadas no YAML'),
     'ferraz_v2_md':  (dict(spender='approx', multidot=True),
                       'ferraz_v2 + espalhar DoTs (o que a lista de mouseover busca)'),
+    # --- Thorn Bloom (racial Harronir; exige --race harronir) ----------------
+    'tb_cd':         (dict(spender='approx', thorn='cd'), 'ferraz_v2 + Thorn Bloom puro no CD'),
+    'tb_burst':      (dict(spender='approx', thorn='burst'), 'Thorn Bloom so dentro do burst'),
+    'tb_aoe':        (dict(spender='approx', thorn='aoe'), 'Thorn Bloom so com 2+ alvos'),
+    'tb_mixed':      (dict(spender='approx', thorn='burst_or_aoe'), 'Thorn Bloom no burst ou com 3+ alvos'),
     'v2_no_wrath':   (dict(spender='approx', wrath_filler=False),
                       'ferraz_v2 sem o Wrath filler'),
     'patchwerk_only': (dict(st_starfall='cosmos', spender='approx', wrath_filler=False),
@@ -276,17 +300,21 @@ VARIANTS = {
 }
 
 
-def run(name, error, enemies, style):
+def run(name, error, enemies, style, race=''):
     os.makedirs(APL_DIR, exist_ok=True)
     os.makedirs(OUT_DIR, exist_ok=True)
     apl = os.path.join(APL_DIR, '%s.simc' % name)
-    js = os.path.join(OUT_DIR, '%s_%dt_%s.json' % (name, enemies, style or 'patchwerk'))
+    js = os.path.join(OUT_DIR, '%s_%dt_%s%s.json' % (name, enemies, style or 'patchwerk',
+                                                     '_' + race if race else ''))
     if name != 'simc_default':
         v = dict(DEFAULTS)
         v.update(VARIANTS[name][0])
         with open(apl, 'w', encoding='utf-8') as fh:
             fh.write(build(v))
     cmd = [SIMC, PROFILE]
+    if race:
+        # Must come after the profile so it overrides the race it declares.
+        cmd.append('race=' + race)
     if name != 'simc_default':
         cmd.append(apl)
     cmd += ['target_error=%s' % error, 'threads=8', 'json2=' + js,
@@ -308,11 +336,14 @@ def main(argv):
     error = '0.2'
     enemies = 1
     style = ''
+    race = ''
     names = []
     i = 0
     while i < len(argv):
         if argv[i] == '--error':
             error = argv[i + 1]; i += 2; continue
+        if argv[i] == '--race':
+            race = argv[i + 1]; i += 2; continue
         if argv[i] == '--style':
             style = argv[i + 1]; i += 2; continue
         if argv[i] == '--targets':
@@ -325,7 +356,7 @@ def main(argv):
     for n in names:
         sys.stdout.write('running %-16s ... ' % n)
         sys.stdout.flush()
-        r = run(n, error, enemies, style)
+        r = run(n, error, enemies, style, race)
         results[n] = r
         print('%.0f DPS' % r[0] if r else 'failed')
 
