@@ -1,0 +1,306 @@
+# =============================================================================
+# Guardian Druid — 104 Core Engine (patch 12.1, Midnight)
+# =============================================================================
+# Priority (single target):
+#   Moonfire uptime -> Thrash 3-5 stacks -> Moonfire -> Mangle -> Thrash
+#   -> Rage into Maul/Ironfur -> Frenzied Regen -> Moonfire on Galactic Guardian
+#   -> Barkskin / Incarnation -> Swipe filler
+# AoE is the same list with Thrash and Mangle ahead of Moonfire.
+#
+# Build assumptions — these are untalented, so they are gone from the APL:
+#   Red Moon, Convoke the Spirits, Sundering Roar, Ravage, Bristling Fur,
+#   Fluid Form, Moonkin Form, and the Rake/Rip/Shred/Ferocious Bite catweave.
+#   Red Moon's slot in the priority is taken over by Moonfire.
+#
+# Numeric spell IDs are used only where the name is ambiguous between forms:
+#   77758   = Thrash (Bear)   — the name also matches Thrash (Cat) 106832
+#   213764  = Swipe (Bear)    — the name also matches Swipe (Cat) 106785
+#   1261868 = Heart of the Wild while in Cat Form (the button morphs)
+# =============================================================================
+
+version: 5
+patch: "12.1"
+spec: 104
+name: Guardian Druid Ferraz (12.1)
+author: Ferraz
+description: |
+  Guardian Druid 104 core engine rebuilt for 12.1.
+  Moonfire replaces Red Moon, Maul/Ironfur split by predicted incoming damage,
+  Heart of the Wild weaves through Cat Form, ST/AoE split on 8y enemy count.
+entry: main
+
+# Global conditions AND-ed into every occurrence of the spell.
+spell_overrides:
+  # Maul is deliberately NOT overridden with "!talent.lunar_calling.enabled".
+  # That override would delete the rage spender entirely on Lunar Calling builds.
+  incarnation_guardian_of_ursoc: "!buff.incarnation_guardian_of_ursoc.up"
+  mangle: "buff.bear_form.down|rage<=30&buff.gore.up&cooldown.77758.down&enemies.8y<=3"
+  moonfire: "!talent.lunar_calling.enabled|cooldown.77758.down|enemies.8y=0"
+  barkskin: "(!player.inmythicplus|fight_remains>=20|player.on_last_boss)&(variable.tank_buster_remains<=1|variable.tank_buster_casting|variable.tank_buster_remains>34)"
+
+config:
+  # === DEFENSIVE HP THRESHOLDS ===
+  survival_instincts_hp_pct:
+    section: "Defensive HP Percentage"
+    label: "Survival Instincts HP%"
+    type: slider
+    min: 0
+    max: 100
+    default: 40
+  frenzied_regeneration_hp_pct:
+    section: "Defensive HP Percentage"
+    label: "Frenzied Regeneration HP%"
+    type: slider
+    min: 0
+    max: 100
+    default: 75
+  barkskin_hp_pct:
+    section: "Defensive HP Percentage"
+    label: "Barkskin HP%"
+    type: slider
+    min: 0
+    max: 100
+    default: 50
+
+  # === PREDICTED INCOMING DAMAGE THRESHOLDS ===
+  # Measured as % of effective health after currently active defensives.
+  survival_instincts_dmg_pct:
+    section: "Defensives Prediction Damage"
+    label: "Survival Instincts (Incoming Dmg%)"
+    type: slider
+    min: 0
+    max: 100
+    default: 55
+  barkskin_dmg_pct:
+    section: "Defensives Prediction Damage"
+    label: "Barkskin (Incoming Dmg%)"
+    type: slider
+    min: 0
+    max: 100
+    default: 40
+  ironfur_dmg_pct:
+    section: "Defensives Prediction Damage"
+    label: "Ironfur over Maul (Incoming Dmg%)"
+    type: slider
+    min: 0
+    max: 100
+    default: 20
+
+  # === RAGE SPENDING ===
+  rage_deficit_maul:
+    label: "Rage Deficit (Maul)"
+    type: slider
+    min: 1
+    max: 100
+    default: 20
+    description: "Maul fires once rage is within this much of the cap. Lower = more aggressive."
+
+  # === COOLDOWN CONFIGURATIONS ===
+  auto_hotw:
+    section: "Cooldowns"
+    label: "Auto Heart of the Wild"
+    type: checkbox
+    default: true
+    description: "Weave Cat Form -> Heart of the Wild -> Bear Form automatically when HotW is ready."
+  hotw_delay:
+    section: "Cooldowns"
+    label: "Heart of the Wild (delay after pull)"
+    type: slider
+    min: 0
+    max: 30
+    default: 8
+    description: "Seconds of combat required before leaving Bear Form for the HotW weave."
+  hotw_hp_pct:
+    section: "Cooldowns"
+    label: "Heart of the Wild (minimum HP%)"
+    type: slider
+    min: 0
+    max: 100
+    default: 80
+    description: "Stay in Bear Form below this health. Leaving Bear drops bear armor and stamina."
+  lunar_beam_moving_check:
+    label: "Lunar Beam (Moving Check)"
+    type: checkbox
+    default: true
+
+  # === MOUSEOVER CONFIGURATIONS ===
+  MO_moonfire:
+    label: "Moonfire on MO"
+    type: checkbox
+    default: true
+  allow_pull_with_mo:
+    label: "Pull with MO"
+    type: checkbox
+    default: true
+
+variables:
+  # 3+ enemies within Thrash/Swipe range, and the Simia AoE toggle is on.
+  aoe_mode: enemies.8y>=3&state.aoe
+  # True when a big hit is predicted — routes rage into Ironfur instead of Maul.
+  heavy_incoming: incoming.mitigated.pct>=config.ironfur_dmg_pct
+  # Gate for the Heart of the Wild weave. Leaving Bear Form drops bear armor and
+  # stamina, so the fight has to be established and safe first: combat running for
+  # the configured delay, health above the floor, Ironfur already up, and no burst
+  # window in progress.
+  hotw_weave: config.auto_hotw&talent.heart_of_the_wild&cooldown_bypass.heart_of_the_wild.ready&target.valid&target.attackable&player.combat&combat.time>=config.hotw_delay&health.pct>=config.hotw_hp_pct&buff.ironfur.up&!buff.incarnation_guardian_of_ursoc.up&!buff.berserk.up
+
+lists:
+  # ===========================================================================
+  # Tank buster prediction — feeds the barkskin spell_override above.
+  # Reads the native Encounter Timeline (C_EncounterTimeline, 12.0+) instead of
+  # hardcoded boss ability names, which only ever resolved on their own tier.
+  # ===========================================================================
+  set_tank_var:
+    - variable,name=tank_buster_remains,value=999
+    - variable,name=tank_buster_remains,value=encounter.next_tank.remains,if=encounter.next_tank.up&encounter.next_tank.severity>=1&encounter.next_tank.remains<variable.tank_buster_remains
+    - variable,name=tank_buster_casting,value=encounter.next_tank.up&encounter.next_tank.remains<=1
+
+  # ===========================================================================
+  # Defensives — predicted damage first, then reactive HP thresholds.
+  # ===========================================================================
+  defensives:
+    # Pre-fire on a predicted incoming hit (% of effective HP)
+    - barkskin,range_check=none,if=incoming.mitigated.pct>=config.barkskin_dmg_pct
+    - survival_instincts,range_check=none,if=incoming.mitigated.pct>=config.survival_instincts_dmg_pct
+
+    # React when already low
+    - survival_instincts,range_check=none,if=health.pct<=config.survival_instincts_hp_pct
+    - frenzied_regeneration,range_check=none,if=health.pct<=config.frenzied_regeneration_hp_pct&buff.frenzied_regeneration.down
+    - barkskin,range_check=none,if=health.pct<=config.barkskin_hp_pct
+
+  # ===========================================================================
+  # Cooldowns — Barkskin -> Lunar Beam -> Berserk/Incarnation -> racials.
+  # ===========================================================================
+  cooldowns:
+    - barkskin,if=buff.bear_form.up
+
+    # Lunar Beam straight on cooldown, no Incarnation/Berserk sync.
+    - lunar_beam,if=target.valid&(!config.lunar_beam_moving_check|player.moving.time<=1)
+
+    # Berserk and Incarnation are mutually exclusive talents, and the
+    # incarnation spell_override already blocks a recast while the buff is up.
+    - berserk,if=target.valid
+    - incarnation_guardian_of_ursoc,if=target.valid
+    - wild_guardian,if=buff.lunar_beam.up
+
+    - blood_fury
+    - berserking
+    - fireblood
+    - ancestral_call
+
+  # ===========================================================================
+  # Bear — shared layer for form and rage spending.
+  # Runs before st/aoe, which carry the damage priority.
+  # ===========================================================================
+  bear:
+    - bear_form,range_check=none,if=!buff.bear_form.up&!buff.cat_form.up
+    - mangle,if=rage<=30
+    - moonfire,name="Moonfire (GG proc)",if=buff.galactic_guardian.up&target.valid
+
+    # Ironfur defensively, Maul offensively when no big hit is predicted.
+    - ironfur,name="Ironfur (uptime)",if=buff.ironfur.remains<2&player.combat
+    - ironfur,name="Ironfur (predicted dmg)",if=var.heavy_incoming
+    - ironfur,name="Ironfur (overcap)",if=rage>=80
+    - maul,name="Maul",if=buff.ironfur.up&!var.heavy_incoming&rage.deficit<=config.rage_deficit_maul
+    - raze,name="Raze",if=talent.raze.enabled&enemies.8y>=3&buff.ironfur.up&!var.heavy_incoming&rage.deficit<=config.rage_deficit_maul
+
+  # ===========================================================================
+  # Single target — also covers the opener.
+  # ===========================================================================
+  st:
+    - moonfire,name="Moonfire (maintain)",if=target.valid&dot.moonfire.refreshable
+    - 77758,name="Thrash (Lunar Calling)",range_check=mob_count_8y,if=cooldown.77758.ready&talent.lunar_calling.enabled
+
+    # Keep this as a real if=. target_if is NOT a supported step modifier here,
+    # so writing it that way silently drops the condition and Thrash spams.
+    - 77758,name="Thrash (stacks)",range_check=mob_count_8y,if=cooldown.77758.ready&(dot.thrash.refreshable|dot.thrash.stack<5&talent.flashing_claws.rank=2|dot.thrash.stack<4&talent.flashing_claws.rank=1|dot.thrash.stack<3&!talent.flashing_claws.enabled)
+
+    # Red Moon's slot in the original priority, now Moonfire.
+    - moonfire,name="Moonfire (ST prio)",if=target.valid&cooldown.mangle.remains<=gcd
+
+    - mangle,name="Mangle (burst)",if=(buff.incarnation_guardian_of_ursoc.up|buff.berserk.up)&buff.ursine_potential.stack<6&talent.wildpower_surge.enabled
+    - mangle,name="Mangle",if=(buff.incarnation_guardian_of_ursoc.up|buff.berserk.up)|((rage<88)&!talent.fount_of_strength.enabled)|((rage<83)&!talent.fount_of_strength.enabled&talent.soul_of_the_forest.enabled)|((rage<108)&talent.fount_of_strength.enabled)|((rage<103)&talent.fount_of_strength.enabled&talent.soul_of_the_forest.enabled)
+    - 77758,name="Thrash (CD)",range_check=mob_count_8y,if=cooldown.77758.ready
+    - moonfire,name="Moonfire (Lunation)",if=talent.lunation.enabled&buff.bear_form.up&target.valid
+    - 213764,name="Swipe (filler)"
+
+  # ===========================================================================
+  # AoE — same priority, minus the extra Moonfire slot, and with Thrash and
+  # Mangle ahead of Moonfire. Entered at 3+ enemies with the AoE toggle on.
+  # ===========================================================================
+  aoe:
+    - 77758,name="Thrash (Lunar Calling)",range_check=mob_count_8y,if=cooldown.77758.ready&talent.lunar_calling.enabled
+    - 77758,name="Thrash (stacks)",range_check=mob_count_8y,if=cooldown.77758.ready&(dot.thrash.refreshable|dot.thrash.stack<5&talent.flashing_claws.rank=2|dot.thrash.stack<4&talent.flashing_claws.rank=1|dot.thrash.stack<3&!talent.flashing_claws.enabled)
+    - moonfire,name="Moonfire (maintain)",if=target.valid&dot.moonfire.refreshable
+    - mangle,name="Mangle (burst)",if=(buff.incarnation_guardian_of_ursoc.up|buff.berserk.up)&buff.ursine_potential.stack<6&talent.wildpower_surge.enabled
+    - mangle,name="Mangle",if=(buff.incarnation_guardian_of_ursoc.up|buff.berserk.up)|((rage<88)&!talent.fount_of_strength.enabled)|((rage<83)&!talent.fount_of_strength.enabled&talent.soul_of_the_forest.enabled)|((rage<108)&talent.fount_of_strength.enabled)|((rage<103)&talent.fount_of_strength.enabled&talent.soul_of_the_forest.enabled)
+    - 77758,name="Thrash (CD)",range_check=mob_count_8y,if=cooldown.77758.ready
+    - 213764,name="Swipe (filler)"
+
+  # ===========================================================================
+  # Main entry point.
+  # ===========================================================================
+  main:
+    # --- Engine plumbing (must stay at the top) ---
+    - call_action_list,name=set_tank_var
+    - call_action_list,name=spell_queue
+    - call_action_list,name=sanity_checks
+    - call_action_list,name=auto_target
+
+    # --- Buffs and form ---
+    - mark_of_the_wild,range_check=none,if=(buff.mark_of_the_wild.down.any|action.mark_of_the_wild.overlayed)&lastcast.mark_of_the_wild>=10
+    - bear_form,range_check=none,if=buff.bear_form.down&!buff.cat_form.up&(target.attackable|enemies.40y)
+
+    # --- Heart of the Wild weave ---
+    # No Fluid Form, so Cat Form is cast explicitly. Casting HotW puts it on
+    # cooldown, and that is what drives the return to Bear on the next GCD.
+    # Cast by name and by the cat-form morph id — whichever the client accepts
+    # fires, the other is a no-op.
+    - cat_form,name="Cat Form (HotW)",range_check=none,if=var.hotw_weave&buff.cat_form.down
+    - heart_of_the_wild,name="Heart of the Wild",range_check=none,ignore_cds_toggle=true,if=buff.cat_form.up&cooldown_bypass.heart_of_the_wild.ready&target.valid&target.attackable
+    - 1261868,name="Heart of the Wild (cat morph)",range_check=none,ignore_cds_toggle=true,if=buff.cat_form.up&cooldown_bypass.heart_of_the_wild.ready&target.valid&target.attackable
+    # Return to Bear once HotW is spent. The health and no-target clauses are the
+    # escape hatches: if the cast is blocked or the target is gone, this still
+    # gets us out of Cat Form instead of parking there with HotW still ready.
+    - bear_form,name="Bear Form (post-HotW)",range_check=none,if=buff.cat_form.up&(!cooldown_bypass.heart_of_the_wild.ready|health.pct<config.hotw_hp_pct|!target.valid|!target.attackable)
+
+    # --- Pull ---
+    - moonfire.mouseover,if=config.MO_moonfire&config.allow_pull_with_mo&mouseover.enemy&mouseover.alive&mouseover.debuff.moonfire.down
+
+    - return,if=auto_combat.player
+
+    # --- Survival ---
+    - call_action_list,name=defensives
+
+    # --- Interrupts and crowd control ---
+    - skull_bash,if=interrupt.target.check
+    - skull_bash.mouseover,if=interrupt.mouseover.check
+    - skull_bash.focus,if=interrupt.focus.check
+    - mighty_bash,if=interrupt.cc.check
+    - incapacitating_roar,if=interrupt.stun.aoe.check
+    - quaking_palm,if=interrupt.cc.check
+    - haymaker,if=interrupt.cc.check
+    - war_stomp,if=interrupt.stun.aoe.check
+    - bull_rush,if=interrupt.stun.aoe.check
+    - tail_swipe,if=interrupt.stun.aoe.check
+
+    # --- Taunt: grab aggro when not tanking (dungeon/M+ only, never raid) ---
+    - growl,name="Taunt",if=target.threat<2&target.valid&target.threat!=-1&!player.inraid
+    - growl.mouseover,name="Taunt MO",if=mouseover.threat<2&mouseover.combat&mouseover.threat!=-1&mouseover.exists&!player.inraid
+
+    - call_action_list,name=auto_heal
+
+    # --- Items ---
+    - trinket_1,if=trinket_1.sync
+    - trinket_2,if=trinket_2.sync
+
+    # --- Off-GCD armor and ranged filler ---
+    - ironfur,delay=300,if=buff.ironfur.remains<2|rage>=80
+    - moonfire,if=!target.in_melee&buff.bear_form.up&target.valid
+    - moonfire.mouseover,if=config.MO_moonfire&mouseover.enemy&mouseover.alive&mouseover.debuff.moonfire.down&mouseover.combat
+
+    # --- Damage priority ---
+    - call_action_list,name=cooldowns
+    - call_action_list,name=bear,if=buff.bear_form.up
+    - call_action_list,name=aoe,if=buff.bear_form.up&var.aoe_mode
+    - call_action_list,name=st,if=buff.bear_form.up&!var.aoe_mode
