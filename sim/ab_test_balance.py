@@ -117,6 +117,18 @@ def build(v):
     else:  # 'off' -- the literal YAML default
         add('actions.trinkets=' + a('berserking', CD_ACTIVE))
 
+    # Heart of the Wild: for Balance it is +30% damage to every Balance spell
+    # for 45s on a 5min cooldown, plus instant Starsurge. The YAML only ever
+    # casts it as a party heal, so `off` is the current behaviour.
+    hotw = {
+        'off': '',
+        'cd': 'heart_of_the_wild',
+        'burst': a('heart_of_the_wild', CD_ACTIVE),
+        'pre_burst': a('heart_of_the_wild', 'variable.inc_ready|' + CD_ACTIVE),
+    }[v['hotw']]
+    if hotw:
+        add('actions.trinkets+=/' + hotw)
+
     # Thorn Bloom, the Harronir racial: 3min CD, 0.5s GCD, 10y puddle at the
     # target area, up to 8 enemies. Only reachable with `--race harronir`.
     thorn = {
@@ -238,7 +250,8 @@ DEFAULTS = dict(inc_foe_align=True, eclipse_yields_to_inc=True, cds_first=False,
                 starweaver_lines=True, ss_ap=SS_AP, sf_ap=SF_AP, wrath_filler=True,
                 foe_gate='', trinkets='ferraz', aoe_threshold=2, opener_simc=False,
                 eclipse_timings=False, ascendant_fires=False, spender='floor',
-                multidot=False, prepot=False, st_starfall='off', thorn='off')
+                multidot=False, prepot=False, st_starfall='off', thorn='off',
+                hotw='off')
 
 VARIANTS = {
     'ferraz':        ({}, 'A rotacao atual do FerrazBalance.yaml'),
@@ -285,6 +298,10 @@ VARIANTS = {
     'ferraz_v2':     (dict(spender='approx'), 'A rotacao com as mudancas aplicadas no YAML'),
     'ferraz_v2_md':  (dict(spender='approx', multidot=True),
                       'ferraz_v2 + espalhar DoTs (o que a lista de mouseover busca)'),
+    # --- Heart of the Wild como cooldown de dano -----------------------------
+    'hotw_cd':       (dict(spender='approx', hotw='cd'), 'HotW no CD, sem alinhar com nada'),
+    'hotw_burst':    (dict(spender='approx', hotw='burst'), 'HotW dentro do Incarnation'),
+    'hotw_pre':      (dict(spender='approx', hotw='pre_burst'), 'HotW junto/antes do Incarnation'),
     # --- Thorn Bloom (racial Harronir; exige --race harronir) ----------------
     'tb_cd':         (dict(spender='approx', thorn='cd'), 'ferraz_v2 + Thorn Bloom puro no CD'),
     'tb_burst':      (dict(spender='approx', thorn='burst'), 'Thorn Bloom so dentro do burst'),
