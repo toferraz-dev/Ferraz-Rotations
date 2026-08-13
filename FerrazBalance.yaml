@@ -78,7 +78,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-08-13   |   Patch: 12.1   |   Script version: 1.0"
+    text: "Last update: 2026-08-13 | Patch: 12.1 | Version: 1.0"
 
   # The exact string every number in this file was measured against. Changing
   # the build invalidates the AP floors and the Incarnation alignment.
