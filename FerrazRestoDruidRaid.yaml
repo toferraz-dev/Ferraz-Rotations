@@ -1,18 +1,104 @@
-version: 4.1
+# =============================================================================
+# Restoration Druid — spec 105 — patch 12.1 (Midnight)
+# Wildstalker hero tree. Built for Raid healing, not Mythic+.
+# =============================================================================
+#
+# HOW THIS FILE IS ORGANISED
+#   main                          entry point. Plumbing, OOC prep, defensives,
+#                                 cooldowns, then hands off to active healing
+#                                 and DPS weaving.
+#   out_of_combat                 Mark of the Wild, pre-pull Lifebloom/Rejuv/
+#                                 Regrowth before the pull starts.
+#   defensives                    Ironbark, Barkskin, Bear Form + Frenzied
+#                                 Regeneration.
+#   racials                       Shadowmeld aggro drop, Thorn Bloom.
+#   utility                       Root cleanse (Bear/Cat shift), Innervate.
+#   cooldowns                     Nature's Swiftness -> trinkets/potion ->
+#                                 Convoke -> Tranquility -> Swiftmend ->
+#                                 Clearcasting Regrowth.
+#   mouseover_healing_emergency   unit-frame mouseover heals, emergency-HP
+#                                 gated from main.
+#   moving                        instant-only priority while moving.
+#   active_healing                 Soul of the Forest consumption -> self
+#                                 Efflorescence/Lifebloom/Rejuvenation loop ->
+#                                 tank Lifebloom fallback -> forced HoT spread
+#                                 -> Abundance Regrowth -> Wild Growth ->
+#                                 Rejuvenation/Germination/Regrowth.
+#   ranged_dps / catweave* /       DPS weaving (Moonkin bolts, Cat Form,
+#   bearweave                     Bearweave) while the group is topped and
+#                                 healthy — entirely secondary to healing.
+#
+# HEALING PRIORITY — cooldown alignment (`cooldowns`)
+#   Nature's Swiftness -> trinkets/potion -> Convoke the Spirits (needs
+#   Abundance up, caster form) -> instant NS Regrowth -> Tranquility -> self
+#   Swiftmend (Power of the Archdruid loop) -> reactive Swiftmend (feeds Soul
+#   of the Forest / Treants) -> Clearcasting Regrowth
+#
+# HEALING PRIORITY — active healing (`active_healing`)
+#   Soul of the Forest consumption (Wild Growth/Regrowth/Germination/Rejuv)
+#   -> self Efflorescence + self Lifebloom (Everbloom) + self Rejuvenation
+#   (Photosynthesis) -> tank Lifebloom fallback (Everbloom stacks to 3) ->
+#   forced HoT spread (optional, config.raid_force_spread) -> Abundance
+#   Regrowth -> Wild Growth -> Rejuvenation -> Germination -> Regrowth
+#
+# HOW THE ORDER WAS DECIDED
+#   Unlike the Balance file, this priority is NOT SimulationCraft-validated:
+#   SimC has no raid-damage-intake or incoming-heal model, so it cannot score
+#   a healing APL. The ordering here is manual raid-healer theorycraft
+#   (HoT-efficiency, cooldown alignment, tank-safety first) reasoned from
+#   spell coefficients and Simia's own expression set — not measured by
+#   simulation. Treat every threshold and every priority call as a
+#   starting point to tune against your own raid team, not a benchmarked
+#   number.
+#
+#   The Season 2 self Efflorescence/Lifebloom/Swiftmend/Rejuvenation core loop
+#   (the current class-guide's own recommended playstyle) was cross-checked
+#   against the decoded talent string via the local SimC binary
+#   (sim/tools/simc-1210.01.a2d0577-win64/simc.exe, talents= profile field) —
+#   not guessed. Everbloom is maxed at 4/4.
+#
+# BUILD ASSUMPTIONS — talents the priority reads directly via talent.X, all
+#   confirmed present on the recommended string by decoding it through SimC:
+#   talent.germination, talent.heart_of_the_wild, talent.efflorescence,
+#   talent.everbloom, talent.photosynthesis, talent.power_of_the_archdruid.
+#   talent.fluid_form and talent.swipe are also checked but are NOT on this
+#   string — those lines are dead weight (harmless) unless the build changes.
+#
+# TALENT STRING — see config.recommended_talents below. Matches the
+#   Wildstalker raid build decoded above.
+# =============================================================================
+
+version: 1
 author: Ferraz
-patch: "12.0.5"
+patch: "12.1"
 spec: 105
 name: Ferraz Restoration Druid Raid (Wildstalker)
 description: |
   Ferraz Restoration Druid Raid (Wildstalker)
 entry: main
 
+# =============================================================================
+# CONFIG — the panel the user sees in Simia.
+# None of the healing/defensive thresholds below have been validated by
+# simulation (see header note above) — they are reasonable raid-healing
+# defaults, tune to your own raid team's damage profile.
+# =============================================================================
 config:
+  # Build stamp, display-only. Simia has no expression that reads the `version:`
+  # and `patch:` fields at the top of the file, so this text is a manual mirror
+  # of them — update all three together.
+  about:
+    section: "Info"
+    type: note
+    label: "Rotation Info"
+    text: "Last update: 2026-08-14 | Patch: 12.1 | Version: 1"
+
+  # The talent string the four talent.X checks in this file assume.
   recommended_talents:
     section: "Talents"
     type: copy_text
     label: "Recommended Talent String"
-    text: "CkGAAAAAAAAAAAAAAAAAAAAAAMjxMLz2MmZG2GGzMDjFmBAAAAAAAAAALDa2MMNzYYMLzMzMDDzMAAAAAAAAAAAAAmtZWa2mZzGjZGMzA0MAAzMAMA"
+    text: "CkGADBD3hSPCL9Y9gz68WcKvMMjxMLzMjZmxsNMYmNjFmBAAAAAAAAAAbDa2YMNzY4BMLzMzMDDzAAAAAAAAAAIAAgZbmlmtZ2sxYmZYmBGNDAwMDADA"
 
   # === DEFENSIVE CONFIGURATIONS ===
   raid_barkskin_threshold:
@@ -197,13 +283,16 @@ config:
     default: true
 
   # === UTILITY CONFIGURATIONS ===
+  # Season 2 Innervate restores a flat 25% max mana (no longer a free-cast
+  # window), so it is best spent early and often. Guide default: first cast
+  # around 75% mana, then maximize casts through the fight.
   raid_innervate_threshold:
     label: "Innervate Mana %"
     section: "Utility"
     type: slider
     min: 25
     max: 99
-    default: 60
+    default: 75
 
   # === RACIAL CONFIGURATIONS ===
   raid_thorn_bloom_threshold:
@@ -261,6 +350,9 @@ config:
     text: "Join Discord - Ferraz"
     url: "https://discord.com/channels/857767821093634068/1467268534420766854"
 
+# =============================================================================
+# VARIABLES
+# =============================================================================
 variables:
   # True if there are fewer injured group members than the threshold for Catweaving
   group_healthy: group.count(cycle.health.effective.pct<config.raid_catweave_group_hp)<config.raid_catweave_injured_max
@@ -271,15 +363,23 @@ variables:
   # Soul of the Forest proc is active
   has_soul: buff.soul_of_the_forest.up
 
+# =============================================================================
+# LISTS
+# =============================================================================
 lists:
-  # Interrupts and Dispel: Automatic Soothe and AoE CCs
+  # ===========================================================================
+  # INTERRUPTS — automatic Soothe (enrage purge) and AoE CC assist.
+  # ===========================================================================
   interrupts:
     - target_enemy,delay=100,name="Search Soothe",if=!target.purgeable.enrage&enemies.combat.any(cycle.purgeable.enrage)
     - target_enemy,delay=100,name="Search Interrupt",if=!interrupt.target.check&interrupt.8y.any
     - incapacitating_roar,name="Roar (AoE CC)",if=interrupt.stun.aoe.check
     - soothe,name="Soothe Enrage",if=target.purgeable.enrage
 
-  # Out of Combat: Mark of the Wild, Symbiotic Relationship, and healing prep (Lifebloom on tanks, Rejuv, etc.)
+  # ===========================================================================
+  # OUT OF COMBAT — Mark of the Wild and pre-pull healing prep (Lifebloom on
+  # tanks, top off Rejuvenation/Regrowth) so the pull starts with HoTs rolling.
+  # ===========================================================================
   out_of_combat:
     - mark_of_the_wild,range_check=none,if=(buff.mark_of_the_wild.down.any|action.mark_of_the_wild.overlayed)&lastcast.mark_of_the_wild>=10
     # Pre-combat Lifebloom (Raid: ensures on tanks)
@@ -288,33 +388,54 @@ lists:
     - rejuvenation,name="OOC Rejuvenation",cycle=members,if=cycle.health.effective.pct<config.raid_rejuvenation_threshold&cycle.buff.rejuvenation.remains<1.5&!player.combat
     - regrowth,name="OOC Regrowth",cycle=members,if=cycle.health.effective.pct<config.raid_regrowth_threshold&cycle.buff.regrowth.remains<1.5&!player.combat
 
-  # Mitigations and Emergency Defensives: Ironbark on Tanks/Members -> Barkskin -> Bear Form + Frenzied Regen
+  # ===========================================================================
+  # DEFENSIVES — Ironbark (tank/member split) -> Barkskin -> Bear Form +
+  # Frenzied Regeneration. Called from main ahead of racials/cooldowns, so
+  # survival outranks utility and burst.
+  # ===========================================================================
   defensives:
     - ironbark,name="Ironbark (Tank)",cycle=tanks,if=config.raid_ironbark_target=1&cycle.health.pct<config.raid_ironbark_threshold&cycle.buff.ironbark.down
     - ironbark,name="Ironbark (Members)",cycle=members,if=config.raid_ironbark_target=2&cycle.health.pct<config.raid_ironbark_threshold&cycle.buff.ironbark.down
-    - barkskin,name="Barkskin",if=incoming.pct<config.raid_barkskin_threshold
+    - barkskin,name="Barkskin",if=incoming.pct>=config.raid_barkskin_threshold
     - bear_form,name="Panic Bear",if=health.effective.pct<config.raid_frenzied_regen_threshold&!buff.bear_form.up&cooldown.frenzied_regeneration.ready
     - frenzied_regeneration,name="Frenzied Regen",if=health.effective.pct<config.raid_frenzied_regen_threshold&buff.bear_form.up
 
-  # Racial Abilities and Specific Utilities
+  # ===========================================================================
+  # RACIALS — Shadowmeld aggro drop, Thorn Bloom (Harronir) group heal.
+  # ===========================================================================
   racials:
     - shadowmeld,name="Shadowmeld (Aggro Drop)",if=player.combat&player.aggro&!player.casting
     - thorn_bloom,name="Thorn Bloom",if=group.count(cycle.health.effective.pct<config.raid_thorn_bloom_threshold)>=config.raid_thorn_bloom_members&target.in_melee
 
-  # Main Healing Cooldown Alignment: NS -> Trinkets/Potion -> Convoke -> NS Regrowth -> Tranquility -> Swiftmend
+  # ===========================================================================
+  # COOLDOWNS — main healing cooldown alignment: Nature's Swiftness ->
+  # trinkets/potion -> Convoke -> NS Regrowth -> Tranquility -> Swiftmend ->
+  # Clearcasting Regrowth. Convoke requires NS up, caster form and Abundance
+  # stack>=3 so it lands during a stacked-HoT window instead of cold.
+  # ===========================================================================
   cooldowns:
-    - natures_swiftness,name="NS (Pre-Convoke)",range_check=none,if=cooldown.convoke_the_spirits.ready&group.count(cycle.health.effective.pct<config.raid_convoke_threshold)>=config.raid_convoke_members&!buff.cat_form.up&!buff.bear_form.up&!buff.moonkin_form.up&buff.abundance.stack>=3
+    - natures_swiftness,name="NS (Pre-Convoke)",range_check=none,if=cooldown.convoke_the_spirits.ready&group.count(cycle.health.effective.pct<config.raid_convoke_threshold)>=config.raid_convoke_members&!buff.cat_form.up&!buff.bear_form.up&!buff.moonkin_form.up&buff.abundance.up
     - trinket_1,name="Trinket 1",if=config.raid_use_trinket_1&trinket_1.ready&buff.natures_swiftness.up
     - trinket_2,name="Trinket 2",if=config.raid_use_trinket_2&trinket_2.ready&buff.natures_swiftness.up
     - combat_potion,name="Combat Potion",if=combat_potion.ready&config.raid_use_potion&buff.natures_swiftness.up
-    # Convoke requires Nature's Swiftness + Abundance (stacks >= 3) and caster form
-    - convoke_the_spirits,global_delay=500,name="Convoke (Heal)",if=buff.natures_swiftness.up&!buff.cat_form.up&!buff.bear_form.up&!buff.moonkin_form.up&buff.abundance.stack>=3
+    # Convoke requires Nature's Swiftness + Abundance up (Season 2: binary at
+    # 5 active Rejuvenations, no longer a stacking buff) and caster form
+    - convoke_the_spirits,global_delay=500,name="Convoke (Heal)",if=buff.natures_swiftness.up&!buff.cat_form.up&!buff.bear_form.up&!buff.moonkin_form.up&buff.abundance.up
     - regrowth,name="Nature Swift Regrowth",cycle=members,if=buff.natures_swiftness.up
     - tranquility,global_delay=500,name="Tranquility",if=!config.raid_manual_tranquility&group.count(cycle.health.effective.pct<config.raid_tranquility_threshold)>=config.raid_tranquility_members&!player.moving
+    # Season 2 core loop (Power of the Archdruid): Swiftmend on self on CD,
+    # spreads Rejuvenation to 3 targets and grants Symbiotic Blooms (+20% self
+    # healing received, feeds Everbloom). Talent-gated — inert if untalented,
+    # falls through to the reactive Swiftmend below.
+    - swiftmend.player,name="Self Swiftmend (Archdruid)",range_check=none,if=talent.power_of_the_archdruid&cooldown.swiftmend.ready&(buff.rejuvenation.up|buff.regrowth.up|buff.wild_growth.up)
     - swiftmend,name="Swiftmend for SotF/Treants",cycle=members,if=cycle.health.effective.pct<config.raid_swiftmend_threshold&(cycle.buff.rejuvenation.up|cycle.buff.regrowth.up|cycle.buff.wild_growth.up)
     - regrowth,name="Clearcasting Regrowth",cycle=members,if=buff.clearcasting.up&(cycle.buff.regrowth.down|cycle.health.effective.pct<99)
 
-  # Sequential Active Healing: SotF consumption -> Lifebloom maintenance -> AoE and ST heals
+  # ===========================================================================
+  # ACTIVE HEALING — sequential priority: Soul of the Forest consumption ->
+  # Lifebloom maintenance -> forced HoT spread (optional) -> core periodic and
+  # direct healing (Wild Growth > Rejuvenation > Germination > Regrowth).
+  # ===========================================================================
   active_healing:
     # Consumes the Soul of the Forest proc
     - wild_growth,name="SotF Wild Growth",range_check=none,if=var.has_soul&group.count(cycle.health.effective.pct<config.raid_wild_growth_threshold)>=config.raid_wild_growth_members
@@ -324,8 +445,20 @@ lists:
 
     - thorn_bloom,name="Thorn Bloom",if=group.count(cycle.health.effective.pct<config.raid_thorn_bloom_threshold)>=config.raid_thorn_bloom_members&target.in_melee
 
-    # Lifebloom on tanks (Everbloom stacks to 3)
-    - lifebloom,name="Lifebloom",cycle=members,if=cycle.health.effective.pct<config.raid_lifebloom_threshold&cycle.buff.lifebloom.down&(group.count(cycle.buff.lifebloom.up)=0|tank1.buff.lifebloom.up)
+    # Season 2 core loop (Everbloom 4/4 + Lifetreading + Photosynthesis): the
+    # guide's own advice is "keep Lifebloom on yourself" — Everbloom auto-
+    # stacks it to 3 and cleaves 40% of its bloom to 6 nearby allies, so a
+    # self-cast covers the raid, not just the player. Lifetreading then makes
+    # Efflorescence follow the Lifebloom target (us), and 1-2 self Rejuvenation
+    # keeps Photosynthesis converting them into extra Lifebloom healing.
+    # Talent-gated — inert if untalented, falls through to tank Lifebloom.
+    - efflorescence,name="Efflorescence (Self)",range_check=none,if=talent.efflorescence&cooldown.efflorescence.ready
+    - lifebloom.player,name="Self Lifebloom (Everbloom)",range_check=none,if=talent.everbloom&buff.lifebloom.down
+    - rejuvenation.player,name="Self Rejuvenation (Photosynthesis)",range_check=none,if=talent.photosynthesis&buff.rejuvenation.down
+
+    # Lifebloom on tanks — secondary target once the self Lifebloom above is
+    # maintained (Everbloom stacks to 3)
+    - lifebloom,name="Lifebloom",cycle=members,if=cycle.health.effective.pct<config.raid_lifebloom_threshold&cycle.buff.lifebloom.down&(group.count(cycle.buff.lifebloom.up)=0|tank1.buff.lifebloom.up|tank2.buff.lifebloom.up)
     - lifebloom,name="Lifebloom (Tank)",cycle=tanks,if=(cycle.buff.lifebloom.down|cycle.buff.lifebloom.remains<4.5)&(cycle.buff.lifebloom.up|group.count(cycle.buff.lifebloom.up)=0)
 
     # Forces HoT spread if option is enabled
@@ -333,19 +466,28 @@ lists:
     - rejuvenation,name="Forced Rejuvenation",cycle=members,if=config.raid_force_spread&(cycle.buff.rejuvenation.down|cycle.buff.rejuvenation.remains<1.5)
     - rejuvenation,name="Forced Germination",cycle=members,if=config.raid_force_spread&talent.germination&cycle.buff.rejuvenation.up&cycle.buff.rejuvenation_germination.down&cycle.health.effective.pct<config.raid_rejuvenation_threshold
 
+    # Season 2 Abundance window: with 5 Rejuvenations active, Regrowth is
+    # cheap and high-crit. The guide calls this an "enormously Regrowth
+    # focused" rotation — spend the window before falling back to Wild Growth.
+    - regrowth,name="Abundance Regrowth",cycle=members,if=buff.abundance.up&cycle.health.effective.pct<config.raid_regrowth_threshold
+
     # Core periodic and direct healing logic: Wild Growth > Rejuv > Germination > Regrowth
     - wild_growth,name="Wild Growth",range_check=none,if=group.count(cycle.health.effective.pct<config.raid_wild_growth_threshold)>=config.raid_wild_growth_members
     - rejuvenation,name="Rejuvenation",cycle=members,if=cycle.buff.rejuvenation.remains<1.5&cycle.health.effective.pct<config.raid_rejuvenation_threshold
     - rejuvenation,name="Germination",cycle=members,if=talent.germination&cycle.buff.rejuvenation.up&(cycle.buff.rejuvenation_germination.down|cycle.buff.rejuvenation_germination.remains<1.5)&cycle.health.effective.pct<config.raid_rejuvenation_threshold
     - regrowth,name="Regrowth",cycle=members,if=cycle.health.effective.pct<config.raid_regrowth_threshold
 
-  # Mobility (root breaking) and mana management
+  # ===========================================================================
+  # UTILITY — mobility (root breaking via Bear/Cat shift) and mana management.
+  # ===========================================================================
   utility:
     - bear_form,name="Shapeshift Clear",if=player.rooted&!buff.bear_form.up&!player.stunned
     - cat_form,name="Shapeshift Toggle",if=player.rooted&buff.bear_form.up&!player.stunned
     - innervate,name="Innervate",if=mana.pct<config.raid_innervate_threshold
 
-  # Cat Form DPS Rotation (Single Target)
+  # ===========================================================================
+  # CATWEAVE_ST — Cat Form DPS rotation, single target.
+  # ===========================================================================
   catweave_st:
     - heart_of_the_wild,name="HotW Cat ST",if=config.raid_use_heart_of_the_wild&talent.heart_of_the_wild&buff.cat_form.up
     - rip,name="Rip ST",if=combo_points>=5&debuff.rip.refreshable
@@ -353,7 +495,9 @@ lists:
     - rake,name="Rake ST",if=debuff.rake.refreshable
     - shred,name="Shred ST"
 
-  # Cat Form DPS Rotation (AoE)
+  # ===========================================================================
+  # CATWEAVE_AOE — Cat Form DPS rotation, AoE.
+  # ===========================================================================
   catweave_aoe:
     - heart_of_the_wild,name="HotW Cat AoE",if=config.raid_use_heart_of_the_wild&talent.heart_of_the_wild&buff.cat_form.up
     - target_enemy,name="Search Bleed Target",if=combo_points>=5&!debuff.rip.refreshable&active_dot.rip<enemies.combat.8y
@@ -363,7 +507,10 @@ lists:
     - swipe,name="Swipe AoE",if=talent.swipe
     - shred,name="Shred AoE",if=!talent.swipe
 
-  # Catweaving Transition and Entry (Physical DPS)
+  # ===========================================================================
+  # CATWEAVE — transition and entry into physical DPS (Fluid Form auto-shift,
+  # or manual Cat Form fallback), then hands off to catweave_st/catweave_aoe.
+  # ===========================================================================
   catweave:
     - rejuvenation,name="Cat Rejuvenation",cycle=members,if=cycle.buff.rejuvenation.remains<4&(buff.cat_form.up|talent.fluid_form)&(!target.in_melee|!var.group_healthy)
     # Fluid Form: Casts Rake/Shred to automatically shapeshift
@@ -375,7 +522,10 @@ lists:
     - call_action_list,name=catweave_aoe,if=active_enemies>=config.raid_aoe_threshold
     - call_action_list,name=catweave_st,if=active_enemies<config.raid_aoe_threshold
 
-  # Ranged DoT maintenance in caster form
+  # ===========================================================================
+  # RANGED_DPS — ranged DoT maintenance in caster form (Moonkin bolts, Sun/
+  # Moonfire refresh) while the group is healthy and the target is not melee.
+  # ===========================================================================
   ranged_dps:
     - starsurge,name="Starsurge",if=buff.moonkin_form.up
     - sunfire,name="Sunfire Aoe Dot",if=debuff.sunfire.refreshable
@@ -383,48 +533,71 @@ lists:
     - starfire,name="Starfire AoE",if=active_enemies>=3
     - wrath,name="Wrath"
 
-  # Bear Form rotation for debuffs (Bearweave)
+  # ===========================================================================
+  # BEARWEAVE — Bear Form bleed maintenance (Fluid Form) before handing off to
+  # the physical catweave rotation.
+  # ===========================================================================
   bearweave:
     - thrash,name="Thrash (BearmForm Bleed)",if=debuff.thrash.remains<3&talent.fluid_form
     - mangle,name="Mangle (BearForm)",if=talent.fluid_form
     - call_action_list,name=catweave
 
-  # Healing on the Move: Convoke (if ready and safe) or instant HoTs
+  # ===========================================================================
+  # MOVING — healing on the move: Convoke if ready and safe, otherwise instant
+  # HoTs only (Lifebloom, Rejuvenation).
+  # ===========================================================================
   moving:
-    - natures_swiftness,name="NS (Pre-Convoke Moving)",if=spell.convoke_the_spirits.ready&group.count(cycle.health.effective.pct<config.raid_convoke_threshold)>=config.raid_convoke_members&!buff.cat_form.up&!buff.bear_form.up&buff.abundance.stacks>=3
-    - convoke_the_spirits,global_delay=500,name="Convoke (Moving)",if=group.count(cycle.health.effective.pct<config.raid_convoke_threshold)>=config.raid_convoke_members&!buff.cat_form.up&!buff.bear_form.up&buff.abundance.stacks>=3
+    - natures_swiftness,name="NS (Pre-Convoke Moving)",if=spell.convoke_the_spirits.ready&group.count(cycle.health.effective.pct<config.raid_convoke_threshold)>=config.raid_convoke_members&!buff.cat_form.up&!buff.bear_form.up&!buff.moonkin_form.up&buff.abundance.up
+    - convoke_the_spirits,global_delay=500,name="Convoke (Moving)",if=group.count(cycle.health.effective.pct<config.raid_convoke_threshold)>=config.raid_convoke_members&!buff.cat_form.up&!buff.bear_form.up&!buff.moonkin_form.up&buff.abundance.up
     - lifebloom,name="Lifebloom (Moving)",cycle=members,if=cycle.health.effective.pct<config.raid_lifebloom_threshold&cycle.buff.lifebloom.down&(group.count(cycle.buff.lifebloom.up)=0|tank1.buff.lifebloom.up|tank2.buff.lifebloom.up)
     - lifebloom,name="Lifebloom Tank (Moving)",cycle=tanks,if=(cycle.buff.lifebloom.down|cycle.buff.lifebloom.remains<4.5)&(cycle.buff.lifebloom.up|group.count(cycle.buff.lifebloom.up)=0)
     - rejuvenation,name="Rejuvenation (Moving)",cycle=members,if=cycle.buff.rejuvenation.down&cycle.health.effective.pct<95
 
-  # Emergency Mouseover Healing on unit frames
+  # ===========================================================================
+  # MOUSEOVER_HEALING_EMERGENCY — unit-frame mouseover heals. Called from main
+  # only while config.raid_use_mouseover is on and the mouseover is a valid
+  # friendly unit frame below config.raid_mouseover_emergency_hp. No HoT-
+  # presence gate on Swiftmend/Rejuvenation: Simia has no mouseover.buff.*
+  # expression, so usability is left to the engine's own cast-legality check.
+  # ===========================================================================
   mouseover_healing_emergency:
     - regrowth.mouseover,name="Regrowth (MO) Instant",if=buff.natures_swiftness.up
-    - swiftmend.mouseover,name="Swiftmend (MO)",if=mouseover.buff.remains(rejuvenation)>1|mouseover.buff.remains(regrowth) >1|mouseover.buff.remains(wild_growth)>1
-    - rejuvenation.mouseover,name="Rejuvenation (MO)",if=mouseover.buff.remains(rejuvenation)<=1.5
+    - swiftmend.mouseover,name="Swiftmend (MO)"
+    - rejuvenation.mouseover,name="Rejuvenation (MO)"
     - regrowth.mouseover,name="Regrowth (MO) Cast",if=!player.moving
 
-  # Main Rotation (main) with combat priorities
+  # ===========================================================================
+  # MAIN — entry point. Read top to bottom: the first line whose condition
+  # passes wins the GCD, so healing (defensives -> cooldowns -> emergency ->
+  # active healing) always outranks DPS weaving.
+  # ===========================================================================
   main:
     # Aborts if channeling crucial abilities (Tranquility/Convoke)
     - return,if=(player.channeling&player.casting.spell_id=740)|(player.channeling&player.casting.spell_id=323764)|buff.tranquility.up|buff.convoke_the_spirits.up
+
+    # --- Engine plumbing. Must stay at the top or the engine misbehaves. ---
     - call_action_list,name=spell_queue
     - call_action_list,name=sanity_checks
     - call_action_list,name=out_of_combat
     - call_action_list,name=auto_target
     - call_action_list,name=auto_heal
     - return,if=auto_combat.player
+
+    # --- Survival, then utility, then the healing cooldown window ---
     - call_action_list,name=interrupts
     - call_action_list,name=defensives
     - call_action_list,name=racials
     - call_action_list,name=utility
     - call_action_list,name=cooldowns
+
     # Emergency Mouseover Healing on unit frames
     - call_action_list,name=mouseover_healing_emergency,if=config.raid_use_mouseover&var.mo_friendly_valid&mouseover.health.effective.pct<config.raid_mouseover_emergency_hp
     - call_action_list,name=moving,if=player.moving
-    # Active healing in combat
+
+    # --- Active healing in combat ---
     - call_action_list,name=active_healing
-    # DPS weaving when the group is healthy
+
+    # --- DPS weaving. Only while the group is topped and healthy. ---
     - call_action_list,name=ranged_dps,if=config.raid_ranged_dps&var.can_catweave&target.exists&target.alive&!target.friendly&((config.raid_melee_dps&!target.in_melee)|!config.raid_melee_dps)
     - call_action_list,name=bearweave,if=config.raid_melee_dps&var.can_catweave&target.exists&target.alive&!target.friendly&target.in_melee&active_enemies>=2
     - call_action_list,name=catweave,if=config.raid_melee_dps&var.can_catweave&target.exists&target.alive&!target.friendly&target.in_melee
