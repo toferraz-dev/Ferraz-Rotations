@@ -43,6 +43,32 @@ de luta diferentes, respostas opostas. Não copiar linhas entre os dois arquivos
 O `solar_eclipse` virou `lunar_eclipse` por coerência de build — o SimC modela Eclipse
 como um feitiço só, então não dá para medir. É correção de build, não de número.
 
+## Poção — o arquivo não tinha nenhuma
+
+O `trinkets` só tinha trinket 1 e 2. Não existia linha de poção. Medido em cima da
+rotação já corrigida:
+
+| variante | 1 alvo |
+|---|---|
+| sem poção (como estava) | 117.6k |
+| poção dentro do burst | 124.3k (**+5.67%**) |
+| poção no burst **ou** com a luta acabando | 124.9k (**+6.17%**) |
+
+Aplicada a segunda: numa luta de 300s cabem duas poções se a primeira sair cedo, e a
+cláusula `fight_remains<=30` pega a segunda de graça.
+
+AVISO sobre os números da seção anterior: o harness emitia poção nos dois lados, então
+os DPS absolutos ali estavam otimistas. Os deltas continuam válidos — os dois braços
+tinham poção — mas o baseline real da rotação antiga era mais baixo.
+
+## Sliders de Time To Die — não fazem sentido aqui
+
+O arquivo de M+ tem cinco. Cada variável TTD lá começa com `target.boss|...`, então em
+boss elas são sempre verdadeiras e não gatilham nada. Existem para trash de dungeon,
+que morre antes de um cooldown de 3 minutos pagar. Em raid o alvo é boss quase sempre,
+e os cortes que importam já estão inline (`fight_remains<20` no Incarnation e no Fury
+of Elune). Não foram portados de propósito.
+
 ## O que foi testado e não mudou nada
 
 | variante | 1 alvo |
