@@ -62,7 +62,12 @@ def build(v):
 
     # The YAML fires trinkets in the burst window or when the burst is far away.
     add('actions.trinkets=' + a('use_items', CD_ACTIVE + '|cooldown.ca_inc.remains>40'))
-    add('actions.trinkets+=/' + a('potion', CD_ACTIVE))
+    # NOTE: the YAML has no potion line at all. `potion='off'` is the faithful
+    # translation; the others price what adding one would be worth.
+    if v['potion'] == 'burst':
+        add('actions.trinkets+=/' + a('potion', CD_ACTIVE))
+    elif v['potion'] == 'burst_end':
+        add('actions.trinkets+=/' + a('potion', CD_ACTIVE + '|fight_remains<=30'))
 
     def emit(name, lines):
         lines = [x for x in lines if x]
@@ -175,7 +180,8 @@ def build(v):
 
 
 DEFAULTS = dict(filler='wrath', grove_lines=True, spender='floor', dot_gate=True,
-                inc_foe_align=False, inc_no_ascendant=False, opener=True)
+                inc_foe_align=False, inc_no_ascendant=False, opener=True,
+                potion='off')
 
 VARIANTS = {
     'raid_ferraz':   ({}, 'A rotacao de raid como esta hoje'),
@@ -195,6 +201,13 @@ VARIANTS = {
                       'raid_v2 sem as listas de opener'),
     'v2_no_wrath':   (dict(filler='starfire_only', grove_lines=False, spender='approx'),
                       'raid_v2 sem Wrath nenhum, so Starfire'),
+    # --- pocao: o YAML nao tem linha nenhuma -------------------------------
+    'v3':            (dict(filler='starfire_only', grove_lines=False, spender='approx'),
+                      'A rotacao como esta hoje, sem pocao'),
+    'v3_potion':     (dict(filler='starfire_only', grove_lines=False, spender='approx',
+                           potion='burst'), 'v3 + pocao dentro do burst'),
+    'v3_potion_end': (dict(filler='starfire_only', grove_lines=False, spender='approx',
+                           potion='burst_end'), 'v3 + pocao no burst ou no fim da luta'),
 }
 
 

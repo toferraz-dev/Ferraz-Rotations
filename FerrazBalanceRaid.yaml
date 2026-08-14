@@ -158,6 +158,14 @@ config:
     type: checkbox
     default: true
 
+  # The file had no potion line at all. Adding one is worth +6.17% on Patchwerk,
+  # the second largest number in this file after the filler fix.
+  use_potion:
+    label: "Auto Offensive Potion"
+    section: "Trinkets"
+    type: checkbox
+    default: true
+
   discord_button:
     section: "Help"
     type: button
@@ -189,6 +197,10 @@ lists:
   trinkets:
     - trinket_1,if=config.use_trinket_1&player.combat&trinket_1.ready&(var.cd_active|cooldown.celestial_alignment.remains>40|cooldown.incarnation_chosen_of_elune.remains>40)
     - trinket_2,if=config.use_trinket_2&player.combat&trinket_2.ready&(var.cd_active|cooldown.celestial_alignment.remains>40|cooldown.incarnation_chosen_of_elune.remains>40)
+    # Potion inside the burst, plus a second one at the end of a long fight —
+    # a 300s fight fits two if the first goes out early. Worth +6.17%; holding it
+    # to the burst window only is +5.67%, so the end-of-fight clause is free DPS.
+    - combat_potion,if=config.use_potion&player.combat&combat_potion.ready&(var.cd_active|fight_remains<=30)
 
   # ===========================================================================
   # DEFENSIVES — NONE of this is validated by simulation.
