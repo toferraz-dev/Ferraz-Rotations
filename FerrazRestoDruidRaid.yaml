@@ -68,7 +68,7 @@
 #   Wildstalker raid build decoded above.
 # =============================================================================
 
-version: 1
+version: 1.0
 author: Ferraz
 patch: "12.1"
 spec: 105
