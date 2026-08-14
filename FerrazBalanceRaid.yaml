@@ -1,6 +1,53 @@
-version: 4.2
+# =============================================================================
+# Balance Druid — spec 102 — patch 12.1 (Midnight) — RAID
+# Elune's Chosen hero tree. Built for raid single target, not for Mythic+.
+# =============================================================================
+#
+# READ THIS FIRST — the file is named "(Grove)" and is not a Grove build.
+#   The recommended talent string is ELUNE'S CHOSEN with Lunar Calling. It
+#   carries NO Force of Nature, NO Wild Mushroom and NO New/Half/Full Moon, so
+#   every Keeper of the Grove line in here is dead weight. They are kept and
+#   flagged inline, exactly as the M+ file keeps its dead Starweaver lines, so
+#   the file still works if the Grove build comes back. Removing them measured
+#   +0.01%, i.e. nothing.
+#
+#   The filler was the expensive half of that mismatch: the damage lists used to
+#   end on Wrath, which is what a Grove build wants. On Lunar Calling, filling
+#   with Starfire instead is worth +11.1% at one target. That single change is
+#   most of what this file gained.
+#
+# HOW THIS FILE IS ORGANISED
+#   main            entry point. Plumbing, target guards, form, utility, then it
+#                   delegates the damage priority to the lists below.
+#   heal_support    Mark of the Wild, Thorn Bloom.
+#   defensives      Barkskin, Bear Form / Heart of the Wild / Frenzied
+#                   Regeneration.
+#   interrupts      Solar Beam on target, mouseover or focus.
+#   trinkets        trinkets, tied to the burst window.
+#   opener_st       burst ramp, 1 enemy. Runs whenever CA/Inc is ready.
+#   opener_aoe      burst ramp, 2+ enemies.
+#   moving_st       instant-only priority, moving, 1 enemy.
+#   moving_aoe      instant-only priority, moving, 2+ enemies.
+#   st              damage priority, standing still, 1 enemy.
+#   aoe             damage priority, standing still, 2+ enemies.
+#
+# HOW THE ORDER WAS DECIDED
+#   Measured with SimulationCraft 1210-01 on Patchwerk — the raid proxy, unlike
+#   the M+ file which uses DungeonSlice — against the talent string this file
+#   recommends. Harness: sim/ab_test_balance_raid.py. Profile:
+#   sim/Ferraz_balance_raid.simc. Numbers at target_error=0.12 (about +/-0.06%).
+#
+#   FIGHT STYLE MATTERS AND THE TWO FILES DISAGREE ON PURPOSE. Dropping the
+#   Wrath filler is +11.1% here and -1.44% in the M+ file. Neither is wrong;
+#   they are different fights. Do not copy lines between the two.
+#
+#   WHAT IS *NOT* VALIDATED: everything defensive, Thorn Bloom, Heart of the
+#   Wild, and the two `moving_*` lists (the sim never moves).
+# =============================================================================
+
+version: 1.0
 author: Ferraz
-patch: "12.0.5"
+patch: "12.1"
 spec: 102
 name: Ferraz Balance Druid Raid (Grove)
 description: |
@@ -8,13 +55,37 @@ description: |
 entry: main
 
 config:
+  # Build stamp, display-only. Simia has no expression that reads the `version:`
+  # and `patch:` fields at the top of the file, so this text is a manual mirror
+  # of them — update all three together.
+  about:
+    section: "Info"
+    type: note
+    label: "Rotation Info"
+    text: "Last update: 2026-08-13 | Patch: 12.1 | Version: 1.0"
+
+  # The exact string every number in this file was measured against. It is
+  # Elune's Chosen, not Grove — see the header.
   recommended_talents:
     section: "Talents"
     type: copy_text
     label: "Recommended Talent String"
-    text: "CYGAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWoMbNjxMDMmlZmZmBYGjZWGLzYGbsMzyYmZMLYYAGgltxGmmZWGAAAAsxMzMD2MwYGAzMAwA"
+    text: "CYGAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWoMbNjxMDwsMzMzMYYGjZWmhxMWYZmlZGjZ2wAgx2yMDGz2IwEAAAgFzMzMD2MMGzAAYmBLDA"
 
   # === DEFENSIVE CONFIGURATIONS ===
+  # Barkskin has two triggers. Proactive: fire before the hit lands.
+  # `incoming.mitigated.pct` is the predicted hit as a percentage of effective
+  # health *after* the defensives already running, so it is NOT comparable to
+  # the HP slider below — 40 here is a much bigger event than 40 there.
+  barkskin_dmg_pct:
+    label: "Barkskin (Incoming Dmg%)"
+    section: "Defensives"
+    type: slider
+    min: 0
+    max: 100
+    default: 40
+
+  # Reactive floor: fire once health has already dropped. UNMEASURED.
   barkskin_hp:
     label: "Barkskin HP%"
     section: "Defensives"
@@ -23,6 +94,8 @@ config:
     max: 100
     default: 60
 
+  # Frenzied Regeneration needs Bear Form, which costs the caster everything for
+  # two globals, so this floor sits much lower than the Barkskin one.
   frenzied_regen_hp:
     label: "Frenzied Regen HP%"
     section: "Defensives"
@@ -31,20 +104,45 @@ config:
     max: 100
     default: 30
 
-  # === HEALING CONFIGURATIONS ===
-  enable_hotw:
-    label: "HotW Support (Heal Party)"
-    section: "Healing"
+  # Heart of the Wild pressed inside Bear Form. On a Moonkin the talent grants
+  # the off-role packages, and the Guardian one is a real survival cooldown:
+  # extra Stamina, overlapping Ironfur, and an extra Frenzied Regeneration
+  # charge. The morph id carries a flat maximum-health increase instead.
+  hotw_bear_defensive:
+    label: "HotW in Bear Form (Defensive)"
+    section: "Defensives"
     type: checkbox
     default: true
+    description: "In the emergency Bear Form window, press Heart of the Wild before Frenzied Regeneration. Stamina lands first, so the heal arrives on a bigger health pool."
 
-  hotw_hp_threshold:
-    label: "Party HP% for HotW"
-    section: "Healing"
+  hotw_bear_hp:
+    label: "HotW Bear Defensive HP%"
+    section: "Defensives"
     type: slider
-    min: 30
-    max: 90
+    min: 0
+    max: 100
+    default: 35
+
+  # === RACIAL CONFIGURATIONS ===
+  # Thorn Bloom lands a 10y puddle at the target area, so it reaches whoever is
+  # standing on the boss — tank and melee. It is a heal, not a damage button: in
+  # SimulationCraft its damage is 0.13% of DPS and the 0.5s GCD costs more than
+  # that, so it is never fired for damage.
+  thorn_bloom_threshold:
+    label: "Thorn Bloom HP %"
+    section: "Racials"
+    type: slider
+    min: 25
+    max: 99
     default: 75
+
+  thorn_bloom_members:
+    label: "Thorn Bloom - Min Members"
+    section: "Racials"
+    type: slider
+    min: 1
+    max: 4
+    default: 2
 
   # === TRINKET & CONSUMABLE CONFIGURATIONS ===
   use_trinket_1:
@@ -69,7 +167,9 @@ config:
 variables:
   # True when no Eclipse (Solar or Lunar) is active
   eclipse_down: buff.eclipse_solar.down&buff.eclipse_lunar.down
-  # CA or Incarnation ready to be activated (triggers Opener sequence)
+  # CA or Incarnation ready to be activated (triggers Opener sequence).
+  # Despite the name this is not only the pull: it turns true again before every
+  # burst, so the ramp lists run each time. Removing them measured -1.6%.
   opener: (talent.celestial_alignment|talent.incarnation_chosen_of_elune)&cooldown.celestial_alignment.remains=0&!var.cd_active
   # Safe window to burn aligned main cooldowns
   cd_window: cooldown.force_of_nature.remains>15|(cooldown.celestial_alignment.remains<44&cooldown.incarnation_chosen_of_elune.remains<44)
@@ -89,30 +189,80 @@ lists:
     - trinket_1,if=config.use_trinket_1&player.combat&trinket_1.ready&(var.cd_active|cooldown.celestial_alignment.remains>40|cooldown.incarnation_chosen_of_elune.remains>40)
     - trinket_2,if=config.use_trinket_2&player.combat&trinket_2.ready&(var.cd_active|cooldown.celestial_alignment.remains>40|cooldown.incarnation_chosen_of_elune.remains>40)
 
-  # Emergency Bear Form for Frenzied Regeneration, and Barkskin
+  # ===========================================================================
+  # DEFENSIVES — NONE of this is validated by simulation.
+  # ===========================================================================
   defensives:
-    - bear_form,if=health.effective.pct<=config.frenzied_regen_hp&cooldown.frenzied_regeneration.ready&buff.frenzied_regeneration.down&!buff.bear_form.up
-    - frenzied_regeneration,if=health.effective.pct<=config.frenzied_regen_hp&buff.bear_form.up
-    - barkskin,if=incoming.pct<=config.barkskin_hp
+    # --- Proactive: a big hit is predicted, spend before it lands ---
+    # Barkskin is off the global cooldown, so this costs no cast time and sits
+    # at the top. `incoming.mitigated.pct` already discounts whatever defensive
+    # is running, so this does not stack Barkskin onto a covered hit.
+    - barkskin,range_check=none,name="Barkskin (predicted)",if=incoming.mitigated.pct>=config.barkskin_dmg_pct
 
-  # Activation of Mark of the Wild and Heart of the Wild if group health drops
+    # --- Reactive: already low, spend now regardless of prediction ---
+    # Frenzied Regeneration needs Bear Form, so the shift is its own step.
+    - bear_form,if=health.effective.pct<=config.frenzied_regen_hp&cooldown.frenzied_regeneration.ready&buff.frenzied_regeneration.down&!buff.bear_form.up
+
+    # Heart of the Wild inside that Bear window, BEFORE the heal. The Guardian
+    # package it grants a Moonkin is extra Stamina, overlapping Ironfur and an
+    # extra Frenzied Regeneration charge; the morph id is a flat maximum-health
+    # increase. Either way the health pool grows first, so the Frenzied
+    # Regeneration on the next line lands on the bigger pool.
+    #
+    # Cast twice, by name and by the bear morph id (1261872), because the button
+    # morphs with the form and only one of the two resolves — the other is a
+    # no-op. ignore_cds_toggle keeps it available with the global Cooldowns
+    # toggle off: this is survival, not a damage cooldown.
+    #
+    # COST: this is the same button as the Moonkin-form version, which calls
+    # down empowered Starfall. Spending it in Bear gives that up.
+    - heart_of_the_wild,name="HotW (Bear defensive)",range_check=none,ignore_cds_toggle=true,if=config.hotw_bear_defensive&buff.bear_form.up&health.effective.pct<=config.hotw_bear_hp&!buff.heart_of_the_wild.up
+    - 1261872,name="HotW (Bear morph)",range_check=none,ignore_cds_toggle=true,if=config.hotw_bear_defensive&buff.bear_form.up&health.effective.pct<=config.hotw_bear_hp&!buff.heart_of_the_wild.up
+
+    - frenzied_regeneration,if=health.effective.pct<=config.frenzied_regen_hp&buff.bear_form.up
+
+    # Reactive Barkskin. This used to read `incoming.pct<=config.barkskin_hp`,
+    # which was the predicted-damage expression compared the wrong way round: any
+    # small predicted hit passed it, so Barkskin went out on cooldown rather than
+    # on danger. The prediction now lives in the line at the top of this list.
+    - barkskin,range_check=none,name="Barkskin (low HP)",if=health.effective.pct<=config.barkskin_hp
+
+  # ===========================================================================
+  # HEAL SUPPORT — raid utility. UNMEASURED: none of this is damage.
+  # NOTE: Heart of the Wild is deliberately absent here. It used to double as a
+  # raid-heal cooldown gated on the group's lowest health, which meant the button
+  # could be spent one GCD before the Bear emergency in `defensives` wanted it.
+  # The whole 5 minute cooldown now belongs to that defensive.
+  # ===========================================================================
   heal_support:
     - mark_of_the_wild,range_check=none,if=(buff.mark_of_the_wild.down.any|action.mark_of_the_wild.overlayed)&lastcast.mark_of_the_wild>=10
-    - heart_of_the_wild,if=config.enable_hotw&group.lowest.health.pct<config.hotw_hp_threshold&!buff.heart_of_the_wild.up
+    # Thorn Bloom (Harronir racial) — party heal on the boss. Gated on the
+    # target because the puddle lands at the target area, not on the player.
+    # No target.in_melee clause, unlike the Resto file: a Moonkin sits at 40y
+    # and would never pass it, and it does not need to — the spell has 40y of
+    # range and the 10y puddle covers whoever is standing on the boss.
+    - thorn_bloom,name="Thorn Bloom",if=group.count(cycle.health.effective.pct<config.thorn_bloom_threshold)>=config.thorn_bloom_members&target.valid&target.enemy&!target.dead&target.range<=40
 
-  # Moving ST Rotation — Instant abilities only: DoTs -> Starsurge -> Fury of Elune -> Wild Mushroom -> New Moon
+  # ===========================================================================
+  # MOVING ST — instant casts only. UNMEASURED: the sim never moves.
+  # The Wild Mushroom and New Moon lines are dead on the recommended build.
+  # ===========================================================================
   moving_st:
     - moonfire,if=debuff.moonfire.remains<2|debuff.moonfire.refreshable
     - sunfire,if=debuff.sunfire.remains<2|debuff.sunfire.refreshable
+    # DEAD CLAUSE: Starweaver is untalented, so buff.starweavers_warp never appears.
     - starsurge,if=buff.starweavers_warp.up|buff.touch_the_cosmos.react
     - starsurge,if=astral_power>60
     - fury_of_elune,if=!talent.sundered_firmament|(debuff.atmospheric_exposure.remains<2&buff.eclipse_lunar.remains>5)
+    # DEAD LINES on the recommended build: no Wild Mushroom, no New Moon.
     - wild_mushroom,if=cooldown.wild_mushroom.full_recharge_time<cooldown.celestial_alignment.remains
     - new_moon,if=astral_power.deficit>10
     - moonfire
     - sunfire
 
-  # Moving AoE Rotation — Instant abilities only
+  # ===========================================================================
+  # MOVING AOE — instant casts only. UNMEASURED.
+  # ===========================================================================
   moving_aoe:
     - sunfire,if=debuff.sunfire.remains<2|debuff.sunfire.refreshable
     - moonfire,if=active_enemies<6&(debuff.moonfire.remains<2|debuff.moonfire.refreshable)
@@ -121,92 +271,136 @@ lists:
     - starsurge,if=buff.starfall.up&(buff.touch_the_cosmos.react|buff.starweavers_warp.up)
     - starsurge,if=buff.starfall.up&astral_power>60
     - fury_of_elune,if=!talent.sundered_firmament|debuff.atmospheric_exposure.remains<2
+    # DEAD LINES on the recommended build.
     - wild_mushroom,if=buff.eclipse_lunar.up|buff.eclipse_solar.up|cooldown.wild_mushroom.full_recharge_time<cooldown.celestial_alignment.remains
     - new_moon,if=astral_power.deficit>10
     - sunfire
     - moonfire,if=active_enemies<6
 
-  # Grove ST Rotation — DoTs -> Solar Eclipse (Grove preferred) -> Fury of Elune -> Force of Nature -> Cooldowns -> Moons -> Wrath
+  # ===========================================================================
+  # ST — 1 enemy, standing still.
+  # ===========================================================================
   st:
-    # Keeps DoTs active (also updates out of Eclipse to avoid clipping)
+    # Keeps DoTs active. The `&var.eclipse_down` on the pandemic half is
+    # deliberate: refreshing a DoT inside an Eclipse throws away the snapshot.
+    # Dropping that clause and refreshing on pandemic regardless measured -0.94%.
     - moonfire,if=debuff.moonfire.remains<2|debuff.moonfire.refreshable&var.eclipse_down
     - sunfire,if=debuff.sunfire.remains<2|debuff.sunfire.refreshable&var.eclipse_down
-    # Forces Solar Eclipse (Grove prioritizes Solar over Lunar)
-    - solar_eclipse,if=var.eclipse_down
-    # Fury of Elune on cooldown (controlling debuff overlap)
+
+    # Lunar Eclipse, not Solar. This line used to read `solar_eclipse`, which is
+    # the Keeper of the Grove preference; the recommended build runs Lunar
+    # Calling and wants Lunar. SimulationCraft cannot measure the difference —
+    # it models Eclipse as a single spell — so this one is corrected on build
+    # grounds, not on a number.
+    - lunar_eclipse,if=var.eclipse_down
+
+    # Fury of Elune on cooldown, holding it off an active Atmospheric Exposure
+    # so the debuff windows do not overlap.
     - fury_of_elune,if=!talent.sundered_firmament|(debuff.atmospheric_exposure.remains<2&(buff.eclipse_lunar.remains>5))|fight_remains<20
-    # Force of Nature during burst or if Incarnation is far off
+
+    # DEAD LINE on the recommended build: Force of Nature is untalented.
     - force_of_nature,if=var.cd_active|cooldown.incarnation_chosen_of_elune.remains>30
-    # Spends AP — consumes free procs first, then spends above 60 Astral Power
+
+    # Spends AP — free procs first. The Starweaver halves are dead on this build.
     - starfall,if=active_enemies>=2&(buff.starweavers_weft.up|buff.touch_the_cosmos.react)
     - starsurge,if=buff.starweavers_warp.up|buff.touch_the_cosmos.react
-    - starsurge,if=astral_power>60&active_enemies<=1
-    # Activates Celestial Alignment or Incarnation; waits for the Ascendant Stars buff to fade
+
+    # Rattle the Stars only discounts the spender while an Eclipse is up, so the
+    # AP floor follows the Eclipse: spend early inside it, hold near the cap
+    # outside. Replaced a flat astral_power>60 and measured +1.28%.
+    - starsurge,if=!var.eclipse_down&astral_power>=50&active_enemies<=1
+    - starsurge,if=var.eclipse_down&astral_power.deficit<20&active_enemies<=1
+
+    # Activates Celestial Alignment or Incarnation; waits for the Ascendant Stars
+    # buff to fade. Removing that wait, and separately aligning the burst with
+    # Fury of Elune, both measured inside the error bar — the gate stays as is.
     - incarnation_chosen_of_elune,global_delay=500,if=!var.cd_active&buff.ascendant_stars.down&(!talent.elunes_guidance|cooldown.lunar_eclipse.charges_fractional<1.5)
-    # Moon charges — avoids capping charges; waits for debuffs to end
+
+    # DEAD LINES on the recommended build: no New/Half/Full Moon, no Wild Mushroom.
     - full_moon,if=astral_power.deficit>40&debuff.atmospheric_exposure.remains<action.full_moon.execute_time+0.5
     - half_moon,if=astral_power.deficit>20&debuff.atmospheric_exposure.remains<action.half_moon.execute_time+0.5
     - new_moon,if=astral_power.deficit>10&debuff.atmospheric_exposure.remains<action.new_moon.execute_time+0.5
-    # Wild Mushroom for AP generation, avoiding capping charges
     - wild_mushroom,if=buff.eclipse_lunar.up|cooldown.wild_mushroom.full_recharge_time<cooldown.celestial_alignment.remains
-    # Filler: Starfire in pure Lunar Eclipse, otherwise Wrath
-    - starfire,if=buff.eclipse_lunar.up&!buff.celestial_alignment.up&!buff.incarnation_chosen_of_elune.up
-    - wrath
 
-  # AoE Rotation (2+) — Spread DoTs -> Solar Eclipse -> Fury of Elune -> Force of Nature -> Burst -> Starfall -> Starsurge -> Mushrooms
+    # Filler. This list used to end on Wrath, with Starfire as the special case.
+    # That is the Grove shape; on Lunar Calling it is backwards. Starfire alone,
+    # with no Wrath line at all, measured +11.1% at one target and changed
+    # nothing at three. It is the single largest number in this file.
+    # (The M+ file keeps its Wrath line — there it is worth 1.44%. Different
+    # fight, different answer. Do not copy this line across.)
+    - starfire
+
+  # ===========================================================================
+  # AOE — 2+ enemies, standing still.
+  # ===========================================================================
   aoe:
     - sunfire,if=debuff.sunfire.remains<2|debuff.sunfire.refreshable&var.eclipse_down
     - moonfire,if=active_enemies<6&(debuff.moonfire.remains<2|debuff.moonfire.refreshable&var.eclipse_down)
-    - solar_eclipse,if=var.eclipse_down
+    # Lunar, not Solar — see the note in `st`.
+    - lunar_eclipse,if=var.eclipse_down
     - fury_of_elune,if=!talent.sundered_firmament|debuff.atmospheric_exposure.remains<2
+    # DEAD LINE: Force of Nature is untalented.
     - force_of_nature,if=var.cd_active|cooldown.incarnation_chosen_of_elune.remains>30
     - incarnation_chosen_of_elune,global_delay=500,if=!var.cd_active&(var.eclipse_down|fight_remains<20)
     - starfall,if=buff.starweavers_weft.up|buff.touch_the_cosmos.react
     - starfall,if=(astral_power>50)&target.time_to_die>5
     - starsurge,if=buff.starfall.up&(buff.starweavers_warp.up|buff.touch_the_cosmos.react)
     - starsurge,if=buff.starfall.up&astral_power>80&buff.starlord.stack<3
+    # DEAD LINE: Wild Mushroom is untalented.
     - wild_mushroom,if=buff.eclipse_lunar.up|buff.eclipse_solar.up|cooldown.wild_mushroom.full_recharge_time<cooldown.celestial_alignment.remains
-    - starfire,if=active_enemies>=3
-    - wrath
+    # Filler — Starfire at every target count now, for the reason in `st`.
+    - starfire
 
-  # Grove ST Opener — Pre-ramping DoTs and Starsurge -> main CDs -> AP Burst -> Wrath
+  # ===========================================================================
+  # OPENER ST — the burst ramp. var.opener turns true before EVERY burst, not
+  # only on the pull, so this list runs each cycle. Removing both opener lists
+  # measured -1.6%.
+  # ===========================================================================
   opener_st:
     - moonfire,if=debuff.moonfire.remains<2|debuff.moonfire.refreshable&var.eclipse_down
     - sunfire,if=debuff.sunfire.remains<2|debuff.sunfire.refreshable&var.eclipse_down
-    - solar_eclipse,if=var.eclipse_down
+    - lunar_eclipse,if=var.eclipse_down
     # Accumulates Starlord and Ascendant Stars buffs before firing the main burst
     - starsurge,if=buff.ascendant_stars.up|buff.touch_the_cosmos.react
     - fury_of_elune
+    # DEAD LINE: Force of Nature is untalented.
     - force_of_nature
     - incarnation_chosen_of_elune,global_delay=500,if=!var.cd_active
     # Dumps accumulated Astral Power during the burst window
     - starfall,if=active_enemies>1&(buff.touch_the_cosmos.react|astral_power>80)
     - starsurge,if=buff.touch_the_cosmos.react|astral_power>80
-    - wrath
+    - starfire
 
-  # Grove AoE Opener — Spread DoTs -> CDs -> Enter Solar Eclipse -> Dump AP
+  # ===========================================================================
+  # OPENER AOE — same ramp, 2+ enemies.
+  # ===========================================================================
   opener_aoe:
     - sunfire,if=debuff.sunfire.refreshable
     - moonfire,if=active_enemies<6&debuff.moonfire.refreshable
     - fury_of_elune
+    # DEAD LINE: Force of Nature is untalented.
     - force_of_nature
     - incarnation_chosen_of_elune,global_delay=500,if=!var.cd_active
-    - solar_eclipse,if=var.eclipse_down
+    - lunar_eclipse,if=var.eclipse_down
     - starfall,if=astral_power>50|buff.ascendant_stars.up
     - starsurge,if=buff.starfall.up&buff.ascendant_stars.up
-    - wrath,if=buff.ascendant_stars.up
+    - starfire,if=buff.ascendant_stars.up
 
-  # Main Entry Point (main) with priorities
+  # ===========================================================================
+  # MAIN — entry point. The first line whose condition passes wins the GCD.
+  # ===========================================================================
   main:
-    - call_action_list,name=spell_queue
-    - call_action_list,name=sanity_checks
-    - call_action_list,name=auto_target_ranged
+    # --- Engine plumbing. Must stay at the top or the engine misbehaves. ---
+    - call_action_list,name=spell_queue          # Simia internals
+    - call_action_list,name=sanity_checks        # Simia internals
+    - call_action_list,name=auto_target_ranged   # Simia internals
 
+    # --- Target guards: nothing below this point runs without a valid enemy ---
     - return,if=!target.valid&!((cfg.auto_combat.has(1)&target.quest_mob&target.enemy&!target.dead)|(cfg.auto_combat.has(2)&target.combat&target.enemy&!target.dead)|(cfg.auto_combat.has(3)&target.targeting_party&target.enemy&!target.dead))
     - return,if=!target.valid&cfg.auto_combat.has(0)
     - return,if=!target.valid|target.dead|!target.attackable
 
-    - call_action_list,name=auto_heal
+    - call_action_list,name=auto_heal            # Simia internals
     - call_action_list,name=heal_support
     # Ensures Moonkin Form
     - moonkin_form,if=buff.moonkin_form.down&health.pct>config.frenzied_regen_hp&!buff.frenzied_regeneration.up
@@ -217,10 +411,14 @@ lists:
     - call_action_list,name=interrupts
     - call_action_list,name=defensives
     - call_action_list,name=trinkets
-    # Opening Sequence if CDs are ready
+
+    # --- Damage priority. Exactly one of the six lists below runs. ---
+    # The burst ramp takes over whenever CA/Incarnation is ready.
     - call_action_list,name=opener_aoe,if=var.opener&active_enemies>1
     - call_action_list,name=opener_st,if=var.opener&active_enemies<=1
+    # Moving next: while moving, only the instant-cast lists are legal.
     - call_action_list,name=moving_aoe,if=player.moving&active_enemies>1
     - call_action_list,name=moving_st,if=player.moving&active_enemies<=1
+    # Standard stationary rotation
     - call_action_list,name=st,if=active_enemies<=1
     - call_action_list,name=aoe,if=active_enemies>1
