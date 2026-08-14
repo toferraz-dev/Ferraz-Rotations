@@ -3,7 +3,8 @@
 # Elune's Chosen hero tree. Built for raid single target, not for Mythic+.
 # =============================================================================
 #
-# READ THIS FIRST — the file is named "(Grove)" and is not a Grove build.
+# READ THIS FIRST — this used to be the "(Grove)" raid file and is not a Grove
+# build any more.
 #   The recommended talent string is ELUNE'S CHOSEN with Lunar Calling. It
 #   carries NO Force of Nature, NO Wild Mushroom and NO New/Half/Full Moon, so
 #   every Keeper of the Grove line in here is dead weight. They are kept and
@@ -49,9 +50,9 @@ version: 1.0
 author: Ferraz
 patch: "12.1"
 spec: 102
-name: Ferraz Balance Druid Raid (Grove)
+name: Balance Druid Ferraz Raid (12.1)
 description: |
-  Ferraz Balance Druid Raid (Grove)
+  Balance Druid Ferraz Raid (12.1)
 entry: main
 
 config:
