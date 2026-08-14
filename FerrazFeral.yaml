@@ -2,9 +2,9 @@ version: 5.0
 author: Ferraz
 patch: "12.0.7"
 spec: 103
-name: Ferraz Feral Druid M+ (Claw)
+name: Feral Druid Ferraz M+
 description: |
-  Ferraz Feral Druid M+ (Claw)
+  Feral Druid Ferraz M+
 entry: main
 
 config:

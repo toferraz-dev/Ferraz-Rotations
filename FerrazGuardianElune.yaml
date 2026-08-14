@@ -51,7 +51,7 @@
 version: 1.0
 patch: "12.1"
 spec: 104
-name: Guardian Druid Ferraz (12.1)
+name: Guardian Druid Ferraz M+
 author: Ferraz
 description: |
   Guardian Druid 104 engine for 12.1, tuned for Mythic+.
