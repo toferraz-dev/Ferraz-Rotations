@@ -73,9 +73,9 @@ version: 1.0
 author: Ferraz
 patch: "12.1"
 spec: 105
-name: Ferraz Restoration Druid Raid (Wildstalker)
+name: Restoration Druid Ferraz Raid
 description: |
-  Ferraz Restoration Druid Raid (Wildstalker)
+  Restoration Druid Ferraz Raid
 entry: main
 
 # =============================================================================

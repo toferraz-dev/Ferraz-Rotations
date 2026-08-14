@@ -61,9 +61,9 @@ version: 1.0
 author: Ferraz
 patch: "12.1"
 spec: 102
-name: Balance Druid Ferraz M+ (12.1)
+name: Balance Druid Ferraz M+
 description: |
-  Balance Druid Ferraz M+ (12.1)
+  Balance Druid Ferraz M+
 entry: main
 
 # =============================================================================

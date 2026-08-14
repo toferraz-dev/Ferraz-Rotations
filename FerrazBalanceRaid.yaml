@@ -50,9 +50,9 @@ version: 1.0
 author: Ferraz
 patch: "12.1"
 spec: 102
-name: Balance Druid Ferraz Raid (12.1)
+name: Balance Druid Ferraz Raid
 description: |
-  Balance Druid Ferraz Raid (12.1)
+  Balance Druid Ferraz Raid
 entry: main
 
 config:
