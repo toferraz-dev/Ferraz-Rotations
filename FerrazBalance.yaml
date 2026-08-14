@@ -6,8 +6,9 @@
 # HOW THIS FILE IS ORGANISED
 #   main            entry point. Plumbing, target guards, form, utility, then it
 #                   delegates the damage priority to the lists below.
-#   heal_support    Mark of the Wild, Heart of the Wild, Thorn Bloom.
-#   defensives      Bear Form / Frenzied Regeneration / Barkskin, root cleanse.
+#   heal_support    Mark of the Wild, Thorn Bloom.
+#   defensives      Barkskin, Bear Form / Heart of the Wild / Frenzied
+#                   Regeneration, root cleanse.
 #   interrupts      Solar Beam on target, mouseover or focus.
 #   trinkets        trinkets and combat potion, tied to the burst window.
 #   mouseover_dots  spreads Moonfire/Sunfire without changing target.
@@ -89,7 +90,22 @@ config:
     text: "CYGAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWoMbNMmZgxsMzMzMLMgxMLzsYmZswyMLjxMjNMAYstNzgxsNCMBAAAYhZmZGsZMjxAAwMDWGA"
 
   # === DEFENSIVE CONFIGURATIONS ===
-  # Reactive floors: fire once health has already dropped. UNMEASURED.
+  # Barkskin has two triggers, the same split the Guardian file uses.
+  #
+  # Proactive: fire before the hit lands. `incoming.mitigated.pct` is the
+  # predicted hit expressed as a percentage of effective health *after* the
+  # defensives already running, so this is NOT comparable to the HP slider
+  # below — 40 here is a much bigger event than 40 there.
+  barkskin_dmg_pct:
+    label: "Barkskin (Incoming Dmg%)"
+    section: "Defensives"
+    type: slider
+    min: 0
+    max: 100
+    default: 40
+
+  # Reactive floor: fire once health has already dropped, whatever the
+  # prediction says. UNMEASURED, like everything defensive in this file.
   barkskin_hp:
     label: "Barkskin HP%"
     section: "Defensives"
@@ -108,20 +124,26 @@ config:
     max: 100
     default: 30
 
-  # === HEALING CONFIGURATIONS ===
-  enable_hotw:
-    label: "HotW Support (Heal Party)"
-    section: "Healing"
+  # Heart of the Wild pressed inside Bear Form. On a Moonkin the talent grants
+  # the off-role packages, and the Guardian one is a real survival cooldown:
+  # extra Stamina, overlapping Ironfur, and an extra Frenzied Regeneration
+  # charge. The morph id carries a flat maximum-health increase instead.
+  # This is now the only thing the button is spent on: the party-heal use was
+  # removed so the whole 5 minute cooldown is available for the emergency.
+  hotw_bear_defensive:
+    label: "HotW in Bear Form (Defensive)"
+    section: "Defensives"
     type: checkbox
     default: true
+    description: "In the emergency Bear Form window, press Heart of the Wild before Frenzied Regeneration. Stamina lands first, so the heal arrives on a bigger health pool."
 
-  hotw_hp_threshold:
-    label: "Party HP% for HotW"
-    section: "Healing"
+  hotw_bear_hp:
+    label: "HotW Bear Defensive HP%"
+    section: "Defensives"
     type: slider
-    min: 30
-    max: 90
-    default: 75
+    min: 0
+    max: 100
+    default: 35
 
   # === RACIAL CONFIGURATIONS ===
   # Thorn Bloom lands a 10y puddle at the target area, so it reaches whoever is
@@ -320,13 +342,42 @@ lists:
   # utility. NONE of this is validated by simulation.
   # ===========================================================================
   defensives:
+    # --- Proactive: a big hit is predicted, spend before it lands ---
+    # Barkskin is off the global cooldown, so this costs no cast time and sits
+    # at the top. `incoming.mitigated.pct` already discounts whatever defensive
+    # is running, so this does not stack Barkskin onto a covered hit.
+    - barkskin,range_check=none,name="Barkskin (predicted)",if=incoming.mitigated.pct>=config.barkskin_dmg_pct
+
+    # --- Reactive: already low, spend now regardless of prediction ---
     # Frenzied Regeneration needs Bear Form, so the shift is its own step. The
     # buff.frenzied_regeneration.down clause stops it shifting for a heal that
     # is already running.
     - bear_form,if=health.effective.pct<=config.frenzied_regen_hp&cooldown.frenzied_regeneration.ready&buff.frenzied_regeneration.down&!buff.bear_form.up
+
+    # Heart of the Wild inside that Bear window, BEFORE the heal. The Guardian
+    # package it grants a Moonkin is extra Stamina, overlapping Ironfur and an
+    # extra Frenzied Regeneration charge; the morph id is a flat maximum-health
+    # increase. Either way the health pool grows first, so the Frenzied
+    # Regeneration on the next line lands on the bigger pool.
+    #
+    # Cast twice, by name and by the bear morph id (1261872), because the button
+    # morphs with the form and only one of the two resolves — the other is a
+    # no-op. Same trick the Guardian file uses for the Cat morph.
+    # ignore_cds_toggle keeps it available with the global Cooldowns toggle off:
+    # this is survival, not a damage cooldown.
+    #
+    # COST: this is the same button as the Moonkin-form version, which calls
+    # down empowered Starfall. Spending it in Bear gives that up.
+    - heart_of_the_wild,name="HotW (Bear defensive)",range_check=none,ignore_cds_toggle=true,if=config.hotw_bear_defensive&buff.bear_form.up&health.effective.pct<=config.hotw_bear_hp&!buff.heart_of_the_wild.up
+    - 1261872,name="HotW (Bear morph)",range_check=none,ignore_cds_toggle=true,if=config.hotw_bear_defensive&buff.bear_form.up&health.effective.pct<=config.hotw_bear_hp&!buff.heart_of_the_wild.up
+
     - frenzied_regeneration,if=health.effective.pct<=config.frenzied_regen_hp&buff.bear_form.up
-    # Barkskin reads predicted incoming damage, not current health.
-    - barkskin,if=incoming.pct<=config.barkskin_hp
+    # Reactive Barkskin. This used to read `incoming.pct<=config.barkskin_hp`,
+    # which was the predicted-damage expression compared the wrong way round: any
+    # small predicted hit passed it, so Barkskin went out on cooldown rather than
+    # on danger. The prediction now lives in the line at the top of this list and
+    # this one does what its label always claimed — fire on low health.
+    - barkskin,range_check=none,name="Barkskin (low HP)",if=health.effective.pct<=config.barkskin_hp
     # Cleanse roots: Shifts to Cat to clear movement impairing effects
     - cat_form,if=debuff_list.freedom.up&buff.moonkin_form.up
     # Out of Moonkin Form (rooted, or mid Bear Form heal) Starfire is the only
@@ -341,7 +392,10 @@ lists:
   heal_support:
     # lastcast>=10 stops it retrying every GCD while the buff propagates.
     - mark_of_the_wild,range_check=none,if=(buff.mark_of_the_wild.down.any|action.mark_of_the_wild.overlayed)&lastcast.mark_of_the_wild>=10
-    - heart_of_the_wild,if=config.enable_hotw&group.lowest.health.pct<config.hotw_hp_threshold&!buff.heart_of_the_wild.up
+    # NOTE: Heart of the Wild is deliberately absent here. It used to double as a
+    # party-heal cooldown, gated on the group's lowest health, which meant the
+    # button could be spent one GCD before the Bear emergency in `defensives`
+    # wanted it. The whole 5 minute cooldown now belongs to that defensive.
     # Thorn Bloom (Harronir racial) — party heal on the pack. Gated on the
     # target because the puddle lands at the target area, not on the player.
     # No target.in_melee clause, unlike the Resto file: a Moonkin sits at 40y
