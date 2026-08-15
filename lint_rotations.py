@@ -61,7 +61,21 @@ TYPOS = [
     (re.compile(r'\band\b', re.I), 'W', 'Use & for AND operator', True),
     (re.compile(r'\bor\b', re.I), 'W', 'Use | for OR operator', True),
     (re.compile(r'\bnot\s+\w', re.I), 'W', 'Use ! for NOT operator', True),
+    # Reversed expression order: the catalog defines these as player.X, never
+    # X.player (found live in two Ferraz files as `auto_combat.player`).
+    (re.compile(r'\bauto_combat\.player\b'), 'W', 'Did you mean "player.auto_combat"?', False),
+    (re.compile(r'\b(combat|moving|casting|channeling|stunned|rooted|silenced|'
+                r'feared|dead|alive|aggro|mounted|solo|group)\.player\b'),
+     'W', 'Expression order looks reversed — did you mean "player.X"?', False),
 ]
+
+# From expression-catalog.json's config_widgets block (SIMIA_DOCUMENTATION.md
+# section 5). Includes documented aliases.
+KNOWN_WIDGET_TYPES = {
+    'slider', 'checkbox', 'dropdown', 'multi_select', 'unit_select', 'toggle',
+    'number', 'number_input', 'copy_text', 'copy', 'copytext', 'copy-text',
+    'link', 'url', 'note', 'info', 'text', 'divider', 'separator', 'button',
+}
 
 
 def strip_inline_comment(text):
@@ -148,6 +162,20 @@ def lint(path, shared_cfg, shared_lists, strict_options=False):
                                         re.compile(r'^\s{2}(\w+):\s*$')) | shared_lists
     defined_cfg = collect_block_names(lines, re.compile(r'^config:\s*$'),
                                       re.compile(r'^\s{2}(\w+):\s*$')) | shared_cfg
+    # Line range covered by the top-level `config:` block, so `type:` checks
+    # do not fire on unrelated uses of the word elsewhere in the file.
+    config_start = None
+    for i, text in enumerate(lines):
+        if re.match(r'^config:\s*$', text):
+            config_start = i
+            break
+    config_lines = set()
+    if config_start is not None:
+        for i in range(config_start + 1, len(lines)):
+            if re.match(r'^[a-z_]+:\s*$', lines[i]):
+                break
+            config_lines.add(i)
+
     defined_vars = collect_block_names(lines, re.compile(r'^(?:variables|variable|var):\s*$'),
                                        re.compile(r'^\s{2}(\w+):'))
     for text in lines:
@@ -247,6 +275,12 @@ def lint(path, shared_cfg, shared_lists, strict_options=False):
                 for opt in re.findall(r',(\w+)=', body):
                     if opt not in STEP_OPTIONS and opt not in EXTRA_STEP_OPTIONS:
                         add(n, 'I', 'Step option "%s" is not in the extension table' % opt)
+
+        # --- config widget type ---
+        if n in config_lines:
+            wm = re.match(r'^\s*type:\s*(\S+)\s*$', text)
+            if wm and wm.group(1).strip('"\'') not in KNOWN_WIDGET_TYPES:
+                add(n, 'W', 'Unknown config widget type "%s"' % wm.group(1))
 
         # --- reference rules (every line) ---
         for mm in re.finditer(r'\bconfig\.(\w+)', text):
