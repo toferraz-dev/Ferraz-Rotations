@@ -139,8 +139,19 @@ config:
     label: "Spread DoTs on Mouseover"
     section: "AoE"
     type: checkbox
-    default: true
+    default: false
     description: "In AoE, suggests Moonfire/Sunfire on the mouseover unit while enemies near the target are missing the DoT. Spreading the DoTs is the single largest AoE gain."
+
+  # === SINGLE TARGET CONFIGURATIONS ===
+  # Gear-dependent: wins on crit-heavy gear (reference: 22.5% crit/21.6%
+  # haste, +1.44% to keep it), loses on haste-heavy/crit-light gear
+  # (measured: 15.4% crit/31.2% haste, +5.28% to drop it). Default OFF.
+  wrath_filler:
+    label: "Wrath Filler (ST)"
+    section: "Damage"
+    type: checkbox
+    default: false
+    description: "Casts Wrath as filler between Starfire on single target. Test both with an A/B sim against your own gear — the crit/haste ratio decides which wins."
 
   # === COOLDOWN CONFIGURATIONS ===
   auto_burst:
@@ -359,9 +370,11 @@ lists:
     - starsurge,if=!var.eclipse_down&astral_power>=50
     - starsurge,if=var.eclipse_down&astral_power.deficit<20
 
-    # Wrath here is intentional: deleting it for pure Starfire fill measured
-    # -1.44% DungeonSlice (+0.55% Patchwerk, still net loss). Do not "fix" this.
-    - wrath,if=var.eclipse_down&active_enemies<=1
+    # Wrath filler: +DPS on the reference gear (crit-heavy, 22.5% crit /
+    # 21.6% haste) — deleting it there measured -1.44% DungeonSlice. On a
+    # haste-heavy/crit-light build (measured: 15.4% crit / 31.2% haste) it's
+    # the opposite, +5.28% to drop it. Default OFF: no Wrath filler.
+    - wrath,if=config.wrath_filler&var.eclipse_down&active_enemies<=1
     - starfire
 
   # 2+ enemies, standing still. 2-enemy threshold measured: raising to 3
