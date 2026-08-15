@@ -1,3 +1,4 @@
+# Feral Druid — spec 103 — patch 12.0.7 — M+.
 version: 5.0
 author: Ferraz
 patch: "12.0.7"
@@ -162,7 +163,7 @@ lists:
 
     - call_action_list,name=auto_heal
 
-    - return,if=auto_combat.player
+    - return,if=player.auto_combat
 
     - call_action_list,name=defensives
 

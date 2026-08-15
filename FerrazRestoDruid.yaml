@@ -1,3 +1,4 @@
+# Restoration Druid — spec 105 — patch 12.0.7 — M+.
 version: 4.3
 author: Ferraz
 patch: "12.0.7"
@@ -468,7 +469,7 @@ lists:
     - call_action_list,name=out_of_combat,if=!player.combat
     - call_action_list,name=auto_target_ranged
     - call_action_list,name=auto_heal,if=!var.in_dps_form|!var.group_healthy
-    - return,if=auto_combat.player
+    - return,if=player.auto_combat
     - call_action_list,name=defensives,if=!var.in_dps_form|!var.group_healthy
     - call_action_list,name=utility
     - call_action_list,name=racials

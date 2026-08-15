@@ -1,60 +1,43 @@
 # =============================================================================
-# Balance Druid — spec 102 — patch 12.1 (Midnight)
-# Elune's Chosen hero tree. Built for Mythic+, not for raid.
+# Balance Druid — spec 102 — patch 12.1 (Midnight) — Elune's Chosen, M+.
 # =============================================================================
 #
-# HOW THIS FILE IS ORGANISED
-#   main            entry point. Plumbing, target guards, form, utility, then it
-#                   delegates the damage priority to the lists below.
+# LISTS
+#   main            plumbing, target guards, form/utility, delegates damage.
 #   heal_support    Mark of the Wild, Thorn Bloom.
-#   defensives      Barkskin, Bear Form / Heart of the Wild / Frenzied
-#                   Regeneration, root cleanse.
-#   interrupts      Solar Beam on target, mouseover or focus.
-#   trinkets        trinkets and combat potion, tied to the burst window.
+#   defensives      Barkskin, Bear Form/HotW/Frenzied Regen, root cleanse.
+#   interrupts      Solar Beam (target/mouseover/focus).
+#   trinkets        trinkets + combat potion, tied to the burst window.
 #   mouseover_dots  spreads Moonfire/Sunfire without changing target.
-#   moving_st       instant-only priority, moving, fewer than 2 enemies.
-#   moving_aoe      instant-only priority, moving, 2+ enemies.
-#   ec_st           damage priority, standing still, fewer than 2 enemies.
-#   aoe             damage priority, standing still, 2+ enemies.
+#   moving_st / moving_aoe   instant-only priority while moving.
+#   ec_st / aoe     stationary damage priority, <2 / 2+ enemies.
 #
-# DAMAGE PRIORITY — single target (`ec_st`)
-#   Moonfire/Sunfire uptime -> Eclipse -> Incarnation -> Fury of Elune
-#   -> free procs -> Starsurge on the Eclipse-aware AP floor -> Wrath/Starfire
+# ST: Moonfire/Sunfire uptime -> Eclipse -> Incarnation -> Fury of Elune ->
+# free procs -> Starsurge (Eclipse-aware AP floor) -> Wrath/Starfire.
+# AoE: anti-cap Starfall -> DoTs (target then mouseover) -> Eclipse ->
+# Incarnation -> Fury of Elune -> free procs -> Starfall -> Starsurge
+# weaving -> Starfire.
 #
-# DAMAGE PRIORITY — AoE (`aoe`)
-#   Anti-cap Starfall -> DoTs on target -> DoTs on mouseover -> Eclipse
-#   -> Incarnation -> Fury of Elune -> free procs -> Starfall -> Starsurge
-#   weaving under Starfall -> Starfire
+# Every ordering claim was measured with SimC 1210-01, fight_style=DungeonSlice
+# (the M+ proxy), against the recommended string. Harness: sim/ab_test_balance.py,
+# profile sim/Ferraz_balance.simc, table sim/BALANCE_AB_RESULTS.md.
+# target_error=0.12-0.15 (~±0.06%), so <0.2% quoted here is noise. DungeonSlice
+# is the only fight style that decided anything — Patchwerk-only gains were
+# rejected, flagged inline where relevant.
 #
-# HOW THE ORDER WAS DECIDED
-#   Every ordering claim below was measured with SimulationCraft 1210-01 under
-#   fight_style=DungeonSlice — the M+ proxy — against the talent string this
-#   file recommends. The harness is sim/ab_test_balance.py, the profile is
-#   sim/Ferraz_balance.simc, and the full table is in
-#   sim/BALANCE_AB_RESULTS.md. Numbers are at target_error=0.12-0.15 (about
-#   +/-0.06%), so anything under ~0.2% quoted here would be noise.
+# NOT validated: defensives, Heart of the Wild, Thorn Bloom, the two HP
+# sliders, both moving_* lists — SimC has no M+ damage-intake model and never
+# moves.
 #
-#   DungeonSlice is the ONLY fight style that decided anything. Several edits
-#   that gain on Patchwerk lose in dungeons and were rejected for that reason —
-#   they are flagged inline where it matters.
+# Untalented on the recommended string (harmless dead lines, flagged inline):
+# Starweaver, Force of Nature, Convoke the Spirits, New/Half/Full Moon, Wild
+# Mushroom, Power of Goldrinn, Orbit Breaker.
 #
-#   WHAT IS *NOT* VALIDATED: everything defensive and every heal.
-#   SimulationCraft does not model M+ damage intake, so the `defensives` list,
-#   Heart of the Wild, Thorn Bloom and the two HP sliders are unmeasured. The
-#   two `moving_*` lists are unmeasured as well — the sim never moves. Treat
-#   the numbers as applying to the stationary damage core only.
-#
-# BUILD ASSUMPTIONS — untalented on the recommended string, so absent from the
-# priority: Starweaver, Force of Nature, Convoke the Spirits, New Moon /
-# Half Moon / Full Moon, Wild Mushroom, Power of Goldrinn, Orbit Breaker.
-#   Lines that reference those talents are kept where they are harmless, so the
-#   file still behaves if the talent comes back. They are flagged inline.
-#
-# WHAT THE RECOMMENDED STRING DOES CARRY: Lunar Calling, Lunation, Boundless
-#   Moonlight, Atmospheric Exposure, The Eternal Moon, Incarnation: Chosen of
-#   Elune, Whirling Stars, Fury of Elune, Touch the Cosmos, Umbral Embrace,
-#   Rattle the Stars, Meteorites, Aetherial Kindling, Stellar Amplification,
-#   Sundered Firmament, Radiant Moonlight.
+# Carried by the string: Lunar Calling, Lunation, Boundless Moonlight,
+# Atmospheric Exposure, The Eternal Moon, Incarnation: Chosen of Elune,
+# Whirling Stars, Fury of Elune, Touch the Cosmos, Umbral Embrace, Rattle
+# the Stars, Meteorites, Aetherial Kindling, Stellar Amplification, Sundered
+# Firmament, Radiant Moonlight.
 # =============================================================================
 
 version: 1.0
@@ -67,22 +50,18 @@ description: |
 entry: main
 
 # =============================================================================
-# CONFIG — the panel the user sees in Simia.
-# None of the defensive or healing defaults below have been validated by
-# simulation.
+# CONFIG — defensive/healing defaults are unvalidated by simulation.
 # =============================================================================
 config:
-  # Build stamp, display-only. Simia has no expression that reads the `version:`
-  # and `patch:` fields at the top of the file, so this text is a manual mirror
-  # of them — update all three together.
+  # Display-only build stamp — keep in sync with version:/patch: above.
   about:
     section: "Info"
     type: note
     label: "Rotation Info"
     text: "Last update: 2026-08-13 | Patch: 12.1 | Version: 1.0"
 
-  # The exact string every number in this file was measured against. Changing
-  # the build invalidates the AP floors and the Incarnation alignment.
+  # Exact string every number here was measured against — changing it
+  # invalidates the AP floors and Incarnation alignment.
   recommended_talents:
     section: "Talents"
     type: copy_text
@@ -90,12 +69,8 @@ config:
     text: "CYGAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWoMbNMmZgxsMzMzMLMgxMLzsYmZswyMLjxMjNMAYstNzgxsNCMBAAAYhZmZGsZMjxAAwMDWGA"
 
   # === DEFENSIVE CONFIGURATIONS ===
-  # Barkskin has two triggers, the same split the Guardian file uses.
-  #
-  # Proactive: fire before the hit lands. `incoming.mitigated.pct` is the
-  # predicted hit expressed as a percentage of effective health *after* the
-  # defensives already running, so this is NOT comparable to the HP slider
-  # below — 40 here is a much bigger event than 40 there.
+  # Barkskin: proactive trigger. incoming.mitigated.pct is post-defensives,
+  # so NOT comparable to the HP slider below (40 here != 40 there).
   barkskin_dmg_pct:
     label: "Barkskin (Incoming Dmg%)"
     section: "Defensives"
@@ -104,8 +79,7 @@ config:
     max: 100
     default: 40
 
-  # Reactive floor: fire once health has already dropped, whatever the
-  # prediction says. UNMEASURED, like everything defensive in this file.
+  # Reactive floor, unmeasured like everything defensive here.
   barkskin_hp:
     label: "Barkskin HP%"
     section: "Defensives"
@@ -114,8 +88,7 @@ config:
     max: 100
     default: 60
 
-  # Frenzied Regeneration needs Bear Form, which costs the caster everything for
-  # two globals, so this floor sits much lower than the Barkskin one.
+  # Lower than Barkskin: Bear Form costs two full GCDs to enter.
   frenzied_regen_hp:
     label: "Frenzied Regen HP%"
     section: "Defensives"
@@ -124,12 +97,8 @@ config:
     max: 100
     default: 30
 
-  # Heart of the Wild pressed inside Bear Form. On a Moonkin the talent grants
-  # the off-role packages, and the Guardian one is a real survival cooldown:
-  # extra Stamina, overlapping Ironfur, and an extra Frenzied Regeneration
-  # charge. The morph id carries a flat maximum-health increase instead.
-  # This is now the only thing the button is spent on: the party-heal use was
-  # removed so the whole 5 minute cooldown is available for the emergency.
+  # HotW inside Bear Form: extra Stamina/Ironfur/Frenzied Regen charge. Sole
+  # use of the button now — party-heal use was removed to free the CD.
   hotw_bear_defensive:
     label: "HotW in Bear Form (Defensive)"
     section: "Defensives"
@@ -146,11 +115,8 @@ config:
     default: 35
 
   # === RACIAL CONFIGURATIONS ===
-  # Thorn Bloom lands a 10y puddle at the target area, so it reaches whoever is
-  # standing on the pack — tank and melee. It is a heal, not a damage button: in
-  # SimulationCraft its damage is 0.13% of DPS and the 0.5s GCD costs more than
-  # that, so it is never fired for damage. Every damage placement measured
-  # between +0.02% and -0.41% under DungeonSlice, i.e. nothing or worse.
+  # Thorn Bloom: heal only, not damage — its DPS is 0.13% and costs a GCD.
+  # Every damage placement tested measured +0.02% to -0.41% (nothing or worse).
   thorn_bloom_threshold:
     label: "Thorn Bloom HP %"
     section: "Racials"
@@ -168,9 +134,7 @@ config:
     default: 2
 
   # === AOE CONFIGURATIONS ===
-  # Spreading the DoTs is the single largest AoE gain in the file: letting the
-  # sim dot every target measured +2.1% under DungeonSlice and +9.8% at five
-  # targets, which alone closes the whole gap to the SimC default APL there.
+  # Largest AoE gain in the file: +2.1% DungeonSlice, +9.8% at 5 targets.
   enable_mouseover_dots:
     label: "Spread DoTs on Mouseover"
     section: "AoE"
@@ -194,8 +158,7 @@ config:
     description: "Manual burst window. Only needed when Auto Burst is OFF: toggle ON to allow Incarnation, trinkets and potion, OFF to hold CDs."
 
   # === TRINKET & CONSUMABLE CONFIGURATIONS ===
-  # These default to ON because leaving them off measured -7.4% under
-  # DungeonSlice — by far the largest single number in the file.
+  # Default ON: off measured -7.4% DungeonSlice, the largest number here.
   use_trinket_1:
     label: "Auto Trinket 1 (Before Incarnation)"
     section: "Trinkets"
@@ -215,9 +178,8 @@ config:
     default: true
 
   # === TIME TO DIE (TTD) CONFIGURATIONS ===
-  # These are what make the automatic burst safe: they stop a three minute
-  # cooldown being spent on trash that is already falling over. They cannot be
-  # validated by simulation, where every dummy lives the whole fight.
+  # Stop a 3min CD being spent on trash that's about to die. Unvalidated —
+  # SimC dummies live the whole fight.
   ttd_incarnation:
     label: "Incarnation TTD (seconds)"
     section: "Time To Die"
@@ -274,35 +236,24 @@ config:
 # VARIABLES
 # =============================================================================
 variables:
-  # True when no Eclipse (Solar or Lunar) is active. Used both as a filler
-  # switch and as the AP-floor switch — see the spender lines in ec_st/aoe.
+  # No Eclipse active — filler switch and AP-floor switch (ec_st/aoe).
   eclipse_down: buff.eclipse_solar.down&buff.eclipse_lunar.down
 
-  # Hero Talent: Boundless Moonlight (Elune's Chosen). Not referenced by any
-  # priority line today; kept as the hero-tree probe for future branches.
+  # Hero-tree probe, not referenced by any priority line yet.
   ec: talent.boundless_moonlight
 
-  # Burst is allowed: either it runs itself, or the manual toggle is ON.
-  # Everything that spends the burst window reads this — Incarnation, both
-  # trinkets and the potion — so one switch drives the whole window.
+  # Burst allowed: auto or manual toggle. Drives Incarnation + both trinkets + potion.
   burst_ok: config.auto_burst|config.burst_toggle
 
-  # Ready to cast Incarnation. Five clauses, all required:
-  #   1. burst allowed (auto or toggle)
-  #   2. talent taken and a charge available (Whirling Stars gives two)
-  #   3. the target will live long enough (config.ttd_incarnation)
-  #   4. not already inside a burst window
-  #   5. aligned with Fury of Elune — it is up, or under 2s from coming up
-  # Clause 5 is the expensive one and it pays: firing Incarnation without
-  # waiting for Fury of Elune measured -0.47% under DungeonSlice.
+  # Incarnation ready: burst allowed, talented+charge, TTD ok, not already in
+  # a burst window, and aligned with Fury of Elune (up or <2s away — skipping
+  # this alignment measured -0.47% DungeonSlice).
   inc_ready_to_cast: var.burst_ok&talent.incarnation_chosen_of_elune&cooldown.incarnation_chosen_of_elune.charges>0&var.inc_ttd_ok&!var.cd_active&(cooldown.fury_of_elune.remains<2|buff.fury_of_elune.up)
 
-  # Active when under the effect of Celestial Alignment or Incarnation. This is
-  # what the trinket and potion lines wait for, so they ride the same window.
+  # Celestial Alignment/Incarnation active — trinkets/potion ride this window.
   cd_active: buff.celestial_alignment.up|buff.incarnation_chosen_of_elune.up
 
-  # === TIME TO DIE (TTD) VARIABLES ===
-  # The target.boss status ignores TTD restrictions (Bosses always receive full cooldowns)
+  # === TIME TO DIE (TTD) VARIABLES === (target.boss always ignores TTD)
   inc_ttd_ok: (target.boss|target.time_to_die>=config.ttd_incarnation|fight_remains>=config.ttd_incarnation)
   foe_ttd_ok: (target.boss|target.time_to_die>=config.ttd_fury_of_elune|fight_remains>=config.ttd_fury_of_elune)
   trinkets_ttd_ok: (target.boss|target.time_to_die>=config.ttd_trinkets|fight_remains>=config.ttd_trinkets)
@@ -310,272 +261,160 @@ variables:
   starfall_ttd_ok: (target.boss|target.time_to_die>=config.ttd_starfall|fight_remains>=config.ttd_starfall)
 
 lists:
-  # ===========================================================================
-  # INTERRUPTS — Solar Beam on target, mouseover or focus.
-  # interrupt.*.check are Simia's own kick filters (cast is interruptible,
-  # important enough, in range, not already being kicked by someone else).
-  # ===========================================================================
+  # Solar Beam on target/mouseover/focus. interrupt.*.check = Simia's own
+  # kick filters (interruptible, important, in range, not already kicked).
   interrupts:
     - solar_beam,if=interrupt.target.check
     - solar_beam.mouseover,if=interrupt.mouseover.check
     - solar_beam.focus,if=interrupt.focus.check
 
-  # ===========================================================================
-  # TRINKETS — they ride along with Incarnation.
-  # var.cd_active only turns true once the burst is already up, and the Fury of
-  # Elune check delays them one step further, until it has been spent — that is
-  # where the damage window actually is. Dropping the Fury of Elune clause
-  # measured -0.23% under DungeonSlice.
-  #
-  # MEASURED ALTERNATIVE, deliberately not taken: firing trinkets whenever they
-  # are ready, ignoring the burst entirely, is +0.28% — a 2min trinket held for
-  # a 3min Incarnation loses a use per fight. It is inside spitting distance of
-  # noise and it gives up the aligned burst, so the window keeps them.
-  # ===========================================================================
+  # Ride along with Incarnation, delayed until Fury of Elune is spent (that's
+  # where the real window is — dropping this clause measured -0.23%).
+  # Tested alternative (rejected): firing on cooldown regardless of burst is
+  # +0.28% but loses a trinket use per fight and gives up the aligned burst.
   trinkets:
     - trinket_1,delay=150,name="Trinket 1",if=var.burst_ok&config.use_trinket_1&trinket_1.ready&player.combat&var.trinkets_ttd_ok&cooldown.fury_of_elune.remains>0&var.cd_active
     - trinket_2,delay=150,name="Trinket 2",if=var.burst_ok&config.use_trinket_2&trinket_2.ready&player.combat&var.trinkets_ttd_ok&cooldown.fury_of_elune.remains>0&var.cd_active
     - combat_potion,delay=150,name="Combat Potion",if=var.burst_ok&config.use_potion&combat_potion.ready&player.combat&var.potion_ttd_ok&cooldown.fury_of_elune.remains>0&var.cd_active
 
-  # ===========================================================================
-  # DEFENSIVES — called from main ahead of interrupts, so survival outranks
-  # utility. NONE of this is validated by simulation.
-  # ===========================================================================
+  # Ahead of interrupts, so survival outranks utility. Unvalidated by sim.
   defensives:
-    # --- Proactive: a big hit is predicted, spend before it lands ---
-    # Barkskin is off the global cooldown, so this costs no cast time and sits
-    # at the top. `incoming.mitigated.pct` already discounts whatever defensive
-    # is running, so this does not stack Barkskin onto a covered hit.
+    # Proactive: off-GCD, incoming.mitigated.pct already discounts running defensives.
     - barkskin,range_check=none,name="Barkskin (predicted)",if=incoming.mitigated.pct>=config.barkskin_dmg_pct
 
-    # --- Reactive: already low, spend now regardless of prediction ---
-    # Frenzied Regeneration needs Bear Form, so the shift is its own step. The
-    # buff.frenzied_regeneration.down clause stops it shifting for a heal that
-    # is already running.
+    # Reactive: shift to Bear first (own step so it doesn't reshift mid-heal).
     - bear_form,if=health.effective.pct<=config.frenzied_regen_hp&cooldown.frenzied_regeneration.ready&buff.frenzied_regeneration.down&!buff.bear_form.up
 
-    # Heart of the Wild inside that Bear window, BEFORE the heal. The Guardian
-    # package it grants a Moonkin is extra Stamina, overlapping Ironfur and an
-    # extra Frenzied Regeneration charge; the morph id is a flat maximum-health
-    # increase. Either way the health pool grows first, so the Frenzied
-    # Regeneration on the next line lands on the bigger pool.
-    #
-    # Cast twice, by name and by the bear morph id (1261872), because the button
-    # morphs with the form and only one of the two resolves — the other is a
-    # no-op. Same trick the Guardian file uses for the Cat morph.
-    # ignore_cds_toggle keeps it available with the global Cooldowns toggle off:
-    # this is survival, not a damage cooldown.
-    #
-    # COST: this is the same button as the Moonkin-form version, which calls
-    # down empowered Starfall. Spending it in Bear gives that up.
+    # HotW before the heal so Frenzied Regen lands on the bigger (Stamina)
+    # pool. Cast by name AND by the bear morph id (1261872) — only one
+    # resolves per form, the other is a no-op. Costs the Moonkin-form
+    # empowered-Starfall use of the same button.
     - heart_of_the_wild,name="HotW (Bear defensive)",range_check=none,ignore_cds_toggle=true,if=config.hotw_bear_defensive&buff.bear_form.up&health.effective.pct<=config.hotw_bear_hp&!buff.heart_of_the_wild.up
     - 1261872,name="HotW (Bear morph)",range_check=none,ignore_cds_toggle=true,if=config.hotw_bear_defensive&buff.bear_form.up&health.effective.pct<=config.hotw_bear_hp&!buff.heart_of_the_wild.up
 
     - frenzied_regeneration,if=health.effective.pct<=config.frenzied_regen_hp&buff.bear_form.up
-    # Reactive Barkskin. This used to read `incoming.pct<=config.barkskin_hp`,
-    # which was the predicted-damage expression compared the wrong way round: any
-    # small predicted hit passed it, so Barkskin went out on cooldown rather than
-    # on danger. The prediction now lives in the line at the top of this list and
-    # this one does what its label always claimed — fire on low health.
     - barkskin,range_check=none,name="Barkskin (low HP)",if=health.effective.pct<=config.barkskin_hp
-    # Cleanse roots: Shifts to Cat to clear movement impairing effects
     - cat_form,if=debuff_list.freedom.up&buff.moonkin_form.up
-    # Out of Moonkin Form (rooted, or mid Bear Form heal) Starfire is the only
-    # thing still worth casting. main re-shifts on the following pass.
     - starfire, if=!buff.moonkin_form.up
 
-  # ===========================================================================
-  # HEAL SUPPORT — party utility. Called early in main, before the target
-  # guards, so every line here carries its own target gate where it needs one.
-  # UNMEASURED: none of this is damage.
-  # ===========================================================================
+  # Party utility, called before target guards. Unmeasured (not damage).
   heal_support:
-    # lastcast>=10 stops it retrying every GCD while the buff propagates.
     - mark_of_the_wild,range_check=none,if=(buff.mark_of_the_wild.down.any|action.mark_of_the_wild.overlayed)&lastcast.mark_of_the_wild>=10
-    # NOTE: Heart of the Wild is deliberately absent here. It used to double as a
-    # party-heal cooldown, gated on the group's lowest health, which meant the
-    # button could be spent one GCD before the Bear emergency in `defensives`
-    # wanted it. The whole 5 minute cooldown now belongs to that defensive.
-    # Thorn Bloom (Harronir racial) — party heal on the pack. Gated on the
-    # target because the puddle lands at the target area, not on the player.
-    # No target.in_melee clause, unlike the Resto file: a Moonkin sits at 40y
-    # and would never pass it, and it does not need to — the spell has 40y of
-    # range and the 10y puddle covers whoever is standing on the pack.
+    # Heart of the Wild deliberately absent: the whole CD now belongs to the
+    # Bear-form defensive in `defensives` instead of double-dipping as a heal.
     - thorn_bloom,name="Thorn Bloom",if=group.count(cycle.health.effective.pct<config.thorn_bloom_threshold)>=config.thorn_bloom_members&target.valid&target.enemy&!target.dead&target.range<=40
 
-  # ===========================================================================
-  # MOUSEOVER DOTS — spreads the DoTs without ever changing target.
-  # Simia cannot cycle enemy targets (`target_enemy` genuinely swaps target,
-  # which is unacceptable in M+) and has no debuff expressions for the mouseover
-  # unit. So the gate is the cluster: only suggest while an enemy near the
-  # target is missing the DoT, with a 1.5s lockout per spell so the same mob is
-  # not dotted twice in a row.
-  # This is the addon-side stand-in for what the sim does with target_if, which
-  # is worth +2.1% under DungeonSlice and +9.8% at five targets.
-  # ===========================================================================
+  # Spreads DoTs without changing target: Simia can't cycle enemy targets or
+  # read mouseover debuffs directly, so the gate is cluster-based (an enemy
+  # near target missing the DoT), 1.5s lockout to avoid double-dotting.
+  # Addon-side stand-in for SimC's target_if: +2.1% DungeonSlice, +9.8% at 5.
   mouseover_dots:
     - sunfire.mouseover,name="Sunfire Mouseover",if=config.enable_mouseover_dots&mouseover.exists&mouseover.enemy&mouseover.attackable&!mouseover.dead&mouseover.range<=40&cluster.debuff.sunfire.count<enemies.around_target&lastcast.sunfire>=1.5
-    # Moonfire stops at 6 targets for the same GCD-efficiency reason as the aoe
-    # list: past that, a global spent dotting beats nothing but Starfire.
     - moonfire.mouseover,name="Moonfire Mouseover",if=config.enable_mouseover_dots&mouseover.exists&mouseover.enemy&mouseover.attackable&!mouseover.dead&mouseover.range<=40&active_enemies<6&cluster.debuff.moonfire.count<enemies.around_target&lastcast.moonfire>=1.5
 
-  # ===========================================================================
-  # MOVING ST — instant casts only, fewer than 2 enemies.
-  # UNMEASURED: SimulationCraft never moves, so nothing in this list or the next
-  # one has a number behind it. The ordering mirrors the stationary lists.
-  # ===========================================================================
+  # Instant casts only, <2 enemies. Unmeasured (SimC never moves).
   moving_st:
     - moonfire,if=debuff.moonfire.remains<2|debuff.moonfire.refreshable
     - sunfire,if=debuff.sunfire.remains<2|debuff.sunfire.refreshable
-    # Casts instant filler under the effect of Ascendant Fires
     - starfire,if=buff.ascendant_fires.up
     - wrath,if=buff.ascendant_fires.up&var.eclipse_down
-    # Spends Astral Power (AP) with instant Starsurge; prioritizes active procs.
-    # DEAD CLAUSE on the recommended string: Starweaver is untalented, so
-    # buff.starweavers_warp never appears. Kept so the line still works if it
-    # comes back.
+    # Starweaver clause is dead on the recommended string; kept for when it returns.
     - starsurge,if=buff.starweavers_warp.up|buff.touch_the_cosmos.react
     - starsurge,if=astral_power>60
-    # Fury of Elune — instant on cooldown
     - fury_of_elune
-    # Instant fallback spells for movement
     - moonfire
     - sunfire
 
-  # ===========================================================================
-  # MOVING AOE — instant casts only, 2+ enemies. UNMEASURED, see above.
-  # ===========================================================================
+  # Instant casts only, 2+ enemies. Unmeasured.
   moving_aoe:
     - sunfire,if=debuff.sunfire.remains<2|debuff.sunfire.refreshable
-    # Spreads Moonfire (limited to less than 6 targets for GCD efficiency)
     - moonfire,if=active_enemies<6&(debuff.moonfire.remains<2|debuff.moonfire.refreshable)
-    # Casts instant Starfire with Ascendant Fires
     - starfire,if=buff.ascendant_fires.up
-    # Starfall: Primary AoE AP spender — constantly renewed
     - starfall,if=buff.starweavers_weft.up|buff.touch_the_cosmos.react
     - starfall,if=astral_power>50
-    # Casts Starsurge in AoE only on free procs (prevents manual AP spending)
     - starsurge,if=buff.starfall.up&(buff.touch_the_cosmos.react|buff.starweavers_warp.up)
     - fury_of_elune
     - sunfire
     - moonfire,if=active_enemies<6
 
-  # ===========================================================================
-  # EC_ST — Elune's Chosen single target, standing still.
-  # DoTs -> Eclipse -> Incarnation -> Fury of Elune -> spend AP -> fillers.
-  # ===========================================================================
+  # Single target, standing still. DoTs -> Eclipse -> Incarnation -> Fury of
+  # Elune -> spend AP -> fillers.
   ec_st:
-    # DoTs first. Putting the three cooldowns ahead of them instead measured
-    # -3.60% under DungeonSlice — the worst reordering tested in this file.
+    # DoTs first — cooldowns ahead of them measured -3.60%, the worst reorder tested.
     - moonfire,if=debuff.moonfire.remains<2|debuff.moonfire.refreshable
     - sunfire,if=debuff.sunfire.remains<2|debuff.sunfire.refreshable
 
-    # Eclipse, but it yields to a ready Incarnation: the !var.inc_ready_to_cast
-    # clause holds the charge so the burst does not land on a window that is
-    # about to be replaced. Casting Eclipse anyway measured -0.33%.
+    # Yields to a ready Incarnation so the burst doesn't land on a window
+    # about to be replaced (casting anyway measured -0.33%).
     - lunar_eclipse,if=var.eclipse_down&cooldown.lunar_eclipse.ready&!var.inc_ready_to_cast
-
-    # Incarnation — see var.inc_ready_to_cast for the five clauses behind it.
     - incarnation_chosen_of_elune,if=var.inc_ready_to_cast
-
-    # Fury of Elune on CD — Lunation passively reduces CD via Arcane casts.
-    # Adding the SimC default's extra gate (hold unless CA/Inc is far away)
-    # measured inside the error bar, so the plain cooldown use stays.
     - fury_of_elune,if=var.foe_ttd_ok
 
-    # Free procs first — these cost no Astral Power at all.
-    # DEAD LINES on the recommended string: Starweaver is untalented. Kept
-    # because they cost nothing and the list stays correct if it returns.
+    # Free procs (Starweaver dead on this string, kept for when it returns).
     - starfall,if=buff.starweavers_weft.up|buff.touch_the_cosmos.react
     - starsurge,if=buff.starweavers_warp.up|buff.touch_the_cosmos.react
 
-    # Rattle the Stars only discounts the spender while an Eclipse is up, so the
-    # AP floor follows the Eclipse: spend early inside it, hold near the cap outside.
-    # This replaced a flat astral_power>60 and measured +0.79% under DungeonSlice.
+    # AP floor follows the Eclipse (spend early inside, hold near cap
+    # outside) — replaced a flat astral_power>60, measured +0.79%.
     - starsurge,if=!var.eclipse_down&astral_power>=50
     - starsurge,if=var.eclipse_down&astral_power.deficit<20
 
-    # Fillers — Wrath if out of Eclipse, Starfire during Lunar Eclipse.
-    # The Wrath line looks wrong for an Elune's Chosen build and is not: deleting
-    # it and letting Starfire fill everything measured -1.44% under DungeonSlice.
-    # (The same deletion is +0.55% on Patchwerk single target. It was re-tested
-    # on top of the current spender lines and still lost. Do not "fix" this.)
+    # Wrath here is intentional: deleting it for pure Starfire fill measured
+    # -1.44% DungeonSlice (+0.55% Patchwerk, still net loss). Do not "fix" this.
     - wrath,if=var.eclipse_down&active_enemies<=1
     - starfire
 
-  # ===========================================================================
-  # AOE — 2+ enemies, standing still.
-  # The 2-enemy threshold is measured: raising it to 3 costs -1.48% under
-  # DungeonSlice, and to 4 costs more.
-  # ===========================================================================
+  # 2+ enemies, standing still. 2-enemy threshold measured: raising to 3
+  # costs -1.48% DungeonSlice, 4 costs more.
   aoe:
-    # Emergency AP dump — prevents capping Astral Power at the start of a pull
     - starfall,if=astral_power>=80&var.starfall_ttd_ok
 
-    # Spreads DoTs — Moonfire first (grouping phase), then Sunfire
     - moonfire,if=active_enemies<6&debuff.moonfire.refreshable
     - sunfire,if=debuff.sunfire.refreshable
-    # Target is dotted; hand the leftovers to the mouseover
     - call_action_list,name=mouseover_dots
 
-    # Same cooldown block as ec_st, same reasoning — see the comments there.
+    # Same cooldown block as ec_st.
     - lunar_eclipse,if=var.eclipse_down&cooldown.lunar_eclipse.ready&!var.inc_ready_to_cast
     - incarnation_chosen_of_elune,if=var.inc_ready_to_cast
     - fury_of_elune,if=var.foe_ttd_ok
 
-    # Free proc (Starweaver half is dead on this build, see ec_st)
     - starfall,if=buff.starweavers_weft.up|buff.touch_the_cosmos.react
-    # Same Rattle the Stars floor as the ST list, one step lower for Starfall
     - starfall,if=!var.eclipse_down&astral_power>=40&var.starfall_ttd_ok
     - starfall,if=var.eclipse_down&astral_power.deficit<20&var.starfall_ttd_ok
 
-    # Starsurge only weaves under an active Starfall and only on a free proc, so
-    # it never competes with Starfall for Astral Power.
+    # Starsurge weaves only under active Starfall + free proc — never
+    # competes with Starfall for AP.
     - starsurge,if=buff.starfall.up&(buff.starweavers_warp.up|buff.touch_the_cosmos.react)
     - starfire
 
-  # ===========================================================================
-  # MAIN — entry point. Read top to bottom: the first line whose condition
-  # passes wins the GCD, so everything above the damage lists outranks damage.
-  # ===========================================================================
+  # Entry point: first matching line wins the GCD, everything above the
+  # damage lists outranks damage.
   main:
-    # Never interrupt our own cast or channel.
     - return,if=player.channeling|player.casting
 
-    # --- Engine plumbing. Must stay at the top or the engine misbehaves. ---
-    - call_action_list,name=spell_queue          # Simia internals
-    - call_action_list,name=sanity_checks        # Simia internals
-    - call_action_list,name=auto_target_ranged   # Simia internals
+    # --- Engine plumbing. Must stay at the top. ---
+    - call_action_list,name=spell_queue
+    - call_action_list,name=sanity_checks
+    - call_action_list,name=auto_target_ranged
 
-    # Party utility runs before the target guards below, because Mark of the
-    # Wild and Heart of the Wild do not need a live enemy.
     - call_action_list,name=heal_support
 
-    # --- Target guards: nothing below this point runs without a valid enemy ---
-    # The first line lets Simia's auto-combat modes adopt a target we do not
-    # have yet (quest mob, unit already in combat, unit a party member is on).
+    # --- Target guards ---
     - return,if=!target.valid&!((cfg.auto_combat.has(1)&target.quest_mob&target.enemy&!target.dead)|(cfg.auto_combat.has(2)&target.combat&target.enemy&!target.dead)|(cfg.auto_combat.has(3)&target.targeting_party&target.enemy&!target.dead))
     - return,if=!target.valid&cfg.auto_combat.has(0)
     - return,if=!target.valid|target.dead|!target.attackable
 
-    # Ensures Moonkin Form. The health clauses keep it from stealing the global
-    # back while the defensives list is mid Bear Form heal.
     - moonkin_form,if=buff.moonkin_form.down&health.effective.pct>config.frenzied_regen_hp&!buff.frenzied_regeneration.up
-
-    # Casts Wrath before combat starts if standing still and in range
     - wrath,if=!player.combat&!player.moving&target.distance<=40
-
-    - call_action_list,name=auto_heal            # Simia internals
+    - call_action_list,name=auto_heal
 
     # --- Survival, then utility, then the burst window ---
     - call_action_list,name=defensives
     - call_action_list,name=interrupts
     - call_action_list,name=trinkets
 
-    # --- Damage priority. Exactly one of the four lists below runs. ---
-    # Moving first: while moving, only the instant-cast lists are legal.
+    # --- Damage priority: moving first (instant-only), then stationary. ---
     - call_action_list,name=moving_aoe,if=player.moving&active_enemies>1
     - call_action_list,name=moving_st,if=player.moving&active_enemies<=1
-    # Standard stationary rotation
     - call_action_list,name=ec_st,if=active_enemies<=1
     - call_action_list,name=aoe,if=active_enemies>1

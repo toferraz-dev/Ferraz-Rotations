@@ -1,51 +1,34 @@
 # =============================================================================
-# Guardian Druid — spec 104 — patch 12.1 (Midnight)
-# Elune's Chosen hero tree. Built for Mythic+, not for raid.
+# Guardian Druid — spec 104 — patch 12.1 (Midnight) — Elune's Chosen, M+.
 # =============================================================================
 #
-# HOW THIS FILE IS ORGANISED
-#   main            entry point. Plumbing, form, survival, utility, then it
-#                   delegates the damage priority to the lists below.
-#   set_tank_var    reads the Encounter Timeline into two variables.
-#   defensives      Barkskin / Survival Instincts / Frenzied Regeneration.
+# LISTS
+#   main            plumbing, form, survival, utility, delegates damage.
+#   set_tank_var    reads the Encounter Timeline into 2 variables.
+#   defensives      Barkskin / Survival Instincts / Frenzied Regen.
 #   cooldowns       Barkskin, Lunar Beam, Berserk/Incarnation, racials.
-#   bear            form and rage spending. Runs BEFORE st/aoe.
-#   st              damage priority, fewer than 2 enemies.
-#   aoe             damage priority, 2+ enemies (see var.aoe_mode).
+#   bear            form + rage spending, shared, runs before st/aoe.
+#   st / aoe        damage priority, <2 / 2+ enemies (var.aoe_mode).
 #
-# DAMAGE PRIORITY — single target (`st`)
-#   Moonfire uptime -> Thrash (Lunar Calling) -> Thrash to 3-5 stacks -> Mangle
-#   -> Moonfire on Galactic Guardian -> Thrash on cooldown -> Moonfire (Lunation)
-#   -> Swipe filler
+# ST: Moonfire uptime -> Thrash (Lunar Calling) -> Thrash to stacks -> Mangle
+# -> Moonfire (Galactic Guardian) -> Thrash on CD -> Moonfire (Lunation) ->
+# Swipe filler. AoE: same but both Thrash lines promoted above Moonfire, no
+# Lunation slot.
 #
-# DAMAGE PRIORITY — AoE (`aoe`)
-#   Same list with both Thrash lines ahead of Moonfire and no Lunation slot.
+# Measured with SimC 1210-01, fight_style=DungeonSlice, against this
+# character's actual gear/talents. Harness sim/ab_test.py, target_error=0.15
+# (~±0.08%) — under ~0.2% is noise and not quoted. NOT validated: everything
+# defensive (no M+ damage-intake model) — defensives list, tank-buster
+# prediction, var.heavy_incoming, all Defensive HP/Prediction sliders.
 #
-# HOW THE ORDER WAS DECIDED
-#   Every ordering claim below was measured with SimulationCraft 1210-01 under
-#   fight_style=DungeonSlice — the M+ proxy — against this character's actual
-#   gear and talents. The harness is sim/ab_test.py; per-line comments carry the
-#   deltas. Numbers are at target_error=0.15 (about +/-0.08%), so anything under
-#   ~0.2% quoted here would be noise and is not quoted at all.
+# Untalented on this character (harmless dead lines, flagged inline): Red
+# Moon, Convoke the Spirits, Sundering Roar, Ravage, Bristling Fur, Fluid
+# Form, Moonkin Form, Wildpower Surge, Killing Blow, Fount of Strength, the
+# Rake/Rip/Shred/Ferocious Bite catweave.
 #
-#   WHAT IS *NOT* VALIDATED: everything defensive. SimulationCraft does not
-#   model M+ damage intake, so the `defensives` list, the tank-buster
-#   prediction, var.heavy_incoming, and every slider under "Defensive HP
-#   Percentage" and "Defensives Prediction Damage" are unmeasured. Treat the
-#   numbers as applying to the damage core only.
-#
-# BUILD ASSUMPTIONS — untalented on this character, so absent from the priority:
-#   Red Moon, Convoke the Spirits, Sundering Roar, Ravage, Bristling Fur,
-#   Fluid Form, Moonkin Form, Wildpower Surge, Killing Blow, Fount of Strength,
-#   and the Rake/Rip/Shred/Ferocious Bite catweave.
-#   Lines that reference those talents are kept where they are harmless, so the
-#   file still behaves if the talent comes back. They are flagged inline.
-#
-# NUMERIC SPELL IDS — used only where the name is ambiguous:
-#   77758   Thrash (Bear)   — the name also matches Thrash (Cat) 106832
-#   213764  Swipe (Bear)    — the name also matches Swipe (Cat) 106785
-#   1261868 Heart of the Wild while in Cat Form (the button morphs)
-#   1307881 Gory Fur        — three different spells share that display name
+# Numeric spell IDs (name is ambiguous): 77758 Thrash(Bear) vs 106832
+# Thrash(Cat); 213764 Swipe(Bear) vs 106785 Swipe(Cat); 1261868 HotW in Cat
+# Form (button morphs); 1307881 Gory Fur (3 spells share the display name).
 # =============================================================================
 
 version: 1.0
@@ -62,67 +45,44 @@ description: |
 entry: main
 
 # =============================================================================
-# SPELL OVERRIDES
-# Each entry is AND-ed into *every* occurrence of that spell anywhere in the
-# file. They are global gates, not priority entries.
+# SPELL OVERRIDES — AND-ed into every occurrence of that spell in the file.
 # =============================================================================
 spell_overrides:
-  # --- Two spells are deliberately NOT listed here ---------------------------
-  #
-  # Maul: an override of "!talent.lunar_calling.enabled" would delete the rage
-  # spender outright on Lunar Calling builds, which is the build this file is
-  # written for.
-  #
-  # Mangle: the old override was
-  #   "buff.bear_form.down|rage<=30&buff.gore.up&cooldown.77758.down&enemies.8y<=3"
-  # Because & binds tighter than |, that demanded a Gore proc AND low rage AND
-  # Thrash on cooldown AND 3 or fewer enemies, all at once. It cut Mangle from
-  # ~78 casts per fight to ~15. Removing it measured +1.5% single target and
-  # +4.9% at 5 targets. The per-line conditions in bear/st/aoe do the real
-  # gating; a global gate on a core ability is the wrong tool.
+  # Maul and Mangle deliberately NOT overridden globally: an old Mangle
+  # override (Gore+low rage+Thrash-on-CD+<=3 enemies, all at once) cut it
+  # from ~78 to ~15 casts/fight — removing it measured +1.5% ST, +4.9% at 5.
+  # Per-line conditions in bear/st/aoe do the real gating now.
 
-  # Never re-press Incarnation while its own buff is up. Without this the
-  # cooldowns list would keep suggesting it for the whole window.
+  # Blocks re-suggesting Incarnation while its own buff is up.
   incarnation_guardian_of_ursoc: "!buff.incarnation_guardian_of_ursoc.up"
 
-  # With Lunar Calling the Thrash button casts Moonfire, so an unrestricted
-  # Moonfire would steal the button while Thrash itself is available. Allow
-  # Moonfire only when Lunar Calling is untalented, or Thrash is on cooldown,
-  # or there is nothing in range to Thrash.
+  # Lunar Calling makes Thrash cast Moonfire — only allow raw Moonfire when
+  # untalented, Thrash is on CD, or nothing is in Thrash range.
   moonfire: "!talent.lunar_calling.enabled|cooldown.77758.down|enemies.8y=0"
 
-  # Barkskin is not pressed on cooldown. It is saved for a predicted tank
-  # buster off the Encounter Timeline (see set_tank_var), except when the fight
-  # is short enough or final enough that holding it is pointless. This gate
-  # applies to all three Barkskin lines in the file at once.
+  # Barkskin held for a predicted tank buster (Encounter Timeline, see
+  # set_tank_var) unless the fight is short/final enough that holding is pointless.
   barkskin: "(!player.inmythicplus|fight_remains>=20|player.on_last_boss)&(variable.tank_buster_remains<=1|variable.tank_buster_casting|variable.tank_buster_remains>34)"
 
 # =============================================================================
-# CONFIG — the panel the user sees in Simia.
-# None of the defensive defaults below have been validated by simulation.
+# CONFIG — defensive defaults are unvalidated by simulation.
 # =============================================================================
 config:
-  # Build stamp, display-only. Simia has no expression that reads the `version:`
-  # and `patch:` fields at the top of the file, so this text is a manual mirror
-  # of them — update all three together.
+  # Display-only build stamp — keep in sync with version:/patch: above.
   about:
     section: "Info"
     type: note
     label: "Rotation Info"
     text: "Last update: 2026-08-13 | Patch: 12.1 | Version: 1.0"
 
-  # The exact string every number in this file was measured against — it is the
-  # talents half of sim/Tassiana_guardian.simc, the profile the A/B harness runs.
-  # Changing the build invalidates the rage numbers, the Thrash stack branch and
-  # the Heart of the Wild weave.
+  # Exact string every number here was measured against (sim/Tassiana_guardian.simc).
   recommended_talents:
     section: "Talents"
     type: copy_text
     label: "Recommended Talent String"
     text: "CgGADBD3hSPCL9Y9gz68WcKvMAAAAAAAAAAAAgZmxsMPwMjZWMLGmZZZgZzwoJamZWmZmZmlxMAAAAAAMjlZALbzMYMLDgpAAAAbYmBYxMYAbWAYmBwA"
 
-  # === DEFENSIVE HP THRESHOLDS ===
-  # Reactive floors: fire the cooldown once health has already dropped.
+  # === DEFENSIVE HP THRESHOLDS === (reactive: fire once HP already dropped)
   survival_instincts_hp_pct:
     section: "Defensive HP Percentage"
     label: "Survival Instincts HP%"
@@ -146,10 +106,8 @@ config:
     default: 50
 
   # === PREDICTED INCOMING DAMAGE THRESHOLDS ===
-  # Proactive: fire before the hit lands. `incoming.mitigated.pct` is the
-  # predicted hit expressed as a percentage of effective health *after* the
-  # defensives already running, so these are not comparable to the HP sliders
-  # above — 40 here is a much bigger event than 40 there.
+  # Proactive. incoming.mitigated.pct is post-defensives, so NOT comparable
+  # to the HP sliders above (40 here != 40 there).
   survival_instincts_dmg_pct:
     section: "Defensives Prediction Damage"
     label: "Survival Instincts (Incoming Dmg%)"
@@ -164,8 +122,7 @@ config:
     min: 0
     max: 100
     default: 40
-  # Drives var.heavy_incoming. Above this, rage goes to Ironfur instead of
-  # Raze/Maul. Lower = more armour, less damage.
+  # Drives var.heavy_incoming: above this, rage goes to Ironfur not Raze/Maul.
   ironfur_dmg_pct:
     section: "Defensives Prediction Damage"
     label: "Ironfur over Maul (Incoming Dmg%)"
@@ -174,9 +131,7 @@ config:
     max: 100
     default: 20
 
-  # === RAGE SPENDING ===
-  # Rage caps at 100 on this build (Fount of Strength untalented), so the
-  # default of 20 means Raze/Maul fire at 80 rage or above.
+  # === RAGE SPENDING === (100 cap on this build — default 20 fires at 80+ rage)
   rage_deficit_maul:
     label: "Rage Deficit (Maul)"
     type: slider
@@ -186,10 +141,8 @@ config:
     description: "Maul fires once rage is within this much of the cap. Lower = more aggressive."
 
   # === COOLDOWN CONFIGURATIONS ===
-  # The Heart of the Wild weave is the single most valuable thing in this file:
-  # removing it costs 15% under DungeonSlice. These three sliders gate it.
-  # Loosening all three at once measured -3.3%, so the conservative defaults are
-  # not just safe, they are also correct for damage.
+  # HotW weave is the single most valuable thing here (-15% DungeonSlice if
+  # removed). These 3 sliders gate it — loosening all three measured -3.3%.
   auto_hotw:
     section: "Cooldowns"
     label: "Auto Heart of the Wild"
@@ -232,167 +185,75 @@ config:
 # VARIABLES
 # =============================================================================
 variables:
-  # AoE switch: 2+ enemies inside Thrash/Swipe range and the Simia AoE toggle on.
-  # The threshold was 3. Under DungeonSlice, 2 measured +0.70% and 4 measured
-  # -0.79%, so two is where the AoE list starts paying for itself in dungeon
-  # pulls. state.aoe is the user's in-game toggle and always has the last word.
+  # 2+ enemies (threshold: 2 measured +0.70%, 4 measured -0.79% vs 3), and the
+  # user's AoE toggle.
   aoe_mode: enemies.8y>=2&state.aoe
 
-  # True when a big hit is predicted. Routes rage into Ironfur and blocks
-  # Raze/Maul, so armour wins over damage exactly when it matters.
-  # UNMEASURED: SimulationCraft has no equivalent of this prediction, so the
-  # sim treated it as permanently false. The whole Maul-vs-Ironfur split rests
-  # on in-game judgement, not on any number in this file.
+  # Big hit predicted -> routes rage to Ironfur over Raze/Maul. Unmeasured:
+  # SimC has no equivalent prediction, treats this as permanently false.
   heavy_incoming: incoming.mitigated.pct>=config.ironfur_dmg_pct
 
-  # Gate for the Heart of the Wild weave. Leaving Bear Form drops bear armour
-  # and stamina, so the pull has to be established and safe first. In order:
-  # the feature is on, the talent exists, HotW is actually ready, there is a
-  # live target to weave against, combat has been running for the configured
-  # delay, health is above the floor, Ironfur is already up to cover the window,
-  # and no burst window is running (burst and the weave fight over the same
-  # GCDs — see the cooldowns list, which resolves that by holding burst).
+  # Gate for the HotW weave: feature on, talented, ready, live target,
+  # combat running long enough, HP above floor, Ironfur already up, no
+  # burst window active (burst and weave compete for the same GCDs).
   hotw_weave: config.auto_hotw&talent.heart_of_the_wild&cooldown_bypass.heart_of_the_wild.ready&target.valid&target.attackable&player.combat&combat.time>=config.hotw_delay&health.pct>=config.hotw_hp_pct&buff.ironfur.up&!buff.incarnation_guardian_of_ursoc.up&!buff.berserk.up
 
 lists:
-  # ===========================================================================
-  # SET_TANK_VAR — tank buster prediction, feeds the barkskin spell_override.
-  # Reads the native Encounter Timeline (C_EncounterTimeline, 12.0+) rather
-  # than hardcoded boss ability names, which only ever resolved on their own
-  # tier and went stale every patch.
-  # ===========================================================================
+  # Tank-buster prediction feeding the barkskin override. Reads the native
+  # Encounter Timeline (C_EncounterTimeline, 12.0+) instead of hardcoded boss
+  # ability names.
   set_tank_var:
-    # Reset each pass. 999 means "no tank buster known", which reads as "far
-    # away" to every comparison downstream.
     - variable,name=tank_buster_remains,value=999
-    # Take the soonest timeline event that is flagged as tank damage and is
-    # closer than whatever is already stored.
     - variable,name=tank_buster_remains,value=encounter.next_tank.remains,if=encounter.next_tank.up&encounter.next_tank.severity>=1&encounter.next_tank.remains<variable.tank_buster_remains
-    # Separate flag for "it is landing right now", used to fire defensives on
-    # the cast rather than waiting for the hit.
     - variable,name=tank_buster_casting,value=encounter.next_tank.up&encounter.next_tank.remains<=1
 
-  # ===========================================================================
-  # DEFENSIVES — predicted damage first, reactive HP thresholds second.
-  # Called from main before interrupts, so survival outranks utility.
-  # NONE of this is validated by simulation.
-  # ===========================================================================
+  # Predicted damage first, reactive HP second. Unvalidated by simulation.
   defensives:
-    # --- Proactive: a big hit is predicted, spend before it lands ---
-    # Barkskin also carries the global tank-buster override, so this only fires
-    # inside a real buster window.
     - barkskin,range_check=none,if=incoming.mitigated.pct>=config.barkskin_dmg_pct
-    # Survival Instincts is the bigger button and sits behind a bigger number.
     - survival_instincts,range_check=none,if=incoming.mitigated.pct>=config.survival_instincts_dmg_pct
-
-    # --- Reactive: already low, spend now regardless of prediction ---
     - survival_instincts,range_check=none,if=health.pct<=config.survival_instincts_hp_pct
-    # buff.frenzied_regeneration.down stops it being re-pressed over itself;
-    # the heal is a HoT, so refreshing early throws away the remaining ticks.
     - frenzied_regeneration,range_check=none,if=health.pct<=config.frenzied_regeneration_hp_pct&buff.frenzied_regeneration.down
     - barkskin,range_check=none,if=health.pct<=config.barkskin_hp_pct
 
-  # ===========================================================================
-  # COOLDOWNS — called from main just ahead of the damage lists.
-  # ===========================================================================
   cooldowns:
-    # Barkskin on cooldown *within* the tank-buster window the global override
-    # allows. Bear Form only: out of form it is a wasted global.
     - barkskin,if=buff.bear_form.up
-
-    # Lunar Beam straight on cooldown, deliberately NOT synced to
-    # Incarnation/Berserk. SimC's own APL syncs it; forcing that sync here
-    # measured +0.17%, inside the error bar, so the simpler unsynced version
-    # stays. The moving check exists because the beam is a ground effect and
-    # running out of it wastes the cooldown.
+    # Deliberately unsynced from Incarnation/Berserk — forcing sync measured
+    # +0.17% (noise). Moving check: it's a ground effect, running out wastes it.
     - lunar_beam,if=target.valid&(!config.lunar_beam_moving_check|player.moving.time<=1)
 
-    # Berserk and Incarnation are mutually exclusive talents — with Incarnation
-    # talented the Berserk line simply never resolves, and vice versa. Both are
-    # listed so the file works either way. The global override already blocks a
-    # recast while the buff is up.
-    #
-    # Both are HELD until Heart of the Wild has been spent. var.hotw_weave
-    # refuses to weave while a burst window is running, so pressing burst first
-    # pushed HotW to the back of the pull. Delaying burst instead measured
-    # +0.95% under DungeonSlice. (The same change measured -10.6% on Patchwerk
-    # single target — it is a genuinely M+-specific choice, not a universal one.)
-    #
-    # The first two clauses are the escape hatch: with the weave switched off or
-    # HotW untalented there is nothing to wait for, so burst fires immediately
-    # instead of being held for a weave that will never happen.
+    # Berserk/Incarnation are mutually exclusive talents, both listed so the
+    # file works either way. Held until HotW is spent — delaying burst for the
+    # weave measured +0.95% DungeonSlice (-10.6% Patchwerk, M+-specific).
+    # First two clauses are the escape hatch when there's no weave to wait for.
     - berserk,if=target.valid&(!config.auto_hotw|!talent.heart_of_the_wild|!cooldown_bypass.heart_of_the_wild.ready)
     - incarnation_guardian_of_ursoc,if=target.valid&(!config.auto_hotw|!talent.heart_of_the_wild|!cooldown_bypass.heart_of_the_wild.ready)
 
-    # Wild Guardian is only worth pressing inside the Lunar Beam window.
     - wild_guardian,if=buff.lunar_beam.up
 
-    # Racials, unconditional, on cooldown. All four are dead on a Harronir
-    # character — none of these is its racial — and are kept only so the file
-    # survives a race change.
+    # Racials, unconditional — dead on a Harronir character, kept for race changes.
     - blood_fury
     - berserking
     - fireblood
     - ancestral_call
 
-  # ===========================================================================
-  # BEAR — form and rage spending, shared by both damage lists.
-  # main calls this BEFORE st/aoe, so anything here outranks the whole damage
-  # priority. Only put things here that genuinely deserve that.
-  # ===========================================================================
+  # Form + rage spending, shared by st/aoe. Called BEFORE them in main, so
+  # anything here outranks the whole damage priority.
   bear:
-    # Safety net: if we are in no form at all, get into Bear. The !cat_form
-    # clause keeps this from fighting the Heart of the Wild weave in main.
     - bear_form,range_check=none,if=!buff.bear_form.up&!buff.cat_form.up
 
-    # HISTORY — two lines used to sit here and were measured out:
-    #   "mangle,if=rage<=30" existed to claw rage back while the old Mangle
-    #   override strangled the normal Mangle lines. With that override gone the
-    #   st/aoe Mangle already fires at rage<83, so this only jumped the queue
-    #   ahead of Thrash. Removing it: +0.38%.
-    #
-    #   "moonfire,if=buff.galactic_guardian.up" spent every GG proc here, at the
-    #   top of the shared layer, ahead of Thrash and Mangle. The proc lasts long
-    #   enough to be consumed a GCD or two later, so it now sits after Mangle
-    #   inside st/aoe. Moving it: +2.95%. Deleting it outright was worse
-    #   (+2.38%), so the proc is still used — just not at the front.
-
-    # --- Ironfur: armour, off the global cooldown ---------------------------
-    # use_off_gcd=1 matches every Ironfur line in the SimC APL. Without it each
-    # Ironfur consumes a suggestion slot that would otherwise be Mangle or
-    # Thrash. Measured neutral for damage (+0.06%, inside the error bar) — this
-    # is here because not losing a GCD to armour is correct in M+, not because
-    # the sim rewarded it.
-    #
-    # Three separate triggers, in order of urgency:
-    #   1. uptime    — the buff is about to fall off
-    #   2. predicted — a big hit is coming (var.heavy_incoming)
-    #   3. overcap   — rage is about to be wasted anyway
+    # --- Ironfur, off the global cooldown (use_off_gcd=1, neutral for damage
+    # but correct for M+ — not losing a GCD to armour) ---
     - ironfur,use_off_gcd=1,name="Ironfur (uptime)",if=buff.ironfur.remains<2&player.combat
     - ironfur,use_off_gcd=1,name="Ironfur (predicted dmg)",if=var.heavy_incoming
     - ironfur,use_off_gcd=1,name="Ironfur (overcap)",if=rage>=80
-    # NOTE: dumping rage at 40 instead of 80, the way SimC does, measured -2.86%
-    # under DungeonSlice. It was +9.41% on Patchwerk single target — a raid-only
-    # gain that actively hurts M+. Do not "fix" this to match SimC.
+    # Dumping at 40 like SimC's raid APL measured -2.86% DungeonSlice
+    # (+9.41% Patchwerk) — a raid-only gain. Do not "fix" this to match SimC.
 
-    # --- Rage spenders -------------------------------------------------------
-    # Gory Fur (1307881 — three different spells share the display name, so the
-    # id is required) discounts the next Maul. Spend the proc on sight instead
-    # of waiting for the rage-deficit gate below. Worth 2.24%.
-    #
-    # Both spender pairs split on talent.raze, never on enemy count: in SimC
-    # Raze is a parse-time redirect, so with the talent EVERY Maul becomes a
-    # Raze at any target count. Holding Raze for packs would leave the build
-    # with no rage spender at all in single target.
-    #
-    # The enemies.8y<3 on the Maul branch is SimC's own gate: without Raze and
-    # against 3+ enemies, Thrash and Swipe beat spending the proc on Maul.
+    # --- Rage spenders. Split on talent.raze (parse-time redirect in SimC —
+    # with it, EVERY Maul becomes Raze at any target count), never on enemy
+    # count. Gory Fur (1307881, 3 spells share the name) spent on sight: +2.24%.
     - maul,name="Maul (Gory Fur)",if=buff.1307881.up&!talent.raze.enabled&enemies.8y<3&buff.ironfur.up&!var.heavy_incoming
     - raze,name="Raze (Gory Fur)",if=buff.1307881.up&talent.raze.enabled&buff.ironfur.up&!var.heavy_incoming
-
-    # Ordinary rage dump, once rage is within config.rage_deficit_maul of the
-    # cap. Both lines require Ironfur to already be up and no big hit predicted:
-    # armour first, damage with the leftovers.
     - maul,name="Maul",if=!talent.raze.enabled&buff.ironfur.up&!var.heavy_incoming&rage.deficit<=config.rage_deficit_maul
     - raze,name="Raze",if=talent.raze.enabled&buff.ironfur.up&!var.heavy_incoming&rage.deficit<=config.rage_deficit_maul
 
@@ -400,174 +261,98 @@ lists:
   # ST — damage priority below the AoE threshold. Also covers the opener.
   # ===========================================================================
   st:
-    # Keep the Moonfire DoT up. `refreshable` is the pandemic window (under 30%
-    # of duration remaining), so this does not clip. Removing this line measured
-    # inside the error bar — it is kept because DoT uptime is worth more in real
-    # play than in a 300-second dummy fight, where the DoT never falls off.
     - moonfire,name="Moonfire (maintain)",if=target.valid&dot.moonfire.refreshable
-
-    # With Lunar Calling the Thrash button casts Moonfire, so Thrash gets first
-    # refusal on its own cooldown before anything else can take the button.
     - 77758,name="Thrash (Lunar Calling)",range_check=mob_count_8y,if=cooldown.77758.ready&talent.lunar_calling.enabled
 
-    # Build and hold the Thrash DoT stack. The stack cap depends on Flashing
-    # Claws rank, hence the three-way branch; on this build (rank 2) the live
-    # branch is stack<5.
-    #
-    # This must stay a real if=. `target_if` is a SimulationCraft modifier and
-    # does NOT exist in Simia — it is absent from all 25 stepModifiers in the
-    # expression catalog and from the IntelliSense extension's table. Writing it
-    # here drops the condition silently and Thrash spams. (Simia's own
-    # rotation_104.yaml translates it as `target.refreshable`, which does not
-    # exist either — that official file is broken on this line.) It costs
-    # nothing anyway: Thrash (Bear) is a PBAoE, so there is no "other target" to
-    # retarget to.
+    # Must stay a real if=: target_if is a SimC modifier that does NOT exist
+    # in Simia (absent from all stepModifiers). Writing it drops the
+    # condition silently and Thrash spams. Costs nothing to keep as if=
+    # anyway — Thrash(Bear) is PBAoE, no other target to retarget to.
     - 77758,name="Thrash (stacks)",range_check=mob_count_8y,if=cooldown.77758.ready&(dot.thrash.refreshable|dot.thrash.stack<5&talent.flashing_claws.rank=2|dot.thrash.stack<4&talent.flashing_claws.rank=1|dot.thrash.stack<3&!talent.flashing_claws.enabled)
 
-    # HISTORY — Red Moon's old slot held a Moonfire on cooldown.mangle.remains
-    # <=gcd. It fired precisely when Mangle was about to come up, spending the
-    # GCD that Mangle wanted. Removing it: +2.43%. Combined with moving the
-    # Galactic Guardian proc out of `bear`: +4.55%.
-
-    # DEAD LINE on this build: Wildpower Surge is untalented, so this never
-    # resolves. Kept because it costs nothing and the list stays correct if the
-    # talent returns. Measured -0.04% to remove, i.e. nothing.
+    # Dead while Wildpower Surge is untalented (removing measured -0.04%, nothing).
     - mangle,name="Mangle (burst)",if=(buff.incarnation_guardian_of_ursoc.up|buff.berserk.up)&buff.ursine_potential.stack<6&talent.wildpower_surge.enabled
 
-    # Main Mangle. Free inside a burst window; otherwise gated on rage headroom
-    # so it is used as a generator rather than overcapping. The four rage
-    # numbers cover the Fount of Strength / Soul of the Forest combinations; on
-    # this build (no Fount, yes SotF) the live branch is rage<83.
+    # Free in burst, else gated on rage headroom. Four numbers cover Fount of
+    # Strength/SotF combos; live branch on this build (no Fount, yes SotF) is rage<83.
     - mangle,name="Mangle",if=(buff.incarnation_guardian_of_ursoc.up|buff.berserk.up)|((rage<88)&!talent.fount_of_strength.enabled)|((rage<83)&!talent.fount_of_strength.enabled&talent.soul_of_the_forest.enabled)|((rage<108)&talent.fount_of_strength.enabled)|((rage<103)&talent.fount_of_strength.enabled&talent.soul_of_the_forest.enabled)
 
-    # Galactic Guardian proc: a free, instant, boosted Moonfire. Deliberately
-    # placed AFTER Mangle rather than at the top of `bear` — the proc lives long
-    # enough to wait a GCD, and letting it jump the queue cost 2.95%.
+    # Placed after Mangle, not at the top of `bear` — proc lives long enough
+    # to wait a GCD; jumping the queue cost 2.95%.
     - moonfire,name="Moonfire (GG proc)",if=buff.galactic_guardian.up&target.valid
-
-    # Thrash again with no stack condition: by now it is pure filler on cooldown.
     - 77758,name="Thrash (CD)",range_check=mob_count_8y,if=cooldown.77758.ready
-
-    # Lunation makes a bear-form Moonfire worth pressing over Swipe.
     - moonfire,name="Moonfire (Lunation)",if=talent.lunation.enabled&buff.bear_form.up&target.valid
-
-    # Last resort. Numeric id because "swipe" also matches the Cat version.
+    # Numeric id: "swipe" also matches the Cat version.
     - 213764,name="Swipe (filler)"
 
-  # ===========================================================================
-  # AOE — damage priority at 2+ enemies (var.aoe_mode).
-  # Same list as `st` with both Thrash lines promoted above Moonfire, and no
-  # Lunation slot: with several targets, Swipe beats a single-target Moonfire.
-  # ===========================================================================
+  # Same as `st` with both Thrash lines promoted above Moonfire, no Lunation
+  # slot — Swipe beats single-target Moonfire at several targets.
   aoe:
     - 77758,name="Thrash (Lunar Calling)",range_check=mob_count_8y,if=cooldown.77758.ready&talent.lunar_calling.enabled
     - 77758,name="Thrash (stacks)",range_check=mob_count_8y,if=cooldown.77758.ready&(dot.thrash.refreshable|dot.thrash.stack<5&talent.flashing_claws.rank=2|dot.thrash.stack<4&talent.flashing_claws.rank=1|dot.thrash.stack<3&!talent.flashing_claws.enabled)
     - moonfire,name="Moonfire (maintain)",if=target.valid&dot.moonfire.refreshable
-    # Dead while Wildpower Surge is untalented — see the note in `st`.
     - mangle,name="Mangle (burst)",if=(buff.incarnation_guardian_of_ursoc.up|buff.berserk.up)&buff.ursine_potential.stack<6&talent.wildpower_surge.enabled
     - mangle,name="Mangle",if=(buff.incarnation_guardian_of_ursoc.up|buff.berserk.up)|((rage<88)&!talent.fount_of_strength.enabled)|((rage<83)&!talent.fount_of_strength.enabled&talent.soul_of_the_forest.enabled)|((rage<108)&talent.fount_of_strength.enabled)|((rage<103)&talent.fount_of_strength.enabled&talent.soul_of_the_forest.enabled)
     - moonfire,name="Moonfire (GG proc)",if=buff.galactic_guardian.up&target.valid
     - 77758,name="Thrash (CD)",range_check=mob_count_8y,if=cooldown.77758.ready
     - 213764,name="Swipe (filler)"
 
-  # ===========================================================================
-  # MAIN — entry point. Read top to bottom: the first line whose condition
-  # passes wins the GCD, so everything above the damage lists outranks damage.
-  # ===========================================================================
+  # Entry point: first matching line wins the GCD.
   main:
-    # --- Engine plumbing. Must stay at the top or the engine misbehaves. ---
-    - call_action_list,name=set_tank_var      # refresh the tank-buster variables
-    - call_action_list,name=spell_queue       # Simia internals
-    - call_action_list,name=sanity_checks     # Simia internals
-    - call_action_list,name=auto_target       # Simia internals
+    - call_action_list,name=set_tank_var
+    - call_action_list,name=spell_queue
+    - call_action_list,name=sanity_checks
+    - call_action_list,name=auto_target
 
-    # --- Raid buff and base form ---
-    # Re-apply Mark of the Wild when it is missing from anyone, or when Simia
-    # flags the button as overlayed. lastcast>=10 stops it retrying every GCD
-    # while the buff is still propagating.
     - mark_of_the_wild,range_check=none,if=(buff.mark_of_the_wild.down.any|action.mark_of_the_wild.overlayed)&lastcast.mark_of_the_wild>=10
-    # Get into Bear when there is something to fight. !cat_form yields to the
-    # weave below; without it this line and the weave would fight each other.
+    # !cat_form yields to the weave below so they don't fight each other.
     - bear_form,range_check=none,if=buff.bear_form.down&!buff.cat_form.up&(target.attackable|enemies.40y)
 
-    # --- Heart of the Wild weave ---
-    # The most valuable block in the file: removing it costs 15% under
-    # DungeonSlice. Without Fluid Form, Cat Form has to be cast explicitly.
-    # Casting HotW puts it on cooldown, and that state change is what drives the
-    # return to Bear on the following GCD.
-    #
-    # HotW is cast twice, by name and by the cat-form morph id (1261868).
-    # Whichever the client accepts fires; the other is a no-op. ignore_cds_toggle
-    # lets the weave run even with the global Cooldowns toggle off, because the
-    # weave is a throughput rotation step here, not a saved cooldown.
+    # --- Heart of the Wild weave — biggest block in the file: -15%
+    # DungeonSlice if removed. Cast by name AND cat-form morph id (1261868),
+    # only one resolves per form. ---
     - cat_form,name="Cat Form (HotW)",range_check=none,if=var.hotw_weave&buff.cat_form.down
     - heart_of_the_wild,name="Heart of the Wild",range_check=none,ignore_cds_toggle=true,if=buff.cat_form.up&cooldown_bypass.heart_of_the_wild.ready&target.valid&target.attackable
     - 1261868,name="Heart of the Wild (cat morph)",range_check=none,ignore_cds_toggle=true,if=buff.cat_form.up&cooldown_bypass.heart_of_the_wild.ready&target.valid&target.attackable
-    # Return to Bear once HotW is spent. The extra clauses are escape hatches:
-    # if the cast is blocked, health drops, or the target dies mid-weave, this
-    # still gets us out of Cat Form instead of parking there with bear armour
-    # and stamina gone and HotW still showing ready.
+    # Escape hatches back to Bear if the cast is blocked, HP drops, or target dies mid-weave.
     - bear_form,name="Bear Form (post-HotW)",range_check=none,if=buff.cat_form.up&(!cooldown_bypass.heart_of_the_wild.ready|health.pct<config.hotw_hp_pct|!target.valid|!target.attackable)
 
-    # --- Pull ---
-    # Moonfire the mouseover to start a pack from range, before combat begins.
     - moonfire.mouseover,if=config.MO_moonfire&config.allow_pull_with_mo&mouseover.enemy&mouseover.alive&mouseover.debuff.moonfire.down
 
     # Hand control back to Simia's auto-combat driver when it owns the player.
-    # NOTE: this sits ABOVE the defensives, so nothing below runs while
-    # auto_combat.player is true.
-    - return,if=auto_combat.player
+    - return,if=player.auto_combat
 
-    # --- Survival: outranks utility and all damage ---
     - call_action_list,name=defensives
 
-    # --- Interrupts and crowd control ---
-    # interrupt.*.check are Simia's own kick filters (cast is interruptible,
-    # important enough, in range, not already being kicked by someone else).
     - skull_bash,if=interrupt.target.check
     - skull_bash.mouseover,if=interrupt.mouseover.check
     - skull_bash.focus,if=interrupt.focus.check
-    # Stun/incapacitate fallbacks for when Skull Bash is on cooldown.
     - mighty_bash,if=interrupt.cc.check
     - incapacitating_roar,if=interrupt.stun.aoe.check
-    # Racial and profession stuns. Only one of these exists per character; the
-    # rest never resolve.
+    # Racial/profession stuns — only one exists per character, rest never resolve.
     - quaking_palm,if=interrupt.cc.check
     - haymaker,if=interrupt.cc.check
     - war_stomp,if=interrupt.stun.aoe.check
     - bull_rush,if=interrupt.stun.aoe.check
     - tail_swipe,if=interrupt.stun.aoe.check
 
-    # --- Taunt: grab aggro when not tanking. Dungeon/M+ only, never raid ---
-    # threat<2 means we do not have solid aggro; threat!=-1 filters units with
-    # no threat table at all. !player.inraid is the guard that stops this from
-    # ripping a boss off the other tank.
+    # Taunt (dungeon/M+ only). !player.inraid stops it ripping a boss off the other tank.
     - growl,name="Taunt",if=target.threat<2&target.valid&target.threat!=-1&!player.inraid
     - growl.mouseover,name="Taunt MO",if=mouseover.threat<2&mouseover.combat&mouseover.threat!=-1&mouseover.exists&!player.inraid
 
-    - call_action_list,name=auto_heal         # Simia internals
+    - call_action_list,name=auto_heal
 
-    # --- Items: only when Simia decides they line up with a burst window ---
     - trinket_1,if=trinket_1.sync
     - trinket_2,if=trinket_2.sync
 
-    # --- Off-GCD armour and ranged filler ---
-    # A second Ironfur trigger, outside the bear list, so armour is topped up
-    # even on GCDs the damage lists own. delay=300 is the anti-spam throttle;
-    # use_off_gcd keeps it from eating the suggestion slot. This overlaps the
-    # bear-list Ironfur lines on purpose — belt and braces on the buff that
-    # keeps a Guardian alive.
+    # Second Ironfur trigger outside `bear`, so armour tops up on GCDs the
+    # damage lists own. Overlaps the bear-list lines on purpose.
     - ironfur,use_off_gcd=1,delay=300,if=buff.ironfur.remains<2|rage>=80
-    # Out of melee, Moonfire is the only thing worth pressing. The global
-    # Moonfire override still applies, so this yields to Thrash on Lunar Calling.
     - moonfire,if=!target.in_melee&buff.bear_form.up&target.valid
-    # Spread Moonfire onto a mouseover already in combat, without switching target.
     - moonfire.mouseover,if=config.MO_moonfire&mouseover.enemy&mouseover.alive&mouseover.debuff.moonfire.down&mouseover.combat
 
-    # --- Damage priority. Everything above this point outranks damage. ---
+    # --- Damage priority ---
     - call_action_list,name=cooldowns
-    # Form and rage spending are shared, so they run before either damage list.
     - call_action_list,name=bear,if=buff.bear_form.up
-    # Exactly one of these two runs, split by var.aoe_mode.
     - call_action_list,name=aoe,if=buff.bear_form.up&var.aoe_mode
     - call_action_list,name=st,if=buff.bear_form.up&!var.aoe_mode
