@@ -513,7 +513,11 @@ lists:
     - call_action_list,name=auto_target
     - call_action_list,name=auto_heal
 
-    - return,if=!player.auto_combat
+    # NOTE: a `return,if=!player.auto_combat` used to sit here. Despite the
+    # name, player.auto_combat is NOT "am I in combat" — the catalog defines
+    # it as a config-based auto-combat-driver check, which reads false in
+    # normal play. Negated, that made this abort main on every pass and
+    # nothing below ever fired. Use player.combat for combat state. Removed.
 
     # Cancels a heal mid-cast if the target got topped off by another source.
     - stop_casting,name="Cancel Overheal",casting_check=any,if=casting_target.health.pct>=config.raid_cancel_overheal_pct

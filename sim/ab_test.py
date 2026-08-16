@@ -20,7 +20,7 @@ import subprocess
 import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-SIMC = os.path.join(ROOT, 'sim', 'tools', 'simc-1210.01.a2d0577-win64', 'simc.exe')
+SIMC = os.path.join(ROOT, 'sim', 'tools', 'simc-1210.01.a060a35-win64', 'simc.exe')
 PROFILE = os.path.join(ROOT, 'sim', 'Tassiana_guardian.simc')
 APL_DIR = os.path.join(ROOT, 'sim', 'apl')
 OUT_DIR = os.path.join(ROOT, 'sim', 'out')
