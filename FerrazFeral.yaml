@@ -12,14 +12,18 @@
 # BIGGEST FINDING: the `cooldown` list computed var.holdBerserk and the
 # Convoke count-remaining variables but never actually cast Berserk, Convoke
 # the Spirits, trinkets or a potion anywhere in the file. Adding them back
-# measured +19.73% DungeonSlice — by far the largest number here. Two other
+# measured +19.42% DungeonSlice — by far the largest number here. Two other
 # candidate fixes tested and NOT applied: removing Tiger's Fury's
 # hold-for-Frantic-Frenzy clause (no measurable gain once Berserk is
 # actually cast, possibly a tiny loss) and the dotc_rake_threshold talent
-# fix (+0.01%, noise — fixed anyway since it costs nothing, see its own comment).
+# fix (-0.14%, noise — fixed anyway since it costs nothing, see its own comment).
+#
+# Separately from the sim: a dead `return,if=auto_combat.player` at the top of
+# main was silently aborting the whole rotation in-game (see the note there).
+# SimC never had that line, so no number here captures it.
 #
 # BUILD ASSUMPTIONS — talents confirmed on the recommended string by decoding
-# it through the local SimC binary (sim/tools/simc-1210.01.a2d0577-win64/simc.exe):
+# it through the local SimC binary (sim/tools/simc-1210.01.a060a35-win64/simc.exe):
 # hero tree is Druid of the Claw (all 14 points, Ravage-centric), Frantic
 # Frenzy, Rampant Ferocity, Primal Wrath, Double-Clawed Rake, Infected Wounds,
 # Unseen Predator apex maxed 4/4. NOT talented (dead weight, flagged inline
@@ -33,7 +37,7 @@
 # window built around it is a possible future gain, not applied here.
 # =============================================================================
 
-version: 5.0
+version: 1.0
 author: Ferraz
 patch: "12.1"
 spec: 103
@@ -47,7 +51,7 @@ config:
     section: "Talents"
     type: copy_text
     label: "Recommended Talent String"
-    text: "CcGAAAAAAAAAAAAAAAAAAAAAAAAAAAAgZmZ2YmZmxY2MPw2YbGzMmZAAAAYLY2M8AmZUzYWMzMzsMmxAAAAAAwADAAAgmZZWmZmBAsAzMDwCDGAAAzshB"
+    text: "CcGADBD3hSPCL9Y9gz68WcKvMAAAAAAgZmZ2YmZmxY2MPw2YbGzMmZAAAAYLY2M8AmZUzYWMzMzsMmxAAAAAAwADAAAgmZZWmZmBEYBmZGgFGMAAAmZDD"
 
   survival_instincts_hp_pct:
     section: "Defensive HP Percentage"
@@ -105,11 +109,6 @@ config:
     max: 100
     default: 40
 
-  travel_form_mode:
-    label: "Auto Travel Form"
-    type: checkbox
-    default: true
-
   # === COOLDOWN CONFIGURATIONS ===
   # Defaults ON: the whole cooldown block below (Berserk/Convoke/trinkets/
   # potion) was entirely missing before — see the `cooldown` list comment.
@@ -141,7 +140,7 @@ variables:
   # default APL) gates on talent.merciless_claws instead. No measured DPS
   # difference on this build (wild_slashes untalented -> 99 either way), but
   # the formula is now correct if the build changes. Fixed, not guessed:
-  # confirmed via sim/ab_test_feral.py's dotc_fix_only variant (+0.01% ~).
+  # confirmed via sim/ab_test_feral.py's dotc_fix_only variant (-0.14% ~).
   dotc_rake_threshold: 99-94*(talent.wild_slashes&talent.merciless_claws)-91*(talent.wild_slashes&!talent.merciless_claws)
   bs_inc_cd: var.bs_inc_cd_remains+10
   convoke_cd: cooldown.convoke_the_spirits.remains+10
@@ -205,7 +204,8 @@ lists:
     - thorn_bloom
 
   builder:
-    - prowl,if=!buff.shadowmeld.up&(!var.rake_tf|dot.rake.refreshable)
+    # Same reasoning as the main-list Prowl: cannot be cast in combat.
+    - prowl,if=!player.combat&!buff.shadowmeld.up&(!var.rake_tf|dot.rake.refreshable)
     - rake,if=(buff.tigers_fury.up|dot.rake.remains<cooldown.tigers_fury.remains)&(dot.rake.refreshable&(buff.tigers_fury.up|!var.rake_tf)|dot.rake.remains<2|buff.tigers_fury.up&!var.rake_tf)
     - moonfire,if=talent.lunar_inspiration&(buff.tigers_fury.up|dot.moonfire.remains<cooldown.tigers_fury.remains)&(dot.moonfire.refreshable&(buff.tigers_fury.up|!var.moonfire_tf)|dot.moonfire.remains<2|buff.tigers_fury.up&!var.moonfire_tf)
     - shred
@@ -220,16 +220,14 @@ lists:
     - shred,if=combo_points<=1&active_enemies=2&talent.panthers_guile
     - 106785,if=combo_points>1|active_enemies>2|!talent.panthers_guile
 
-  main:
-    - call_action_list,name=spell_queue
-    - call_action_list,name=sanity_checks
-    - call_action_list,name=auto_target
-
+  # Mark of the Wild, OOC Regrowth top-off.
+  heal_support:
     - mark_of_the_wild,range_check=none,if=(buff.mark_of_the_wild.down.any|action.mark_of_the_wild.overlayed)&lastcast.mark_of_the_wild>=10
     - regrowth,range_check=none,if=health.pct<=config.regrowth_ooc_hp_pct&!player.combat
 
-    - travel_form,after=200,range_check=none,if=config.travel_form_mode&!player.combat&player.inopenworld&mount_usable&buff.travel_form.down&!target.quest_mob&!target.dummy
-
+  # Emergency Bear Form, Fluid Form auto-shift, manual Cat Form entry, and
+  # the pre-pull Prowl opener.
+  form:
     - bear_form,range_check=none,if=health.pct<=25&!buff.bear_form.up&player.combat
     - heart_of_the_wild,range_check=none,if=buff.bear_form.up&player.combat
 
@@ -237,22 +235,49 @@ lists:
     - rake,if=player.combat&target.attackable&target.in_melee&buff.cat_form.down&talent.fluid_form.enabled
     - cat_form,range_check=none,if=buff.cat_form.down&(target.attackable|enemies.40y)
 
-    - prowl,range_check=none,if=!var.bs_inc&buff.prowl.down&buff.shadowmeld.down&(target.attackable|enemies.40y)
+    # !player.combat added: Prowl cannot be cast in combat (Blizzard's own
+    # restriction) — if Simia doesn't already model that as "unusable" the
+    # same way it does cooldowns/resources/range, the buff never applies,
+    # the condition never turns false, and this line traps priority forever
+    # every GCD in combat, blocking Tiger's Fury/cooldown/finisher/builder
+    # below it entirely. This is meant as the pre-pull opener only.
+    - prowl,range_check=none,if=!player.combat&!var.bs_inc&buff.prowl.down&buff.shadowmeld.down&(target.attackable|enemies.40y)
 
+  interrupts:
     - skull_bash,off_gcd=true,ignore_queue=true,if=interrupt.target.check
     - skull_bash.mouseover,off_gcd=true,ignore_queue=true,if=interrupt.mouseover.check
     - skull_bash.focus,off_gcd=true,ignore_queue=true,if=interrupt.focus.check
     - mighty_bash,if=interrupt.cc.check
     - incapacitating_roar,if=interrupt.stun.aoe.check
 
-    - call_action_list,name=auto_heal
-
-    - return,if=player.auto_combat
-
-    - call_action_list,name=defensives
-
+  # Regrowth off a Predatory Swiftness proc — deliberately called after
+  # `defensives` in main, so a real defensive cooldown outranks a proc heal.
+  predatory_swiftness:
     - regrowth,delay=500,range_check=none,if=buff.predatory_swiftness.up&player.solo&health.pct<=config.predatory_swiftness_heal_solo_hp_pct&lastcast.regrowth>=2
     - regrowth,delay=500,range_check=none,if=buff.predatory_swiftness.up&player.group&health.pct<=config.predatory_swiftness_heal_group_hp_pct&lastcast.regrowth>=2
+
+  main:
+    - call_action_list,name=spell_queue
+    - call_action_list,name=sanity_checks
+    - call_action_list,name=auto_target
+
+    - call_action_list,name=heal_support
+    - call_action_list,name=form
+    - call_action_list,name=interrupts
+
+    - call_action_list,name=auto_heal
+
+    # NOTE: there used to be a `return,if=auto_combat.player` here. That
+    # expression does not exist (it is player.auto_combat reversed), so it
+    # never evaluated true and the line was dead — which is the only reason
+    # the rotation worked. "Fixing" the spelling made it live, and since
+    # player.auto_combat is a config-based check that reads true in normal
+    # use, it aborted main before defensives/cooldowns/finishers: nothing
+    # below this point ever fired. Removed entirely rather than re-spelled.
+    # Do not add it back.
+
+    - call_action_list,name=defensives
+    - call_action_list,name=predatory_swiftness
 
     # "auto_combat.target" doesn't exist as an expression (confirmed against
     # expression-catalog.json) — reversed/invalid, same bug class as

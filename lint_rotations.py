@@ -62,12 +62,22 @@ TYPOS = [
     (re.compile(r'\bor\b', re.I), 'W', 'Use | for OR operator', True),
     (re.compile(r'\bnot\s+\w', re.I), 'W', 'Use ! for NOT operator', True),
     # Reversed expression order: the catalog defines these as player.X, never
-    # X.player (found live in two Ferraz files as `auto_combat.player`).
-    (re.compile(r'\bauto_combat\.player\b'), 'W', 'Did you mean "player.auto_combat"?', False),
+    # X.player. `auto_combat.player` is deliberately NOT auto-corrected — see
+    # the dedicated check below for why re-spelling it is a trap.
     (re.compile(r'\b(combat|moving|casting|channeling|stunned|rooted|silenced|'
                 r'feared|dead|alive|aggro|mounted|solo|group)\.player\b'),
      'W', 'Expression order looks reversed — did you mean "player.X"?', False),
 ]
+
+# player.auto_combat is a CONFIG-based auto-combat-driver check, not "am I in
+# combat" (that is player.combat). Four Ferraz files shipped a dead
+# `return,if=auto_combat.player` — an invalid expression that never fired.
+# Re-spelling it to the valid player.auto_combat made the return live and
+# aborted the whole rotation before defensives and damage; negating it
+# (`!player.auto_combat`) aborts in normal play instead. Either way the
+# rotation silently stops suggesting anything, with no error shown.
+AUTO_COMBAT_RETURN = re.compile(r'-\s*return\b[^#]*\bplayer\.auto_combat\b')
+AUTO_COMBAT_REVERSED = re.compile(r'\bauto_combat\.player\b')
 
 # From expression-catalog.json's config_widgets block (SIMIA_DOCUMENTATION.md
 # section 5). Includes documented aliases.
@@ -260,6 +270,15 @@ def lint(path, shared_cfg, shared_lists, strict_options=False):
                 add(n, 'I', '.down already returns boolean, drop the =true')
             if re.match(r'^\s*-\s*,', text):
                 add(n, 'E', 'Missing spell name before comma')
+            if AUTO_COMBAT_RETURN.search(text):
+                add(n, 'E', 'return on player.auto_combat aborts the whole rotation '
+                            '(config-based driver check, not combat state — use '
+                            'player.combat). Nothing below this line will ever fire.')
+            elif AUTO_COMBAT_REVERSED.search(text):
+                add(n, 'W', '"auto_combat.player" is not a valid expression, so this '
+                            'line is dead. Do NOT just re-spell it to '
+                            'player.auto_combat — that activates it and can abort the '
+                            'rotation. Delete the line or use player.combat.')
             if body.startswith(('call_action_list', 'run_action_list')) and 'name=' not in body:
                 add(n, 'E', 'call_action_list/run_action_list requires name= parameter')
             call_alias = re.search(r'\bcall=(\w*)', body)

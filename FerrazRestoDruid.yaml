@@ -469,7 +469,10 @@ lists:
     - call_action_list,name=out_of_combat,if=!player.combat
     - call_action_list,name=auto_target_ranged
     - call_action_list,name=auto_heal,if=!var.in_dps_form|!var.group_healthy
-    - return,if=player.auto_combat
+    # NOTE: a `return,if=auto_combat.player` used to sit here. That expression
+    # does not exist (player.auto_combat reversed), so it never fired and the
+    # line was dead — the only reason the rotation worked. Re-spelling it made
+    # it live and aborted everything below. Removed. Do not add it back.
     - call_action_list,name=defensives,if=!var.in_dps_form|!var.group_healthy
     - call_action_list,name=utility
     - call_action_list,name=racials

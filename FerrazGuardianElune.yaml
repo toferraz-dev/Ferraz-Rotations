@@ -319,8 +319,13 @@ lists:
 
     - moonfire.mouseover,if=config.MO_moonfire&config.allow_pull_with_mo&mouseover.enemy&mouseover.alive&mouseover.debuff.moonfire.down
 
-    # Hand control back to Simia's auto-combat driver when it owns the player.
-    - return,if=player.auto_combat
+    # NOTE: there used to be a `return,if=auto_combat.player` here, meant to
+    # hand control to Simia's auto-combat driver. That expression does not
+    # exist (it is player.auto_combat reversed), so it never evaluated true
+    # and the line was dead — which is the only reason the rotation worked.
+    # "Fixing" the spelling made it live, and since player.auto_combat is a
+    # config-based check that reads true in normal use, it aborted main
+    # before defensives and all damage. Removed. Do not add it back.
 
     - call_action_list,name=defensives
 
