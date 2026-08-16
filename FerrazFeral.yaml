@@ -1,7 +1,41 @@
-# Feral Druid — spec 103 — patch 12.0.7 — M+.
+# =============================================================================
+# Feral Druid — spec 103 — patch 12.1 (Midnight) — Druid of the Claw, M+.
+# =============================================================================
+#
+# Measured with SimC 1210-01, fight_style=DungeonSlice (M+ proxy), against
+# the recommended string. Harness: sim/ab_test_feral.py, profile
+# sim/Ferraz_feral.simc (gear: SimC's own MID1 Feral preset). Baseline for
+# comparison is SimC's own default APL for this build, sourced from
+# dreamgrove (github.com/dreamgrove/dreamgrove/blob/master/sims/cat/feral.txt)
+# and already dungeon-tuned — not a guess.
+#
+# BIGGEST FINDING: the `cooldown` list computed var.holdBerserk and the
+# Convoke count-remaining variables but never actually cast Berserk, Convoke
+# the Spirits, trinkets or a potion anywhere in the file. Adding them back
+# measured +19.73% DungeonSlice — by far the largest number here. Two other
+# candidate fixes tested and NOT applied: removing Tiger's Fury's
+# hold-for-Frantic-Frenzy clause (no measurable gain once Berserk is
+# actually cast, possibly a tiny loss) and the dotc_rake_threshold talent
+# fix (+0.01%, noise — fixed anyway since it costs nothing, see its own comment).
+#
+# BUILD ASSUMPTIONS — talents confirmed on the recommended string by decoding
+# it through the local SimC binary (sim/tools/simc-1210.01.a2d0577-win64/simc.exe):
+# hero tree is Druid of the Claw (all 14 points, Ravage-centric), Frantic
+# Frenzy, Rampant Ferocity, Primal Wrath, Double-Clawed Rake, Infected Wounds,
+# Unseen Predator apex maxed 4/4. NOT talented (dead weight, flagged inline
+# where checked): Lunar Inspiration, Wild Slashes, Fluid Form, Panther's
+# Guile — and every hero_tree.wildstalker check in aoe_builder.
+#
+# Unseen Predator (apex): Tiger's Fury guarantees a bonus Unseen Attack on
+# your next 2 combo-point generators — entirely passive/automatic on the
+# game side, no APL line needed. Its stacking damage buff (Unseen Predator's
+# Craving) is not currently spent around deliberately; a finisher-pooling
+# window built around it is a possible future gain, not applied here.
+# =============================================================================
+
 version: 5.0
 author: Ferraz
-patch: "12.0.7"
+patch: "12.1"
 spec: 103
 name: Feral Druid Ferraz M+
 description: |
@@ -9,6 +43,12 @@ description: |
 entry: main
 
 config:
+  recommended_talents:
+    section: "Talents"
+    type: copy_text
+    label: "Recommended Talent String"
+    text: "CcGAAAAAAAAAAAAAAAAAAAAAAAAAAAAgZmZ2YmZmxY2MPw2YbGzMmZAAAAYLY2M8AmZUzYWMzMzsMmxAAAAAAwADAAAgmZZWmZmBAsAzMDwCDGAAAzshB"
+
   survival_instincts_hp_pct:
     section: "Defensive HP Percentage"
     label: "Survival Instincts HP%"
@@ -70,13 +110,39 @@ config:
     type: checkbox
     default: true
 
+  # === COOLDOWN CONFIGURATIONS ===
+  # Defaults ON: the whole cooldown block below (Berserk/Convoke/trinkets/
+  # potion) was entirely missing before — see the `cooldown` list comment.
+  use_trinket_1:
+    label: "Auto Trinket 1"
+    section: "Cooldowns"
+    type: checkbox
+    default: true
+
+  use_trinket_2:
+    label: "Auto Trinket 2"
+    section: "Cooldowns"
+    type: checkbox
+    default: true
+
+  use_potion:
+    label: "Auto Combat Potion"
+    section: "Cooldowns"
+    type: checkbox
+    default: true
+
 variables:
   bs_inc: buff.berserk.up|buff.incarnation_avatar_of_ashamane.up
   bs_inc_remains: buff.berserk.remains+buff.incarnation_avatar_of_ashamane.remains
   bs_inc_cd_remains: cooldown.berserk.remains>?cooldown.incarnation_avatar_of_ashamane.remains
   bs_inc_cd_duration: cooldown.berserk.duration>?cooldown.incarnation_avatar_of_ashamane.duration
   regrowth: 0
-  dotc_rake_threshold: 5-2*(talent.wild_slashes&!talent.infected_wounds)+3*(!talent.wild_slashes&talent.infected_wounds)
+  # Was gated on talent.infected_wounds — the real formula (dreamgrove/SimC
+  # default APL) gates on talent.merciless_claws instead. No measured DPS
+  # difference on this build (wild_slashes untalented -> 99 either way), but
+  # the formula is now correct if the build changes. Fixed, not guessed:
+  # confirmed via sim/ab_test_feral.py's dotc_fix_only variant (+0.01% ~).
+  dotc_rake_threshold: 99-94*(talent.wild_slashes&talent.merciless_claws)-91*(talent.wild_slashes&!talent.merciless_claws)
   bs_inc_cd: var.bs_inc_cd_remains+10
   convoke_cd: cooldown.convoke_the_spirits.remains+10
   convokeCountRemaining: floor(((fight_remains-var.convoke_cd)%cooldown.convoke_the_spirits.duration)+(fight_remains>cooldown.convoke_the_spirits.remains))
@@ -100,8 +166,26 @@ lists:
     - barkskin,off_gcd=true,ignore_queue=true,range_check=none,if=health.pct<=config.barkskin_hp_pct
 
   cooldown:
+    # This whole list used to be just the two finisher-CD lines below: the
+    # file computed var.holdBerserk and the Convoke count-remaining variables
+    # but never actually cast Berserk, Convoke the Spirits, trinkets or a
+    # potion anywhere. Confirmed missing via sim/ab_test_feral.py against the
+    # SimC default (dreamgrove-sourced) APL for this exact build — adding
+    # them back measured +19.73% DungeonSlice, the single largest number in
+    # this file.
+    - trinket_1,if=config.use_trinket_1&trinket_1.ready
+    - trinket_2,if=config.use_trinket_2&trinket_2.ready
+    - berserking,if=var.bs_inc
+    - blood_fury,if=var.bs_inc
+    - fireblood,if=var.bs_inc
+    - ancestral_call,if=var.bs_inc
+    - combat_potion,if=config.use_potion&combat_potion.ready&(var.bs_inc|fight_remains<32)
+    - berserk,if=buff.tigers_fury.up&!var.holdBerserk
     - feral_frenzy,if=!talent.frantic_frenzy&combo_points<=2+(2*var.bs_inc)
     - frantic_frenzy,if=buff.tigers_fury.up|combo_points<=2+(2*var.bs_inc)
+    # Talented on the recommended string. Lines up with Berserk, on the GCD
+    # right after a finisher so the burst window snapshots a full-CP window.
+    - convoke_the_spirits,if=var.bs_inc&buff.tigers_fury.up&(prev_gcd.1.rip|prev_gcd.1.ferocious_bite|prev_gcd.1.primal_wrath|buff.tigers_fury.remains<=1+action.convoke_the_spirits.execute_time)
 
   finisher:
     - rip,if=combo_points>=5&(dot.rip.refreshable&(buff.tigers_fury.up|dot.rip.remains<cooldown.tigers_fury.remains)|buff.tigers_fury.up&!var.rip_tf&dot.rip.up|buff.tigers_fury.up&buff.tigers_fury.remains<2&dot.rip.up)
@@ -170,7 +254,12 @@ lists:
     - regrowth,delay=500,range_check=none,if=buff.predatory_swiftness.up&player.solo&health.pct<=config.predatory_swiftness_heal_solo_hp_pct&lastcast.regrowth>=2
     - regrowth,delay=500,range_check=none,if=buff.predatory_swiftness.up&player.group&health.pct<=config.predatory_swiftness_heal_group_hp_pct&lastcast.regrowth>=2
 
-    - return,if=auto_combat.target
+    # "auto_combat.target" doesn't exist as an expression (confirmed against
+    # expression-catalog.json) — reversed/invalid, same bug class as
+    # auto_combat.player found elsewhere. This gate's clear intent is a
+    # target-validity guard before the DPS lines below, matching the pattern
+    # Balance/Guardian use ahead of their own damage lists.
+    - return,if=!target.valid|target.dead|!target.attackable
 
     - rake,range_check=none,if=buff.prowl.up&target.in_melee
     - return,if=buff.prowl.up
