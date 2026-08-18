@@ -184,7 +184,7 @@ DEFAULTS = dict(filler='wrath', grove_lines=True, spender='floor', dot_gate=True
                 potion='off')
 
 VARIANTS = {
-    'raid_ferraz':   ({}, 'A rotacao de raid como esta hoje'),
+    'raid_ferraz':   ({}, 'Estado ANTIGO do arquivo (Wrath filler, Grove lines, piso fixo)'),
     'filler_ec':     (dict(filler='ec'), 'Starfire de filler, Wrath so fora de Eclipse'),
     'no_grove':      (dict(grove_lines=False), 'Remove as linhas mortas de Grove (FoN/Mushroom/Moons)'),
     'spender_approx': (dict(spender='approx'), 'Piso de AP amarrado ao Eclipse (Rattle the Stars)'),
@@ -201,9 +201,12 @@ VARIANTS = {
                       'raid_v2 sem as listas de opener'),
     'v2_no_wrath':   (dict(filler='starfire_only', grove_lines=False, spender='approx'),
                       'raid_v2 sem Wrath nenhum, so Starfire'),
-    # --- pocao: o YAML nao tem linha nenhuma -------------------------------
+    # --- pocao ---------------------------------------------------------------
+    # NOTE: the YAML now carries the potion line WITH the fight_remains<=30
+    # clause, so `v3_potion_end` — not `v3` — is what the file actually does.
+    # `v3` is kept as the no-potion control.
     'v3':            (dict(filler='starfire_only', grove_lines=False, spender='approx'),
-                      'A rotacao como esta hoje, sem pocao'),
+                      'Controle: mesma rotacao SEM pocao'),
     'v3_potion':     (dict(filler='starfire_only', grove_lines=False, spender='approx',
                            potion='burst'), 'v3 + pocao dentro do burst'),
     'v3_potion_end': (dict(filler='starfire_only', grove_lines=False, spender='approx',
