@@ -286,7 +286,12 @@ lists:
   trinkets:
     - trinket_1,delay=150,name="Trinket 1",if=var.burst_ok&config.use_trinket_1&trinket_1.ready&player.combat&var.trinkets_ttd_ok&cooldown.fury_of_elune.remains>0&var.cd_active
     - trinket_2,delay=150,name="Trinket 2",if=var.burst_ok&config.use_trinket_2&trinket_2.ready&player.combat&var.trinkets_ttd_ok&cooldown.fury_of_elune.remains>0&var.cd_active
-    - combat_potion,delay=150,name="Combat Potion",if=var.burst_ok&config.use_potion&combat_potion.ready&player.combat&var.potion_ttd_ok&cooldown.fury_of_elune.remains>0&var.cd_active
+    # fight_remains<=30 lets a potion that would otherwise be wasted at the end
+    # of a fight go out anyway. Measured +0.61% DungeonSlice on its own against
+    # this file's current baseline; a pre-pot on top of it measured +0.11%
+    # (noise) and made the pair worse than this clause alone, so only the
+    # end-of-fight half is here.
+    - combat_potion,delay=150,name="Combat Potion",if=var.burst_ok&config.use_potion&combat_potion.ready&player.combat&(var.potion_ttd_ok&cooldown.fury_of_elune.remains>0&var.cd_active|fight_remains<=30)
 
   # Ahead of interrupts, so survival outranks utility. Unvalidated by sim.
   defensives:

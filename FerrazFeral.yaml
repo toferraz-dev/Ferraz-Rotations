@@ -23,7 +23,7 @@
 # SimC never had that line, so no number here captures it.
 #
 # BUILD ASSUMPTIONS — talents confirmed on the recommended string by decoding
-# it through the local SimC binary (sim/tools/simc-1210.01.a060a35-win64/simc.exe):
+# it through the local SimC binary (sim/tools/simc-1210.01.fd069a4-win64/simc.exe):
 # hero tree is Druid of the Claw (all 14 points, Ravage-centric), Frantic
 # Frenzy, Rampant Ferocity, Primal Wrath, Double-Clawed Rake, Infected Wounds,
 # Unseen Predator apex maxed 4/4. NOT talented (dead weight, flagged inline
