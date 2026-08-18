@@ -33,7 +33,7 @@ import subprocess
 import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-SIMC = os.path.join(ROOT, 'sim', 'tools', 'simc-1210.01.a060a35-win64', 'simc.exe')
+SIMC = os.path.join(ROOT, 'sim', 'tools', 'simc-1210.01.fd069a4-win64', 'simc.exe')
 PROFILE = os.path.join(ROOT, 'sim', 'Ferraz_balance.simc')
 APL_DIR = os.path.join(ROOT, 'sim', 'apl_balance')
 OUT_DIR = os.path.join(ROOT, 'sim', 'out_balance')
@@ -314,6 +314,26 @@ VARIANTS = {
     'st_best2':      (dict(st_starfall='cosmos', spender='cost', wrath_filler=False,
                            opener_simc=True, trinkets='twopot', prepot=True),
                       'st_best + as duas pocoes'),
+    # --- incremental: em cima da base real do YAML (v2 + sem Wrath filler) ---
+    'base_now':      (dict(spender='approx', wrath_filler=False),
+                      'BASE = o que o YAML faz hoje (v2, Wrath filler OFF)'),
+    'now_ecl_over':  (dict(spender='approx', wrath_filler=False, eclipse_yields_to_inc=False),
+                      'BASE + Eclipse mesmo com Incarnation pronto'),
+    'now_trk_free':  (dict(spender='approx', wrath_filler=False, trinkets='free'),
+                      'BASE + trinkets sempre que prontos'),
+    'now_inc_asap':  (dict(spender='approx', wrath_filler=False, inc_foe_align=False),
+                      'BASE + Incarnation sem esperar Fury of Elune'),
+    'now_pot2x':     (dict(spender='approx', wrath_filler=False, trinkets='twopot', prepot=True),
+                      'BASE + pre-pot e segunda pocao'),
+    'now_md':        (dict(spender='approx', wrath_filler=False, multidot=True),
+                      'BASE + espalhar DoTs (multidot)'),
+    'now_all':       (dict(spender='approx', wrath_filler=False, eclipse_yields_to_inc=False,
+                           trinkets='free', inc_foe_align=False),
+                      'BASE + as tres melhores juntas'),
+    'now_pot_end':   (dict(spender='approx', wrath_filler=False, trinkets='twopot'),
+                      'BASE + 2a pocao no fim da luta (SEM pre-pot)'),
+    'now_prepot':    (dict(spender='approx', wrath_filler=False, prepot=True),
+                      'BASE + apenas pre-pot'),
 }
 
 
