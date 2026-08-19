@@ -1,5 +1,5 @@
 # =============================================================================
-# Feral Druid — spec 103 — patch 12.1 (Midnight) — Druid of the Claw, M+.
+# Feral Druid — spec 103 — patch 12.1 (Midnight) — Wildstalker, M+.
 # =============================================================================
 #
 # Measured with SimC 1210-01, fight_style=DungeonSlice (M+ proxy), against
@@ -12,7 +12,7 @@
 # BIGGEST FINDING: the `cooldown` list computed var.holdBerserk and the
 # Convoke count-remaining variables but never actually cast Berserk, Convoke
 # the Spirits, trinkets or a potion anywhere in the file. Adding them back
-# measured +19.42% DungeonSlice — by far the largest number here. Two other
+# measured +18.42% DungeonSlice — by far the largest number here. Two other
 # candidate fixes tested and NOT applied: removing Tiger's Fury's
 # hold-for-Frantic-Frenzy clause (no measurable gain once Berserk is
 # actually cast, possibly a tiny loss) and the dotc_rake_threshold talent
@@ -23,12 +23,24 @@
 # SimC never had that line, so no number here captures it.
 #
 # BUILD ASSUMPTIONS — talents confirmed on the recommended string by decoding
-# it through the local SimC binary (sim/tools/simc-1210.01.fd069a4-win64/simc.exe):
-# hero tree is Druid of the Claw (all 14 points, Ravage-centric), Frantic
-# Frenzy, Rampant Ferocity, Primal Wrath, Double-Clawed Rake, Infected Wounds,
-# Unseen Predator apex maxed 4/4. NOT talented (dead weight, flagged inline
-# where checked): Lunar Inspiration, Wild Slashes, Fluid Form, Panther's
-# Guile — and every hero_tree.wildstalker check in aoe_builder.
+# it through the local SimC binary (sim/tools/simc-1210.01.fd069a4-win64/simc.exe).
+# The hero tree is WILDSTALKER (all 14 points: Thriving Growth, Bursting
+# Growth, Vigorous Creepers, Resilient Flourishing, Strategic Infusion, Hunt
+# Beneath the Open Skies, Twin Sprouts, Rampancy, ...), plus Frantic Frenzy,
+# Rampant Ferocity, Primal Wrath, Double-Clawed Rake, Infected Wounds and
+# Unseen Predator apex maxed 4/4.
+#
+# This file used to be a Druid of the Claw build. Nothing in the priority had
+# to change for the swap — every affected line is already gated on
+# hero_tree.* or on a talent, so the Ravage and Heart of the Wild lines simply
+# went inert and the hero_tree.wildstalker branches in aoe_builder went live.
+# NOT talented (harmless dead weight): Ravage, Heart of the Wild, Lunar
+# Inspiration, Wild Slashes, Fluid Form, Panther's Guile, and every
+# hero_tree.druid_of_the_claw check.
+#
+# Bite pooling (ferocious_bite with max_energy) was tested here and measured
+# nothing — it is worth +2.87% on the RAID build only, where Saber Jaws pays
+# for it. See FerrazFeralRaid.yaml.
 #
 # Unseen Predator (apex): Tiger's Fury guarantees a bonus Unseen Attack on
 # your next 2 combo-point generators — entirely passive/automatic on the
@@ -51,7 +63,7 @@ config:
     section: "Talents"
     type: copy_text
     label: "Recommended Talent String"
-    text: "CcGADBD3hSPCL9Y9gz68WcKvMAAAAAAgZmZ2YmZmxY2MPw2YbGzMmZAAAAYLY2M8AmZUzYWMzMzsMmxAAAAAAwADAAAgmZZWmZmBEYBmZGgFGMAAAmZDD"
+    text: "CcGAAAAAAAAAAAAAAAAAAAAAAAAAAAAgZmZ2YmZmxY2MPw2YbGzMmZAAAAYJY2gxMjaGzCzMzsMmZGAAAAAAADAAAgAgZbmlmlZW2AzMALMDDAgZGAMA"
 
   survival_instincts_hp_pct:
     section: "Defensive HP Percentage"

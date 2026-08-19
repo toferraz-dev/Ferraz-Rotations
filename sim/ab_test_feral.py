@@ -1,6 +1,6 @@
 """A/B harness: measure the Ferraz Feral (M+) rotation against the SimC
-default (dreamgrove-sourced, already tuned for this exact Druid of the Claw
-talent build and DungeonSlice), and isolate one change per variant.
+default (dreamgrove-sourced, already tuned for this exact Wildstalker talent
+build and DungeonSlice), and isolate one change per variant.
 
 The Simia YAML cannot be fed to SimulationCraft, so the damage half of
 FerrazFeral.yaml is translated here into a SimC action list.
@@ -102,9 +102,12 @@ def build(v):
 
     # --- finisher / aoe_finisher / builder: byte-for-byte from the YAML ---
     add('actions.finisher=rip,if=combo_points>=5&(dot.rip.refreshable&(buff.tigers_fury.up|dot.rip.remains<cooldown.tigers_fury.remains)|buff.tigers_fury.up&!variable.rip_tf&dot.rip.ticking|buff.tigers_fury.up&buff.tigers_fury.remains<2&dot.rip.ticking)')
-    add('actions.finisher+=/pool_resource,for_next=1,if=energy<50')
-    add('actions.finisher+=/ferocious_bite,if=combo_points>=5')
-    add('actions.finisher+=/ferocious_bite,if=combo_points>=5')
+    if v.get('bite_pool'):
+        add('actions.finisher+=/pool_resource,for_next=1')
+        add('actions.finisher+=/ferocious_bite,max_energy=1,if=combo_points>=5')
+    else:
+        add('actions.finisher+=/pool_resource,for_next=1,if=energy<50')
+        add('actions.finisher+=/ferocious_bite,if=combo_points>=5')
 
     add('actions.aoe_finisher=primal_wrath,if=combo_points>=5&spell_targets>1&(dot.rip.remains<6.5&!buff.bs_inc.up|dot.rip.refreshable)')
     add('actions.aoe_finisher+=/ferocious_bite,if=combo_points>=5&!talent.primal_wrath&spell_targets>=2+(3*!talent.rampant_ferocity)')
@@ -146,7 +149,7 @@ def build(v):
     return '\n'.join(L) + '\n'
 
 
-DEFAULTS = dict(no_cds=True, tf_no_hold=False, dotc_fix=False)
+DEFAULTS = dict(no_cds=True, tf_no_hold=False, dotc_fix=False, bite_pool=False)
 
 VARIANTS = {
     'ferraz':        ({}, 'A rotacao atual: sem Berserk/Convoke/trinkets/pocao'),
@@ -154,6 +157,10 @@ VARIANTS = {
     'fixed_tf_hold': (dict(no_cds=False, tf_no_hold=True), '+ remove o hold de Tigers Fury (M+ only, sem sentido aqui)'),
     'fixed_all':     (dict(no_cds=False, tf_no_hold=True, dotc_fix=True), 'Todas as 3 correcoes juntas'),
     'dotc_fix_only': (dict(dotc_fix=True), 'So a formula do dotc_rake_threshold corrigida'),
+    # --- Wildstalker: em cima da base real (com CDs) --------------------------
+    'ws_base':       (dict(no_cds=False), 'BASE Wildstalker = o que o YAML faz hoje'),
+    'ws_bite_pool':  (dict(no_cds=False, bite_pool=True),
+                      'BASE + Bite com max_energy (ganhou +2.87% na build de raid)'),
 }
 
 
