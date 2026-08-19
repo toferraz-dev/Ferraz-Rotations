@@ -1,61 +1,46 @@
 # =============================================================================
-# Feral Druid — spec 103 — patch 12.1 (Midnight) — Wildstalker, M+.
+# Feral Druid — spec 103 — patch 12.1 (Midnight) — Druid of the Claw, RAID.
 # =============================================================================
 #
-# Measured with SimC 1210-01, fight_style=DungeonSlice (M+ proxy), against
-# the recommended string. Harness: sim/ab_test_feral.py, profile
-# sim/Ferraz_feral.simc (gear: SimC's own MID1 Feral preset). Baseline for
-# comparison is SimC's own default APL for this build, sourced from
-# dreamgrove (github.com/dreamgrove/dreamgrove/blob/master/sims/cat/feral.txt)
-# and already dungeon-tuned — not a guess.
+# Measured with SimC 1210-01, fight_style=Patchwerk (the raid proxy, unlike
+# the M+ file which uses DungeonSlice), against the recommended string.
+# Harness: sim/ab_test_feral_raid.py, profile sim/Ferraz_feral_raid.simc
+# (gear: SimC's own MID1 Feral preset). Baseline for comparison is SimC's own
+# default APL for this build, sourced from dreamgrove.
 #
-# BIGGEST FINDING: the `cooldown` list computed var.holdBerserk and the
-# Convoke count-remaining variables but never actually cast Berserk, Convoke
-# the Spirits, trinkets or a potion anywhere in the file. Adding them back
-# measured +18.42% DungeonSlice — by far the largest number here. Two other
-# candidate fixes tested and NOT applied: removing Tiger's Fury's
-# hold-for-Frantic-Frenzy clause (no measurable gain once Berserk is
-# actually cast, possibly a tiny loss) and the dotc_rake_threshold talent
-# fix (-0.14%, noise — fixed anyway since it costs nothing, see its own comment).
+# THIS IS NOT THE M+ FILE WITH A DIFFERENT STRING. The raid build drops
+# Frantic Frenzy, Primal Wrath, Apex Predator's Craving, Rampant Ferocity,
+# Double-Clawed Rake, Infected Wounds, Rip and Tear and Heart of the Wild,
+# and picks up Ashamane's Guidance, Merciless Claws, Panther's Guile, Saber
+# Jaws, Focused Frenzy, Coiled to Spring and Tireless Energy. Three priority
+# changes follow from that, all measured against the ported M+ priority:
 #
-# Separately from the sim: a dead `return,if=auto_combat.player` at the top of
-# main was silently aborting the whole rotation in-game (see the note there).
-# SimC never had that line, so no number here captures it.
+#   Convoke outside Berserk (Ashamane's Guidance)   +5.19%
+#   Ferocious Bite pooled to full energy            +2.87%
+#   Shred on a Sudden Ambush proc                   +2.35%
+#   all three together                             +10.17%
 #
-# BUILD ASSUMPTIONS — talents confirmed on the recommended string by decoding
-# it through the local SimC binary (sim/tools/simc-1210.01.fd069a4-win64/simc.exe).
-# The hero tree is WILDSTALKER (all 14 points: Thriving Growth, Bursting
-# Growth, Vigorous Creepers, Resilient Flourishing, Strategic Infusion, Hunt
-# Beneath the Open Skies, Twin Sprouts, Rampancy, ...), plus Frantic Frenzy,
-# Rampant Ferocity, Primal Wrath, Double-Clawed Rake, Infected Wounds and
-# Unseen Predator apex maxed 4/4.
+# Dropping the cooldown block entirely measures -21.47%, so the same
+# missing-cooldowns bug the M+ file had would cost even more here.
 #
-# This file used to be a Druid of the Claw build. Nothing in the priority had
-# to change for the swap — every affected line is already gated on
-# hero_tree.* or on a talent, so the Ravage and Heart of the Wild lines simply
-# went inert and the hero_tree.wildstalker branches in aoe_builder went live.
-# NOT talented (harmless dead weight): Ravage, Heart of the Wild, Lunar
-# Inspiration, Wild Slashes, Fluid Form, Panther's Guile, and every
-# hero_tree.druid_of_the_claw check.
+# TESTED AND REJECTED: simplifying the Rip condition (removing its two
+# Tiger's Fury re-snapshot clauses) appeared to be worth +23.7%, but that was
+# an artifact of the harness pinning var.rip_tf to 0 — with it pinned to 1,
+# the way the game actually behaves once Rip is applied under Tiger's Fury,
+# the current condition and the simplified one land within the error bar of
+# each other. The clauses stay.
 #
-# Bite pooling (ferocious_bite with max_energy) was tested here and measured
-# nothing — it is worth +2.87% on the RAID build only, where Saber Jaws pays
-# for it. See FerrazFeralRaid.yaml.
-#
-# Unseen Predator (apex): Tiger's Fury guarantees a bonus Unseen Attack on
-# your next 2 combo-point generators — entirely passive/automatic on the
-# game side, no APL line needed. Its stacking damage buff (Unseen Predator's
-# Craving) is not currently spent around deliberately; a finisher-pooling
-# window built around it is a possible future gain, not applied here.
+# NOT validated (SimC models none of it): every defensive, Regrowth healing,
+# and the Predatory Swiftness lines.
 # =============================================================================
 
 version: 1.0
 author: Ferraz
 patch: "12.1"
 spec: 103
-name: Feral Druid Ferraz M+
+name: Feral Druid Ferraz Raid
 description: |
-  Feral Druid Ferraz M+
+  Feral Druid Ferraz Raid
 entry: main
 
 config:
@@ -63,7 +48,7 @@ config:
     section: "Talents"
     type: copy_text
     label: "Recommended Talent String"
-    text: "CcGAAAAAAAAAAAAAAAAAAAAAAAAAAAAgZmZ2YmZmxY2MPw2YbGzMmZAAAAYJY2gxMjaGzCzMzsMmZGAAAAAAADAAAgAgZbmlmlZW2AzMALMDDAgZGAMA"
+    text: "CcGAAAAAAAAAAAAAAAAAAAAAAAAAAAAwghxYmZmxsxDsMz2MzMmZGAAAAWCmNYMzomxswMzMGzMDAAAAAAgBAAAQzsMLzMzACsAmZAWMzwAAAYmNMA"
 
   survival_instincts_hp_pct:
     section: "Defensive HP Percentage"
@@ -89,17 +74,11 @@ config:
     max: 100
     default: 60
 
-  predatory_swiftness_heal_solo_hp_pct:
+  # Raid default is lower than the M+ file's: in a raid you are rarely the one
+  # who has to top yourself, and a Regrowth is a lost finisher.
+  predatory_swiftness_heal_hp_pct:
     section: "Defensive HP Percentage"
-    label: "Regrowth (Predatory Swiftness) HP% (Solo)"
-    type: slider
-    min: 0
-    max: 100
-    default: 80
-
-  predatory_swiftness_heal_group_hp_pct:
-    section: "Defensive HP Percentage"
-    label: "Regrowth (Predatory Swiftness) HP% (Group)"
+    label: "Regrowth (Predatory Swiftness) HP%"
     type: slider
     min: 0
     max: 100
@@ -122,8 +101,7 @@ config:
     default: 40
 
   # === COOLDOWN CONFIGURATIONS ===
-  # Defaults ON: the whole cooldown block below (Berserk/Convoke/trinkets/
-  # potion) was entirely missing before — see the `cooldown` list comment.
+  # Defaults ON: dropping the whole cooldown block measures -21.47% here.
   use_trinket_1:
     label: "Auto Trinket 1"
     section: "Cooldowns"
@@ -142,17 +120,19 @@ config:
     type: checkbox
     default: true
 
+  discord_button:
+    section: "Help"
+    type: button
+    label: "Discord - Ferraz"
+    text: "Join Discord - Ferraz"
+    url: "https://discord.com/channels/857767821093634068/1467268534420766854"
+
 variables:
   bs_inc: buff.berserk.up|buff.incarnation_avatar_of_ashamane.up
   bs_inc_remains: buff.berserk.remains+buff.incarnation_avatar_of_ashamane.remains
   bs_inc_cd_remains: cooldown.berserk.remains>?cooldown.incarnation_avatar_of_ashamane.remains
   bs_inc_cd_duration: cooldown.berserk.duration>?cooldown.incarnation_avatar_of_ashamane.duration
   regrowth: 0
-  # Was gated on talent.infected_wounds — the real formula (dreamgrove/SimC
-  # default APL) gates on talent.merciless_claws instead. No measured DPS
-  # difference on this build (wild_slashes untalented -> 99 either way), but
-  # the formula is now correct if the build changes. Fixed, not guessed:
-  # confirmed via sim/ab_test_feral.py's dotc_fix_only variant (-0.14% ~).
   dotc_rake_threshold: 99-94*(talent.wild_slashes&talent.merciless_claws)-91*(talent.wild_slashes&!talent.merciless_claws)
   bs_inc_cd: var.bs_inc_cd_remains+10
   convoke_cd: cooldown.convoke_the_spirits.remains+10
@@ -161,12 +141,9 @@ variables:
   firstHoldBerserkCondition: var.zerkCountRemaining=1&var.convokeCountRemaining=1&cooldown.convoke_the_spirits.remains>10
   secondHoldBerserkCondition: cooldown.convoke_the_spirits.remains>20&var.convokeCountRemaining=var.zerkCountRemaining&var.zerkCountRemaining=floor(((fight_remains-var.convoke_cd)%var.bs_inc_cd_duration)+(fight_remains>cooldown.convoke_the_spirits.remains))
   holdBerserk: var.firstHoldBerserkCondition|var.secondHoldBerserkCondition
-  holdConvoke: var.convokeCountRemaining=1&var.zerkCountRemaining=1&!var.bs_inc
   rake_tf: debuff.rake.visual_id=491160
   rip_tf: debuff.rip.visual_id=491158
   moonfire_tf: debuff.moonfire.visual_id=500891
-
-  rip_preempt: "active_enemies=1&combo_points>=5&dot.rip.up&(dot.rip.refreshable&(buff.tigers_fury.up|dot.rip.remains<cooldown.tigers_fury.remains)|buff.tigers_fury.up&!var.rip_tf|buff.tigers_fury.up&buff.tigers_fury.remains<2)"
 
 lists:
   defensives:
@@ -177,13 +154,6 @@ lists:
     - barkskin,off_gcd=true,ignore_queue=true,range_check=none,if=health.pct<=config.barkskin_hp_pct
 
   cooldown:
-    # This whole list used to be just the two finisher-CD lines below: the
-    # file computed var.holdBerserk and the Convoke count-remaining variables
-    # but never actually cast Berserk, Convoke the Spirits, trinkets or a
-    # potion anywhere. Confirmed missing via sim/ab_test_feral.py against the
-    # SimC default (dreamgrove-sourced) APL for this exact build — adding
-    # them back measured +19.73% DungeonSlice, the single largest number in
-    # this file.
     - trinket_1,if=config.use_trinket_1&trinket_1.ready
     - trinket_2,if=config.use_trinket_2&trinket_2.ready
     - berserking,if=var.bs_inc
@@ -192,19 +162,31 @@ lists:
     - ancestral_call,if=var.bs_inc
     - combat_potion,if=config.use_potion&combat_potion.ready&(var.bs_inc|fight_remains<32)
     - berserk,if=buff.tigers_fury.up&!var.holdBerserk
+    # Frantic Frenzy is NOT on the raid string, so the first line is the live
+    # one here and the second is inert. Both kept so the file survives a
+    # respec either way.
     - feral_frenzy,if=!talent.frantic_frenzy&combo_points<=2+(2*var.bs_inc)
     - frantic_frenzy,if=buff.tigers_fury.up|combo_points<=2+(2*var.bs_inc)
-    # Talented on the recommended string. Lines up with Berserk, on the GCD
-    # right after a finisher so the burst window snapshots a full-CP window.
-    - convoke_the_spirits,if=var.bs_inc&buff.tigers_fury.up&(prev_gcd.1.rip|prev_gcd.1.ferocious_bite|prev_gcd.1.primal_wrath|buff.tigers_fury.remains<=1+action.convoke_the_spirits.execute_time)
+    # RAID-SPECIFIC (+5.19%): with Ashamane's Guidance — which only the raid
+    # build carries — Convoke is worth firing OUTSIDE the Berserk window when
+    # Berserk is far away, instead of always waiting for it. The M+ file has
+    # no such clause because it does not talent Ashamane's Guidance.
+    - convoke_the_spirits,if=(var.bs_inc|talent.ashamanes_guidance&(var.bs_inc_cd_remains>45|var.holdBerserk))&buff.tigers_fury.up&(prev_gcd.1.rip|prev_gcd.1.ferocious_bite|prev_gcd.1.primal_wrath|buff.tigers_fury.remains<=1+action.convoke_the_spirits.execute_time)
 
   finisher:
     - rip,if=combo_points>=5&(dot.rip.refreshable&(buff.tigers_fury.up|dot.rip.remains<cooldown.tigers_fury.remains)|buff.tigers_fury.up&!var.rip_tf&dot.rip.up|buff.tigers_fury.up&buff.tigers_fury.remains<2&dot.rip.up)
+    # RAID-SPECIFIC (+2.87%): Ferocious Bite spends up to 25 extra energy for
+    # up to 100% extra damage, and Saber Jaws (raid-only) raises that payoff
+    # further — so it is pooled to the full 50-energy cost instead of being
+    # fired at the 25-energy floor. This `return` is the pooling gate.
     - return,if=combo_points>=5&energy<50
     - ferocious_bite,if=combo_points>=5
     - ravage,if=combo_points>=5
 
   aoe_finisher:
+    # Primal Wrath and Rampant Ferocity are NOT on the raid string, so the
+    # lines gated on them are inert and the Rip/Bite fallbacks are the live
+    # path. Kept so the list still works on an AoE respec.
     - primal_wrath,if=combo_points>=5&active_enemies>1&(dot.rip.remains<6.5&!var.bs_inc|dot.rip.refreshable)
     - ravage,if=combo_points>=5&!talent.primal_wrath&active_enemies>=2+(3*!talent.rampant_ferocity)
     - rip,if=combo_points>=5&!talent.primal_wrath&(dot.rip.down|dot.rip.refreshable&(buff.tigers_fury.up|!var.rip_tf))
@@ -216,8 +198,10 @@ lists:
     - thorn_bloom
 
   builder:
-    # Same reasoning as the main-list Prowl: cannot be cast in combat.
     - prowl,if=!player.combat&!buff.shadowmeld.up&(!var.rake_tf|dot.rake.refreshable)
+    # RAID-SPECIFIC (+2.35%): dreamgrove keeps a Druid-of-the-Claw-only Shred
+    # on a Sudden Ambush proc, ahead of the Rake refresh.
+    - shred,name="Shred (Sudden Ambush)",if=buff.sudden_ambush.up&hero_tree.druid_of_the_claw
     - rake,if=(buff.tigers_fury.up|dot.rake.remains<cooldown.tigers_fury.remains)&(dot.rake.refreshable&(buff.tigers_fury.up|!var.rake_tf)|dot.rake.remains<2|buff.tigers_fury.up&!var.rake_tf)
     - moonfire,if=talent.lunar_inspiration&(buff.tigers_fury.up|dot.moonfire.remains<cooldown.tigers_fury.remains)&(dot.moonfire.refreshable&(buff.tigers_fury.up|!var.moonfire_tf)|dot.moonfire.remains<2|buff.tigers_fury.up&!var.moonfire_tf)
     - shred
@@ -229,6 +213,7 @@ lists:
     - 106785,if=buff.sudden_ambush.up&active_enemies>=5+(2*hero_tree.wildstalker)
     - rake,if=dot.rake.refreshable&(hero_tree.wildstalker|active_enemies<=var.dotc_rake_threshold)
     - rake,if=buff.tigers_fury.up&!var.rake_tf&active_enemies=2
+    # Panther's Guile IS on the raid string, so this line is live here.
     - shred,if=combo_points<=1&active_enemies=2&talent.panthers_guile
     - 106785,if=combo_points>1|active_enemies>2|!talent.panthers_guile
 
@@ -238,7 +223,8 @@ lists:
     - regrowth,range_check=none,if=health.pct<=config.regrowth_ooc_hp_pct&!player.combat
 
   # Emergency Bear Form, Fluid Form auto-shift, manual Cat Form entry, and
-  # the pre-pull Prowl opener.
+  # the pre-pull Prowl opener. Heart of the Wild is NOT on the raid string,
+  # so that line is inert here.
   form:
     - bear_form,range_check=none,if=health.pct<=25&!buff.bear_form.up&player.combat
     - heart_of_the_wild,range_check=none,if=buff.bear_form.up&player.combat
@@ -247,12 +233,8 @@ lists:
     - rake,if=player.combat&target.attackable&target.in_melee&buff.cat_form.down&talent.fluid_form.enabled
     - cat_form,range_check=none,if=buff.cat_form.down&(target.attackable|enemies.40y)
 
-    # !player.combat added: Prowl cannot be cast in combat (Blizzard's own
-    # restriction) — if Simia doesn't already model that as "unusable" the
-    # same way it does cooldowns/resources/range, the buff never applies,
-    # the condition never turns false, and this line traps priority forever
-    # every GCD in combat, blocking Tiger's Fury/cooldown/finisher/builder
-    # below it entirely. This is meant as the pre-pull opener only.
+    # Prowl cannot be cast in combat — pre-pull opener only. See the M+ file
+    # for the full note on why this needs an explicit !player.combat.
     - prowl,range_check=none,if=!player.combat&!var.bs_inc&buff.prowl.down&buff.shadowmeld.down&(target.attackable|enemies.40y)
 
   interrupts:
@@ -262,11 +244,10 @@ lists:
     - mighty_bash,if=interrupt.cc.check
     - incapacitating_roar,if=interrupt.stun.aoe.check
 
-  # Regrowth off a Predatory Swiftness proc — deliberately called after
-  # `defensives` in main, so a real defensive cooldown outranks a proc heal.
+  # Regrowth off a Predatory Swiftness proc. Called after `defensives` so a
+  # real defensive cooldown outranks a proc heal.
   predatory_swiftness:
-    - regrowth,delay=500,range_check=none,if=buff.predatory_swiftness.up&player.solo&health.pct<=config.predatory_swiftness_heal_solo_hp_pct&lastcast.regrowth>=2
-    - regrowth,delay=500,range_check=none,if=buff.predatory_swiftness.up&player.group&health.pct<=config.predatory_swiftness_heal_group_hp_pct&lastcast.regrowth>=2
+    - regrowth,delay=500,range_check=none,if=buff.predatory_swiftness.up&health.pct<=config.predatory_swiftness_heal_hp_pct&lastcast.regrowth>=2
 
   main:
     - call_action_list,name=spell_queue
@@ -279,36 +260,28 @@ lists:
 
     - call_action_list,name=auto_heal
 
-    # NOTE: there used to be a `return,if=auto_combat.player` here. That
-    # expression does not exist (it is player.auto_combat reversed), so it
-    # never evaluated true and the line was dead — which is the only reason
-    # the rotation worked. "Fixing" the spelling made it live, and since
-    # player.auto_combat is a config-based check that reads true in normal
-    # use, it aborted main before defensives/cooldowns/finishers: nothing
-    # below this point ever fired. Removed entirely rather than re-spelled.
-    # Do not add it back.
+    # NOTE: do NOT add a `return,if=player.auto_combat` here. It is a
+    # config-based auto-combat-driver check, not combat state, and it aborts
+    # the whole rotation before defensives and damage. See the M+ file.
 
     - call_action_list,name=defensives
     - call_action_list,name=predatory_swiftness
 
-    # "auto_combat.target" doesn't exist as an expression (confirmed against
-    # expression-catalog.json) — reversed/invalid, same bug class as
-    # auto_combat.player found elsewhere. This gate's clear intent is a
-    # target-validity guard before the DPS lines below, matching the pattern
-    # Balance/Guardian use ahead of their own damage lists.
     - return,if=!target.valid|target.dead|!target.attackable
 
     - rake,range_check=none,if=buff.prowl.up&target.in_melee
     - return,if=buff.prowl.up
 
-    - tigers_fury,off_gcd=true,ignore_queue=true,if=(var.bs_inc_cd_remains<=1|var.bs_inc_cd_remains>10)&(cooldown.frantic_frenzy.remains<buff.tigers_fury.duration-1.5|cooldown.frantic_frenzy.remains>22|!talent.frantic_frenzy|active_enemies=1)
+    - tigers_fury,off_gcd=true,ignore_queue=true,if=(var.bs_inc_cd_remains<=1|var.bs_inc_cd_remains>10|var.holdBerserk)&(cooldown.frantic_frenzy.remains<buff.tigers_fury.duration-1.5|cooldown.frantic_frenzy.remains>22|!talent.frantic_frenzy|active_enemies=1)
 
     - chomp,if=buff.chomp_enabler.up
 
     - call_action_list,name=cooldown
 
-    - ferocious_bite,if=buff.apex_predators_craving.up&!var.rip_preempt
-    - ravage,if=buff.apex_predators_craving.up&!var.rip_preempt
+    # Apex Predator's Craving is NOT on the raid string — these two are inert
+    # here, kept so a respec back to the M+ build still works.
+    - ferocious_bite,if=buff.apex_predators_craving.up
+    - ravage,if=buff.apex_predators_craving.up
 
     - call_action_list,name=finisher,if=active_enemies=1
     - call_action_list,name=aoe_finisher,if=active_enemies>=2

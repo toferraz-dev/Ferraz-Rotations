@@ -1,9 +1,14 @@
-# Feral (M+) profile for the Ferraz A/B harness. Gear copied from SimC's
+# Feral (Raid) profile for the Ferraz A/B harness. Gear copied from SimC's
 # bundled MID1 Feral preset (profiles/MID1/MID1_Druid_Feral.simc) so the
 # numbers stay comparable to a maintained reference; only the talent string
-# is replaced by the Wildstalker build FerrazFeral.yaml is tuned for.
+# is replaced by the raid build FerrazFeralRaid.yaml is tuned for.
+#
+# This build differs a lot from the M+ one: no Frantic Frenzy, no Primal
+# Wrath, no Apex Predator's Craving, no Rampant Ferocity, no Double-Clawed
+# Rake, no Heart of the Wild — and it adds Ashamane's Guidance, Merciless
+# Claws, Panther's Guile, Saber Jaws, Focused Frenzy and Coiled to Spring.
 
-druid="Ferraz_Feral"
+druid="Ferraz_Feral_Raid"
 source=default
 spec=feral
 level=90
@@ -11,7 +16,7 @@ race=night_elf
 timeofday=night
 role=attack
 position=back
-talents=CcGAAAAAAAAAAAAAAAAAAAAAAAAAAAAgZmZ2YmZmxY2MPw2YbGzMmZAAAAYJY2gxMjaGzCzMzsMmZGAAAAAAADAAAgAgZbmlmlZW2AzMALMDDAgZGAMA
+talents=CcGAAAAAAAAAAAAAAAAAAAAAAAAAAAAwghxYmZmxsxDsMz2MzMmZGAAAAWCmNYMzomxswMzMGzMDAAAAAAgBAAAQzsMLzMzACsAmZAWMzwAAAYmNMA
 
 # Default consumables
 potion=lights_potential_2
