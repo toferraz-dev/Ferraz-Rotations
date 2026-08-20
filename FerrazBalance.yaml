@@ -40,7 +40,7 @@
 # Firmament, Radiant Moonlight.
 # =============================================================================
 
-version: 2.2
+version: 2.3
 author: Ferraz
 patch: "12.1"
 spec: 102
@@ -58,7 +58,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-08-20 | Patch: 12.1 | Version: 2.2"
+    text: "Last update: 2026-08-20 | Patch: 12.1 | Version: 2.3"
 
   # Exact string every number here was measured against — changing it
   # invalidates the AP floors and Incarnation alignment.
@@ -143,9 +143,13 @@ config:
     description: "In AoE, suggests Moonfire/Sunfire on the mouseover unit while enemies near the target are missing the DoT. Spreading the DoTs is the single largest AoE gain."
 
   # === SINGLE TARGET CONFIGURATIONS ===
-  # Gear-dependent: wins on crit-heavy gear (reference: 22.5% crit/21.6%
-  # haste, +1.44% to keep it), loses on haste-heavy/crit-light gear
-  # (measured: 15.4% crit/31.2% haste, +5.28% to drop it). Default OFF.
+  # Gear-dependent, measured at three points on DungeonSlice — the value of
+  # keeping Wrath tracks crit almost linearly:
+  #     15.4% crit / 31.2% haste  ->  -5.28% to keep it
+  #     18.8% crit / 29.4% haste  ->  -4.04% to keep it
+  #     22.5% crit / 21.6% haste  ->  +1.44% to keep it   (reference profile)
+  # So the break-even sits somewhere near ~22% crit. Default OFF; re-test if
+  # a gear change adds a large chunk of crit at once.
   wrath_filler:
     label: "Wrath Filler (ST)"
     section: "Damage"
@@ -418,10 +422,9 @@ lists:
     - starsurge,if=!var.eclipse_down&astral_power>=50
     - starsurge,if=var.eclipse_down&astral_power.deficit<20
 
-    # Wrath filler: +DPS on the reference gear (crit-heavy, 22.5% crit /
-    # 21.6% haste) — deleting it there measured -1.44% DungeonSlice. On a
-    # haste-heavy/crit-light build (measured: 15.4% crit / 31.2% haste) it's
-    # the opposite, +5.28% to drop it. Default OFF: no Wrath filler.
+    # Wrath filler: worth keeping only on crit-heavy gear. See the
+    # wrath_filler config block for the three measured data points — the
+    # break-even is around ~22% crit. Default OFF: no Wrath filler.
     - wrath,if=config.wrath_filler&var.eclipse_down&active_enemies<=1
     - starfire
 
