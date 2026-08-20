@@ -13,6 +13,13 @@ predictions:
   48438: { name: "Wild Growth", buff: 48438 }
 
 config:
+  # Display-only build stamp — keep in sync with version:/patch: above.
+  about:
+    section: "Info"
+    type: note
+    label: "Rotation Info"
+    text: "Last update: Outdate | Patch: 12.0.7 | Version: 4.3"
+
   recommended_talents:
     section: "Talents"
     type: copy_text

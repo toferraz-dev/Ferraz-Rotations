@@ -59,6 +59,13 @@ description: |
 entry: main
 
 config:
+  # Display-only build stamp — keep in sync with version:/patch: above.
+  about:
+    section: "Info"
+    type: note
+    label: "Rotation Info"
+    text: "Last update: 2026-08-20 | Patch: 12.1 | Version: 1.0"
+
   recommended_talents:
     section: "Talents"
     type: copy_text
