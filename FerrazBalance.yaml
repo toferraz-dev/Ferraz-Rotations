@@ -40,7 +40,7 @@
 # Firmament, Radiant Moonlight.
 # =============================================================================
 
-version: 1.0
+version: 2.0
 author: Ferraz
 patch: "12.1"
 spec: 102
@@ -58,7 +58,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-08-13 | Patch: 12.1 | Version: 1.0"
+    text: "Last update: 2026-08-20 | Patch: 12.1 | Version: 2.0"
 
   # Exact string every number here was measured against — changing it
   # invalidates the AP floors and Incarnation alignment.
