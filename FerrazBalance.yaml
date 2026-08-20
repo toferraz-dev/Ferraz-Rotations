@@ -40,7 +40,7 @@
 # Firmament, Radiant Moonlight.
 # =============================================================================
 
-version: 2.0
+version: 2.1
 author: Ferraz
 patch: "12.1"
 spec: 102
@@ -58,7 +58,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-08-20 | Patch: 12.1 | Version: 2.0"
+    text: "Last update: 2026-08-20 | Patch: 12.1 | Version: 2.1"
 
   # Exact string every number here was measured against — changing it
   # invalidates the AP floors and Incarnation alignment.
@@ -167,7 +167,7 @@ config:
     min: 1
     max: 6
     default: 1
-    description: "Minimum enemies actually engaged before Incarnation fires. Raise it to hold the burst for bigger pulls."
+    description: "Minimum enemies actually engaged before Incarnation fires. Raise it to hold the burst for bigger pulls — bosses always ignore this, so raising it never blocks a boss."
 
   auto_burst:
     label: "Auto Burst (no toggle needed)"
@@ -275,7 +275,10 @@ variables:
   # current target already has one of our DoTs on it. That last clause is what
   # stops the burst going out while the tank is still gathering — at that
   # point nothing has been hit yet, so no DoT is up.
-  pull_engaged: player.combat&active_enemies>=config.inc_min_enemies&(debuff.moonfire.up|debuff.sunfire.up)
+  # target.boss short-circuits the enemy count, same as every TTD var below:
+  # a boss is one enemy, so without it raising inc_min_enemies above 1 would
+  # silently stop Incarnation from ever firing on a boss.
+  pull_engaged: player.combat&(target.boss|active_enemies>=config.inc_min_enemies)&(debuff.moonfire.up|debuff.sunfire.up)
 
   # Incarnation ready: burst allowed, talented+charge, TTD ok, not already in
   # a burst window, aligned with Fury of Elune (up or <2s away — skipping that
