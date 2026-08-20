@@ -40,7 +40,7 @@
 # Firmament, Radiant Moonlight.
 # =============================================================================
 
-version: 2.1
+version: 2.2
 author: Ferraz
 patch: "12.1"
 spec: 102
@@ -58,7 +58,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-08-20 | Patch: 12.1 | Version: 2.1"
+    text: "Last update: 2026-08-20 | Patch: 12.1 | Version: 2.2"
 
   # Exact string every number here was measured against — changing it
   # invalidates the AP floors and Incarnation alignment.
@@ -169,6 +169,19 @@ config:
     default: 1
     description: "Minimum enemies actually engaged before Incarnation fires. Raise it to hold the burst for bigger pulls — bosses always ignore this, so raising it never blocks a boss."
 
+  # Seconds of combat before Incarnation may fire on trash. The DoT clause in
+  # var.pull_engaged already blocks the "tank is still gathering" case; this
+  # is the extra margin for "tank pulled one mob and five more are coming".
+  # Bosses ignore it, so a boss pull still bursts immediately.
+  inc_min_combat_time:
+    label: "Incarnation - Min Combat Time (s)"
+    section: "Cooldowns"
+    type: slider
+    min: 0
+    max: 10
+    default: 0
+    description: "Hold Incarnation for this many seconds after combat starts, so a half-gathered pull does not eat the cooldown. Bosses ignore it. 0 disables."
+
   auto_burst:
     label: "Auto Burst (no toggle needed)"
     section: "Cooldowns"
@@ -275,10 +288,16 @@ variables:
   # current target already has one of our DoTs on it. That last clause is what
   # stops the burst going out while the tank is still gathering — at that
   # point nothing has been hit yet, so no DoT is up.
-  # target.boss short-circuits the enemy count, same as every TTD var below:
-  # a boss is one enemy, so without it raising inc_min_enemies above 1 would
-  # silently stop Incarnation from ever firing on a boss.
-  pull_engaged: player.combat&(target.boss|active_enemies>=config.inc_min_enemies)&(debuff.moonfire.up|debuff.sunfire.up)
+  # enemies.combat.40y, NOT active_enemies: the catalog defines the latter as
+  # a nameplate count, which happily includes a mob the tank dragged in from
+  # range — or a pack that is merely on screen. This counts only enemies
+  # actually in combat and inside our 40y cast range.
+  # target.boss short-circuits both the count and the combat-time delay, same
+  # as every TTD var below: a boss is one enemy, so without it raising
+  # inc_min_enemies above 1 would silently stop Incarnation ever firing on a
+  # boss, and any delay would just be lost burst on a pull that is already
+  # fully engaged.
+  pull_engaged: player.combat&(target.boss|enemies.combat.40y>=config.inc_min_enemies&combat.time>=config.inc_min_combat_time)&(debuff.moonfire.up|debuff.sunfire.up)
 
   # Incarnation ready: burst allowed, talented+charge, TTD ok, not already in
   # a burst window, aligned with Fury of Elune (up or <2s away — skipping that
