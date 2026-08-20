@@ -124,6 +124,23 @@ def build(v):
     # berserk when the talent is taken, so an explicit incarnation action does
     # not exist. The Simia YAML needs both lines; SimC refuses the second one.
     add('actions.cooldowns+=/' + a('berserk', OV_INCARN, burst_gate))
+    # Combat potion. 'burst' rides the Berserk/Incarnation buff (in SimC
+    # Incarnation is a redirect off berserk, so both buff names are checked);
+    # 'cd' fires it the moment it is ready, which is what measures whether the
+    # sync is worth anything at all. fight_remains<32 stops a potion being
+    # carried unused to the end of the fight.
+    if v['potion'] == 'burst':
+        add('actions.cooldowns+=/' + a('potion',
+            'buff.berserk.up|buff.incarnation_guardian_of_ursoc.up|fight_remains<32'))
+    elif v['potion'] == 'cd':
+        add('actions.cooldowns+=/potion')
+    elif v['potion'] == 'burst_or_early':
+        # Prefers the burst window, but refuses to sit on the potion when
+        # Berserk/Incarnation is still far away (the rotation holds it for
+        # the HotW weave, so 'wait for burst' can mean waiting a long time).
+        add('actions.cooldowns+=/' + a('potion',
+            'buff.berserk.up|buff.incarnation_guardian_of_ursoc.up'
+            '|cooldown.berserk.remains>30|fight_remains<32'))
     add('actions.cooldowns+=/' + a('wild_guardian', 'buff.lunar_beam.up'))
     for r in ('blood_fury', 'berserking', 'fireblood', 'ancestral_call'):
         add('actions.cooldowns+=/' + r)
@@ -208,10 +225,14 @@ DEFAULTS = dict(ironfur_off_gcd=True, gory_fur=True, raze_aoe_gate=False,
                 mf_maintain=True, mf_st_prio=False, mf_lunation=True,
                 mf_lunation_capped=False, mf_gg='late', wildpower_line=True,
                 mangle_override='none', moonfire_override='full', lc_companion=False,
-                mf_maintain_first=True, bear_mangle=False, hotw_weave=True, hotw_drop=(), aoe_threshold=2)
+                mf_maintain_first=True, bear_mangle=False, hotw_weave=True, hotw_drop=(), aoe_threshold=2,
+                potion='off')
 
 VARIANTS = {
     'ferraz':        ({}, 'A rotacao atual, apos os fixes de hoje'),
+    'potion_burst':  (dict(potion='burst'), 'Combat potion junto com Incarnation/Berserk'),
+    'potion_cd':     (dict(potion='cd'), 'Combat potion assim que fica pronto, sem sync'),
+    'potion_mid':    (dict(potion='burst_or_early'), 'Potion no burst, mas nao espera se Berserk esta longe'),
     'no_off_gcd':    (dict(ironfur_off_gcd=False), 'Ironfur volta a comer GCD (mede o item 1)'),
     'no_gory':       (dict(gory_fur=False), 'Sem as linhas de Gory Fur (mede o item 2)'),
     'raze_gated':    (dict(raze_aoe_gate=True), 'Raze preso em 3+ alvos (mede o item 3)'),
