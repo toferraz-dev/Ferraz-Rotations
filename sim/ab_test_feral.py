@@ -101,7 +101,13 @@ def build(v):
         add('actions.cooldown%s%s' % ('=' if i == 0 else '+=/', ln))
 
     # --- finisher / aoe_finisher / builder: byte-for-byte from the YAML ---
-    add('actions.finisher=rip,if=combo_points>=5&(dot.rip.refreshable&(buff.tigers_fury.up|dot.rip.remains<cooldown.tigers_fury.remains)|buff.tigers_fury.up&!variable.rip_tf&dot.rip.ticking|buff.tigers_fury.up&buff.tigers_fury.remains<2&dot.rip.ticking)')
+    # Apex Predator's Craving fires a free finisher off the top of the list.
+    # The YAML has it; it was dead on Wildstalker and is live again on DotC.
+    if v['apex_ravage']:
+        add('actions.finisher=ferocious_bite,if=buff.apex_predators_craving.up')
+        add('actions.finisher+=/rip,if=combo_points>=5&(dot.rip.refreshable&(buff.tigers_fury.up|dot.rip.remains<cooldown.tigers_fury.remains)|buff.tigers_fury.up&!variable.rip_tf&dot.rip.ticking|buff.tigers_fury.up&buff.tigers_fury.remains<2&dot.rip.ticking)')
+    else:
+        add('actions.finisher=rip,if=combo_points>=5&(dot.rip.refreshable&(buff.tigers_fury.up|dot.rip.remains<cooldown.tigers_fury.remains)|buff.tigers_fury.up&!variable.rip_tf&dot.rip.ticking|buff.tigers_fury.up&buff.tigers_fury.remains<2&dot.rip.ticking)')
     if v.get('bite_pool'):
         add('actions.finisher+=/pool_resource,for_next=1')
         add('actions.finisher+=/ferocious_bite,max_energy=1,if=combo_points>=5')
@@ -120,6 +126,11 @@ def build(v):
 
     add('actions.builder=prowl,if=!buff.shadowmeld.up&(!variable.rake_tf|dot.rake.refreshable)')
     add('actions.builder+=/rake,if=(buff.tigers_fury.up|dot.rake.remains<cooldown.tigers_fury.remains)&(dot.rake.refreshable&(buff.tigers_fury.up|!variable.rake_tf)|dot.rake.remains<2|buff.tigers_fury.up&!variable.rake_tf)')
+    if v['sudden_ambush_shred']:
+        # dreamgrove keeps a Druid-of-the-Claw-only Shred on a Sudden Ambush
+        # proc. It measured +2.35% in the raid file; the M+ build only became
+        # eligible for it when it moved back to Druid of the Claw.
+        add('actions.builder+=/shred,if=buff.sudden_ambush.up&hero_tree.druid_of_the_claw')
     add('actions.builder+=/shred')
 
     # --- aoe_builder: the dotc_rake_threshold formula is the one place the
@@ -149,7 +160,8 @@ def build(v):
     return '\n'.join(L) + '\n'
 
 
-DEFAULTS = dict(no_cds=True, tf_no_hold=False, dotc_fix=False, bite_pool=False)
+DEFAULTS = dict(no_cds=True, tf_no_hold=False, dotc_fix=False, bite_pool=False,
+                sudden_ambush_shred=False, apex_ravage=False)
 
 VARIANTS = {
     'ferraz':        ({}, 'A rotacao atual: sem Berserk/Convoke/trinkets/pocao'),
@@ -161,6 +173,13 @@ VARIANTS = {
     'ws_base':       (dict(no_cds=False), 'BASE Wildstalker = o que o YAML faz hoje'),
     'ws_bite_pool':  (dict(no_cds=False, bite_pool=True),
                       'BASE + Bite com max_energy (ganhou +2.87% na build de raid)'),
+    # --- Druid of the Claw: a build de M+ voltou para DotC ------------------
+    'dotc_sa_shred': (dict(no_cds=False, sudden_ambush_shred=True),
+                      'BASE + Shred no proc de Sudden Ambush (ganhou +2.35% no raid)'),
+    'dotc_apex':     (dict(no_cds=False, apex_ravage=True),
+                      'BASE + linha de Apex Predators Craving no topo do finisher'),
+    'dotc_both':     (dict(no_cds=False, sudden_ambush_shred=True, apex_ravage=True),
+                      'BASE + as duas'),
 }
 
 
