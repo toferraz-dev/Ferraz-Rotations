@@ -45,7 +45,8 @@ OUT_DIR = os.path.join(ROOT, 'sim', 'out_balance')
 SS_AP = 60          # ec_st: starsurge,if=astral_power>60
 SF_AP = 50          # aoe:   starfall,if=astral_power>50
 SF_PANIC = 80       # aoe:   starfall,if=astral_power>=80 (anti-cap dump)
-MOONFIRE_CAP = 6    # aoe:   moonfire only under 6 targets
+MOONFIRE_CAP = 99   # aoe: no target cap on Moonfire as of YAML 2.6 —
+                    # the old 6 measured -8% to -10.65% at 6/8/10 targets
 
 # `var.eclipse_down` = buff.eclipse_solar.down & buff.eclipse_lunar.down
 ECLIPSE_DOWN = 'buff.eclipse.down'
@@ -207,12 +208,12 @@ def build(v):
         # What the SimC APL does and the YAML cannot: spread the DoTs over every
         # target instead of only the one under the cursor.
         aoe_dots = [
-            'moonfire,target_if=refreshable&spell_targets<%d' % MOONFIRE_CAP,
+            'moonfire,target_if=refreshable&spell_targets<%d' % v['mf_cap'],
             'sunfire,target_if=refreshable',
         ]
     else:
         aoe_dots = [
-            a('moonfire', 'spell_targets<%d' % MOONFIRE_CAP, 'dot.moonfire.refreshable'),
+            a('moonfire', 'spell_targets<%d' % v['mf_cap'], 'dot.moonfire.refreshable'),
             a('sunfire', 'dot.sunfire.refreshable'),
         ]
     sf_main = {
@@ -251,7 +252,7 @@ DEFAULTS = dict(inc_foe_align=True, eclipse_yields_to_inc=True, cds_first=False,
                 foe_gate='', trinkets='ferraz', aoe_threshold=2, opener_simc=False,
                 eclipse_timings=False, ascendant_fires=False, spender='floor',
                 multidot=False, prepot=False, st_starfall='off', thorn='off',
-                hotw='off')
+                hotw='off', mf_cap=MOONFIRE_CAP)
 
 VARIANTS = {
     'ferraz':        ({}, 'A rotacao atual do FerrazBalance.yaml'),
@@ -265,6 +266,15 @@ VARIANTS = {
     'sf_ap_40':      (dict(sf_ap=40), 'Starfall em AP>40 no AoE'),
     'sf_ap_60':      (dict(sf_ap=60), 'Starfall em AP>60 no AoE'),
     'no_wrath':      (dict(wrath_filler=False), 'So Starfire de filler no ST'),
+    # Is the <6 Moonfire cap still the right cutoff on the current gear?
+    'nw_mf_99':      (dict(wrath_filler=False, mf_cap=99), 'Sem Wrath + Moonfire sem cap de alvos'),
+    'nw_mf_4':       (dict(wrath_filler=False, mf_cap=4), 'Sem Wrath + Moonfire so ate 4 alvos'),
+    # DEFAULTS carries wrath_filler=True, but the YAML ships it OFF — so
+    # `no_wrath` is the real baseline for the file, not `ferraz`. These
+    # variants re-test the AP floor against that correct baseline.
+    'nw_ss_50':      (dict(wrath_filler=False, ss_ap=50), 'Sem Wrath + Starsurge em AP>50'),
+    'nw_ss_70':      (dict(wrath_filler=False, ss_ap=70), 'Sem Wrath + Starsurge em AP>70'),
+    'nw_ss_80':      (dict(wrath_filler=False, ss_ap=80), 'Sem Wrath + Starsurge perto do cap'),
     'foe_off_cd':    (dict(foe_gate='cooldown.ca_inc.remains>10|talent.lunation'),
                       'Fury of Elune com o gate do APL padrao'),
     'no_trinkets':   (dict(trinkets='off'), 'Trinkets/pocao desligados, como o default do YAML'),
