@@ -40,7 +40,7 @@
 # Firmament, Radiant Moonlight.
 # =============================================================================
 
-version: 2.3
+version: 2.4
 author: Ferraz
 patch: "12.1"
 spec: 102
@@ -58,7 +58,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-08-20 | Patch: 12.1 | Version: 2.3"
+    text: "Last update: 2026-08-21 | Patch: 12.1 | Version: 2.4"
 
   # Exact string every number here was measured against — changing it
   # invalidates the AP floors and Incarnation alignment.
@@ -159,32 +159,24 @@ config:
 
   # === COOLDOWN CONFIGURATIONS ===
   # Log-driven: 6 of 15 Incarnations in a real +11 run went out with ZERO
-  # enemies being damaged — the tank was still gathering the pull. The old
-  # gate let `fight_remains>=ttd` pass while nothing was engaged yet. This
-  # requires a real pull to exist before the 3min cooldown is spent.
-  # SimC cannot measure this (its dummies are always engaged), so the gain
-  # is in-game only.
-  inc_min_enemies:
-    label: "Incarnation - Min Enemies"
-    section: "Cooldowns"
-    type: slider
-    min: 1
-    max: 6
-    default: 1
-    description: "Minimum enemies actually engaged before Incarnation fires. Raise it to hold the burst for bigger pulls — bosses always ignore this, so raising it never blocks a boss."
-
-  # Seconds of combat before Incarnation may fire on trash. The DoT clause in
-  # var.pull_engaged already blocks the "tank is still gathering" case; this
-  # is the extra margin for "tank pulled one mob and five more are coming".
-  # Bosses ignore it, so a boss pull still bursts immediately.
-  inc_min_combat_time:
-    label: "Incarnation - Min Combat Time (s)"
+  # enemies being damaged — the tank was still gathering the pull. Versions
+  # 2.1-2.3 gated that on an engaged-enemy count plus a combat-time delay,
+  # both short-circuited for bosses. 2.4 replaces all of it with a single
+  # standing-still timer: while you are repositioning behind the tank you are
+  # by definition moving, and once the pull is actually parked you stop. It
+  # reads the real state directly instead of proxying it through enemy counts,
+  # and it needs no boss exception — you stand still on a boss too.
+  #
+  # SimC cannot measure this at all: it never moves, so player.standing.time
+  # is effectively infinite there and the gate is always open. In-game only.
+  inc_min_standing_time:
+    label: "Incarnation - Min Standing Still (s)"
     section: "Cooldowns"
     type: slider
     min: 0
     max: 10
-    default: 0
-    description: "Hold Incarnation for this many seconds after combat starts, so a half-gathered pull does not eat the cooldown. Bosses ignore it. 0 disables."
+    default: 2
+    description: "Seconds standing still before Incarnation may fire. While you are still repositioning the pull is not parked yet, so the burst waits. 0 disables the check. Raise it if the burst still goes out too early; lower it on fights where you are forced to keep moving."
 
   auto_burst:
     label: "Auto Burst (no toggle needed)"
@@ -288,20 +280,18 @@ variables:
   # Burst allowed: auto or manual toggle. Drives Incarnation + both trinkets + potion.
   burst_ok: config.auto_burst|config.burst_toggle
 
-  # A pull is actually underway: in combat, enough enemies engaged, and the
-  # current target already has one of our DoTs on it. That last clause is what
-  # stops the burst going out while the tank is still gathering — at that
-  # point nothing has been hit yet, so no DoT is up.
-  # enemies.combat.40y, NOT active_enemies: the catalog defines the latter as
-  # a nameplate count, which happily includes a mob the tank dragged in from
-  # range — or a pack that is merely on screen. This counts only enemies
-  # actually in combat and inside our 40y cast range.
-  # target.boss short-circuits both the count and the combat-time delay, same
-  # as every TTD var below: a boss is one enemy, so without it raising
-  # inc_min_enemies above 1 would silently stop Incarnation ever firing on a
-  # boss, and any delay would just be lost burst on a pull that is already
-  # fully engaged.
-  pull_engaged: player.combat&(target.boss|enemies.combat.40y>=config.inc_min_enemies&combat.time>=config.inc_min_combat_time)&(debuff.moonfire.up|debuff.sunfire.up)
+  # A pull is actually underway. Three conditions, all required:
+  #   player.combat                  obvious floor.
+  #   player.standing.time >= N      the pull is parked. Catalog: "Seconds
+  #                                  spent standing still" — it resets the
+  #                                  moment you move, so this is the current
+  #                                  uninterrupted stand, not a total.
+  #   a DoT is on the target         something has actually been hit. This is
+  #                                  what stops the burst firing at a pack the
+  #                                  tank has not reached yet.
+  # No boss exception is needed here, unlike every TTD var below: standing
+  # still is not a trash-only state, so a boss pull passes the same gate.
+  pull_engaged: player.combat&player.standing.time>=config.inc_min_standing_time&(debuff.moonfire.up|debuff.sunfire.up)
 
   # Incarnation ready: burst allowed, talented+charge, TTD ok, not already in
   # a burst window, aligned with Fury of Elune (up or <2s away — skipping that
