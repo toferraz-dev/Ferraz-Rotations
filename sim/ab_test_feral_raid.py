@@ -46,6 +46,7 @@ def build(v):
     # rake_tf/rip_tf read debuff.X.visual_id in the YAML — Simia-only, pinned here.
     add('actions.precombat+=/variable,name=rake_tf,value=0')
     add('actions.precombat+=/variable,name=rip_tf,value=%d' % (1 if v['rip_tf_true'] else 0))
+    add('actions.precombat+=/variable,name=moonfire_tf,value=%d' % (1 if v['rip_tf_true'] else 0))
     add('actions.precombat+=/variable,name=dotc_rake_threshold,op=set,value=99')
     add('actions.precombat+=/variable,name=dotc_rake_threshold,op=set,'
         'if=talent.wild_slashes&talent.merciless_claws,value=5')
@@ -143,6 +144,16 @@ def build(v):
         '|dot.rake.remains<cooldown.tigers_fury.remains)'
         '&(dot.rake.refreshable&(buff.tigers_fury.up|!variable.rake_tf)'
         '|dot.rake.remains<2|buff.tigers_fury.up&!variable.rake_tf)')
+    # Lunar Inspiration. The YAML carries a Tiger's Fury re-snapshot version
+    # AHEAD of the plain refreshable one (FerrazFeralRaid.yaml:213 and :218);
+    # the harness only ever had the plain one. LI is untalented on the Druid
+    # of the Claw build, so it never mattered until the raid build moved to
+    # Wildstalker. `li_full` prices the YAML's real pair.
+    if v['li_full']:
+        add('actions.builder+=/moonfire_cat,if=talent.lunar_inspiration'
+            '&(buff.tigers_fury.up|dot.moonfire.remains<cooldown.tigers_fury.remains)'
+            '&(dot.moonfire.refreshable&(buff.tigers_fury.up|!variable.moonfire_tf)'
+            '|dot.moonfire.remains<2|buff.tigers_fury.up&!variable.moonfire_tf)')
     add('actions.builder+=/moonfire_cat,if=talent.lunar_inspiration&dot.moonfire.refreshable')
     add('actions.builder+=/shred')
 
@@ -168,7 +179,8 @@ def build(v):
 
 
 DEFAULTS = dict(cds=True, convoke_ag=False, bite_max_energy=False,
-                sudden_ambush_shred=False, simple_rip=False, rip_tf_true=False)
+                sudden_ambush_shred=False, simple_rip=False, rip_tf_true=False,
+                li_full=False)
 
 VARIANTS = {
     'ferraz':        ({}, 'Porte direto da rotacao de M+ para a build de raid'),
@@ -192,6 +204,8 @@ VARIANTS = {
                       'BASE + Shred em Sudden Ambush'),
     'rt_all':        (dict(rip_tf_true=True, convoke_ag=True, bite_max_energy=True,
                            sudden_ambush_shred=True), 'BASE + as tres juntas'),
+    'rt_li_full':    (dict(rip_tf_true=True, li_full=True),
+                      'BASE + a linha completa de Lunar Inspiration do YAML'),
     'rt_no_cds':     (dict(rip_tf_true=True, cds=False),
                       'CONTROLE: BASE sem Berserk/Convoke/trinkets/pocao'),
     'rip_and_pool':  (dict(simple_rip=True, bite_max_energy=True),

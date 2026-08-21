@@ -1,5 +1,5 @@
 # =============================================================================
-# Feral Druid — spec 103 — patch 12.1 (Midnight) — Druid of the Claw, RAID.
+# Feral Druid — spec 103 — patch 12.1 (Midnight) — Wildstalker, RAID.
 # =============================================================================
 #
 # Measured with SimC 1210-01, fight_style=Patchwerk (the raid proxy, unlike
@@ -9,16 +9,29 @@
 # default APL for this build, sourced from dreamgrove.
 #
 # THIS IS NOT THE M+ FILE WITH A DIFFERENT STRING. The raid build drops
-# Frantic Frenzy, Primal Wrath, Apex Predator's Craving, Rampant Ferocity,
-# Double-Clawed Rake, Infected Wounds, Rip and Tear and Heart of the Wild,
-# and picks up Ashamane's Guidance, Merciless Claws, Panther's Guile, Saber
-# Jaws, Focused Frenzy, Coiled to Spring and Tireless Energy. Three priority
-# changes follow from that, all measured against the ported M+ priority:
+# Frantic Frenzy, Primal Wrath, Apex Predator's Craving, Rampant Ferocity and
+# Double-Clawed Rake, and picks up Panther's Guile, Saber Jaws, Focused
+# Frenzy, Coiled to Spring, Tireless Energy, Lunar Inspiration, Infected
+# Wounds and Circle of Life and Death.
 #
-#   Convoke outside Berserk (Ashamane's Guidance)   +5.19%
-#   Ferocious Bite pooled to full energy            +2.87%
-#   Shred on a Sudden Ambush proc                   +2.35%
-#   all three together                             +10.17%
+# HERO TREE HISTORY: this file was Druid of the Claw until 1.1, when the raid
+# build moved to WILDSTALKER — the mirror of what the M+ file did at the same
+# time, in the opposite direction. Two of the three gains the 1.0 header
+# advertised died with that move, and the priority needed no edit for it:
+# every affected line is gated on a talent or on hero_tree.*, so they went
+# inert on their own. Re-measured on the Wildstalker string against the same
+# baseline (Patchwerk, rip_tf pinned to 1):
+#
+#   Ferocious Bite pooled to full energy    +2.50%   still live (Saber Jaws)
+#   Lunar Inspiration Moonfire line         +1.78%   NEW: LI was untalented
+#                                                    on Druid of the Claw
+#   Convoke outside Berserk                 +0.04%   dead: no Ashamane's
+#                                                    Guidance on this string
+#   Shred on a Sudden Ambush proc           -0.03%   dead: gated on
+#                                                    hero_tree.druid_of_the_claw
+#
+# The two dead lines are kept, gated as they are, so a respec back to Druid
+# of the Claw revives them without an edit.
 #
 # Dropping the cooldown block entirely measures -21.47%, so the same
 # missing-cooldowns bug the M+ file had would cost even more here.
@@ -34,7 +47,7 @@
 # and the Predatory Swiftness lines.
 # =============================================================================
 
-version: 1.0
+version: 1.1
 author: Ferraz
 patch: "12.1"
 spec: 103
@@ -49,13 +62,13 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-08-20 | Patch: 12.1 | Version: 1.0"
+    text: "Last update: 2026-08-21 | Patch: 12.1 | Version: 1.1"
 
   recommended_talents:
     section: "Talents"
     type: copy_text
     label: "Recommended Talent String"
-    text: "CcGAAAAAAAAAAAAAAAAAAAAAAAAAAAAwghxYmZmxsxDsMz2MzMmZGAAAAWCmNYMzomxswMzMGzMDAAAAAAgBAAAQzsMLzMzACsAmZAWMzwAAAYmNMA"
+    text: "CcGADBD3hSPCL9Y9gz68WcKvMAAAAAAwYMjxYmZMmtFWGbzMzYmZAAAAYJY2gxMjaGziZmZGjZegBAAAAAAwAAAAIAYWmZrZbmlNYmZAWMDGAAzMAYA"
 
   survival_instincts_hp_pct:
     section: "Defensive HP Percentage"
@@ -174,18 +187,19 @@ lists:
     # respec either way.
     - feral_frenzy,if=!talent.frantic_frenzy&combo_points<=2+(2*var.bs_inc)
     - frantic_frenzy,if=buff.tigers_fury.up|combo_points<=2+(2*var.bs_inc)
-    # RAID-SPECIFIC (+5.19%): with Ashamane's Guidance — which only the raid
-    # build carries — Convoke is worth firing OUTSIDE the Berserk window when
-    # Berserk is far away, instead of always waiting for it. The M+ file has
-    # no such clause because it does not talent Ashamane's Guidance.
+    # The talent.ashamanes_guidance clause fires Convoke OUTSIDE the Berserk
+    # window when Berserk is far away. It was worth +5.19% while the raid
+    # build carried Ashamane's Guidance; the Wildstalker string does not, so
+    # the clause is inert (re-measured: +0.04%, noise). Kept for a respec.
     - convoke_the_spirits,if=(var.bs_inc|talent.ashamanes_guidance&(var.bs_inc_cd_remains>45|var.holdBerserk))&buff.tigers_fury.up&(prev_gcd.1.rip|prev_gcd.1.ferocious_bite|prev_gcd.1.primal_wrath|buff.tigers_fury.remains<=1+action.convoke_the_spirits.execute_time)
 
   finisher:
     - rip,if=combo_points>=5&(dot.rip.refreshable&(buff.tigers_fury.up|dot.rip.remains<cooldown.tigers_fury.remains)|buff.tigers_fury.up&!var.rip_tf&dot.rip.up|buff.tigers_fury.up&buff.tigers_fury.remains<2&dot.rip.up)
-    # RAID-SPECIFIC (+2.87%): Ferocious Bite spends up to 25 extra energy for
-    # up to 100% extra damage, and Saber Jaws (raid-only) raises that payoff
-    # further — so it is pooled to the full 50-energy cost instead of being
-    # fired at the 25-energy floor. This `return` is the pooling gate.
+    # RAID-SPECIFIC (+2.50% on the Wildstalker string, +2.87% on the old Druid
+    # of the Claw one): Ferocious Bite spends up to 25 extra energy for up to
+    # 100% extra damage, and Saber Jaws — which both raid builds carry — raises
+    # that payoff further, so it is pooled to the full 50-energy cost instead
+    # of being fired at the 25-energy floor. This `return` is the pooling gate.
     - return,if=combo_points>=5&energy<50
     - ferocious_bite,if=combo_points>=5
     - ravage,if=combo_points>=5
@@ -206,10 +220,15 @@ lists:
 
   builder:
     - prowl,if=!player.combat&!buff.shadowmeld.up&(!var.rake_tf|dot.rake.refreshable)
-    # RAID-SPECIFIC (+2.35%): dreamgrove keeps a Druid-of-the-Claw-only Shred
-    # on a Sudden Ambush proc, ahead of the Rake refresh.
+    # dreamgrove keeps a Druid-of-the-Claw-only Shred on a Sudden Ambush proc,
+    # ahead of the Rake refresh. Worth +2.35% while this file was Druid of the
+    # Claw; inert on Wildstalker (re-measured: -0.03%). Kept for a respec.
     - shred,name="Shred (Sudden Ambush)",if=buff.sudden_ambush.up&hero_tree.druid_of_the_claw
     - rake,if=(buff.tigers_fury.up|dot.rake.remains<cooldown.tigers_fury.remains)&(dot.rake.refreshable&(buff.tigers_fury.up|!var.rake_tf)|dot.rake.remains<2|buff.tigers_fury.up&!var.rake_tf)
+    # Lunar Inspiration, live for the first time on the Wildstalker string:
+    # worth +1.78% over the plain `refreshable` version below it. The extra
+    # clauses re-snapshot Moonfire under Tiger's Fury, same shape as the Rake
+    # and Rip lines.
     - moonfire,if=talent.lunar_inspiration&(buff.tigers_fury.up|dot.moonfire.remains<cooldown.tigers_fury.remains)&(dot.moonfire.refreshable&(buff.tigers_fury.up|!var.moonfire_tf)|dot.moonfire.remains<2|buff.tigers_fury.up&!var.moonfire_tf)
     - shred
 
