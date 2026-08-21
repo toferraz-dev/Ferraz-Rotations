@@ -30,7 +30,7 @@
 # lists (SimC never moves).
 # =============================================================================
 
-version: 1.0
+version: 1.1
 author: Ferraz
 patch: "12.1"
 spec: 102
@@ -45,7 +45,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-08-13 | Patch: 12.1 | Version: 1.0"
+    text: "Last update: 2026-08-21 | Patch: 12.1 | Version: 1.1"
 
   # Exact string every number here was measured against — Elune's Chosen, not Grove.
   recommended_talents:
@@ -301,7 +301,13 @@ lists:
     - call_action_list,name=auto_heal
     - call_action_list,name=heal_support
     - moonkin_form,if=buff.moonkin_form.down&health.pct>config.frenzied_regen_hp&!buff.frenzied_regeneration.up
-    - wrath,if=!player.combat&!player.moving&target.distance<=40
+    # NOTE: a pre-pull `wrath,if=!player.combat&!player.moving&target.distance<=40`
+    # used to sit here. It auto-started combat on any attackable target within
+    # 40y, which in a dungeon means pulling whatever you happen to have clicked
+    # — the tank decides the pull, not the rotation. It was also the wrong
+    # spell: with Lunar Calling, Starfire carries +120% on the primary target
+    # and Wrath no longer flips Eclipse, which is why the filler is pure
+    # Starfire. Removed. Pull by hand.
 
     - call_action_list,name=interrupts
     - call_action_list,name=defensives
