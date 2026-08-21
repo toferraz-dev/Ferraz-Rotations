@@ -57,7 +57,7 @@
 # window built around it is a possible future gain, not applied here.
 # =============================================================================
 
-version: 2.1
+version: 2.2
 author: Ferraz
 patch: "12.1"
 spec: 103
@@ -72,7 +72,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-08-20 | Patch: 12.1 | Version: 2.1"
+    text: "Last update: 2026-08-21 | Patch: 12.1 | Version: 2.2"
 
   recommended_talents:
     section: "Talents"
@@ -157,6 +157,52 @@ config:
     type: checkbox
     default: true
 
+  # === TIME TO DIE (TTD) CONFIGURATIONS ===
+  # Stop a long cooldown being spent on trash that is about to die. Same shape
+  # as FerrazBalance.yaml's TTD block, including the target.boss short-circuit
+  # in each variable: a boss never counts as "about to die", so a boss pull
+  # always bursts immediately no matter how these are set.
+  #
+  # UNVALIDATED by simulation, like the Balance ones: SimC dummies live the
+  # whole fight, so a TTD gate can only cost DPS there and never gain any.
+  # Measured on DungeonSlice purely to confirm it costs nothing (see the
+  # header). The actual gain is in-game, on trash that dies early.
+  ttd_berserk:
+    label: "Berserk / Incarnation TTD (seconds)"
+    section: "Time To Die"
+    type: slider
+    min: 5
+    max: 30
+    default: 15
+    description: "Minimum fight time remaining to use Berserk or Incarnation: Avatar of Ashamane. Bosses ignore it."
+
+  ttd_convoke:
+    label: "Convoke the Spirits TTD (seconds)"
+    section: "Time To Die"
+    type: slider
+    min: 3
+    max: 20
+    default: 8
+    description: "Minimum fight time remaining to use Convoke the Spirits. Lower than Berserk's: Convoke pays out over ~4s, so it is worth firing on a shorter pull. Bosses ignore it."
+
+  ttd_trinkets:
+    label: "Trinkets TTD (seconds)"
+    section: "Time To Die"
+    type: slider
+    min: 5
+    max: 30
+    default: 10
+    description: "Minimum fight time remaining to use trinkets. Bosses ignore it."
+
+  ttd_potion:
+    label: "Potion TTD (seconds)"
+    section: "Time To Die"
+    type: slider
+    min: 5
+    max: 30
+    default: 15
+    description: "Minimum fight time remaining to use the combat potion. The end-of-fight clause on the potion line ignores this, so a potion that would be wasted anyway still goes out."
+
 variables:
   bs_inc: buff.berserk.up|buff.incarnation_avatar_of_ashamane.up
   bs_inc_remains: buff.berserk.remains+buff.incarnation_avatar_of_ashamane.remains
@@ -181,6 +227,12 @@ variables:
   rip_tf: debuff.rip.visual_id=491158
   moonfire_tf: debuff.moonfire.visual_id=500891
 
+  # === TIME TO DIE (TTD) VARIABLES === (target.boss always ignores TTD)
+  berserk_ttd_ok: (target.boss|target.time_to_die>=config.ttd_berserk|fight_remains>=config.ttd_berserk)
+  convoke_ttd_ok: (target.boss|target.time_to_die>=config.ttd_convoke|fight_remains>=config.ttd_convoke)
+  trinkets_ttd_ok: (target.boss|target.time_to_die>=config.ttd_trinkets|fight_remains>=config.ttd_trinkets)
+  potion_ttd_ok: (target.boss|target.time_to_die>=config.ttd_potion|fight_remains>=config.ttd_potion)
+
   rip_preempt: "active_enemies=1&combo_points>=5&dot.rip.up&(dot.rip.refreshable&(buff.tigers_fury.up|dot.rip.remains<cooldown.tigers_fury.remains)|buff.tigers_fury.up&!var.rip_tf|buff.tigers_fury.up&buff.tigers_fury.remains<2)"
 
 lists:
@@ -199,19 +251,19 @@ lists:
     # SimC default (dreamgrove-sourced) APL for this exact build — adding
     # them back measured +19.73% DungeonSlice, the single largest number in
     # this file.
-    - trinket_1,if=config.use_trinket_1&trinket_1.ready
-    - trinket_2,if=config.use_trinket_2&trinket_2.ready
+    - trinket_1,if=config.use_trinket_1&trinket_1.ready&var.trinkets_ttd_ok
+    - trinket_2,if=config.use_trinket_2&trinket_2.ready&var.trinkets_ttd_ok
     - berserking,if=var.bs_inc
     - blood_fury,if=var.bs_inc
     - fireblood,if=var.bs_inc
     - ancestral_call,if=var.bs_inc
-    - combat_potion,if=config.use_potion&combat_potion.ready&(var.bs_inc|fight_remains<32)
-    - berserk,if=buff.tigers_fury.up&!var.holdBerserk
+    - combat_potion,if=config.use_potion&combat_potion.ready&(var.bs_inc&var.potion_ttd_ok|fight_remains<32)
+    - berserk,if=buff.tigers_fury.up&!var.holdBerserk&var.berserk_ttd_ok
     - feral_frenzy,if=!talent.frantic_frenzy&combo_points<=2+(2*var.bs_inc)
     - frantic_frenzy,if=buff.tigers_fury.up|combo_points<=2+(2*var.bs_inc)
     # Talented on the recommended string. Lines up with Berserk, on the GCD
     # right after a finisher so the burst window snapshots a full-CP window.
-    - convoke_the_spirits,if=var.bs_inc&buff.tigers_fury.up&(prev_gcd.1.rip|prev_gcd.1.ferocious_bite|prev_gcd.1.primal_wrath|buff.tigers_fury.remains<=1+action.convoke_the_spirits.execute_time)
+    - convoke_the_spirits,if=var.bs_inc&var.convoke_ttd_ok&buff.tigers_fury.up&(prev_gcd.1.rip|prev_gcd.1.ferocious_bite|prev_gcd.1.primal_wrath|buff.tigers_fury.remains<=1+action.convoke_the_spirits.execute_time)
 
   finisher:
     - rip,if=combo_points>=5&(dot.rip.refreshable&(buff.tigers_fury.up|dot.rip.remains<cooldown.tigers_fury.remains)|buff.tigers_fury.up&!var.rip_tf&dot.rip.up|buff.tigers_fury.up&buff.tigers_fury.remains<2&dot.rip.up)

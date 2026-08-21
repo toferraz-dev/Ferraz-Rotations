@@ -80,23 +80,39 @@ def build(v):
     # FerrazFeral.yaml's `cooldown` list has today. `missing_cds` restores
     # what it never had: Berserk itself, Convoke the Spirits (talented),
     # racial, trinkets, potion. ---
+    # TTD gates, mirroring the YAML's ttd_* variables. SimC has no boss flag on
+    # a dummy and knows fight_remains exactly, so target.boss drops out and each
+    # gate reduces to the fight_remains clause. That means TTD can only ever
+    # HOLD a cooldown back here, never gain anything — the point of measuring it
+    # is to confirm the cost is zero, since the real gain (trash that dies early)
+    # is unmodellable.
+    ttd_zerk = 'fight_remains>=15' if v['ttd'] else ''
+    ttd_conv = 'fight_remains>=8' if v['ttd'] else ''
+    ttd_trk = 'fight_remains>=10' if v['ttd'] else ''
+    ttd_pot = 'fight_remains>=15' if v['ttd'] else ''
     cd = ['call_action_list,name=cd_variable,if=!cooldown.bs_inc.remains|!cooldown.convoke_the_spirits.remains']
     if not v['no_cds']:
+        pot = '(buff.bs_inc.up&%s)|fight_remains<32' % ttd_pot if ttd_pot             else 'buff.bs_inc.up|fight_remains<32'
         cd += [
-            a('use_items'),
+            a('use_items', ttd_trk),
             a('berserking'),
-            a('potion', 'buff.bs_inc.up|fight_remains<32'),
-            a('berserk', 'buff.tigers_fury.up&!variable.holdBerserk'),
+            a('potion', pot),
+            a('berserk', 'buff.tigers_fury.up&!variable.holdBerserk', ttd_zerk),
         ]
     cd += [
         a('feral_frenzy', '!talent.frantic_frenzy&combo_points<=2+(2*buff.bs_inc.up)'),
         a('frantic_frenzy', 'buff.tigers_fury.up|combo_points<=2+(2*buff.bs_inc.up)'),
     ]
     if not v['no_cds']:
-        cd.append(a('convoke_the_spirits',
-                     'buff.bs_inc.up&buff.tigers_fury.up&(prev_gcd.1.rip|prev_gcd.1.ferocious_bite'
-                     '|prev_gcd.1.primal_wrath|buff.tigers_fury.remains<=1+action.convoke_the_spirits.execute_time)'
-                     '|fight_remains<5'))
+        # The TTD gate goes on the burst clause only, never on the trailing
+        # fight_remains<5 escape — wrapping the whole expression would make the
+        # escape unreachable, which is not what the YAML does (it has no such
+        # escape clause at all).
+        main_conv = ('buff.bs_inc.up&%sbuff.tigers_fury.up&(prev_gcd.1.rip'
+                     '|prev_gcd.1.ferocious_bite|prev_gcd.1.primal_wrath'
+                     '|buff.tigers_fury.remains<=1+action.convoke_the_spirits.execute_time)'
+                     % (ttd_conv + '&' if ttd_conv else ''))
+        cd.append(a('convoke_the_spirits', main_conv + '|fight_remains<5'))
     for i, ln in enumerate(cd):
         add('actions.cooldown%s%s' % ('=' if i == 0 else '+=/', ln))
 
@@ -161,10 +177,11 @@ def build(v):
 
 
 DEFAULTS = dict(no_cds=True, tf_no_hold=False, dotc_fix=False, bite_pool=False,
-                sudden_ambush_shred=False, apex_ravage=False)
+                sudden_ambush_shred=False, apex_ravage=False, ttd=False)
 
 VARIANTS = {
     'ferraz':        ({}, 'A rotacao atual: sem Berserk/Convoke/trinkets/pocao'),
+    'ttd_gates':     (dict(no_cds=False, ttd=True), 'BASE + gates de TTD no burst (Berserk/Convoke/trinkets/pocao)'),
     'fixed_cds':     (dict(no_cds=False), 'Adiciona Berserk, Convoke, racial, trinkets, pocao'),
     'fixed_tf_hold': (dict(no_cds=False, tf_no_hold=True), '+ remove o hold de Tigers Fury (M+ only, sem sentido aqui)'),
     'fixed_all':     (dict(no_cds=False, tf_no_hold=True, dotc_fix=True), 'Todas as 3 correcoes juntas'),
