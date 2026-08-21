@@ -23,7 +23,7 @@
 # SimC never had that line, so no number here captures it.
 #
 # BUILD ASSUMPTIONS — talents confirmed on the recommended string by decoding
-# it through the local SimC binary (sim/tools/simc-1210.01.fd069a4-win64/simc.exe).
+# it through the local SimC binary (sim/tools/simc-1210.01.62ca36f-win64/simc.exe).
 # The hero tree is DRUID OF THE CLAW (all 14 points: Ravage, Claw Rampage,
 # Killing Strikes, Dreadful Wound, Twin Claw, Strike for the Heart, Bestial
 # Strength, Aggravate Wounds, ...), plus Frantic Frenzy, Rampant Ferocity,
