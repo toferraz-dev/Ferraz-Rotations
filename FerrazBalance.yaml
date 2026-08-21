@@ -61,7 +61,7 @@
 # Wild Mushroom, Power of Goldrinn, Orbit Breaker.
 # =============================================================================
 
-version: 2.7
+version: 3.1
 author: Ferraz
 patch: "12.1"
 spec: 102
@@ -78,7 +78,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-08-21 | Patch: 12.1 | Version: 2.7"
+    text: "Last update: 2026-08-21 | Patch: 12.1 | Version: 3.1"
 
   # ==========================================================================
   # RECOMMENDED BUILD — every number in this file was measured against this
@@ -255,6 +255,86 @@ config:
     description: "In AoE, switch to the nearest other enemy when the current target will die before a Starfire cast can land. Switches to the NEAREST enemy, not the healthiest — Simia cannot pick by criteria. Off by default: unvalidated by simulation."
 
   # ==========================================================================
+  # ENGINE — the plumbing this file used to inherit from Simia's _shared.yaml.
+  #   `sanity_checks` there is NOT just guards: it also calls auto_dispel,
+  #   affix, auto_purge_enrage, auto_brez, auto_rez and auto_combat_potion.
+  #   Inheriting it meant none of that could be switched off, and the potion
+  #   call fought this file's own combat_potion line in `trinkets`.
+  #   It is inlined in the `engine` list below so every piece has a toggle.
+  #   One exception: the `dispels` list is called from `main` after defensives
+  #   and interrupts, not from `engine`, so a real defensive or a kick still
+  #   outranks a dispel.
+  #   The five return guards were copied verbatim — do not drop any of them.
+  #
+  #   Deliberately NOT copied, because they contain nothing a Druid can use:
+  #     anti_cc          Human/DK/Warrior/Undead racials only
+  #     auto_freedom     Blessing of Freedom, Tiger's Lust, Master's Call,
+  #                      Escape Artist. The Druid answer (shapeshift out of a
+  #                      root) already lives in this file's `defensives`.
+  #     auto_feign_death Hunter only
+  #     auto_death_grip  Death Knight only
+  #     special_actions_combat   melee auto-attack, gated on player.melee
+  #     auto_combat_potion       superseded by this file's own potion line
+  # ==========================================================================
+  engine_loot_nearby:
+    label: "Loot Nearby Corpses"
+    section: "Engine"
+    type: checkbox
+    default: true
+    description: "Interact with lootable corpses out of combat."
+
+  engine_auto_target:
+    label: "Auto Target (Ranged)"
+    section: "Engine"
+    type: multi_select
+    options:
+      - label: "No target"
+        value: 0
+      - label: "Target is dead"
+        value: 1
+      - label: "Target too far"
+        value: 2
+    default: [0, 1]
+    description: "When to pick a new enemy automatically, within 40y."
+
+  engine_healthstone:
+    label: "Healthstone HP%"
+    section: "Engine"
+    type: slider
+    min: 0
+    max: 100
+    default: 40
+
+  engine_health_potion:
+    label: "Health Potion HP%"
+    section: "Engine"
+    type: slider
+    min: 0
+    max: 100
+    default: 25
+
+  engine_auto_brez:
+    label: "Rebirth on Mouseover"
+    section: "Engine"
+    type: checkbox
+    default: true
+    description: "Battle rez a dead ally while hovering their unit frame. Pools rage first if you are in Bear Form."
+
+  engine_auto_rez:
+    label: "Revive on Mouseover (OOC)"
+    section: "Engine"
+    type: checkbox
+    default: true
+    description: "Out-of-combat Revive on a dead ally under the mouse."
+
+  engine_affix_devour:
+    label: "Dispel Devouring Rift (Affix)"
+    section: "Engine"
+    type: checkbox
+    default: true
+    description: "Remove Corruption on the Devour affix debuff (440313), self first. Bypasses the normal dispel-type matching — the affix is removable by any dispel."
+
+  # ==========================================================================
   # DISPELS — inlined from Simia's shared lists so each piece is
   #   switchable on its own. UNVALIDATED: SimC has no dispel model.
   # ==========================================================================
@@ -396,6 +476,16 @@ variables:
   # still is not a trash-only state, so a boss pull passes the same gate.
   pull_engaged: player.combat&player.standing.time>=config.inc_min_standing_time&(debuff.moonfire.up|debuff.sunfire.up)
 
+  # Incarnation is ready and the ONLY thing missing is the stand. This is
+  # var.pull_engaged without its standing-time clause, plus the readiness
+  # checks. It exists to stop the moving_* lists spending Fury of Elune out
+  # from under the burst: FoE lasts 8s on a 60s cooldown, and Incarnation
+  # requires FoE up or <2s away, so a Fury fired while running means the
+  # burst waits up to ~58s for the next one if you do not park within 8s.
+  # While this is true, the moving lists hold FoE. It clears the moment
+  # Incarnation actually goes out (var.cd_active).
+  inc_waiting_to_stand: var.burst_ok&talent.incarnation_chosen_of_elune&cooldown.incarnation_chosen_of_elune.charges>0&var.inc_ttd_ok&!var.cd_active&player.combat&(debuff.moonfire.up|debuff.sunfire.up)
+
   # Incarnation ready: burst allowed, talented+charge, TTD ok, not already in
   # a burst window, aligned with Fury of Elune (up or <2s away — skipping that
   # alignment measured -0.47% DungeonSlice), and a real pull is underway.
@@ -433,6 +523,46 @@ lists:
     # end-of-fight half is here.
     - combat_potion,delay=150,name="Combat Potion",if=var.burst_ok&config.use_potion&combat_potion.ready&player.combat&(var.potion_ttd_ok&cooldown.fury_of_elune.remains>0&var.cd_active|fight_remains<=30)
 
+  # Everything `spell_queue`, `sanity_checks` and `auto_target_ranged` used to
+  # do, inlined. Order matches the shared file so behaviour is unchanged except
+  # where a toggle says otherwise. See the ENGINE config block for what was
+  # deliberately left out and why.
+  engine:
+    - queue_spell,if=!player.casting|!player.channeling
+
+    # --- The five guards, copied verbatim from _shared.yaml sanity_checks.
+    # Dropping any of these lets the rotation fire while dead or mounted.
+    - return,if=!state.rotation
+    - return,if=player.dead
+    - return,if=state.blocked_inputs
+    - return,if=mounted
+    - return,if=buff.travel_form.up
+
+    # --- Looting (was special_actions; combat half was melee-only, dropped).
+    - interact_target,delay=350,if=config.engine_loot_nearby&target.lootable&target.range<=5
+    - interact_target,delay=350,if=config.engine_loot_nearby&loot_nearby
+    - interact_mouseover,delay=350,if=config.engine_loot_nearby&mouseover.lootable&mouseover.range<=5
+
+    # --- Devour affix. Direct spell-id check, not cycle.dispelable: the affix
+    # debuff is removable by every dispel type, so type matching would skip it.
+    # player_first so you clear yourself before anyone else.
+    - remove_corruption,delay=500,cycle=party,cycle_order=player_first,name="Devouring Rift (Affix)",if=config.engine_affix_devour&cycle.debuff.440313.up.any
+
+    # --- Rebirth / Revive on a hovered unit frame.
+    - pool_resource,resource=rage,for_next=1,if=config.engine_auto_brez&mouseover.dead&mouseover.friendly&mouseover.unitframe&buff.bear_form.up&cooldown.rebirth.ready
+    - rebirth.mouseover,name="Rebirth (Mouseover)",if=config.engine_auto_brez&mouseover.dead&mouseover.friendly&mouseover.unitframe&player.combat
+    - revive.mouseover,name="Revive (Mouseover)",if=config.engine_auto_rez&mouseover.dead&mouseover.friendly&mouseover.unitframe&!player.combat
+
+    # --- Consumables (was auto_heal). No mana potion line: Balance does not
+    # run out of mana in a dungeon.
+    - healthstone,delay=250,if=healthstone.ready&health.pct<=config.engine_healthstone
+    - health_potion,delay=250,if=health_potion.ready&health.pct<=config.engine_health_potion
+
+    # --- Auto target (was auto_target_ranged), 40y like the shared ranged list.
+    - target_enemy,delay=200,off_gcd=true,if=config.engine_auto_target.has(0)&!target.exists&enemies.combat.40y>=1
+    - target_enemy,delay=200,off_gcd=true,if=config.engine_auto_target.has(1)&target.dead&enemies.combat.40y>=1
+    - target_enemy,delay=200,off_gcd=true,if=config.engine_auto_target.has(2)&target.range>=40&enemies.combat.40y>=1
+
   # Dispels, inlined from _shared.yaml rather than inherited. Self first: it is
   # the cheapest and the one you always want. The party line uses cycle=party
   # (the 5-man), matching what the shared list does for non-healer specs.
@@ -459,7 +589,7 @@ lists:
 
     - frenzied_regeneration,if=health.effective.pct<=config.frenzied_regen_hp&buff.bear_form.up
     - barkskin,range_check=none,name="Barkskin (low HP)",if=health.effective.pct<=config.barkskin_hp
-    - cat_form,if=debuff_list.freedom.up&buff.moonkin_form.up
+    - cat_form,if=debuff_list.freedom.up&(buff.moonkin_form.up|buff.bear_form.up)
     - starfire, if=!buff.moonkin_form.up
 
   # Party utility, called before target guards. Unmeasured (not damage).
@@ -507,7 +637,10 @@ lists:
     # Starweaver clause is dead on the recommended string; kept for when it returns.
     - starsurge,if=buff.starweavers_warp.up|buff.touch_the_cosmos.react
     - starsurge,if=astral_power>60
-    - fury_of_elune
+    # Held while the burst is only waiting for you to stand still — see
+    # var.inc_waiting_to_stand. Also picks up the TTD gate the stationary
+    # lists already had. UNMEASURABLE: SimC never moves.
+    - fury_of_elune,if=var.foe_ttd_ok&!var.inc_waiting_to_stand
     - moonfire
     - sunfire
 
@@ -519,7 +652,10 @@ lists:
     - starfall,if=buff.starweavers_weft.up|buff.touch_the_cosmos.react
     - starfall,if=astral_power>50
     - starsurge,if=buff.starfall.up&(buff.touch_the_cosmos.react|buff.starweavers_warp.up)
-    - fury_of_elune
+    # Held while the burst is only waiting for you to stand still — see
+    # var.inc_waiting_to_stand. Also picks up the TTD gate the stationary
+    # lists already had. UNMEASURABLE: SimC never moves.
+    - fury_of_elune,if=var.foe_ttd_ok&!var.inc_waiting_to_stand
     - sunfire
     - moonfire
 
@@ -588,9 +724,7 @@ lists:
     - return,if=player.channeling|player.casting
 
     # --- Engine plumbing. Must stay at the top. ---
-    - call_action_list,name=spell_queue
-    - call_action_list,name=sanity_checks
-    - call_action_list,name=auto_target_ranged
+    - call_action_list,name=engine
 
     - call_action_list,name=heal_support
 
@@ -600,8 +734,13 @@ lists:
     - return,if=!target.valid|target.dead|!target.attackable
 
     - moonkin_form,if=buff.moonkin_form.down&health.effective.pct>config.frenzied_regen_hp&!buff.frenzied_regeneration.up
-    - wrath,if=!player.combat&!player.moving&target.distance<=40
-    - call_action_list,name=auto_heal
+    # NOTE: a pre-pull `wrath,if=!player.combat&!player.moving&target.distance<=40`
+    # used to sit here. It auto-started combat on any attackable target within
+    # 40y, which in a dungeon means pulling whatever you happen to have clicked
+    # — the tank decides the pull, not the rotation. It was also the wrong
+    # spell: with Lunar Calling, Starfire carries +120% on the primary target
+    # and Wrath no longer flips Eclipse, which is why the filler is pure
+    # Starfire. Removed. Pull by hand.
 
     # --- Survival, then utility, then the burst window ---
     - call_action_list,name=defensives
