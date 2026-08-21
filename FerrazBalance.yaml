@@ -61,7 +61,7 @@
 # Wild Mushroom, Power of Goldrinn, Orbit Breaker.
 # =============================================================================
 
-version: 3.1
+version: 3.2
 author: Ferraz
 patch: "12.1"
 spec: 102
@@ -78,7 +78,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-08-21 | Patch: 12.1 | Version: 3.1"
+    text: "Last update: 2026-08-21 | Patch: 12.1 | Version: 3.2"
 
   # ==========================================================================
   # RECOMMENDED BUILD — every number in this file was measured against this
@@ -620,13 +620,31 @@ lists:
   # on this character. Removed entirely. The mouseover spread line below keeps
   # its own cap — spreading is a different cost profile and was not measured.
   #
-  # Spreads DoTs without changing target: Simia can't cycle enemy targets or
-  # read mouseover debuffs directly, so the gate is cluster-based (an enemy
-  # near target missing the DoT), 1.5s lockout to avoid double-dotting.
-  # Addon-side stand-in for SimC's target_if: +2.1% DungeonSlice, +9.8% at 5.
+  # Spreads DoTs without changing target. Addon-side stand-in for SimC's
+  # target_if: +2.1% DungeonSlice, +9.8% at 5 targets.
+  #
+  # Until 3.2 both lines gated on cluster.debuff.SPELL.count<enemies.around_target,
+  # on the belief that Simia could not read a mouseover's debuffs. It can —
+  # mouseover.debuff.SPELL.PROPERTY is used by Simia's own rotation_104 and
+  # rotation_256, and by FerrazGuardianElune.yaml. The cluster proxy asks
+  # "is the pack around MY TARGET fully dotted", which is the wrong question:
+  # the spell lands on the MOUSEOVER, which may not even be in that pack. On a
+  # dotted cluster the line refused to fire at an undotted mob under the mouse.
+  # Now each line checks the actual unit it casts at.
+  #
+  # Three other changes that came with it:
+  #   - the 1.5s lockout is gone; it existed to cover the proxy being slow to
+  #     update, and it blocked legitimate casts at a second mob within 1.5s.
+  #     Simia's own rotations carry no lockout here. Put it back if you see
+  #     double-casts.
+  #   - the enemies.combat.40y<6 cap is gone from Moonfire, matching the cast
+  #     lines: Moonfire measured better at 6, 8 and 10 targets, so capping the
+  #     spread contradicted the cast priority.
+  #   - mouseover.combat added: hovering an unpulled mob no longer pulls it,
+  #     the same reason the pre-pull Wrath was removed in 3.1.
   mouseover_dots:
-    - sunfire.mouseover,name="Sunfire Mouseover",if=config.enable_mouseover_dots&mouseover.exists&mouseover.enemy&mouseover.attackable&!mouseover.dead&mouseover.range<=40&cluster.debuff.sunfire.count<enemies.around_target&lastcast.sunfire>=1.5
-    - moonfire.mouseover,name="Moonfire Mouseover",if=config.enable_mouseover_dots&mouseover.exists&mouseover.enemy&mouseover.attackable&!mouseover.dead&mouseover.range<=40&enemies.combat.40y<6&cluster.debuff.moonfire.count<enemies.around_target&lastcast.moonfire>=1.5
+    - sunfire.mouseover,name="Sunfire Mouseover",if=config.enable_mouseover_dots&mouseover.exists&mouseover.enemy&mouseover.attackable&!mouseover.dead&mouseover.combat&mouseover.range<=40&mouseover.debuff.sunfire.down
+    - moonfire.mouseover,name="Moonfire Mouseover",if=config.enable_mouseover_dots&mouseover.exists&mouseover.enemy&mouseover.attackable&!mouseover.dead&mouseover.combat&mouseover.range<=40&mouseover.debuff.moonfire.down
 
   # Instant casts only, <2 enemies. Unmeasured (SimC never moves).
   moving_st:
