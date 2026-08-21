@@ -1,5 +1,5 @@
 # =============================================================================
-# Feral Druid — spec 103 — patch 12.1 (Midnight) — Wildstalker, M+.
+# Feral Druid — spec 103 — patch 12.1 (Midnight) — Druid of the Claw, M+.
 # =============================================================================
 #
 # Measured with SimC 1210-01, fight_style=DungeonSlice (M+ proxy), against
@@ -24,19 +24,27 @@
 #
 # BUILD ASSUMPTIONS — talents confirmed on the recommended string by decoding
 # it through the local SimC binary (sim/tools/simc-1210.01.fd069a4-win64/simc.exe).
-# The hero tree is WILDSTALKER (all 14 points: Thriving Growth, Bursting
-# Growth, Vigorous Creepers, Resilient Flourishing, Strategic Infusion, Hunt
-# Beneath the Open Skies, Twin Sprouts, Rampancy, ...), plus Frantic Frenzy,
-# Rampant Ferocity, Primal Wrath, Double-Clawed Rake, Infected Wounds and
-# Unseen Predator apex maxed 4/4.
+# The hero tree is DRUID OF THE CLAW (all 14 points: Ravage, Claw Rampage,
+# Killing Strikes, Dreadful Wound, Twin Claw, Strike for the Heart, Bestial
+# Strength, Aggravate Wounds, ...), plus Frantic Frenzy, Rampant Ferocity,
+# Primal Wrath, Double-Clawed Rake, Infected Wounds, Heart of the Wild, Fluid
+# Form and Unseen Predator apex maxed 4/4.
 #
-# This file used to be a Druid of the Claw build. Nothing in the priority had
-# to change for the swap — every affected line is already gated on
-# hero_tree.* or on a talent, so the Ravage and Heart of the Wild lines simply
-# went inert and the hero_tree.wildstalker branches in aoe_builder went live.
-# NOT talented (harmless dead weight): Ravage, Heart of the Wild, Lunar
-# Inspiration, Wild Slashes, Fluid Form, Panther's Guile, and every
-# hero_tree.druid_of_the_claw check.
+# This file has now been on both hero trees (Druid of the Claw -> Wildstalker
+# -> back to Druid of the Claw) and the priority never had to change for any
+# of it: every affected line is gated on hero_tree.* or on a talent, so the
+# Ravage and Heart of the Wild lines simply go live or inert on their own and
+# the aoe_builder branches swap sides by themselves.
+# NOT talented on this string (harmless dead weight): Lunar Inspiration, Wild
+# Slashes, Panther's Guile, and every hero_tree.wildstalker check.
+#
+# Two Druid-of-the-Claw candidates were measured on the new string and NOT
+# applied, all three inside the error bar of the current priority:
+#     Shred on a Sudden Ambush proc   -0.02%  (worth +2.35% on the RAID file,
+#                                              which is single-target; here the
+#                                              builder list barely runs)
+#     Apex Predator's Craving line     -0.04%
+#     both together                    -0.08%
 #
 # Bite pooling (ferocious_bite with max_energy) was tested here and measured
 # nothing — it is worth +2.87% on the RAID build only, where Saber Jaws pays
@@ -49,7 +57,7 @@
 # window built around it is a possible future gain, not applied here.
 # =============================================================================
 
-version: 2.0
+version: 2.1
 author: Ferraz
 patch: "12.1"
 spec: 103
@@ -64,13 +72,13 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-08-20 | Patch: 12.1 | Version: 2.0"
+    text: "Last update: 2026-08-20 | Patch: 12.1 | Version: 2.1"
 
   recommended_talents:
     section: "Talents"
     type: copy_text
     label: "Recommended Talent String"
-    text: "CcGAAAAAAAAAAAAAAAAAAAAAAAAAAAAgZmZ2YmZmxY2MPw2YbGzMmZAAAAYJY2gxMjaGzCzMzsMmZGAAAAAAADAAAgAgZbmlmlZW2AzMALMDDAgZGAMA"
+    text: "CcGAAAAAAAAAAAAAAAAAAAAAAAAAAAAgZmZ2YmZmxY2MPw2YbGzMmZAAAAYLY2M8AmZUzYWMzMzsMmhBAAAAAwADAAAgmZZWmZmBAsAzMDwCDGAAAzshB"
 
   survival_instincts_hp_pct:
     section: "Defensive HP Percentage"
