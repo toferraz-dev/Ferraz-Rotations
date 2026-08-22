@@ -37,7 +37,7 @@
 # heals better" — SimC never lets the group take damage, so it never charges
 # you for the globals a form swap costs.
 # =============================================================================
-version: 2.4
+version: 2.5
 author: Ferraz
 patch: "12.1"
 spec: 105
@@ -59,7 +59,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-08-22 | Patch: 12.1 | Version: 2.4"
+    text: "Last update: 2026-08-22 | Patch: 12.1 | Version: 2.5"
 
   # ==========================================================================
   # RECOMMENDED BUILD — the string the talent.X gates below assume.
@@ -531,6 +531,14 @@ lists:
     #
     # No target chooser: in a 5-man there is only ever tank1.
     - symbiotic_relationship,cycle=tanks,range_check=none,name="Symbiotic (Tank)",if=talent.symbiotic_relationship&buff.symbiotic_relationship.down&buff.474760.down&lastcast.symbiotic_relationship>=60
+    # Shift back to caster form ONLY when somebody needs the healing. The rule
+    # is "leave the form when you cannot weave", but !var.can_catweave cannot
+    # be used here: that variable is group_healthy AND player.combat, so out of
+    # combat it is always true and the line would fire on every pass. The half
+    # that carries the meaning is !var.group_healthy — someone is hurt, so stop
+    # weaving and heal. In combat the catweave list uses !var.can_catweave
+    # directly, where it behaves as intended.
+    #
     # Shift back to caster form after weaving, by casting something. The
     # !buff.prowl.up guard is what stops an infinite loop with the Auto Stealth
     # line at the bottom of this list: Prowl IS Cat Form, so without it the
@@ -541,7 +549,7 @@ lists:
     # cycle=members with no HP gate is deliberate here: the point is leaving
     # the form, and the Rejuvenation is the vehicle. It fires at most once per
     # shift now, not on a loop.
-    - rejuvenation,name="Rejuvenation - Remove DPSForm",cycle=members,if=(buff.cat_form.up|buff.bear_form.up)&!buff.prowl.up
+    - rejuvenation,name="Rejuvenation - Remove DPSForm",cycle=members,if=(buff.cat_form.up|buff.bear_form.up)&!buff.prowl.up&!var.group_healthy
     # Pre-combat Lifebloom maintenance on tanks
     - lifebloom,name="OOC Lifebloom (Tank)",cycle=tanks,if=(player.inraid|player.indungeon)&(cycle.buff.lifebloom.down|cycle.buff.lifebloom.refreshable)
     - rejuvenation,name="OOC Rejuvenation",cycle=members,if=(player.inraid|player.indungeon)&cycle.health.effective.pct<config.ooc_heal_hp_pct&cycle.buff.rejuvenation.refreshable
@@ -721,7 +729,7 @@ lists:
   # Catweaving Transition and Entry (Physical DPS)
   catweave:
     # Refresh Rejuv on injured members before fully committing to Cat
-    - rejuvenation,name="Cat Rejuvenation",cycle=members,if=(buff.bear_form.up|buff.cat_form.up)&(!target.in_melee|!var.group_healthy)
+    - rejuvenation,name="Cat Rejuvenation",cycle=members,if=(buff.bear_form.up|buff.cat_form.up)&!var.can_catweave
 
     # Fluid Form: Casts Rake/Shred to automatically shapeshift
     - rake,name="Fluid Rake",if=!buff.cat_form.up
