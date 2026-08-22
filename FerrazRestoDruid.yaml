@@ -37,7 +37,7 @@
 # heals better" — SimC never lets the group take damage, so it never charges
 # you for the globals a form swap costs.
 # =============================================================================
-version: 1.9
+version: 2.0
 author: Ferraz
 patch: "12.1"
 spec: 105
@@ -59,7 +59,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-08-22 | Patch: 12.1 | Version: 1.9"
+    text: "Last update: 2026-08-22 | Patch: 12.1 | Version: 2.0"
 
   # ==========================================================================
   # RECOMMENDED BUILD — the string the talent.X gates below assume.
@@ -743,7 +743,8 @@ lists:
     - lifebloom,name="Lifebloom Tank (Moving)",cycle=tanks,if=cycle.buff.lifebloom.down|cycle.buff.lifebloom.refreshable
     - rejuvenation,name="Rejuvenation (Moving)",cycle=members,if=cycle.buff.rejuvenation.refreshable&cycle.health.effective.pct<config.rejuvenation_threshold
     - rejuvenation,name="Germination (Moving)",cycle=members,if=talent.germination&cycle.buff.rejuvenation.up&(cycle.buff.rejuvenation_germination.down|cycle.buff.rejuvenation_germination.refreshable)&cycle.health.effective.pct<config.rejuvenation_threshold
-    - call_action_list,name=abundance_maintenance,if=!var.can_catweave
+    # Third caller, same rule: in combat always, out of combat only on request.
+    - call_action_list,name=abundance_maintenance,if=!var.can_catweave&(player.combat|config.ooc_abundance)
 
   # Emergency Mouseover Healing on unit frames
   mouseover_healing_emergency:
@@ -828,4 +829,12 @@ lists:
     - call_action_list,name=ranged_dps,if=config.ranged_dps&var.can_catweave&target.exists&target.alive&!target.friendly&!target.in_melee
     - call_action_list,name=bearweave,if=config.melee_dps&var.can_catweave&target.exists&target.alive&!target.friendly&target.in_melee
     # Downtime Filler: Pad Abundance if there is no valid enemy to attack
-    - call_action_list,name=abundance_maintenance,if=!target.exists|target.friendly|target.range>40
+    # Downtime filler. (player.combat|config.ooc_abundance) is the important
+    # half: padding Abundance IN combat is the Regrowth ramp and always
+    # allowed, but out of combat it obeys the toggle. Without that clause this
+    # line ignored the toggle entirely — standing around with no target makes
+    # !target.exists true, so it padded forever no matter how the checkbox was
+    # set. That is the "it keeps casting Rejuvenation even with Pad Abundance
+    # unchecked" bug: the toggle was only ever wired to the out_of_combat
+    # caller, and this list has three callers.
+    - call_action_list,name=abundance_maintenance,if=(player.combat|config.ooc_abundance)&(!target.exists|target.friendly|target.range>40)
