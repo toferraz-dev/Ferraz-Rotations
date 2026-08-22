@@ -37,7 +37,7 @@
 # heals better" — SimC never lets the group take damage, so it never charges
 # you for the globals a form swap costs.
 # =============================================================================
-version: 2.9
+version: 3.0
 author: Ferraz
 patch: "12.1"
 spec: 105
@@ -59,7 +59,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-08-22 | Patch: 12.1 | Version: 2.9"
+    text: "Last update: 2026-08-22 | Patch: 12.1 | Version: 3.0"
 
   # ==========================================================================
   # RECOMMENDED BUILD — the string the talent.X gates below assume.
@@ -534,13 +534,21 @@ lists:
     #
     # No target chooser: in a 5-man there is only ever tank1.
     - symbiotic_relationship,cycle=tanks,range_check=none,name="Symbiotic (Tank)",if=talent.symbiotic_relationship&buff.symbiotic_relationship.down&buff.474760.down&lastcast.symbiotic_relationship>=60
-    # Shift back to caster form ONLY when somebody needs the healing. The rule
-    # is "leave the form when you cannot weave", but !var.can_catweave cannot
-    # be used here: that variable is group_healthy AND player.combat, so out of
-    # combat it is always true and the line would fire on every pass. The half
-    # that carries the meaning is !var.group_healthy — someone is hurt, so stop
-    # weaving and heal. In combat the catweave list uses !var.can_catweave
-    # directly, where it behaves as intended.
+    # Shift back to caster form whenever you should not be weaving —
+    # !var.can_catweave, which is the rule as stated: leave the form when you
+    # cannot weave. Out of combat that is always true, and that is correct:
+    # standing in Cat Form outside combat does nothing for you.
+    #
+    # 2.5 used !var.group_healthy here instead and that DEADLOCKED the whole
+    # rotation. A snapshot caught it: out of combat, in Cat Form, group at
+    # 100%, 104 steps evaluated and ZERO selected. Nothing could fire, because
+    # every exit was gated on the condition that says you should be in form:
+    #   can_catweave is false out of combat, so bearweave/catweave never run
+    #   the "Cat Rejuvenation" shift-out line lives INSIDE catweave, so it was
+    #     unreachable exactly when it was needed
+    #   this line demanded a hurt group, and the group was full
+    # This is the only exit that is reachable out of combat. It has to key on
+    # can_catweave, not on group health.
     #
     # Shift back to caster form after weaving, by casting something. The
     # !buff.prowl.up guard is what stops an infinite loop with the Auto Stealth
@@ -552,7 +560,7 @@ lists:
     # cycle=members with no HP gate is deliberate here: the point is leaving
     # the form, and the Rejuvenation is the vehicle. It fires at most once per
     # shift now, not on a loop.
-    - rejuvenation,name="Rejuvenation - Remove DPSForm",cycle=members,if=(buff.cat_form.up|buff.bear_form.up)&!buff.prowl.up&!var.group_healthy
+    - rejuvenation,name="Rejuvenation - Remove DPSForm",cycle=members,if=(buff.cat_form.up|buff.bear_form.up)&!buff.prowl.up&!var.can_catweave
     # Pre-combat Lifebloom maintenance on tanks
     - lifebloom,name="OOC Lifebloom (Tank)",cycle=tanks,if=(player.inraid|player.indungeon)&(cycle.buff.lifebloom.down|cycle.buff.lifebloom.refreshable)
     - rejuvenation,name="OOC Rejuvenation",cycle=members,if=(player.inraid|player.indungeon)&cycle.health.effective.pct<config.ooc_heal_hp_pct&cycle.buff.rejuvenation.refreshable
