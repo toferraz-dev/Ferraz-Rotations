@@ -61,7 +61,7 @@
 # Wild Mushroom, Power of Goldrinn, Orbit Breaker.
 # =============================================================================
 
-version: 3.2
+version: 3.3
 author: Ferraz
 patch: "12.1"
 spec: 102
@@ -78,7 +78,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-08-21 | Patch: 12.1 | Version: 3.2"
+    text: "Last update: 2026-08-22 | Patch: 12.1 | Version: 3.3"
 
   # ==========================================================================
   # RECOMMENDED BUILD — every number in this file was measured against this
@@ -767,7 +767,14 @@ lists:
     - call_action_list,name=trinkets
 
     # --- Damage priority: moving first (instant-only), then stationary. ---
-    - call_action_list,name=moving_aoe,if=player.moving&enemies.combat.40y>1
-    - call_action_list,name=moving_st,if=player.moving&enemies.combat.40y<=1
-    - call_action_list,name=ec_st,if=enemies.combat.40y<=1
-    - call_action_list,name=aoe,if=enemies.combat.40y>1
+    # player.combat on EVERY damage call. Without it the ST lists fire out of
+    # combat and pull: `enemies.combat.40y<=1` is TRUE when the count is ZERO,
+    # so with any attackable target selected the rotation would open on it with
+    # Moonfire, Sunfire or Starfire. The target guards above only check that the
+    # target is valid and attackable — none of them check combat.
+    # Removing the pre-pull Wrath did not cover this: that line was the explicit
+    # puller, but the damage lists pull on their own. The tank decides the pull.
+    - call_action_list,name=moving_aoe,if=player.combat&player.moving&enemies.combat.40y>1
+    - call_action_list,name=moving_st,if=player.combat&player.moving&enemies.combat.40y<=1
+    - call_action_list,name=ec_st,if=player.combat&enemies.combat.40y<=1
+    - call_action_list,name=aoe,if=player.combat&enemies.combat.40y>1
