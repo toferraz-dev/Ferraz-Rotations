@@ -37,7 +37,7 @@
 # heals better" — SimC never lets the group take damage, so it never charges
 # you for the globals a form swap costs.
 # =============================================================================
-version: 3.0
+version: 3.1
 author: Ferraz
 patch: "12.1"
 spec: 105
@@ -59,7 +59,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-08-22 | Patch: 12.1 | Version: 3.0"
+    text: "Last update: 2026-08-22 | Patch: 12.1 | Version: 3.1"
 
   # ==========================================================================
   # RECOMMENDED BUILD — the string the talent.X gates below assume.
@@ -534,6 +534,19 @@ lists:
     #
     # No target chooser: in a 5-man there is only ever tank1.
     - symbiotic_relationship,cycle=tanks,range_check=none,name="Symbiotic (Tank)",if=talent.symbiotic_relationship&buff.symbiotic_relationship.down&buff.474760.down&lastcast.symbiotic_relationship>=60
+    # Only leave the form when somebody actually needs the healing. Standing in
+    # Cat Form out of combat with a full group costs nothing, so spending a
+    # Rejuvenation purely to drop the form is mana for no reason — that is the
+    # "it casts Rejuvenation whenever I shift" report.
+    #
+    # 3.0 used !var.can_catweave here, which is ALWAYS true out of combat
+    # (can_catweave requires player.combat), so every shift produced a cast.
+    # 2.5 used !var.group_healthy and appeared to deadlock, but that was the
+    # `Cat Rejuvenation` line being unreachable — fixed separately by moving it
+    # into main. A healthy group out of combat producing no suggestion is not a
+    # deadlock; it is the rotation correctly having nothing to do.
+    #
+    # OLD COMMENT, kept for the reasoning it records:
     # Shift back to caster form whenever you should not be weaving —
     # !var.can_catweave, which is the rule as stated: leave the form when you
     # cannot weave. Out of combat that is always true, and that is correct:
@@ -560,7 +573,7 @@ lists:
     # cycle=members with no HP gate is deliberate here: the point is leaving
     # the form, and the Rejuvenation is the vehicle. It fires at most once per
     # shift now, not on a loop.
-    - rejuvenation,name="Rejuvenation - Remove DPSForm",cycle=members,if=(buff.cat_form.up|buff.bear_form.up)&!buff.prowl.up&!var.can_catweave
+    - rejuvenation,name="Rejuvenation - Remove DPSForm",cycle=members,if=(buff.cat_form.up|buff.bear_form.up)&!buff.prowl.up&!var.group_healthy
     # Pre-combat Lifebloom maintenance on tanks
     - lifebloom,name="OOC Lifebloom (Tank)",cycle=tanks,if=(player.inraid|player.indungeon)&(cycle.buff.lifebloom.down|cycle.buff.lifebloom.refreshable)
     - rejuvenation,name="OOC Rejuvenation",cycle=members,if=(player.inraid|player.indungeon)&cycle.health.effective.pct<config.ooc_heal_hp_pct&cycle.buff.rejuvenation.refreshable
@@ -739,9 +752,6 @@ lists:
 
   # Catweaving Transition and Entry (Physical DPS)
   catweave:
-    # Refresh Rejuv on injured members before fully committing to Cat
-    - rejuvenation,name="Cat Rejuvenation",cycle=members,if=(buff.bear_form.up|buff.cat_form.up)&!var.can_catweave
-
     # Fluid Form: Casts Rake/Shred to automatically shapeshift
     - rake,name="Fluid Rake",if=!buff.cat_form.up
     - cat_form,name="Manual Cat Shift",if=!buff.cat_form.up
@@ -881,6 +891,13 @@ lists:
     # reapplied on a global that would otherwise have been damage, never on one
     # that would have been a heal.
     - mark_of_the_wild,range_check=none,name="Mark of the Wild (low prio)",if=(buff.mark_of_the_wild.down.any|action.mark_of_the_wild.overlayed)&lastcast.mark_of_the_wild>=10
+
+    # Leave Cat/Bear to heal. This used to live at the top of `catweave`, which
+    # is only reachable through `bearweave` — and that call requires
+    # var.can_catweave. So the line whose job is "stop weaving, someone is
+    # hurt" was locked behind the condition that says you SHOULD be weaving,
+    # and could never fire. It sits in main now, above the weaving calls.
+    - rejuvenation,name="Cat Rejuvenation",cycle=members,if=(buff.bear_form.up|buff.cat_form.up)&!var.can_catweave
 
     # DPS weaving when the group is healthy
     - call_action_list,name=ranged_dps,if=config.ranged_dps&var.can_catweave&target.exists&target.alive&!target.friendly&!target.in_melee
