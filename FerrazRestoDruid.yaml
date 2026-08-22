@@ -37,7 +37,7 @@
 # heals better" — SimC never lets the group take damage, so it never charges
 # you for the globals a form swap costs.
 # =============================================================================
-version: 1.2
+version: 1.4
 author: Ferraz
 patch: "12.1"
 spec: 105
@@ -59,7 +59,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-08-22 | Patch: 12.1 | Version: 1.2"
+    text: "Last update: 2026-08-22 | Patch: 12.1 | Version: 1.4"
 
   # ==========================================================================
   # RECOMMENDED BUILD — the string the talent.X gates below assume.
@@ -105,6 +105,30 @@ config:
       - label: "Tank"
         value: 2
     default: 1
+
+  # Out-of-combat healing floor. The OOC lines used to run on the in-combat
+  # thresholds, and rejuvenation_threshold defaults to 100 — so anyone at 99.9%
+  # qualified and the rotation healed full-health people between pulls. Heal out
+  # of combat only when somebody genuinely needs it.
+  ooc_heal_hp_pct:
+    label: "OOC Heal Below HP%"
+    section: "Healing"
+    type: slider
+    min: 25
+    max: 100
+    default: 85
+    description: "Out of combat, only heal group members under this health. Set to 100 to go back to topping everyone off."
+
+  # Padding Abundance before a pull is real value, but the list has no natural
+  # stopping point: Rejuvenation expires in ~15s, so out of combat it recasts
+  # forever and drains mana while you stand still. OFF by default — turn it on
+  # if you want a pre-pull ramp and are willing to pay for it.
+  ooc_abundance:
+    label: "Pad Abundance Out of Combat"
+    section: "Healing"
+    type: checkbox
+    default: false
+    description: "Keep casting Rejuvenation between pulls to build Abundance stacks. Costs mana continuously while you are standing around."
 
   abundance_min_stacks:
     label: "Abundance Stacks (Pad)"
@@ -334,15 +358,6 @@ config:
     type: checkbox
     default: true
 
-  # Symbiotic Relationship bond target. Leave empty to fall back to a tank,
-  # which is what the file hardcoded before.
-  symbiotic_target:
-    label: "Symbiotic Relationship Target"
-    section: "Utility"
-    type: unit_select
-    filter: tanks
-    max: 1
-
   innervate_threshold:
     label: "Innervate Mana %"
     section: "Utility"
@@ -495,24 +510,36 @@ lists:
   # Out of Combat: Mark of the Wild, Symbiotic Relationship, and healing prep (Lifebloom on tanks, Rejuv, etc.)
   out_of_combat:
     - mark_of_the_wild,range_check=none,if=(buff.mark_of_the_wild.down.any|action.mark_of_the_wild.overlayed)&lastcast.mark_of_the_wild>=10
-    # Out of combat only — the spell refuses to cast in combat. The bond aura
-    # sits on the CASTER, so the gate is buff.symbiotic_relationship on self,
-    # never cycle.buff.*. lastcast>=10 is the debounce: without it, any moment
-    # the buff has not registered yet re-fires the cast every pass.
-    - symbiotic_relationship,cycle=config.symbiotic_target,range_check=none,name="Symbiotic (Chosen)",if=talent.symbiotic_relationship&config.symbiotic_target&buff.symbiotic_relationship.down&lastcast.symbiotic_relationship>=10
-    - symbiotic_relationship,cycle=tanks,range_check=none,name="Symbiotic (Tank Fallback)",if=talent.symbiotic_relationship&!config.symbiotic_target&buff.symbiotic_relationship.down&lastcast.symbiotic_relationship>=10
+    # Symbiotic Relationship. Out of combat only — the spell refuses to cast in
+    # combat, which is why it must never appear in an in-combat list.
+    #
+    # THE BOND PRODUCES NO TRACKABLE AURA. Checked against a 26-minute M+ log:
+    # the bond heal (474760) fires on both partners 2935 times, and there is
+    # NOT ONE applybuff event for Symbiotic on either of them. So
+    # buff.symbiotic_relationship never registers, .down stays true forever,
+    # and any condition built on it re-casts every pass. That is the "casting
+    # it nonstop" bug, and it survived two attempts to fix it with buff gates.
+    #
+    # The buff checks are kept in case they resolve in-game where the log shows
+    # nothing, but lastcast is what actually bounds it: at worst the bond is
+    # re-established once a minute, out of combat, which costs one global.
+    #
+    # No target chooser: in a 5-man there is only ever tank1.
+    - symbiotic_relationship,cycle=tanks,range_check=none,name="Symbiotic (Tank)",if=talent.symbiotic_relationship&buff.symbiotic_relationship.down&buff.474760.down&lastcast.symbiotic_relationship>=60
     # Casts Rejuvenation to exit combat forms if necessary
     - rejuvenation,name="Rejuvenation - Remove DPSForm",cycle=members,if=buff.cat_form.up|buff.bear_form.up
     # Pre-combat Lifebloom maintenance on tanks
     - lifebloom,name="OOC Lifebloom (Tank)",cycle=tanks,if=cycle.buff.lifebloom.down|cycle.buff.lifebloom.refreshable
-    - rejuvenation,name="OOC Rejuvenation",cycle=members,if=cycle.health.effective.pct<config.rejuvenation_threshold&cycle.buff.rejuvenation.refreshable
-    - regrowth,name="OOC Regrowth",cycle=members,if=cycle.health.effective.pct<config.regrowth_threshold&pred.cycle.buff.regrowth.refreshable
+    - rejuvenation,name="OOC Rejuvenation",cycle=members,if=cycle.health.effective.pct<config.ooc_heal_hp_pct&cycle.buff.rejuvenation.refreshable
+    - regrowth,name="OOC Regrowth",cycle=members,if=cycle.health.effective.pct<config.ooc_heal_hp_pct&pred.cycle.buff.regrowth.refreshable
     # Forces HoT spread if the toggle is active (ignores normal HP thresholds)
     - wild_growth,name="Forced Wild Growth",range_check=none,if=config.force_spread&(pred.buff.wild_growth.down|group.count(pred.cycle.buff.wild_growth.down)>=1)
     - rejuvenation,name="Forced Rejuvenation",cycle=members,if=config.force_spread&(cycle.buff.rejuvenation.down|cycle.buff.rejuvenation.refreshable)
     - rejuvenation,name="Forced Germination",cycle=members,if=config.force_spread&cycle.buff.rejuvenation.up&cycle.buff.rejuvenation_germination.down
-    # Abundance Maintenance: Keeps 6 Abundance stacks on the group
-    - call_action_list,name=abundance_maintenance
+    # Abundance padding, now behind a toggle. This call had NO condition at
+    # all: out of combat it re-cast Rejuvenation forever as the HoT expired,
+    # which is the "burning mana for nothing while standing around" bug.
+    - call_action_list,name=abundance_maintenance,if=config.ooc_abundance
     # Auto Stealth when all healing is done
     - prowl,name="Auto Stealth",if=config.auto_prowl&!buff.prowl.up&!buff.travel_form.up&!buff.bear_form.up
 
