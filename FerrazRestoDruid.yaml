@@ -37,7 +37,7 @@
 # heals better" — SimC never lets the group take damage, so it never charges
 # you for the globals a form swap costs.
 # =============================================================================
-version: 1.4
+version: 1.5
 author: Ferraz
 patch: "12.1"
 spec: 105
@@ -59,7 +59,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-08-22 | Patch: 12.1 | Version: 1.4"
+    text: "Last update: 2026-08-22 | Patch: 12.1 | Version: 1.5"
 
   # ==========================================================================
   # RECOMMENDED BUILD — the string the talent.X gates below assume.
@@ -128,15 +128,7 @@ config:
     section: "Healing"
     type: checkbox
     default: false
-    description: "Keep casting Rejuvenation between pulls to build Abundance stacks. Costs mana continuously while you are standing around."
-
-  abundance_min_stacks:
-    label: "Abundance Stacks (Pad)"
-    section: "Healing"
-    type: slider
-    min: 1
-    max: 10
-    default: 5
+    description: "Keep casting Rejuvenation between pulls until 5 are up, so the Abundance window is ready at the pull. Costs mana while you stand around."
 
   wild_growth_threshold:
     label: "Wild Growth HP %"
@@ -625,6 +617,12 @@ lists:
     - rejuvenation,name="Forced Rejuvenation",cycle=members,if=config.force_spread&(cycle.buff.rejuvenation.down|cycle.buff.rejuvenation.refreshable)
     - rejuvenation,name="Forced Germination",cycle=members,if=config.force_spread&cycle.buff.rejuvenation.up&cycle.buff.rejuvenation_germination.down
 
+    # Spend the Abundance window. Regrowth at -60% cost and +60% crit is the
+    # entire payoff of keeping 5 Rejuvenations up; without this line the file
+    # built the buff and never cashed it. FerrazRestoDruidRaid.yaml already
+    # had this and the M+ file did not.
+    - regrowth,name="Abundance Regrowth",cycle=members,if=buff.abundance.up&cycle.health.effective.pct<config.regrowth_threshold
+
     # Core periodic and direct healing logic
     - wild_growth,name="Wild Growth",range_check=none,if=group.count(cycle.health.effective.pct<config.wild_growth_threshold&!cycle.tank)>=config.wild_growth_members
     - rejuvenation,name="Rejuvenation",cycle=members,if=cycle.buff.rejuvenation.refreshable&cycle.health.effective.pct<config.rejuvenation_threshold
@@ -638,9 +636,19 @@ lists:
     - innervate,name="Innervate",off_gcd=true,ignore_queue=true,delay=150,range_check=none,if=mana.pct<config.innervate_threshold&fight_remains>15
     - stampeding_roar,name="Stampeding Roar",if=var.use_stampeding_roar&config.stampeding_roar_usage!=0
 
+  # ABUNDANCE CHANGED IN 12.1 and this list was still written for the old one.
+  # From the game's own spell data (207383 / 207640):
+  #   "While you have at least 5 Rejuvenations active, Regrowth's cost is
+  #    reduced by 60% and critical chance is increased by 60%."
+  #   Buff 207640: Stacks: 1 maximum, duration 30s.
+  # It no longer stacks per Rejuvenation — it is a binary threshold. The old
+  # gate here read `buff.abundance.stack<5`, and since the buff caps at ONE
+  # stack that comparison is true even while the buff is up. The filler could
+  # never stop, in combat or out. It now gates on !buff.abundance.up, so it
+  # pads until the threshold is met and then goes quiet.
   abundance_maintenance:
-    - rejuvenation,name="Abundance Filler (Rejuv)",cycle=members,if=buff.abundance.stack<config.abundance_min_stacks&cycle.buff.rejuvenation.refreshable
-    - rejuvenation,name="Abundance Filler (Germination)",cycle=members,if=buff.abundance.stack<config.abundance_min_stacks&talent.germination&cycle.buff.rejuvenation.up&(cycle.buff.rejuvenation_germination.down|cycle.buff.rejuvenation_germination.refreshable)
+    - rejuvenation,name="Abundance Filler (Rejuv)",cycle=members,if=!buff.abundance.up&cycle.buff.rejuvenation.refreshable
+    - rejuvenation,name="Abundance Filler (Germination)",cycle=members,if=!buff.abundance.up&talent.germination&cycle.buff.rejuvenation.up&(cycle.buff.rejuvenation_germination.down|cycle.buff.rejuvenation_germination.refreshable)
 
   # Cat Form DPS Rotation (Single Target)
   catweave_st:
