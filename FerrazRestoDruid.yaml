@@ -37,7 +37,7 @@
 # heals better" — SimC never lets the group take damage, so it never charges
 # you for the globals a form swap costs.
 # =============================================================================
-version: 5.0
+version: 5.1
 author: Ferraz
 patch: "12.1"
 spec: 105
@@ -56,7 +56,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-08-22 | Patch: 12.1 | Version: 5.0"
+    text: "Last update: 2026-08-22 | Patch: 12.1 | Version: 5.1"
 
   recommended_talents:
     section: "Talents"
@@ -487,11 +487,20 @@ lists:
     - shred,name="Shred ST"
 
   # Cat Form DPS Rotation (AoE)
+  # Until 5.1 this list was byte-identical to catweave_st — it filled with
+  # Shred, a single-target builder, at every target count. Swipe IS talented on
+  # this build and is the Cat AoE builder. Measured on sim/ab_test_resto_dps.py:
+  #     3 targets   37994 -> 38501   +1.33%
+  #     5 targets   44390 -> 51431  +15.86%
+  # Numeric id 106785, not the name: "swipe" also matches the Bear version
+  # (213764), the same reason FerrazFeral.yaml and FerrazGuardianElune.yaml use
+  # ids for it. Shred stays underneath as the low-target fallback.
   catweave_aoe:
     - target_enemy,name="Search Bleed Target",if=combo_points>=5&!debuff.rip.refreshable&active_dot.rip<enemies.combat.8y
     - rip,name="Rip AoE",if=combo_points>=5&debuff.rip.refreshable
     - ferocious_bite,name="Bite AoE",if=combo_points>=5
     - rake,name="Rake AoE",if=debuff.rake.refreshable
+    - 106785,name="Swipe AoE"
     - shred,name="Shred AoE"
 
   # Catweaving Transition and Entry (Physical DPS)
