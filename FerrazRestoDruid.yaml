@@ -37,7 +37,7 @@
 # heals better" — SimC never lets the group take damage, so it never charges
 # you for the globals a form swap costs.
 # =============================================================================
-version: 2.8
+version: 2.9
 author: Ferraz
 patch: "12.1"
 spec: 105
@@ -59,7 +59,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-08-22 | Patch: 12.1 | Version: 2.8"
+    text: "Last update: 2026-08-22 | Patch: 12.1 | Version: 2.9"
 
   # ==========================================================================
   # RECOMMENDED BUILD — the string the talent.X gates below assume.
@@ -489,6 +489,9 @@ variables:
   in_dps_form: buff.cat_form.up|buff.bear_form.up
   # Friendly and valid mouseover target
   mo_friendly_valid: mouseover.exists&mouseover.alive&mouseover.friendly&mouseover.unitframe
+  # Heart of the Wild is ready and enabled. While this is true the bearweave
+  # list yields, so the rotation goes straight to Cat Form and fires it.
+  hotw_pending: config.use_heart_of_the_wild&talent.heart_of_the_wild&cooldown.heart_of_the_wild.ready
   # Soul of the Forest proc is active
   has_soul: buff.soul_of_the_forest.up
   # Stampeding Roar conditions based on the interface
@@ -770,9 +773,18 @@ lists:
     - wrath,name="Wrath Filler"
 
   # Defensive rotation and debuffs in Bear Form (Bearweave)
+  # !var.hotw_pending on both bear casts is what lets Heart of the Wild happen
+  # at all. Read the flow: main calls bearweave, bearweave Thrashes (which
+  # shifts you to BEAR via Fluid Form), then hands off to catweave, which casts
+  # Rake to shift you to CAT. Next pass Thrash is up again and pulls you back
+  # to Bear. HotW requires Cat Form at the instant it is evaluated, so in that
+  # ping-pong it almost never gets a window — it only fired in testing when
+  # Thrash and Mangle happened to both be on cooldown at once.
+  # With this guard, a ready HotW makes bearweave step aside for one pass: you
+  # go straight to Cat, cast it, and the bear bleeds resume afterwards.
   bearweave:
-    - thrash,name="Thrash (BearmForm Bleed)",if=dot.thrash.stack<3|dot.thrash.remains<=8
-    - mangle,name="Mangle (BearForm)",if=!buff.bear_form.up&(dot.thrash.remains<=8|dot.thrash.stack<3)
+    - thrash,name="Thrash (BearmForm Bleed)",if=(dot.thrash.stack<3|dot.thrash.remains<=8)&!var.hotw_pending
+    - mangle,name="Mangle (BearForm)",if=!buff.bear_form.up&(dot.thrash.remains<=8|dot.thrash.stack<3)&!var.hotw_pending
     - call_action_list,name=catweave
 
   # Healing on the Move: Instant spells only (HoTs and Lifebloom)
