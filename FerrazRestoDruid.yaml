@@ -37,7 +37,7 @@
 # heals better" — SimC never lets the group take damage, so it never charges
 # you for the globals a form swap costs.
 # =============================================================================
-version: 1.0
+version: 1.2
 author: Ferraz
 patch: "12.1"
 spec: 105
@@ -59,7 +59,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-08-22 | Patch: 12.1 | Version: 1.0"
+    text: "Last update: 2026-08-22 | Patch: 12.1 | Version: 1.2"
 
   # ==========================================================================
   # RECOMMENDED BUILD — the string the talent.X gates below assume.
@@ -495,8 +495,12 @@ lists:
   # Out of Combat: Mark of the Wild, Symbiotic Relationship, and healing prep (Lifebloom on tanks, Rejuv, etc.)
   out_of_combat:
     - mark_of_the_wild,range_check=none,if=(buff.mark_of_the_wild.down.any|action.mark_of_the_wild.overlayed)&lastcast.mark_of_the_wild>=10
-    - symbiotic_relationship,cycle=config.symbiotic_target,range_check=none,name="Symbiotic (Chosen)",if=config.symbiotic_target&!buff.symbiotic_relationship.up
-    - symbiotic_relationship,cycle=tanks,range_check=none,name="Symbiotic (Tank Fallback)",if=!config.symbiotic_target&!buff.symbiotic_relationship.up
+    # Out of combat only — the spell refuses to cast in combat. The bond aura
+    # sits on the CASTER, so the gate is buff.symbiotic_relationship on self,
+    # never cycle.buff.*. lastcast>=10 is the debounce: without it, any moment
+    # the buff has not registered yet re-fires the cast every pass.
+    - symbiotic_relationship,cycle=config.symbiotic_target,range_check=none,name="Symbiotic (Chosen)",if=talent.symbiotic_relationship&config.symbiotic_target&buff.symbiotic_relationship.down&lastcast.symbiotic_relationship>=10
+    - symbiotic_relationship,cycle=tanks,range_check=none,name="Symbiotic (Tank Fallback)",if=talent.symbiotic_relationship&!config.symbiotic_target&buff.symbiotic_relationship.down&lastcast.symbiotic_relationship>=10
     # Casts Rejuvenation to exit combat forms if necessary
     - rejuvenation,name="Rejuvenation - Remove DPSForm",cycle=members,if=buff.cat_form.up|buff.bear_form.up
     # Pre-combat Lifebloom maintenance on tanks
@@ -532,8 +536,11 @@ lists:
   # Main Healing Cooldown Alignment: NS -> Trinkets/Potion -> Convoke -> NS Regrowth -> Tranquility -> Swiftmend
   cooldowns:
     - mark_of_the_wild,range_check=none,if=(buff.mark_of_the_wild.down.any|action.mark_of_the_wild.overlayed)&lastcast.mark_of_the_wild>=10
-    - symbiotic_relationship,cycle=config.symbiotic_target,range_check=none,name="Symbiotic (Chosen)",if=config.symbiotic_target&!buff.symbiotic_relationship.up
-    - symbiotic_relationship,cycle=tanks,range_check=none,name="Symbiotic (Tank Fallback)",if=!config.symbiotic_target&!buff.symbiotic_relationship.up
+    # NO Symbiotic Relationship line here. It used to sit in this list, which
+    # runs IN COMBAT — and the spell can only be cast out of combat. The cast
+    # failed, the bond buff never applied, the condition never cleared, and the
+    # line took the GCD every single pass. That is the "casting it nonstop"
+    # bug. It lives in `out_of_combat` only.
     - natures_swiftness,name="Nature Swiftness",off_gcd=true,ignore_queue=true,delay=150,range_check=none,if=group.count(cycle.health.effective.pct<config.natures_swiftness_threshold)>=1
     # Overgrowth (new in 12.1) rides this line for free: with Nature's
     # Swiftness up, this Regrowth also applies Lifebloom, Rejuvenation and Wild
@@ -569,10 +576,14 @@ lists:
     - rejuvenation,name="SotF Germination",cycle=members,if=var.has_soul&talent.germination&cycle.buff.rejuvenation.up&(cycle.buff.rejuvenation_germination.down|cycle.buff.rejuvenation_germination.refreshable)
     - regrowth,name="SotF Regrowth",cycle=members,if=var.has_soul&cycle.health.effective.pct<config.regrowth_threshold
 
-    # NEW in 5.0 — the file had NO Efflorescence line at all despite it being
-    # talented. It is a maintenance cast, and Lifetreading then walks the puddle
-    # to your Lifebloom target for free.
-    - efflorescence,name="Efflorescence",range_check=none,if=talent.efflorescence&cooldown.efflorescence.ready
+    # Efflorescence. LOG-DRIVEN gate: a 26-minute M+ log from another
+    # Restoration druid shows 452 Efflorescence placements and ZERO casts of it
+    # — Lifetreading re-summons and moves the puddle on its own once it exists.
+    # So the cast is a one-off, not a maintenance cast on cooldown. Gated on
+    # `totem.efflorescence.up` being false: Simia tracks ground effects under
+    # totem.SPELL, and casting it on cooldown would burn a global every 15s to
+    # replace a puddle that is already there and already following you.
+    - efflorescence,name="Efflorescence",range_check=none,if=talent.efflorescence&!totem.efflorescence.up
 
     # NEW in 5.0 — Everbloom self loop. after=300 debounces Everbloom's own
     # restack tick; refreshing under 4.5s keeps the stacks it has built.
@@ -643,10 +654,18 @@ lists:
     - call_action_list,name=catweave_aoe,if=enemies.combat.8y>=config.aoe_threshold
     - call_action_list,name=catweave_st,if=enemies.combat.8y<config.aoe_threshold
 
-  # Ranged DoT maintenance in caster form
+  # Caster-form damage. LOG-DRIVEN: the reference M+ log has this druid doing
+  # 100% of his damage from caster form — 5 Cat Form casts in 26 minutes and no
+  # Rake/Shred/Rip at all — at 8.4 damage casts per minute. His two biggest
+  # damage casts, Starsurge (57) and Starfire (27), were missing from this list
+  # entirely; it only had Sunfire, Moonfire and Wrath. Both are castable by
+  # Restoration (verified against the game's spell data).
+  # Starsurge first: it is the Astral Power spender and the hardest hitter.
   ranged_dps:
     - sunfire,name="Sunfire AoE Refresh",if=debuff.sunfire.refreshable
     - moonfire,name="Moonfire ST Refresh",if=debuff.moonfire.refreshable
+    - starsurge,name="Starsurge",if=astral_power>=40
+    - starfire,name="Starfire",if=enemies.combat.40y>=2
     - wrath,name="Wrath Filler"
 
   # Defensive rotation and debuffs in Bear Form (Bearweave)
