@@ -37,7 +37,7 @@
 # heals better" — SimC never lets the group take damage, so it never charges
 # you for the globals a form swap costs.
 # =============================================================================
-version: 1.8
+version: 1.9
 author: Ferraz
 patch: "12.1"
 spec: 105
@@ -59,7 +59,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-08-22 | Patch: 12.1 | Version: 1.8"
+    text: "Last update: 2026-08-22 | Patch: 12.1 | Version: 1.9"
 
   # ==========================================================================
   # RECOMMENDED BUILD — the string the talent.X gates below assume.
@@ -503,7 +503,13 @@ lists:
     # enemy" with no filter.
     - soothe,name="Soothe Enrage",if=target.purgeable.enrage
 
-  # Out of Combat: Mark of the Wild, Symbiotic Relationship, and healing prep (Lifebloom on tanks, Rejuv, etc.)
+  # Out of Combat: Mark of the Wild, Symbiotic Relationship, and healing prep.
+  #
+  # Every cycle= line here carries (player.inraid|player.indungeon). Without it
+  # `cycle=members` reads a PHANTOM MEMBER while you are solo or ungrouped —
+  # it reports 0% health, the threshold passes, and the rotation heals nobody
+  # forever. FerrazRestoDruidRaid.yaml has carried this guard since the same
+  # bug was reported there; this file never got it.
   out_of_combat:
     - mark_of_the_wild,range_check=none,if=(buff.mark_of_the_wild.down.any|action.mark_of_the_wild.overlayed)&lastcast.mark_of_the_wild>=10
     # Symbiotic Relationship. Out of combat only — the spell refuses to cast in
@@ -534,13 +540,13 @@ lists:
     # shift now, not on a loop.
     - rejuvenation,name="Rejuvenation - Remove DPSForm",cycle=members,if=(buff.cat_form.up|buff.bear_form.up)&!buff.prowl.up
     # Pre-combat Lifebloom maintenance on tanks
-    - lifebloom,name="OOC Lifebloom (Tank)",cycle=tanks,if=cycle.buff.lifebloom.down|cycle.buff.lifebloom.refreshable
-    - rejuvenation,name="OOC Rejuvenation",cycle=members,if=cycle.health.effective.pct<config.ooc_heal_hp_pct&cycle.buff.rejuvenation.refreshable
-    - regrowth,name="OOC Regrowth",cycle=members,if=cycle.health.effective.pct<config.ooc_heal_hp_pct&pred.cycle.buff.regrowth.refreshable
+    - lifebloom,name="OOC Lifebloom (Tank)",cycle=tanks,if=(player.inraid|player.indungeon)&(cycle.buff.lifebloom.down|cycle.buff.lifebloom.refreshable)
+    - rejuvenation,name="OOC Rejuvenation",cycle=members,if=(player.inraid|player.indungeon)&cycle.health.effective.pct<config.ooc_heal_hp_pct&cycle.buff.rejuvenation.refreshable
+    - regrowth,name="OOC Regrowth",cycle=members,if=(player.inraid|player.indungeon)&cycle.health.effective.pct<config.ooc_heal_hp_pct&pred.cycle.buff.regrowth.refreshable
     # Forces HoT spread if the toggle is active (ignores normal HP thresholds)
     - wild_growth,name="Forced Wild Growth",range_check=none,if=config.force_spread&(pred.buff.wild_growth.down|group.count(pred.cycle.buff.wild_growth.down)>=1)
-    - rejuvenation,name="Forced Rejuvenation",cycle=members,if=config.force_spread&(cycle.buff.rejuvenation.down|cycle.buff.rejuvenation.refreshable)
-    - rejuvenation,name="Forced Germination",cycle=members,if=config.force_spread&cycle.buff.rejuvenation.up&cycle.buff.rejuvenation_germination.down
+    - rejuvenation,name="Forced Rejuvenation",cycle=members,if=(player.inraid|player.indungeon)&config.force_spread&(cycle.buff.rejuvenation.down|cycle.buff.rejuvenation.refreshable)
+    - rejuvenation,name="Forced Germination",cycle=members,if=(player.inraid|player.indungeon)&config.force_spread&cycle.buff.rejuvenation.up&cycle.buff.rejuvenation_germination.down
     # Abundance padding, now behind a toggle. This call had NO condition at
     # all: out of combat it re-cast Rejuvenation forever as the HoT expired,
     # which is the "burning mana for nothing while standing around" bug.
