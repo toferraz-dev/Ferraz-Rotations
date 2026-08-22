@@ -1,0 +1,39 @@
+# Restoration (M+) DPS profile for the Cat/Bear weaving harness.
+#
+# SimC has no usable healing model, so this profile exists ONLY to measure the
+# DAMAGE half of FerrazRestoDruid.yaml — the catweave/bearweave/ranged_dps
+# lists. Nothing about the healing priority can be validated here.
+#
+# Gear: SimC's own MID1 Balance preset. There is no MID1 Restoration preset;
+# Balance is the closest match since both wear Intellect gear. The absolute
+# numbers are therefore NOT this character's DPS — only the deltas between
+# variants mean anything.
+
+druid="Ferraz_Resto_MPlus"
+source=default
+spec=restoration
+level=90
+race=night_elf
+role=attack
+position=back
+talents=CkGAAAAAAAAAAAAAAAAAAAAAAMMmZZMjZmxsN8AMzsMjNbzAAAAAAAAAAglBNbGmmZMDmFzMzMLzwDMDAAAAAAAGAAAAAMbzs1sNziNGzMwMLgmBAYmBgB
+
+potion=lights_potential_2
+flask=magisters_2
+food=harandar_celebration
+augmentation=void_touched
+temporary_enchant=main_hand:thalassian_phoenix_oil_2
+head=branches_of_the_luminous_bloom,id=250024,bonus_id=13575/13575/13575/13575/13575/13575/13575/13575/13575/13575,ilevel=289,gem_id=240983,enchant_id=8017
+neck=amulet_of_the_abyssal_hymn,id=250247,ilevel=289,gem_id=240983
+back=adherents_silken_shroud,id=239656,bonus_id=8960/12066/12214/12384/13622/13667/9627,crafted_stats=32/36
+chest=trunk_of_the_luminous_bloom,id=250027,bonus_id=13575/13575/13575/13575/13575/13575/13575/13575/13575/13575,ilevel=289,enchant_id=7987
+hands=gloves_of_viscous_goo,id=251113,ilevel=289
+waist=snapvine_cinch,id=251082,bonus_id=1808,ilevel=289,gem_id=240918
+legs=phloemwraps_of_the_luminous_bloom,id=250023,bonus_id=13575/13575/13575/13575/13575/13575/13575/13575/13575/13575,ilevel=289,enchant_id=7935
+feet=canopy_walkers_footwraps,id=249382,ilevel=289,enchant_id=7963
+finger1=occlusion_of_void,id=251217,ilevel=289,gem_id=240908,enchant_id=7997
+finger2=omission_of_light,id=251093,bonus_id=12806/13577/13668,ilevel=289,gem_id=240900,enchant_id=7969
+trinket1=vaelgors_final_stare,id=249346,ilevel=289
+trinket2=gaze_of_the_alnseer,id=249343,bonus_id=40/12806/13335,ilevel=289
+main_hand=splitshroud_stinger,id=251111,ilevel=289,enchant_id=8039
+off_hand=alnhara_lantern,id=245769,bonus_id=8960/12066/12214/12214/12214/12214/12214/12214/12214/12214/12693/9627,ilevel=285,crafted_stats=32/49
