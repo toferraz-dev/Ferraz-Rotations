@@ -60,7 +60,7 @@
 # Revive.
 # =============================================================================
 
-version: 2.4
+version: 2.5
 author: Ferraz
 patch: "12.1"
 spec: 102
@@ -75,7 +75,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-08-22 | Patch: 12.1 | Version: 2.4"
+    text: "Last update: 2026-08-22 | Patch: 12.1 | Version: 2.5"
 
   # Exact string every number here was measured against — Elune's Chosen, not Grove.
   recommended_talents:
@@ -361,7 +361,11 @@ lists:
     - barkskin,range_check=none,name="Barkskin (low HP)",if=health.effective.pct<=config.barkskin_hp
     # Root cleanse by shapeshift, then Starfire to shift back to Moonkin.
     - cat_form,if=debuff_list.freedom.up&(buff.moonkin_form.up|buff.bear_form.up)
-    - starfire, if=!buff.moonkin_form.up
+    # player.combat here: this line exists to shift back to Moonkin after the
+    # root cleanse above, but Starfire is an ATTACK. Out of combat it opened on
+    # whatever was targeted. The moonkin_form line in `main` already handles the
+    # out-of-combat case.
+    - starfire,if=player.combat&!buff.moonkin_form.up
 
   # Raid utility, unmeasured (not damage). Heart of the Wild deliberately
   # absent — its CD now belongs entirely to the Bear-form defensive above.
@@ -514,9 +518,18 @@ lists:
     # not yet.
     #
     # --- Damage priority: burst ramp, then moving, then stationary. ---
-    - call_action_list,name=opener_aoe,if=var.opener&enemies.combat.40y>1
-    - call_action_list,name=opener_st,if=var.opener&enemies.combat.40y<=1
-    - call_action_list,name=moving_aoe,if=player.moving&enemies.combat.40y>1
-    - call_action_list,name=moving_st,if=player.moving&enemies.combat.40y<=1
-    - call_action_list,name=st,if=enemies.combat.40y<=1
-    - call_action_list,name=aoe,if=enemies.combat.40y>1
+    # target.combat on every damage call. NOT player.combat: casting is what
+    # puts YOU in combat, so requiring it means the rotation can never take the
+    # first action, and it blocks joining a pull the tank started.
+    # target.combat asks the right question — is this mob already fighting
+    # someone? A mob nobody pulled is not, so the rotation leaves it alone.
+    #
+    # target.valid was supposed to cover this. The docs call it "Comprehensive
+    # check: exists, enemy, alive, IN COMBAT (PvE)", but in game it does not
+    # hold a mob back, which is why both files opened on idle targets.
+    - call_action_list,name=opener_aoe,if=target.combat&var.opener&enemies.combat.40y>1
+    - call_action_list,name=opener_st,if=target.combat&var.opener&enemies.combat.40y<=1
+    - call_action_list,name=moving_aoe,if=target.combat&player.moving&enemies.combat.40y>1
+    - call_action_list,name=moving_st,if=target.combat&player.moving&enemies.combat.40y<=1
+    - call_action_list,name=st,if=target.combat&enemies.combat.40y<=1
+    - call_action_list,name=aoe,if=target.combat&enemies.combat.40y>1
