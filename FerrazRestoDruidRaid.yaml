@@ -34,7 +34,7 @@
 # string — harmless dead weight unless the build changes.
 # =============================================================================
 
-version: 1.2
+version: 1.3
 author: Ferraz
 patch: "12.1"
 spec: 105
@@ -53,7 +53,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-08-22 | Patch: 12.1 | Version: 1.2"
+    text: "Last update: 2026-08-22 | Patch: 12.1 | Version: 1.3"
 
   # String the talent.X checks below assume.
   recommended_talents:
@@ -567,7 +567,14 @@ lists:
   utility:
     - bear_form,name="Shapeshift Clear",if=player.rooted&!buff.bear_form.up&!player.stunned
     - cat_form,name="Shapeshift Toggle",if=player.rooted&buff.bear_form.up&!player.stunned
-    - innervate,name="Innervate",if=mana.pct<config.raid_innervate_threshold
+    # innervate.player, not bare innervate. Without an explicit cast target the
+    # addon needs a target to fire it and simply does nothing when you have
+    # none — which is most of the time between pulls, exactly when you want the
+    # mana back. As a healer you innervate YOURSELF anyway (Season 2 made it a
+    # flat 25% mana restore), so pinning the target loses nothing.
+    # range_check=none for the same reason: it is a self-cast, so there is no
+    # range to check.
+    - innervate.player,name="Innervate",off_gcd=true,ignore_queue=true,range_check=none,if=mana.pct<config.raid_innervate_threshold
 
   # Cat Form single-target DPS.
   catweave_st:
