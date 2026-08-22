@@ -31,7 +31,7 @@
 # Form (button morphs); 1307881 Gory Fur (3 spells share the display name).
 # =============================================================================
 
-version: 1.2
+version: 1.3
 patch: "12.1"
 spec: 104
 name: Guardian Druid Ferraz M+
@@ -73,7 +73,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-08-22 | Patch: 12.1 | Version: 1.2"
+    text: "Last update: 2026-08-22 | Patch: 12.1 | Version: 1.3"
 
   # Exact string every number here was measured against (sim/Tassiana_guardian.simc).
   recommended_talents:
@@ -467,6 +467,18 @@ lists:
     - bear_form,name="Bear Form (post-HotW)",range_check=none,if=buff.cat_form.up&(!cooldown_bypass.heart_of_the_wild.ready|health.pct<config.hotw_hp_pct|!target.valid|!target.attackable)
 
     - moonfire.mouseover,if=config.MO_moonfire&config.allow_pull_with_mo&mouseover.enemy&mouseover.alive&mouseover.debuff.moonfire.down
+
+    # --- COMBAT WALL. Nothing below this line runs out of combat. ---
+    # Everything above it is what a tank may do before the pull: the engine,
+    # Mark of the Wild, entering Bear Form, the Heart of the Wild weave (which
+    # carries its own player.combat gate in var.hotw_weave) and the Moonfire
+    # mouseover pull — that last one is a DELIBERATE pull, kept above the wall
+    # on purpose and switchable with config.allow_pull_with_mo.
+    #
+    # player.combat, NOT player.auto_combat. The catalog defines the second as
+    # a "Config-based auto-combat check", not combat state; using it here is
+    # the bug that silently disabled four rotations in this repo.
+    - return,if=!player.combat
 
     # NOTE: there used to be a `return,if=auto_combat.player` here, meant to
     # hand control to Simia's auto-combat driver. That expression does not
