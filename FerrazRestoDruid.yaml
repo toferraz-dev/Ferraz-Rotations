@@ -37,7 +37,7 @@
 # heals better" — SimC never lets the group take damage, so it never charges
 # you for the globals a form swap costs.
 # =============================================================================
-version: 3.1
+version: 3.2
 author: Ferraz
 patch: "12.1"
 spec: 105
@@ -59,7 +59,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-08-22 | Patch: 12.1 | Version: 3.1"
+    text: "Last update: 2026-08-22 | Patch: 12.1 | Version: 3.2"
 
   # ==========================================================================
   # RECOMMENDED BUILD — the string the talent.X gates below assume.
@@ -534,46 +534,23 @@ lists:
     #
     # No target chooser: in a 5-man there is only ever tank1.
     - symbiotic_relationship,cycle=tanks,range_check=none,name="Symbiotic (Tank)",if=talent.symbiotic_relationship&buff.symbiotic_relationship.down&buff.474760.down&lastcast.symbiotic_relationship>=60
-    # Only leave the form when somebody actually needs the healing. Standing in
-    # Cat Form out of combat with a full group costs nothing, so spending a
-    # Rejuvenation purely to drop the form is mana for no reason — that is the
-    # "it casts Rejuvenation whenever I shift" report.
+    # NO "cast Rejuvenation to leave the form" line, in or out of combat.
+    # Any healing spell drops you out of Cat/Bear on its own — confirmed in
+    # game on 12.1 — so the moment the
+    # rotation decides someone needs healing, that heal is the shift. A cast
+    # whose only purpose is changing form is mana for nothing.
     #
-    # 3.0 used !var.can_catweave here, which is ALWAYS true out of combat
-    # (can_catweave requires player.combat), so every shift produced a cast.
-    # 2.5 used !var.group_healthy and appeared to deadlock, but that was the
-    # `Cat Rejuvenation` line being unreachable — fixed separately by moving it
-    # into main. A healthy group out of combat producing no suggestion is not a
-    # deadlock; it is the rotation correctly having nothing to do.
+    # The healing lists are already reachable from a DPS form: every one of
+    # them is gated `!var.in_dps_form|!var.group_healthy`, so a hurt group
+    # opens them while you are still in Cat.
     #
-    # OLD COMMENT, kept for the reasoning it records:
-    # Shift back to caster form whenever you should not be weaving —
-    # !var.can_catweave, which is the rule as stated: leave the form when you
-    # cannot weave. Out of combat that is always true, and that is correct:
-    # standing in Cat Form outside combat does nothing for you.
-    #
-    # 2.5 used !var.group_healthy here instead and that DEADLOCKED the whole
-    # rotation. A snapshot caught it: out of combat, in Cat Form, group at
-    # 100%, 104 steps evaluated and ZERO selected. Nothing could fire, because
-    # every exit was gated on the condition that says you should be in form:
-    #   can_catweave is false out of combat, so bearweave/catweave never run
-    #   the "Cat Rejuvenation" shift-out line lives INSIDE catweave, so it was
-    #     unreachable exactly when it was needed
-    #   this line demanded a hurt group, and the group was full
-    # This is the only exit that is reachable out of combat. It has to key on
-    # can_catweave, not on group health.
-    #
-    # Shift back to caster form after weaving, by casting something. The
-    # !buff.prowl.up guard is what stops an infinite loop with the Auto Stealth
-    # line at the bottom of this list: Prowl IS Cat Form, so without it the
-    # sequence was prowl -> buff.cat_form.up -> this Rejuvenation -> the cast
-    # drops you out of form and breaks stealth -> Auto Stealth prowls again ->
-    # forever, burning mana the whole time. Both toggles ship ON, so it ran
-    # any time you stood still.
-    # cycle=members with no HP gate is deliberate here: the point is leaving
-    # the form, and the Rejuvenation is the vehicle. It fires at most once per
-    # shift now, not on a loop.
-    - rejuvenation,name="Rejuvenation - Remove DPSForm",cycle=members,if=(buff.cat_form.up|buff.bear_form.up)&!buff.prowl.up&!var.group_healthy
+    # History, so this does not come back: 2.5 gated the line on
+    # !var.group_healthy, 3.0 loosened it to !var.can_catweave (always true out
+    # of combat, so every shift cast a heal), 3.1 put it back and moved the
+    # in-combat twin into main. 3.2 deletes both — the line never needed to
+    # exist. Note the direction Fluid Form works: "Shred, Rake, and Skull Bash
+    # can be used in any form and shift you INTO Cat Form". It covers entering,
+    # not leaving; leaving is the base behaviour of casting a caster spell.
     # Pre-combat Lifebloom maintenance on tanks
     - lifebloom,name="OOC Lifebloom (Tank)",cycle=tanks,if=(player.inraid|player.indungeon)&(cycle.buff.lifebloom.down|cycle.buff.lifebloom.refreshable)
     - rejuvenation,name="OOC Rejuvenation",cycle=members,if=(player.inraid|player.indungeon)&cycle.health.effective.pct<config.ooc_heal_hp_pct&cycle.buff.rejuvenation.refreshable
@@ -892,12 +869,6 @@ lists:
     # that would have been a heal.
     - mark_of_the_wild,range_check=none,name="Mark of the Wild (low prio)",if=(buff.mark_of_the_wild.down.any|action.mark_of_the_wild.overlayed)&lastcast.mark_of_the_wild>=10
 
-    # Leave Cat/Bear to heal. This used to live at the top of `catweave`, which
-    # is only reachable through `bearweave` — and that call requires
-    # var.can_catweave. So the line whose job is "stop weaving, someone is
-    # hurt" was locked behind the condition that says you SHOULD be weaving,
-    # and could never fire. It sits in main now, above the weaving calls.
-    - rejuvenation,name="Cat Rejuvenation",cycle=members,if=(buff.bear_form.up|buff.cat_form.up)&!var.can_catweave
 
     # DPS weaving when the group is healthy
     - call_action_list,name=ranged_dps,if=config.ranged_dps&var.can_catweave&target.exists&target.alive&!target.friendly&!target.in_melee
