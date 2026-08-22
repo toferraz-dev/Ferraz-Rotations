@@ -24,13 +24,43 @@
 # target_error=0.12 (~±0.06%).
 #
 # Fight style matters and the two files disagree ON PURPOSE: dropping Wrath
-# is +11.1% here, -1.44% in the M+ file. Do not copy lines between them.
+# is +11.1% here, -1.44% in the M+ file. Do not copy Wrath between them.
+#
+# 2.0 DID port five things from FerrazBalance.yaml, all of them fixes rather
+# than tuning:
+#
+#   Moonfire target cap removed        +8.68% at 6 targets, +6.66% at 8
+#     The `active_enemies<6` gate came from the reference list and was never
+#     measured on this character. Both halves were wrong — see below for the
+#     counting expression, and the number itself loses at every count tested.
+#
+#   active_enemies -> enemies.combat.40y   14 occurrences, none left
+#     The catalog defines active_enemies as a NAMEPLATE count: mobs merely on
+#     screen count, including a pack nobody has engaged. enemies.combat.40y
+#     counts only enemies actually in combat and inside cast range.
+#
+#   engine plumbing inlined
+#     `sanity_checks` is not just guards — it also calls auto_dispel, affix,
+#     auto_purge_enrage, auto_brez, auto_rez and auto_combat_potion. That last
+#     one fought this file's own combat_potion line, which is worth +6.17%.
+#     Two drivers for one potion. Now inlined with a toggle per piece.
+#
+#   dispels + Rebirth/Revive, each behind its own toggle
+#
+#   mouseover_dots, gated on the mouseover's OWN debuff
+#     Worth nothing on a single-target boss, everything in an add phase.
+#
+# NOT ported, and why: inc_min_standing_time (you stand still on a boss
+# anyway), swap_off_dying (a boss does not die mid-cast), and the moving Fury
+# of Elune guard (Incarnation here keys off var.opener, with no FoE alignment
+# requirement, so the conflict the M+ file has does not exist).
 #
 # NOT validated: defensives, Thorn Bloom, Heart of the Wild, both moving_*
-# lists (SimC never moves).
+# lists (SimC never moves), the dispels list (no dispel model), Rebirth and
+# Revive.
 # =============================================================================
 
-version: 1.1
+version: 2.0
 author: Ferraz
 patch: "12.1"
 spec: 102
@@ -45,7 +75,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-08-21 | Patch: 12.1 | Version: 1.1"
+    text: "Last update: 2026-08-21 | Patch: 12.1 | Version: 2.0"
 
   # Exact string every number here was measured against — Elune's Chosen, not Grove.
   recommended_talents:
@@ -137,6 +167,107 @@ config:
     type: checkbox
     default: true
 
+  # === ENGINE CONFIGURATIONS ===
+  # This file used to call spell_queue / sanity_checks / auto_target_ranged /
+  # auto_heal from Simia's _shared.yaml. `sanity_checks` is not just guards: it
+  # also calls auto_dispel, affix, auto_purge_enrage, auto_brez, auto_rez and
+  # auto_combat_potion. Two problems with inheriting it here specifically:
+  #   - nothing could be switched off;
+  #   - auto_combat_potion fought this file's own combat_potion line, which is
+  #     worth +6.17% and is the second largest number in the file. Two drivers
+  #     for one potion.
+  # All of it is inlined in the `engine` list so each piece has a toggle.
+  # Not copied (no Druid content): anti_cc, auto_freedom, auto_feign_death,
+  # auto_death_grip, special_actions_combat (melee), auto_combat_potion.
+  engine_loot_nearby:
+    label: "Loot Nearby Corpses"
+    section: "Engine"
+    type: checkbox
+    default: true
+
+  engine_auto_target:
+    label: "Auto Target (Ranged)"
+    section: "Engine"
+    type: multi_select
+    options:
+      - label: "No target"
+        value: 0
+      - label: "Target is dead"
+        value: 1
+      - label: "Target too far"
+        value: 2
+    default: [0, 1]
+
+  engine_healthstone:
+    label: "Healthstone HP%"
+    section: "Engine"
+    type: slider
+    min: 0
+    max: 100
+    default: 40
+
+  engine_health_potion:
+    label: "Health Potion HP%"
+    section: "Engine"
+    type: slider
+    min: 0
+    max: 100
+    default: 25
+
+  # Default ON and it matters more here than in M+: a battle rez is often the
+  # single most valuable global you press in a raid.
+  engine_auto_brez:
+    label: "Rebirth on Mouseover"
+    section: "Engine"
+    type: checkbox
+    default: true
+    description: "Battle rez a dead ally while hovering their unit frame. Pools rage first if you are in Bear Form."
+
+  engine_auto_rez:
+    label: "Revive on Mouseover (OOC)"
+    section: "Engine"
+    type: checkbox
+    default: true
+
+  # === AOE CONFIGURATIONS ===
+  # Ported from the M+ file, where it is the largest AoE gain (+2.1% overall,
+  # +9.8% at 5 targets). Worth nothing on a single-target boss and everything
+  # in an add phase, so it ships ON — the lines only fire when a valid enemy
+  # mouseover exists. Gated on the mouseover's OWN debuff, not on a cluster
+  # proxy: mouseover.debuff.SPELL.PROPERTY is used by Simia's own rotation_104
+  # and rotation_256.
+  enable_mouseover_dots:
+    label: "Spread DoTs on Mouseover"
+    section: "AoE"
+    type: checkbox
+    default: true
+    description: "Suggests Moonfire/Sunfire on the unit under your mouse while it is missing the DoT. Does nothing on single target."
+
+  # === DISPEL CONFIGURATIONS ===
+  # Balance removes POISON and CURSE only (remove_corruption 2782), plus enrage
+  # offensively (soothe 2908) — see simia_data_dump/_dispeldata.yaml. The .list
+  # suffix applies Simia's own dispel_list filter. UNVALIDATED: no dispel model
+  # in SimC. Party dispel defaults OFF here: in a raid the healers cover it and
+  # a GCD spent dispelling is a GCD off the boss.
+  auto_dispel_self:
+    label: "Dispel Self (Poison/Curse)"
+    section: "Dispels"
+    type: checkbox
+    default: true
+    description: "Only fires when you actually have a dispelable debuff, so it costs nothing otherwise."
+
+  auto_dispel_party:
+    label: "Dispel Party"
+    section: "Dispels"
+    type: checkbox
+    default: false
+
+  auto_purge_enrage:
+    label: "Soothe Enrage"
+    section: "Dispels"
+    type: checkbox
+    default: false
+
   discord_button:
     section: "Help"
     type: button
@@ -154,6 +285,47 @@ variables:
   cd_active: buff.celestial_alignment.up|buff.incarnation_chosen_of_elune.up
 
 lists:
+  # Everything spell_queue / sanity_checks / auto_target_ranged / auto_heal used
+  # to do, inlined so it can be configured. The five return guards are copied
+  # verbatim — dropping any of them lets the rotation fire while dead or mounted.
+  engine:
+    - queue_spell,if=!player.casting|!player.channeling
+
+    - return,if=!state.rotation
+    - return,if=player.dead
+    - return,if=state.blocked_inputs
+    - return,if=mounted
+    - return,if=buff.travel_form.up
+
+    - interact_target,delay=350,if=config.engine_loot_nearby&target.lootable&target.range<=5
+    - interact_target,delay=350,if=config.engine_loot_nearby&loot_nearby
+    - interact_mouseover,delay=350,if=config.engine_loot_nearby&mouseover.lootable&mouseover.range<=5
+
+    # Rebirth / Revive on a hovered unit frame.
+    - pool_resource,resource=rage,for_next=1,if=config.engine_auto_brez&mouseover.dead&mouseover.friendly&mouseover.unitframe&buff.bear_form.up&cooldown.rebirth.ready
+    - rebirth.mouseover,name="Rebirth (Mouseover)",if=config.engine_auto_brez&mouseover.dead&mouseover.friendly&mouseover.unitframe&player.combat
+    - revive.mouseover,name="Revive (Mouseover)",if=config.engine_auto_rez&mouseover.dead&mouseover.friendly&mouseover.unitframe&!player.combat
+
+    - healthstone,delay=250,if=healthstone.ready&health.pct<=config.engine_healthstone
+    - health_potion,delay=250,if=health_potion.ready&health.pct<=config.engine_health_potion
+
+    - target_enemy,delay=200,off_gcd=true,if=config.engine_auto_target.has(0)&!target.exists&enemies.combat.40y>=1
+    - target_enemy,delay=200,off_gcd=true,if=config.engine_auto_target.has(1)&target.dead&enemies.combat.40y>=1
+    - target_enemy,delay=200,off_gcd=true,if=config.engine_auto_target.has(2)&target.range>=40&enemies.combat.40y>=1
+
+  # Spreads DoTs without changing target. mouseover.combat keeps it from
+  # pulling something that is not in the fight yet.
+  mouseover_dots:
+    - sunfire.mouseover,name="Sunfire Mouseover",if=config.enable_mouseover_dots&mouseover.exists&mouseover.enemy&mouseover.attackable&!mouseover.dead&mouseover.combat&mouseover.range<=40&mouseover.debuff.sunfire.down
+    - moonfire.mouseover,name="Moonfire Mouseover",if=config.enable_mouseover_dots&mouseover.exists&mouseover.enemy&mouseover.attackable&!mouseover.dead&mouseover.combat&mouseover.range<=40&mouseover.debuff.moonfire.down
+
+  # Called from main after defensives and interrupts, so a real defensive or a
+  # kick still outranks a dispel.
+  dispels:
+    - remove_corruption.player,delay=500,name="Remove Corruption (Self)",if=config.auto_dispel_self&player.dispelable.list
+    - remove_corruption,delay=500,cycle=party,name="Remove Corruption (Party)",if=config.auto_dispel_party&cycle.dispelable.list
+    - soothe,name="Soothe (Enrage)",if=config.auto_purge_enrage&target.purgeable.enrage
+
   interrupts:
     - solar_beam,if=interrupt.target.check
     - solar_beam.mouseover,if=interrupt.mouseover.check
@@ -200,7 +372,7 @@ lists:
   # Instant casts only, unmeasured.
   moving_aoe:
     - sunfire,if=debuff.sunfire.remains<2|debuff.sunfire.refreshable
-    - moonfire,if=active_enemies<6&(debuff.moonfire.remains<2|debuff.moonfire.refreshable)
+    - moonfire,if=debuff.moonfire.remains<2|debuff.moonfire.refreshable
     - starfall,if=buff.starweavers_weft.up|buff.touch_the_cosmos.react
     - starfall,if=astral_power>50
     - starsurge,if=buff.starfall.up&(buff.touch_the_cosmos.react|buff.starweavers_warp.up)
@@ -210,7 +382,7 @@ lists:
     - wild_mushroom,if=buff.eclipse_lunar.up|buff.eclipse_solar.up|cooldown.wild_mushroom.full_recharge_time<cooldown.celestial_alignment.remains
     - new_moon,if=astral_power.deficit>10
     - sunfire
-    - moonfire,if=active_enemies<6
+    - moonfire
 
   # ===========================================================================
   # ST — 1 enemy, standing still.
@@ -227,12 +399,12 @@ lists:
     - fury_of_elune,if=!talent.sundered_firmament|(debuff.atmospheric_exposure.remains<2&(buff.eclipse_lunar.remains>5))|fight_remains<20
     - force_of_nature,if=var.cd_active|cooldown.incarnation_chosen_of_elune.remains>30
 
-    - starfall,if=active_enemies>=2&(buff.starweavers_weft.up|buff.touch_the_cosmos.react)
+    - starfall,if=enemies.combat.40y>=2&(buff.starweavers_weft.up|buff.touch_the_cosmos.react)
     - starsurge,if=buff.starweavers_warp.up|buff.touch_the_cosmos.react
 
     # AP floor follows the Eclipse — replaced flat astral_power>60, measured +1.28%.
-    - starsurge,if=!var.eclipse_down&astral_power>=50&active_enemies<=1
-    - starsurge,if=var.eclipse_down&astral_power.deficit<20&active_enemies<=1
+    - starsurge,if=!var.eclipse_down&astral_power>=50&enemies.combat.40y<=1
+    - starsurge,if=var.eclipse_down&astral_power.deficit<20&enemies.combat.40y<=1
 
     - incarnation_chosen_of_elune,global_delay=500,if=!var.cd_active&buff.ascendant_stars.down&(!talent.elunes_guidance|cooldown.lunar_eclipse.charges_fractional<1.5)
 
@@ -249,7 +421,8 @@ lists:
   # 2+ enemies, standing still.
   aoe:
     - sunfire,if=debuff.sunfire.remains<2|debuff.sunfire.refreshable&var.eclipse_down
-    - moonfire,if=active_enemies<6&(debuff.moonfire.remains<2|debuff.moonfire.refreshable&var.eclipse_down)
+    - moonfire,if=debuff.moonfire.remains<2|debuff.moonfire.refreshable&var.eclipse_down
+    - call_action_list,name=mouseover_dots
     - lunar_eclipse,if=var.eclipse_down
     - fury_of_elune,if=!talent.sundered_firmament|debuff.atmospheric_exposure.remains<2
     - force_of_nature,if=var.cd_active|cooldown.incarnation_chosen_of_elune.remains>30
@@ -271,14 +444,14 @@ lists:
     - fury_of_elune
     - force_of_nature
     - incarnation_chosen_of_elune,global_delay=500,if=!var.cd_active
-    - starfall,if=active_enemies>1&(buff.touch_the_cosmos.react|astral_power>80)
+    - starfall,if=enemies.combat.40y>1&(buff.touch_the_cosmos.react|astral_power>80)
     - starsurge,if=buff.touch_the_cosmos.react|astral_power>80
     - starfire
 
   # Same ramp, 2+ enemies.
   opener_aoe:
     - sunfire,if=debuff.sunfire.refreshable
-    - moonfire,if=active_enemies<6&debuff.moonfire.refreshable
+    - moonfire,if=debuff.moonfire.refreshable
     - fury_of_elune
     - force_of_nature
     - incarnation_chosen_of_elune,global_delay=500,if=!var.cd_active
@@ -289,16 +462,13 @@ lists:
 
   # Entry point: first matching line wins the GCD.
   main:
-    - call_action_list,name=spell_queue
-    - call_action_list,name=sanity_checks
-    - call_action_list,name=auto_target_ranged
+    - call_action_list,name=engine
 
     # --- Target guards ---
     - return,if=!target.valid&!((cfg.auto_combat.has(1)&target.quest_mob&target.enemy&!target.dead)|(cfg.auto_combat.has(2)&target.combat&target.enemy&!target.dead)|(cfg.auto_combat.has(3)&target.targeting_party&target.enemy&!target.dead))
     - return,if=!target.valid&cfg.auto_combat.has(0)
     - return,if=!target.valid|target.dead|!target.attackable
 
-    - call_action_list,name=auto_heal
     - call_action_list,name=heal_support
     - moonkin_form,if=buff.moonkin_form.down&health.pct>config.frenzied_regen_hp&!buff.frenzied_regeneration.up
     # NOTE: a pre-pull `wrath,if=!player.combat&!player.moving&target.distance<=40`
@@ -311,12 +481,13 @@ lists:
 
     - call_action_list,name=interrupts
     - call_action_list,name=defensives
+    - call_action_list,name=dispels
     - call_action_list,name=trinkets
 
     # --- Damage priority: burst ramp, then moving, then stationary. ---
-    - call_action_list,name=opener_aoe,if=var.opener&active_enemies>1
-    - call_action_list,name=opener_st,if=var.opener&active_enemies<=1
-    - call_action_list,name=moving_aoe,if=player.moving&active_enemies>1
-    - call_action_list,name=moving_st,if=player.moving&active_enemies<=1
-    - call_action_list,name=st,if=active_enemies<=1
-    - call_action_list,name=aoe,if=active_enemies>1
+    - call_action_list,name=opener_aoe,if=var.opener&enemies.combat.40y>1
+    - call_action_list,name=opener_st,if=var.opener&enemies.combat.40y<=1
+    - call_action_list,name=moving_aoe,if=player.moving&enemies.combat.40y>1
+    - call_action_list,name=moving_st,if=player.moving&enemies.combat.40y<=1
+    - call_action_list,name=st,if=enemies.combat.40y<=1
+    - call_action_list,name=aoe,if=enemies.combat.40y>1

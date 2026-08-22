@@ -139,8 +139,8 @@ def build(v):
     emit('aoe', [
         a('sunfire', 'dot.sunfire.remains<2|dot.sunfire.refreshable&' + ECLIPSE_DOWN)
         if v['dot_gate'] else a('sunfire', 'dot.sunfire.remains<2|dot.sunfire.refreshable'),
-        a('moonfire', 'spell_targets<6', 'dot.moonfire.remains<2|dot.moonfire.refreshable&' + ECLIPSE_DOWN)
-        if v['dot_gate'] else a('moonfire', 'spell_targets<6', 'dot.moonfire.remains<2|dot.moonfire.refreshable'),
+        a('moonfire', 'spell_targets<%d' % v['mf_cap'], 'dot.moonfire.remains<2|dot.moonfire.refreshable&' + ECLIPSE_DOWN)
+        if v['dot_gate'] else a('moonfire', 'spell_targets<%d' % v['mf_cap'], 'dot.moonfire.remains<2|dot.moonfire.refreshable'),
         a('eclipse', ECLIPSE_DOWN),
         a('fury_of_elune', FOE_GATE_AOE),
         fon,
@@ -166,7 +166,7 @@ def build(v):
 
     emit('opener_aoe', [
         a('sunfire', 'dot.sunfire.refreshable'),
-        a('moonfire', 'spell_targets<6&dot.moonfire.refreshable'),
+        a('moonfire', 'spell_targets<%d&dot.moonfire.refreshable' % v['mf_cap']),
         'fury_of_elune',
         fon,
         a('celestial_alignment', '!' + CD_ACTIVE),
@@ -181,7 +181,7 @@ def build(v):
 
 DEFAULTS = dict(filler='wrath', grove_lines=True, spender='floor', dot_gate=True,
                 inc_foe_align=False, inc_no_ascendant=False, opener=True,
-                potion='off')
+                potion='off', mf_cap=99)
 
 VARIANTS = {
     'raid_ferraz':   ({}, 'Estado ANTIGO do arquivo (Wrath filler, Grove lines, piso fixo)'),
@@ -192,6 +192,10 @@ VARIANTS = {
     'inc_foe':       (dict(inc_foe_align=True), 'Incarnation alinhado com Fury of Elune'),
     'raid_v2':       (dict(filler='ec', grove_lines=False, spender='approx'),
                       'Todas as mudancas que ganharam, juntas'),
+    # Does the <6 Moonfire cap (inherited from the reference list, never
+    # measured here) hold up on this file's own fight style?
+    'v2_mf_cap6':    (dict(filler='ec', grove_lines=False, spender='approx', mf_cap=6),
+                      'raid_v2 com o cap antigo de Moonfire (<6 alvos)'),
     'v2_inc_foe':    (dict(filler='ec', grove_lines=False, spender='approx', inc_foe_align=True),
                       'raid_v2 + Incarnation alinhado com Fury of Elune'),
     'v2_no_stars':   (dict(filler='ec', grove_lines=False, spender='approx',
