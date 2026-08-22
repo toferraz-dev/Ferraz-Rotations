@@ -37,7 +37,7 @@
 # heals better" — SimC never lets the group take damage, so it never charges
 # you for the globals a form swap costs.
 # =============================================================================
-version: 2.0
+version: 2.1
 author: Ferraz
 patch: "12.1"
 spec: 105
@@ -59,7 +59,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-08-22 | Patch: 12.1 | Version: 2.0"
+    text: "Last update: 2026-08-22 | Patch: 12.1 | Version: 2.1"
 
   # ==========================================================================
   # RECOMMENDED BUILD — the string the talent.X gates below assume.
@@ -128,11 +128,11 @@ config:
   # forever and drains mana while you stand still. OFF by default — turn it on
   # if you want a pre-pull ramp and are willing to pay for it.
   ooc_abundance:
-    label: "Pad Abundance Out of Combat"
+    label: "Pad Abundance"
     section: "Healing"
-    type: checkbox
-    default: false
-    description: "Keep casting Rejuvenation between pulls until 5 are up, so the Abundance window is ready at the pull. Costs mana while you stand around."
+    type: toggle
+    spell: 774
+    description: "Bindable. While ON, keeps casting Rejuvenation until 5 are up so the Abundance window is ready — including out of combat, where it costs mana for as long as you stand there. In combat the padding runs regardless of this toggle; this only controls the downtime half."
 
   wild_growth_threshold:
     label: "Wild Growth HP %"
@@ -362,13 +362,6 @@ config:
     max: 99
     default: 60
 
-  force_spread:
-    label: "Force HoT Spread"
-    section: "Utility"
-    type: toggle
-    spell: 774
-    description: "Forces Rejuvenation / Wild Growth spread regardless of HP"
-
   # ==========================================================================
   # RACIALS — Thorn Bloom is a heal, not damage.
   # ==========================================================================
@@ -543,10 +536,6 @@ lists:
     - lifebloom,name="OOC Lifebloom (Tank)",cycle=tanks,if=(player.inraid|player.indungeon)&(cycle.buff.lifebloom.down|cycle.buff.lifebloom.refreshable)
     - rejuvenation,name="OOC Rejuvenation",cycle=members,if=(player.inraid|player.indungeon)&cycle.health.effective.pct<config.ooc_heal_hp_pct&cycle.buff.rejuvenation.refreshable
     - regrowth,name="OOC Regrowth",cycle=members,if=(player.inraid|player.indungeon)&cycle.health.effective.pct<config.ooc_heal_hp_pct&pred.cycle.buff.regrowth.refreshable
-    # Forces HoT spread if the toggle is active (ignores normal HP thresholds)
-    - wild_growth,name="Forced Wild Growth",range_check=none,if=config.force_spread&(pred.buff.wild_growth.down|group.count(pred.cycle.buff.wild_growth.down)>=1)
-    - rejuvenation,name="Forced Rejuvenation",cycle=members,if=(player.inraid|player.indungeon)&config.force_spread&(cycle.buff.rejuvenation.down|cycle.buff.rejuvenation.refreshable)
-    - rejuvenation,name="Forced Germination",cycle=members,if=(player.inraid|player.indungeon)&config.force_spread&cycle.buff.rejuvenation.up&cycle.buff.rejuvenation_germination.down
     # Abundance padding, now behind a toggle. This call had NO condition at
     # all: out of combat it re-cast Rejuvenation forever as the HoT expired,
     # which is the "burning mana for nothing while standing around" bug.
@@ -641,10 +630,6 @@ lists:
     # NEW in 5.0 — Photosynthesis wants a Rejuvenation on yourself.
     - rejuvenation.player,name="Self Rejuvenation (Photosynthesis)",range_check=none,if=talent.photosynthesis&player.combat&buff.rejuvenation.down
 
-    # Forces HoT spread if the toggle is active (ignores normal HP thresholds)
-    - wild_growth,name="Forced Wild Growth",range_check=none,if=config.force_spread&(pred.buff.wild_growth.down|group.count(pred.cycle.buff.wild_growth.down)>=1)
-    - rejuvenation,name="Forced Rejuvenation",cycle=members,if=config.force_spread&(cycle.buff.rejuvenation.down|cycle.buff.rejuvenation.refreshable)
-    - rejuvenation,name="Forced Germination",cycle=members,if=config.force_spread&cycle.buff.rejuvenation.up&cycle.buff.rejuvenation_germination.down
 
     # Spend the Abundance window. Regrowth at -60% cost and +60% crit is the
     # entire payoff of keeping 5 Rejuvenations up; without this line the file
