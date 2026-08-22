@@ -40,6 +40,24 @@ lists:
 
 > [!IMPORTANT]
 > **O que são essas três linhas?** Toda rotação deve começar com elas. `spell_queue` gerencia feitiços na fila manual, `sanity_checks` faz verificações de estado (se está vivo, não montado, etc.), e `auto_target` seleciona alvos automaticamente. Sem elas, a rotação não funcionará corretamente.
+>
+> [!WARNING]
+> **`sanity_checks` NÃO é só verificação de estado.** Além dos cinco `return` de guarda
+> (`!state.rotation`, `player.dead`, `state.blocked_inputs`, `mounted`, `travel_form`), ele
+> chama por dentro: `special_actions`, `anti_cc`, `auto_freedom`, `auto_feign_death`,
+> `auto_death_grip`, **`auto_dispel`**, `affix`, **`auto_purge_enrage`**, `auto_brez`,
+> `auto_rez` e **`auto_combat_potion`** — ver `simia_data_dump/_shared.yaml`.
+>
+> Duas consequências práticas:
+>
+> 1. **A sua rotação já dispela e já usa poção** mesmo sem nenhuma linha sua para isso, e
+>    não há como desligar peça por peça.
+> 2. **Se o seu arquivo tem linha própria de `combat_potion`**, ela concorre com o
+>    `auto_combat_potion` herdado: dois motoristas para a mesma poção.
+>
+> Para ter controle, inline o conteúdo que interessa no seu próprio arquivo e pare de
+> chamar `sanity_checks` — mas **copie os cinco `return` ao pé da letra**, ou a rotação
+> passa a disparar morto ou montado.
 
 ### Passo 2: Adicionar o Primeiro Feitiço
 Abaixo das três listas compartilhadas, adicione um feitiço de preenchimento (filler):
@@ -756,10 +774,23 @@ Ações virtuais são comandos especiais que podem ser sugeridos na rotação su
 4. **Bypass de Alcance para Self-Buffs:** Sempre inclua `range_check=none` para feitiços autolançados ou self-buffs para evitar travamento da rotação se você estiver sem alvo.
 5. **Checagem de Buffs Externos:** Use o sufixo `.any` para buffs que podem vir de outros jogadores do grupo (como Sede de Sangue/Bloodlust: `buff.bloodlust.up.any`).
 6. **Bônus de Pandemia:** Sempre verifique se os DoTs ou HoTs estão renováveis usando `.refreshable` ou `.remains < pandemic_threshold` antes de reaplicá-los para evitar desperdício de GCD e recursos.
-7. **Melee: use `target.in_melee`, não `target.range<=N`:** `target.range` é distância de **borda** (já desconta o alcance de combate das duas unidades), então o valor de "melee máximo" muda com o tamanho do mob — 4.5 num mob pequeno, 2.33 num boss de reach 9. `target.in_melee` replica o cálculo do cliente e é invariante ao tamanho. Para "N jardas longe do melee" use `target.melee_gap>=N` (0 enquanto em melee, nunca negativo).
-8. **Geometria e AoE: use `.distance`, não `.range`:** `target.distance` / `focus.distance` / `mouseover.distance` são distância de **centro**, sem desconto de reach e sem clamp — é a unidade em que raios de AoE e mecânicas de boss são medidos, e a única válida para geometria ou clustering. Vale a identidade `target.distance - target.range = soma dos dois reaches`.
-9. **Cones e facing:** `player.facing.target[.N]` (padrão ±90°) para checar se você está de frente, `target.facing.player[.N]` para checar se o mob está de frente para você (evitar parry/frontal), e `enemies.around.angle.N[.Y]` para contar inimigos dentro de um cone — o caminho correto para habilidades em cone em vez de contar por raio.
-10. **NPC específico sem precisar targetar:** `active_npc.NPC_ID.*` varre todas as nameplates do pull (count, ttd, min_ttd, range, health.pct). Adicione `.any` para NPCs que nunca entram em combate (geradores, adds neutros de objetivo).
+7. **Não existe contagem de inimigos consciente de melee.** `target.in_melee` e
+   `target.melee_gap` são testes **por unidade**, não contagens. Para contar, só existem
+   `enemies.Xy` e `enemies.combat.Xy` com jardagem fixa — use `enemies.combat.8y` para AoE
+   melee (é o que a própria lista `auto_target` do Simia usa). O `.combat` importa: sem ele
+   você conta mob que ninguém puxou.
+
+8. **`active_enemies` é contagem de NAMEPLATE, não de inimigos engajados.** Ele inclui
+   qualquer mob na tela — boneco de treino parado ao lado, pack que o tank ainda não
+   alcançou, add de outra plataforma. Isso silenciosamente desliga linhas com gate de
+   contagem (`active_enemies<6`) e dispara cooldown em pull que ainda não existe. Prefira
+   `enemies.combat.40y` (ranged) ou `enemies.combat.8y` (melee), que contam só quem está
+   em combate e no alcance.
+
+9. **Melee: use `target.in_melee`, não `target.range<=N`:** `target.range` é distância de **borda** (já desconta o alcance de combate das duas unidades), então o valor de "melee máximo" muda com o tamanho do mob — 4.5 num mob pequeno, 2.33 num boss de reach 9. `target.in_melee` replica o cálculo do cliente e é invariante ao tamanho. Para "N jardas longe do melee" use `target.melee_gap>=N` (0 enquanto em melee, nunca negativo).
+10. **Geometria e AoE: use `.distance`, não `.range`:** `target.distance` / `focus.distance` / `mouseover.distance` são distância de **centro**, sem desconto de reach e sem clamp — é a unidade em que raios de AoE e mecânicas de boss são medidos, e a única válida para geometria ou clustering. Vale a identidade `target.distance - target.range = soma dos dois reaches`.
+11. **Cones e facing:** `player.facing.target[.N]` (padrão ±90°) para checar se você está de frente, `target.facing.player[.N]` para checar se o mob está de frente para você (evitar parry/frontal), e `enemies.around.angle.N[.Y]` para contar inimigos dentro de um cone — o caminho correto para habilidades em cone em vez de contar por raio.
+12. **NPC específico sem precisar targetar:** `active_npc.NPC_ID.*` varre todas as nameplates do pull (count, ttd, min_ttd, range, health.pct). Adicione `.any` para NPCs que nunca entram em combate (geradores, adds neutros de objetivo).
 
 ---
 
@@ -1138,6 +1169,8 @@ Propriedades da unidade sob o cursor. Possui as mesmas propriedades de Target.
 | Health & Status | `mouseover.alive` | bool | Mouseover is alive. | `mouseover.alive` |
 | Health & Status | `mouseover.dead` | bool | Mouseover is dead. | `mouseover.dead` |
 | Health & Status | `mouseover.health.pct` | number | Mouseover health percentage. | `mouseover.health.pct<30` |
+| Auras | `mouseover.debuff.SPELL.PROPERTY` | varies | Debuff on the mouseover unit — `.up`, `.down`, `.remains`, `.stack`. Só conta debuffs aplicados por você; some `.any` para qualquer fonte. **Existe e funciona** — usado por `rotation_104` e `rotation_256` de fábrica. Use isto para espalhar DoT por mouseover em vez de proxies de cluster, que olham o pack em volta do SEU ALVO e não a unidade sob o mouse. | `moonfire.mouseover,if=mouseover.debuff.moonfire.down` |
+| Auras | `mouseover.buff.SPELL.PROPERTY` | varies | Idem para buffs no mouseover. | `mouseover.buff.ironbark.down` |
 | Health & Status | `mouseover.health.current` | number | Mouseover current health. | `mouseover.health.current` |
 | Health & Status | `mouseover.health.deficit` | number | Mouseover missing health. | `mouseover.health.deficit` |
 | Health & Status | `mouseover.health.effective.pct` | number | Mouseover effective healable health %. |  |
