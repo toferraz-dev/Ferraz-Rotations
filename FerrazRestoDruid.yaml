@@ -37,7 +37,7 @@
 # heals better" — SimC never lets the group take damage, so it never charges
 # you for the globals a form swap costs.
 # =============================================================================
-version: 2.2
+version: 2.3
 author: Ferraz
 patch: "12.1"
 spec: 105
@@ -59,7 +59,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-08-22 | Patch: 12.1 | Version: 2.2"
+    text: "Last update: 2026-08-22 | Patch: 12.1 | Version: 2.3"
 
   # ==========================================================================
   # RECOMMENDED BUILD — the string the talent.X gates below assume.
@@ -153,13 +153,20 @@ config:
     max: 4
     default: 2
 
+  # Measured against RAW health, not effective health — see the comment on the
+  # Nature's Swiftness line. 70 raw is roughly where 60 effective was MEANT to
+  # sit before incoming HoTs inflated it.
+  # Also worth raising further: Overgrowth (new in 12.1) makes the NS Regrowth
+  # apply Lifebloom, Rejuvenation and Wild Growth too, so NS is a ramp tool now
+  # and not only a panic button. The reference M+ log fires it every 1.5 min,
+  # near its 60s cooldown.
   natures_swiftness_threshold:
     label: "Nature's Swiftness HP %"
     section: "Healing"
     type: slider
     min: 10
     max: 99
-    default: 60
+    default: 70
 
   swiftmend_threshold:
     label: "Swiftmend HP %"
@@ -574,11 +581,22 @@ lists:
     # failed, the bond buff never applied, the condition never cleared, and the
     # line took the GCD every single pass. That is the "casting it nonstop"
     # bug. It lives in `out_of_combat` only.
-    - natures_swiftness,name="Nature Swiftness",off_gcd=true,ignore_queue=true,delay=150,range_check=none,if=group.count(cycle.health.effective.pct<config.natures_swiftness_threshold)>=1
+    # RAW health.pct here, NOT health.effective.pct. The docs define effective
+    # as healthPct - healAbsorbPct + incomingHealsPct — it ADDS healing already
+    # on the way. On a HoT healer that inflates everyone: a player at 55% real
+    # health with Rejuvenation, Wild Growth and Lifebloom ticking reads 75-85%
+    # effective. Gated on effective<60 this line needed someone at roughly
+    # 35-40% ACTUAL health, which is why it never fired.
+    # Effective health is the right metric for "do they still need healing"
+    # (it stops overheal). It is the wrong metric for "is this an emergency".
+    # off_gcd=true is kept — Nature's Swiftness is off the global, so this is
+    # free. Note it renders as a small overlaid icon during another spell's
+    # GCD, not as the main suggestion.
+    - natures_swiftness,name="Nature Swiftness",off_gcd=true,ignore_queue=true,delay=150,range_check=none,if=group.count(cycle.health.pct<config.natures_swiftness_threshold)>=1
     # Overgrowth (new in 12.1) rides this line for free: with Nature's
     # Swiftness up, this Regrowth also applies Lifebloom, Rejuvenation and Wild
     # Growth to the same target. No extra line needed.
-    - regrowth,name="Nature Swift Regrowth",cycle=members,if=buff.natures_swiftness.up&cycle.health.effective.pct<config.natures_swiftness_threshold
+    - regrowth,name="Nature Swift Regrowth",cycle=members,if=buff.natures_swiftness.up&cycle.health.pct<config.natures_swiftness_threshold
     - rejuvenation,name="Reju Out Cat For Convoke",if=(group.count(cycle.health.effective.pct<config.convoke_threshold&!cycle.tank)>=config.convoke_members)&(buff.cat_form.up|buff.bear_form.up)
     - trinket_1,delay=150,name="Trinket 1",if=config.use_trinket_1&trinket_1.ready&(group.count(cycle.health.effective.pct<config.convoke_threshold&!cycle.tank)>=config.convoke_members)&!buff.cat_form.up&!buff.bear_form.up
     - trinket_2,delay=150,name="Trinket 2",if=config.use_trinket_2&trinket_2.ready&(group.count(cycle.health.effective.pct<config.convoke_threshold&!cycle.tank)>=config.convoke_members)&!buff.cat_form.up&!buff.bear_form.up
