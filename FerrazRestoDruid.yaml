@@ -37,7 +37,7 @@
 # heals better" — SimC never lets the group take damage, so it never charges
 # you for the globals a form swap costs.
 # =============================================================================
-version: 2.3
+version: 2.4
 author: Ferraz
 patch: "12.1"
 spec: 105
@@ -59,7 +59,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-08-22 | Patch: 12.1 | Version: 2.3"
+    text: "Last update: 2026-08-22 | Patch: 12.1 | Version: 2.4"
 
   # ==========================================================================
   # RECOMMENDED BUILD — the string the talent.X gates below assume.
@@ -553,11 +553,17 @@ lists:
     # Auto Stealth when all healing is done
     - prowl,name="Auto Stealth",if=config.auto_prowl&!buff.prowl.up&!buff.travel_form.up&!buff.bear_form.up
 
-  # Mitigations and Emergency Defensives: Ironbark on Tanks/Members -> Barkskin -> Bear Form + Frenzied Regen
+  # Mitigations and Emergency Defensives: Ironbark on Tanks/Members -> Barkskin
+  # -> Bear Form + Frenzied Regen.
+  #
+  # Ironbark reads RAW health, not effective. Effective health adds the healing
+  # already flying at the target, and Ironbark is damage REDUCTION — it does
+  # not heal, so it has to land before those HoTs do, not after they have
+  # already discounted the danger.
   defensives:
     - barkskin,name="Barkskin",off_gcd=true,ignore_queue=true,if=health.pct<config.barkskin_threshold|incoming.pct>=30
-    - ironbark,name="Ironbark (Tank)",off_gcd=true,ignore_queue=true,cycle=tanks,if=config.ironbark_target=1&(cycle.health.effective.pct<config.ironbark_threshold|cycle.incoming.pct>40)&cycle.buff.ironbark.down
-    - ironbark,name="Ironbark (Members)",off_gcd=true,ignore_queue=true,cycle=members,if=config.ironbark_target=2&(cycle.health.effective.pct<config.ironbark_threshold|cycle.incoming.pct>40)&cycle.buff.ironbark.down
+    - ironbark,name="Ironbark (Tank)",off_gcd=true,ignore_queue=true,cycle=tanks,if=config.ironbark_target=1&(cycle.health.pct<config.ironbark_threshold|cycle.incoming.pct>40)&cycle.buff.ironbark.down
+    - ironbark,name="Ironbark (Members)",off_gcd=true,ignore_queue=true,cycle=members,if=config.ironbark_target=2&(cycle.health.pct<config.ironbark_threshold|cycle.incoming.pct>40)&cycle.buff.ironbark.down
     - bear_form,name="Panic Bear",if= health.pct<config.frenzied_regen_threshold&!buff.bear_form.up&cooldown.frenzied_regeneration.ready
     - frenzied_regeneration,name="Frenzied Regen",if= health.pct<config.frenzied_regen_threshold&buff.bear_form.up
 
@@ -616,7 +622,10 @@ lists:
     # Treant usage and Clearcasting synergized with Wild Synthesis
     - regrowth,name="Clearcasting Regrowth",cycle=members,if=buff.clearcasting.up&(pred.cycle.buff.regrowth.down|cycle.health.effective.pct<99)
 
-    - regrowth,name="Regrowth Emergency",cycle=members,if=cycle.health.effective.pct<50
+    # RAW health, like Nature's Swiftness: effective adds incomingHealsPct, so
+    # with your HoTs rolling "50% effective" is roughly 30% real. An emergency
+    # line has to read the health the player actually has.
+    - regrowth,name="Regrowth Emergency",cycle=members,if=cycle.health.pct<50
 
     # Soul of the Forest is spent on REJUVENATION first. This is a priority
     # change in 5.0: the old order burned the proc on Regrowth. method.gg is
@@ -821,7 +830,7 @@ lists:
     - call_action_list,name=cooldowns,if=!var.in_dps_form|!var.group_healthy
     - call_action_list,name=interrupts
     # Emergency Mouseover Healing on unit frames
-    - call_action_list,name=mouseover_healing_emergency,if=config.use_mouseover&var.mo_friendly_valid&mouseover.health.effective.pct<config.mouseover_emergency_hp&(!var.in_dps_form|!var.group_healthy)
+    - call_action_list,name=mouseover_healing_emergency,if=config.use_mouseover&var.mo_friendly_valid&mouseover.health.pct<config.mouseover_emergency_hp&(!var.in_dps_form|!var.group_healthy)
     - call_action_list,name=moving,if=player.moving&(!var.in_dps_form|!var.group_healthy)
     # Sequential Active Healing: SotF consumption -> Lifebloom maintenance -> AoE and ST heals
     - call_action_list,name=active_healing,if=!var.in_dps_form|!var.group_healthy
