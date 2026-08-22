@@ -37,7 +37,7 @@
 # heals better" — SimC never lets the group take damage, so it never charges
 # you for the globals a form swap costs.
 # =============================================================================
-version: 1.5
+version: 1.6
 author: Ferraz
 patch: "12.1"
 spec: 105
@@ -59,7 +59,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-08-22 | Patch: 12.1 | Version: 1.5"
+    text: "Last update: 2026-08-22 | Patch: 12.1 | Version: 1.6"
 
   # ==========================================================================
   # RECOMMENDED BUILD — the string the talent.X gates below assume.
@@ -88,23 +88,27 @@ config:
     max: 99
     default: 80
 
-  # Everbloom 4/4 + Lifetreading decide this. With Everbloom the single
-  # Lifebloom charge auto-stacks to 3 and cleaves 40% of its healing to six
-  # allies, and Lifetreading walks Efflorescence to whoever carries it. Keeping
-  # it on yourself means the Efflorescence puddle follows YOU, which is where
-  # you want it in a dungeon. Switch to Tank if you would rather anchor it to
-  # the tank — method.gg's M+ page suggests the tank, its general page suggests
-  # yourself; with Lifetreading in the build, self wins for puddle placement.
+  # Everbloom 4/4 + Lifetreading decide this, and 1.6 flips the default to the
+  # tank on three independent grounds:
+  #   - Lifetreading grows Efflorescence under the Lifebloom target. In a
+  #     dungeon the melee cluster stands on the tank, so that is where a
+  #     ground-anchored heal is worth the most.
+  #   - Everbloom cleaves 40% of Lifebloom's healing to six allies, and it
+  #     cleaves FROM the holder — again, better centred on the pile.
+  #   - The reference M+ log keeps Lifebloom on one partner for 101 of 111
+  #     applications, never on the caster.
+  # method.gg's M+ page says tank; its general page says yourself. Set to Self
+  # if you are the one taking the damage.
   lifebloom_target:
     label: "Lifebloom Target"
     section: "Healing"
     type: dropdown
     options:
-      - label: "Self (Everbloom + Lifetreading)"
-        value: 1
-      - label: "Tank"
+      - label: "Tank (puddle sits in the melee cluster)"
         value: 2
-    default: 1
+      - label: "Self"
+        value: 1
+    default: 2
 
   # Out-of-combat healing floor. The OOC lines used to run on the in-combat
   # thresholds, and rejuvenation_threshold defaults to 100 — so anyone at 99.9%
@@ -595,14 +599,21 @@ lists:
     - rejuvenation,name="SotF Germination",cycle=members,if=var.has_soul&talent.germination&cycle.buff.rejuvenation.up&(cycle.buff.rejuvenation_germination.down|cycle.buff.rejuvenation_germination.refreshable)
     - regrowth,name="SotF Regrowth",cycle=members,if=var.has_soul&cycle.health.effective.pct<config.regrowth_threshold
 
-    # Efflorescence. LOG-DRIVEN gate: a 26-minute M+ log from another
-    # Restoration druid shows 452 Efflorescence placements and ZERO casts of it
-    # — Lifetreading re-summons and moves the puddle on its own once it exists.
-    # So the cast is a one-off, not a maintenance cast on cooldown. Gated on
-    # `totem.efflorescence.up` being false: Simia tracks ground effects under
-    # totem.SPELL, and casting it on cooldown would burn a global every 15s to
-    # replace a puddle that is already there and already following you.
-    - efflorescence,name="Efflorescence",range_check=none,if=talent.efflorescence&!totem.efflorescence.up
+    # Efflorescence is NOT CAST on this build. Lifetreading (1217941) carries
+    # `replace="Efflorescence" (id=145205)` in its own spell data and reads
+    # "Efflorescence healing increased by 25%, and it now automatically grows
+    # beneath your Lifebloom target's feet." It REPLACES the button: with
+    # Lifetreading talented there is nothing to cast, and the puddle follows
+    # whoever holds your Lifebloom. The reference M+ log confirms it — 452
+    # automatic placements of the Lifetreading version (1232285) and zero casts
+    # of 145205 across 26 minutes.
+    #
+    # The line is kept, gated on !talent.lifetreading, so a build that drops
+    # Lifetreading still places the puddle by hand. On THIS build it is inert.
+    #
+    # Consequence worth knowing: Lifetreading makes lifebloom_target decide
+    # where your Efflorescence sits. That is why the default is the tank.
+    - efflorescence,name="Efflorescence (no Lifetreading)",range_check=none,if=talent.efflorescence&!talent.lifetreading&!totem.efflorescence.up
 
     # NEW in 5.0 — Everbloom self loop. after=300 debounces Everbloom's own
     # restack tick; refreshing under 4.5s keeps the stacks it has built.
