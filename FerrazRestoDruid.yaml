@@ -37,7 +37,7 @@
 # heals better" — SimC never lets the group take damage, so it never charges
 # you for the globals a form swap costs.
 # =============================================================================
-version: 2.6
+version: 2.7
 author: Ferraz
 patch: "12.1"
 spec: 105
@@ -59,7 +59,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-08-22 | Patch: 12.1 | Version: 2.6"
+    text: "Last update: 2026-08-22 | Patch: 12.1 | Version: 2.7"
 
   # ==========================================================================
   # RECOMMENDED BUILD — the string the talent.X gates below assume.
@@ -736,16 +736,28 @@ lists:
     - cat_form,name="Manual Cat Shift",if=!buff.cat_form.up
     - return,if=!buff.cat_form.up
 
-    # Heart of the Wild MORPHS with the form you are in, and Simia does not
-    # resolve it: the mapping in simia_data_dump/_morphs.yaml is commented out
-    # (`# heart_of_the_wild: 1261868`). Casting it by name alone works from
-    # caster form and silently fails once the button has changed underneath
-    # you, which is why it stops working after shifting.
-    # Cast by name AND by the cat-form morph id. Only one resolves in a given
-    # form; the other is a no-op. FerrazGuardianElune.yaml uses 1261868 the
-    # same way, FerrazBalance.yaml uses the bear morph 1261872.
-    - heart_of_the_wild,name="HotW Cat",if=config.use_heart_of_the_wild&talent.heart_of_the_wild&buff.cat_form.up
-    - 1261868,name="HotW Cat (morph)",if=config.use_heart_of_the_wild&talent.heart_of_the_wild&buff.cat_form.up
+    # Heart of the Wild MORPHS with your form, and Simia does not resolve it —
+    # the mapping in simia_data_dump/_morphs.yaml is commented out
+    # (`# heart_of_the_wild: 1261868`). Four ids share the name and they are
+    # NOT interchangeable:
+    #   1261867  the TALENT button — "Perform a powerful off-role ability
+    #            depending on your currently active shapeshift form". This is
+    #            the one a Restoration druid actually presses.
+    #   1261868  a morph of 1261867
+    #   1261872  the Bear morph ("Maximum health increased")
+    #   108291   the Balance version ("Damage of your Balance spells increased")
+    # 2.6 added only 1261868, copied from FerrazGuardianElune.yaml, and that
+    # file is a Guardian — its button is not this one. All three plausible
+    # casts are listed now; only one resolves per form and the rest are no-ops.
+    #
+    # The talent.heart_of_the_wild gate is also gone. On this build the talent
+    # entry is 1261867 in the CLASS tree, and a name-based talent check is one
+    # more thing that can fail to resolve while the button is morphed. The
+    # config toggle plus the form check is enough — an untalented cast simply
+    # does not fire.
+    - heart_of_the_wild,name="HotW (name)",if=config.use_heart_of_the_wild&buff.cat_form.up
+    - 1261867,name="HotW (talent button)",if=config.use_heart_of_the_wild&buff.cat_form.up
+    - 1261868,name="HotW (cat morph)",if=config.use_heart_of_the_wild&buff.cat_form.up
     - convoke_the_spirits,name="Convoke (Offensive)",if=buff.cat_form.up&cooldown.convoke_the_spirits.ready&target.time_to_die>10
     - call_action_list,name=catweave_aoe,if=enemies.combat.8y>=config.aoe_threshold
     - call_action_list,name=catweave_st,if=enemies.combat.8y<config.aoe_threshold
