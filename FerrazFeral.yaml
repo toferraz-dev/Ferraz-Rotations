@@ -57,7 +57,7 @@
 # window built around it is a possible future gain, not applied here.
 # =============================================================================
 
-version: 2.3
+version: 2.4
 author: Ferraz
 patch: "12.1"
 spec: 103
@@ -72,7 +72,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-08-22 | Patch: 12.1 | Version: 2.3"
+    text: "Last update: 2026-08-22 | Patch: 12.1 | Version: 2.4"
 
   recommended_talents:
     section: "Talents"
@@ -463,6 +463,17 @@ lists:
 
     - call_action_list,name=heal_support
     - call_action_list,name=form
+
+    # --- COMBAT WALL. Nothing below this line runs out of combat. ---
+    # Allowed while idle, above the wall: the engine (loot, auto-target,
+    # Rebirth/Revive, dispels, consumables), heal_support (Mark of the Wild,
+    # out-of-combat Regrowth) and `form` — which owns the pre-pull Prowl and
+    # entering Cat Form, both of which must work before the pull.
+    #
+    # player.combat, NOT player.auto_combat. The catalog defines the second as
+    # a "Config-based auto-combat check", not combat state; using it here is
+    # the bug that silently disabled four rotations in this repo.
+    - return,if=!player.combat
     - call_action_list,name=interrupts
 
 
