@@ -37,7 +37,7 @@
 # heals better" — SimC never lets the group take damage, so it never charges
 # you for the globals a form swap costs.
 # =============================================================================
-version: 1.6
+version: 1.7
 author: Ferraz
 patch: "12.1"
 spec: 105
@@ -59,7 +59,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-08-22 | Patch: 12.1 | Version: 1.6"
+    text: "Last update: 2026-08-22 | Patch: 12.1 | Version: 1.7"
 
   # ==========================================================================
   # RECOMMENDED BUILD — the string the talent.X gates below assume.
@@ -558,7 +558,10 @@ lists:
 
   # Main Healing Cooldown Alignment: NS -> Trinkets/Potion -> Convoke -> NS Regrowth -> Tranquility -> Swiftmend
   cooldowns:
-    - mark_of_the_wild,range_check=none,if=(buff.mark_of_the_wild.down.any|action.mark_of_the_wild.overlayed)&lastcast.mark_of_the_wild>=10
+    # NO Mark of the Wild here. It used to be the first line of this list,
+    # which runs in combat — so a missing buff outranked Nature's Swiftness,
+    # Convoke, Tranquility and Swiftmend. It is allowed in combat, but it
+    # belongs at the bottom: see the call in `main`, below active_healing.
     # NO Symbiotic Relationship line here. It used to sit in this list, which
     # runs IN COMBAT — and the spell can only be cast out of combat. The cast
     # failed, the bond buff never applied, the condition never cleared, and the
@@ -800,6 +803,12 @@ lists:
     - call_action_list,name=moving,if=player.moving&(!var.in_dps_form|!var.group_healthy)
     # Sequential Active Healing: SotF consumption -> Lifebloom maintenance -> AoE and ST heals
     - call_action_list,name=active_healing,if=!var.in_dps_form|!var.group_healthy
+    # Mark of the Wild, in combat, at the bottom of the priority. Everything
+    # that heals outranks it; it outranks the DPS weaving. So a dropped buff is
+    # reapplied on a global that would otherwise have been damage, never on one
+    # that would have been a heal.
+    - mark_of_the_wild,range_check=none,name="Mark of the Wild (low prio)",if=(buff.mark_of_the_wild.down.any|action.mark_of_the_wild.overlayed)&lastcast.mark_of_the_wild>=10
+
     # DPS weaving when the group is healthy
     - call_action_list,name=ranged_dps,if=config.ranged_dps&var.can_catweave&target.exists&target.alive&!target.friendly&!target.in_melee
     - call_action_list,name=bearweave,if=config.melee_dps&var.can_catweave&target.exists&target.alive&!target.friendly&target.in_melee
