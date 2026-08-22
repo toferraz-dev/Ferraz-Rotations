@@ -37,7 +37,7 @@
 # heals better" — SimC never lets the group take damage, so it never charges
 # you for the globals a form swap costs.
 # =============================================================================
-version: 3.2
+version: 3.3
 author: Ferraz
 patch: "12.1"
 spec: 105
@@ -59,7 +59,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-08-22 | Patch: 12.1 | Version: 3.2"
+    text: "Last update: 2026-08-22 | Patch: 12.1 | Version: 3.3"
 
   # ==========================================================================
   # RECOMMENDED BUILD — the string the talent.X gates below assume.
@@ -686,7 +686,14 @@ lists:
   # Utilities, Mobility, and Mana Recovery
   utility:
     - bear_form,name="Shapeshift Clear",if=debuff_list.freedom.up&!buff.bear_form.up
-    - innervate,name="Innervate",off_gcd=true,ignore_queue=true,delay=150,range_check=none,if=mana.pct<config.innervate_threshold&fight_remains>15
+    # innervate.player, not bare innervate. Without an explicit cast target the
+    # addon needs a target to fire it and simply does nothing when you have
+    # none — which is most of the time between pulls, exactly when you want the
+    # mana back. As a healer you innervate YOURSELF anyway (Season 2 made it a
+    # flat 25% mana restore), so pinning the target loses nothing.
+    # range_check=none for the same reason: it is a self-cast, so there is no
+    # range to check.
+    - innervate.player,name="Innervate",off_gcd=true,ignore_queue=true,delay=150,range_check=none,if=mana.pct<config.innervate_threshold&fight_remains>15
     - stampeding_roar,name="Stampeding Roar",if=var.use_stampeding_roar&config.stampeding_roar_usage!=0
 
   # ABUNDANCE CHANGED IN 12.1 and this list was still written for the old one.
