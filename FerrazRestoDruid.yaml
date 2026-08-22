@@ -1,7 +1,45 @@
-# Restoration Druid — spec 105 — patch 12.0.7 — M+.
-version: 4.3
+# =============================================================================
+# Restoration Druid — spec 105 — patch 12.1 (Midnight) — Wildstalker, M+.
+# =============================================================================
+#
+# Build decoded through the local SimC binary. The pieces that shape the
+# priority: Everbloom 4/4, Efflorescence, LIFETREADING (Efflorescence follows
+# your Lifebloom target on its own), Photosynthesis, Power of the Archdruid,
+# Soul of the Forest, Germination, Abundance, Grove Guardians, Verdancy,
+# Intensity, Nature's Bounty, Omen of Clarity and Overgrowth (new in 12.1:
+# Nature's Swiftness makes the next Regrowth also apply Lifebloom, Rejuvenation
+# and Wild Growth to that target).
+# NOT talented: Cenarion Ward, Nourish, Verdant Infusion, Flourish, Incarnation:
+# Tree of Life, Flash of Clarity.
+#
+# THE HEALING HALF IS NOT SimC-VALIDATED. SimC has no usable healing model, so
+# every healing change here is guide theorycraft (method.gg Restoration Druid,
+# Midnight 12.1), not measurement.
+#
+# THE DAMAGE HALF IS. Harness sim/ab_test_resto_dps.py, profile
+# sim/Ferraz_resto_mplus.simc, 3 targets. Gear is SimC's MID1 Balance preset
+# (there is no Restoration one), so absolute DPS is meaningless and only the
+# deltas mean anything. The current weaving priority wins every comparison:
+#
+#     current (bearweave -> catweave, HotW, Convoke)   38107 DPS
+#     without the Bear opener                          31964   -16.12%
+#     without Heart of the Wild                        35280    -7.42%
+#     without offensive Convoke                        35097    -7.90%
+#     caster only, never shifting                      20278   -46.79%
+#     AoE list at 2 targets instead of 3               37978    -0.34%
+#     AoE list at 4 targets                            38036    noise
+#
+# So: the Bear opener earns its place, both cooldowns earn theirs, and the
+# 3-target AoE threshold is already the right cut. Nothing in the damage half
+# needed changing.
+#
+# Read those numbers as "which weaving shape does more damage", never as "this
+# heals better" — SimC never lets the group take damage, so it never charges
+# you for the globals a form swap costs.
+# =============================================================================
+version: 5.0
 author: Ferraz
-patch: "12.0.7"
+patch: "12.1"
 spec: 105
 name: Restoration Druid Ferraz M+
 description: |
@@ -18,13 +56,13 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: Outdate | Patch: 12.0.7 | Version: 4.3"
+    text: "Last update: 2026-08-22 | Patch: 12.1 | Version: 5.0"
 
   recommended_talents:
     section: "Talents"
     type: copy_text
     label: "Recommended Talent String"
-    text: "CkGA8cL7tpvige+kkmGM9zUPWPMmZZMjZmxsN8AMzswsYbGAAAAAAAAAAsMoZbGmmZMwsYmZmZZGegBAAAAgBAYGAACAAY2mZrZZmNbMzMwMzGoZAAmZAYA"
+    text: "CkGAAAAAAAAAAAAAAAAAAAAAAMMmZZMjZmxsN8AMzsMjNbzAAAAAAAAAAglBNbGmmZMDmFzMzMLzwDMDAAAAAAAGAAAAAMbzs1sNziNGzMwMLgmBAYmBgB"
 
   # === DEFENSIVE CONFIGURATIONS ===
   barkskin_threshold:
@@ -116,6 +154,24 @@ config:
     min: 10
     max: 99
     default: 80
+
+  # Everbloom 4/4 + Lifetreading decide this. With Everbloom the single
+  # Lifebloom charge auto-stacks to 3 and cleaves 40% of its healing to six
+  # allies, and Lifetreading walks Efflorescence to whoever carries it. Keeping
+  # it on yourself means the Efflorescence puddle follows YOU, which is where
+  # you want it in a dungeon. Switch to Tank if you would rather anchor it to
+  # the tank — method.gg's M+ page suggests the tank, its general page suggests
+  # yourself; with Lifetreading in the build, self wins for puddle placement.
+  lifebloom_target:
+    label: "Lifebloom Target"
+    section: "Healing"
+    type: dropdown
+    options:
+      - label: "Self (Everbloom + Lifetreading)"
+        value: 1
+      - label: "Tank"
+        value: 2
+    default: 1
 
   abundance_min_stacks:
     label: "Abundance Stacks (Pad)"
@@ -305,7 +361,12 @@ lists:
   # Interrupts and Dispel: Automatic Soothe and AoE CCs
   interrupts:
     - incapacitating_roar,name="Roar (AoE CC)",if=interrupt.stun.aoe.check
-    - target_enemy,delay=100,name="Search Soothe",if=!target.purgeable.enrage&enemies.combat.any(cycle.purgeable.enrage)
+    # REMOVED: a target_enemy "Search Soothe" line gated on
+    # enemies.combat.any(cycle.purgeable.enrage). No predicate form `.any(EXPR)`
+    # exists for enemies — group.count(EXPR) is the only one and it iterates
+    # ALLIES. The line was dead, so Soothe below only fired when you already
+    # had the enraged mob targeted. Not fixable: target_enemy is "nearest
+    # enemy" with no filter.
     - soothe,name="Soothe Enrage",if=target.purgeable.enrage
 
   # Out of Combat: Mark of the Wild, Symbiotic Relationship, and healing prep (Lifebloom on tanks, Rejuv, etc.)
@@ -319,7 +380,7 @@ lists:
     - rejuvenation,name="OOC Rejuvenation",cycle=members,if=cycle.health.effective.pct<config.rejuvenation_threshold&cycle.buff.rejuvenation.refreshable
     - regrowth,name="OOC Regrowth",cycle=members,if=cycle.health.effective.pct<config.regrowth_threshold&pred.cycle.buff.regrowth.refreshable
     # Forces HoT spread if the toggle is active (ignores normal HP thresholds)
-    - wild_growth,name="Forced Wild Growth",range_check=none,if=config.force_spread&(pred.buff.wild_growth.down|group.any(pred.cycle.buff.wild_growth.down))
+    - wild_growth,name="Forced Wild Growth",range_check=none,if=config.force_spread&(pred.buff.wild_growth.down|group.count(pred.cycle.buff.wild_growth.down)>=1)
     - rejuvenation,name="Forced Rejuvenation",cycle=members,if=config.force_spread&(cycle.buff.rejuvenation.down|cycle.buff.rejuvenation.refreshable)
     - rejuvenation,name="Forced Germination",cycle=members,if=config.force_spread&cycle.buff.rejuvenation.up&cycle.buff.rejuvenation_germination.down
     # Abundance Maintenance: Keeps 6 Abundance stacks on the group
@@ -349,6 +410,9 @@ lists:
     - mark_of_the_wild,range_check=none,if=(buff.mark_of_the_wild.down.any|action.mark_of_the_wild.overlayed)&lastcast.mark_of_the_wild>=10
     - symbiotic_relationship,name="Symbiotic Tank",cycle=tanks,if=!buff.symbiotic_relationship.up&!cycle.buff.symbiotic_relationship.up
     - natures_swiftness,name="Nature Swiftness",off_gcd=true,ignore_queue=true,delay=150,range_check=none,if=group.count(cycle.health.effective.pct<config.natures_swiftness_threshold)>=1
+    # Overgrowth (new in 12.1) rides this line for free: with Nature's
+    # Swiftness up, this Regrowth also applies Lifebloom, Rejuvenation and Wild
+    # Growth to the same target. No extra line needed.
     - regrowth,name="Nature Swift Regrowth",cycle=members,if=buff.natures_swiftness.up&cycle.health.effective.pct<config.natures_swiftness_threshold
     - rejuvenation,name="Reju Out Cat For Convoke",if=(group.count(cycle.health.effective.pct<config.convoke_threshold&!cycle.tank)>=config.convoke_members)&(buff.cat_form.up|buff.bear_form.up)
     - trinket_1,delay=150,name="Trinket 1",if=config.use_trinket_1&trinket_1.ready&(group.count(cycle.health.effective.pct<config.convoke_threshold&!cycle.tank)>=config.convoke_members)&!buff.cat_form.up&!buff.bear_form.up
@@ -356,6 +420,11 @@ lists:
     - combat_potion,delay=150,name="Combat Potion",if=combat_potion.ready&config.use_potion&(group.count(cycle.health.effective.pct<config.convoke_threshold&!cycle.tank)>=config.convoke_members)&!buff.cat_form.up&!buff.bear_form.up
     - convoke_the_spirits,global_delay=500,name="Convoke (Heal)",if=(group.count(cycle.health.effective.pct<config.convoke_threshold&!cycle.tank)>=config.convoke_members)&!buff.cat_form.up&!buff.bear_form.up
     - tranquility,global_delay=500,name="Tranquility",if=!config.manual_tranquility&group.count(cycle.health.effective.pct<config.tranquility_threshold&!cycle.tank)>=config.tranquility_members&!player.moving
+    # NEW in 5.0 — Power of the Archdruid: Swiftmend on cooldown spreads three
+    # Rejuvenations, which is what gets Abundance to 5 stacks fast. Self-cast so
+    # it never waits for someone to be hurt. Grove Guardians also makes every
+    # Swiftmend summon a treant.
+    - swiftmend.player,name="Self Swiftmend (Archdruid)",range_check=none,if=talent.power_of_the_archdruid&player.combat&cooldown.swiftmend.ready&(buff.rejuvenation.up|buff.regrowth.up|buff.wild_growth.up)
     # Swiftmend to obtain Soul of the Forest buff (requires active HoT on target)
     - swiftmend,name="Swiftmend for SotF/Treants",cycle=members,if=cycle.health.effective.pct<config.swiftmend_threshold&(cycle.buff.rejuvenation.up|pred.cycle.buff.regrowth.up|pred.cycle.buff.wild_growth.up)
 
@@ -364,17 +433,32 @@ lists:
     # Treant usage and Clearcasting synergized with Wild Synthesis
     - regrowth,name="Clearcasting Regrowth",cycle=members,if=buff.clearcasting.up&(pred.cycle.buff.regrowth.down|cycle.health.effective.pct<99)
 
-    # Consumes the Soul of the Forest proc
     - regrowth,name="Regrowth Emergency",cycle=members,if=cycle.health.effective.pct<50
-    - regrowth,name="SotF Regrowth",cycle=members,if=var.has_soul&cycle.health.effective.pct<config.regrowth_threshold
-    - rejuvenation,name="SotF Germination",cycle=members,if=var.has_soul&talent.germination&cycle.buff.rejuvenation.up&(cycle.buff.rejuvenation_germination.down|cycle.buff.rejuvenation_germination.refreshable)
-    - rejuvenation,name="SotF Rejuvenation",cycle=members,if=var.has_soul&cycle.buff.rejuvenation.refreshable
 
-    # Lifebloom on tanks
-    - lifebloom,name="Lifebloom (Tank)",cycle=tanks,if=cycle.buff.lifebloom.down|cycle.buff.lifebloom.refreshable
+    # Soul of the Forest is spent on REJUVENATION first. This is a priority
+    # change in 5.0: the old order burned the proc on Regrowth. method.gg is
+    # explicit that the proc belongs on Rejuvenation, and with Power of the
+    # Archdruid in the build a SotF Rejuv is what feeds the Swiftmend spread.
+    # Regrowth keeps the proc only as a fallback when nobody needs a HoT.
+    - rejuvenation,name="SotF Rejuvenation",cycle=members,if=var.has_soul&cycle.buff.rejuvenation.refreshable
+    - rejuvenation,name="SotF Germination",cycle=members,if=var.has_soul&talent.germination&cycle.buff.rejuvenation.up&(cycle.buff.rejuvenation_germination.down|cycle.buff.rejuvenation_germination.refreshable)
+    - regrowth,name="SotF Regrowth",cycle=members,if=var.has_soul&cycle.health.effective.pct<config.regrowth_threshold
+
+    # NEW in 5.0 — the file had NO Efflorescence line at all despite it being
+    # talented. It is a maintenance cast, and Lifetreading then walks the puddle
+    # to your Lifebloom target for free.
+    - efflorescence,name="Efflorescence",range_check=none,if=talent.efflorescence&cooldown.efflorescence.ready
+
+    # NEW in 5.0 — Everbloom self loop. after=300 debounces Everbloom's own
+    # restack tick; refreshing under 4.5s keeps the stacks it has built.
+    - lifebloom.player,name="Self Lifebloom (Everbloom)",range_check=none,after=300,if=config.lifebloom_target=1&talent.everbloom&(buff.lifebloom.down|buff.lifebloom.remains<4.5)
+    - lifebloom,name="Lifebloom (Tank)",cycle=tanks,if=config.lifebloom_target=2&(cycle.buff.lifebloom.down|cycle.buff.lifebloom.refreshable)
+
+    # NEW in 5.0 — Photosynthesis wants a Rejuvenation on yourself.
+    - rejuvenation.player,name="Self Rejuvenation (Photosynthesis)",range_check=none,if=talent.photosynthesis&player.combat&buff.rejuvenation.down
 
     # Forces HoT spread if the toggle is active (ignores normal HP thresholds)
-    - wild_growth,name="Forced Wild Growth",range_check=none,if=config.force_spread&(pred.buff.wild_growth.down|group.any(pred.cycle.buff.wild_growth.down))
+    - wild_growth,name="Forced Wild Growth",range_check=none,if=config.force_spread&(pred.buff.wild_growth.down|group.count(pred.cycle.buff.wild_growth.down)>=1)
     - rejuvenation,name="Forced Rejuvenation",cycle=members,if=config.force_spread&(cycle.buff.rejuvenation.down|cycle.buff.rejuvenation.refreshable)
     - rejuvenation,name="Forced Germination",cycle=members,if=config.force_spread&cycle.buff.rejuvenation.up&cycle.buff.rejuvenation_germination.down
 
@@ -422,8 +506,8 @@ lists:
 
     - heart_of_the_wild,name="HotW Cat",if=config.use_heart_of_the_wild&talent.heart_of_the_wild&buff.cat_form.up
     - convoke_the_spirits,name="Convoke (Offensive)",if=buff.cat_form.up&cooldown.convoke_the_spirits.ready&target.time_to_die>10
-    - call_action_list,name=catweave_aoe,if=active_enemies>=config.aoe_threshold
-    - call_action_list,name=catweave_st,if=active_enemies<config.aoe_threshold
+    - call_action_list,name=catweave_aoe,if=enemies.combat.8y>=config.aoe_threshold
+    - call_action_list,name=catweave_st,if=enemies.combat.8y<config.aoe_threshold
 
   # Ranged DoT maintenance in caster form
   ranged_dps:
@@ -446,12 +530,12 @@ lists:
 
   # Emergency Mouseover Healing on unit frames
   mouseover_healing_emergency:
-    - swiftmend.mouseover,name="Swiftmend (MO)",if=mouseover.buff.remains(rejuvenation)>1|mouseover.buff.remains(regrowth)>1|mouseover.buff.remains(wild_growth)>1
-    - rejuvenation.mouseover,name="Rejuvenation (MO)",if=mouseover.buff.remains(rejuvenation)<=1.5
+    - swiftmend.mouseover,name="Swiftmend (MO)",if=mouseover.buff.rejuvenation.remains>1|mouseover.buff.regrowth.remains>1|mouseover.buff.wild_growth.remains>1
+    - rejuvenation.mouseover,name="Rejuvenation (MO)",if=mouseover.buff.rejuvenation.remains<=1.5
     - regrowth.mouseover,name="Regrowth (MO) Cast",if=!player.moving
 
   auto_rez:
-    - revitalize.mouseover,if=mouseover.dead&mouseover.friendly&mouseover.unitframe&!player.combat
+    - revive.mouseover,if=mouseover.dead&mouseover.friendly&mouseover.unitframe&!player.combat
     - rebirth.mouseover,if=mouseover.dead&mouseover.friendly&mouseover.unitframe&player.combat
 
   spell_queue:
@@ -461,6 +545,8 @@ lists:
     - return,if=!state.rotation
     - return,if=player.dead
     - return,if=state.blocked_inputs
+    # `mounted` was missing from this local copy of sanity_checks.
+    - return,if=mounted
     - interact_target,delay=350,if=config.lootnearby&target.lootable&target.range<=5&!player.combat
     - interact_target,delay=350,if=config.lootnearby&loot_nearby&!player.combat
     - interact_mouseover,delay=350,if=config.lootnearby&mouseover.lootable&mouseover.range<=5&!player.combat
