@@ -60,7 +60,7 @@
 # Revive.
 # =============================================================================
 
-version: 2.1
+version: 2.4
 author: Ferraz
 patch: "12.1"
 spec: 102
@@ -75,7 +75,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-08-22 | Patch: 12.1 | Version: 2.1"
+    text: "Last update: 2026-08-22 | Patch: 12.1 | Version: 2.4"
 
   # Exact string every number here was measured against — Elune's Chosen, not Grove.
   recommended_talents:
@@ -229,6 +229,12 @@ config:
     type: checkbox
     default: true
 
+  engine_affix_devour:
+    label: "Dispel Devouring Rift (Affix)"
+    section: "Engine"
+    type: checkbox
+    default: true
+
   # === AOE CONFIGURATIONS ===
   # Ported from the M+ file, where it is the largest AoE gain (+2.1% overall,
   # +9.8% at 5 targets). Worth nothing on a single-target boss and everything
@@ -302,6 +308,9 @@ lists:
     - interact_mouseover,delay=350,if=config.engine_loot_nearby&mouseover.lootable&mouseover.range<=5
 
     # Rebirth / Revive on a hovered unit frame.
+    # Devour affix. Inert in a raid, kept so the plumbing matches the M+ file.
+    - remove_corruption,delay=500,cycle=party,cycle_order=player_first,name="Devouring Rift (Affix)",if=config.engine_affix_devour&cycle.debuff.440313.up.any
+
     - pool_resource,resource=rage,for_next=1,if=config.engine_auto_brez&mouseover.dead&mouseover.friendly&mouseover.unitframe&buff.bear_form.up&cooldown.rebirth.ready
     - rebirth.mouseover,name="Rebirth (Mouseover)",if=config.engine_auto_brez&mouseover.dead&mouseover.friendly&mouseover.unitframe&player.combat
     - revive.mouseover,name="Revive (Mouseover)",if=config.engine_auto_rez&mouseover.dead&mouseover.friendly&mouseover.unitframe&!player.combat
@@ -350,6 +359,9 @@ lists:
 
     - frenzied_regeneration,if=health.effective.pct<=config.frenzied_regen_hp&buff.bear_form.up
     - barkskin,range_check=none,name="Barkskin (low HP)",if=health.effective.pct<=config.barkskin_hp
+    # Root cleanse by shapeshift, then Starfire to shift back to Moonkin.
+    - cat_form,if=debuff_list.freedom.up&(buff.moonkin_form.up|buff.bear_form.up)
+    - starfire, if=!buff.moonkin_form.up
 
   # Raid utility, unmeasured (not damage). Heart of the Wild deliberately
   # absent — its CD now belongs entirely to the Bear-form defensive above.
@@ -462,15 +474,21 @@ lists:
 
   # Entry point: first matching line wins the GCD.
   main:
+    # This opening block is kept IDENTICAL to FerrazBalance.yaml. The two files
+    # diverge on purpose in their damage priorities, never in their plumbing.
+    - return,if=player.channeling|player.casting
+
+    # --- Engine plumbing. Must stay at the top. ---
     - call_action_list,name=engine
+
+    - call_action_list,name=heal_support
 
     # --- Target guards ---
     - return,if=!target.valid&!((cfg.auto_combat.has(1)&target.quest_mob&target.enemy&!target.dead)|(cfg.auto_combat.has(2)&target.combat&target.enemy&!target.dead)|(cfg.auto_combat.has(3)&target.targeting_party&target.enemy&!target.dead))
     - return,if=!target.valid&cfg.auto_combat.has(0)
     - return,if=!target.valid|target.dead|!target.attackable
 
-    - call_action_list,name=heal_support
-    - moonkin_form,if=buff.moonkin_form.down&health.pct>config.frenzied_regen_hp&!buff.frenzied_regeneration.up
+    - moonkin_form,if=buff.moonkin_form.down&health.effective.pct>config.frenzied_regen_hp&!buff.frenzied_regeneration.up
     # NOTE: a pre-pull `wrath,if=!player.combat&!player.moving&target.distance<=40`
     # used to sit here. It auto-started combat on any attackable target within
     # 40y, which in a dungeon means pulling whatever you happen to have clicked
@@ -484,17 +502,21 @@ lists:
     - call_action_list,name=dispels
     - call_action_list,name=trinkets
 
+    # NOTE on out-of-combat pulling: the guard is target.valid, three lines up.
+    # The docs define it as "Comprehensive check: exists, enemy, alive, IN
+    # COMBAT (PvE)", and `return,if=!target.valid|target.dead|!target.attackable`
+    # halts the rotation whenever it is false. A mob nobody has pulled is not a
+    # valid target, so the damage lists never see it.
+    # Do NOT add player.combat to these calls. It looks like the same guard and
+    # is not: casting is what puts YOU in combat, so requiring it first means
+    # the rotation can never take the first action, and it also blocks joining
+    # a pull the tank started, where target.combat is true and player.combat is
+    # not yet.
+    #
     # --- Damage priority: burst ramp, then moving, then stationary. ---
-    # player.combat on EVERY damage call. Without it the ST lists fire out of
-    # combat and pull: `enemies.combat.40y<=1` is TRUE when the count is ZERO,
-    # so with any attackable target selected the rotation would open on it with
-    # Moonfire, Sunfire or Starfire. The target guards above only check that the
-    # target is valid and attackable — none of them check combat.
-    # Removing the pre-pull Wrath did not cover this: that line was the explicit
-    # puller, but the damage lists pull on their own. The tank decides the pull.
-    - call_action_list,name=opener_aoe,if=player.combat&var.opener&enemies.combat.40y>1
-    - call_action_list,name=opener_st,if=player.combat&var.opener&enemies.combat.40y<=1
-    - call_action_list,name=moving_aoe,if=player.combat&player.moving&enemies.combat.40y>1
-    - call_action_list,name=moving_st,if=player.combat&player.moving&enemies.combat.40y<=1
-    - call_action_list,name=st,if=player.combat&enemies.combat.40y<=1
-    - call_action_list,name=aoe,if=player.combat&enemies.combat.40y>1
+    - call_action_list,name=opener_aoe,if=var.opener&enemies.combat.40y>1
+    - call_action_list,name=opener_st,if=var.opener&enemies.combat.40y<=1
+    - call_action_list,name=moving_aoe,if=player.moving&enemies.combat.40y>1
+    - call_action_list,name=moving_st,if=player.moving&enemies.combat.40y<=1
+    - call_action_list,name=st,if=enemies.combat.40y<=1
+    - call_action_list,name=aoe,if=enemies.combat.40y>1
