@@ -88,20 +88,27 @@ def build(v):
     add('actions.catweave+=/call_action_list,name=cat_st,if=spell_targets<%d' % v['aoe_at'])
 
     # --- catweave_st / catweave_aoe, as the YAML writes them ---
+    # NOTE: the YAML's AoE list is byte-identical to its ST list — both filler
+    # on Shred. Swipe (213764) IS talented on this build and is the Cat AoE
+    # builder; `swipe_aoe` prices adding it.
     for name in ('cat_st', 'cat_aoe'):
         eq = 'actions.%s=' % name
         add(eq + a('rip', 'combo_points>=5&dot.rip.refreshable'))
         add('actions.%s+=/' % name + a('ferocious_bite', 'combo_points>=5'))
         add('actions.%s+=/' % name + a('rake', 'dot.rake.refreshable'))
+        if name == 'cat_aoe' and v['swipe_aoe']:
+            add('actions.cat_aoe+=/swipe_cat')
         add('actions.%s+=/shred' % name)
 
     return '\n'.join(L) + '\n'
 
 
-DEFAULTS = dict(forms=True, bearweave=True, hotw=True, convoke=True, aoe_at=AOE)
+DEFAULTS = dict(forms=True, bearweave=True, hotw=True, convoke=True, aoe_at=AOE,
+                swipe_aoe=False)
 
 VARIANTS = {
     'ferraz':       ({}, 'A rotacao atual: bearweave -> catweave, HotW e Convoke'),
+    'swipe_aoe':    (dict(swipe_aoe=True), 'Swipe no lugar do Shred como filler de AoE'),
     'no_bearweave': (dict(bearweave=False), 'Sem Bear: entra direto em Cat'),
     'no_hotw':      (dict(hotw=False), 'Sem Heart of the Wild'),
     'no_convoke':   (dict(convoke=False), 'Sem Convoke ofensivo'),
