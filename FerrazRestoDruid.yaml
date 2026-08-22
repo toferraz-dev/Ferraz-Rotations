@@ -37,7 +37,7 @@
 # heals better" — SimC never lets the group take damage, so it never charges
 # you for the globals a form swap costs.
 # =============================================================================
-version: 2.1
+version: 2.2
 author: Ferraz
 patch: "12.1"
 spec: 105
@@ -59,7 +59,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-08-22 | Patch: 12.1 | Version: 2.1"
+    text: "Last update: 2026-08-22 | Patch: 12.1 | Version: 2.2"
 
   # ==========================================================================
   # RECOMMENDED BUILD — the string the talent.X gates below assume.
@@ -131,7 +131,10 @@ config:
     label: "Pad Abundance"
     section: "Healing"
     type: toggle
-    spell: 774
+    # 207640 (the Abundance buff), not 207383 (the talent): the talent carries
+    # "Do Not Display (Spellbook, Aura Icon, Combat Log)" in its spell data and
+    # has no icon to render. 207640 is the one you actually see on your bar.
+    spell: 207640
     description: "Bindable. While ON, keeps casting Rejuvenation until 5 are up so the Abundance window is ready — including out of combat, where it costs mana for as long as you stand there. In combat the padding runs regardless of this toggle; this only controls the downtime half."
 
   wild_growth_threshold:
