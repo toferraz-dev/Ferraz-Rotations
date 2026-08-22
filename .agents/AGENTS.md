@@ -35,3 +35,34 @@ Whenever you are tasked with creating, reviewing, or modifying a YAML rotation f
 
    Comment-only or tooling-only commits that do not touch a rotation's behaviour still get the
    date refreshed and a +0.1 bump on the files they touch.
+
+7. **Check for a SimulationCraft update before every sim run:** The local binary lives in
+   `sim/tools/simc-<version>.<sha>-win64/`. Its bundled WoW data goes stale fast, and stale
+   data means item stats and tuning hotfixes that no longer match the live client — which is
+   exactly what gear and talent measurements depend on.
+
+   Before running any A/B harness or profileset, verify the local build is current:
+
+   ```bash
+   # what is installed, and which WoW build its data carries
+   ls sim/tools/
+   ./sim/tools/simc-*/simc.exe 2>&1 | head -1
+
+   # newest Windows nightly (plain http — https serves a mismatched certificate)
+   curl -s -k -L "http://downloads.simulationcraft.org/nightly/" \
+     | grep -oE 'simc-[0-9]+\.[0-9]+\.[a-f0-9]+-win64\.7z' | sort -u | tail -3
+   ```
+
+   If a newer build exists, say so and report **how far behind** the local one is before
+   asking whether to update. Use the GitHub compare API for that — SimulationCraft publishes
+   no GitHub releases, so `gh api .../releases` returns an empty list:
+
+   `https://api.github.com/repos/simulationcraft/simc/compare/<local-sha>...<remote-sha>`
+
+   Report `ahead_by` and whether any commit touches the class being measured. A build that is
+   only ahead on other classes still matters for its game data, but say which of the two
+   reasons applies.
+
+   Downloading is an action the user must approve. Extraction needs the `py7zr` Python package
+   (no 7-Zip is installed on this machine). After updating, repoint every harness path and
+   re-verify the most important recent finding on the new binary before trusting it.
