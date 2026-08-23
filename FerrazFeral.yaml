@@ -57,7 +57,7 @@
 # window built around it is a possible future gain, not applied here.
 # =============================================================================
 
-version: 2.4
+version: 2.5
 author: Ferraz
 patch: "12.1"
 spec: 103
@@ -72,7 +72,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-08-22 | Patch: 12.1 | Version: 2.4"
+    text: "Last update: 2026-08-23 | Patch: 12.1 | Version: 2.5"
 
   recommended_talents:
     section: "Talents"
@@ -325,7 +325,11 @@ lists:
   # Not copied (no Druid content): anti_cc, auto_freedom, auto_feign_death,
   # auto_death_grip, auto_combat_potion.
   engine:
-    - queue_spell,if=!player.casting|!player.channeling
+    # `&`, not `|`. With `|` the condition is true whenever you are not doing at
+    # least ONE of the two things — and you are almost never casting AND
+    # channelling at once, so it read true on essentially every pass. The queue
+    # is meant to flush only when you are genuinely free.
+    - queue_spell,if=!player.casting&!player.channeling
 
     - return,if=!state.rotation
     - return,if=player.dead

@@ -34,7 +34,7 @@
 # string — harmless dead weight unless the build changes.
 # =============================================================================
 
-version: 1.4
+version: 1.5
 author: Ferraz
 patch: "12.1"
 spec: 105
@@ -53,7 +53,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-08-23 | Patch: 12.1 | Version: 1.4"
+    text: "Last update: 2026-08-23 | Patch: 12.1 | Version: 1.5"
 
   # String the talent.X checks below assume.
   recommended_talents:
@@ -429,7 +429,11 @@ lists:
   # auto_combat_potion (this file drives its own potion, tied to Nature's
   # Swiftness).
   engine:
-    - queue_spell,if=!player.casting|!player.channeling
+    # `&`, not `|`. With `|` the condition is true whenever you are not doing at
+    # least ONE of the two things — and you are almost never casting AND
+    # channelling at once, so it read true on essentially every pass. The queue
+    # is meant to flush only when you are genuinely free.
+    - queue_spell,if=!player.casting&!player.channeling
 
     - return,if=!state.rotation
     - return,if=player.dead

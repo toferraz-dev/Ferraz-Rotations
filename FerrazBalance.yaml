@@ -61,7 +61,7 @@
 # Wild Mushroom, Power of Goldrinn, Orbit Breaker.
 # =============================================================================
 
-version: 3.6
+version: 3.7
 author: Ferraz
 patch: "12.1"
 spec: 102
@@ -78,7 +78,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-08-22 | Patch: 12.1 | Version: 3.6"
+    text: "Last update: 2026-08-23 | Patch: 12.1 | Version: 3.7"
 
   # ==========================================================================
   # RECOMMENDED BUILD — every number in this file was measured against this
@@ -528,7 +528,11 @@ lists:
   # where a toggle says otherwise. See the ENGINE config block for what was
   # deliberately left out and why.
   engine:
-    - queue_spell,if=!player.casting|!player.channeling
+    # `&`, not `|`. With `|` the condition is true whenever you are not doing at
+    # least ONE of the two things — and you are almost never casting AND
+    # channelling at once, so it read true on essentially every pass. The queue
+    # is meant to flush only when you are genuinely free.
+    - queue_spell,if=!player.casting&!player.channeling
 
     # --- The five guards, copied verbatim from _shared.yaml sanity_checks.
     # Dropping any of these lets the rotation fire while dead or mounted.
