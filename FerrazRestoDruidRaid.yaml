@@ -34,7 +34,7 @@
 # string — harmless dead weight unless the build changes.
 # =============================================================================
 
-version: 1.3
+version: 1.4
 author: Ferraz
 patch: "12.1"
 spec: 105
@@ -53,7 +53,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-08-22 | Patch: 12.1 | Version: 1.3"
+    text: "Last update: 2026-08-23 | Patch: 12.1 | Version: 1.4"
 
   # String the talent.X checks below assume.
   recommended_talents:
@@ -478,8 +478,17 @@ lists:
     # Symbiotic Relationship: can only rebind out of combat. Bond aura lives
     # on the caster, so the gate is buff.symbiotic_relationship (self), not
     # cycle.buff.*.
-    - symbiotic_relationship,cycle=config.raid_symbiotic_target,range_check=none,name="Symbiotic Relationship (Chosen)",if=talent.symbiotic_relationship&config.raid_symbiotic_target&buff.symbiotic_relationship.down&lastcast.symbiotic_relationship>=10
-    - symbiotic_relationship,cycle=tanks,range_check=none,name="Symbiotic Relationship (Tank Fallback)",if=talent.symbiotic_relationship&!config.raid_symbiotic_target&buff.symbiotic_relationship.down&lastcast.symbiotic_relationship>=10
+    # buff.474750, NOT buff.symbiotic_relationship. A snapshot settles it: the
+    # player carries "[474750] (Symbiotic Relationship) mine=yes" for the full
+    # hour, and in the very same trace the rotation evaluated
+    # `buff.symbiotic_relationship.down = 1 [PASS]`. The name does not resolve
+    # to that aura, so every condition built on it re-cast the bond on a target
+    # that already had it.
+    # 474760, which 1.9 guessed at, is the bond HEAL — it fires thousands of
+    # times a fight and is never an aura. Wrong id, and it read .down forever.
+    # lastcast stays as the backstop in case the aura id changes again.
+    - symbiotic_relationship,cycle=config.raid_symbiotic_target,range_check=none,name="Symbiotic Relationship (Chosen)",if=talent.symbiotic_relationship&config.raid_symbiotic_target&buff.474750.down&lastcast.symbiotic_relationship>=10
+    - symbiotic_relationship,cycle=tanks,range_check=none,name="Symbiotic Relationship (Tank Fallback)",if=talent.symbiotic_relationship&!config.raid_symbiotic_target&buff.474750.down&lastcast.symbiotic_relationship>=10
 
     - lifebloom,name="OOC Lifebloom",cycle=members,if=(player.inraid|player.indungeon)&!talent.everbloom&cycle.health.effective.pct<config.raid_lifebloom_threshold&cycle.buff.lifebloom.down&(group.count(cycle.buff.lifebloom.up)=0|tank1.buff.lifebloom.up|tank2.buff.lifebloom.up)&!player.combat
     - lifebloom,name="OOC Lifebloom (Tank)",cycle=tanks,if=(player.inraid|player.indungeon)&!talent.everbloom&(cycle.buff.lifebloom.down|cycle.buff.lifebloom.remains<4.5)&(cycle.buff.lifebloom.up|group.count(cycle.buff.lifebloom.up)=0)&!player.combat
