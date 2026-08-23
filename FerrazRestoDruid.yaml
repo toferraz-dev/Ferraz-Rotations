@@ -37,7 +37,7 @@
 # heals better" — SimC never lets the group take damage, so it never charges
 # you for the globals a form swap costs.
 # =============================================================================
-version: "4.0.0"
+version: "4.1.0"
 author: Ferraz
 patch: "12.1"
 spec: 105
@@ -59,7 +59,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-08-23 | Patch: 12.1 | Version: 4.0.0"
+    text: "Last update: 2026-08-23 | Patch: 12.1 | Version: 4.1.0"
 
   # ==========================================================================
   # RECOMMENDED BUILD — the string the talent.X gates below assume.
@@ -136,16 +136,6 @@ config:
     # has no icon to render. 207640 is the one you actually see on your bar.
     spell: 207640
     description: "Bindable. While ON, keeps casting Rejuvenation until 5 are up so the Abundance window is ready — including out of combat, where it costs mana for as long as you stand there. In combat the padding runs regardless of this toggle; this only controls the downtime half."
-
-  # ==========================================================================
-  # DUNGEONS — encounter-specific healing.
-  # ==========================================================================
-  avatar_sethraliss:
-    label: "Heal Avatar of Sethraliss (mouseover)"
-    section: "Dungeons"
-    type: checkbox
-    default: true
-    description: "Temple of Sethraliss last boss: while your mouse is on the Avatar and it is not silenced by Defiling Taint, heal it. Locked to that one NPC, so it never fires anywhere else."
 
   wild_growth_threshold:
     label: "Wild Growth HP %"
@@ -1002,10 +992,16 @@ lists:
     - call_action_list,name=racials
     - call_action_list,name=cooldowns,if=!var.in_dps_form|!var.group_healthy
     - call_action_list,name=interrupts
-    # Temple of Sethraliss last boss. Deliberately NOT gated on
-    # !var.in_dps_form|!var.group_healthy: healing the Avatar is the objective
-    # of the fight, so it must not wait for the party to be hurt first.
-    - call_action_list,name=avatar_sethraliss,if=config.avatar_sethraliss&mouseover.npcid=133392&mouseover.friendly&mouseover.debuff.1301199.down&mouseover.health.pct<100
+    # Temple of Sethraliss last boss.
+    #
+    # No config toggle: mouseover.npcid=133392 already locks this to one NPC in
+    # one dungeon, so a checkbox could only ever turn OFF something that never
+    # fires anywhere else.
+    #
+    # Deliberately NOT gated on !var.in_dps_form|!var.group_healthy either.
+    # Healing the Avatar IS the objective of the fight, so it must not wait for
+    # the party to be hurt first.
+    - call_action_list,name=avatar_sethraliss,if=mouseover.npcid=133392&mouseover.friendly&mouseover.debuff.1301199.down&mouseover.health.pct<100
     # Emergency Mouseover Healing on unit frames
     - call_action_list,name=mouseover_healing_emergency,if=config.use_mouseover&var.mo_friendly_valid&mouseover.health.pct<config.mouseover_emergency_hp&(!var.in_dps_form|!var.group_healthy)
     - call_action_list,name=moving,if=player.moving&(!var.in_dps_form|!var.group_healthy)
