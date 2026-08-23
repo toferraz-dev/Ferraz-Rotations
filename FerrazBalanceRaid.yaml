@@ -60,7 +60,7 @@
 # Revive.
 # =============================================================================
 
-version: 2.8
+version: "2.8.0"
 author: Ferraz
 patch: "12.1"
 spec: 102
@@ -75,7 +75,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-08-23 | Patch: 12.1 | Version: 2.8"
+    text: "Last update: 2026-08-23 | Patch: 12.1 | Version: 2.8.0"
 
   # Exact string every number here was measured against — Elune's Chosen, not Grove.
   recommended_talents:
