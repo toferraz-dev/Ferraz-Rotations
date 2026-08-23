@@ -71,3 +71,8 @@ Whenever you are tasked with creating, reviewing, or modifying a YAML rotation f
    significance rule, the Simia-to-SimC translation traps and what a result is
    allowed to claim — is in `.agents/SIMC_METHODOLOGY.md`. Read it before
    running or writing a harness.
+
+9. **Simia expertise briefing:** `.agents/SIMIA_EXPERT_PROMPT.md` collects the
+   bug classes, the expressions that do not mean what they look like, the spell
+   queue semantics and the house rules. Written to hand to a fresh agent. Read it
+   before editing any rotation YAML.
