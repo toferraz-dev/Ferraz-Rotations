@@ -47,7 +47,7 @@
 # and the Predatory Swiftness lines.
 # =============================================================================
 
-version: 1.5
+version: "1.5.0"
 author: Ferraz
 patch: "12.1"
 spec: 103
@@ -62,7 +62,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-08-23 | Patch: 12.1 | Version: 1.5"
+    text: "Last update: 2026-08-23 | Patch: 12.1 | Version: 1.5.0"
 
   recommended_talents:
     section: "Talents"

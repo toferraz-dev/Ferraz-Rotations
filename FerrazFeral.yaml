@@ -57,7 +57,7 @@
 # window built around it is a possible future gain, not applied here.
 # =============================================================================
 
-version: 2.6
+version: "2.6.0"
 author: Ferraz
 patch: "12.1"
 spec: 103
@@ -72,7 +72,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-08-23 | Patch: 12.1 | Version: 2.6"
+    text: "Last update: 2026-08-23 | Patch: 12.1 | Version: 2.6.0"
 
   recommended_talents:
     section: "Talents"

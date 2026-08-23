@@ -31,7 +31,7 @@
 # Form (button morphs); 1307881 Gory Fur (3 spells share the display name).
 # =============================================================================
 
-version: 1.7
+version: "1.7.0"
 patch: "12.1"
 spec: 104
 name: Guardian Druid Ferraz M+
@@ -73,7 +73,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-08-23 | Patch: 12.1 | Version: 1.7"
+    text: "Last update: 2026-08-23 | Patch: 12.1 | Version: 1.7.0"
 
   # Exact string every number here was measured against (sim/Tassiana_guardian.simc).
   recommended_talents:

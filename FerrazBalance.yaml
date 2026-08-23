@@ -61,7 +61,7 @@
 # Wild Mushroom, Power of Goldrinn, Orbit Breaker.
 # =============================================================================
 
-version: 3.8
+version: "3.8.0"
 author: Ferraz
 patch: "12.1"
 spec: 102
@@ -78,7 +78,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-08-23 | Patch: 12.1 | Version: 3.8"
+    text: "Last update: 2026-08-23 | Patch: 12.1 | Version: 3.8.0"
 
   # ==========================================================================
   # RECOMMENDED BUILD — every number in this file was measured against this
