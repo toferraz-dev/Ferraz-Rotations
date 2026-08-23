@@ -37,7 +37,7 @@
 # heals better" — SimC never lets the group take damage, so it never charges
 # you for the globals a form swap costs.
 # =============================================================================
-version: 3.9
+version: 4.0
 author: Ferraz
 patch: "12.1"
 spec: 105
@@ -59,7 +59,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-08-23 | Patch: 12.1 | Version: 3.9"
+    text: "Last update: 2026-08-23 | Patch: 12.1 | Version: 4.0"
 
   # ==========================================================================
   # RECOMMENDED BUILD — the string the talent.X gates below assume.
@@ -136,6 +136,16 @@ config:
     # has no icon to render. 207640 is the one you actually see on your bar.
     spell: 207640
     description: "Bindable. While ON, keeps casting Rejuvenation until 5 are up so the Abundance window is ready — including out of combat, where it costs mana for as long as you stand there. In combat the padding runs regardless of this toggle; this only controls the downtime half."
+
+  # ==========================================================================
+  # DUNGEONS — encounter-specific healing.
+  # ==========================================================================
+  avatar_sethraliss:
+    label: "Heal Avatar of Sethraliss (mouseover)"
+    section: "Dungeons"
+    type: checkbox
+    default: true
+    description: "Temple of Sethraliss last boss: while your mouse is on the Avatar and it is not silenced by Defiling Taint, heal it. Locked to that one NPC, so it never fires anywhere else."
 
   wild_growth_threshold:
     label: "Wild Growth HP %"
@@ -848,6 +858,35 @@ lists:
     - call_action_list,name=abundance_maintenance,if=!var.can_catweave&(player.combat|config.ooc_abundance)
 
   # Emergency Mouseover Healing on unit frames
+  # Temple of Sethraliss, Avatar of Sethraliss. A Valithria-style fight: the
+  # party heals the boss to 100% instead of killing it.
+  #
+  # WHY MOUSEOVER AND NOT cycle=members. cycle=members walks the PARTY only —
+  # the Avatar is never in it, so no amount of work inside the normal healing
+  # lists could ever reach the boss.
+  #
+  # WHY THIS DOES NOT REUSE mouseover_healing_emergency. That list is gated in
+  # main on var.mo_friendly_valid, which requires mouseover.unitframe, and the
+  # catalog is explicit: unitframe is "true if the mouseover came from a UI
+  # unit frame (party/raid frame), FALSE IF FROM THE 3D WORLD". The Avatar is a
+  # world unit, so that gate shuts before any line inside is read. Rollfacedk's
+  # Battle Nurse Paladin solves it by dropping the unitframe check entirely,
+  # which also heals every friendly NPC in the game; the npcid lock below gets
+  # the same reach without that.
+  #
+  # FAIL-SAFE DIRECTION. 1301199 (Defiling Taint) is a server-side dummy aura
+  # and it is NOT confirmed which unit carries it — the Avatar or the Essence
+  # Defiler channelling it. If it never resolves on the Avatar, `.down` reads
+  # true forever and this degrades into "heal whenever you point at it", which
+  # is exactly the behaviour that already works for Rollfacedk. The wrong guess
+  # costs nothing; it never fails closed into a dead line.
+  #
+  # Order is throughput: instant HoT, then Swiftmend eating it, then hardcast.
+  avatar_sethraliss:
+    - rejuvenation.mouseover,name="Avatar Rejuvenation",range_check=mouseover,if=mouseover.buff.rejuvenation.refreshable
+    - swiftmend.mouseover,name="Avatar Swiftmend",range_check=mouseover,if=mouseover.buff.rejuvenation.up|mouseover.buff.regrowth.up
+    - regrowth.mouseover,name="Avatar Regrowth",range_check=mouseover,if=!player.moving
+
   mouseover_healing_emergency:
     - swiftmend.mouseover,name="Swiftmend (MO)",if=mouseover.buff.rejuvenation.remains>1|mouseover.buff.regrowth.remains>1|mouseover.buff.wild_growth.remains>1
     - rejuvenation.mouseover,name="Rejuvenation (MO)",if=mouseover.buff.rejuvenation.remains<=1.5
@@ -963,6 +1002,10 @@ lists:
     - call_action_list,name=racials
     - call_action_list,name=cooldowns,if=!var.in_dps_form|!var.group_healthy
     - call_action_list,name=interrupts
+    # Temple of Sethraliss last boss. Deliberately NOT gated on
+    # !var.in_dps_form|!var.group_healthy: healing the Avatar is the objective
+    # of the fight, so it must not wait for the party to be hurt first.
+    - call_action_list,name=avatar_sethraliss,if=config.avatar_sethraliss&mouseover.npcid=133392&mouseover.friendly&mouseover.debuff.1301199.down&mouseover.health.pct<100
     # Emergency Mouseover Healing on unit frames
     - call_action_list,name=mouseover_healing_emergency,if=config.use_mouseover&var.mo_friendly_valid&mouseover.health.pct<config.mouseover_emergency_hp&(!var.in_dps_form|!var.group_healthy)
     - call_action_list,name=moving,if=player.moving&(!var.in_dps_form|!var.group_healthy)
