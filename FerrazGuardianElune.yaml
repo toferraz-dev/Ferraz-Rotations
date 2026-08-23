@@ -31,7 +31,7 @@
 # Form (button morphs); 1307881 Gory Fur (3 spells share the display name).
 # =============================================================================
 
-version: 1.5
+version: 1.6
 patch: "12.1"
 spec: 104
 name: Guardian Druid Ferraz M+
@@ -73,7 +73,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-08-22 | Patch: 12.1 | Version: 1.5"
+    text: "Last update: 2026-08-23 | Patch: 12.1 | Version: 1.6"
 
   # Exact string every number here was measured against (sim/Tassiana_guardian.simc).
   recommended_talents:
@@ -311,7 +311,11 @@ lists:
   # Not copied (no Druid content): anti_cc, auto_freedom, auto_feign_death,
   # auto_death_grip, auto_combat_potion.
   engine:
-    - queue_spell,if=!player.casting|!player.channeling
+    # `&`, not `|`. With `|` the condition is true whenever you are not doing at
+    # least ONE of the two things — and you are almost never casting AND
+    # channelling at once, so it read true on essentially every pass. The queue
+    # is meant to flush only when you are genuinely free.
+    - queue_spell,if=!player.casting&!player.channeling
 
     - return,if=!state.rotation
     - return,if=player.dead
