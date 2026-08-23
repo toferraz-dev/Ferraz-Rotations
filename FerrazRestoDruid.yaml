@@ -37,7 +37,7 @@
 # heals better" — SimC never lets the group take damage, so it never charges
 # you for the globals a form swap costs.
 # =============================================================================
-version: "4.1.1"
+version: "4.2.0"
 author: Ferraz
 patch: "12.1"
 spec: 105
@@ -59,7 +59,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-08-23 | Patch: 12.1 | Version: 4.1.1"
+    text: "Last update: 2026-08-23 | Patch: 12.1 | Version: 4.2.0"
 
   # ==========================================================================
   # RECOMMENDED BUILD — the string the talent.X gates below assume.
@@ -810,19 +810,34 @@ lists:
     - call_action_list,name=catweave_aoe,if=enemies.combat.8y>=config.aoe_threshold
     - call_action_list,name=catweave_st,if=enemies.combat.8y<config.aoe_threshold
 
-  # Caster-form damage. LOG-DRIVEN: the reference M+ log has this druid doing
-  # 100% of his damage from caster form — 5 Cat Form casts in 26 minutes and no
-  # Rake/Shred/Rip at all — at 8.4 damage casts per minute. His two biggest
-  # damage casts, Starsurge (57) and Starfire (27), were missing from this list
-  # entirely; it only had Sunfire, Moonfire and Wrath. Both are castable by
-  # Restoration (verified against the game's spell data).
-  # Starsurge first: it is the Astral Power spender and the hardest hitter.
+  # Caster-form damage. MOONFIRE ONLY.
+  #
+  # Checked against client 69404, and only two of the five spells this list
+  # used to hold are even available to Restoration:
+  #
+  #   Moonfire  (8921)   baseline — carries its own "0.8% Base Mana w/
+  #                      Restoration Druid (137012)" entry. Ours.
+  #   Wrath     (5176)   baseline, castable, but the damage is not worth a
+  #                      global on a healer. Dropped by choice, not by rule.
+  #   Sunfire   (93402)  "Talent Entry: Generic [tree=class, row=4, col=9]" —
+  #                      a CLASS TALENT we do not take. The line was dead.
+  #   Starsurge (78674)  "Talent Entry: Balance [free=(Balance)]" — free for
+  #                      Balance only, and it costs 40 Astral Power, which
+  #                      Restoration never generates. Dead twice over.
+  #   Starfire  (194153) same: free for Balance, not for us.
+  #
+  # 5.0 added Starsurge and Starfire off a reference M+ log and claimed both
+  # were "castable by Restoration (verified against the game's spell data)".
+  # That verification was wrong — the spell data says free=(Balance). The log
+  # almost certainly belonged to a druid who had spent class-tree points we do
+  # not spend.
+  #
+  # With Wrath gone this list can now produce nothing once the Moonfire DoT is
+  # rolling. That is deliberate: the pass then falls through to
+  # abundance_maintenance, so an idle global pads Rejuvenation toward the
+  # Abundance window instead of buying a few points of filler damage.
   ranged_dps:
-    - sunfire,name="Sunfire AoE Refresh",if=debuff.sunfire.refreshable
     - moonfire,name="Moonfire ST Refresh",if=debuff.moonfire.refreshable
-    - starsurge,name="Starsurge",if=astral_power>=40
-    - starfire,name="Starfire",if=enemies.combat.40y>=2
-    - wrath,name="Wrath Filler"
 
   # Defensive rotation and debuffs in Bear Form (Bearweave)
   # !var.hotw_pending on both bear casts is what lets Heart of the Wild happen
