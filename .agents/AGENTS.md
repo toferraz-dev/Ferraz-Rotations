@@ -66,3 +66,8 @@ Whenever you are tasked with creating, reviewing, or modifying a YAML rotation f
    Downloading is an action the user must approve. Extraction needs the `py7zr` Python package
    (no 7-Zip is installed on this machine). After updating, repoint every harness path and
    re-verify the most important recent finding on the new binary before trusting it.
+
+8. **SimC methodology:** the full A/B method — M+ vs raid settings, the
+   significance rule, the Simia-to-SimC translation traps and what a result is
+   allowed to claim — is in `.agents/SIMC_METHODOLOGY.md`. Read it before
+   running or writing a harness.
