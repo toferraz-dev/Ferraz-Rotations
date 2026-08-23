@@ -37,7 +37,7 @@
 # heals better" — SimC never lets the group take damage, so it never charges
 # you for the globals a form swap costs.
 # =============================================================================
-version: "4.1.0"
+version: "4.1.1"
 author: Ferraz
 patch: "12.1"
 spec: 105
@@ -59,7 +59,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-08-23 | Patch: 12.1 | Version: 4.1.0"
+    text: "Last update: 2026-08-23 | Patch: 12.1 | Version: 4.1.1"
 
   # ==========================================================================
   # RECOMMENDED BUILD — the string the talent.X gates below assume.
@@ -135,7 +135,7 @@ config:
     # "Do Not Display (Spellbook, Aura Icon, Combat Log)" in its spell data and
     # has no icon to render. 207640 is the one you actually see on your bar.
     spell: 207640
-    description: "Bindable. While ON, keeps casting Rejuvenation until 5 are up so the Abundance window is ready — including out of combat, where it costs mana for as long as you stand there. In combat the padding runs regardless of this toggle; this only controls the downtime half."
+    description: "Bindable. Controls DOWNTIME only. In combat the rotation always pads Rejuvenation up to 5 so the Abundance window is ready — that half is not optional. This toggle decides whether it keeps doing it while you stand around between pulls, where it costs mana for as long as you are there."
 
   wild_growth_threshold:
     label: "Wild Growth HP %"
@@ -1007,6 +1007,24 @@ lists:
     - call_action_list,name=moving,if=player.moving&(!var.in_dps_form|!var.group_healthy)
     # Sequential Active Healing: SotF consumption -> Lifebloom maintenance -> AoE and ST heals
     - call_action_list,name=active_healing,if=!var.in_dps_form|!var.group_healthy
+    # Pad Abundance IN COMBAT, always, regardless of the toggle. The toggle is
+    # about downtime only.
+    #
+    # This caller had to exist. The only in-combat caller was the downtime one
+    # at the bottom of this list, and it carries
+    # (!target.exists|target.friendly|target.range>40) — so it needed you to
+    # have NO enemy target. It also sits below ranged_dps/bearweave, both of
+    # which end in an unconditional filler (wrath, shred), so it was doubly
+    # unreachable. Standing in combat on a live target with the group topped,
+    # Abundance was never padded at all, even though the config text has always
+    # claimed "in combat the padding runs regardless of this toggle".
+    #
+    # Placed here on purpose: below every healing list, above the damage. That
+    # is the real trade — a global spent padding is a global not spent on
+    # damage. The list gates itself on !buff.abundance.up, so it stops as soon
+    # as the 5 Rejuvenations are up and does not bleed DPS after that.
+    - call_action_list,name=abundance_maintenance,if=player.combat
+
     # Mark of the Wild, in combat, at the bottom of the priority. Everything
     # that heals outranks it; it outranks the DPS weaving. So a dropped buff is
     # reapplied on a global that would otherwise have been damage, never on one
@@ -1017,13 +1035,3 @@ lists:
     # DPS weaving when the group is healthy
     - call_action_list,name=ranged_dps,if=config.ranged_dps&var.can_catweave&target.exists&target.alive&!target.friendly&!target.in_melee
     - call_action_list,name=bearweave,if=config.melee_dps&var.can_catweave&target.exists&target.alive&!target.friendly&target.in_melee
-    # Downtime Filler: Pad Abundance if there is no valid enemy to attack
-    # Downtime filler. (player.combat|config.ooc_abundance) is the important
-    # half: padding Abundance IN combat is the Regrowth ramp and always
-    # allowed, but out of combat it obeys the toggle. Without that clause this
-    # line ignored the toggle entirely — standing around with no target makes
-    # !target.exists true, so it padded forever no matter how the checkbox was
-    # set. That is the "it keeps casting Rejuvenation even with Pad Abundance
-    # unchecked" bug: the toggle was only ever wired to the out_of_combat
-    # caller, and this list has three callers.
-    - call_action_list,name=abundance_maintenance,if=(player.combat|config.ooc_abundance)&(!target.exists|target.friendly|target.range>40)
