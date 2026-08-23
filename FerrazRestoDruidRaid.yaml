@@ -34,7 +34,7 @@
 # string — harmless dead weight unless the build changes.
 # =============================================================================
 
-version: 1.6
+version: 1.7
 author: Ferraz
 patch: "12.1"
 spec: 105
@@ -53,7 +53,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-08-23 | Patch: 12.1 | Version: 1.6"
+    text: "Last update: 2026-08-23 | Patch: 12.1 | Version: 1.7"
 
   # String the talent.X checks below assume.
   recommended_talents:
@@ -550,7 +550,16 @@ lists:
     # Power of the Archdruid loop: Swiftmend on CD, spreads Rejuv to 3 targets.
     - swiftmend.player,name="Self Swiftmend (Archdruid)",range_check=none,if=talent.power_of_the_archdruid&player.combat&cooldown.swiftmend.ready&(buff.rejuvenation.up|buff.regrowth.up|buff.wild_growth.up)
     - swiftmend,name="Swiftmend for SotF/Treants",cycle=members,if=player.combat&cycle.health.effective.pct<config.raid_swiftmend_threshold&(cycle.buff.rejuvenation.up|cycle.buff.regrowth.up|cycle.buff.wild_growth.up)
-    - regrowth,name="Clearcasting Regrowth",cycle=members,if=player.combat&buff.clearcasting.up&(cycle.buff.regrowth.down|cycle.health.effective.pct<99)
+    # NO `|pred.cycle.buff.regrowth.down` branch. That half carried no health
+    # gate at all, so a tank at 100% with no Regrowth HoT satisfied the line on
+    # its own — and in the M+ file, which had no player.combat either, that
+    # made it the ONE Regrowth reachable out of combat that fires on a full
+    # target. Omen of Clarity procs Clearcasting by itself, so between pulls
+    # the proc sat there, this line saw a tank without the HoT, and spent it
+    # into pure overheal.
+    # Spending a free proc early is still the intent; `<99` keeps it, and
+    # player.combat keeps it from burning during downtime.
+    - regrowth,name="Clearcasting Regrowth",cycle=members,if=player.combat&buff.clearcasting.up&cycle.health.effective.pct<99
 
   # SotF consumption -> self Efflorescence/Lifebloom(Everbloom)/Rejuvenation
   # (Photosynthesis) loop -> tank Lifebloom fallback -> forced spread ->

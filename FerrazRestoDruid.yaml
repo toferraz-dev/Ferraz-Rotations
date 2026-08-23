@@ -37,7 +37,7 @@
 # heals better" — SimC never lets the group take damage, so it never charges
 # you for the globals a form swap costs.
 # =============================================================================
-version: 3.5
+version: 3.6
 author: Ferraz
 patch: "12.1"
 spec: 105
@@ -59,7 +59,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-08-23 | Patch: 12.1 | Version: 3.5"
+    text: "Last update: 2026-08-23 | Patch: 12.1 | Version: 3.6"
 
   # ==========================================================================
   # RECOMMENDED BUILD — the string the talent.X gates below assume.
@@ -655,7 +655,16 @@ lists:
   # Sequential Active Healing: SotF consumption -> Lifebloom maintenance -> AoE and ST heals
   active_healing:
     # Treant usage and Clearcasting synergized with Wild Synthesis
-    - regrowth,name="Clearcasting Regrowth",cycle=members,if=buff.clearcasting.up&(pred.cycle.buff.regrowth.down|cycle.health.effective.pct<99)
+    # NO `|pred.cycle.buff.regrowth.down` branch. That half carried no health
+    # gate at all, so a tank at 100% with no Regrowth HoT satisfied the line on
+    # its own — and in the M+ file, which had no player.combat either, that
+    # made it the ONE Regrowth reachable out of combat that fires on a full
+    # target. Omen of Clarity procs Clearcasting by itself, so between pulls
+    # the proc sat there, this line saw a tank without the HoT, and spent it
+    # into pure overheal.
+    # Spending a free proc early is still the intent; `<99` keeps it, and
+    # player.combat keeps it from burning during downtime.
+    - regrowth,name="Clearcasting Regrowth",cycle=members,if=player.combat&buff.clearcasting.up&cycle.health.effective.pct<99
 
     # RAW health, like Nature's Swiftness: effective adds incomingHealsPct, so
     # with your HoTs rolling "50% effective" is roughly 30% real. An emergency
