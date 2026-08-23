@@ -37,7 +37,7 @@
 # heals better" — SimC never lets the group take damage, so it never charges
 # you for the globals a form swap costs.
 # =============================================================================
-version: 3.4
+version: 3.5
 author: Ferraz
 patch: "12.1"
 spec: 105
@@ -59,7 +59,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-08-23 | Patch: 12.1 | Version: 3.4"
+    text: "Last update: 2026-08-23 | Patch: 12.1 | Version: 3.5"
 
   # ==========================================================================
   # RECOMMENDED BUILD — the string the talent.X gates below assume.
@@ -542,7 +542,24 @@ lists:
     # 474760, which 1.9 guessed at, is the bond HEAL — it fires thousands of
     # times a fight and is never an aura. Wrong id, and it read .down forever.
     # lastcast stays as the backstop in case the aura id changes again.
-    - symbiotic_relationship,cycle=tanks,range_check=none,name="Symbiotic (Tank)",if=talent.symbiotic_relationship&buff.474750.down&lastcast.symbiotic_relationship>=60
+    # Two auras, one per side of the bond. A snapshot shows them together:
+    #   [PLAYER]    474754 (Symbiotic Relationship) rem=3466.3 mine=no
+    #   [PARTY[4]]  474750 (Symbiotic Relationship) rem=3466.2 mine=yes
+    # 474750 sits on the TANK and is applied by you. 474754 sits on YOU and is
+    # applied by the tank. 3.4 claimed the player carried 474750 — that was a
+    # misread of the same snapshot, and it is why the line kept re-casting.
+    #
+    # `cycle.buff`, not `buff`. Bare `buff.X` reads the PLAYER's auras, but
+    # this line cycles tanks, so it has to ask about the CYCLED unit. Every
+    # other cycle= line in this file already uses the cycle. prefix; this one
+    # was the lone exception.
+    #
+    # buff.474754.down is the second half: you may only hold one bond, so if
+    # you already carry the healer-side aura, do not bond a different tank.
+    #
+    # 474760, guessed at in 1.9, appears nowhere in any snapshot. The bond's
+    # heal is 439530 (Symbiotic Blooms), an 8s aura that lands on the group.
+    - symbiotic_relationship,cycle=tanks,range_check=none,name="Symbiotic (Tank)",if=talent.symbiotic_relationship&cycle.buff.474750.down&buff.474754.down&lastcast.symbiotic_relationship>=60
     # NO "cast Rejuvenation to leave the form" line, in or out of combat.
     # Any healing spell drops you out of Cat/Bear on its own — confirmed in
     # game on 12.1 — so the moment the
