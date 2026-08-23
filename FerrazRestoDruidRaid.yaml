@@ -34,7 +34,7 @@
 # string — harmless dead weight unless the build changes.
 # =============================================================================
 
-version: 1.7
+version: 1.8
 author: Ferraz
 patch: "12.1"
 spec: 105
@@ -53,7 +53,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-08-23 | Patch: 12.1 | Version: 1.7"
+    text: "Last update: 2026-08-23 | Patch: 12.1 | Version: 1.8"
 
   # String the talent.X checks below assume.
   recommended_talents:
@@ -678,7 +678,30 @@ lists:
   # Entry point. First matching line wins the GCD: defensives -> cooldowns ->
   # emergency -> active healing outrank DPS weaving.
   main:
-    - return,if=(player.channeling&player.casting.spell_id=740)|(player.channeling&player.casting.spell_id=323764)|buff.tranquility.up|buff.convoke_the_spirits.up
+    # `player.channeling`, bare. This is what every official rotation in
+    # simia_data_dump uses, and the compound guard it replaces had two ways to
+    # fail open:
+    #
+    #   1. Both spell_id clauses need player.casting.spell_id populated during
+    #      a CHANNEL. In the WoW API that is UnitChannelInfo, a different call
+    #      from UnitCastingInfo; if the addon reads only the latter the field
+    #      is empty mid-channel and both clauses go false together.
+    #   2. buff.convoke_the_spirits.up resolves by NAME — the exact pattern
+    #      that silently never matched for Symbiotic Relationship.
+    #
+    #   The raid file was narrower still: it listed 323764 but not 391528, so
+    #   on the talent version of Convoke its id check could never match.
+    #
+    # That combination explains a channel that is protected MOST of the time
+    # and occasionally clipped: only one clause was really working, and it
+    # depended on when the client registered the channel. Heavy healing is
+    # when a hardcast is always queued behind, so that is when the gap shows —
+    # Nature's Swiftness fires off-GCD (harmless), then "Nature Swift Regrowth"
+    # becomes the suggestion and clips Convoke.
+    #
+    # Nothing in this file uses interrupt=true, so no line ever wants to break
+    # its own channel. The narrow guard bought nothing.
+    - return,if=player.channeling
 
     # --- Engine plumbing. Must stay at the top. ---
     - call_action_list,name=engine
