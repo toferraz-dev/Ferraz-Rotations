@@ -61,7 +61,7 @@
 # Wild Mushroom, Power of Goldrinn, Orbit Breaker.
 # =============================================================================
 
-version: "3.8.1"
+version: "3.8.3"
 author: Ferraz
 patch: "12.1"
 spec: 102
@@ -78,7 +78,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-08-23 | Patch: 12.1 | Version: 3.8.1"
+    text: "Last update: 2026-08-23 | Patch: 12.1 | Version: 3.8.3"
 
   # ==========================================================================
   # RECOMMENDED BUILD — every number in this file was measured against this
@@ -482,8 +482,6 @@ variables:
   # No Eclipse active — filler switch and AP-floor switch (ec_st/aoe).
   eclipse_down: buff.eclipse_solar.down&buff.eclipse_lunar.down
 
-  # Hero-tree probe, not referenced by any priority line yet.
-  ec: talent.boundless_moonlight
 
   # Burst allowed: auto or manual toggle. Drives Incarnation + both trinkets + potion.
   burst_ok: config.auto_burst|config.burst_toggle
@@ -697,18 +695,18 @@ lists:
   #   - mouseover.combat added: hovering an unpulled mob no longer pulls it,
   #     the same reason the pre-pull Wrath was removed in 3.1.
   mouseover_dots:
-    - sunfire.mouseover,name="Sunfire Mouseover",if=config.enable_mouseover_dots&mouseover.exists&mouseover.enemy&mouseover.attackable&!mouseover.dead&mouseover.combat&mouseover.range<=40&mouseover.debuff.sunfire.down
-    - moonfire.mouseover,name="Moonfire Mouseover",if=config.enable_mouseover_dots&mouseover.exists&mouseover.enemy&mouseover.attackable&!mouseover.dead&mouseover.combat&mouseover.range<=40&mouseover.debuff.moonfire.down
+    - sunfire,name="Sunfire (Fallback)",name="Sunfire (Fallback)".mouseover,name="Sunfire Mouseover",if=config.enable_mouseover_dots&mouseover.exists&mouseover.enemy&mouseover.attackable&!mouseover.dead&mouseover.combat&mouseover.range<=40&mouseover.debuff.sunfire.down
+    - moonfire,name="Moonfire (Fallback)",name="Moonfire (Fallback)".mouseover,name="Moonfire Mouseover",if=config.enable_mouseover_dots&mouseover.exists&mouseover.enemy&mouseover.attackable&!mouseover.dead&mouseover.combat&mouseover.range<=40&mouseover.debuff.moonfire.down
 
   # Instant casts only, <2 enemies. Unmeasured (SimC never moves).
   moving_st:
-    - moonfire,if=debuff.moonfire.remains<2|debuff.moonfire.refreshable
-    - sunfire,if=debuff.sunfire.remains<2|debuff.sunfire.refreshable
+    - moonfire,name="Moonfire (Refresh)",if=debuff.moonfire.remains<2|debuff.moonfire.refreshable
+    - sunfire,name="Sunfire (Refresh)",if=debuff.sunfire.remains<2|debuff.sunfire.refreshable
     - starfire,if=buff.ascendant_fires.up
     - wrath,if=buff.ascendant_fires.up&var.eclipse_down
     # Starweaver clause is dead on the recommended string; kept for when it returns.
-    - starsurge,if=buff.starweavers_warp.up|buff.touch_the_cosmos.react
-    - starsurge,if=astral_power>60
+    - starsurge,name="Starsurge (Proc or AP Dump)",if=buff.starweavers_warp.up|buff.touch_the_cosmos.react
+    - starsurge,name="Starsurge (AP Dump)",if=astral_power>60
     # Held while the burst is only waiting for you to stand still — see
     # var.inc_waiting_to_stand. Also picks up the TTD gate the stationary
     # lists already had. UNMEASURABLE: SimC never moves.
@@ -718,11 +716,11 @@ lists:
 
   # Instant casts only, 2+ enemies. Unmeasured.
   moving_aoe:
-    - sunfire,if=debuff.sunfire.remains<2|debuff.sunfire.refreshable
-    - moonfire,if=debuff.moonfire.remains<2|debuff.moonfire.refreshable
+    - sunfire,name="Sunfire (Refresh)",if=debuff.sunfire.remains<2|debuff.sunfire.refreshable
+    - moonfire,name="Moonfire (Refresh)",if=debuff.moonfire.remains<2|debuff.moonfire.refreshable
     - starfire,if=buff.ascendant_fires.up
-    - starfall,if=buff.starweavers_weft.up|buff.touch_the_cosmos.react
-    - starfall,if=astral_power>50
+    - starfall,name="Starfall (Proc or AP Dump)",if=buff.starweavers_weft.up|buff.touch_the_cosmos.react
+    - starfall,name="Starfall (AP Dump)",if=astral_power>50
     - starsurge,if=buff.starfall.up&(buff.touch_the_cosmos.react|buff.starweavers_warp.up)
     # Held while the burst is only waiting for you to stand still — see
     # var.inc_waiting_to_stand. Also picks up the TTD gate the stationary
@@ -745,13 +743,13 @@ lists:
     - fury_of_elune,if=var.foe_ttd_ok
 
     # Free procs (Starweaver dead on this string, kept for when it returns).
-    - starfall,if=buff.starweavers_weft.up|buff.touch_the_cosmos.react
-    - starsurge,if=buff.starweavers_warp.up|buff.touch_the_cosmos.react
+    - starfall,name="Starfall (Proc or AP Dump)",if=buff.starweavers_weft.up|buff.touch_the_cosmos.react
+    - starsurge,name="Starsurge (Proc or AP Dump)",if=buff.starweavers_warp.up|buff.touch_the_cosmos.react
 
     # AP floor follows the Eclipse (spend early inside, hold near cap
     # outside) — replaced a flat astral_power>60, measured +0.79%.
-    - starsurge,if=!var.eclipse_down&astral_power>=50
-    - starsurge,if=var.eclipse_down&astral_power.deficit<20
+    - starsurge,name="Starsurge (Eclipse Down)",if=!var.eclipse_down&astral_power>=50
+    - starsurge,name="Starsurge (AP Capping)",if=var.eclipse_down&astral_power.deficit<20
 
     # Wrath filler: worth keeping only on crit-heavy gear. See the
     # wrath_filler config block for the three measured data points — the
@@ -762,7 +760,7 @@ lists:
   # 2+ enemies, standing still. 2-enemy threshold measured: raising to 3
   # costs -1.48% DungeonSlice, 4 costs more.
   aoe:
-    - starfall,if=astral_power>=80&var.starfall_ttd_ok
+    - starfall,name="Starfall (AP Dump)",if=astral_power>=80&var.starfall_ttd_ok
 
     - moonfire,if=debuff.moonfire.refreshable
     - sunfire,if=debuff.sunfire.refreshable
@@ -774,8 +772,8 @@ lists:
     - fury_of_elune,if=var.foe_ttd_ok
 
     - starfall,if=buff.starweavers_weft.up|buff.touch_the_cosmos.react
-    - starfall,if=!var.eclipse_down&astral_power>=40&var.starfall_ttd_ok
-    - starfall,if=var.eclipse_down&astral_power.deficit<20&var.starfall_ttd_ok
+    - starfall,name="Starfall (Eclipse Down)",if=!var.eclipse_down&astral_power>=40&var.starfall_ttd_ok
+    - starfall,name="Starfall (AP Capping)",if=var.eclipse_down&astral_power.deficit<20&var.starfall_ttd_ok
 
     # Starsurge weaves only under active Starfall + free proc — never
     # competes with Starfall for AP.
