@@ -60,7 +60,7 @@
 # Revive.
 # =============================================================================
 
-version: 2.7
+version: 2.8
 author: Ferraz
 patch: "12.1"
 spec: 102
@@ -75,7 +75,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-08-23 | Patch: 12.1 | Version: 2.7"
+    text: "Last update: 2026-08-23 | Patch: 12.1 | Version: 2.8"
 
   # Exact string every number here was measured against — Elune's Chosen, not Grove.
   recommended_talents:
@@ -325,6 +325,31 @@ lists:
     - target_enemy,delay=200,off_gcd=true,if=config.engine_auto_target.has(0)&!target.exists&enemies.combat.40y>=1
     - target_enemy,delay=200,off_gcd=true,if=config.engine_auto_target.has(1)&target.dead&enemies.combat.40y>=1
     - target_enemy,delay=200,off_gcd=true,if=config.engine_auto_target.has(2)&target.range>=40&enemies.combat.40y>=1
+
+    # --- Temple of Sethraliss, Adderis and Aspix ---------------------------
+    # Storm Blessed alternates between the two bosses and gives its holder
+    # "Immunity - Damage Only" on every school — a hard immunity, not a
+    # reduction. Damage into it is wasted entirely, so swap off.
+    #
+    # 1289229 is the AURA. 1310311 is the 2.5s cast that applies it; checking
+    # the cast id would only ever be true for those 2.5 seconds. Same trap as
+    # Symbiotic Relationship, where the cast and the aura are different ids.
+    #
+    # target_enemy takes no filter — it is "target nearest enemy" and CYCLES
+    # on repeated presses, like Tab. So the pattern is to describe why the
+    # CURRENT target is wrong and let it re-evaluate next pass; delay=500
+    # keeps that from spinning. This is the same shape the official rotations
+    # use for interrupt scanning.
+    #
+    # enemies.combat.40y>=2 stops it hunting once one boss is dead: the
+    # survivor gains Frenzy (1292035), never Storm Blessed, and with nothing
+    # to swap to the line would otherwise cycle for nothing. 40y in every
+    # file, melee included — the count only asks "is there another boss",
+    # not "is it in melee range".
+    #
+    # No config toggle: the condition is one boss aura in one dungeon, and
+    # there is no reason to ever want to keep hitting an immune target.
+    - target_enemy,name="Swap Off Storm Blessed",delay=500,off_gcd=true,if=target.buff.1289229.up&enemies.combat.40y>=2
 
   # Spreads DoTs without changing target. mouseover.combat keeps it from
   # pulling something that is not in the fight yet.
