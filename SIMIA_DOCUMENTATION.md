@@ -791,6 +791,40 @@ Ações virtuais são comandos especiais que podem ser sugeridos na rotação su
 10. **Geometria e AoE: use `.distance`, não `.range`:** `target.distance` / `focus.distance` / `mouseover.distance` são distância de **centro**, sem desconto de reach e sem clamp — é a unidade em que raios de AoE e mecânicas de boss são medidos, e a única válida para geometria ou clustering. Vale a identidade `target.distance - target.range = soma dos dois reaches`.
 11. **Cones e facing:** `player.facing.target[.N]` (padrão ±90°) para checar se você está de frente, `target.facing.player[.N]` para checar se o mob está de frente para você (evitar parry/frontal), e `enemies.around.angle.N[.Y]` para contar inimigos dentro de um cone — o caminho correto para habilidades em cone em vez de contar por raio.
 12. **NPC específico sem precisar targetar:** `active_npc.NPC_ID.*` varre todas as nameplates do pull (count, ttd, min_ttd, range, health.pct). Adicione `.any` para NPCs que nunca entram em combate (geradores, adds neutros de objetivo).
+13. **A fila de feitiços NÃO é filtrada por cooldown na ENTRADA.** O comentário do
+   `_shared.yaml` promete que a fila "only casts if the queued spell is usable (valid,
+   off CD, has charges)" — o "off CD" só vale no flush, nunca na entrada. Motivo: o
+   addon usa `IsUsableSpell()` do WoW, que checa recurso e estado mas **ignora
+   cooldown** (isso é `GetSpellCooldown`, outra chamada). Um snapshot mostra os dois
+   fatos lado a lado:
+
+   ```
+   === QUEUE (1) ===
+     [1] ID=106898 (Stampeding Roar)
+
+   [106898] (Stampeding Roar) usable=YES ... cd=26.8/120.0
+   ```
+
+   O feitiço entrou na fila com 26,8s de CD restante. O flush recusou corretamente
+   (`SANITY FAIL: no usable queued spell or blocked by queue_logic`), então ele não é
+   castado — mas a entrada permanece, e dispara quando o CD virar.
+
+   **Isso não é corrigível no YAML.** A fila é populada pelo Lua (`MemData[10]`) no
+   instante da pressão da tecla; nenhuma expressão da rotação é avaliada nesse momento.
+   O bloco `queue_logic:` gateia o **cast**, não a entrada — é a mesma barreira que já
+   recusou acima. Não gaste tempo procurando uma expressão de entrada: não existe.
+
+14. **`queue_spell` tem duas formas com significados opostos.** `queue_spell` pelado
+   despeja o que o **jogador** enfileirou. `queue_spell,spell=X,if=...` faz a
+   **rotação** enfileirar X — serve para off-GCD que o addon não consegue apertar
+   durante um hardcast (ver `community_Jecht_Fire_Mage_v1_1.yaml`). Trocar uma pela
+   outra por engano adiciona casts automáticos que ninguém pediu.
+
+15. **`queue_spell` quer `&`, não `|`.** A forma herdada do `_shared.yaml` é
+   `if=!player.casting|!player.channeling`, que é verdadeira sempre que você não está
+   fazendo **pelo menos uma** das duas coisas — e as duas quase nunca se sobrepõem, então
+   a condição lê verdadeiro em toda passada e não guarda nada. O correto é
+   `!player.casting&!player.channeling`.
 
 ---
 
