@@ -57,7 +57,7 @@
 # window built around it is a possible future gain, not applied here.
 # =============================================================================
 
-version: "2.6.0"
+version: "2.6.1"
 author: Ferraz
 patch: "12.1"
 spec: 103
@@ -72,13 +72,25 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-08-23 | Patch: 12.1 | Version: 2.6.0"
+    text: "Last update: 2026-08-23 | Patch: 12.1 | Version: 2.6.1"
 
   recommended_talents:
     section: "Talents"
     type: copy_text
     label: "Recommended Talent String"
     text: "CcGAAAAAAAAAAAAAAAAAAAAAAAAAAAAgZmZ2YmZmxY2MPw2YbGzMmZAAAAYLY2M8AmZUzYWMzMzsMmhBAAAAAwADAAAgmZZWmZmBAsAzMDwCDGAAAzshB"
+
+  # The panic Bear Form shift had a literal 25 and no name=, the only threshold
+  # in either Feral file that was not a slider and the only defensive that did
+  # not show up in the execution log when it fired.
+  panic_bear_hp_pct:
+    label: "Panic Bear Form HP %"
+    section: "Defensive HP Percentage"
+    type: slider
+    min: 1
+    max: 99
+    default: 25
+    description: "Shift to Bear Form for the armour and health when you drop below this. Bear is a big survival gain but costs you the Cat rotation, so it is deliberately the lowest threshold on this panel."
 
   survival_instincts_hp_pct:
     section: "Defensive HP Percentage"
@@ -459,7 +471,7 @@ lists:
   # Emergency Bear Form, Fluid Form auto-shift, manual Cat Form entry, and
   # the pre-pull Prowl opener.
   form:
-    - bear_form,range_check=none,if=health.pct<=25&!buff.bear_form.up&player.combat
+    - bear_form,name="Panic Bear Form",range_check=none,if=health.pct<=config.panic_bear_hp_pct&!buff.bear_form.up&player.combat
     - heart_of_the_wild,range_check=none,if=buff.bear_form.up&player.combat
 
     - shred,if=player.combat&target.attackable&target.in_melee&buff.cat_form.down&talent.fluid_form.enabled
@@ -488,6 +500,12 @@ lists:
     - regrowth,delay=500,range_check=none,if=buff.predatory_swiftness.up&player.group&health.pct<=config.predatory_swiftness_heal_group_hp_pct&lastcast.regrowth>=2
 
   main:
+    # Convoke is a channel and nothing here ever wants to break it. Bare
+    # player.channeling, the shape every official rotation in simia_data_dump
+    # uses — see FerrazRestoDruid.yaml, where a narrower id-based guard failed
+    # open often enough to clip Convoke in a real key.
+    - return,if=player.channeling
+
     - call_action_list,name=engine
 
     - call_action_list,name=heal_support

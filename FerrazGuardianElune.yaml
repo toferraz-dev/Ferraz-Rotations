@@ -479,6 +479,12 @@ lists:
 
   # Entry point: first matching line wins the GCD.
   main:
+    # Convoke is a channel and nothing here ever wants to break it. Bare
+    # player.channeling, the shape every official rotation in simia_data_dump
+    # uses — see FerrazRestoDruid.yaml, where a narrower id-based guard failed
+    # open often enough to clip Convoke in a real key.
+    - return,if=player.channeling
+
     - call_action_list,name=set_tank_var
     - call_action_list,name=engine
 

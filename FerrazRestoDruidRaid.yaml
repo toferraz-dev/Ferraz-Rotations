@@ -34,7 +34,7 @@
 # string — harmless dead weight unless the build changes.
 # =============================================================================
 
-version: "1.9.0"
+version: "1.9.1"
 author: Ferraz
 patch: "12.1"
 spec: 105
@@ -53,7 +53,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-08-23 | Patch: 12.1 | Version: 1.9.0"
+    text: "Last update: 2026-08-23 | Patch: 12.1 | Version: 1.9.1"
 
   # String the talent.X checks below assume.
   recommended_talents:
@@ -503,7 +503,9 @@ lists:
   # cleanup on genuine HP need — (player.inraid|player.indungeon) avoids
   # misreading a phantom "member" when solo/ungrouped.
   out_of_combat:
-    - mark_of_the_wild,range_check=none,if=(buff.mark_of_the_wild.down.any|action.mark_of_the_wild.overlayed)&lastcast.mark_of_the_wild>=10
+    # config.raid_use_mark_of_the_wild was defined but no line read it, so the
+    # checkbox did nothing at all. Wired up here.
+    - mark_of_the_wild,name="Mark of the Wild",range_check=none,if=config.raid_use_mark_of_the_wild&(buff.mark_of_the_wild.down.any|action.mark_of_the_wild.overlayed)&lastcast.mark_of_the_wild>=10
     # Symbiotic Relationship: can only rebind out of combat. Bond aura lives
     # on the caster, so the gate is buff.symbiotic_relationship (self), not
     # cycle.buff.*.
@@ -690,7 +692,10 @@ lists:
     - lifebloom.player,name="Self Lifebloom (Moving)",range_check=none,after=300,if=talent.everbloom&(buff.lifebloom.down|buff.lifebloom.remains<4.5)
     - lifebloom,name="Lifebloom (Moving)",cycle=members,if=!talent.everbloom&cycle.health.effective.pct<config.raid_lifebloom_threshold&cycle.buff.lifebloom.down&(group.count(cycle.buff.lifebloom.up)=0|tank1.buff.lifebloom.up|tank2.buff.lifebloom.up)
     - lifebloom,name="Lifebloom Tank (Moving)",cycle=tanks,if=!talent.everbloom&(cycle.buff.lifebloom.down|cycle.buff.lifebloom.remains<4.5)&(cycle.buff.lifebloom.up|group.count(cycle.buff.lifebloom.up)=0)
-    - rejuvenation,name="Rejuvenation (Moving)",cycle=members,if=cycle.buff.rejuvenation.down&cycle.health.effective.pct<95
+    # config.raid_rejuvenation_threshold, not a literal 95. The stationary
+    # Rejuvenation lines already read the slider; this one did not, so moving
+    # was silently stricter than standing and the slider could not reach it.
+    - rejuvenation,name="Rejuvenation (Moving)",cycle=members,if=cycle.buff.rejuvenation.down&cycle.health.effective.pct<config.raid_rejuvenation_threshold
 
   # Unit-frame mouseover heals, HP-gated from main. No mouseover.buff.*
   # expression exists, so usability is left to the engine's own check.

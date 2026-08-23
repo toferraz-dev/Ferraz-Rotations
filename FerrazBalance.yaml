@@ -61,7 +61,7 @@
 # Wild Mushroom, Power of Goldrinn, Orbit Breaker.
 # =============================================================================
 
-version: "3.8.0"
+version: "3.8.1"
 author: Ferraz
 patch: "12.1"
 spec: 102
@@ -78,7 +78,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-08-23 | Patch: 12.1 | Version: 3.8.0"
+    text: "Last update: 2026-08-23 | Patch: 12.1 | Version: 3.8.1"
 
   # ==========================================================================
   # RECOMMENDED BUILD — every number in this file was measured against this
@@ -282,6 +282,31 @@ config:
     type: checkbox
     default: true
     description: "Interact with lootable corpses out of combat."
+
+  # cfg.auto_combat was READ by two lines in sanity_checks but defined nowhere
+  # in this file, so it fell back to Simia's shared _shared.yaml copy. Two
+  # problems with that: the header of this file claims it owns all of its own
+  # plumbing, and an inherited default can change under you without any commit
+  # here. Defined locally now, with the same options and the same default
+  # [1, 2] the shared file uses, so behaviour is unchanged.
+  #
+  # Worth knowing what that default means: "Off" is option 0 and is NOT
+  # selected, so `config.engine_auto_combat.has(0)` is false and the second guard below
+  # is inert out of the box. It only does anything if you tick Off yourself.
+  engine_auto_combat:
+    label: "Auto Combat"
+    section: "Engine"
+    type: multi_select
+    options:
+      - label: "Off"
+        value: 0
+      - label: "Quest Mob"
+        value: 1
+      - label: "Target in combat"
+        value: 2
+      - label: "Targeting party"
+        value: 3
+    default: [1, 2]
 
   engine_auto_target:
     label: "Auto Target (Ranged)"
@@ -787,8 +812,8 @@ lists:
     - return,if=!player.combat
 
     # --- Target guards ---
-    - return,if=!target.valid&!((cfg.auto_combat.has(1)&target.quest_mob&target.enemy&!target.dead)|(cfg.auto_combat.has(2)&target.combat&target.enemy&!target.dead)|(cfg.auto_combat.has(3)&target.targeting_party&target.enemy&!target.dead))
-    - return,if=!target.valid&cfg.auto_combat.has(0)
+    - return,if=!target.valid&!((config.engine_auto_combat.has(1)&target.quest_mob&target.enemy&!target.dead)|(config.engine_auto_combat.has(2)&target.combat&target.enemy&!target.dead)|(config.engine_auto_combat.has(3)&target.targeting_party&target.enemy&!target.dead))
+    - return,if=!target.valid&config.engine_auto_combat.has(0)
     - return,if=!target.valid|target.dead|!target.attackable
 
     - moonkin_form,if=buff.moonkin_form.down&health.effective.pct>config.frenzied_regen_hp&!buff.frenzied_regeneration.up

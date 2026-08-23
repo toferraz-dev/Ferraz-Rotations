@@ -37,7 +37,7 @@
 # heals better" — SimC never lets the group take damage, so it never charges
 # you for the globals a form swap costs.
 # =============================================================================
-version: "4.2.0"
+version: "4.3.0"
 author: Ferraz
 patch: "12.1"
 spec: 105
@@ -59,7 +59,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-08-23 | Patch: 12.1 | Version: 4.2.0"
+    text: "Last update: 2026-08-23 | Patch: 12.1 | Version: 4.3.0"
 
   # ==========================================================================
   # RECOMMENDED BUILD — the string the talent.X gates below assume.
@@ -252,6 +252,29 @@ config:
   # ==========================================================================
   # DEFENSIVES — personal and Ironbark.
   # ==========================================================================
+  # The predicted-damage half of the defensives was hardcoded while the health
+  # half had sliders, so tuning one left the other stuck. incoming.pct is the
+  # biggest predicted incoming hit as a % of effective health — a different
+  # question from "how hurt are they right now", which is why each defensive
+  # reads both.
+  barkskin_incoming_pct:
+    label: "Barkskin Incoming Damage %"
+    section: "Defensives"
+    type: slider
+    min: 10
+    max: 100
+    default: 30
+    description: "Use Barkskin when the biggest predicted incoming hit is at least this much of your effective health, even at full HP."
+
+  ironbark_incoming_pct:
+    label: "Ironbark Incoming Damage %"
+    section: "Defensives"
+    type: slider
+    min: 10
+    max: 100
+    default: 40
+    description: "Use Ironbark when the target's biggest predicted incoming hit is at least this much of their effective health, even at full HP."
+
   barkskin_threshold:
     label: "Barkskin HP %"
     section: "Defensives"
@@ -611,9 +634,9 @@ lists:
   # not heal, so it has to land before those HoTs do, not after they have
   # already discounted the danger.
   defensives:
-    - barkskin,name="Barkskin",off_gcd=true,ignore_queue=true,if=health.pct<config.barkskin_threshold|incoming.pct>=30
-    - ironbark,name="Ironbark (Tank)",off_gcd=true,ignore_queue=true,cycle=tanks,if=config.ironbark_target=1&(cycle.health.pct<config.ironbark_threshold|cycle.incoming.pct>40)&cycle.buff.ironbark.down
-    - ironbark,name="Ironbark (Members)",off_gcd=true,ignore_queue=true,cycle=members,if=config.ironbark_target=2&(cycle.health.pct<config.ironbark_threshold|cycle.incoming.pct>40)&cycle.buff.ironbark.down
+    - barkskin,name="Barkskin",off_gcd=true,ignore_queue=true,if=health.pct<config.barkskin_threshold|incoming.pct>=config.barkskin_incoming_pct
+    - ironbark,name="Ironbark (Tank)",off_gcd=true,ignore_queue=true,cycle=tanks,if=config.ironbark_target=1&(cycle.health.pct<config.ironbark_threshold|cycle.incoming.pct>config.ironbark_incoming_pct)&cycle.buff.ironbark.down
+    - ironbark,name="Ironbark (Members)",off_gcd=true,ignore_queue=true,cycle=members,if=config.ironbark_target=2&(cycle.health.pct<config.ironbark_threshold|cycle.incoming.pct>config.ironbark_incoming_pct)&cycle.buff.ironbark.down
     - bear_form,name="Panic Bear",if= health.pct<config.frenzied_regen_threshold&!buff.bear_form.up&cooldown.frenzied_regeneration.ready
     - frenzied_regeneration,name="Frenzied Regen",if= health.pct<config.frenzied_regen_threshold&buff.bear_form.up
 
