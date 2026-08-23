@@ -60,7 +60,7 @@
 # Revive.
 # =============================================================================
 
-version: "2.8.1"
+version: "2.8.3"
 author: Ferraz
 patch: "12.1"
 spec: 102
@@ -75,7 +75,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-08-23 | Patch: 12.1 | Version: 2.8.1"
+    text: "Last update: 2026-08-23 | Patch: 12.1 | Version: 2.8.3"
 
   # Exact string every number here was measured against — Elune's Chosen, not Grove.
   recommended_talents:
@@ -311,8 +311,6 @@ variables:
   # CA/Incarnation ready — turns true before every burst, not just the pull.
   # Removing the opener lists it drives measured -1.6%.
   opener: (talent.celestial_alignment|talent.incarnation_chosen_of_elune)&cooldown.celestial_alignment.remains=0&!var.cd_active
-  cd_window: cooldown.force_of_nature.remains>15|(cooldown.celestial_alignment.remains<44&cooldown.incarnation_chosen_of_elune.remains<44)
-  cd_window_narrow: cooldown.force_of_nature.remains>30|((cooldown.celestial_alignment.remains>10|cooldown.incarnation_chosen_of_elune.remains>10)&(cooldown.celestial_alignment.remains<20&cooldown.incarnation_chosen_of_elune.remains<20))
   cd_active: buff.celestial_alignment.up|buff.incarnation_chosen_of_elune.up
 
 lists:
@@ -379,8 +377,8 @@ lists:
   # Spreads DoTs without changing target. mouseover.combat keeps it from
   # pulling something that is not in the fight yet.
   mouseover_dots:
-    - sunfire.mouseover,name="Sunfire Mouseover",if=config.enable_mouseover_dots&mouseover.exists&mouseover.enemy&mouseover.attackable&!mouseover.dead&mouseover.combat&mouseover.range<=40&mouseover.debuff.sunfire.down
-    - moonfire.mouseover,name="Moonfire Mouseover",if=config.enable_mouseover_dots&mouseover.exists&mouseover.enemy&mouseover.attackable&!mouseover.dead&mouseover.combat&mouseover.range<=40&mouseover.debuff.moonfire.down
+    - sunfire,name="Sunfire (Fallback)",name="Sunfire (Fallback)".mouseover,name="Sunfire Mouseover",if=config.enable_mouseover_dots&mouseover.exists&mouseover.enemy&mouseover.attackable&!mouseover.dead&mouseover.combat&mouseover.range<=40&mouseover.debuff.sunfire.down
+    - moonfire,name="Moonfire (Fallback)",name="Moonfire (Fallback)".mouseover,name="Moonfire Mouseover",if=config.enable_mouseover_dots&mouseover.exists&mouseover.enemy&mouseover.attackable&!mouseover.dead&mouseover.combat&mouseover.range<=40&mouseover.debuff.moonfire.down
 
   # Called from main after defensives and interrupts, so a real defensive or a
   # kick still outranks a dispel.
@@ -425,10 +423,10 @@ lists:
 
   # Instant casts only, unmeasured. Wild Mushroom/New Moon lines dead on this build.
   moving_st:
-    - moonfire,if=debuff.moonfire.remains<2|debuff.moonfire.refreshable
-    - sunfire,if=debuff.sunfire.remains<2|debuff.sunfire.refreshable
-    - starsurge,if=buff.starweavers_warp.up|buff.touch_the_cosmos.react
-    - starsurge,if=astral_power>60
+    - moonfire,name="Moonfire (Refresh)",if=debuff.moonfire.remains<2|debuff.moonfire.refreshable
+    - sunfire,name="Sunfire (Refresh)",if=debuff.sunfire.remains<2|debuff.sunfire.refreshable
+    - starsurge,name="Starsurge (Proc or AP Dump)",if=buff.starweavers_warp.up|buff.touch_the_cosmos.react
+    - starsurge,name="Starsurge (AP Dump)",if=astral_power>60
     - fury_of_elune,if=!talent.sundered_firmament|(debuff.atmospheric_exposure.remains<2&buff.eclipse_lunar.remains>5)
     - wild_mushroom,if=cooldown.wild_mushroom.full_recharge_time<cooldown.celestial_alignment.remains
     - new_moon,if=astral_power.deficit>10
@@ -437,12 +435,12 @@ lists:
 
   # Instant casts only, unmeasured.
   moving_aoe:
-    - sunfire,if=debuff.sunfire.remains<2|debuff.sunfire.refreshable
-    - moonfire,if=debuff.moonfire.remains<2|debuff.moonfire.refreshable
-    - starfall,if=buff.starweavers_weft.up|buff.touch_the_cosmos.react
-    - starfall,if=astral_power>50
-    - starsurge,if=buff.starfall.up&(buff.touch_the_cosmos.react|buff.starweavers_warp.up)
-    - starsurge,if=buff.starfall.up&astral_power>60
+    - sunfire,name="Sunfire (Refresh)",if=debuff.sunfire.remains<2|debuff.sunfire.refreshable
+    - moonfire,name="Moonfire (Refresh)",if=debuff.moonfire.remains<2|debuff.moonfire.refreshable
+    - starfall,name="Starfall (Proc or AP Dump)",if=buff.starweavers_weft.up|buff.touch_the_cosmos.react
+    - starfall,name="Starfall (AP Dump)",if=astral_power>50
+    - starsurge,name="Starsurge (Proc or AP Dump)",if=buff.starfall.up&(buff.touch_the_cosmos.react|buff.starweavers_warp.up)
+    - starsurge,name="Starsurge (AP Dump)",if=buff.starfall.up&astral_power>60
     - fury_of_elune,if=!talent.sundered_firmament|debuff.atmospheric_exposure.remains<2
     # DEAD LINES on the recommended build.
     - wild_mushroom,if=buff.eclipse_lunar.up|buff.eclipse_solar.up|cooldown.wild_mushroom.full_recharge_time<cooldown.celestial_alignment.remains
@@ -466,11 +464,11 @@ lists:
     - force_of_nature,if=var.cd_active|cooldown.incarnation_chosen_of_elune.remains>30
 
     - starfall,if=enemies.combat.40y>=2&(buff.starweavers_weft.up|buff.touch_the_cosmos.react)
-    - starsurge,if=buff.starweavers_warp.up|buff.touch_the_cosmos.react
+    - starsurge,name="Starsurge (Proc or AP Dump)",if=buff.starweavers_warp.up|buff.touch_the_cosmos.react
 
     # AP floor follows the Eclipse — replaced flat astral_power>60, measured +1.28%.
-    - starsurge,if=!var.eclipse_down&astral_power>=50&enemies.combat.40y<=1
-    - starsurge,if=var.eclipse_down&astral_power.deficit<20&enemies.combat.40y<=1
+    - starsurge,name="Starsurge (Eclipse Down)",if=!var.eclipse_down&astral_power>=50&enemies.combat.40y<=1
+    - starsurge,name="Starsurge (AP Capping)",if=var.eclipse_down&astral_power.deficit<20&enemies.combat.40y<=1
 
     - incarnation_chosen_of_elune,global_delay=500,if=!var.cd_active&buff.ascendant_stars.down&(!talent.elunes_guidance|cooldown.lunar_eclipse.charges_fractional<1.5)
 
@@ -493,10 +491,10 @@ lists:
     - fury_of_elune,if=!talent.sundered_firmament|debuff.atmospheric_exposure.remains<2
     - force_of_nature,if=var.cd_active|cooldown.incarnation_chosen_of_elune.remains>30
     - incarnation_chosen_of_elune,global_delay=500,if=!var.cd_active&(var.eclipse_down|fight_remains<20)
-    - starfall,if=buff.starweavers_weft.up|buff.touch_the_cosmos.react
-    - starfall,if=(astral_power>50)&target.time_to_die>5
-    - starsurge,if=buff.starfall.up&(buff.starweavers_warp.up|buff.touch_the_cosmos.react)
-    - starsurge,if=buff.starfall.up&astral_power>80&buff.starlord.stack<3
+    - starfall,name="Starfall (Proc or AP Dump)",if=buff.starweavers_weft.up|buff.touch_the_cosmos.react
+    - starfall,name="Starfall (AP Dump)",if=(astral_power>50)&target.time_to_die>5
+    - starsurge,name="Starsurge (Proc or AP Dump)",if=buff.starfall.up&(buff.starweavers_warp.up|buff.touch_the_cosmos.react)
+    - starsurge,name="Starsurge (AP Dump)",if=buff.starfall.up&astral_power>80&buff.starlord.stack<3
     - wild_mushroom,if=buff.eclipse_lunar.up|buff.eclipse_solar.up|cooldown.wild_mushroom.full_recharge_time<cooldown.celestial_alignment.remains
     - starfire
 
@@ -506,12 +504,12 @@ lists:
     - moonfire,if=debuff.moonfire.remains<2|debuff.moonfire.refreshable&var.eclipse_down
     - sunfire,if=debuff.sunfire.remains<2|debuff.sunfire.refreshable&var.eclipse_down
     - lunar_eclipse,if=var.eclipse_down
-    - starsurge,if=buff.ascendant_stars.up|buff.touch_the_cosmos.react
+    - starsurge,name="Starsurge (Ascendant Stars)",if=buff.ascendant_stars.up|buff.touch_the_cosmos.react
     - fury_of_elune
     - force_of_nature
     - incarnation_chosen_of_elune,global_delay=500,if=!var.cd_active
     - starfall,if=enemies.combat.40y>1&(buff.touch_the_cosmos.react|astral_power>80)
-    - starsurge,if=buff.touch_the_cosmos.react|astral_power>80
+    - starsurge,name="Starsurge (Proc or AP Dump)",if=buff.touch_the_cosmos.react|astral_power>80
     - starfire
 
   # Same ramp, 2+ enemies.

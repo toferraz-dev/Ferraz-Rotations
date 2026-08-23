@@ -47,7 +47,7 @@
 # and the Predatory Swiftness lines.
 # =============================================================================
 
-version: "1.5.1"
+version: "1.5.3"
 author: Ferraz
 patch: "12.1"
 spec: 103
@@ -62,7 +62,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-08-23 | Patch: 12.1 | Version: 1.5.1"
+    text: "Last update: 2026-08-23 | Patch: 12.1 | Version: 1.5.3"
 
   recommended_talents:
     section: "Talents"
@@ -241,7 +241,6 @@ config:
 
 variables:
   bs_inc: buff.berserk.up|buff.incarnation_avatar_of_ashamane.up
-  bs_inc_remains: buff.berserk.remains+buff.incarnation_avatar_of_ashamane.remains
   bs_inc_cd_remains: cooldown.berserk.remains>?cooldown.incarnation_avatar_of_ashamane.remains
   bs_inc_cd_duration: cooldown.berserk.duration>?cooldown.incarnation_avatar_of_ashamane.duration
   regrowth: 0
@@ -331,11 +330,11 @@ lists:
     - target_enemy,name="Swap Off Storm Blessed",delay=500,off_gcd=true,if=target.buff.1289229.up&enemies.combat.40y>=2
 
   defensives:
-    - barkskin,off_gcd=true,ignore_queue=true,range_check=none,if=incoming.pct>=config.barkskin_dmg_pct
-    - survival_instincts,off_gcd=true,ignore_queue=true,range_check=none,if=incoming.pct>=config.survival_instincts_dmg_pct&incoming.mitigated.pct>=config.survival_instincts_dmg_pct
+    - barkskin,name="Barkskin (Predicted Damage)",off_gcd=true,ignore_queue=true,range_check=none,if=incoming.pct>=config.barkskin_dmg_pct
+    - survival_instincts,name="Survival Instincts (Predicted Damage)",off_gcd=true,ignore_queue=true,range_check=none,if=incoming.pct>=config.survival_instincts_dmg_pct&incoming.mitigated.pct>=config.survival_instincts_dmg_pct
     - bear_form,name="Shapeshift Clear",if=debuff_list.freedom.up&!buff.bear_form.up
-    - survival_instincts,off_gcd=true,ignore_queue=true,range_check=none,if=health.pct<=config.survival_instincts_hp_pct
-    - barkskin,off_gcd=true,ignore_queue=true,range_check=none,if=health.pct<=config.barkskin_hp_pct
+    - survival_instincts,name="Survival Instincts (HP)",off_gcd=true,ignore_queue=true,range_check=none,if=health.pct<=config.survival_instincts_hp_pct
+    - barkskin,name="Barkskin (HP)",off_gcd=true,ignore_queue=true,range_check=none,if=health.pct<=config.barkskin_hp_pct
 
   cooldown:
     - trinket_1,if=config.use_trinket_1&trinket_1.ready
@@ -365,19 +364,19 @@ lists:
     # that payoff further, so it is pooled to the full 50-energy cost instead
     # of being fired at the 25-energy floor. This `return` is the pooling gate.
     - return,if=combo_points>=5&energy<50
-    - ferocious_bite,if=combo_points>=5
-    - ravage,if=combo_points>=5
+    - ferocious_bite,name="Ferocious Bite (Fallback)",if=combo_points>=5
+    - ravage,name="Ravage (Fallback)",if=combo_points>=5
 
   aoe_finisher:
     # Primal Wrath and Rampant Ferocity are NOT on the raid string, so the
     # lines gated on them are inert and the Rip/Bite fallbacks are the live
     # path. Kept so the list still works on an AoE respec.
-    - primal_wrath,if=combo_points>=5&enemies.combat.8y>1&(dot.rip.remains<6.5&!var.bs_inc|dot.rip.refreshable)
-    - ravage,if=combo_points>=5&!talent.primal_wrath&enemies.combat.8y>=2+(3*!talent.rampant_ferocity)
+    - primal_wrath,name="Primal Wrath (Refresh)",if=combo_points>=5&enemies.combat.8y>1&(dot.rip.remains<6.5&!var.bs_inc|dot.rip.refreshable)
+    - ravage,name="Ravage (No Primal Wrath)",if=combo_points>=5&!talent.primal_wrath&enemies.combat.8y>=2+(3*!talent.rampant_ferocity)
     - rip,if=combo_points>=5&!talent.primal_wrath&(dot.rip.down|dot.rip.refreshable&(buff.tigers_fury.up|!var.rip_tf))
-    - ferocious_bite,if=combo_points>=5&(talent.rampant_ferocity|buff.ravage.up&enemies.combat.8y<8|dot.bloodseeker_vines.ticking&enemies.combat.8y<5)
-    - ravage,if=combo_points>=5&(talent.rampant_ferocity|enemies.combat.8y<8|dot.bloodseeker_vines.ticking&enemies.combat.8y<5)
-    - primal_wrath,if=combo_points>=5
+    - ferocious_bite,name="Ferocious Bite (Rampant/Vines)",if=combo_points>=5&(talent.rampant_ferocity|buff.ravage.up&enemies.combat.8y<8|dot.bloodseeker_vines.ticking&enemies.combat.8y<5)
+    - ravage,name="Ravage (Rampant/Vines)",if=combo_points>=5&(talent.rampant_ferocity|enemies.combat.8y<8|dot.bloodseeker_vines.ticking&enemies.combat.8y<5)
+    - primal_wrath,name="Primal Wrath (Fallback)",if=combo_points>=5
     - ferocious_bite,if=combo_points>=5
     - ravage,if=combo_points>=5
     - thorn_bloom
@@ -397,15 +396,15 @@ lists:
     - shred
 
   aoe_builder:
-    - rake,if=dot.rake.refreshable&((talent.doubleclawed_rake&(!talent.lunar_inspiration|!talent.panthers_guile|active_dot.rake<5))|hero_tree.wildstalker&(active_dot.rake<2+!talent.panthers_guile+talent.lunar_inspiration))
+    - rake,name="Rake (Doubleclawed)",if=dot.rake.refreshable&((talent.doubleclawed_rake&(!talent.lunar_inspiration|!talent.panthers_guile|active_dot.rake<5))|hero_tree.wildstalker&(active_dot.rake<2+!talent.panthers_guile+talent.lunar_inspiration))
     - moonfire,if=talent.lunar_inspiration&dot.moonfire.refreshable
-    - 106785,if=hero_tree.druid_of_the_claw&var.bs_inc|buff.clearcasting.react&enemies.combat.8y>2&(hero_tree.druid_of_the_claw|enemies.combat.8y<7)
-    - 106785,if=buff.sudden_ambush.up&enemies.combat.8y>=5+(2*hero_tree.wildstalker)
-    - rake,if=dot.rake.refreshable&(hero_tree.wildstalker|enemies.combat.8y<=var.dotc_rake_threshold)
-    - rake,if=buff.tigers_fury.up&!var.rake_tf&enemies.combat.8y=2
+    - 106785,name="Swipe (Proc)",if=hero_tree.druid_of_the_claw&var.bs_inc|buff.clearcasting.react&enemies.combat.8y>2&(hero_tree.druid_of_the_claw|enemies.combat.8y<7)
+    - 106785,name="Swipe (Sudden Ambush)",if=buff.sudden_ambush.up&enemies.combat.8y>=5+(2*hero_tree.wildstalker)
+    - rake,name="Rake (Wildstalker)",if=dot.rake.refreshable&(hero_tree.wildstalker|enemies.combat.8y<=var.dotc_rake_threshold)
+    - rake,name="Rake (Tigers Fury)",if=buff.tigers_fury.up&!var.rake_tf&enemies.combat.8y=2
     # Panther's Guile IS on the raid string, so this line is live here.
     - shred,if=combo_points<=1&enemies.combat.8y=2&talent.panthers_guile
-    - 106785,if=combo_points>1|enemies.combat.8y>2|!talent.panthers_guile
+    - 106785,name="Swipe (Filler)",if=combo_points>1|enemies.combat.8y>2|!talent.panthers_guile
 
   # Mark of the Wild, OOC Regrowth top-off.
   heal_support:
@@ -476,7 +475,7 @@ lists:
     - rake,range_check=none,if=buff.prowl.up&target.in_melee
     - return,if=buff.prowl.up
 
-    - tigers_fury,off_gcd=true,ignore_queue=true,if=(var.bs_inc_cd_remains<=1|var.bs_inc_cd_remains>10|var.holdBerserk)&(cooldown.frantic_frenzy.remains<buff.tigers_fury.duration-1.5|cooldown.frantic_frenzy.remains>22|!talent.frantic_frenzy|enemies.combat.8y=1)
+    - tigers_fury,name="Tigers Fury (Refresh)",off_gcd=true,ignore_queue=true,if=(var.bs_inc_cd_remains<=1|var.bs_inc_cd_remains>10|var.holdBerserk)&(cooldown.frantic_frenzy.remains<buff.tigers_fury.duration-1.5|cooldown.frantic_frenzy.remains>22|!talent.frantic_frenzy|enemies.combat.8y=1)
 
     - chomp,if=buff.chomp_enabler.up
 
@@ -492,4 +491,4 @@ lists:
     - call_action_list,name=builder,if=enemies.combat.8y=1&combo_points<=4
     - call_action_list,name=aoe_builder,if=enemies.combat.8y>1&combo_points<=4
     - regrowth,range_check=none,if=buff.predatory_swiftness.up&var.regrowth
-    - tigers_fury,off_gcd=true,ignore_queue=true
+    - tigers_fury,name="Tigers Fury (Fallback)",off_gcd=true,ignore_queue=true

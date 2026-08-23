@@ -31,7 +31,7 @@
 # Form (button morphs); 1307881 Gory Fur (3 spells share the display name).
 # =============================================================================
 
-version: "1.7.0"
+version: "1.7.2"
 patch: "12.1"
 spec: 104
 name: Guardian Druid Ferraz M+
@@ -73,7 +73,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-08-23 | Patch: 12.1 | Version: 1.7.0"
+    text: "Last update: 2026-08-23 | Patch: 12.1 | Version: 1.7.2"
 
   # Exact string every number here was measured against (sim/Tassiana_guardian.simc).
   recommended_talents:
@@ -384,11 +384,11 @@ lists:
 
   # Predicted damage first, reactive HP second. Unvalidated by simulation.
   defensives:
-    - barkskin,range_check=none,if=incoming.mitigated.pct>=config.barkskin_dmg_pct
-    - survival_instincts,range_check=none,if=incoming.mitigated.pct>=config.survival_instincts_dmg_pct
-    - survival_instincts,range_check=none,if=health.pct<=config.survival_instincts_hp_pct
+    - barkskin,name="Barkskin (Predicted Damage)",range_check=none,if=incoming.mitigated.pct>=config.barkskin_dmg_pct
+    - survival_instincts,name="Survival Instincts (Predicted Damage)",range_check=none,if=incoming.mitigated.pct>=config.survival_instincts_dmg_pct
+    - survival_instincts,name="Survival Instincts (HP)",range_check=none,if=health.pct<=config.survival_instincts_hp_pct
     - frenzied_regeneration,range_check=none,if=health.pct<=config.frenzied_regeneration_hp_pct&buff.frenzied_regeneration.down
-    - barkskin,range_check=none,if=health.pct<=config.barkskin_hp_pct
+    - barkskin,name="Barkskin (HP)",range_check=none,if=health.pct<=config.barkskin_hp_pct
 
   cooldowns:
     - barkskin,if=buff.bear_form.up
@@ -501,7 +501,7 @@ lists:
     # Escape hatches back to Bear if the cast is blocked, HP drops, or target dies mid-weave.
     - bear_form,name="Bear Form (post-HotW)",range_check=none,if=buff.cat_form.up&(!cooldown_bypass.heart_of_the_wild.ready|health.pct<config.hotw_hp_pct|!target.valid|!target.attackable)
 
-    - moonfire.mouseover,if=config.MO_moonfire&config.allow_pull_with_mo&mouseover.enemy&mouseover.alive&mouseover.debuff.moonfire.down
+    - moonfire.mouseover,name="Moonfire (Pull)",if=config.MO_moonfire&config.allow_pull_with_mo&mouseover.enemy&mouseover.alive&mouseover.debuff.moonfire.down
     # --- COMBAT WALL. Nothing below this line runs out of combat. ---
     # Everything above it is what a tank may do before the pull: the engine,
     # Mark of the Wild, entering Bear Form, the Heart of the Wild weave (which
@@ -550,7 +550,7 @@ lists:
     # damage lists own. Overlaps the bear-list lines on purpose.
     - ironfur,use_off_gcd=1,delay=300,if=buff.ironfur.remains<2|rage>=80
     - moonfire,if=!target.in_melee&buff.bear_form.up&target.valid
-    - moonfire.mouseover,if=config.MO_moonfire&mouseover.enemy&mouseover.alive&mouseover.debuff.moonfire.down&mouseover.combat
+    - moonfire.mouseover,name="Moonfire (In Combat)",if=config.MO_moonfire&mouseover.enemy&mouseover.alive&mouseover.debuff.moonfire.down&mouseover.combat
 
     # --- Damage priority ---
     - call_action_list,name=cooldowns
