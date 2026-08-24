@@ -37,7 +37,7 @@
 # heals better" — SimC never lets the group take damage, so it never charges
 # you for the globals a form swap costs.
 # =============================================================================
-version: "4.5.0"
+version: "4.5.1"
 author: Ferraz
 patch: "12.1"
 spec: 105
@@ -59,7 +59,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-08-23 | Patch: 12.1 | Version: 4.5.0"
+    text: "Last update: 2026-08-23 | Patch: 12.1 | Version: 4.5.1"
 
   # ==========================================================================
   # RECOMMENDED BUILD — the string the talent.X gates below assume.
@@ -692,8 +692,8 @@ lists:
     - trinket_1,delay=150,name="Trinket 1",if=config.use_trinket_1&trinket_1.ready&(group.count(cycle.health.effective.pct<config.convoke_threshold&!cycle.tank)>=config.convoke_members)&!buff.cat_form.up&!buff.bear_form.up
     - trinket_2,delay=150,name="Trinket 2",if=config.use_trinket_2&trinket_2.ready&(group.count(cycle.health.effective.pct<config.convoke_threshold&!cycle.tank)>=config.convoke_members)&!buff.cat_form.up&!buff.bear_form.up
     - combat_potion,delay=150,name="Combat Potion",if=combat_potion.ready&config.use_potion&(group.count(cycle.health.effective.pct<config.convoke_threshold&!cycle.tank)>=config.convoke_members)&!buff.cat_form.up&!buff.bear_form.up
-    - convoke_the_spirits,global_delay=500,name="Convoke (Heal)",if=(group.count(cycle.health.effective.pct<config.convoke_threshold&!cycle.tank)>=config.convoke_members)&!buff.cat_form.up&!buff.bear_form.up
-    - tranquility,global_delay=500,name="Tranquility",if=!config.manual_tranquility&group.count(cycle.health.effective.pct<config.tranquility_threshold&!cycle.tank)>=config.tranquility_members&!player.moving
+    - convoke_the_spirits,global_delay=750,name="Convoke (Heal)",if=(group.count(cycle.health.effective.pct<config.convoke_threshold&!cycle.tank)>=config.convoke_members)&!buff.cat_form.up&!buff.bear_form.up
+    - tranquility,global_delay=750,name="Tranquility",if=!config.manual_tranquility&group.count(cycle.health.effective.pct<config.tranquility_threshold&!cycle.tank)>=config.tranquility_members&!player.moving
     # NEW in 5.0 — Power of the Archdruid: Swiftmend on cooldown spreads three
     # Rejuvenations, which is what gets Abundance to 5 stacks fast. Self-cast so
     # it never waits for someone to be hurt. Grove Guardians also makes every
@@ -841,7 +841,23 @@ lists:
     # If it misbehaves after a spec change, that is a Simia-side stale-button
     # problem and no id in this file will fix it.
     - heart_of_the_wild,name="HotW Cat",if=config.use_heart_of_the_wild&talent.heart_of_the_wild&buff.cat_form.up
-    - convoke_the_spirits,name="Convoke (Offensive)",if=buff.cat_form.up&cooldown.convoke_the_spirits.ready&target.time_to_die>10
+    # global_delay, and NOT 500. This line had no delay at all while every other
+    # Convoke line in both Resto files carried global_delay=500.
+    #
+    # The guard `return,if=player.channeling` is the first line of main, so once
+    # the channel is REGISTERED nothing below it runs. The gap is the window
+    # between pressing Convoke and the client reporting the channel — a server
+    # round trip plus the addon's polling interval. In that window the rotation
+    # completes a full pass and suggests something else; during heavy healing
+    # there is always a heal waiting, which is exactly when the clipping was
+    # seen. global_delay is the documented tool for this: "blocks ALL spells for
+    # N ms after pressing (useful for registering channels)".
+    #
+    # Raised to 750 because 500 is marginal on a South American connection —
+    # 150-250ms of latency plus polling lands close to the old value. The cost
+    # is 750ms of held suggestions after a Convoke press, which is free while
+    # you are channelling for 4 seconds anyway.
+    - convoke_the_spirits,global_delay=750,name="Convoke (Offensive)",if=buff.cat_form.up&cooldown.convoke_the_spirits.ready&target.time_to_die>10
     - call_action_list,name=catweave_aoe,if=enemies.combat.8y>=config.aoe_threshold
     - call_action_list,name=catweave_st,if=enemies.combat.8y<config.aoe_threshold
 
