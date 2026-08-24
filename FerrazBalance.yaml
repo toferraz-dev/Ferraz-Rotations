@@ -61,7 +61,7 @@
 # Wild Mushroom, Power of Goldrinn, Orbit Breaker.
 # =============================================================================
 
-version: "3.8.3"
+version: "3.8.4"
 author: Ferraz
 patch: "12.1"
 spec: 102
@@ -78,7 +78,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-08-23 | Patch: 12.1 | Version: 3.8.3"
+    text: "Last update: 2026-08-23 | Patch: 12.1 | Version: 3.8.4"
 
   # ==========================================================================
   # RECOMMENDED BUILD — every number in this file was measured against this
@@ -695,8 +695,8 @@ lists:
   #   - mouseover.combat added: hovering an unpulled mob no longer pulls it,
   #     the same reason the pre-pull Wrath was removed in 3.1.
   mouseover_dots:
-    - sunfire,name="Sunfire (Fallback)",name="Sunfire (Fallback)".mouseover,name="Sunfire Mouseover",if=config.enable_mouseover_dots&mouseover.exists&mouseover.enemy&mouseover.attackable&!mouseover.dead&mouseover.combat&mouseover.range<=40&mouseover.debuff.sunfire.down
-    - moonfire,name="Moonfire (Fallback)",name="Moonfire (Fallback)".mouseover,name="Moonfire Mouseover",if=config.enable_mouseover_dots&mouseover.exists&mouseover.enemy&mouseover.attackable&!mouseover.dead&mouseover.combat&mouseover.range<=40&mouseover.debuff.moonfire.down
+    - sunfire.mouseover,name="Sunfire Mouseover",if=config.enable_mouseover_dots&mouseover.exists&mouseover.enemy&mouseover.attackable&!mouseover.dead&mouseover.combat&mouseover.range<=40&mouseover.debuff.sunfire.down
+    - moonfire.mouseover,name="Moonfire Mouseover",if=config.enable_mouseover_dots&mouseover.exists&mouseover.enemy&mouseover.attackable&!mouseover.dead&mouseover.combat&mouseover.range<=40&mouseover.debuff.moonfire.down
 
   # Instant casts only, <2 enemies. Unmeasured (SimC never moves).
   moving_st:
