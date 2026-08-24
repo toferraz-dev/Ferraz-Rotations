@@ -61,7 +61,7 @@
 # Wild Mushroom, Power of Goldrinn, Orbit Breaker.
 # =============================================================================
 
-version: "3.8.4"
+version: "3.8.5"
 author: Ferraz
 patch: "12.1"
 spec: 102
@@ -78,7 +78,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-08-23 | Patch: 12.1 | Version: 3.8.4"
+    text: "Last update: 2026-08-24 | Patch: 12.1 | Version: 3.8.5"
 
   # ==========================================================================
   # RECOMMENDED BUILD — every number in this file was measured against this
@@ -394,8 +394,8 @@ config:
     label: "Soothe Enrage"
     section: "Dispels"
     type: checkbox
-    default: false
-    description: "Soothe the current target when it has an enrage effect. OFF by default: costs a GCD and many trash enrages are not worth it. Turn ON for dungeons where the enrage matters."
+    default: true
+    description: "Soothe the current target when it has an enrage effect. ON by default — this is what Simia's shared list did before this file inlined its own plumbing, and it had no switch at all. Turn OFF on a key where the enrage is not worth the global."
 
   # ==========================================================================
   # DEFENSIVES — UNVALIDATED: SimC has no M+ damage-intake model.
@@ -437,7 +437,7 @@ config:
     section: "Defensives"
     type: checkbox
     default: true
-    description: "In the emergency Bear Form window, press Heart of the Wild before Frenzied Regeneration. Stamina lands first, so the heal arrives on a bigger health pool."
+    description: "Soothe the current target when it has an enrage effect. ON by default — this is what Simia's shared list did before this file inlined its own plumbing, and it had no switch at all. Turn OFF on a key where the enrage is not worth the global."
 
   hotw_bear_hp:
     label: "HotW Bear Defensive HP%"

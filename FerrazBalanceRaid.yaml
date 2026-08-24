@@ -60,7 +60,7 @@
 # Revive.
 # =============================================================================
 
-version: "2.8.4"
+version: "2.8.5"
 author: Ferraz
 patch: "12.1"
 spec: 102
@@ -75,7 +75,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-08-23 | Patch: 12.1 | Version: 2.8.4"
+    text: "Last update: 2026-08-24 | Patch: 12.1 | Version: 2.8.5"
 
   # Exact string every number here was measured against — Elune's Chosen, not Grove.
   recommended_talents:
@@ -297,7 +297,8 @@ config:
     label: "Soothe Enrage"
     section: "Dispels"
     type: checkbox
-    default: false
+    default: true
+    description: "Soothe the current target when it has an enrage effect. ON by default — this is what Simia's shared list did before this file inlined its own plumbing, and it had no switch at all. Turn OFF on a key where the enrage is not worth the global."
 
   discord_button:
     section: "Help"

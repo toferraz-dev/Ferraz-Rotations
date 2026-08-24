@@ -57,7 +57,7 @@
 # window built around it is a possible future gain, not applied here.
 # =============================================================================
 
-version: "2.6.3"
+version: "2.6.4"
 author: Ferraz
 patch: "12.1"
 spec: 103
@@ -72,7 +72,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-08-23 | Patch: 12.1 | Version: 2.6.3"
+    text: "Last update: 2026-08-24 | Patch: 12.1 | Version: 2.6.4"
 
   recommended_talents:
     section: "Talents"
@@ -293,7 +293,8 @@ config:
     label: "Soothe Enrage"
     section: "Dispels"
     type: checkbox
-    default: false
+    default: true
+    description: "Soothe the current target when it has an enrage effect. ON by default — this is what Simia's shared list did before this file inlined its own plumbing, and it had no switch at all. Turn OFF on a key where the enrage is not worth the global."
 
 variables:
   bs_inc: buff.berserk.up|buff.incarnation_avatar_of_ashamane.up
