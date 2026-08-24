@@ -1,0 +1,11 @@
+# 1) so as gemas 240983 em head + aneis + cinto
+profileset."1 gemas 240983 em head+aneis+cinto"+=head=,id=250024,enchant_id=7961,gem_id=240983,bonus_id=6652/13440/13338/13575/12806/13534
+profileset."1 gemas 240983 em head+aneis+cinto"+=finger1=,id=252258,enchant_id=7969,gem_id=240983,bonus_id=12842/13440/42/13668/12699,content_tuning=1279
+profileset."1 gemas 240983 em head+aneis+cinto"+=finger2=,id=251136,enchant_id=7969,gem_id=240983,bonus_id=12842/13440/6652/13668/12699,content_tuning=1279
+profileset."1 gemas 240983 em head+aneis+cinto"+=waist=,id=251189,gem_id=240983,bonus_id=12843/13440/6652/13696/13662/12699,content_tuning=1279
+
+# 2) gemas + o anel Amani Warlord no finger2
+profileset."2 gemas + anel Amani no finger2"+=head=,id=250024,enchant_id=7961,gem_id=240983,bonus_id=6652/13440/13338/13575/12806/13534
+profileset."2 gemas + anel Amani no finger2"+=finger1=,id=252258,enchant_id=7969,gem_id=240983,bonus_id=12842/13440/42/13668/12699,content_tuning=1279
+profileset."2 gemas + anel Amani no finger2"+=finger2=,id=273792,enchant_id=7969,gem_id=240983,bonus_id=12843/13440/6652/13668/12699,content_tuning=1279
+profileset."2 gemas + anel Amani no finger2"+=waist=,id=251189,gem_id=240983,bonus_id=12843/13440/6652/13696/13662/12699,content_tuning=1279

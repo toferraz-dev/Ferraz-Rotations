@@ -1,0 +1,29 @@
+# --- ENCANTAMENTOS: seus vs os do perfil de referencia do SimC ---
+profileset."ENCH head 8017 (seu 7961)"+=head=,id=250024,enchant_id=8017,gem_id=240888,bonus_id=6652/13440/13338/13575/12806/13534
+profileset."ENCH feet 7963 (seu 7993)"+=feet=,id=244569,enchant_id=7963,bonus_id=12214/13667/12497/12066/8960/12384/8793/13622,content_tuning=3615,crafted_stats=49/40,crafting_quality=5
+profileset."ENCH weapon 8039 (seu 8041)"+=main_hand=,id=251225,enchant_id=8039,bonus_id=13440/6652/12701/12845,content_tuning=1279
+
+# --- GEMA no head (sua: 240888) ---
+profileset."GEM head 240983"+=head=,id=250024,enchant_id=7961,gem_id=240983,bonus_id=6652/13440/13338/13575/12806/13534
+profileset."GEM head 240896"+=head=,id=250024,enchant_id=7961,gem_id=240896,bonus_id=6652/13440/13338/13575/12806/13534
+profileset."GEM head 240918"+=head=,id=250024,enchant_id=7961,gem_id=240918,bonus_id=6652/13440/13338/13575/12806/13534
+
+# --- GEMA no neck (sua: 240983) ---
+profileset."GEM neck 240888"+=neck=,id=251142,gem_id=240888,bonus_id=12843/13440/6652/13668/12699,content_tuning=1279
+profileset."GEM neck 240896"+=neck=,id=251142,gem_id=240896,bonus_id=12843/13440/6652/13668/12699,content_tuning=1279
+profileset."GEM neck 240918"+=neck=,id=251142,gem_id=240918,bonus_id=12843/13440/6652/13668/12699,content_tuning=1279
+
+# --- GEMAS nos dois aneis (suas: 240896) ---
+profileset."GEM aneis 240888"+=finger1=,id=252258,enchant_id=7969,gem_id=240888,bonus_id=12842/13440/42/13668/12699,content_tuning=1279
+profileset."GEM aneis 240888"+=finger2=,id=251136,enchant_id=7969,gem_id=240888,bonus_id=12842/13440/6652/13668/12699,content_tuning=1279
+profileset."GEM aneis 240983"+=finger1=,id=252258,enchant_id=7969,gem_id=240983,bonus_id=12842/13440/42/13668/12699,content_tuning=1279
+profileset."GEM aneis 240983"+=finger2=,id=251136,enchant_id=7969,gem_id=240983,bonus_id=12842/13440/6652/13668/12699,content_tuning=1279
+profileset."GEM aneis 240918"+=finger1=,id=252258,enchant_id=7969,gem_id=240918,bonus_id=12842/13440/42/13668/12699,content_tuning=1279
+profileset."GEM aneis 240918"+=finger2=,id=251136,enchant_id=7969,gem_id=240918,bonus_id=12842/13440/6652/13668/12699,content_tuning=1279
+
+# --- WAIST: socket nao usado? ---
+profileset."GEM waist 240918 (hoje vazio)"+=waist=,id=251189,gem_id=240918,bonus_id=12843/13440/6652/13696/13662/12699,content_tuning=1279
+profileset."GEM waist 240983"+=waist=,id=251189,gem_id=240983,bonus_id=12843/13440/6652/13696/13662/12699,content_tuning=1279
+profileset."GEM aneis 240983 + waist 240983"+=finger1=,id=252258,enchant_id=7969,gem_id=240983,bonus_id=12842/13440/42/13668/12699,content_tuning=1279
+profileset."GEM aneis 240983 + waist 240983"+=finger2=,id=251136,enchant_id=7969,gem_id=240983,bonus_id=12842/13440/6652/13668/12699,content_tuning=1279
+profileset."GEM aneis 240983 + waist 240983"+=waist=,id=251189,gem_id=240983,bonus_id=12843/13440/6652/13696/13662/12699,content_tuning=1279
