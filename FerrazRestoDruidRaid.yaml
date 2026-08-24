@@ -34,7 +34,7 @@
 # string — harmless dead weight unless the build changes.
 # =============================================================================
 
-version: "1.9.2"
+version: "1.9.3"
 author: Ferraz
 patch: "12.1"
 spec: 105
@@ -53,7 +53,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-08-23 | Patch: 12.1 | Version: 1.9.2"
+    text: "Last update: 2026-08-23 | Patch: 12.1 | Version: 1.9.3"
 
   # String the talent.X checks below assume.
   recommended_talents:
@@ -457,9 +457,23 @@ lists:
     - health_potion,delay=250,if=health_potion.ready&health.pct<=config.engine_health_potion
     - mana_potion,delay=250,if=mana_potion.ready&mana.pct<=config.engine_mana_potion
 
-    - target_enemy,delay=200,off_gcd=true,if=config.engine_auto_target.has(0)&!target.exists&enemies.combat.40y>=1
-    - target_enemy,delay=200,off_gcd=true,if=config.engine_auto_target.has(1)&target.dead&enemies.combat.40y>=1
-    - target_enemy,delay=200,off_gcd=true,if=config.engine_auto_target.has(2)&target.range>=40&enemies.combat.40y>=1
+    # player.combat on all three. As a healer you are constantly OUT of combat
+    # while the group is IN it, and you do not target enemies — so
+    # `!target.exists & enemies.combat.40y>=1` was satisfied on essentially
+    # every pass between pulls and this fired every 200ms forever.
+    #
+    # It never resolved itself because the two halves measure different things:
+    # enemies.combat.40y is a nameplate count, but WoW's TargetNearestEnemy
+    # only picks up enemies in front of you. The count says an enemy exists,
+    # the targeting call cannot reach it, and the condition stays true. With
+    # off_gcd=true that is a visible suggestion spamming out of combat.
+    #
+    # Nothing is lost by gating it: the only thing in this file that wants an
+    # enemy target is the damage half, and that already requires
+    # var.can_catweave, which is group_healthy AND player.combat.
+    - target_enemy,delay=200,off_gcd=true,if=player.combat&config.engine_auto_target.has(0)&!target.exists&enemies.combat.40y>=1
+    - target_enemy,delay=200,off_gcd=true,if=player.combat&config.engine_auto_target.has(1)&target.dead&enemies.combat.40y>=1
+    - target_enemy,delay=200,off_gcd=true,if=player.combat&config.engine_auto_target.has(2)&target.range>=40&enemies.combat.40y>=1
 
     # --- Temple of Sethraliss, Adderis and Aspix ---------------------------
     # Storm Blessed alternates between the two bosses and gives its holder
