@@ -60,7 +60,7 @@
 # Revive.
 # =============================================================================
 
-version: "2.8.3"
+version: "2.8.4"
 author: Ferraz
 patch: "12.1"
 spec: 102
@@ -75,7 +75,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-08-23 | Patch: 12.1 | Version: 2.8.3"
+    text: "Last update: 2026-08-23 | Patch: 12.1 | Version: 2.8.4"
 
   # Exact string every number here was measured against — Elune's Chosen, not Grove.
   recommended_talents:
@@ -377,8 +377,8 @@ lists:
   # Spreads DoTs without changing target. mouseover.combat keeps it from
   # pulling something that is not in the fight yet.
   mouseover_dots:
-    - sunfire,name="Sunfire (Fallback)",name="Sunfire (Fallback)".mouseover,name="Sunfire Mouseover",if=config.enable_mouseover_dots&mouseover.exists&mouseover.enemy&mouseover.attackable&!mouseover.dead&mouseover.combat&mouseover.range<=40&mouseover.debuff.sunfire.down
-    - moonfire,name="Moonfire (Fallback)",name="Moonfire (Fallback)".mouseover,name="Moonfire Mouseover",if=config.enable_mouseover_dots&mouseover.exists&mouseover.enemy&mouseover.attackable&!mouseover.dead&mouseover.combat&mouseover.range<=40&mouseover.debuff.moonfire.down
+    - sunfire.mouseover,name="Sunfire Mouseover",if=config.enable_mouseover_dots&mouseover.exists&mouseover.enemy&mouseover.attackable&!mouseover.dead&mouseover.combat&mouseover.range<=40&mouseover.debuff.sunfire.down
+    - moonfire.mouseover,name="Moonfire Mouseover",if=config.enable_mouseover_dots&mouseover.exists&mouseover.enemy&mouseover.attackable&!mouseover.dead&mouseover.combat&mouseover.range<=40&mouseover.debuff.moonfire.down
 
   # Called from main after defensives and interrupts, so a real defensive or a
   # kick still outranks a dispel.
