@@ -1,0 +1,24 @@
+# Bag alternatives, one profileset each. Every set inherits the equipped
+# profile and overrides only the slot it is testing.
+
+# --- head: 311 bag piece vs the 289 Luminous Bloom (possible tier) ---
+profileset."head Spare Speakers Hood 311"+=head=,id=273791,enchant_id=7961,gem_id=240888,bonus_id=12843/13440/6652/13696/13662/12699,content_tuning=1279
+
+# --- hands: 308 bag piece vs the 289 Luminous Bloom (possible tier) ---
+profileset."hands Subjugators Chilling Grips 308"+=hands=,id=193758,bonus_id=12842/13440/42/13662/12699,content_tuning=1279
+
+# --- ring: test against BOTH equipped rings, they are different items ---
+profileset."ring Amani Warlord 311 over finger1"+=finger1=,id=273792,enchant_id=7969,gem_id=240896,bonus_id=12843/13440/6652/13668/12699,content_tuning=1279
+profileset."ring Amani Warlord 311 over finger2"+=finger2=,id=273792,enchant_id=7969,gem_id=240896,bonus_id=12843/13440/6652/13668/12699,content_tuning=1279
+
+# --- trinkets: both bag options against each equipped slot ---
+profileset."trinket Gaze of the Alnseer 298 over t1"+=trinket1=,id=249343,bonus_id=6652/13335/13654
+profileset."trinket Gaze of the Alnseer 298 over t2"+=trinket2=,id=249343,bonus_id=6652/13335/13654
+profileset."trinket Emberwing Feather 298 over t1"+=trinket1=,id=250144,bonus_id=13440/6652/12699/13654
+profileset."trinket Emberwing Feather 298 over t2"+=trinket2=,id=250144,bonus_id=13440/6652/12699/13654
+
+# --- two-handers: these REPLACE main hand AND off hand, so off_hand is cleared ---
+profileset."2H Fallen Speakers Staff 318"+=main_hand=,id=251156,enchant_id=8039,bonus_id=13440/6652/12701/12845,content_tuning=1279
+profileset."2H Fallen Speakers Staff 318"+=off_hand=
+profileset."2H Toxin-Coated Warstaff 308"+=main_hand=,id=273783,enchant_id=8039,bonus_id=13439/6652/12701/12838,content_tuning=3025
+profileset."2H Toxin-Coated Warstaff 308"+=off_hand=

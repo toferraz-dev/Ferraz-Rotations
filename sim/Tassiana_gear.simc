@@ -1,0 +1,29 @@
+# Tassiana's live gear — SimC addon export 2026-08-24 12:56, US/Area 52.
+# Equipped only. The bag alternatives live in the profileset files that
+# source this, so both the M+ and the raid run compare against the same base.
+druid="Tassiana"
+level=90
+race=harronir
+region=us
+server=area_52
+role=spell
+professions=leatherworking=29/skinning=100
+spec=balance
+omnium_talents=136814:1/136818:1/136817:1/136819:1/136825:1
+
+head=,id=250024,enchant_id=7961,gem_id=240888,bonus_id=6652/13440/13338/13575/12806/13534
+neck=,id=251142,gem_id=240983,bonus_id=12843/13440/6652/13668/12699,content_tuning=1279
+shoulder=,id=271526,bonus_id=6652/12843/13440/13694/13697/1564,redirected_base_stats=251146
+back=,id=193763,bonus_id=12843/13440/6652/13662/12699,content_tuning=1279
+chest=,id=271531,enchant_id=7987,bonus_id=6652/12843/13440/13690/13698/1564,redirected_base_stats=251159
+wrist=,id=244576,bonus_id=12214/12497/13751/8960/12384/8793/13836/13696,content_tuning=3615,crafted_stats=40/36,crafting_quality=5
+hands=,id=250025,bonus_id=6652/13440/13337/13574/12806
+waist=,id=251189,bonus_id=12843/13440/6652/13696/13662/12699,content_tuning=1279
+legs=,id=159313,enchant_id=7935,bonus_id=12843/13440/6652/13662/12699,content_tuning=1279
+feet=,id=244569,enchant_id=7993,bonus_id=12214/13667/12497/12066/8960/12384/8793/13622,content_tuning=3615,crafted_stats=49/40,crafting_quality=5
+finger1=,id=252258,enchant_id=7969,gem_id=240896,bonus_id=12842/13440/42/13668/12699,content_tuning=1279
+finger2=,id=251136,enchant_id=7969,gem_id=240896,bonus_id=12842/13440/6652/13668/12699,content_tuning=1279
+trinket1=,id=250215,bonus_id=13439/6652/12699/12838,content_tuning=3025
+trinket2=,id=250224,bonus_id=13440/6652/12699/12844,content_tuning=1279
+main_hand=,id=251225,enchant_id=8041,bonus_id=13440/6652/12701/12845,content_tuning=1279
+off_hand=,id=251191,bonus_id=13440/6652/12699/12845,content_tuning=1279

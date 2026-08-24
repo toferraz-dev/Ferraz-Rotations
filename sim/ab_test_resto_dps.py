@@ -24,7 +24,7 @@ import subprocess
 import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-SIMC = os.path.join(ROOT, 'sim', 'tools', 'simc-1210.01.a9a6985-win64', 'simc.exe')
+SIMC = os.path.join(ROOT, 'sim', 'tools', 'simc-1210.01.2165324-win64', 'simc.exe')
 PROFILE = os.path.join(ROOT, 'sim', 'Ferraz_resto_mplus.simc')
 APL_DIR = os.path.join(ROOT, 'sim', 'apl_resto_dps')
 OUT_DIR = os.path.join(ROOT, 'sim', 'out_resto_dps')
