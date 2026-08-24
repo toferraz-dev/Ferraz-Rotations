@@ -37,7 +37,7 @@
 # heals better" — SimC never lets the group take damage, so it never charges
 # you for the globals a form swap costs.
 # =============================================================================
-version: "4.5.1"
+version: "4.5.2"
 author: Ferraz
 patch: "12.1"
 spec: 105
@@ -59,7 +59,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-08-23 | Patch: 12.1 | Version: 4.5.1"
+    text: "Last update: 2026-08-23 | Patch: 12.1 | Version: 4.5.2"
 
   # ==========================================================================
   # RECOMMENDED BUILD — the string the talent.X gates below assume.
@@ -136,18 +136,6 @@ config:
     # has no icon to render. 207640 is the one you actually see on your bar.
     spell: 207640
     description: "Bindable. Controls DOWNTIME only. In combat the rotation always pads Rejuvenation up to 5 so the Abundance window is ready — that half is not optional. This toggle decides whether it keeps doing it while you stand around between pulls, where it costs mana for as long as you are there."
-
-  # Mirrors raid_cancel_overheal_pct. The raid file has had this since 1.0 and
-  # the M+ file never did, so a hardcast Regrowth here kept going into a target
-  # somebody else had already topped.
-  cancel_overheal_pct:
-    label: "Cancel Cast If Target HP % >="
-    section: "Healing"
-    type: slider
-    min: 90
-    max: 100
-    default: 98
-    description: "Abort a heal mid-cast once its target is at or above this health. Only affects hard casts — instants are already out the door."
 
   wild_growth_threshold:
     label: "Wild Growth HP %"
@@ -1054,13 +1042,6 @@ lists:
     - return,if=player.channeling
     - call_action_list,name=engine
     - call_action_list,name=out_of_combat,if=!player.combat
-    # NOTE: a `return,if=auto_combat.player` used to sit here. That expression
-    # does not exist (player.auto_combat reversed), so it never fired and the
-    # line was dead — the only reason the rotation worked. Re-spelling it made
-    # it live and aborted everything below. Removed. Do not add it back.
-    # Cancels a heal mid-cast if the target got topped off by another source.
-    # The raid file has carried this since 1.0; the M+ file never had it.
-    - stop_casting,name="Cancel Overheal",casting_check=any,if=casting_target.health.pct>=config.cancel_overheal_pct
 
     - call_action_list,name=defensives,if=!var.in_dps_form|!var.group_healthy
     - call_action_list,name=utility
