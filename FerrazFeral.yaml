@@ -57,7 +57,7 @@
 # window built around it is a possible future gain, not applied here.
 # =============================================================================
 
-version: "2.6.4"
+version: "2.7.0"
 author: Ferraz
 patch: "12.1"
 spec: 103
@@ -72,7 +72,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-08-24 | Patch: 12.1 | Version: 2.6.4"
+    text: "Last update: 2026-08-24 | Patch: 12.1 | Version: 2.7.0"
 
   recommended_talents:
     section: "Talents"
@@ -297,6 +297,17 @@ config:
     description: "Soothe the current target when it has an enrage effect. ON by default — this is what Simia's shared list did before this file inlined its own plumbing, and it had no switch at all. Turn OFF on a key where the enrage is not worth the global."
 
 variables:
+  # The channelled ids this spec can actually produce, confirmed against client
+  # 69404: Convoke is 323764 (Night Fae) and 391528 (talent), both flagged
+  # "Is Channelled". Tranquility (740) is deliberately absent — its spell data
+  # says "Talent Entry: Restoration [tree=spec]", so Feral cannot cast it.
+  #
+  # Written WITHOUT a leading player.channeling& on purpose. With it, the term
+  # is a strict subset of the player.channeling already in the guard and
+  # contributes nothing. Standing alone it covers the case the guard was
+  # missing: the addon reporting Convoke through UnitCastingInfo before it
+  # flips to UnitChannelInfo, which is the window a channel gets clipped in.
+  protected_channel: player.casting.spell_id=323764|player.casting.spell_id=391528
   bs_inc: buff.berserk.up|buff.incarnation_avatar_of_ashamane.up
   bs_inc_cd_remains: cooldown.berserk.remains>?cooldown.incarnation_avatar_of_ashamane.remains
   bs_inc_cd_duration: cooldown.berserk.duration>?cooldown.incarnation_avatar_of_ashamane.duration
@@ -503,7 +514,7 @@ lists:
     # player.channeling, the shape every official rotation in simia_data_dump
     # uses — see FerrazRestoDruid.yaml, where a narrower id-based guard failed
     # open often enough to clip Convoke in a real key.
-    - return,if=player.channeling
+    - return,if=player.channeling|player.casting|var.protected_channel
 
     - call_action_list,name=engine
 
