@@ -37,7 +37,7 @@
 # heals better" — SimC never lets the group take damage, so it never charges
 # you for the globals a form swap costs.
 # =============================================================================
-version: "4.5.3"
+version: "4.5.4"
 author: Ferraz
 patch: "12.1"
 spec: 105
@@ -59,7 +59,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-08-23 | Patch: 12.1 | Version: 4.5.3"
+    text: "Last update: 2026-08-24 | Patch: 12.1 | Version: 4.5.4"
 
   # ==========================================================================
   # RECOMMENDED BUILD — the string the talent.X gates below assume.
@@ -1053,7 +1053,28 @@ lists:
     #
     # Nothing in this file uses interrupt=true, so no line ever wants to break
     # its own channel. The narrow guard bought nothing.
-    - return,if=player.channeling
+    #
+    # `|player.casting` added on 4.5.4 / 1.9.4. Both Balance files have guarded
+    # cast AND channel since they were written; the two Resto files guarded
+    # only the channel, and that is the one asymmetry left after the bare
+    # guard went in.
+    #
+    # It matters because UnitCastingInfo and UnitChannelInfo are separate API
+    # calls. If the addon reports Convoke or Tranquility as a CAST at any
+    # instant — on the wind-up, before it flips to a channel — then
+    # player.channeling is false and player.casting is true, and the channel
+    # sits unprotected for exactly that window. This closes it.
+    #
+    # Free to add: nothing in either file uses interrupt=true, so no line ever
+    # wants to act during your own cast either.
+    #
+    # NOT the fix suggested on the Simia forum, and worth writing down why.
+    # That advice was `return,if=player.channeling&!var.sm_channeling` with
+    # `sm_channeling: player.channeling&player.casting.spell_id=115175`. 115175
+    # is Soothing Mist — that clause is a Mistweaver EXCEPTION, a way to keep
+    # acting through one's own channel. It loosens the guard. This file already
+    # had the strict half of that advice since 4929112.
+    - return,if=player.channeling|player.casting
     - call_action_list,name=engine
     - call_action_list,name=out_of_combat,if=!player.combat
 
