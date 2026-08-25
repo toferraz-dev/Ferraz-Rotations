@@ -37,7 +37,7 @@
 # heals better" — SimC never lets the group take damage, so it never charges
 # you for the globals a form swap costs.
 # =============================================================================
-version: "4.5.4"
+version: "4.6.0"
 author: Ferraz
 patch: "12.1"
 spec: 105
@@ -59,7 +59,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-08-24 | Patch: 12.1 | Version: 4.5.4"
+    text: "Last update: 2026-08-24 | Patch: 12.1 | Version: 4.6.0"
 
   # ==========================================================================
   # RECOMMENDED BUILD — the string the talent.X gates below assume.
@@ -210,6 +210,39 @@ config:
   # ==========================================================================
   # HEALING COOLDOWNS — Convoke, Tranquility and their gates.
   # ==========================================================================
+  # Channel guard shape. Two readings of the same Simia forum advice, and this
+  # switch lets you settle it in one key instead of by argument.
+  #
+  #   ON  (forum's wording, literally)
+  #       return,if=(channeling|casting)&!var.protected_channel
+  #       Returns during ANY cast or channel EXCEPT Convoke and Tranquility.
+  #       The rotation keeps evaluating through those two.
+  #
+  #   OFF (what the file did before)
+  #       return,if=(channeling|casting)
+  #       Returns during every cast and channel, no exception.
+  #
+  # The forum reply was `return,if=player.channeling&!var.sm_channeling` with
+  # sm_channeling keyed on 115175, and said to change the id. 115175 is
+  # Soothing Mist — a spell a Mistweaver channels WHILE doing other things, so
+  # the `!` there is an exception that keeps the rotation alive through it.
+  #
+  # Which way that cuts here depends on something not yet observed: whether
+  # player.casting.spell_id is populated during a CHANNEL at all. In the WoW
+  # API that is UnitChannelInfo, a different call from UnitCastingInfo. If the
+  # field is empty mid-channel then var.protected_channel is false forever,
+  # this collapses to the OFF behaviour and the switch does nothing either way.
+  # If it IS populated, ON stops protecting exactly Convoke and Tranquility.
+  #
+  # A snapshot taken DURING a Convoke settles it: look at the PLAYER section
+  # for casting.spell_id.
+  forum_channel_guard:
+    label: "Channel Guard - Forum Variant"
+    section: "Cooldowns"
+    type: checkbox
+    default: true
+    description: "ON: keep the rotation running through your own Convoke and Tranquility, blocking it during every other cast and channel. OFF: block during every cast and channel with no exception. If your channels get clipped, try the other setting."
+
   convoke_threshold:
     label: "Convoke HP %"
     section: "Cooldowns"
@@ -519,6 +552,11 @@ config:
     url: "https://discord.com/channels/857767821093634068/1467268534420766854"
 
 variables:
+  # The three channelled ids, confirmed against client 69404: Tranquility is
+  # 740, Convoke is 323764 (Night Fae) and 391528 (talent). All three carry
+  # the "Is Channelled" attribute. 157982 and 1236573 are Tranquility's heal
+  # components, not the channel, so they are deliberately absent.
+  protected_channel: player.channeling&(player.casting.spell_id=740|player.casting.spell_id=323764|player.casting.spell_id=391528)
   # True if the lowest health group member is healthy enough for Catweaving
   group_healthy: group.lowest.health.effective.pct>=config.catweave_group_hp
   # Safe to enter Cat Form for DPS (group healthy and in combat)
@@ -1074,7 +1112,7 @@ lists:
     # is Soothing Mist — that clause is a Mistweaver EXCEPTION, a way to keep
     # acting through one's own channel. It loosens the guard. This file already
     # had the strict half of that advice since 4929112.
-    - return,if=player.channeling|player.casting
+    - return,if=(player.channeling|player.casting)&(!config.forum_channel_guard|!var.protected_channel)
     - call_action_list,name=engine
     - call_action_list,name=out_of_combat,if=!player.combat
 

@@ -34,7 +34,7 @@
 # string — harmless dead weight unless the build changes.
 # =============================================================================
 
-version: "1.9.4"
+version: "1.10.0"
 author: Ferraz
 patch: "12.1"
 spec: 105
@@ -53,7 +53,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-08-24 | Patch: 12.1 | Version: 1.9.4"
+    text: "Last update: 2026-08-24 | Patch: 12.1 | Version: 1.10.0"
 
   # String the talent.X checks below assume.
   recommended_talents:
@@ -99,6 +99,39 @@ config:
     default: 1
 
   # === COOLDOWN CONFIGURATIONS ===
+  # Channel guard shape. Two readings of the same Simia forum advice, and this
+  # switch lets you settle it in one key instead of by argument.
+  #
+  #   ON  (forum's wording, literally)
+  #       return,if=(channeling|casting)&!var.protected_channel
+  #       Returns during ANY cast or channel EXCEPT Convoke and Tranquility.
+  #       The rotation keeps evaluating through those two.
+  #
+  #   OFF (what the file did before)
+  #       return,if=(channeling|casting)
+  #       Returns during every cast and channel, no exception.
+  #
+  # The forum reply was `return,if=player.channeling&!var.sm_channeling` with
+  # sm_channeling keyed on 115175, and said to change the id. 115175 is
+  # Soothing Mist — a spell a Mistweaver channels WHILE doing other things, so
+  # the `!` there is an exception that keeps the rotation alive through it.
+  #
+  # Which way that cuts here depends on something not yet observed: whether
+  # player.casting.spell_id is populated during a CHANNEL at all. In the WoW
+  # API that is UnitChannelInfo, a different call from UnitCastingInfo. If the
+  # field is empty mid-channel then var.protected_channel is false forever,
+  # this collapses to the OFF behaviour and the switch does nothing either way.
+  # If it IS populated, ON stops protecting exactly Convoke and Tranquility.
+  #
+  # A snapshot taken DURING a Convoke settles it: look at the PLAYER section
+  # for casting.spell_id.
+  forum_channel_guard:
+    label: "Channel Guard - Forum Variant"
+    section: "Cooldowns"
+    type: checkbox
+    default: true
+    description: "ON: keep the rotation running through your own Convoke and Tranquility, blocking it during every other cast and channel. OFF: block during every cast and channel with no exception. If your channels get clipped, try the other setting."
+
   raid_convoke_threshold:
     label: "Convoke HP %"
     section: "Cooldowns"
@@ -411,6 +444,11 @@ config:
 # =============================================================================
 
 variables:
+  # The three channelled ids, confirmed against client 69404: Tranquility is
+  # 740, Convoke is 323764 (Night Fae) and 391528 (talent). All three carry
+  # the "Is Channelled" attribute. 157982 and 1236573 are Tranquility's heal
+  # components, not the channel, so they are deliberately absent.
+  protected_channel: player.channeling&(player.casting.spell_id=740|player.casting.spell_id=323764|player.casting.spell_id=391528)
   group_healthy: group.count(cycle.health.effective.pct<config.raid_catweave_group_hp)<config.raid_catweave_injured_max
   can_catweave: var.group_healthy&player.combat
   mo_friendly_valid: mouseover.exists&mouseover.alive&mouseover.friendly&mouseover.unitframe
@@ -766,7 +804,7 @@ lists:
     # is Soothing Mist — that clause is a Mistweaver EXCEPTION, a way to keep
     # acting through one's own channel. It loosens the guard. This file already
     # had the strict half of that advice since 4929112.
-    - return,if=player.channeling|player.casting
+    - return,if=(player.channeling|player.casting)&(!config.forum_channel_guard|!var.protected_channel)
 
     # --- Engine plumbing. Must stay at the top. ---
     - call_action_list,name=engine
