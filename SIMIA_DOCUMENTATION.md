@@ -826,6 +826,48 @@ Ações virtuais são comandos especiais que podem ser sugeridos na rotação su
    a condição lê verdadeiro em toda passada e não guarda nada. O correto é
    `!player.casting&!player.channeling`.
 
+16. **`hero_tree.NOME` existe e NÃO está no catálogo.** São 26 árvores de herói
+   (`hero_tree.wildstalker`, `hero_tree.druid_of_the_claw`, `hero_tree.elunes_chosen`,
+   `hero_tree.diabolist`, ...) usadas por 27+ rotações oficiais do `simia_data_dump`,
+   e `expression-catalog.json` não traz nenhuma delas. **Expressão ausente do
+   catálogo não é prova de que é inválida** — confira as `rotation_*.yaml` oficiais
+   antes de remover qualquer coisa por "não existe". O mesmo vale para
+   `queue_logic` e para a descrição de `queue_spell`.
+
+17. **`enemies.around_target` conta em volta do ALVO, não em volta de você.**
+   Existe também como `enemies_around_target`. Para feitiço de área ancorado no
+   alvo — Rain of Fire, Starfall — é a pergunta certa, e é o que a rotação oficial
+   de Destruction usa. `enemies.combat.Xy` continua sendo o certo para "quantos
+   inimigos estão me batendo".
+
+18. **`.focus_mouseover` é sufixo de cast válido.** A tabela da seção 2 lista
+   `focus_mouseover` apenas como ação avulsa ("Set mouseover as focus"), mas cinco
+   rotações da comunidade e a `rotation_270.yaml` oficial usam como sufixo:
+   `word_of_glory.focus_mouseover`, `riptide.focus_mouseover`.
+
+19. **`range_check=` aceita cinco valores, não dois.** Contagem no dump:
+   `none` (730), `mob` (52), `mouseover` (31), `focus` (14), `target` (1). A seção 3
+   só cita `none` e `focus`.
+
+20. **`mouseover.unitframe` é FALSO para unidade do mundo 3D.** Gatear cura nele —
+   `mouseover.exists&mouseover.friendly&mouseover.unitframe` — torna impossível curar
+   qualquer NPC amigo que não esteja num frame de grupo. É o gate que impedia
+   qualquer linha de alcançar o Avatar of Sethraliss.
+
+21. **Uma linha de troca de forma pode entrar em loop.** `bear_form,if=X&(moonkin.up|bear.up)`
+   trava: já em urso, sugere urso, o estado não muda, a condição continua verdadeira e
+   a linha come todo global. **Quebrar raiz exige MUDANÇA de forma** — trocar para a
+   forma em que você já está não limpa nada. Ou exclua a forma de destino da condição,
+   ou use duas linhas:
+
+   ```yaml
+   - bear_form,if=debuff_list.freedom.up&!buff.bear_form.up
+   - cat_form,if=debuff_list.freedom.up&buff.bear_form.up
+   ```
+
+22. **`variable.NOME` é forma de LEITURA válida, além de `var.NOME`.** A seção 11.36
+   só documenta `var.` e `cfg.`, mas `variable.` aparece em 27 rotações oficiais.
+
 ---
 
 ## 11. Catálogo de Referência de Expressões
