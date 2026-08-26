@@ -60,7 +60,7 @@
 # Revive.
 # =============================================================================
 
-version: "2.9.0"
+version: "2.9.1"
 author: Ferraz
 patch: "12.1"
 spec: 102
@@ -75,7 +75,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-08-24 | Patch: 12.1 | Version: 2.9.0"
+    text: "Last update: 2026-08-24 | Patch: 12.1 | Version: 2.9.1"
 
   # Exact string every number here was measured against — Elune's Chosen, not Grove.
   recommended_talents:
@@ -409,7 +409,28 @@ lists:
     # defensive two lines below became unreachable exactly when it was the
     # only defensive left. Either payoff now justifies the shift; neither
     # being available leaves you in Moonkin, which is where the damage is.
-    - bear_form,name="Panic Bear Form",if=health.effective.pct<=config.frenzied_regen_hp&buff.frenzied_regeneration.down&!buff.bear_form.up&(cooldown.frenzied_regeneration.ready|(config.hotw_bear_defensive&(cooldown.heart_of_the_wild.ready|buff.heart_of_the_wild.up)))
+
+    # Each reason carries its OWN health threshold, and its own preconditions.
+    #
+    # Before this the whole line sat behind frenzied_regen_hp (30) while the
+    # HotW defensive below triggers at hotw_bear_hp (35). Between 30 and 35
+    # HotW wanted to fire and the shift that makes it reachable refused, so
+    # one of the two sliders quietly did nothing in that band.
+    #
+    # Aligning the numbers would have been the wrong fix — they measure
+    # different things. Shifting for Frenzied Regeneration is worth a deeper
+    # health hole than shifting for HotW, because Frenzy is a heal and HotW is
+    # stamina plus a Frenzy charge. Splitting the branches keeps both sliders
+    # meaningful and independent.
+    #
+    # buff.frenzied_regeneration.down moved INTO the Frenzy branch, where it
+    # belongs: it exists to stop re-shifting to re-apply a HoT you already
+    # have, which has nothing to say about whether HotW is worth pressing.
+    #
+    # Each branch of the `|` now stands on its own — health gate, readiness
+    # check and preconditions all inside it. A branch without its own gate is
+    # how three separate bugs got into this repo.
+    - bear_form,name="Panic Bear Form",if=!buff.bear_form.up&((health.effective.pct<=config.frenzied_regen_hp&cooldown.frenzied_regeneration.ready&buff.frenzied_regeneration.down)|(config.hotw_bear_defensive&health.effective.pct<=config.hotw_bear_hp&(cooldown.heart_of_the_wild.ready|buff.heart_of_the_wild.up)))
 
     # HotW before the heal so Frenzied Regen lands on the bigger pool. Cast
     # by name AND bear morph id (1261872) — only one resolves per form.
