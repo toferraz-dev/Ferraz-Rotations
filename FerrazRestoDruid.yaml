@@ -25,8 +25,40 @@
 # string reverts the behaviour with no edit.
 #
 # THE HEALING HALF IS NOT SimC-VALIDATED. SimC has no usable healing model, so
-# every healing change here is guide theorycraft (method.gg Restoration Druid,
-# Midnight 12.1), not measurement.
+# nothing here is measured the way the damage half is.
+#
+# What it DOES have is three reference logs from the same dungeon (Murder Row,
+# 27-30 min each): Crazyshiftz, Crohot and Kireya. Where all three agree, treat
+# it as a target. Where they disagree, it is a choice, not a rule.
+#
+#                        Crazyshiftz    Crohot    Kireya
+#   Abundance uptime          86.8%      82.1%     58.2%
+#   Overheal                  62.7%      59.9%     48.6%
+#   HPS                     148,920    163,206   136,842
+#   DPS                       9,429     10,207    19,427
+#   damage casts                14%         5%       29%
+#
+# THEY AGREE ON:
+#
+#   ~20 Rejuvenation-family casts a minute. Rejuvenation + Germination runs
+#   24.1 / 20.4 / 16.0 per minute, and Abundance uptime tracks it exactly:
+#   82% / 87% / 58%. Five Rejuvenations at ~15s each needs ~20 applications a
+#   minute to stay saturated, so that is the line. This is why
+#   rejuvenation_threshold is 100 and must stay permissive.
+#
+#   Swiftmend on cooldown. 4.5 / 3.7 / 3.9 per minute — the tightest agreement
+#   in the whole comparison.
+#
+#   Wild Growth is rare. 2.0 / 3.0 / 2.5 per minute. A moment spell, not
+#   maintenance.
+#
+#   ~60% OVERHEAL IS THE TARGET, NOT A DEFECT. The two highest-HPS players
+#   overheal MORE, not less. Overheal is what the Abundance engine costs, and
+#   trying to tune it down starves the buff and lowers HPS. Do not "fix" it.
+#
+# THEY DISAGREE ON: how much damage to weave — 5%, 14% and 29% of casts, and
+# the one who weaves least has the highest HPS while the one who weaves most
+# has the highest DPS by double. See catweave_group_hp for the dial.
 #
 # THE DAMAGE HALF IS. Harness sim/ab_test_resto_dps.py, profile
 # sim/Ferraz_resto_mplus.simc, 3 targets. Gear is SimC's MID1 Balance preset
@@ -49,7 +81,7 @@
 # heals better" — SimC never lets the group take damage, so it never charges
 # you for the globals a form swap costs.
 # =============================================================================
-version: "5.1.0"
+version: "5.2.0"
 author: Ferraz
 patch: "12.1"
 spec: 105
@@ -71,7 +103,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-08-24 | Patch: 12.1 | Version: 5.1.0"
+    text: "Last update: 2026-08-24 | Patch: 12.1 | Version: 5.2.0"
 
   # ==========================================================================
   # RECOMMENDED BUILD — the string the talent.X gates below assume.
@@ -376,6 +408,7 @@ config:
     min: 25
     max: 99
     default: 85
+    description: "The dial between HPS and DPS, and there is no correct value — three reference druids sit at three different points. Reads group.lowest, the MOST hurt member, so it is strict by nature. ~95 plays like Crohot (5% damage casts, 163k HPS, the highest healing of the three). ~85 is the middle. ~75 plays like Kireya (29% damage casts, 19.4k DPS, double the others, at the lowest HPS). Move it after a key, not before one."
 
   aoe_threshold:
     label: "AoE - Min Enemies"
