@@ -60,7 +60,7 @@
 # Revive.
 # =============================================================================
 
-version: "2.9.1"
+version: "2.9.2"
 author: Ferraz
 patch: "12.1"
 spec: 102
@@ -75,7 +75,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-08-24 | Patch: 12.1 | Version: 2.9.1"
+    text: "Last update: 2026-08-24 | Patch: 12.1 | Version: 2.9.2"
 
   # Exact string every number here was measured against — Elune's Chosen, not Grove.
   recommended_talents:
@@ -440,8 +440,19 @@ lists:
     - frenzied_regeneration,if=health.effective.pct<=config.frenzied_regen_hp&buff.bear_form.up
     - barkskin,range_check=none,name="Barkskin (low HP)",if=health.effective.pct<=config.barkskin_hp
     # Root cleanse by shapeshift, then Starfire to shift back to Moonkin.
-    - cat_form,if=debuff_list.freedom.up&(buff.moonkin_form.up|buff.bear_form.up)
-    - starfire,if=!buff.moonkin_form.up
+
+    # Root cleanse. TWO lines, because breaking a root needs a form CHANGE and
+    # one line cannot cover both starting states.
+    #
+    # A single `bear_form,if=freedom.up&(moonkin.up|bear.up)` loops: rooted
+    # while already in Bear, it suggests Bear again, the state does not move,
+    # the condition stays true, and the line takes every GCD until the root
+    # expires. Shifting to the form you are already in cleanses nothing.
+    #
+    # Bear first — it is the tankier place to be while stuck — with Cat as the
+    # way out when Bear is where you already are.
+    - bear_form,name="Root Cleanse (to Bear)",if=debuff_list.freedom.up&!buff.bear_form.up
+    - cat_form,name="Root Cleanse (from Bear)",if=debuff_list.freedom.up&buff.bear_form.up
 
   # Raid utility, unmeasured (not damage). Heart of the Wild deliberately
   # absent — its CD now belongs entirely to the Bear-form defensive above.
@@ -579,7 +590,7 @@ lists:
     - return,if=!target.valid&config.engine_auto_combat.has(0)
     - return,if=!target.valid|target.dead|!target.attackable
 
-    - moonkin_form,if=buff.moonkin_form.down&health.effective.pct>config.frenzied_regen_hp&!buff.frenzied_regeneration.up
+    - starfire,if=buff.moonkin_form.down&health.effective.pct>config.frenzied_regen_hp&!buff.frenzied_regeneration.up
     # NOTE: a pre-pull `wrath,if=!player.combat&!player.moving&target.distance<=40`
     # used to sit here. It auto-started combat on any attackable target within
     # 40y, which in a dungeon means pulling whatever you happen to have clicked
