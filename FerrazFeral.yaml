@@ -57,7 +57,7 @@
 # window built around it is a possible future gain, not applied here.
 # =============================================================================
 
-version: "2.7.0"
+version: "2.8.0"
 author: Ferraz
 patch: "12.1"
 spec: 103
@@ -72,7 +72,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-08-24 | Patch: 12.1 | Version: 2.7.0"
+    text: "Last update: 2026-08-24 | Patch: 12.1 | Version: 2.8.0"
 
   recommended_talents:
     section: "Talents"
@@ -481,7 +481,17 @@ lists:
   # Emergency Bear Form, Fluid Form auto-shift, manual Cat Form entry, and
   # the pre-pull Prowl opener.
   form:
-    - bear_form,name="Panic Bear Form",range_check=none,if=health.pct<=config.panic_bear_hp_pct&!buff.bear_form.up&player.combat
+    # Shifting to Bear costs you the Cat rotation, so it has to buy something.
+    # In THIS file the only payoff is Heart of the Wild on the next line —
+    # there is no Frenzied Regeneration line here at all, because Frenzied
+    # Regeneration (22842) reads "Talent Entry: Generic [free=(Guardian)]",
+    # a class talent Feral has to spend a point on and this build does not.
+    #
+    # Without this gate the shift fired on health alone, so with HotW on
+    # cooldown you left Cat Form, gained nothing, and walked back. Pure DPS
+    # loss. Now the shift only happens when the button it exists to press is
+    # actually available.
+    - bear_form,name="Panic Bear Form",range_check=none,if=health.pct<=config.panic_bear_hp_pct&!buff.bear_form.up&player.combat&(cooldown.heart_of_the_wild.ready|buff.heart_of_the_wild.up)
     - heart_of_the_wild,range_check=none,if=buff.bear_form.up&player.combat
 
     - shred,if=player.combat&target.attackable&target.in_melee&buff.cat_form.down&talent.fluid_form.enabled
