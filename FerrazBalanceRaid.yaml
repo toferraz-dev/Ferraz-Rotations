@@ -60,7 +60,7 @@
 # Revive.
 # =============================================================================
 
-version: "2.8.5"
+version: "2.9.0"
 author: Ferraz
 patch: "12.1"
 spec: 102
@@ -75,7 +75,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-08-24 | Patch: 12.1 | Version: 2.8.5"
+    text: "Last update: 2026-08-24 | Patch: 12.1 | Version: 2.9.0"
 
   # Exact string every number here was measured against — Elune's Chosen, not Grove.
   recommended_talents:
@@ -403,7 +403,13 @@ lists:
   # Unvalidated by simulation.
   defensives:
     - barkskin,range_check=none,name="Barkskin (predicted)",if=incoming.mitigated.pct>=config.barkskin_dmg_pct
-    - bear_form,if=health.effective.pct<=config.frenzied_regen_hp&cooldown.frenzied_regeneration.ready&buff.frenzied_regeneration.down&!buff.bear_form.up
+    # Two reasons to be in Bear, not one. The old gate required Frenzied
+    # Regeneration to be ready, which meant that with Frenzy on cooldown but
+    # Heart of the Wild up, the shift was refused — and the HotW bear
+    # defensive two lines below became unreachable exactly when it was the
+    # only defensive left. Either payoff now justifies the shift; neither
+    # being available leaves you in Moonkin, which is where the damage is.
+    - bear_form,name="Panic Bear Form",if=health.effective.pct<=config.frenzied_regen_hp&buff.frenzied_regeneration.down&!buff.bear_form.up&(cooldown.frenzied_regeneration.ready|(config.hotw_bear_defensive&(cooldown.heart_of_the_wild.ready|buff.heart_of_the_wild.up)))
 
     # HotW before the heal so Frenzied Regen lands on the bigger pool. Cast
     # by name AND bear morph id (1261872) — only one resolves per form.
