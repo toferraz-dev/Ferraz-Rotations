@@ -12,6 +12,18 @@
 # NOT talented: Cenarion Ward, Nourish, Verdant Infusion, Flourish, Incarnation:
 # Tree of Life, Flash of Clarity.
 #
+# BUILD CHANGED on 2026-08-24 to the string a reference +15 druid ran (Kireya,
+# Murder Row). Against the previous string it trades:
+#
+#   GAINED   Moonkin Form, Starfire, Sunfire, Ursine Vigor
+#   LOST     Innervate, Matted Fur, Swipe
+#
+# Sunfire is the whole point: it is 29.3% of that druid's damage, the single
+# largest source, and the old build could not cast it at all. Three lines moved
+# with the build — ranged_dps gained Sunfire, catweave_aoe gates Swipe on the
+# talent, and Innervate gates on its own. None were deleted, so reverting the
+# string reverts the behaviour with no edit.
+#
 # THE HEALING HALF IS NOT SimC-VALIDATED. SimC has no usable healing model, so
 # every healing change here is guide theorycraft (method.gg Restoration Druid,
 # Midnight 12.1), not measurement.
@@ -37,7 +49,7 @@
 # heals better" — SimC never lets the group take damage, so it never charges
 # you for the globals a form swap costs.
 # =============================================================================
-version: "4.6.1"
+version: "5.0.0"
 author: Ferraz
 patch: "12.1"
 spec: 105
@@ -59,7 +71,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-08-24 | Patch: 12.1 | Version: 4.6.1"
+    text: "Last update: 2026-08-24 | Patch: 12.1 | Version: 5.0.0"
 
   # ==========================================================================
   # RECOMMENDED BUILD — the string the talent.X gates below assume.
@@ -68,7 +80,7 @@ config:
     section: "Talents"
     type: copy_text
     label: "Recommended Talent String"
-    text: "CkGAAAAAAAAAAAAAAAAAAAAAAMMmZZMjZmxsN8AMzsMjNbzAAAAAAAAAAglBNbGmmZMDmFzMzMLzwDMDAAAAAAAGAAAAAMbzs1sNziNGzMwMLgmBAYmBgB"
+    text: "CkGADBD3hSPCL9Y9gz68WcKvMMMmZZMjZmxsN8AMzsMjNbzAAAAAAAAAAglBNbzw0MjBmFzMzMLzwDYAAAAAMAAzAAQAAAz2MbNbzsYjZmBMzCoZAAmZAYA"
 
   # ==========================================================================
   # HEALING — the core thresholds. Every one of these is judgement:
@@ -136,14 +148,17 @@ config:
     # has no icon to render. 207640 is the one you actually see on your bar.
     spell: 207640
     description: "Bindable. Controls DOWNTIME only. In combat the rotation always pads Rejuvenation up to 5 so the Abundance window is ready — that half is not optional. This toggle decides whether it keeps doing it while you stand around between pulls, where it costs mana for as long as you are there."
-
+  # Lowered 95 -> 85. The reference log casts Wild Growth 2.5x/min and still
+  # overheals 49.4% with it. At 95 effective — and effective ADDS incoming
+  # heals, so it reads high while your HoTs roll — this fired far more often
+  # than that, on people who were never in danger.
   wild_growth_threshold:
     label: "Wild Growth HP %"
     section: "Healing"
     type: slider
     min: 25
     max: 100
-    default: 95
+    default: 85
 
   wild_growth_members:
     label: "Wild Growth - Min Members"
@@ -198,14 +213,20 @@ config:
     min: 25
     max: 99
     default: 90
-
+  # Lowered 100 -> 90. At 100 the line matched anyone not literally full, so
+  # it sat ABOVE the Regrowth line (<90) and won every pass. Someone dropping
+  # fast collected Rejuvenation, then Germination, then finally a Regrowth —
+  # three globals of HoT before the heal that resolves.
+  #
+  # Rejuvenation is maintenance, not triage. 90 keeps it as the blanket
+  # without letting it outrank the direct heal for someone actually hurt.
   rejuvenation_threshold:
     label: "Rejuvenation HP %"
     section: "Healing"
     type: slider
     min: 25
     max: 100
-    default: 100
+    default: 90
 
   # ==========================================================================
   # HEALING COOLDOWNS — Convoke, Tranquility and their gates.
@@ -327,17 +348,23 @@ config:
     type: checkbox
     default: true
 
-  # ==========================================================================
-  # DAMAGE & WEAVING — the only half of this file SimC can measure.
-  #   See the header for the numbers.
-  # ==========================================================================
+  # Lowered 95 -> 85 off a reference +15 log (Kireya, Murder Row, 26.9 min).
+  # var.group_healthy reads group.lowest — the MOST hurt member — so at 95
+  # the gate needed the whole party essentially topped. In a real key that is
+  # almost never true, so var.can_catweave stayed false all fight and the
+  # weaving never opened. Every global went to healing, and since the healing
+  # lines fire at <100 and <95 they always found somebody: a HoT treadmill
+  # that casts constantly and fixes nothing.
+  #
+  # The reference druid weaves 7.5 melee swings a minute and spends 29% of
+  # his casts on damage. This file was spending 0%.
   catweave_group_hp:
     label: "Exit Cat - Group HP %"
     section: "Damage"
     type: slider
     min: 25
     max: 99
-    default: 95
+    default: 85
 
   aoe_threshold:
     label: "AoE - Min Enemies"
@@ -777,7 +804,9 @@ lists:
     # flat 25% mana restore), so pinning the target loses nothing.
     # range_check=none for the same reason: it is a self-cast, so there is no
     # range to check.
-    - innervate.player,name="Innervate",off_gcd=true,ignore_queue=true,delay=150,range_check=none,if=mana.pct<config.innervate_threshold&fight_remains>15
+    # talent.innervate added: the new build drops it, and the reference druid
+    # never casts it in 26.9 minutes. Gated, not deleted.
+    - innervate.player,name="Innervate",off_gcd=true,ignore_queue=true,delay=150,range_check=none,if=talent.innervate&mana.pct<config.innervate_threshold&fight_remains>15
     - stampeding_roar,name="Stampeding Roar",if=var.use_stampeding_roar&config.stampeding_roar_usage!=0
 
   # ABUNDANCE CHANGED IN 12.1 and this list was still written for the old one.
@@ -815,14 +844,31 @@ lists:
     - rip,name="Rip AoE",if=combo_points>=5&debuff.rip.refreshable
     - ferocious_bite,name="Bite AoE",if=combo_points>=5
     - rake,name="Rake AoE",if=debuff.rake.refreshable
-    - 106785,name="Swipe AoE"
+    # talent.swipe: the reference build does not take it and never casts it
+    # (0 Swipe casts in 26.9 min). Gated rather than deleted so the line
+    # returns on its own if the build does. Shred below is the fallback.
+    - 106785,name="Swipe AoE",if=talent.swipe
     - shred,name="Shred AoE"
 
   # Catweaving Transition and Entry (Physical DPS)
   catweave:
-    # Fluid Form: Casts Rake/Shred to automatically shapeshift
+    # Fluid Form does the shifting, so the entry is a DAMAGE cast, not a form
+    # cast. From the tooltip (449193), which SimC's Description field only
+    # reproduces one line of:
+    #
+    #   Shred, Rake, and Skull Bash ... shift you into Cat Form
+    #   Mangle ... shifts you into Bear Form
+    #   Wrath and Starfire shift you into Moonkin Form, if known.
+    #
+    # So Rake both enters Cat AND applies the bleed in one global. The explicit
+    # cat_form below is the fallback for a build without the talent — gated on
+    # !talent.fluid_form so it never competes with the free shift.
+    #
+    # The reference +15 log settles that this is how it plays: 53 Rake casts
+    # against 3 Cat Form casts in 26.9 minutes. He essentially never shifts by
+    # hand.
     - rake,name="Fluid Rake",if=!buff.cat_form.up
-    - cat_form,name="Manual Cat Shift",if=!buff.cat_form.up
+    - cat_form,name="Manual Cat Shift",if=!talent.fluid_form&!buff.cat_form.up
     - return,if=!buff.cat_form.up
 
     # Heart of the Wild is cast BY NAME ONLY. Do not add morph ids to this
@@ -860,34 +906,29 @@ lists:
     - call_action_list,name=catweave_aoe,if=enemies.combat.8y>=config.aoe_threshold
     - call_action_list,name=catweave_st,if=enemies.combat.8y<config.aoe_threshold
 
-  # Caster-form damage. MOONFIRE ONLY.
+  # Caster-form damage. Rebuilt from a reference +15 log (Kireya, Murder Row,
+  # 26.9 min) after the build changed to that druid's exact string.
   #
-  # Checked against client 69404, and only two of the five spells this list
-  # used to hold are even available to Restoration:
+  # What he ACTUALLY casts, counted from the log — not what the talents allow:
   #
-  #   Moonfire  (8921)   baseline — carries its own "0.8% Base Mana w/
-  #                      Restoration Druid (137012)" entry. Ours.
-  #   Wrath     (5176)   baseline, castable, but the damage is not worth a
-  #                      global on a healer. Dropped by choice, not by rule.
-  #   Sunfire   (93402)  "Talent Entry: Generic [tree=class, row=4, col=9]" —
-  #                      a CLASS TALENT we do not take. The line was dead.
-  #   Starsurge (78674)  "Talent Entry: Balance [free=(Balance)]" — free for
-  #                      Balance only, and it costs 40 Astral Power, which
-  #                      Restoration never generates. Dead twice over.
-  #   Starfire  (194153) same: free for Balance, not for us.
+  #   Sunfire   58 casts   29.3% of his total damage, the single biggest source
+  #   Moonfire  22 casts    7.6%
+  #   Starfire   0 casts   talented and never pressed
+  #   Wrath      0 casts   the 49 Wrath hits in his damage come from Convoke
+  #                        firing it, not from a manual cast
   #
-  # 5.0 added Starsurge and Starfire off a reference M+ log and claimed both
-  # were "castable by Restoration (verified against the game's spell data)".
-  # That verification was wrong — the spell data says free=(Balance). The log
-  # almost certainly belonged to a druid who had spent class-tree points we do
-  # not spend.
+  # So this list is two DoTs and nothing else. No Starfire and no Wrath filler:
+  # both are available on this build and he uses neither, and a filler here
+  # would compete with the Cat weaving that produces the other 25%.
   #
-  # With Wrath gone this list can now produce nothing once the Moonfire DoT is
-  # rolling. That is deliberate: the pass then falls through to
-  # abundance_maintenance, so an idle global pads Rejuvenation toward the
-  # Abundance window instead of buying a few points of filler damage.
+  # Sunfire first — it is four times Moonfire's damage share.
+  #
+  # talent.sunfire gates it so the file still works if the build moves back:
+  # Sunfire (93402) is "Talent Entry: Generic [tree=class, row=4, col=9]", a
+  # class talent, not baseline for Restoration.
   ranged_dps:
-    - moonfire,name="Moonfire ST Refresh",if=debuff.moonfire.refreshable
+    - sunfire,name="Sunfire Refresh",if=talent.sunfire&debuff.sunfire.refreshable
+    - moonfire,name="Moonfire Refresh",if=debuff.moonfire.refreshable
 
   # Defensive rotation and debuffs in Bear Form (Bearweave)
   # !var.hotw_pending on both bear casts is what lets Heart of the Wild happen
@@ -899,6 +940,11 @@ lists:
   # Thrash and Mangle happened to both be on cooldown at once.
   # With this guard, a ready HotW makes bearweave step aside for one pass: you
   # go straight to Cat, cast it, and the bear bleeds resume afterwards.
+  #
+  # No bear_form cast here either, for the same reason as catweave: Mangle is
+  # in Fluid Form's list and shifts you into Bear by itself. Thrash is NOT in
+  # that list, so out of Bear it is simply unusable and the pass falls through
+  # to Mangle, which shifts you — after which Thrash works on the next pass.
   bearweave:
     - thrash,name="Thrash (BearmForm Bleed)",if=(dot.thrash.stack<3|dot.thrash.remains<=8)&!var.hotw_pending
     - mangle,name="Mangle (BearForm)",if=!buff.bear_form.up&(dot.thrash.remains<=8|dot.thrash.stack<3)&!var.hotw_pending
