@@ -1,0 +1,209 @@
+# Measuring a Simia rotation with SimulationCraft
+
+How this repo uses SimC to decide whether a change to a rotation YAML is worth
+keeping. Written to be handed to another agent working on the same files.
+
+Everything here was established by running it, not by reading about it. Where a
+claim has a known limit, the limit is stated.
+
+---
+
+## 1. What SimC can and cannot answer
+
+SimC simulates **damage**. That is the whole of what it decides here.
+
+| Spec | Half that is measurable | Half that is not |
+|---|---|---|
+| Balance | all of it | — |
+| Feral | all of it | — |
+| Guardian | damage | survival, threat, cooldown timing vs boss damage |
+| Restoration | Cat/Bear weaving damage | every healing decision |
+
+**The healing model.** As of nightly `a9a6985` (2026-08-23) SimC does spawn
+healing targets and does report HPS with a real error bar — but only if you
+pass `healing=N` explicitly. `role=heal` alone spawns nothing and everything
+reads 0.
+
+Even then it answers less than it looks. The healing target is
+`health=0|20000000`: a bottomless bucket that starts empty and never fills.
+Measured consequence — `actual_amount == total_amount`, overheal `0.00%`, and
+there is no overheal field in the JSON at all. So:
+
+- **measurable**: raw HPS of a cast sequence, mana efficiency, talent/gear impact
+- **not measurable**: overheal, triage, cooldown timing, any HP threshold
+
+Every healing threshold in a rotation is therefore unmeasurable — all targets
+sit at 0% forever, so `cycle.health.pct<X` has nothing to decide. A throughput
+sim always favours spamming the highest-HPS spell, which is exactly what
+overheals in a real key. Treat healing numbers as biased, and say so whenever
+you quote one.
+
+---
+
+## 2. M+ versus raid
+
+The difference is the fight style and the target count, and it matters more
+than people expect — a change can win at one and lose at the other.
+
+| | M+ | Raid |
+|---|---|---|
+| `fight_style` | `DungeonSlice` | omit (SimC default = Patchwerk) |
+| targets | 3 typical, sweep 1 / 3 / 5 | 1 for ST, 6–8 for cleave |
+| `target_error` | `0.2` | `0.15` |
+| what it models | pull after pull, mobs dying, movement | one target, full duration, no downtime |
+
+**A trap worth stating plainly:** the harnesses only pass `fight_style` when you
+give `--style`. Without it you are running Patchwerk, whatever you meant. Label
+results with the style you actually ran — mislabelling a Patchwerk run as
+DungeonSlice invalidates the conclusion, not just the wording.
+
+`DungeonSlice` is a proxy, not a dungeon. It has no affixes, no interrupts, no
+tank pathing. It is good for "does this priority survive things dying" and bad
+for anything route-specific.
+
+---
+
+## 3. The A/B harness
+
+Each spec has one: `sim/ab_test_<spec>.py`, plus a `.simc` profile per spec in
+`sim/`. The design is the same in all of them.
+
+The harness **generates a SimC APL from Python**, one function that takes a
+variant dict and emits action lines. Variants differ from the baseline by
+**exactly one thing**. That is the whole discipline: a variant that changes two
+things measures neither.
+
+```python
+VARIANTS = {
+    'ferraz':       ({}, 'the current rotation'),
+    'swipe_aoe':    (dict(swipe_aoe=True), 'Swipe instead of Shred as AoE filler'),
+    'no_bearweave': (dict(bearweave=False), 'straight into Cat, no Bear opener'),
+}
+```
+
+Run it:
+
+```bash
+python sim/ab_test_resto_dps.py --targets 3
+```
+
+```bash
+python sim/ab_test_balance.py ferraz no_wrath --targets 5 --style DungeonSlice
+```
+
+### Significance
+
+A result is real only if the gap clears the combined error bar:
+
+```
+comb = 2 * sqrt(e1² + e2²)        # e = dps['mean_std_dev'] from the JSON
+real = abs(delta) > comb
+```
+
+Anything inside that is printed as `~` and must be reported as noise, never as
+a small win. **Use `mean_std_dev`, not `stddev`** — the second is per-iteration
+spread and is far larger, so it hides real differences.
+
+### Comparing runs
+
+Never compare a number from one run against a number written down earlier
+unless the profile, gear, target count, fight style and binary are all
+identical. Re-run the baseline in the same batch. Two profile snapshots
+compared across a gear change produced a "this is noise" verdict here that was
+wrong; the gain was real.
+
+---
+
+## 4. Translating Simia YAML into a SimC APL
+
+The harness is only as good as this translation, and this is where the errors
+happen. Mirror the YAML **line for line**. Do not invent lines to "make it
+work" — a missing shapeshift or an ungated filler can produce a fake +244%,
+which measured nothing but the harness's own invention.
+
+Expressions that exist in Simia and have **no SimC equivalent**:
+
+| Simia | why it fails | what to do |
+|---|---|---|
+| `target.in_melee` | Simia-only; SimC errors out | SimC parks the target in melee — drop the branch |
+| `enemies.combat.8y` | no combat-aware count | `spell_targets` |
+| `cycle.*`, `group.count(...)` | no party model | no equivalent; the line cannot be measured |
+| `player.combat` | sim is always in combat | drop |
+| `var.can_catweave` | depends on group health | permanently true in sim — state this as a divergence |
+
+Spell-name traps found the hard way:
+
+- `thrash_bear` is invalid for Restoration. SimC registers the generic `thrash`
+  and resolves it by form.
+- `swipe` matches the Bear version. Use the numeric id (`106785` for Cat).
+- Fluid Form auto-shifts on Thrash/Mangle/Rake/Shred. Do **not** add explicit
+  `bear_form` / `cat_form` lines the YAML does not have.
+
+Write the divergences into the harness docstring. A harness whose limits are
+undocumented will be trusted past them.
+
+---
+
+## 5. Reading a talent string
+
+SimC decodes them. Put `talents=<string>` in a profile, run it, and read the
+talent table out of the HTML report. This is how a build gets verified before
+any rotation change is justified by it.
+
+The same binary answers "can this spec even cast X":
+
+```bash
+./sim/tools/simc-*/simc.exe "spell_query=spell.name=starsurge"
+```
+
+Read the `Talent Entry` line. `free=(Balance)` means free **for Balance only** —
+another spec needs to spend a point. That check caught three lines in the
+Restoration ranged list that had been inert for weeks, and it contradicted a
+comment that claimed the opposite "verified against the game's spell data".
+
+`spell_query` only carries player spell data. NPC and encounter auras are not in
+it — for those, Wowhead, and then a Simia snapshot to confirm which unit
+actually carries the aura.
+
+---
+
+## 6. Update the binary before you trust it
+
+Standing rule in this repo. The bundled WoW data goes stale within days, and
+every gear and talent measurement depends on it matching the live client.
+
+```bash
+./sim/tools/simc-*/simc.exe 2>&1 | head -1
+```
+
+```bash
+curl -s -k -L "http://downloads.simulationcraft.org/nightly/" | grep -oE 'simc-[0-9.]+[a-f0-9]+-win64\.7z'
+```
+
+Plain `http` — the `https` on that host serves a certificate for
+`*.your-server.de` and fails validation.
+
+SimulationCraft publishes **no GitHub releases**; the releases API returns `[]`.
+Use the compare API instead and report `ahead_by` plus whether any commit
+touches the class being measured:
+
+```bash
+curl -s "https://api.github.com/repos/simulationcraft/simc/compare/<local-sha>...<remote-sha>"
+```
+
+The active branch is `midnight`, not `master`. Extraction needs the `py7zr` pip
+package; there is no 7-Zip on this machine. After updating, repoint every
+harness path and **re-verify the most important recent finding on the new
+binary** before trusting it.
+
+---
+
+## 7. What a result is allowed to claim
+
+Absolute DPS is meaningless here. The Restoration harness runs on SimC's MID1
+**Balance** preset because no Restoration one exists, so only deltas between
+variants mean anything. Say that whenever you quote a number.
+
+A finished measurement reports: the variant, the delta, the error bar, the
+target count, the fight style, and the binary. Drop any of those and the number
+cannot be checked later — and in this repo, numbers do get checked later.
