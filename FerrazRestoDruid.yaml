@@ -49,7 +49,7 @@
 # heals better" — SimC never lets the group take damage, so it never charges
 # you for the globals a form swap costs.
 # =============================================================================
-version: "5.0.0"
+version: "5.1.0"
 author: Ferraz
 patch: "12.1"
 spec: 105
@@ -71,7 +71,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-08-24 | Patch: 12.1 | Version: 5.0.0"
+    text: "Last update: 2026-08-24 | Patch: 12.1 | Version: 5.1.0"
 
   # ==========================================================================
   # RECOMMENDED BUILD — the string the talent.X gates below assume.
@@ -183,19 +183,21 @@ config:
     max: 99
     default: 70
 
-  # RAW health, not effective — the same rule as Nature's Swiftness above, and
-  # the reason this slider sits next to it. Every OTHER health slider in this
-  # section is measured against EFFECTIVE health, which adds the healing
-  # already flying at the target; with your HoTs rolling, 50 effective is
-  # roughly 30 real. So a 50 here is a genuinely harder trigger than a 50
-  # anywhere else on this panel. Raise it further than feels right.
+  # Raised 50 -> 60 alongside restoring the Rejuvenation blanket to 100. With
+  # the blanket back at full width this line is the real safety net — the one
+  # thing above the HoT maintenance that reacts to someone genuinely dropping —
+  # so it gets room rather than sitting at the floor.
+  #
+  # Still RAW health, not effective. Effective adds incoming heals, so with
+  # your HoTs rolling it reads high exactly when you need it to read low. 60
+  # raw is roughly 80 effective on a covered target.
   regrowth_emergency_threshold:
     label: "Regrowth Emergency HP % (real HP)"
     section: "Healing"
     type: slider
     min: 25
     max: 90
-    default: 50
+    default: 60
     description: "Emergency Regrowth on anyone below this health. Measured against REAL health, unlike the other sliders here — with HoTs ticking, real health reads lower than the effective health the rest of the panel uses."
 
   swiftmend_threshold:
@@ -213,20 +215,29 @@ config:
     min: 25
     max: 99
     default: 90
-  # Lowered 100 -> 90. At 100 the line matched anyone not literally full, so
-  # it sat ABOVE the Regrowth line (<90) and won every pass. Someone dropping
-  # fast collected Rejuvenation, then Germination, then finally a Regrowth —
-  # three globals of HoT before the heal that resolves.
+  # REVERTED to 100 on 5.1.0, one version after lowering it. The reference +15
+  # log says the blanket IS the Abundance engine and lowering this starves it.
   #
-  # Rejuvenation is maintenance, not triage. 90 keeps it as the blanket
-  # without letting it outrank the direct heal for someone actually hurt.
+  # Abundance needs 5 Rejuvenations up at once and Rejuvenation lasts ~15s, so
+  # holding five people covered costs roughly 20 casts a minute. That druid
+  # runs 16/min (263 Rejuvenation + 166 Germination in 26.9 min) and lands
+  # 58.2% Abundance uptime — 121 of his 176 Regrowths, 69%, go out inside the
+  # window at -60% cost and +60% crit. He has no separate "build Abundance"
+  # behaviour; the uptime is a by-product of blanketing hard.
+  #
+  # 5.0.0 dropped this to 90 on the argument that someone falling fast collected
+  # Rejuvenation, then Germination, then finally a Regrowth. That argument was
+  # wrong: "Regrowth Emergency" is the SECOND line of active_healing, above all
+  # of this, on RAW health. Anyone actually dying is caught there. The case in
+  # the example was a player at 60% real health, who is not dying and for whom
+  # the instant blanket is the right answer.
   rejuvenation_threshold:
     label: "Rejuvenation HP %"
     section: "Healing"
     type: slider
     min: 25
     max: 100
-    default: 90
+    default: 100
 
   # ==========================================================================
   # HEALING COOLDOWNS — Convoke, Tranquility and their gates.
