@@ -5,8 +5,8 @@
 # LISTS
 #   main              entry point: plumbing -> defensives -> cooldowns ->
 #                     active healing -> DPS weaving.
-#   out_of_combat     Mark of the Wild + Symbiotic Relationship (any time) +
-#                     post-combat cleanup on genuine HP need only.
+#   out_of_combat     Mark of the Wild + post-combat cleanup on genuine HP
+#                     need only.
 #   defensives        Ironbark -> Barkskin -> Bear Form + Frenzied Regen.
 #   racials           Shadowmeld, Thorn Bloom.
 #   utility           Root cleanse, Innervate.
@@ -29,12 +29,12 @@
 # talents= profile field), not guessed. Everbloom is maxed at 4/4.
 #
 # talent.X gates confirmed on the string: germination, heart_of_the_wild,
-# efflorescence, everbloom, photosynthesis, power_of_the_archdruid,
-# symbiotic_relationship. fluid_form/swipe are checked but NOT on this
+# efflorescence, everbloom, photosynthesis, power_of_the_archdruid.
+# fluid_form/swipe are checked but NOT on this
 # string — harmless dead weight unless the build changes.
 # =============================================================================
 
-version: "1.10.1"
+version: "1.11.0"
 author: Ferraz
 patch: "12.1"
 spec: 105
@@ -53,7 +53,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-08-24 | Patch: 12.1 | Version: 1.10.1"
+    text: "Last update: 2026-08-24 | Patch: 12.1 | Version: 1.11.0"
 
   # String the talent.X checks below assume.
   recommended_talents:
@@ -262,14 +262,6 @@ config:
     min: 25
     max: 99
     default: 75
-
-  # Symbiotic Relationship bond target. Leave empty to fall back to tank.
-  raid_symbiotic_target:
-    label: "Symbiotic Relationship Target"
-    section: "Utility"
-    type: unit_select
-    filter: tanks
-    max: 1
 
   # === RACIAL CONFIGURATIONS ===
   raid_thorn_bloom_threshold:
@@ -524,44 +516,16 @@ lists:
     - incapacitating_roar,name="Roar (AoE CC)",if=interrupt.stun.aoe.check
     - soothe,name="Soothe Enrage",if=target.purgeable.enrage
 
-  # Mark of the Wild + Symbiotic Relationship (any time), plus post-combat
+  # Mark of the Wild, plus post-combat
   # cleanup on genuine HP need — (player.inraid|player.indungeon) avoids
   # misreading a phantom "member" when solo/ungrouped.
   out_of_combat:
     # config.raid_use_mark_of_the_wild was defined but no line read it, so the
     # checkbox did nothing at all. Wired up here.
     - mark_of_the_wild,name="Mark of the Wild",range_check=none,if=config.raid_use_mark_of_the_wild&(buff.mark_of_the_wild.down.any|action.mark_of_the_wild.overlayed)&lastcast.mark_of_the_wild>=10
-    # Symbiotic Relationship: can only rebind out of combat. Bond aura lives
-    # on the caster, so the gate is buff.symbiotic_relationship (self), not
-    # cycle.buff.*.
-    # buff.474750, NOT buff.symbiotic_relationship. A snapshot settles it: the
-    # player carries "[474750] (Symbiotic Relationship) mine=yes" for the full
-    # hour, and in the very same trace the rotation evaluated
-    # `buff.symbiotic_relationship.down = 1 [PASS]`. The name does not resolve
-    # to that aura, so every condition built on it re-cast the bond on a target
-    # that already had it.
-    # 474760, which 1.9 guessed at, is the bond HEAL — it fires thousands of
-    # times a fight and is never an aura. Wrong id, and it read .down forever.
-    # lastcast stays as the backstop in case the aura id changes again.
-    # Two auras, one per side of the bond. A snapshot shows them together:
-    #   [PLAYER]    474754 (Symbiotic Relationship) rem=3466.3 mine=no
-    #   [PARTY[4]]  474750 (Symbiotic Relationship) rem=3466.2 mine=yes
-    # 474750 sits on the TANK and is applied by you. 474754 sits on YOU and is
-    # applied by the tank. 3.4 claimed the player carried 474750 — that was a
-    # misread of the same snapshot, and it is why the line kept re-casting.
-    #
-    # `cycle.buff`, not `buff`. Bare `buff.X` reads the PLAYER's auras, but
-    # this line cycles tanks, so it has to ask about the CYCLED unit. Every
-    # other cycle= line in this file already uses the cycle. prefix; this one
-    # was the lone exception.
-    #
-    # buff.474754.down is the second half: you may only hold one bond, so if
-    # you already carry the healer-side aura, do not bond a different tank.
-    #
-    # 474760, guessed at in 1.9, appears nowhere in any snapshot. The bond's
-    # heal is 439530 (Symbiotic Blooms), an 8s aura that lands on the group.
-    - symbiotic_relationship,cycle=config.raid_symbiotic_target,range_check=none,name="Symbiotic Relationship (Chosen)",if=talent.symbiotic_relationship&config.raid_symbiotic_target&cycle.buff.474750.down&buff.474754.down&lastcast.symbiotic_relationship>=10
-    - symbiotic_relationship,cycle=tanks,range_check=none,name="Symbiotic Relationship (Tank Fallback)",if=talent.symbiotic_relationship&!config.raid_symbiotic_target&cycle.buff.474750.down&buff.474754.down&lastcast.symbiotic_relationship>=10
+    # NO Symbiotic Relationship. Removed at request for the raid file; the
+    # M+ file keeps it. Nothing else here reads the bond, so the config
+    # raid_symbiotic_target went with it.
 
     - lifebloom,name="OOC Lifebloom",cycle=members,if=(player.inraid|player.indungeon)&!talent.everbloom&cycle.health.effective.pct<config.raid_lifebloom_threshold&cycle.buff.lifebloom.down&(group.count(cycle.buff.lifebloom.up)=0|tank1.buff.lifebloom.up|tank2.buff.lifebloom.up)&!player.combat
     - lifebloom,name="OOC Lifebloom (Tank)",cycle=tanks,if=(player.inraid|player.indungeon)&!talent.everbloom&(cycle.buff.lifebloom.down|cycle.buff.lifebloom.remains<4.5)&(cycle.buff.lifebloom.up|group.count(cycle.buff.lifebloom.up)=0)&!player.combat
