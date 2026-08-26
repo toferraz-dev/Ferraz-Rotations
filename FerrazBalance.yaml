@@ -61,7 +61,7 @@
 # Wild Mushroom, Power of Goldrinn, Orbit Breaker.
 # =============================================================================
 
-version: "3.9.2"
+version: "3.9.3"
 author: Ferraz
 patch: "12.1"
 spec: 102
@@ -78,7 +78,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-08-24 | Patch: 12.1 | Version: 3.9.2"
+    text: "Last update: 2026-08-24 | Patch: 12.1 | Version: 3.9.3"
 
   # ==========================================================================
   # RECOMMENDED BUILD — every number in this file was measured against this
@@ -852,7 +852,26 @@ lists:
     - return,if=!target.valid&config.engine_auto_combat.has(0)
     - return,if=!target.valid|target.dead|!target.attackable
 
-    - moonkin_form,if=buff.moonkin_form.down&health.effective.pct>config.frenzied_regen_hp&!buff.frenzied_regeneration.up
+    # Back to Moonkin. Two lines, split on Fluid Form, so this is correct on
+    # either build.
+    #
+    # Fluid Form (449193) does more than SimC's spell data says. The in-game
+    # tooltip carries THREE lines:
+    #
+    #   Shred, Rake, and Skull Bash ... shift you into Cat Form
+    #   Mangle ... shifts you into Bear Form
+    #   Wrath and Starfire shift you into Moonkin Form, if known.
+    #
+    # SimC's Description field for that id only reproduces the first line, so
+    # `spell_query` reads as though Starfire were not covered. It is. Treat
+    # SimC descriptions as unreliable; its Attributes and Talent Entry fields
+    # have held up, the prose has not.
+    #
+    # So with Fluid Form talented, Starfire returns you to Moonkin AND deals
+    # damage in the same global — strictly better than spending a GCD on the
+    # form. Without it, the explicit shift is the only way back.
+    - starfire,name="Back to Moonkin (Fluid Form)",if=talent.fluid_form&buff.moonkin_form.down&health.effective.pct>config.frenzied_regen_hp&!buff.frenzied_regeneration.up
+    - moonkin_form,name="Back to Moonkin",if=!talent.fluid_form&buff.moonkin_form.down&health.effective.pct>config.frenzied_regen_hp&!buff.frenzied_regeneration.up
     # NOTE: a pre-pull `wrath,if=!player.combat&!player.moving&target.distance<=40`
     # used to sit here. It auto-started combat on any attackable target within
     # 40y, which in a dungeon means pulling whatever you happen to have clicked
