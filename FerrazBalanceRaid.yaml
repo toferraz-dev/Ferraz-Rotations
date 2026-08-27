@@ -1,66 +1,20 @@
 # =============================================================================
-# Balance Druid — spec 102 — patch 12.1 (Midnight) — Elune's Chosen, raid ST.
+# Balance Druid Ferraz Raid - spec 102 - patch 12.1.
 # =============================================================================
 #
-# No longer a Grove build: recommended string is Elune's Chosen + Lunar
-# Calling. No Force of Nature/Wild Mushroom/New-Half-Full Moon — those lines
-# are kept as harmless dead weight (removing measured +0.01%, i.e. nothing).
-# Filler switched from Wrath (Grove) to pure Starfire on Lunar Calling:
-# +11.1% at one target, the single biggest gain in this file.
+# Lists (entry point: main):
+#   engine                  mouseover_dots          dispels                 interrupts
+#   trinkets                defensives              heal_support            moving_st
+#   moving_aoe              st                      aoe                     opener_st
+#   opener_aoe              main
 #
-# LISTS
-#   main            plumbing, target guards, form/utility, delegates damage.
-#   heal_support    Mark of the Wild, Thorn Bloom.
-#   defensives      Barkskin, Bear Form/HotW/Frenzied Regen.
-#   interrupts      Solar Beam (target/mouseover/focus).
-#   trinkets        tied to the burst window.
-#   opener_st / opener_aoe   burst ramp, runs whenever CA/Inc is ready.
-#   moving_st / moving_aoe   instant-only while moving.
-#   st / aoe        stationary damage priority, 1 / 2+ enemies.
-#
-# Measured with SimC 1210-01 on Patchwerk (the raid proxy, vs DungeonSlice
-# for the M+ file) against the recommended string. Harness:
-# sim/ab_test_balance_raid.py, profile sim/Ferraz_balance_raid.simc,
-# target_error=0.12 (~±0.06%).
-#
-# Fight style matters and the two files disagree ON PURPOSE: dropping Wrath
-# is +11.1% here, -1.44% in the M+ file. Do not copy Wrath between them.
-#
-# 2.0 DID port five things from FerrazBalance.yaml, all of them fixes rather
-# than tuning:
-#
-#   Moonfire target cap removed        +8.68% at 6 targets, +6.66% at 8
-#     The `active_enemies<6` gate came from the reference list and was never
-#     measured on this character. Both halves were wrong — see below for the
-#     counting expression, and the number itself loses at every count tested.
-#
-#   active_enemies -> enemies.combat.40y   14 occurrences, none left
-#     The catalog defines active_enemies as a NAMEPLATE count: mobs merely on
-#     screen count, including a pack nobody has engaged. enemies.combat.40y
-#     counts only enemies actually in combat and inside cast range.
-#
-#   engine plumbing inlined
-#     `sanity_checks` is not just guards — it also calls auto_dispel, affix,
-#     auto_purge_enrage, auto_brez, auto_rez and auto_combat_potion. That last
-#     one fought this file's own combat_potion line, which is worth +6.17%.
-#     Two drivers for one potion. Now inlined with a toggle per piece.
-#
-#   dispels + Rebirth/Revive, each behind its own toggle
-#
-#   mouseover_dots, gated on the mouseover's OWN debuff
-#     Worth nothing on a single-target boss, everything in an add phase.
-#
-# NOT ported, and why: inc_min_standing_time (you stand still on a boss
-# anyway), swap_off_dying (a boss does not die mid-cast), and the moving Fury
-# of Elune guard (Incarnation here keys off var.opener, with no FoE alignment
-# requirement, so the conflict the M+ file has does not exist).
-#
-# NOT validated: defensives, Thorn Bloom, Heart of the Wild, both moving_*
-# lists (SimC never moves), the dispels list (no dispel model), Rebirth and
-# Revive.
+# WHY ANY OF IT IS THE WAY IT IS: .agents/rationale/BalanceRaid.md
+# That file carries every measurement, every rejected alternative and every
+# bug this file has already been through. Read it before changing a line -
+# most of what looks improvable here was tried and reverted.
 # =============================================================================
 
-version: "2.10.0"
+version: "2.10.1"
 author: Ferraz
 patch: "12.1"
 spec: 102
@@ -75,7 +29,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-08-27 | Patch: 12.1 | Version: 2.10.0"
+    text: "Last update: 2026-08-27 | Patch: 12.1 | Version: 2.10.1"
 
   # Exact string every number here was measured against — Elune's Chosen, not Grove.
   recommended_talents:
@@ -84,9 +38,7 @@ config:
     label: "Recommended Talent String"
     text: "CYGAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWoMbNjxMDwsMzMzMYYGjZWmhxMWYZmlZGjZ2wAgx2yMDGz2IwEAAAgFzMzMD2MMGzAAYmBLDA"
 
-  # === DEFENSIVE CONFIGURATIONS ===
-  # Barkskin: proactive trigger. incoming.mitigated.pct is post-defensives,
-  # so NOT comparable to the HP slider below (40 here != 40 there).
+  # Barkskin: proactive trigger. incoming.mitigat.
   barkskin_dmg_pct:
     label: "Barkskin (Incoming Dmg%)"
     section: "Defensives"
@@ -167,34 +119,14 @@ config:
     type: checkbox
     default: true
 
-  # === ENGINE CONFIGURATIONS ===
-  # This file used to call spell_queue / sanity_checks / auto_target_ranged /
-  # auto_heal from Simia's _shared.yaml. `sanity_checks` is not just guards: it
-  # also calls auto_dispel, affix, auto_purge_enrage, auto_brez, auto_rez and
-  # auto_combat_potion. Two problems with inheriting it here specifically:
-  #   - nothing could be switched off;
-  #   - auto_combat_potion fought this file's own combat_potion line, which is
-  #     worth +6.17% and is the second largest number in the file. Two drivers
-  #     for one potion.
-  # All of it is inlined in the `engine` list so each piece has a toggle.
-  # Not copied (no Druid content): anti_cc, auto_freedom, auto_feign_death,
-  # auto_death_grip, special_actions_combat (melee), auto_combat_potion.
+  # This file used to call spell_queue / sanity_c.
   engine_loot_nearby:
     label: "Loot Nearby Corpses"
     section: "Engine"
     type: checkbox
     default: true
 
-  # cfg.auto_combat was READ by two lines in sanity_checks but defined nowhere
-  # in this file, so it fell back to Simia's shared _shared.yaml copy. Two
-  # problems with that: the header of this file claims it owns all of its own
-  # plumbing, and an inherited default can change under you without any commit
-  # here. Defined locally now, with the same options and the same default
-  # [1, 2] the shared file uses, so behaviour is unchanged.
-  #
-  # Worth knowing what that default means: "Off" is option 0 and is NOT
-  # selected, so `config.engine_auto_combat.has(0)` is false and the second guard below
-  # is inert out of the box. It only does anything if you tick Off yourself.
+  # cfg.auto_combat was READ by two lines in sani.
   engine_auto_combat:
     label: "Auto Combat"
     section: "Engine"
@@ -260,13 +192,7 @@ config:
     type: checkbox
     default: true
 
-  # === AOE CONFIGURATIONS ===
-  # Ported from the M+ file, where it is the largest AoE gain (+2.1% overall,
-  # +9.8% at 5 targets). Worth nothing on a single-target boss and everything
-  # in an add phase, so it ships ON — the lines only fire when a valid enemy
-  # mouseover exists. Gated on the mouseover's OWN debuff, not on a cluster
-  # proxy: mouseover.debuff.SPELL.PROPERTY is used by Simia's own rotation_104
-  # and rotation_256.
+  # Ported from the M+ file, where it is the larg.
   enable_mouseover_dots:
     label: "Spread DoTs on Mouseover"
     section: "AoE"
@@ -274,12 +200,7 @@ config:
     default: true
     description: "Suggests Moonfire/Sunfire on the unit under your mouse while it is missing the DoT. Does nothing on single target."
 
-  # === DISPEL CONFIGURATIONS ===
-  # Balance removes POISON and CURSE only (remove_corruption 2782), plus enrage
-  # offensively (soothe 2908) — see simia_data_dump/_dispeldata.yaml. The .list
-  # suffix applies Simia's own dispel_list filter. UNVALIDATED: no dispel model
-  # in SimC. Party dispel defaults OFF here: in a raid the healers cover it and
-  # a GCD spent dispelling is a GCD off the boss.
+  # Balance removes POISON and CURSE only (remove.
   auto_dispel_self:
     label: "Dispel Self (Poison/Curse)"
     section: "Dispels"
@@ -322,14 +243,9 @@ variables:
   cd_active: buff.celestial_alignment.up|buff.incarnation_chosen_of_elune.up
 
 lists:
-  # Everything spell_queue / sanity_checks / auto_target_ranged / auto_heal used
-  # to do, inlined so it can be configured. The five return guards are copied
-  # verbatim — dropping any of them lets the rotation fire while dead or mounted.
+  # Everything spell_queue / sanity_checks / auto.
   engine:
-    # `&`, not `|`. With `|` the condition is true whenever you are not doing at
-    # least ONE of the two things — and you are almost never casting AND
-    # channelling at once, so it read true on essentially every pass. The queue
-    # is meant to flush only when you are genuinely free.
+    # `&`, not `|`. With `|` the condition is true .
     - queue_spell,if=!player.casting&!player.channeling
 
     - return,if=!state.rotation
@@ -357,29 +273,7 @@ lists:
     - target_enemy,delay=200,off_gcd=true,if=config.engine_auto_target.has(1)&target.dead&enemies.combat.40y>=1
     - target_enemy,delay=200,off_gcd=true,if=config.engine_auto_target.has(2)&target.range>=40&enemies.combat.40y>=1
 
-    # --- Temple of Sethraliss, Adderis and Aspix ---------------------------
-    # Storm Blessed alternates between the two bosses and gives its holder
-    # "Immunity - Damage Only" on every school — a hard immunity, not a
-    # reduction. Damage into it is wasted entirely, so swap off.
-    #
-    # 1289229 is the AURA. 1310311 is the 2.5s cast that applies it; checking
-    # the cast id would only ever be true for those 2.5 seconds. Same trap as
-    # Symbiotic Relationship, where the cast and the aura are different ids.
-    #
-    # target_enemy takes no filter — it is "target nearest enemy" and CYCLES
-    # on repeated presses, like Tab. So the pattern is to describe why the
-    # CURRENT target is wrong and let it re-evaluate next pass; delay=500
-    # keeps that from spinning. This is the same shape the official rotations
-    # use for interrupt scanning.
-    #
-    # enemies.combat.40y>=2 stops it hunting once one boss is dead: the
-    # survivor gains Frenzy (1292035), never Storm Blessed, and with nothing
-    # to swap to the line would otherwise cycle for nothing. 40y in every
-    # file, melee included — the count only asks "is there another boss",
-    # not "is it in melee range".
-    #
-    # No config toggle: the condition is one boss aura in one dungeon, and
-    # there is no reason to ever want to keep hitting an immune target.
+    # --- Temple of Sethraliss, Adderis and Aspix .
     - target_enemy,name="Swap Off Storm Blessed",delay=500,off_gcd=true,if=target.buff.1289229.up&enemies.combat.40y>=2
 
   # Spreads DoTs without changing target. mouseover.combat keeps it from
@@ -413,33 +307,9 @@ lists:
   # Unvalidated by simulation.
   defensives:
     - barkskin,range_check=none,name="Barkskin (predicted)",if=incoming.mitigated.pct>=config.barkskin_dmg_pct
-    # Two reasons to be in Bear, not one. The old gate required Frenzied
-    # Regeneration to be ready, which meant that with Frenzy on cooldown but
-    # Heart of the Wild up, the shift was refused — and the HotW bear
-    # defensive two lines below became unreachable exactly when it was the
-    # only defensive left. Either payoff now justifies the shift; neither
-    # being available leaves you in Moonkin, which is where the damage is.
+    # Two reasons to be in Bear, not one. The old g.
 
-    # Each reason carries its OWN health threshold, and its own preconditions.
-    #
-    # Before this the whole line sat behind frenzied_regen_hp (30) while the
-    # HotW defensive below triggers at hotw_bear_hp (35). Between 30 and 35
-    # HotW wanted to fire and the shift that makes it reachable refused, so
-    # one of the two sliders quietly did nothing in that band.
-    #
-    # Aligning the numbers would have been the wrong fix — they measure
-    # different things. Shifting for Frenzied Regeneration is worth a deeper
-    # health hole than shifting for HotW, because Frenzy is a heal and HotW is
-    # stamina plus a Frenzy charge. Splitting the branches keeps both sliders
-    # meaningful and independent.
-    #
-    # buff.frenzied_regeneration.down moved INTO the Frenzy branch, where it
-    # belongs: it exists to stop re-shifting to re-apply a HoT you already
-    # have, which has nothing to say about whether HotW is worth pressing.
-    #
-    # Each branch of the `|` now stands on its own — health gate, readiness
-    # check and preconditions all inside it. A branch without its own gate is
-    # how three separate bugs got into this repo.
+    # Two independent reasons to be in Bear, each with its own health gate.
     - bear_form,name="Panic Bear Form",if=!buff.bear_form.up&((health.effective.pct<=config.frenzied_regen_hp&cooldown.frenzied_regeneration.ready&buff.frenzied_regeneration.down)|(config.hotw_bear_defensive&health.effective.pct<=config.hotw_bear_hp&(cooldown.heart_of_the_wild.ready|buff.heart_of_the_wild.up)))
 
     # HotW before the heal so Frenzied Regen lands on the bigger pool. Cast
@@ -451,16 +321,7 @@ lists:
     - barkskin,range_check=none,name="Barkskin (low HP)",if=health.effective.pct<=config.barkskin_hp
     # Root cleanse by shapeshift, then Starfire to shift back to Moonkin.
 
-    # Root cleanse. TWO lines, because breaking a root needs a form CHANGE and
-    # one line cannot cover both starting states.
-    #
-    # A single `bear_form,if=freedom.up&(moonkin.up|bear.up)` loops: rooted
-    # while already in Bear, it suggests Bear again, the state does not move,
-    # the condition stays true, and the line takes every GCD until the root
-    # expires. Shifting to the form you are already in cleanses nothing.
-    #
-    # Bear first — it is the tankier place to be while stuck — with Cat as the
-    # way out when Bear is where you already are.
+    # Root cleanse. TWO lines, because breaking a r.
     - bear_form,name="Root Cleanse (to Bear)",if=debuff_list.freedom.up&!buff.bear_form.up
     - cat_form,name="Root Cleanse (from Bear)",if=debuff_list.freedom.up&buff.bear_form.up
 
@@ -497,9 +358,7 @@ lists:
     - sunfire
     - moonfire
 
-  # ===========================================================================
   # ST — 1 enemy, standing still.
-  # ===========================================================================
   st:
     # eclipse_down on the pandemic clause is deliberate — refreshing inside
     # an Eclipse throws away the snapshot (measured -0.94% without it).
@@ -584,15 +443,8 @@ lists:
 
     - call_action_list,name=heal_support
 
-    # --- COMBAT WALL. Nothing below this line runs out of combat. ---
-    # Everything above it is what the rotation is allowed to do while idle:
-    # the engine (loot, auto-target, rez, dispels, consumables) and
-    # heal_support (Mark of the Wild, Thorn Bloom). Below is damage, defensives,
-    # interrupts and cooldowns — all of it combat-only.
-    #
-    # player.combat, NOT player.auto_combat. The catalog defines the second as
-    # a "Config-based auto-combat check", not combat state; using it here is
-    # the bug that silently disabled four rotations in this repo.
+    # COMBAT WALL - nothing below runs out of combat. player.combat, NOT
+    # player.auto_combat, which is a config check and not combat state.
     - return,if=!player.combat
 
     # --- Target guards ---
@@ -600,51 +452,17 @@ lists:
     - return,if=!target.valid&config.engine_auto_combat.has(0)
     - return,if=!target.valid|target.dead|!target.attackable
 
-    # Back to Moonkin. Two lines, split on Fluid Form, so this is correct on
-    # either build.
-    #
-    # Fluid Form (449193) does more than SimC's spell data says. The in-game
-    # tooltip carries THREE lines:
-    #
-    #   Shred, Rake, and Skull Bash ... shift you into Cat Form
-    #   Mangle ... shifts you into Bear Form
-    #   Wrath and Starfire shift you into Moonkin Form, if known.
-    #
-    # SimC's Description field for that id only reproduces the first line, so
-    # `spell_query` reads as though Starfire were not covered. It is. Treat
-    # SimC descriptions as unreliable; its Attributes and Talent Entry fields
-    # have held up, the prose has not.
-    #
-    # So with Fluid Form talented, Starfire returns you to Moonkin AND deals
-    # damage in the same global — strictly better than spending a GCD on the
-    # form. Without it, the explicit shift is the only way back.
+    # Back to Moonkin. Two lines, split on Fluid Fo.
     - starfire,name="Back to Moonkin (Fluid Form)",if=talent.fluid_form&buff.moonkin_form.down&health.effective.pct>config.frenzied_regen_hp&!buff.frenzied_regeneration.up
     - moonkin_form,name="Back to Moonkin",if=!talent.fluid_form&buff.moonkin_form.down&health.effective.pct>config.frenzied_regen_hp&!buff.frenzied_regeneration.up
-    # NOTE: a pre-pull `wrath,if=!player.combat&!player.moving&target.distance<=40`
-    # used to sit here. It auto-started combat on any attackable target within
-    # 40y, which in a dungeon means pulling whatever you happen to have clicked
-    # — the tank decides the pull, not the rotation. It was also the wrong
-    # spell: with Lunar Calling, Starfire carries +120% on the primary target
-    # and Wrath no longer flips Eclipse, which is why the filler is pure
-    # Starfire. Removed. Pull by hand.
+    # NOTE: a pre-pull `wrath,if=!player.combat&!pl.
 
     - call_action_list,name=interrupts
     - call_action_list,name=defensives
     - call_action_list,name=dispels
     - call_action_list,name=trinkets
 
-    # NOTE on out-of-combat pulling: the guard is target.valid, three lines up.
-    # The docs define it as "Comprehensive check: exists, enemy, alive, IN
-    # COMBAT (PvE)", and `return,if=!target.valid|target.dead|!target.attackable`
-    # halts the rotation whenever it is false. A mob nobody has pulled is not a
-    # valid target, so the damage lists never see it.
-    # Do NOT add player.combat to these calls. It looks like the same guard and
-    # is not: casting is what puts YOU in combat, so requiring it first means
-    # the rotation can never take the first action, and it also blocks joining
-    # a pull the tank started, where target.combat is true and player.combat is
-    # not yet.
-    #
-    # --- Damage priority: burst ramp, then moving, then stationary. ---
+    # NOTE on out-of-combat pulling: the guard is t.
     - call_action_list,name=opener_aoe,if=var.opener&enemies.combat.40y>1
     - call_action_list,name=opener_st,if=var.opener&enemies.combat.40y<=1
     - call_action_list,name=moving_aoe,if=player.moving&enemies.combat.40y>1

@@ -1,0 +1,714 @@
+# BalanceRaid — rationale
+Every technical comment that used to live in `FerrazBalanceRaid.yaml`, moved out so the
+rotation file can stay readable. Nothing here was rewritten: the text is
+verbatim, in file order. The YAML keeps a short comment at each of these
+points.
+
+Read this before changing the matching line — most of it records something
+that was already tried and failed.
+
+---
+
+## version: "2.10.0"
+
+`FerrazBalanceRaid.yaml` line 1
+
+```
+=============================================================================
+Balance Druid — spec 102 — patch 12.1 (Midnight) — Elune's Chosen, raid ST.
+=============================================================================
+
+No longer a Grove build: recommended string is Elune's Chosen + Lunar
+Calling. No Force of Nature/Wild Mushroom/New-Half-Full Moon — those lines
+are kept as harmless dead weight (removing measured +0.01%, i.e. nothing).
+Filler switched from Wrath (Grove) to pure Starfire on Lunar Calling:
++11.1% at one target, the single biggest gain in this file.
+
+LISTS
+  main            plumbing, target guards, form/utility, delegates damage.
+  heal_support    Mark of the Wild, Thorn Bloom.
+  defensives      Barkskin, Bear Form/HotW/Frenzied Regen.
+  interrupts      Solar Beam (target/mouseover/focus).
+  trinkets        tied to the burst window.
+  opener_st / opener_aoe   burst ramp, runs whenever CA/Inc is ready.
+  moving_st / moving_aoe   instant-only while moving.
+  st / aoe        stationary damage priority, 1 / 2+ enemies.
+
+Measured with SimC 1210-01 on Patchwerk (the raid proxy, vs DungeonSlice
+for the M+ file) against the recommended string. Harness:
+sim/ab_test_balance_raid.py, profile sim/Ferraz_balance_raid.simc,
+target_error=0.12 (~±0.06%).
+
+Fight style matters and the two files disagree ON PURPOSE: dropping Wrath
+is +11.1% here, -1.44% in the M+ file. Do not copy Wrath between them.
+
+2.0 DID port five things from FerrazBalance.yaml, all of them fixes rather
+than tuning:
+
+  Moonfire target cap removed        +8.68% at 6 targets, +6.66% at 8
+    The `active_enemies<6` gate came from the reference list and was never
+    measured on this character. Both halves were wrong — see below for the
+    counting expression, and the number itself loses at every count tested.
+
+  active_enemies -> enemies.combat.40y   14 occurrences, none left
+    The catalog defines active_enemies as a NAMEPLATE count: mobs merely on
+    screen count, including a pack nobody has engaged. enemies.combat.40y
+    counts only enemies actually in combat and inside cast range.
+
+  engine plumbing inlined
+    `sanity_checks` is not just guards — it also calls auto_dispel, affix,
+    auto_purge_enrage, auto_brez, auto_rez and auto_combat_potion. That last
+    one fought this file's own combat_potion line, which is worth +6.17%.
+    Two drivers for one potion. Now inlined with a toggle per piece.
+
+  dispels + Rebirth/Revive, each behind its own toggle
+
+  mouseover_dots, gated on the mouseover's OWN debuff
+    Worth nothing on a single-target boss, everything in an add phase.
+
+NOT ported, and why: inc_min_standing_time (you stand still on a boss
+anyway), swap_off_dying (a boss does not die mid-cast), and the moving Fury
+of Elune guard (Incarnation here keys off var.opener, with no FoE alignment
+requirement, so the conflict the M+ file has does not exist).
+
+NOT validated: defensives, Thorn Bloom, Heart of the Wild, both moving_*
+lists (SimC never moves), the dispels list (no dispel model), Rebirth and
+Revive.
+=============================================================================
+```
+
+---
+
+## about:
+
+`FerrazBalanceRaid.yaml` line 73
+
+```
+Display-only build stamp — keep in sync with version:/patch: above.
+```
+
+---
+
+## recommended_talents:
+
+`FerrazBalanceRaid.yaml` line 80
+
+```
+Exact string every number here was measured against — Elune's Chosen, not Grove.
+```
+
+---
+
+## barkskin_dmg_pct:
+
+`FerrazBalanceRaid.yaml` line 87
+
+```
+=== DEFENSIVE CONFIGURATIONS ===
+Barkskin: proactive trigger. incoming.mitigated.pct is post-defensives,
+so NOT comparable to the HP slider below (40 here != 40 there).
+```
+
+---
+
+## barkskin_hp:
+
+`FerrazBalanceRaid.yaml` line 98
+
+```
+Reactive floor, unmeasured.
+```
+
+---
+
+## frenzied_regen_hp:
+
+`FerrazBalanceRaid.yaml` line 107
+
+```
+Lower than Barkskin: Bear Form costs two full GCDs to enter.
+```
+
+---
+
+## hotw_bear_defensive:
+
+`FerrazBalanceRaid.yaml` line 116
+
+```
+HotW inside Bear Form: extra Stamina/Ironfur/Frenzied Regen charge.
+```
+
+---
+
+## thorn_bloom_threshold:
+
+`FerrazBalanceRaid.yaml` line 132
+
+```
+=== RACIAL CONFIGURATIONS ===
+Thorn Bloom: heal only, not damage — its DPS is 0.13% and costs a GCD.
+```
+
+---
+
+## use_trinket_1:
+
+`FerrazBalanceRaid.yaml` line 150
+
+```
+=== TRINKET & CONSUMABLE CONFIGURATIONS ===
+```
+
+---
+
+## use_potion:
+
+`FerrazBalanceRaid.yaml` line 163
+
+```
+Added potion line: +6.17% Patchwerk, second largest number after the filler fix.
+```
+
+---
+
+## engine_loot_nearby:
+
+`FerrazBalanceRaid.yaml` line 170
+
+```
+=== ENGINE CONFIGURATIONS ===
+This file used to call spell_queue / sanity_checks / auto_target_ranged /
+auto_heal from Simia's _shared.yaml. `sanity_checks` is not just guards: it
+also calls auto_dispel, affix, auto_purge_enrage, auto_brez, auto_rez and
+auto_combat_potion. Two problems with inheriting it here specifically:
+  - nothing could be switched off;
+  - auto_combat_potion fought this file's own combat_potion line, which is
+    worth +6.17% and is the second largest number in the file. Two drivers
+    for one potion.
+All of it is inlined in the `engine` list so each piece has a toggle.
+Not copied (no Druid content): anti_cc, auto_freedom, auto_feign_death,
+auto_death_grip, special_actions_combat (melee), auto_combat_potion.
+```
+
+---
+
+## engine_auto_combat:
+
+`FerrazBalanceRaid.yaml` line 188
+
+```
+cfg.auto_combat was READ by two lines in sanity_checks but defined nowhere
+in this file, so it fell back to Simia's shared _shared.yaml copy. Two
+problems with that: the header of this file claims it owns all of its own
+plumbing, and an inherited default can change under you without any commit
+here. Defined locally now, with the same options and the same default
+[1, 2] the shared file uses, so behaviour is unchanged.
+
+Worth knowing what that default means: "Off" is option 0 and is NOT
+selected, so `config.engine_auto_combat.has(0)` is false and the second guard below
+is inert out of the box. It only does anything if you tick Off yourself.
+```
+
+---
+
+## engine_auto_brez:
+
+`FerrazBalanceRaid.yaml` line 242
+
+```
+Default ON and it matters more here than in M+: a battle rez is often the
+single most valuable global you press in a raid.
+```
+
+---
+
+## enable_mouseover_dots:
+
+`FerrazBalanceRaid.yaml` line 263
+
+```
+=== AOE CONFIGURATIONS ===
+Ported from the M+ file, where it is the largest AoE gain (+2.1% overall,
++9.8% at 5 targets). Worth nothing on a single-target boss and everything
+in an add phase, so it ships ON — the lines only fire when a valid enemy
+mouseover exists. Gated on the mouseover's OWN debuff, not on a cluster
+proxy: mouseover.debuff.SPELL.PROPERTY is used by Simia's own rotation_104
+and rotation_256.
+```
+
+---
+
+## auto_dispel_self:
+
+`FerrazBalanceRaid.yaml` line 277
+
+```
+=== DISPEL CONFIGURATIONS ===
+Balance removes POISON and CURSE only (remove_corruption 2782), plus enrage
+offensively (soothe 2908) — see simia_data_dump/_dispeldata.yaml. The .list
+suffix applies Simia's own dispel_list filter. UNVALIDATED: no dispel model
+in SimC. Party dispel defaults OFF here: in a raid the healers cover it and
+a GCD spent dispelling is a GCD off the boss.
+```
+
+---
+
+## opener: (talent.celestial_alignment|talent.incarnation_chosen_of_elune)&cooldown.celestial_alignment.remains=0&!var.cd_active
+
+`FerrazBalanceRaid.yaml` line 319
+
+```
+CA/Incarnation ready — turns true before every burst, not just the pull.
+Removing the opener lists it drives measured -1.6%.
+```
+
+---
+
+## engine:
+
+`FerrazBalanceRaid.yaml` line 325
+
+```
+Everything spell_queue / sanity_checks / auto_target_ranged / auto_heal used
+to do, inlined so it can be configured. The five return guards are copied
+verbatim — dropping any of them lets the rotation fire while dead or mounted.
+```
+
+---
+
+## - queue_spell,if=!player.casting&!player.channeling
+
+`FerrazBalanceRaid.yaml` line 329
+
+```
+`&`, not `|`. With `|` the condition is true whenever you are not doing at
+least ONE of the two things — and you are almost never casting AND
+channelling at once, so it read true on essentially every pass. The queue
+is meant to flush only when you are genuinely free.
+```
+
+---
+
+## - remove_corruption,delay=500,cycle=party,cycle_order=player_first,name="Devouring Rift (Affix)",if=config.engine_affix_devour&cycle.debuff.440313.up.any
+
+`FerrazBalanceRaid.yaml` line 345
+
+```
+Rebirth / Revive on a hovered unit frame.
+Devour affix. Inert in a raid, kept so the plumbing matches the M+ file.
+```
+
+---
+
+## - target_enemy,name="Swap Off Storm Blessed",delay=500,off_gcd=true,if=target.buff.1289229.up&enemies.combat.40y>=2
+
+`FerrazBalanceRaid.yaml` line 360
+
+```
+--- Temple of Sethraliss, Adderis and Aspix ---------------------------
+Storm Blessed alternates between the two bosses and gives its holder
+"Immunity - Damage Only" on every school — a hard immunity, not a
+reduction. Damage into it is wasted entirely, so swap off.
+
+1289229 is the AURA. 1310311 is the 2.5s cast that applies it; checking
+the cast id would only ever be true for those 2.5 seconds. Same trap as
+Symbiotic Relationship, where the cast and the aura are different ids.
+
+target_enemy takes no filter — it is "target nearest enemy" and CYCLES
+on repeated presses, like Tab. So the pattern is to describe why the
+CURRENT target is wrong and let it re-evaluate next pass; delay=500
+keeps that from spinning. This is the same shape the official rotations
+use for interrupt scanning.
+
+enemies.combat.40y>=2 stops it hunting once one boss is dead: the
+survivor gains Frenzy (1292035), never Storm Blessed, and with nothing
+to swap to the line would otherwise cycle for nothing. 40y in every
+file, melee included — the count only asks "is there another boss",
+not "is it in melee range".
+
+No config toggle: the condition is one boss aura in one dungeon, and
+there is no reason to ever want to keep hitting an immune target.
+```
+
+---
+
+## mouseover_dots:
+
+`FerrazBalanceRaid.yaml` line 385
+
+```
+Spreads DoTs without changing target. mouseover.combat keeps it from
+pulling something that is not in the fight yet.
+```
+
+---
+
+## dispels:
+
+`FerrazBalanceRaid.yaml` line 391
+
+```
+Called from main after defensives and interrupts, so a real defensive or a
+kick still outranks a dispel.
+```
+
+---
+
+## - soothe.mouseover,name="Soothe Enrage (Mouseover)",range_check=mouseover,if=config.soothe_mouseover&mouseover.exists&mouseover.enemy&mouseover.attackable&!mouseover.dead&mouseover.combat&mouseover.purgeable.enrage
+
+`FerrazBalanceRaid.yaml` line 396
+
+```
+Hovering is the only way to Soothe a mob you are not targeting — see
+the soothe_mouseover config for why a search line is impossible.
+```
+
+---
+
+## - combat_potion,if=config.use_potion&player.combat&combat_potion.ready&(var.cd_active|fight_remains<=30)
+
+`FerrazBalanceRaid.yaml` line 409
+
+```
+Potion in the burst + a second late-fight (300s fight fits two): +6.17%
+vs +5.67% burst-only, so the end-of-fight clause is free DPS.
+```
+
+---
+
+## defensives:
+
+`FerrazBalanceRaid.yaml` line 413
+
+```
+Unvalidated by simulation.
+```
+
+---
+
+## - bear_form,name="Panic Bear Form",if=!buff.bear_form.up&((health.effective.pct<=config.frenzied_regen_hp&cooldown.frenzied_regeneration.ready&buff.frenzied_regeneration.down)|(config.hotw_bear_defensive&health.effective.pct<=config.hotw_bear_hp&(cooldown.heart_of_the_wild.ready|buff.heart_of_the_wild.up)))
+
+`FerrazBalanceRaid.yaml` line 416
+
+```
+Two reasons to be in Bear, not one. The old gate required Frenzied
+Regeneration to be ready, which meant that with Frenzy on cooldown but
+Heart of the Wild up, the shift was refused — and the HotW bear
+defensive two lines below became unreachable exactly when it was the
+only defensive left. Either payoff now justifies the shift; neither
+being available leaves you in Moonkin, which is where the damage is.
+
+Each reason carries its OWN health threshold, and its own preconditions.
+
+Before this the whole line sat behind frenzied_regen_hp (30) while the
+HotW defensive below triggers at hotw_bear_hp (35). Between 30 and 35
+HotW wanted to fire and the shift that makes it reachable refused, so
+one of the two sliders quietly did nothing in that band.
+
+Aligning the numbers would have been the wrong fix — they measure
+different things. Shifting for Frenzied Regeneration is worth a deeper
+health hole than shifting for HotW, because Frenzy is a heal and HotW is
+stamina plus a Frenzy charge. Splitting the branches keeps both sliders
+meaningful and independent.
+
+buff.frenzied_regeneration.down moved INTO the Frenzy branch, where it
+belongs: it exists to stop re-shifting to re-apply a HoT you already
+have, which has nothing to say about whether HotW is worth pressing.
+
+Each branch of the `|` now stands on its own — health gate, readiness
+check and preconditions all inside it. A branch without its own gate is
+how three separate bugs got into this repo.
+```
+
+---
+
+## - heart_of_the_wild,name="HotW (Bear defensive)",range_check=none,ignore_cds_toggle=true,if=config.hotw_bear_defensive&buff.bear_form.up&health.effective.pct<=config.hotw_bear_hp&!buff.heart_of_the_wild.up
+
+`FerrazBalanceRaid.yaml` line 445
+
+```
+HotW before the heal so Frenzied Regen lands on the bigger pool. Cast
+by name AND bear morph id (1261872) — only one resolves per form.
+```
+
+---
+
+## - bear_form,name="Root Cleanse (to Bear)",if=debuff_list.freedom.up&!buff.bear_form.up
+
+`FerrazBalanceRaid.yaml` line 452
+
+```
+Root cleanse by shapeshift, then Starfire to shift back to Moonkin.
+
+Root cleanse. TWO lines, because breaking a root needs a form CHANGE and
+one line cannot cover both starting states.
+
+A single `bear_form,if=freedom.up&(moonkin.up|bear.up)` loops: rooted
+while already in Bear, it suggests Bear again, the state does not move,
+the condition stays true, and the line takes every GCD until the root
+expires. Shifting to the form you are already in cleanses nothing.
+
+Bear first — it is the tankier place to be while stuck — with Cat as the
+way out when Bear is where you already are.
+```
+
+---
+
+## heal_support:
+
+`FerrazBalanceRaid.yaml` line 467
+
+```
+Raid utility, unmeasured (not damage). Heart of the Wild deliberately
+absent — its CD now belongs entirely to the Bear-form defensive above.
+```
+
+---
+
+## moving_st:
+
+`FerrazBalanceRaid.yaml` line 473
+
+```
+Instant casts only, unmeasured. Wild Mushroom/New Moon lines dead on this build.
+```
+
+---
+
+## moving_aoe:
+
+`FerrazBalanceRaid.yaml` line 485
+
+```
+Instant casts only, unmeasured.
+```
+
+---
+
+## - wild_mushroom,if=buff.eclipse_lunar.up|buff.eclipse_solar.up|cooldown.wild_mushroom.full_recharge_time<cooldown.celestial_alignment.remains
+
+`FerrazBalanceRaid.yaml` line 494
+
+```
+DEAD LINES on the recommended build.
+```
+
+---
+
+## st:
+
+`FerrazBalanceRaid.yaml` line 500
+
+```
+===========================================================================
+ST — 1 enemy, standing still.
+===========================================================================
+```
+
+---
+
+## - moonfire,if=debuff.moonfire.remains<2|debuff.moonfire.refreshable&var.eclipse_down
+
+`FerrazBalanceRaid.yaml` line 504
+
+```
+eclipse_down on the pandemic clause is deliberate — refreshing inside
+an Eclipse throws away the snapshot (measured -0.94% without it).
+```
+
+---
+
+## - lunar_eclipse,if=var.eclipse_down
+
+`FerrazBalanceRaid.yaml` line 509
+
+```
+Lunar, not Solar: build-correct for Lunar Calling (SimC can't
+distinguish, it models Eclipse as one spell).
+```
+
+---
+
+## - starsurge,name="Starsurge (Eclipse Down)",if=!var.eclipse_down&astral_power>=50&enemies.combat.40y<=1
+
+`FerrazBalanceRaid.yaml` line 518
+
+```
+AP floor follows the Eclipse — replaced flat astral_power>60, measured +1.28%.
+```
+
+---
+
+## - full_moon,if=astral_power.deficit>40&debuff.atmospheric_exposure.remains<action.full_moon.execute_time+0.5
+
+`FerrazBalanceRaid.yaml` line 524
+
+```
+Dead on this build: no New/Half/Full Moon, no Wild Mushroom, no Force of Nature.
+```
+
+---
+
+## - starfire
+
+`FerrazBalanceRaid.yaml` line 530
+
+```
+Pure Starfire filler (no Wrath) — +11.1% at 1 target on Lunar Calling,
+the biggest gain in this file. Do not copy Wrath back from the M+ file.
+```
+
+---
+
+## aoe:
+
+`FerrazBalanceRaid.yaml` line 534
+
+```
+2+ enemies, standing still.
+```
+
+---
+
+## opener_st:
+
+`FerrazBalanceRaid.yaml` line 550
+
+```
+Burst ramp — var.opener turns true before every burst, not just the
+pull. Removing both opener lists measured -1.6%.
+```
+
+---
+
+## opener_aoe:
+
+`FerrazBalanceRaid.yaml` line 564
+
+```
+Same ramp, 2+ enemies.
+```
+
+---
+
+## main:
+
+`FerrazBalanceRaid.yaml` line 576
+
+```
+Entry point: first matching line wins the GCD.
+```
+
+---
+
+## - return,if=player.channeling|player.casting
+
+`FerrazBalanceRaid.yaml` line 578
+
+```
+This opening block is kept IDENTICAL to FerrazBalance.yaml. The two files
+diverge on purpose in their damage priorities, never in their plumbing.
+```
+
+---
+
+## - call_action_list,name=engine
+
+`FerrazBalanceRaid.yaml` line 582
+
+```
+--- Engine plumbing. Must stay at the top. ---
+```
+
+---
+
+## - return,if=!player.combat
+
+`FerrazBalanceRaid.yaml` line 587
+
+```
+--- COMBAT WALL. Nothing below this line runs out of combat. ---
+Everything above it is what the rotation is allowed to do while idle:
+the engine (loot, auto-target, rez, dispels, consumables) and
+heal_support (Mark of the Wild, Thorn Bloom). Below is damage, defensives,
+interrupts and cooldowns — all of it combat-only.
+
+player.combat, NOT player.auto_combat. The catalog defines the second as
+a "Config-based auto-combat check", not combat state; using it here is
+the bug that silently disabled four rotations in this repo.
+```
+
+---
+
+## - return,if=!target.valid&!((config.engine_auto_combat.has(1)&target.quest_mob&target.enemy&!target.dead)|(config.engine_auto_combat.has(2)&target.combat&target.enemy&!target.dead)|(config.engine_auto_combat.has(3)&target.targeting_party&target.enemy&!target.dead))
+
+`FerrazBalanceRaid.yaml` line 598
+
+```
+--- Target guards ---
+```
+
+---
+
+## - starfire,name="Back to Moonkin (Fluid Form)",if=talent.fluid_form&buff.moonkin_form.down&health.effective.pct>config.frenzied_regen_hp&!buff.frenzied_regeneration.up
+
+`FerrazBalanceRaid.yaml` line 603
+
+```
+Back to Moonkin. Two lines, split on Fluid Form, so this is correct on
+either build.
+
+Fluid Form (449193) does more than SimC's spell data says. The in-game
+tooltip carries THREE lines:
+
+  Shred, Rake, and Skull Bash ... shift you into Cat Form
+  Mangle ... shifts you into Bear Form
+  Wrath and Starfire shift you into Moonkin Form, if known.
+
+SimC's Description field for that id only reproduces the first line, so
+`spell_query` reads as though Starfire were not covered. It is. Treat
+SimC descriptions as unreliable; its Attributes and Talent Entry fields
+have held up, the prose has not.
+
+So with Fluid Form talented, Starfire returns you to Moonkin AND deals
+damage in the same global — strictly better than spending a GCD on the
+form. Without it, the explicit shift is the only way back.
+```
+
+---
+
+## - call_action_list,name=interrupts
+
+`FerrazBalanceRaid.yaml` line 623
+
+```
+NOTE: a pre-pull `wrath,if=!player.combat&!player.moving&target.distance<=40`
+used to sit here. It auto-started combat on any attackable target within
+40y, which in a dungeon means pulling whatever you happen to have clicked
+— the tank decides the pull, not the rotation. It was also the wrong
+spell: with Lunar Calling, Starfire carries +120% on the primary target
+and Wrath no longer flips Eclipse, which is why the filler is pure
+Starfire. Removed. Pull by hand.
+```
+
+---
+
+## - call_action_list,name=opener_aoe,if=var.opener&enemies.combat.40y>1
+
+`FerrazBalanceRaid.yaml` line 636
+
+```
+NOTE on out-of-combat pulling: the guard is target.valid, three lines up.
+The docs define it as "Comprehensive check: exists, enemy, alive, IN
+COMBAT (PvE)", and `return,if=!target.valid|target.dead|!target.attackable`
+halts the rotation whenever it is false. A mob nobody has pulled is not a
+valid target, so the damage lists never see it.
+Do NOT add player.combat to these calls. It looks like the same guard and
+is not: casting is what puts YOU in combat, so requiring it first means
+the rotation can never take the first action, and it also blocks joining
+a pull the tank started, where target.combat is true and player.combat is
+not yet.
+
+--- Damage priority: burst ramp, then moving, then stationary. ---
+```
