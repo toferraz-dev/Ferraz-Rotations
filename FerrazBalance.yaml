@@ -29,7 +29,7 @@
 # does not support - see .agents/SIMC_METHODOLOGY.md.
 # =============================================================================
 
-version: "4.2.0"
+version: "4.3.0"
 author: Ferraz
 patch: "12.1"
 spec: 102
@@ -46,7 +46,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-08-27 | Patch: 12.1 | Version: 4.2.0"
+    text: "Last update: 2026-08-27 | Patch: 12.1 | Version: 4.3.0"
 
   # Reference build. The measured numbers assume this exact string.
   recommended_talents:
@@ -159,7 +159,7 @@ config:
     section: "AoE"
     type: checkbox
     default: true
-    description: "In AoE, suggests Moonfire/Sunfire on the mouseover unit while enemies near the target are missing the DoT. Spreading the DoTs is the single largest AoE gain."
+    description: "In AoE, suggests Moonfire/Sunfire on the mouseover unit while enemies near the target are missing the DoT. Spreading the DoTs is the single largest AoE gain. A boss under the mouse is skipped; adds around it are not."
 
   # Swap off a target that dies before Starfire lands. OFF by default: it can
   # loop if the nearest enemy IS the dying one. See the rationale file.
@@ -485,10 +485,11 @@ lists:
     - thorn_bloom,name="Thorn Bloom",if=group.count(cycle.health.effective.pct<config.thorn_bloom_threshold)>=config.thorn_bloom_members&target.valid&target.enemy&!target.dead&target.range<=40
 
   # Spreads DoTs onto the mouseover unit without changing target. No target
-  # cap: Moonfire measured better at 6, 8 and 10 enemies.
+  # cap: Moonfire measured better at 6, 8 and 10 enemies. Never fires on a boss
+  # under the mouse - adds around it still get the DoT.
   mouseover_dots:
-    - sunfire.mouseover,name="Sunfire Mouseover",if=config.enable_mouseover_dots&mouseover.exists&mouseover.enemy&mouseover.attackable&!mouseover.dead&mouseover.combat&mouseover.range<=40&mouseover.debuff.sunfire.down
-    - moonfire.mouseover,name="Moonfire Mouseover",if=config.enable_mouseover_dots&mouseover.exists&mouseover.enemy&mouseover.attackable&!mouseover.dead&mouseover.combat&mouseover.range<=40&mouseover.debuff.moonfire.down
+    - sunfire.mouseover,name="Sunfire Mouseover",if=config.enable_mouseover_dots&mouseover.exists&mouseover.enemy&mouseover.attackable&!mouseover.dead&!mouseover.boss&mouseover.combat&mouseover.range<=40&mouseover.debuff.sunfire.down
+    - moonfire.mouseover,name="Moonfire Mouseover",if=config.enable_mouseover_dots&mouseover.exists&mouseover.enemy&mouseover.attackable&!mouseover.dead&!mouseover.boss&mouseover.combat&mouseover.range<=40&mouseover.debuff.moonfire.down
 
   # Instant casts only, <2 enemies. Unmeasured (SimC never moves).
   moving_st:
