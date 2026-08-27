@@ -1,28 +1,51 @@
+# Mirror of FerrazBalance.yaml 4.0.0 (M+ / DungeonSlice).
+#
+# DIVERGENCES — the sim cannot see these, so the lines are absent, not wrong:
+#   moving_st / moving_aoe    SimC never moves
+#   mouseover_dots            no mouseover model (SimC uses target_if instead)
+#   dispels, defensives       no dispel or damage-intake model
+#   swap_off_dying            no retargeting model
+#   every ttd_* gate          sim dummies live the whole fight
+#   inc_min_standing_time     player.standing.time is infinite here
+#   engine, heal_support      plumbing, not damage
+#
+# The pre-pull Wrath the old copy of this file carried is gone: the rotation
+# removed it in 3.1 and keeping it here measured the harness, not the file.
 actions.precombat=snapshot_stats
 actions.precombat+=/moonkin_form
-actions.precombat+=/wrath
+
 actions=variable,name=inc_ready,value=cooldown.ca_inc.up&!buff.ca_inc.up&(cooldown.fury_of_elune.remains<2|buff.fury_of_elune.up)
 actions+=/call_action_list,name=trinkets
 actions+=/run_action_list,name=aoe,if=spell_targets>=2
 actions+=/run_action_list,name=ec_st
+
 actions.trinkets=use_items,if=buff.ca_inc.up&cooldown.fury_of_elune.remains>0
-actions.trinkets+=/potion,if=buff.ca_inc.up&cooldown.fury_of_elune.remains>0
-actions.ec_st=moonfire,if=(dot.moonfire.remains<2|dot.moonfire.refreshable)
-actions.ec_st+=/sunfire,if=(dot.sunfire.remains<2|dot.sunfire.refreshable)
+actions.trinkets+=/potion,if=(buff.ca_inc.up&cooldown.fury_of_elune.remains>0)|fight_remains<=30
+
+# ec_st — DoTs, Eclipse, Incarnation, FoE, free procs, Eclipse-aware AP floor,
+# Starfire. wrath_filler ships OFF, so no Wrath line.
+actions.ec_st=moonfire,if=dot.moonfire.remains<2|dot.moonfire.refreshable
+actions.ec_st+=/sunfire,if=dot.sunfire.remains<2|dot.sunfire.refreshable
 actions.ec_st+=/eclipse,if=buff.eclipse.down&cooldown.eclipse.up&!variable.inc_ready
 actions.ec_st+=/celestial_alignment,if=variable.inc_ready
 actions.ec_st+=/fury_of_elune
-actions.ec_st+=/starfall,if=buff.starweavers_weft.react
-actions.ec_st+=/starsurge,if=(buff.starweavers_warp.react|buff.touch_the_cosmos.react)
-actions.ec_st+=/starsurge,if=astral_power>60
+actions.ec_st+=/starfall,if=buff.starweavers_weft.react|buff.touch_the_cosmos.react
+actions.ec_st+=/starsurge,if=buff.starweavers_warp.react|buff.touch_the_cosmos.react
+actions.ec_st+=/starsurge,if=buff.eclipse.up&astral_power>=50
+actions.ec_st+=/starsurge,if=buff.eclipse.down&astral_power.deficit<20
 actions.ec_st+=/starfire
+
+# aoe — anti-cap Starfall, DoTs (no target cap: Moonfire measured better at 6,
+# 8 and 10), cooldowns, free procs, Eclipse-aware Starfall floors, Starsurge
+# weave under an active Starfall only, Starfire.
 actions.aoe=starfall,if=astral_power>=80
-actions.aoe+=/moonfire,if=spell_targets<99&dot.moonfire.refreshable
+actions.aoe+=/moonfire,if=dot.moonfire.refreshable
 actions.aoe+=/sunfire,if=dot.sunfire.refreshable
 actions.aoe+=/eclipse,if=buff.eclipse.down&cooldown.eclipse.up&!variable.inc_ready
 actions.aoe+=/celestial_alignment,if=variable.inc_ready
 actions.aoe+=/fury_of_elune
-actions.aoe+=/starfall,if=(buff.starweavers_weft.react|buff.touch_the_cosmos.react)
-actions.aoe+=/starfall,if=astral_power>50
-actions.aoe+=/starsurge,if=(buff.starfall.up&(buff.starweavers_warp.up|buff.touch_the_cosmos.react))
+actions.aoe+=/starfall,if=buff.starweavers_weft.react|buff.touch_the_cosmos.react
+actions.aoe+=/starfall,if=buff.eclipse.up&astral_power>=40
+actions.aoe+=/starfall,if=buff.eclipse.down&astral_power.deficit<20
+actions.aoe+=/starsurge,if=buff.starfall.up&(buff.starweavers_warp.up|buff.touch_the_cosmos.react)
 actions.aoe+=/starfire

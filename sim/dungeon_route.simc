@@ -1,0 +1,25 @@
+# M+ route for the DungeonRoute fight style.
+#
+# Why this exists: Balance Druid does NOT declare support for DungeonSlice.
+# SimC prints "Player does not support fight style DungeonSlice, results are
+# inaccurate and should not be used" for that style — with the stock APL and on
+# the previous binary too, so every DungeonSlice number this repo produced
+# carried that warning unnoticed. DungeonRoute IS supported, and it models what
+# a key actually is: pull after pull, mixed counts, bosses between them.
+#
+# Health pools are calibrated to THIS character: 144k Patchwerk single-target,
+# more in AoE. The first attempt used pools ~10x too large and produced an
+# 80-minute route, which is why the numbers are written down here — re-scale
+# them after a large gear change or they stop meaning what they say.
+# Target shape: trash packs 20-30s, bosses 65-90s, ~8 minutes end to end.
+
+raid_events+=/pull,pull=01,bloodlust=0,delay=010,enemies="trash_a1":1200000|"trash_a2":1200000|"trash_a3":1200000
+raid_events+=/pull,pull=02,bloodlust=0,delay=015,enemies="trash_b1":900000|"trash_b2":900000|"trash_b3":900000|"trash_b4":900000|"trash_b5":900000
+raid_events+=/pull,pull=03,bloodlust=0,delay=012,enemies="caster_c1":1500000|"caster_c2":1500000
+raid_events+=/pull,pull=04,bloodlust=1,delay=020,enemies="BOSS_first":10000000
+raid_events+=/pull,pull=05,bloodlust=0,delay=015,enemies="trash_d1":1000000|"trash_d2":1000000|"trash_d3":1000000|"trash_d4":1000000
+raid_events+=/pull,pull=06,bloodlust=0,delay=012,enemies="elite_e1":2500000|"trash_e2":900000|"trash_e3":900000
+raid_events+=/pull,pull=07,bloodlust=0,delay=018,enemies="BOSS_second":11000000
+raid_events+=/pull,pull=08,bloodlust=0,delay=015,enemies="trash_f1":1000000|"trash_f2":1000000|"trash_f3":1000000|"trash_f4":1000000|"trash_f5":1000000|"trash_f6":1000000
+raid_events+=/pull,pull=09,bloodlust=0,delay=012,enemies="lone_g1":2000000
+raid_events+=/pull,pull=10,bloodlust=0,delay=020,enemies="BOSS_last":13000000

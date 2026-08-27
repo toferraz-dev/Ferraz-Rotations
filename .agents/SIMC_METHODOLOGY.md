@@ -45,21 +45,57 @@ you quote one.
 The difference is the fight style and the target count, and it matters more
 than people expect — a change can win at one and lose at the other.
 
+**Check the fight style is supported before believing any number.** SimC knows
+which styles each spec module was validated against, and says so:
+
+    Severe: Player 'Tassiana' does not support fight style DungeonSlice,
+    results are inaccurate and should not be used.
+
+Balance Druid prints that for `DungeonSlice`, `HeavyMovement`,
+`CastingPatchwerk` and `HecticAddCleave`. It prints it with SimC's own stock
+APL, and on older binaries too — so it is the spec module talking, not the
+custom APL, and it was **not** a new check. Every DungeonSlice number this repo
+produced before 2026-08-27 carried that warning unnoticed, because nothing
+grepped for it. Always grep:
+
+```bash
+simc ... 2>&1 | grep -iE "does not support fight style|^Error|Severe"
+```
+
 | | M+ | Raid |
 |---|---|---|
-| `fight_style` | `DungeonSlice` | omit (SimC default = Patchwerk) |
-| targets | 3 typical, sweep 1 / 3 / 5 | 1 for ST, 6–8 for cleave |
-| `target_error` | `0.2` | `0.15` |
-| what it models | pull after pull, mobs dying, movement | one target, full duration, no downtime |
+| `fight_style` | `DungeonRoute` + a route file | omit (SimC default = Patchwerk) |
+| targets | set by the pull events | 1 for ST, 6–8 for cleave |
+| `target_error` | `0.15` | `0.15` |
+| what it models | pull after pull, travel time, bosses | one target, full duration, no downtime |
 
-**A trap worth stating plainly:** the harnesses only pass `fight_style` when you
-give `--style`. Without it you are running Patchwerk, whatever you meant. Label
-results with the style you actually ran — mislabelling a Patchwerk run as
-DungeonSlice invalidates the conclusion, not just the wording.
+`DungeonRoute` is supported and is the better proxy anyway: it is an actual
+sequence of pulls with travel delays between them, so cooldown drift and
+downtime are modelled rather than assumed away. It requires pull events —
+without them it refuses to start:
 
-`DungeonSlice` is a proxy, not a dungeon. It has no affixes, no interrupts, no
-tank pathing. It is good for "does this priority survive things dying" and bad
-for anything route-specific.
+    Error: Initialization error: DungeonRoute fight style requires at least
+    one pull event with pull=1.
+
+The route lives in `sim/dungeon_route.simc`. Syntax:
+
+```
+raid_events+=/pull,pull=01,bloodlust=0,delay=010,enemies="a1":1200000|"a2":1200000
+```
+
+`enemies` is `|`-delimited `"name":health[:CreatureType]`; prefix a name with
+`BOSS_` to spawn it as a boss actor. **Health pools must be calibrated to the
+character's actual throughput.** The first route written here used pools ~10x
+too large and produced a 4850-second fight; the numbers in that file are sized
+for ~144k Patchwerk single-target and need re-scaling after a big gear change.
+
+DungeonRoute DPS is route-wide and includes the travel delays, so it reads far
+below Patchwerk (100.6k vs 144.1k on the same gear). Only deltas between
+profilesets mean anything — never compare a route number to a Patchwerk one.
+
+**A second trap:** the harnesses only pass `fight_style` when you give
+`--style`. Without it you are running Patchwerk, whatever you meant. Label
+results with the style you actually ran.
 
 ---
 

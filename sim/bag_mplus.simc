@@ -1,0 +1,26 @@
+# Bag evaluation, M+ (DungeonRoute). Baseline = currently equipped gear.
+# Every profileset changes exactly ONE slot against that baseline.
+fight_style=DungeonRoute
+target_error=0.15
+threads=8
+
+# --- ring: Band of the Amani Warlord (321), tried in each slot
+profileset."ring_amani_over_f1"+=finger1=,id=273792,enchant_id=7969,gem_id=240900,bonus_id=13440/6652/13668/12699/12846,content_tuning=1279
+profileset."ring_amani_over_f2"+=finger2=,id=273792,enchant_id=7969,gem_id=240900,bonus_id=13440/6652/13668/12699/12846,content_tuning=1279
+
+# --- trinkets: each bag trinket tried in each slot
+profileset."t1_gaze_alnseer"+=trinket1=,id=249343,bonus_id=6652/13335/13654
+profileset."t2_gaze_alnseer"+=trinket2=,id=249343,bonus_id=6652/13335/13654
+profileset."t1_sapling_dawnroot"+=trinket1=,id=250259,bonus_id=12843/13440/6652/12699,content_tuning=1279
+profileset."t2_sapling_dawnroot"+=trinket2=,id=250259,bonus_id=12843/13440/6652/12699,content_tuning=1279
+profileset."t1_emberwing_feather"+=trinket1=,id=250144,bonus_id=13440/6652/12699/13654
+profileset."t2_emberwing_feather"+=trinket2=,id=250144,bonus_id=13440/6652/12699/13654
+profileset."t1_amani_banner"+=trinket1=,id=273797,bonus_id=12843/13440/6652/12699,content_tuning=1279
+profileset."t2_amani_banner"+=trinket2=,id=273797,bonus_id=12843/13440/6652/12699,content_tuning=1279
+
+# --- weapons: both bag options are staves, so the 331 off-hand is LOST.
+# off_hand= clears the slot; that cost is part of what is being measured.
+profileset."wpn_toxin_warstaff"+=main_hand=,id=273783,enchant_id=8039,bonus_id=13439/6652/12701/12838,content_tuning=3025
+profileset."wpn_toxin_warstaff"+=off_hand=
+profileset."wpn_fallen_speaker"+=main_hand=,id=251156,enchant_id=8039,bonus_id=13440/6652/12701/12845,content_tuning=1279
+profileset."wpn_fallen_speaker"+=off_hand=
