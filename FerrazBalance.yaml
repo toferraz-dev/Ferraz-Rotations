@@ -29,7 +29,7 @@
 # does not support - see .agents/SIMC_METHODOLOGY.md.
 # =============================================================================
 
-version: "4.0.3"
+version: "4.1.0"
 author: Ferraz
 patch: "12.1"
 spec: 102
@@ -46,7 +46,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-08-27 | Patch: 12.1 | Version: 4.0.3"
+    text: "Last update: 2026-08-27 | Patch: 12.1 | Version: 4.1.0"
 
   # Reference build. The measured numbers assume this exact string.
   recommended_talents:
@@ -194,6 +194,15 @@ config:
       - label: "Targeting party"
         value: 3
     default: [1, 2]
+
+  # Travel Form. Every suggestion the rotation makes shifts you out of it, so
+  # pausing keeps the form until you drop it yourself.
+  engine_pause_travel_form:
+    label: "Pause in Travel Form"
+    section: "Engine"
+    type: checkbox
+    default: false
+    description: "Stop the whole rotation while you are in Travel Form. OFF by default: the rotation keeps running, and the first thing it suggests will shift you out. Turn ON if you use Travel Form to move between packs and want it left alone — nothing at all is suggested until you leave the form."
 
   engine_auto_target:
     label: "Auto Target (Ranged)"
@@ -402,7 +411,7 @@ lists:
     - return,if=player.dead
     - return,if=state.blocked_inputs
     - return,if=mounted
-    - return,if=buff.travel_form.up
+    - return,if=config.engine_pause_travel_form&buff.travel_form.up
 
     # --- Looting (was special_actions; combat half was melee-only, dropped).
     - interact_target,delay=350,if=config.engine_loot_nearby&target.lootable&target.range<=5
