@@ -14,7 +14,7 @@
 # bug this file has already been through. Read it before changing a line -
 # most of what looks improvable here was tried and reverted.
 # =============================================================================
-version: "5.3.1"
+version: "5.4.0"
 author: Ferraz
 patch: "12.1"
 spec: 105
@@ -33,16 +33,16 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-08-27 | Patch: 12.1 | Version: 5.3.1"
+    text: "Last update: 2026-08-27 | Patch: 12.1 | Version: 5.4.0"
 
-  # RECOMMENDED BUILD — the string the talent.X g.
+  # RECOMMENDED BUILD — the string the talent.X gates below assume.
   recommended_talents:
     section: "Talents"
     type: copy_text
     label: "Recommended Talent String"
     text: "CkGADBD3hSPCL9Y9gz68WcKvMMMmZZMjZmxsN8AMzsMjNbzAAAAAAAAAAglBNbzw0MjBmFzMzMLzwDYAAAAAMAAzAAQAAAz2MbNbzsYjZmBMzCoZAAmZAYA"
 
-  # HEALING — the core thresholds. Every one of t.
+  # HEALING — the core thresholds.
   use_mouseover:
     label: "MO Healing (Emergency)"
     section: "Healing"
@@ -148,7 +148,7 @@ config:
     max: 100
     default: 100
 
-  # HEALING COOLDOWNS — Convoke, Tranquility and .
+  # HEALING COOLDOWNS — Convoke, Tranquility and their gates.
   convoke_threshold:
     label: "Convoke HP %"
     section: "Cooldowns"
@@ -375,12 +375,21 @@ config:
     type: checkbox
     default: true
 
-  # ENGINE — plumbing this file owns instead of i.
+  # ENGINE — plumbing this file owns instead of inheriting.
   loot_nearby:
     label: "Loot Nearby Corpses"
     section: "Engine"
     type: checkbox
     default: true
+
+  # Travel Form. Every suggestion the rotation makes shifts you out of it, so
+  # pausing keeps the form until you drop it yourself.
+  pause_travel_form:
+    label: "Pause in Travel Form"
+    section: "Engine"
+    type: checkbox
+    default: false
+    description: "Stop the whole rotation while you are in Travel Form. OFF by default: the rotation keeps running, and the first thing it suggests will shift you out. Turn ON if you use Travel Form to move between packs and want it left alone — nothing at all is suggested until you leave the form."
 
   auto_target:
     label: "Auto Target (Ranged)"
@@ -638,7 +647,7 @@ lists:
     - return,if=player.dead
     - return,if=state.blocked_inputs
     - return,if=mounted
-    - return,if=buff.travel_form.up
+    - return,if=config.pause_travel_form&buff.travel_form.up
 
     - interact_target,delay=350,if=config.loot_nearby&target.lootable&target.range<=5&!player.combat
     - interact_target,delay=350,if=config.loot_nearby&loot_nearby&!player.combat

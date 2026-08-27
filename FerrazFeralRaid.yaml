@@ -118,7 +118,8 @@ config:
     type: checkbox
     default: true
 
-  # Inlined from Simia's _shared.yaml instead of .
+  # Inlined from Simia's _shared.yaml instead of inherited, so every piece has
+  # a toggle.
   engine_loot_nearby:
     label: "Loot Nearby Corpses"
     section: "Engine"

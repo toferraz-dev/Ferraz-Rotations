@@ -38,7 +38,7 @@ config:
     label: "Recommended Talent String"
     text: "CYGAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWoMbNjxMDwsMzMzMYYGjZWmhxMWYZmlZGjZ2wAgx2yMDGz2IwEAAAgFzMzMD2MMGzAAYmBLDA"
 
-  # Barkskin: proactive trigger. incoming.mitigat.
+  # Barkskin:
   barkskin_dmg_pct:
     label: "Barkskin (Incoming Dmg%)"
     section: "Defensives"
@@ -119,7 +119,8 @@ config:
     type: checkbox
     default: true
 
-  # This file used to call spell_queue / sanity_c.
+  # This file used to call spell_queue / sanity_checks / auto_target_ranged /
+  # auto_heal from Simia's _shared.yaml.
   engine_loot_nearby:
     label: "Loot Nearby Corpses"
     section: "Engine"
@@ -202,7 +203,8 @@ config:
     type: checkbox
     default: true
 
-  # Ported from the M+ file, where it is the larg.
+  # Ported from the M+ file, where it is the largest AoE gain (+2.1% overall,
+  # +9.8% at 5 targets).
   enable_mouseover_dots:
     label: "Spread DoTs on Mouseover"
     section: "AoE"
