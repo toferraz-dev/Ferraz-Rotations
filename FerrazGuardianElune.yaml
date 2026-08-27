@@ -25,7 +25,7 @@ description: |
   through Cat Form. ST/AoE split at 2 enemies within 8 yards.
 entry: main
 
-# SPELL OVERRIDES — AND-ed into every occurrenc.
+# SPELL OVERRIDES — AND-ed into every occurrence of that spell in the file.
 spell_overrides:
   # Maul and Mangle deliberately NOT overridden globally:
 
@@ -40,7 +40,7 @@ spell_overrides:
   # set_tank_var) unless the fight is short/final enough that holding is pointless.
   barkskin: "(!player.inmythicplus|fight_remains>=20|player.on_last_boss)&(variable.tank_buster_remains<=1|variable.tank_buster_casting|variable.tank_buster_remains>34)"
 
-# CONFIG — defensive defaults are unvalidated b.
+# CONFIG — defensive defaults are unvalidated by simulation.
 config:
   # Display-only build stamp — keep in sync with version:/patch: above.
   about:
@@ -79,7 +79,7 @@ config:
     max: 100
     default: 50
 
-  # Proactive. incoming.mitigated.pct is post-def.
+  # Proactive.
   survival_instincts_dmg_pct:
     section: "Defensives Prediction Damage"
     label: "Survival Instincts (Incoming Dmg%)"

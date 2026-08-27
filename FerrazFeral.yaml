@@ -104,7 +104,7 @@ config:
     max: 100
     default: 40
 
-  # Defaults ON: the whole cooldown block below (.
+  # Defaults ON:
   use_trinket_1:
     label: "Auto Trinket 1"
     section: "Cooldowns"
@@ -123,7 +123,7 @@ config:
     type: checkbox
     default: true
 
-  # Stop a long cooldown being spent on trash tha.
+  # Stop a long cooldown being spent on trash that is about to die.
   ttd_berserk:
     label: "Berserk / Incarnation TTD (seconds)"
     section: "Time To Die"
@@ -160,7 +160,8 @@ config:
     default: 15
     description: "Minimum fight time remaining to use the combat potion. The end-of-fight clause on the potion line ignores this, so a potion that would be wasted anyway still goes out."
 
-  # Inlined from Simia's _shared.yaml instead of .
+  # Inlined from Simia's _shared.yaml instead of inherited, so every piece has
+  # a toggle.
   engine_loot_nearby:
     label: "Loot Nearby Corpses"
     section: "Engine"

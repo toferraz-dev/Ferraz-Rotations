@@ -37,7 +37,7 @@ config:
     label: "Recommended Talent String"
     text: "CsQAAAAAAAAAAAAAAAAAAAAAAwMmZGNLMzmZmZWmFzMzsYMWMDAAmZGzMzCYMjhFyAbDL0YhBAAGDM2AwMDwYGzYDAAwMzMAAMGG"
 
-  # PET — the single biggest utility decision thi.
+  # PET — the single biggest utility decision this spec makes.
   pet_choice:
     label: "Pet"
     section: "Pet"
@@ -56,7 +56,7 @@ config:
     default: true
     description: "Re-summon the chosen pet out of combat when it is missing. Never fires in combat — a summon there costs you the pull."
 
-  # COOLDOWNS — Summon Infernal is the burst wind.
+  # COOLDOWNS — Summon Infernal is the burst window everything else rides.
   auto_burst:
     label: "Auto Burst (no toggle needed)"
     section: "Cooldowns"
@@ -81,7 +81,7 @@ config:
     default: 2
     description: "Seconds standing still before Summon Infernal may fire. 0 disables the check."
 
-  # TRINKETS & CONSUMABLES — all three ride the I.
+  # TRINKETS & CONSUMABLES — all three ride the Infernal window.
   use_trinket_1:
     label: "Auto Trinket 1 (with Infernal)"
     section: "Trinkets"
@@ -100,7 +100,8 @@ config:
     type: checkbox
     default: true
 
-  # TIME TO DIE — stop a long cooldown being spen.
+  # TIME TO DIE — stop a long cooldown being spent on trash that is about to
+  # die.
   ttd_infernal:
     label: "Summon Infernal TTD (seconds)"
     section: "Time To Die"
@@ -156,7 +157,7 @@ config:
     max: 8
     default: 3
 
-  # DEFENSIVES — UNVALIDATED: SimC has no M+ dama.
+  # DEFENSIVES — UNVALIDATED:
   unending_resolve_dmg_pct:
     label: "Unending Resolve (Incoming Dmg%)"
     section: "Defensives"
@@ -191,7 +192,7 @@ config:
     max: 100
     default: 65
 
-  # DISPELS — Singe Magic only, and only with an .
+  # DISPELS — Singe Magic only, and only with an Imp out.
   auto_dispel_self:
     label: "Singe Magic - Self"
     section: "Dispels"
@@ -206,7 +207,7 @@ config:
     default: false
     description: "OFF by default: each dispel is a pet global and in M+ the healer usually covers it."
 
-  # ENGINE — the plumbing FerrazBalance.yaml inli.
+  # ENGINE — the plumbing FerrazBalance.yaml inlines instead of inheriting.
   engine_loot_nearby:
     label: "Loot Nearby Corpses"
     section: "Engine"
@@ -359,7 +360,7 @@ lists:
     - fireblood,name="Fireblood",if=var.infernal_active
     - ancestral_call,name="Ancestral Call",if=var.infernal_active
 
-  # SINGLE TARGET — SimC's actions.default, with .
+  # SINGLE TARGET — SimC's actions.default, with the dead branches removed.
   st:
     # Soul Fire on cooldown while it will not overcap. It is a shard generator
     # with a cast time, so it goes before the shard spenders.
@@ -394,7 +395,7 @@ lists:
     - infernal_bolt,name="Infernal Bolt",if=soul_shard<=3
     - incinerate,name="Incinerate"
 
-  # AOE — SimC's actions.aoe_dia. Havoc and Catac.
+  # AOE — SimC's actions.aoe_dia.
   aoe:
     - summon_infernal,name="Summon Infernal (AoE)",if=var.burst_ok&var.infernal_ttd_ok&var.pull_engaged
 

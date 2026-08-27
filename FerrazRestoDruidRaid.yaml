@@ -14,7 +14,7 @@
 # most of what looks improvable here was tried and reverted.
 # =============================================================================
 
-version: "1.12.1"
+version: "1.13.0"
 author: Ferraz
 patch: "12.1"
 spec: 105
@@ -23,7 +23,7 @@ description: |
   Restoration Druid Ferraz Raid
 entry: main
 
-# CONFIG — thresholds below are untested defaul.
+# CONFIG — thresholds below are untested defaults, tune to your team.
 
 config:
   # Display-only build stamp — keep in sync with version:/patch: above.
@@ -31,7 +31,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-08-27 | Patch: 12.1 | Version: 1.12.1"
+    text: "Last update: 2026-08-27 | Patch: 12.1 | Version: 1.13.0"
 
   # String the talent.X checks below assume.
   recommended_talents:
@@ -290,12 +290,21 @@ config:
     spell: 774
     description: "Forces Rejuvenation / Wild Growth spread regardless of HP"
 
-  # Inlined from Simia's _shared.yaml instead of .
+  # Inlined from Simia's _shared.yaml instead of inherited.
   engine_loot_nearby:
     label: "Loot Nearby Corpses"
     section: "Engine"
     type: checkbox
     default: true
+
+  # Travel Form. Every suggestion the rotation makes shifts you out of it, so
+  # pausing keeps the form until you drop it yourself.
+  engine_pause_travel_form:
+    label: "Pause in Travel Form"
+    section: "Engine"
+    type: checkbox
+    default: false
+    description: "Stop the whole rotation while you are in Travel Form. OFF by default: the rotation keeps running, and the first thing it suggests will shift you out. Turn ON if you use Travel Form to move between packs and want it left alone — nothing at all is suggested until you leave the form."
 
   engine_auto_target:
     label: "Auto Target (Ranged)"
@@ -397,7 +406,7 @@ lists:
     - return,if=player.dead
     - return,if=state.blocked_inputs
     - return,if=mounted
-    - return,if=buff.travel_form.up
+    - return,if=config.engine_pause_travel_form&buff.travel_form.up
 
     - interact_target,delay=350,if=config.engine_loot_nearby&target.lootable&target.range<=5
     - interact_target,delay=350,if=config.engine_loot_nearby&loot_nearby
