@@ -399,6 +399,9 @@ class Evaluator:
 
 # Spells that leave you in caster form when cast from a shapeshift. Fluid Form
 # turns some of these into a shift instead - handled in apply().
+DOTS = {'moonfire', 'sunfire', 'rake', 'rip', 'thrash', 'immolate',
+        'stellar_flare', 'lifebloom', 'rejuvenation', 'regrowth'}
+
 CASTER_SPELLS = {
     'starfall', 'starsurge', 'moonfire', 'sunfire', 'lunar_eclipse',
     'solar_eclipse', 'fury_of_elune', 'incarnation_chosen_of_elune',
@@ -409,6 +412,33 @@ CASTER_SPELLS = {
 }
 # Fluid Form: Wrath and Starfire shift you into Moonkin instead of caster.
 FLUID_TO_MOONKIN = {'wrath', 'starfire'}
+
+# Form-cancelling is per FORM, not per spell.
+#
+# Moonfire carries SPELL_ATTR0_NOT_SHAPESHIFTED (16) exactly like Starfall and
+# Solar Beam, so reading the attribute made it look form-cancelling everywhere
+# and the fuzzer reported a Bear/Moonfire loop in FerrazGuardianElune.yaml that
+# cannot happen. Per the author:
+#
+#   Bear    (Guardian)  Moonfire does NOT cancel
+#   Moonkin (Balance)   Moonfire does NOT cancel
+#   Cat     (Feral)     probably DOES - author unsure, and Lunar Inspiration
+#                       is the talent that makes it castable in Cat, so that
+#                       is what the exception keys on
+#
+# Moonkin needs no entry: nothing in this model cancels it, because the
+# cancel rule only ever fires from bear, cat or travel.
+#
+# Second time trusting SimC spell data over the game produced a wrong answer
+# here - see the Fluid Form note in .agents/SIMIA_EXPERT_PROMPT.md. Attributes
+# describe what the base spell requires, not what the class ends up able to do.
+SAFE_FROM_FORM = {
+    'moonfire': {'bear'},
+}
+# (spell, form) -> talents that make it safe there.
+SAFE_WITH_TALENT = {
+    ('moonfire', 'cat'): ('lunar_inspiration',),
+}
 # Off-GCD / item lines that change nothing this model tracks.
 NEUTRAL = {
     'barkskin', 'healthstone', 'health_potion', 'combat_potion', 'trinket_1',
@@ -419,10 +449,28 @@ NEUTRAL = {
 }
 
 
+def land_dot(state, base):
+    """A DoT the rotation just cast is now on the target.
+
+    Without this the gate that let the line fire - dot.X.refreshable,
+    mouseover.debuff.X.down - stays pinned true forever, and the line refires
+    every tick. That is not a rotation loop, it is the environment being
+    frozen against the rotation's own action.
+    """
+    for k in list(state.pins):
+        if ('debuff.%s.' % base) in k or ('dot.%s.' % base) in k:
+            if k.endswith(('.down', '.refreshable')):
+                state.pins[k] = False
+            elif k.endswith('.up'):
+                state.pins[k] = True
+
+
 def apply_effect(state, spell):
     """Mutate state the way the game would. Returns a short description."""
     s = state
     base = spell.split('.')[0]
+    if base in DOTS:
+        land_dot(s, base)
 
     if base == 'stop_casting':
         s.casting = False
@@ -444,6 +492,10 @@ def apply_effect(state, spell):
         if s.form != 'caster':
             s.form = 'caster'
             return 'form -> caster'
+        return ''
+    if s.form in SAFE_FROM_FORM.get(base, ()):
+        return ''
+    if any(t in s.talents for t in SAFE_WITH_TALENT.get((base, s.form), ())):
         return ''
     if base in CASTER_SPELLS or base.isdigit():
         if s.form in ('bear', 'cat', 'travel'):
