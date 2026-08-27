@@ -81,7 +81,7 @@
 # heals better" — SimC never lets the group take damage, so it never charges
 # you for the globals a form swap costs.
 # =============================================================================
-version: "5.2.0"
+version: "5.3.0"
 author: Ferraz
 patch: "12.1"
 spec: 105
@@ -103,7 +103,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-08-24 | Patch: 12.1 | Version: 5.2.0"
+    text: "Last update: 2026-08-27 | Patch: 12.1 | Version: 5.3.0"
 
   # ==========================================================================
   # RECOMMENDED BUILD — the string the talent.X gates below assume.
@@ -391,6 +391,13 @@ config:
     type: checkbox
     default: true
 
+  soothe_mouseover:
+    label: "Soothe Mouseover"
+    section: "Dispels"
+    type: checkbox
+    default: true
+    description: "Soothe whatever you are hovering, checked just before the current-target Soothe below. Simia cannot pick an enraged enemy by criteria — target_enemy is 'nearest enemy' with no filter and there is no .any(EXPR) for enemies — so hovering is the only way to Soothe a mob you are not targeting. This is an independent switch: turning Soothe Enrage off does not disable it. Guarded on mouseover.combat, so hovering an unpulled mob never pulls it."
+
   # Lowered 95 -> 85 off a reference +15 log (Kireya, Murder Row, 26.9 min).
   # var.group_healthy reads group.lowest — the MOST hurt member — so at 95
   # the gate needed the whole party essentially topped. In a real key that is
@@ -627,6 +634,9 @@ lists:
     # ALLIES. The line was dead, so Soothe below only fired when you already
     # had the enraged mob targeted. Not fixable: target_enemy is "nearest
     # enemy" with no filter.
+    # Hovering is the only way to Soothe a mob you are not targeting — see
+    # the soothe_mouseover config for why a search line is impossible.
+    - soothe.mouseover,name="Soothe Enrage (Mouseover)",range_check=mouseover,if=config.soothe_mouseover&mouseover.exists&mouseover.enemy&mouseover.attackable&!mouseover.dead&mouseover.combat&mouseover.purgeable.enrage
     - soothe,name="Soothe Enrage",if=target.purgeable.enrage
 
   # Out of Combat: Mark of the Wild, Symbiotic Relationship, and healing prep.

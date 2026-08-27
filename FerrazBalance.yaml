@@ -51,17 +51,37 @@
 # actually in combat and inside cast range.
 #
 # ── THE TALENT STRING ────────────────────────────────────────────────────────
+# 4.0.0 replaced the reference string with the one from Jeannelin's +18 (The
+# Blinding Vale, 26.4 min, 1216 casts). Verified node by node against the old
+# string with a SimC execution probe, not an HTML scrape: five nodes moved.
+#   gained: Fluid Form, Orbit Breaker, Elune's Guidance
+#   lost:   Stellar Amplification, Sundered Firmament
+# Everything else matched, hero tree included (Elune's Chosen).
+#
 # Carried: Lunar Calling, Lunation, Boundless Moonlight, Atmospheric Exposure,
 # The Eternal Moon, Incarnation: Chosen of Elune, Whirling Stars, Fury of Elune,
 # Touch the Cosmos, Umbral Embrace, Rattle the Stars, Meteorites, Aetherial
-# Kindling, Stellar Amplification, Sundered Firmament, Radiant Moonlight.
+# Kindling, Radiant Moonlight, Fluid Form, Orbit Breaker, Elune's Guidance.
 #
 # NOT carried, so those lines are harmless dead weight (flagged inline):
 # Starweaver, Force of Nature, Convoke the Spirits, New/Half/Full Moon,
-# Wild Mushroom, Power of Goldrinn, Orbit Breaker.
+# Wild Mushroom, Power of Goldrinn.
+#
+# WHAT THIS INVALIDATES. Every measured constant below was tuned against the
+# OLD string and has NOT been re-measured on this one. Elune's Guidance shortens
+# the Incarnation cooldown enough that Jeannelin got one every ~113s against a
+# 3-minute base, so var.inc_ready_to_cast now fires far more often than when the
+# AP floors were fitted. Treat these as provisional until the A/B is re-run:
+#   - the astral_power>=50 / deficit<20 floors in ec_st
+#   - the Starfall 40/80 floors in aoe
+#   - the 2-enemy AoE threshold
+# No rotation line reads Stellar Amplification or Sundered Firmament, so
+# dropping them changes nothing structurally. Fluid Form does flip live
+# behaviour: the "Back to Moonkin (Fluid Form)" line now wins over the explicit
+# moonkin_form shift, which is a free global instead of a spent one.
 # =============================================================================
 
-version: "3.10.0"
+version: "4.0.0"
 author: Ferraz
 patch: "12.1"
 spec: 102
@@ -78,7 +98,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-08-27 | Patch: 12.1 | Version: 3.10.0"
+    text: "Last update: 2026-08-27 | Patch: 12.1 | Version: 4.0.0"
 
   # ==========================================================================
   # RECOMMENDED BUILD — every number in this file was measured against this
@@ -89,7 +109,7 @@ config:
     section: "Talents"
     type: copy_text
     label: "Recommended Talent String"
-    text: "CYGAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWoMbNMmZgxsMzMzMLMgxMLzsYmZswyMLjxMjNMAYstNzgxsNCMBAAAYhZmZGsZMjxAAwMDWGA"
+    text: "CYGADBD3hSPCL9Y9gz68WcKvMAAAAAAAAAAAAAAAAAWoMbNjxMDwsMzMzMLMYMLzsMzCzM2YZmlxMjxGGGgx22MDGz2IwEAAAgFmZmZwmhxYAAYmBLDA"
 
   # ==========================================================================
   # COOLDOWNS — when Incarnation and the burst window are allowed.
@@ -397,6 +417,13 @@ config:
     default: true
     description: "Soothe the current target when it has an enrage effect. ON by default — this is what Simia's shared list did before this file inlined its own plumbing, and it had no switch at all. Turn OFF on a key where the enrage is not worth the global."
 
+  soothe_mouseover:
+    label: "Soothe Mouseover"
+    section: "Dispels"
+    type: checkbox
+    default: true
+    description: "Soothe whatever you are hovering, checked just before the current-target Soothe below. Simia cannot pick an enraged enemy by criteria — target_enemy is 'nearest enemy' with no filter and there is no .any(EXPR) for enemies — so hovering is the only way to Soothe a mob you are not targeting. This is an independent switch: turning Soothe Enrage off does not disable it. Guarded on mouseover.combat, so hovering an unpulled mob never pulls it."
+
   # ==========================================================================
   # DEFENSIVES — UNVALIDATED: SimC has no M+ damage-intake model.
   #   Two different scales here: incoming.mitigated.pct is post-defensives,
@@ -622,6 +649,9 @@ lists:
   dispels:
     - remove_corruption.player,delay=500,name="Remove Corruption (Self)",if=config.auto_dispel_self&player.dispelable.list
     - remove_corruption,delay=500,cycle=party,name="Remove Corruption (Party)",if=config.auto_dispel_party&cycle.dispelable.list
+    # Hovering is the only way to Soothe a mob you are not targeting — see
+    # the soothe_mouseover config for why a search line is impossible.
+    - soothe.mouseover,name="Soothe Enrage (Mouseover)",range_check=mouseover,if=config.soothe_mouseover&mouseover.exists&mouseover.enemy&mouseover.attackable&!mouseover.dead&mouseover.combat&mouseover.purgeable.enrage
     - soothe,name="Soothe (Enrage)",if=config.auto_purge_enrage&target.purgeable.enrage
 
   # Ahead of interrupts, so survival outranks utility. Unvalidated by sim.

@@ -31,7 +31,7 @@
 # Form (button morphs); 1307881 Gory Fur (3 spells share the display name).
 # =============================================================================
 
-version: "1.7.3"
+version: "1.8.0"
 patch: "12.1"
 spec: 104
 name: Guardian Druid Ferraz M+
@@ -73,7 +73,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-08-24 | Patch: 12.1 | Version: 1.7.3"
+    text: "Last update: 2026-08-27 | Patch: 12.1 | Version: 1.8.0"
 
   # Exact string every number here was measured against (sim/Tassiana_guardian.simc).
   recommended_talents:
@@ -288,6 +288,13 @@ config:
     default: true
     description: "Soothe the current target when it has an enrage effect. ON by default — this is what Simia's shared list did before this file inlined its own plumbing, and it had no switch at all. Turn OFF on a key where the enrage is not worth the global."
 
+  soothe_mouseover:
+    label: "Soothe Mouseover"
+    section: "Dispels"
+    type: checkbox
+    default: true
+    description: "Soothe whatever you are hovering, checked just before the current-target Soothe below. Simia cannot pick an enraged enemy by criteria — target_enemy is 'nearest enemy' with no filter and there is no .any(EXPR) for enemies — so hovering is the only way to Soothe a mob you are not targeting. This is an independent switch: turning Soothe Enrage off does not disable it. Guarded on mouseover.combat, so hovering an unpulled mob never pulls it."
+
 variables:
   # 2+ enemies (threshold: 2 measured +0.70%, 4 measured -0.79% vs 3), and the
   # user's AoE toggle.
@@ -336,6 +343,9 @@ lists:
     - remove_corruption.player,delay=500,name="Remove Corruption (Self)",if=config.auto_dispel_self&player.dispelable.list
     - remove_corruption,delay=500,cycle=party,name="Remove Corruption (Party)",if=config.auto_dispel_party&cycle.dispelable.list
     - remove_corruption,delay=500,cycle=party,cycle_order=player_first,name="Devouring Rift (Affix)",if=config.engine_affix_devour&cycle.debuff.440313.up.any
+    # Hovering is the only way to Soothe a mob you are not targeting — see
+    # the soothe_mouseover config for why a search line is impossible.
+    - soothe.mouseover,name="Soothe Enrage (Mouseover)",range_check=mouseover,if=config.soothe_mouseover&mouseover.exists&mouseover.enemy&mouseover.attackable&!mouseover.dead&mouseover.combat&mouseover.purgeable.enrage
     - soothe,name="Soothe (Enrage)",if=config.auto_purge_enrage&target.purgeable.enrage
 
     - pool_resource,resource=rage,for_next=1,if=config.engine_auto_brez&mouseover.dead&mouseover.friendly&mouseover.unitframe&buff.bear_form.up&cooldown.rebirth.ready
