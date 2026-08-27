@@ -14,7 +14,7 @@
 # most of what looks improvable here was tried and reverted.
 # =============================================================================
 
-version: "1.13.0"
+version: "1.14.0"
 author: Ferraz
 patch: "12.1"
 spec: 105
@@ -31,7 +31,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-08-27 | Patch: 12.1 | Version: 1.13.0"
+    text: "Last update: 2026-08-27 | Patch: 12.1 | Version: 1.14.0"
 
   # String the talent.X checks below assume.
   recommended_talents:
@@ -376,6 +376,24 @@ config:
     type: checkbox
     default: true
 
+  # Emergency. The casting guard at the top of main returns before anything
+  # else, so a hardcast used to cost you the defensive entirely.
+  emergency_hp:
+    label: "Emergency HP% (mid-cast)"
+    section: "Defensives"
+    type: slider
+    min: 0
+    max: 100
+    default: 35
+    description: "Health below which defensives and consumables are allowed to fire while you are casting. The rotation normally does nothing at all mid-cast, so without this a hardcast swallows Barkskin, the healthstone and the health potion until it finishes. Set to 0 to go back to that."
+
+  emergency_stop_casting:
+    label: "Cut the Cast in an Emergency"
+    section: "Defensives"
+    type: checkbox
+    default: true
+    description: "Below the emergency HP, end the current cast so the next global can go to a real defensive. Barkskin and the consumables above do not need this - they are off-GCD and fire without touching the cast - so this only matters for the ones that cost a global, like Bear Form into Frenzied Regeneration. Tranquility and Convoke are never cut."
+
   discord_button:
     section: "Help"
     type: button
@@ -397,6 +415,16 @@ variables:
 # LISTS.
 
 lists:
+  # Emergency, called from main ABOVE the casting guard. Everything here is
+  # off-GCD or an item, so it fires without touching the cast; only the last
+  # line ends it, and never on a protected channel.
+  emergency:
+    - barkskin,name="Barkskin (Emergency)",range_check=none,off_gcd=true,ignore_queue=true,if=health.effective.pct<=config.emergency_hp
+    - healthstone,name="Healthstone (Emergency)",off_gcd=true,ignore_queue=true,delay=250,if=healthstone.ready&health.pct<=config.engine_healthstone
+    - health_potion,name="Health Potion (Emergency)",off_gcd=true,ignore_queue=true,delay=250,if=health_potion.ready&health.pct<=config.engine_health_potion
+    # Last, so the off-GCD options above get their chance first.
+    - stop_casting,name="Cut Cast (Emergency)",if=config.emergency_stop_casting&!var.protected_channel
+
   # Everything spell_queue / sanity_checks / auto.
   engine:
     # `&`, not `|`. With `|` the condition is true .
@@ -600,6 +628,10 @@ lists:
   # emergency -> active healing outrank DPS weaving.
   main:
     # `player.channeling`, bare. This is what every.
+    # Emergency FIRST, above the casting guard below. Only reachable while you
+    # are actually casting and actually low, so it costs nothing otherwise.
+    - call_action_list,name=emergency,if=player.combat&(player.casting|player.channeling)&health.effective.pct<=config.emergency_hp
+
     - return,if=player.channeling|player.casting|var.protected_channel
 
     # --- Engine plumbing. Must stay at the top. ---

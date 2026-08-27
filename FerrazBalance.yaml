@@ -29,7 +29,7 @@
 # does not support - see .agents/SIMC_METHODOLOGY.md.
 # =============================================================================
 
-version: "4.3.0"
+version: "4.4.1"
 author: Ferraz
 patch: "12.1"
 spec: 102
@@ -46,7 +46,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-08-27 | Patch: 12.1 | Version: 4.3.0"
+    text: "Last update: 2026-08-27 | Patch: 12.1 | Version: 4.4.1"
 
   # Reference build. The measured numbers assume this exact string.
   recommended_talents:
@@ -350,6 +350,24 @@ config:
   # ==========================================================================
   # HELP
   # ==========================================================================
+  # Emergency. The casting guard at the top of main returns before anything
+  # else, so a hardcast used to cost you the defensive entirely.
+  emergency_hp:
+    label: "Emergency HP% (mid-cast)"
+    section: "Defensives"
+    type: slider
+    min: 0
+    max: 100
+    default: 35
+    description: "Health below which defensives and consumables are allowed to fire while you are casting. The rotation normally does nothing at all mid-cast, so without this a hardcast swallows Barkskin, the healthstone and the health potion until it finishes. Set to 0 to go back to that."
+
+  emergency_stop_casting:
+    label: "Cut the Cast in an Emergency"
+    section: "Defensives"
+    type: checkbox
+    default: true
+    description: "Below the emergency HP, end the current cast so the next global can go to a real defensive. Barkskin and the consumables above do not need this - they are off-GCD and fire without touching the cast - so this only matters for the ones that cost a global, like Bear Form into Frenzied Regeneration. Protected channels are never cut."
+
   discord_button:
     section: "Help"
     type: button
@@ -390,6 +408,16 @@ variables:
   starfall_ttd_ok: (target.boss|target.time_to_die>=config.ttd_starfall|fight_remains>=config.ttd_starfall)
 
 lists:
+  # Emergency, called from main ABOVE the casting guard. Everything here is
+  # off-GCD or an item, so it fires without touching the cast; only the last
+  # line ends it.
+  emergency:
+    - barkskin,name="Barkskin (Emergency)",range_check=none,off_gcd=true,ignore_queue=true,if=health.effective.pct<=config.emergency_hp
+    - healthstone,name="Healthstone (Emergency)",off_gcd=true,ignore_queue=true,delay=250,if=healthstone.ready&health.pct<=config.engine_healthstone
+    - health_potion,name="Health Potion (Emergency)",off_gcd=true,ignore_queue=true,delay=250,if=health_potion.ready&health.pct<=config.engine_health_potion
+    # Last, so the off-GCD options above get their chance first.
+    - stop_casting,name="Cut Cast (Emergency)",if=config.emergency_stop_casting&!player.channeling
+
   # Solar Beam on target/mouseover/focus. interrupt.*.check = Simia's own
   # kick filters (interruptible, important, in range, not already kicked).
   interrupts:
@@ -574,6 +602,10 @@ lists:
   # Entry point: first matching line wins the GCD, everything above the
   # damage lists outranks damage.
   main:
+    # Emergency FIRST, above the casting guard below. Only reachable while you
+    # are actually casting and actually low, so it costs nothing otherwise.
+    - call_action_list,name=emergency,if=player.combat&(player.casting|player.channeling)&health.effective.pct<=config.emergency_hp
+
     - return,if=player.channeling|player.casting
 
     # --- Engine plumbing. Must stay at the top. ---
@@ -598,14 +630,21 @@ lists:
 
     # --- Survival, then utility, then the burst window ---
     - call_action_list,name=defensives
-    - call_action_list,name=interrupts
-    - call_action_list,name=dispels
-    - call_action_list,name=trinkets
-
     # Nothing below may cast while the Bear defensive is holding you in Bear.
     # Every damage spell cancels the form, and Panic Bear Form then pays another
     # global to re-enter it.
+    #
+    # This sits directly under `defensives` and ABOVE interrupts on purpose.
+    # It used to sit under `trinkets`, which left Solar Beam free to cancel the
+    # form the shift had just paid for - the fuzzer found that in the current
+    # file after the first version of this guard was supposed to have fixed it.
+    # Dispels cancel the form the same way. Inside the Bear window survival
+    # outranks the kick; the window is short and health-gated.
     - return,if=buff.bear_form.up&var.bear_defensive_active
+
+    - call_action_list,name=interrupts
+    - call_action_list,name=dispels
+    - call_action_list,name=trinkets
 
     # Do NOT add player.combat to these calls: casting is what puts you in
     # combat, so requiring it first means the rotation never acts.
