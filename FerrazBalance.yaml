@@ -61,7 +61,7 @@
 # Wild Mushroom, Power of Goldrinn, Orbit Breaker.
 # =============================================================================
 
-version: "3.9.4"
+version: "3.10.0"
 author: Ferraz
 patch: "12.1"
 spec: 102
@@ -78,7 +78,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-08-27 | Patch: 12.1 | Version: 3.9.4"
+    text: "Last update: 2026-08-27 | Patch: 12.1 | Version: 3.10.0"
 
   # ==========================================================================
   # RECOMMENDED BUILD — every number in this file was measured against this
@@ -436,7 +436,7 @@ config:
     label: "HotW in Bear Form (Defensive)"
     section: "Defensives"
     type: checkbox
-    default: true
+    default: false
     description: "Shift to Bear as an emergency defensive when Heart of the Wild is ready or already up. Shifting just to shift costs Moonkin uptime for no mitigation, so this only fires when HotW backs it. The Frenzied Regeneration branch above is separate and always active."
 
   hotw_bear_hp:
