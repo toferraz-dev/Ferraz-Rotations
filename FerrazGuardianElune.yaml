@@ -1,37 +1,18 @@
 # =============================================================================
-# Guardian Druid — spec 104 — patch 12.1 (Midnight) — Elune's Chosen, M+.
+# Guardian Druid Ferraz M+ - spec 104 - patch 12.1.
 # =============================================================================
 #
-# LISTS
-#   main            plumbing, form, survival, utility, delegates damage.
-#   set_tank_var    reads the Encounter Timeline into 2 variables.
-#   defensives      Barkskin / Survival Instincts / Frenzied Regen.
-#   cooldowns       Barkskin, Lunar Beam, Berserk/Incarnation, racials.
-#   bear            form + rage spending, shared, runs before st/aoe.
-#   st / aoe        damage priority, <2 / 2+ enemies (var.aoe_mode).
+# Lists (entry point: main):
+#   engine                  set_tank_var            defensives              cooldowns
+#   bear                    st                      aoe                     main
 #
-# ST: Moonfire uptime -> Thrash (Lunar Calling) -> Thrash to stacks -> Mangle
-# -> Moonfire (Galactic Guardian) -> Thrash on CD -> Moonfire (Lunation) ->
-# Swipe filler. AoE: same but both Thrash lines promoted above Moonfire, no
-# Lunation slot.
-#
-# Measured with SimC 1210-01, fight_style=DungeonSlice, against this
-# character's actual gear/talents. Harness sim/ab_test.py, target_error=0.15
-# (~±0.08%) — under ~0.2% is noise and not quoted. NOT validated: everything
-# defensive (no M+ damage-intake model) — defensives list, tank-buster
-# prediction, var.heavy_incoming, all Defensive HP/Prediction sliders.
-#
-# Untalented on this character (harmless dead lines, flagged inline): Red
-# Moon, Convoke the Spirits, Sundering Roar, Ravage, Bristling Fur, Fluid
-# Form, Moonkin Form, Wildpower Surge, Killing Blow, Fount of Strength, the
-# Rake/Rip/Shred/Ferocious Bite catweave.
-#
-# Numeric spell IDs (name is ambiguous): 77758 Thrash(Bear) vs 106832
-# Thrash(Cat); 213764 Swipe(Bear) vs 106785 Swipe(Cat); 1261868 HotW in Cat
-# Form (button morphs); 1307881 Gory Fur (3 spells share the display name).
+# WHY ANY OF IT IS THE WAY IT IS: .agents/rationale/GuardianElune.md
+# That file carries every measurement, every rejected alternative and every
+# bug this file has already been through. Read it before changing a line -
+# most of what looks improvable here was tried and reverted.
 # =============================================================================
 
-version: "1.8.0"
+version: "1.8.1"
 patch: "12.1"
 spec: 104
 name: Guardian Druid Ferraz M+
@@ -44,14 +25,9 @@ description: |
   through Cat Form. ST/AoE split at 2 enemies within 8 yards.
 entry: main
 
-# =============================================================================
-# SPELL OVERRIDES — AND-ed into every occurrence of that spell in the file.
-# =============================================================================
+# SPELL OVERRIDES — AND-ed into every occurrenc.
 spell_overrides:
-  # Maul and Mangle deliberately NOT overridden globally: an old Mangle
-  # override (Gore+low rage+Thrash-on-CD+<=3 enemies, all at once) cut it
-  # from ~78 to ~15 casts/fight — removing it measured +1.5% ST, +4.9% at 5.
-  # Per-line conditions in bear/st/aoe do the real gating now.
+  # Maul and Mangle deliberately NOT overridden g.
 
   # Blocks re-suggesting Incarnation while its own buff is up.
   incarnation_guardian_of_ursoc: "!buff.incarnation_guardian_of_ursoc.up"
@@ -64,16 +40,14 @@ spell_overrides:
   # set_tank_var) unless the fight is short/final enough that holding is pointless.
   barkskin: "(!player.inmythicplus|fight_remains>=20|player.on_last_boss)&(variable.tank_buster_remains<=1|variable.tank_buster_casting|variable.tank_buster_remains>34)"
 
-# =============================================================================
-# CONFIG — defensive defaults are unvalidated by simulation.
-# =============================================================================
+# CONFIG — defensive defaults are unvalidated b.
 config:
   # Display-only build stamp — keep in sync with version:/patch: above.
   about:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-08-27 | Patch: 12.1 | Version: 1.8.0"
+    text: "Last update: 2026-08-27 | Patch: 12.1 | Version: 1.8.1"
 
   # Exact string every number here was measured against (sim/Tassiana_guardian.simc).
   recommended_talents:
@@ -105,9 +79,7 @@ config:
     max: 100
     default: 50
 
-  # === PREDICTED INCOMING DAMAGE THRESHOLDS ===
-  # Proactive. incoming.mitigated.pct is post-defensives, so NOT comparable
-  # to the HP sliders above (40 here != 40 there).
+  # Proactive. incoming.mitigated.pct is post-def.
   survival_instincts_dmg_pct:
     section: "Defensives Prediction Damage"
     label: "Survival Instincts (Incoming Dmg%)"
@@ -140,9 +112,7 @@ config:
     default: 20
     description: "Maul fires once rage is within this much of the cap. Lower = more aggressive."
 
-  # === COOLDOWN CONFIGURATIONS ===
-  # HotW weave is the single most valuable thing here (-15% DungeonSlice if
-  # removed). These 3 sliders gate it — loosening all three measured -3.3%.
+  # HotW weave is the single most valuable thing .
   auto_hotw:
     section: "Cooldowns"
     label: "Auto Heart of the Wild"
@@ -174,13 +144,7 @@ config:
     default: true
     description: "Fire the combat potion automatically. Measured +3.45% DungeonSlice synced to the burst."
 
-  # Measured on DungeonSlice against this file's own priority:
-  #     sync with Incarnation/Berserk   +3.45%
-  #     fire as soon as it is ready     +5.34%
-  #     sync, but not if Berserk >30s   +3.27%   (no better than plain sync)
-  # Syncing loses because the burst itself is deliberately held for the HotW
-  # weave (see the berserk/incarnation lines in `cooldowns`), so "wait for
-  # Incarnation" leaves the potion unused through that whole window.
+  # Measured on DungeonSlice against this file's .
   potion_sync_burst:
     section: "Cooldowns"
     label: "Potion: sync with Incarnation"
@@ -204,16 +168,7 @@ config:
     type: checkbox
     default: true
 
-# =============================================================================
-# VARIABLES
-# =============================================================================
-  # === ENGINE & DISPEL CONFIGURATIONS ===
-  # Inlined from Simia's _shared.yaml instead of inherited, so every piece has
-  # a toggle. See the `engine` list for what was left out and why.
-  # Druid removes POISON and CURSE only (remove_corruption 2782) plus enrage
-  # offensively (soothe 2908) — simia_data_dump/_dispeldata.yaml. The .list
-  # suffix applies Simia's own dispel_list filter.
-  # UNVALIDATED: SimC models none of this.
+# VARIABLES.
   engine_loot_nearby:
     label: "Loot Nearby Corpses"
     section: "Engine"
@@ -304,25 +259,13 @@ variables:
   # SimC has no equivalent prediction, treats this as permanently false.
   heavy_incoming: incoming.mitigated.pct>=config.ironfur_dmg_pct
 
-  # Gate for the HotW weave: feature on, talented, ready, live target,
-  # combat running long enough, HP above floor, Ironfur already up, no
-  # burst window active (burst and weave compete for the same GCDs).
+  # Gate for the HotW weave: feature on, talented.
   hotw_weave: config.auto_hotw&talent.heart_of_the_wild&cooldown_bypass.heart_of_the_wild.ready&target.valid&target.attackable&player.combat&combat.time>=config.hotw_delay&health.pct>=config.hotw_hp_pct&buff.ironfur.up&!buff.incarnation_guardian_of_ursoc.up&!buff.berserk.up
 
 lists:
-  # Everything spell_queue / sanity_checks / auto_target / auto_heal used to do,
-  # inlined so each piece is configurable. `sanity_checks` is not just guards —
-  # it also calls auto_dispel, affix, auto_purge_enrage, auto_brez, auto_rez and
-  # auto_combat_potion, and that last one fought this file's own combat_potion
-  # line. The five return guards are copied verbatim; dropping any of them lets
-  # the rotation fire while dead or mounted.
-  # Not copied (no Druid content): anti_cc, auto_freedom, auto_feign_death,
-  # auto_death_grip, auto_combat_potion.
+  # Everything spell_queue / sanity_checks / auto.
   engine:
-    # `&`, not `|`. With `|` the condition is true whenever you are not doing at
-    # least ONE of the two things — and you are almost never casting AND
-    # channelling at once, so it read true on essentially every pass. The queue
-    # is meant to flush only when you are genuinely free.
+    # `&`, not `|`. With `|` the condition is true .
     - queue_spell,if=!player.casting&!player.channeling
 
     - return,if=!state.rotation
@@ -334,10 +277,7 @@ lists:
     - interact_target,delay=350,if=config.engine_loot_nearby&target.lootable&target.range<=5
     - interact_target,delay=350,if=config.engine_loot_nearby&loot_nearby
     - interact_mouseover,delay=350,if=config.engine_loot_nearby&mouseover.lootable&mouseover.range<=5
-    # Melee-only, and this file IS melee: keeps auto-attack running.
-    # target.in_melee, not target.range<=8: SIMIA_DOCUMENTATION rule 7 — range is
-    # EDGE distance, so 'max melee' reads 4.5 on a small mob and 2.33 on a
-    # 9-reach boss. The shared list used the constant; this does not.
+    # Melee-only, and this file IS melee: keeps aut.
     - attack_target,off_gcd=true,delay=100,if=player.combat&target.exists&target.attackable&target.alive&target.in_melee&!player.auto_attacking
 
     - remove_corruption.player,delay=500,name="Remove Corruption (Self)",if=config.auto_dispel_self&player.dispelable.list
@@ -360,34 +300,10 @@ lists:
     - target_enemy,delay=200,off_gcd=true,if=config.engine_auto_target.has(1)&target.dead&enemies.combat.8y>=1
     - target_enemy,delay=200,off_gcd=true,if=config.engine_auto_target.has(2)&target.range>=25&enemies.combat.8y>=1
 
-    # --- Temple of Sethraliss, Adderis and Aspix ---------------------------
-    # Storm Blessed alternates between the two bosses and gives its holder
-    # "Immunity - Damage Only" on every school — a hard immunity, not a
-    # reduction. Damage into it is wasted entirely, so swap off.
-    #
-    # 1289229 is the AURA. 1310311 is the 2.5s cast that applies it; checking
-    # the cast id would only ever be true for those 2.5 seconds. Same trap as
-    # Symbiotic Relationship, where the cast and the aura are different ids.
-    #
-    # target_enemy takes no filter — it is "target nearest enemy" and CYCLES
-    # on repeated presses, like Tab. So the pattern is to describe why the
-    # CURRENT target is wrong and let it re-evaluate next pass; delay=500
-    # keeps that from spinning. This is the same shape the official rotations
-    # use for interrupt scanning.
-    #
-    # enemies.combat.40y>=2 stops it hunting once one boss is dead: the
-    # survivor gains Frenzy (1292035), never Storm Blessed, and with nothing
-    # to swap to the line would otherwise cycle for nothing. 40y in every
-    # file, melee included — the count only asks "is there another boss",
-    # not "is it in melee range".
-    #
-    # No config toggle: the condition is one boss aura in one dungeon, and
-    # there is no reason to ever want to keep hitting an immune target.
+    # --- Temple of Sethraliss, Adderis and Aspix .
     - target_enemy,name="Swap Off Storm Blessed",delay=500,off_gcd=true,if=target.buff.1289229.up&enemies.combat.40y>=2
 
-  # Tank-buster prediction feeding the barkskin override. Reads the native
-  # Encounter Timeline (C_EncounterTimeline, 12.0+) instead of hardcoded boss
-  # ability names.
+  # Tank-buster prediction feeding the barkskin o.
   set_tank_var:
     - variable,name=tank_buster_remains,value=999
     - variable,name=tank_buster_remains,value=encounter.next_tank.remains,if=encounter.next_tank.up&encounter.next_tank.severity>=1&encounter.next_tank.remains<variable.tank_buster_remains
@@ -407,16 +323,11 @@ lists:
     # +0.17% (noise). Moving check: it's a ground effect, running out wastes it.
     - lunar_beam,if=target.valid&(!config.lunar_beam_moving_check|player.moving.time<=1)
 
-    # Berserk/Incarnation are mutually exclusive talents, both listed so the
-    # file works either way. Held until HotW is spent — delaying burst for the
-    # weave measured +0.95% DungeonSlice (-10.6% Patchwerk, M+-specific).
-    # First two clauses are the escape hatch when there's no weave to wait for.
+    # Berserk/Incarnation are mutually exclusive ta.
     - berserk,if=target.valid&(!config.auto_hotw|!talent.heart_of_the_wild|!cooldown_bypass.heart_of_the_wild.ready)
     - incarnation_guardian_of_ursoc,if=target.valid&(!config.auto_hotw|!talent.heart_of_the_wild|!cooldown_bypass.heart_of_the_wild.ready)
 
-    # Combat potion. With potion_sync_burst ON it rides the Incarnation/Berserk
-    # buff; OFF, the first clause is always true and it fires on cooldown.
-    # fight_remains<=30 stops a potion being carried unused to the end.
+    # Combat potion. With potion_sync_burst ON it r.
     - combat_potion,name="Combat Potion",if=config.use_potion&combat_potion.ready&player.combat&(!config.potion_sync_burst|buff.incarnation_guardian_of_ursoc.up|buff.berserk.up|fight_remains<=30)
 
     - wild_guardian,if=buff.lunar_beam.up
@@ -440,25 +351,18 @@ lists:
     # Dumping at 40 like SimC's raid APL measured -2.86% DungeonSlice
     # (+9.41% Patchwerk) — a raid-only gain. Do not "fix" this to match SimC.
 
-    # --- Rage spenders. Split on talent.raze (parse-time redirect in SimC —
-    # with it, EVERY Maul becomes Raze at any target count), never on enemy
-    # count. Gory Fur (1307881, 3 spells share the name) spent on sight: +2.24%.
+    # --- Rage spenders. Split on talent.raze (pars.
     - maul,name="Maul (Gory Fur)",if=buff.1307881.up&!talent.raze.enabled&enemies.combat.8y<3&buff.ironfur.up&!var.heavy_incoming
     - raze,name="Raze (Gory Fur)",if=buff.1307881.up&talent.raze.enabled&buff.ironfur.up&!var.heavy_incoming
     - maul,name="Maul",if=!talent.raze.enabled&buff.ironfur.up&!var.heavy_incoming&rage.deficit<=config.rage_deficit_maul
     - raze,name="Raze",if=talent.raze.enabled&buff.ironfur.up&!var.heavy_incoming&rage.deficit<=config.rage_deficit_maul
 
-  # ===========================================================================
-  # ST — damage priority below the AoE threshold. Also covers the opener.
-  # ===========================================================================
+  # ST — damage priority below the AoE threshold.
   st:
     - moonfire,name="Moonfire (maintain)",if=target.valid&dot.moonfire.refreshable
     - 77758,name="Thrash (Lunar Calling)",range_check=mob_count_8y,if=cooldown.77758.ready&talent.lunar_calling.enabled
 
-    # Must stay a real if=: target_if is a SimC modifier that does NOT exist
-    # in Simia (absent from all stepModifiers). Writing it drops the
-    # condition silently and Thrash spams. Costs nothing to keep as if=
-    # anyway — Thrash(Bear) is PBAoE, no other target to retarget to.
+    # Must stay a real if=: target_if is a SimC mod.
     - 77758,name="Thrash (stacks)",range_check=mob_count_8y,if=cooldown.77758.ready&(dot.thrash.refreshable|dot.thrash.stack<5&talent.flashing_claws.rank=2|dot.thrash.stack<4&talent.flashing_claws.rank=1|dot.thrash.stack<3&!talent.flashing_claws.enabled)
 
     # Dead while Wildpower Surge is untalented (removing measured -0.04%, nothing).
@@ -490,10 +394,7 @@ lists:
 
   # Entry point: first matching line wins the GCD.
   main:
-    # Convoke is a channel and nothing here ever wants to break it. Bare
-    # player.channeling, the shape every official rotation in simia_data_dump
-    # uses — see FerrazRestoDruid.yaml, where a narrower id-based guard failed
-    # open often enough to clip Convoke in a real key.
+    # Convoke is a channel and nothing here ever wa.
     - return,if=player.channeling
 
     - call_action_list,name=set_tank_var
@@ -503,9 +404,7 @@ lists:
     # !cat_form yields to the weave below so they don't fight each other.
     - bear_form,range_check=none,if=buff.bear_form.down&!buff.cat_form.up&(target.attackable|enemies.40y)
 
-    # --- Heart of the Wild weave — biggest block in the file: -15%
-    # DungeonSlice if removed. Cast by name AND cat-form morph id (1261868),
-    # only one resolves per form. ---
+    # --- Heart of the Wild weave — biggest block i.
     - cat_form,name="Cat Form (HotW)",range_check=none,if=var.hotw_weave&buff.cat_form.down
     - heart_of_the_wild,name="Heart of the Wild",range_check=none,ignore_cds_toggle=true,if=buff.cat_form.up&cooldown_bypass.heart_of_the_wild.ready&target.valid&target.attackable
     - 1261868,name="Heart of the Wild (cat morph)",range_check=none,ignore_cds_toggle=true,if=buff.cat_form.up&cooldown_bypass.heart_of_the_wild.ready&target.valid&target.attackable
@@ -513,27 +412,13 @@ lists:
     - bear_form,name="Bear Form (post-HotW)",range_check=none,if=buff.cat_form.up&(!cooldown_bypass.heart_of_the_wild.ready|health.pct<config.hotw_hp_pct|!target.valid|!target.attackable)
 
     - moonfire.mouseover,name="Moonfire (Pull)",if=config.MO_moonfire&config.allow_pull_with_mo&mouseover.enemy&mouseover.alive&mouseover.debuff.moonfire.down
-    # --- COMBAT WALL. Nothing below this line runs out of combat. ---
-    # Everything above it is what a tank may do before the pull: the engine,
-    # Mark of the Wild, entering Bear Form, the Heart of the Wild weave (which
-    # carries its own player.combat gate in var.hotw_weave) and the Moonfire
-    # mouseover pull directly above — that one is a DELIBERATE pull, kept above
-    # the wall on purpose and switchable with config.allow_pull_with_mo.
-    #
-    # player.combat, NOT player.auto_combat. The catalog defines the second as
-    # a "Config-based auto-combat check", not combat state; using it here is
-    # the bug that silently disabled four rotations in this repo.
+    # COMBAT WALL - nothing below runs out of combat. player.combat, NOT
+    # player.auto_combat, which is a config check and not combat state.
     - return,if=!player.combat
 
 
 
-    # NOTE: there used to be a `return,if=auto_combat.player` here, meant to
-    # hand control to Simia's auto-combat driver. That expression does not
-    # exist (it is player.auto_combat reversed), so it never evaluated true
-    # and the line was dead — which is the only reason the rotation worked.
-    # "Fixing" the spelling made it live, and since player.auto_combat is a
-    # config-based check that reads true in normal use, it aborted main
-    # before defensives and all damage. Removed. Do not add it back.
+    # NOTE: there used to be a `return,if=auto_comb.
 
     - call_action_list,name=defensives
 

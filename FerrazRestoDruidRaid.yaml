@@ -1,40 +1,20 @@
 # =============================================================================
-# Restoration Druid — spec 105 — patch 12.1 (Midnight) — Wildstalker, raid.
+# Restoration Druid Ferraz Raid - spec 105 - patch 12.1.
 # =============================================================================
 #
-# LISTS
-#   main              entry point: plumbing -> defensives -> cooldowns ->
-#                     active healing -> DPS weaving.
-#   out_of_combat     Mark of the Wild + post-combat cleanup on genuine HP
-#                     need only.
-#   defensives        Ironbark -> Barkskin -> Bear Form + Frenzied Regen.
-#   racials           Shadowmeld, Thorn Bloom.
-#   utility           Root cleanse, Innervate.
-#   cooldowns         NS -> trinkets/potion -> Convoke -> Tranquility ->
-#                     Swiftmend -> Clearcasting Regrowth.
-#   mouseover_healing_emergency   unit-frame mouseover heals.
-#   moving            instant-only priority while moving.
-#   active_healing    SotF consumption -> self Efflorescence/Lifebloom/Rejuv
-#                     loop -> tank Lifebloom fallback -> forced spread ->
-#                     Abundance Regrowth -> Wild Growth/Rejuv/Germ/Regrowth.
-#   ranged_dps / catweave* / bearweave   DPS weaving, secondary to healing.
+# Lists (entry point: main):
+#   engine                  interrupts              out_of_combat           defensives
+#   racials                 cooldowns               active_healing          utility
+#   catweave_st             catweave_aoe            catweave                ranged_dps
+#   bearweave               moving                  mouseover_healing_emergency  main
 #
-# NOT SimC-validated: SimC has no raid-damage/incoming-heal model, so this
-# priority is manual raid-healer theorycraft, not benchmarked numbers. Tune
-# thresholds to your own team.
-#
-# The self Efflorescence/Lifebloom/Swiftmend/Rejuvenation loop (current
-# class-guide's recommended playstyle) was checked against the decoded
-# talent string via the local SimC binary (sim/tools/simc-.../simc.exe,
-# talents= profile field), not guessed. Everbloom is maxed at 4/4.
-#
-# talent.X gates confirmed on the string: germination, heart_of_the_wild,
-# efflorescence, everbloom, photosynthesis, power_of_the_archdruid.
-# fluid_form/swipe are checked but NOT on this
-# string — harmless dead weight unless the build changes.
+# WHY ANY OF IT IS THE WAY IT IS: .agents/rationale/RestoDruidRaid.md
+# That file carries every measurement, every rejected alternative and every
+# bug this file has already been through. Read it before changing a line -
+# most of what looks improvable here was tried and reverted.
 # =============================================================================
 
-version: "1.12.0"
+version: "1.12.1"
 author: Ferraz
 patch: "12.1"
 spec: 105
@@ -43,9 +23,7 @@ description: |
   Restoration Druid Ferraz Raid
 entry: main
 
-# =============================================================================
-# CONFIG — thresholds below are untested defaults, tune to your team.
-# =============================================================================
+# CONFIG — thresholds below are untested defaul.
 
 config:
   # Display-only build stamp — keep in sync with version:/patch: above.
@@ -53,7 +31,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-08-27 | Patch: 12.1 | Version: 1.12.0"
+    text: "Last update: 2026-08-27 | Patch: 12.1 | Version: 1.12.1"
 
   # String the talent.X checks below assume.
   recommended_talents:
@@ -312,14 +290,7 @@ config:
     spell: 774
     description: "Forces Rejuvenation / Wild Growth spread regardless of HP"
 
-  # === ENGINE & DISPEL CONFIGURATIONS ===
-  # Inlined from Simia's _shared.yaml instead of inherited. `sanity_checks` is
-  # not just guards: it also calls auto_dispel, affix, auto_purge_enrage,
-  # auto_brez, auto_rez and auto_combat_potion. Two consequences here:
-  #   - Nature's Cure was already firing on the raid with no line in this file
-  #     and no way to tune it;
-  #   - auto_combat_potion fought this file's own combat_potion line.
-  # UNVALIDATED, like everything else in this file: SimC has no healing model.
+  # Inlined from Simia's _shared.yaml instead of .
   engine_loot_nearby:
     label: "Loot Nearby Corpses"
     section: "Engine"
@@ -376,9 +347,7 @@ config:
     type: checkbox
     default: true
 
-  # Nature's Cure removes MAGIC, curse and poison — the healer dispel, far more
-  # valuable than the DPS one. Defaults ON for the party/raid, unlike the DPS
-  # files, because dispelling IS your job here.
+  # Nature's Cure removes MAGIC, curse and poison.
   auto_dispel_group:
     label: "Nature's Cure (Group)"
     section: "Dispels"
@@ -405,44 +374,22 @@ config:
     text: "Join Discord - Ferraz"
     url: "https://discord.com/channels/857767821093634068/1467268534420766854"
 
-# =============================================================================
-# VARIABLES
-# =============================================================================
+# VARIABLES.
 
 variables:
-  # The channelled ids this spec can actually produce, confirmed against client
-  # 69404: Tranquility is 740 and Convoke is 323764 (Night Fae) and 391528
-  # (talent), all three flagged "Is Channelled". Tranquility's 157982 and
-  # 1236573 are heal components, not the channel, so they are left out.
-  #
-  # Written WITHOUT a leading player.channeling& on purpose. With it, the term
-  # is a strict subset of the player.channeling already in the guard and
-  # contributes nothing. Standing alone it covers the case the guard was
-  # missing: the addon reporting Convoke through UnitCastingInfo before it
-  # flips to UnitChannelInfo, which is the window a channel gets clipped in.
+  # The channelled ids this spec can actually pro.
   protected_channel: player.casting.spell_id=740|player.casting.spell_id=323764|player.casting.spell_id=391528
   group_healthy: group.count(cycle.health.effective.pct<config.raid_catweave_group_hp)<config.raid_catweave_injured_max
   can_catweave: var.group_healthy&player.combat
   mo_friendly_valid: mouseover.exists&mouseover.alive&mouseover.friendly&mouseover.unitframe
   has_soul: buff.soul_of_the_forest.up
 
-# =============================================================================
-# LISTS
-# =============================================================================
+# LISTS.
 
 lists:
-  # Everything spell_queue / sanity_checks / auto_target / auto_heal used to do,
-  # inlined so each piece is configurable. The five return guards are copied
-  # verbatim — dropping any of them lets the rotation fire while dead or mounted.
-  # Not copied (nothing a Druid can use): anti_cc, auto_freedom, auto_feign_death,
-  # auto_death_grip, special_actions_combat (melee auto-attack), and
-  # auto_combat_potion (this file drives its own potion, tied to Nature's
-  # Swiftness).
+  # Everything spell_queue / sanity_checks / auto.
   engine:
-    # `&`, not `|`. With `|` the condition is true whenever you are not doing at
-    # least ONE of the two things — and you are almost never casting AND
-    # channelling at once, so it read true on essentially every pass. The queue
-    # is meant to flush only when you are genuinely free.
+    # `&`, not `|`. With `|` the condition is true .
     - queue_spell,if=!player.casting&!player.channeling
 
     - return,if=!state.rotation
@@ -467,58 +414,18 @@ lists:
     - health_potion,delay=250,if=health_potion.ready&health.pct<=config.engine_health_potion
     - mana_potion,delay=250,if=mana_potion.ready&mana.pct<=config.engine_mana_potion
 
-    # player.combat on all three. As a healer you are constantly OUT of combat
-    # while the group is IN it, and you do not target enemies — so
-    # `!target.exists & enemies.combat.40y>=1` was satisfied on essentially
-    # every pass between pulls and this fired every 200ms forever.
-    #
-    # It never resolved itself because the two halves measure different things:
-    # enemies.combat.40y is a nameplate count, but WoW's TargetNearestEnemy
-    # only picks up enemies in front of you. The count says an enemy exists,
-    # the targeting call cannot reach it, and the condition stays true. With
-    # off_gcd=true that is a visible suggestion spamming out of combat.
-    #
-    # Nothing is lost by gating it: the only thing in this file that wants an
-    # enemy target is the damage half, and that already requires
-    # var.can_catweave, which is group_healthy AND player.combat.
+    # player.combat on all three: as a healer you are constantly out of combat
+    # while the group is in it, and without it this fired every 200ms forever.
     - target_enemy,delay=200,off_gcd=true,if=player.combat&config.engine_auto_target.has(0)&!target.exists&enemies.combat.40y>=1
     - target_enemy,delay=200,off_gcd=true,if=player.combat&config.engine_auto_target.has(1)&target.dead&enemies.combat.40y>=1
     - target_enemy,delay=200,off_gcd=true,if=player.combat&config.engine_auto_target.has(2)&target.range>=40&enemies.combat.40y>=1
 
-    # --- Temple of Sethraliss, Adderis and Aspix ---------------------------
-    # Storm Blessed alternates between the two bosses and gives its holder
-    # "Immunity - Damage Only" on every school — a hard immunity, not a
-    # reduction. Damage into it is wasted entirely, so swap off.
-    #
-    # 1289229 is the AURA. 1310311 is the 2.5s cast that applies it; checking
-    # the cast id would only ever be true for those 2.5 seconds. Same trap as
-    # Symbiotic Relationship, where the cast and the aura are different ids.
-    #
-    # target_enemy takes no filter — it is "target nearest enemy" and CYCLES
-    # on repeated presses, like Tab. So the pattern is to describe why the
-    # CURRENT target is wrong and let it re-evaluate next pass; delay=500
-    # keeps that from spinning. This is the same shape the official rotations
-    # use for interrupt scanning.
-    #
-    # enemies.combat.40y>=2 stops it hunting once one boss is dead: the
-    # survivor gains Frenzy (1292035), never Storm Blessed, and with nothing
-    # to swap to the line would otherwise cycle for nothing. 40y in every
-    # file, melee included — the count only asks "is there another boss",
-    # not "is it in melee range".
-    #
-    # No config toggle: the condition is one boss aura in one dungeon, and
-    # there is no reason to ever want to keep hitting an immune target.
+    # --- Temple of Sethraliss, Adderis and Aspix .
     - target_enemy,name="Swap Off Storm Blessed",delay=500,off_gcd=true,if=target.buff.1289229.up&enemies.combat.40y>=2
 
   # Soothe (enrage purge) + AoE CC assist.
   interrupts:
-    # REMOVED: a `target_enemy,if=...&enemies.combat.any(cycle.purgeable.enrage)`
-    # search line. No predicate form `.any(EXPR)` exists for enemies — the only
-    # predicate helper in the catalog is group.count(EXPR), and that iterates
-    # ALLIES. The condition never evaluated true, so the line was dead and
-    # Soothe below only ever fired when you were already on the enraged mob.
-    # Simia cannot pick an enemy by criteria (target_enemy is 'nearest enemy',
-    # no filter), so this is not fixable — target the mob yourself.
+    # REMOVED: a `target_enemy,if=...&enemies.comba.
     - target_enemy,delay=100,name="Search Interrupt",if=!interrupt.target.check&interrupt.8y.any
     - incapacitating_roar,name="Roar (AoE CC)",if=interrupt.stun.aoe.check
     # Hovering is the only way to Soothe a mob you are not targeting — see
@@ -526,16 +433,12 @@ lists:
     - soothe.mouseover,name="Soothe Enrage (Mouseover)",range_check=mouseover,if=config.soothe_mouseover&mouseover.exists&mouseover.enemy&mouseover.attackable&!mouseover.dead&mouseover.combat&mouseover.purgeable.enrage
     - soothe,name="Soothe Enrage",if=target.purgeable.enrage
 
-  # Mark of the Wild, plus post-combat
-  # cleanup on genuine HP need — (player.inraid|player.indungeon) avoids
-  # misreading a phantom "member" when solo/ungrouped.
+  # Mark of the Wild, plus post-combat.
   out_of_combat:
     # config.raid_use_mark_of_the_wild was defined but no line read it, so the
     # checkbox did nothing at all. Wired up here.
     - mark_of_the_wild,name="Mark of the Wild",range_check=none,if=config.raid_use_mark_of_the_wild&(buff.mark_of_the_wild.down.any|action.mark_of_the_wild.overlayed)&lastcast.mark_of_the_wild>=10
-    # NO Symbiotic Relationship. Removed at request for the raid file; the
-    # M+ file keeps it. Nothing else here reads the bond, so the config
-    # raid_symbiotic_target went with it.
+    # NO Symbiotic Relationship. Removed at request.
 
     - lifebloom,name="OOC Lifebloom",cycle=members,if=(player.inraid|player.indungeon)&!talent.everbloom&cycle.health.effective.pct<config.raid_lifebloom_threshold&cycle.buff.lifebloom.down&(group.count(cycle.buff.lifebloom.up)=0|tank1.buff.lifebloom.up|tank2.buff.lifebloom.up)&!player.combat
     - lifebloom,name="OOC Lifebloom (Tank)",cycle=tanks,if=(player.inraid|player.indungeon)&!talent.everbloom&(cycle.buff.lifebloom.down|cycle.buff.lifebloom.remains<4.5)&(cycle.buff.lifebloom.up|group.count(cycle.buff.lifebloom.up)=0)&!player.combat
@@ -555,16 +458,9 @@ lists:
     - shadowmeld,name="Shadowmeld (Aggro Drop)",if=player.combat&player.aggro&!player.casting
     - thorn_bloom,name="Thorn Bloom",if=group.count(cycle.health.effective.pct<config.raid_thorn_bloom_threshold)>=config.raid_thorn_bloom_members&target.in_melee
 
-  # NS -> trinkets/potion -> Convoke (needs Abundance up, caster form) -> NS
-  # Regrowth -> Tranquility -> self Swiftmend (Archdruid) -> reactive
-  # Swiftmend -> Clearcasting Regrowth.
+  # NS -> trinkets/potion -> Convoke (needs Abund.
   cooldowns:
-    # CONVOKE IS FORM-DEPENDENT. In Cat Form it deals damage; only in caster
-    # form does it heal. So the healing chain has to get you out of the form
-    # FIRST — any heal does that on its own, which is what this line is for.
-    # Without it the chain dead-ends: Nature's Swiftness fires, then
-    # "Convoke (Heal)" below refuses because of its !cat_form gate, and the NS
-    # is burned for nothing.
+    # CONVOKE IS FORM-DEPENDENT. In Cat Form it dea.
     - rejuvenation,name="Shift Out For Convoke",cycle=members,if=cooldown.convoke_the_spirits.ready&group.count(cycle.health.effective.pct<config.raid_convoke_threshold)>=config.raid_convoke_members&(buff.cat_form.up|buff.bear_form.up)
     - natures_swiftness,name="NS (Pre-Convoke)",range_check=none,if=cooldown.convoke_the_spirits.ready&group.count(cycle.health.effective.pct<config.raid_convoke_threshold)>=config.raid_convoke_members&!buff.cat_form.up&!buff.bear_form.up&!buff.moonkin_form.up&buff.abundance.up
     - trinket_1,name="Trinket 1",if=config.raid_use_trinket_1&trinket_1.ready&buff.natures_swiftness.up
@@ -576,20 +472,10 @@ lists:
     # Power of the Archdruid loop: Swiftmend on CD, spreads Rejuv to 3 targets.
     - swiftmend.player,name="Self Swiftmend (Archdruid)",range_check=none,if=talent.power_of_the_archdruid&player.combat&cooldown.swiftmend.ready&(buff.rejuvenation.up|buff.regrowth.up|buff.wild_growth.up)
     - swiftmend,name="Swiftmend for SotF/Treants",cycle=members,if=player.combat&cycle.health.effective.pct<config.raid_swiftmend_threshold&(cycle.buff.rejuvenation.up|cycle.buff.regrowth.up|cycle.buff.wild_growth.up)
-    # NO `|pred.cycle.buff.regrowth.down` branch. That half carried no health
-    # gate at all, so a tank at 100% with no Regrowth HoT satisfied the line on
-    # its own — and in the M+ file, which had no player.combat either, that
-    # made it the ONE Regrowth reachable out of combat that fires on a full
-    # target. Omen of Clarity procs Clearcasting by itself, so between pulls
-    # the proc sat there, this line saw a tank without the HoT, and spent it
-    # into pure overheal.
-    # Spending a free proc early is still the intent; `<99` keeps it, and
-    # player.combat keeps it from burning during downtime.
+    # NO `|pred.cycle.buff.regrowth.down` branch. T.
     - regrowth,name="Clearcasting Regrowth",cycle=members,if=player.combat&buff.clearcasting.up&cycle.health.effective.pct<99
 
-  # SotF consumption -> self Efflorescence/Lifebloom(Everbloom)/Rejuvenation
-  # (Photosynthesis) loop -> tank Lifebloom fallback -> forced spread ->
-  # Abundance Regrowth -> Wild Growth/Rejuv/Germination/Regrowth.
+  # SotF consumption -> self Efflorescence/Lifebl.
   active_healing:
     # Self-target fallback (bare health, not cycle.*) so solo content still
     # gets reactive healing. Runs first so it's never starved.
@@ -632,13 +518,7 @@ lists:
   utility:
     - bear_form,name="Shapeshift Clear",if=player.rooted&!buff.bear_form.up&!player.stunned
     - cat_form,name="Shapeshift Toggle",if=player.rooted&buff.bear_form.up&!player.stunned
-    # innervate.player, not bare innervate. Without an explicit cast target the
-    # addon needs a target to fire it and simply does nothing when you have
-    # none — which is most of the time between pulls, exactly when you want the
-    # mana back. As a healer you innervate YOURSELF anyway (Season 2 made it a
-    # flat 25% mana restore), so pinning the target loses nothing.
-    # range_check=none for the same reason: it is a self-cast, so there is no
-    # range to check.
+    # innervate.player, not bare innervate. Without.
     - innervate.player,name="Innervate",off_gcd=true,ignore_queue=true,range_check=none,if=mana.pct<config.raid_innervate_threshold
 
   # Cat Form single-target DPS.
@@ -691,9 +571,7 @@ lists:
     - lifebloom.player,name="Self Lifebloom (Moving)",range_check=none,after=300,if=talent.everbloom&(buff.lifebloom.down|buff.lifebloom.remains<4.5)
     - lifebloom,name="Lifebloom (Moving)",cycle=members,if=!talent.everbloom&cycle.health.effective.pct<config.raid_lifebloom_threshold&cycle.buff.lifebloom.down&(group.count(cycle.buff.lifebloom.up)=0|tank1.buff.lifebloom.up|tank2.buff.lifebloom.up)
     - lifebloom,name="Lifebloom Tank (Moving)",cycle=tanks,if=!talent.everbloom&(cycle.buff.lifebloom.down|cycle.buff.lifebloom.remains<4.5)&(cycle.buff.lifebloom.up|group.count(cycle.buff.lifebloom.up)=0)
-    # config.raid_rejuvenation_threshold, not a literal 95. The stationary
-    # Rejuvenation lines already read the slider; this one did not, so moving
-    # was silently stricter than standing and the slider could not reach it.
+    # config.raid_rejuvenation_threshold, not a lit.
     - rejuvenation,name="Rejuvenation (Moving)",cycle=members,if=cycle.buff.rejuvenation.down&cycle.health.effective.pct<config.raid_rejuvenation_threshold
 
   # Unit-frame mouseover heals, HP-gated from main. No mouseover.buff.*
@@ -707,61 +585,14 @@ lists:
   # Entry point. First matching line wins the GCD: defensives -> cooldowns ->
   # emergency -> active healing outrank DPS weaving.
   main:
-    # `player.channeling`, bare. This is what every official rotation in
-    # simia_data_dump uses, and the compound guard it replaces had two ways to
-    # fail open:
-    #
-    #   1. Both spell_id clauses need player.casting.spell_id populated during
-    #      a CHANNEL. In the WoW API that is UnitChannelInfo, a different call
-    #      from UnitCastingInfo; if the addon reads only the latter the field
-    #      is empty mid-channel and both clauses go false together.
-    #   2. buff.convoke_the_spirits.up resolves by NAME — the exact pattern
-    #      that silently never matched for Symbiotic Relationship.
-    #
-    #   The raid file was narrower still: it listed 323764 but not 391528, so
-    #   on the talent version of Convoke its id check could never match.
-    #
-    # That combination explains a channel that is protected MOST of the time
-    # and occasionally clipped: only one clause was really working, and it
-    # depended on when the client registered the channel. Heavy healing is
-    # when a hardcast is always queued behind, so that is when the gap shows —
-    # Nature's Swiftness fires off-GCD (harmless), then "Nature Swift Regrowth"
-    # becomes the suggestion and clips Convoke.
-    #
-    # Nothing in this file uses interrupt=true, so no line ever wants to break
-    # its own channel. The narrow guard bought nothing.
-    #
-    # `|player.casting` added on 4.5.4 / 1.9.4. Both Balance files have guarded
-    # cast AND channel since they were written; the two Resto files guarded
-    # only the channel, and that is the one asymmetry left after the bare
-    # guard went in.
-    #
-    # It matters because UnitCastingInfo and UnitChannelInfo are separate API
-    # calls. If the addon reports Convoke or Tranquility as a CAST at any
-    # instant — on the wind-up, before it flips to a channel — then
-    # player.channeling is false and player.casting is true, and the channel
-    # sits unprotected for exactly that window. This closes it.
-    #
-    # Free to add: nothing in either file uses interrupt=true, so no line ever
-    # wants to act during your own cast either.
-    #
-    # NOT the fix suggested on the Simia forum, and worth writing down why.
-    # That advice was `return,if=player.channeling&!var.sm_channeling` with
-    # `sm_channeling: player.channeling&player.casting.spell_id=115175`. 115175
-    # is Soothing Mist — that clause is a Mistweaver EXCEPTION, a way to keep
-    # acting through one's own channel. It loosens the guard. This file already
-    # had the strict half of that advice since 4929112.
+    # `player.channeling`, bare. This is what every.
     - return,if=player.channeling|player.casting|var.protected_channel
 
     # --- Engine plumbing. Must stay at the top. ---
     - call_action_list,name=engine
     - call_action_list,name=out_of_combat
 
-    # NOTE: a `return,if=!player.auto_combat` used to sit here. Despite the
-    # name, player.auto_combat is NOT "am I in combat" — the catalog defines
-    # it as a config-based auto-combat-driver check, which reads false in
-    # normal play. Negated, that made this abort main on every pass and
-    # nothing below ever fired. Use player.combat for combat state. Removed.
+    # NOTE: a `return,if=!player.auto_combat` used .
 
     # Cancels a heal mid-cast if the target got topped off by another source.
     - stop_casting,name="Cancel Overheal",casting_check=any,if=casting_target.health.pct>=config.raid_cancel_overheal_pct
