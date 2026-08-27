@@ -29,7 +29,7 @@
 # does not support - see .agents/SIMC_METHODOLOGY.md.
 # =============================================================================
 
-version: "4.1.0"
+version: "4.2.0"
 author: Ferraz
 patch: "12.1"
 spec: 102
@@ -46,7 +46,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-08-27 | Patch: 12.1 | Version: 4.1.0"
+    text: "Last update: 2026-08-27 | Patch: 12.1 | Version: 4.2.0"
 
   # Reference build. The measured numbers assume this exact string.
   recommended_talents:
@@ -378,6 +378,10 @@ variables:
   # Celestial Alignment/Incarnation active — trinkets/potion ride this window.
   cd_active: buff.celestial_alignment.up|buff.incarnation_chosen_of_elune.up
 
+  # The Bear defensive still wants you in Bear. Mirrors both branches of the
+  # Panic Bear Form line, so the exit gate below can never contradict it.
+  bear_defensive_active: health.effective.pct<=config.frenzied_regen_hp|(config.hotw_bear_defensive&health.effective.pct<=config.hotw_bear_hp&(cooldown.heart_of_the_wild.ready|buff.heart_of_the_wild.up))
+
   # === TIME TO DIE (TTD) VARIABLES === (target.boss always ignores TTD)
   inc_ttd_ok: (target.boss|target.time_to_die>=config.ttd_incarnation|fight_remains>=config.ttd_incarnation)
   foe_ttd_ok: (target.boss|target.time_to_die>=config.ttd_fury_of_elune|fight_remains>=config.ttd_fury_of_elune)
@@ -587,8 +591,8 @@ lists:
 
     # Back to Moonkin. Two lines, split on Fluid Form: with it, Starfire shifts
     # you AND deals damage, so the return is a free global.
-    - starfire,name="Back to Moonkin (Fluid Form)",if=talent.fluid_form&buff.moonkin_form.down&health.effective.pct>config.frenzied_regen_hp&!buff.frenzied_regeneration.up
-    - moonkin_form,name="Back to Moonkin",if=!talent.fluid_form&buff.moonkin_form.down&health.effective.pct>config.frenzied_regen_hp&!buff.frenzied_regeneration.up
+    - starfire,name="Back to Moonkin (Fluid Form)",if=talent.fluid_form&buff.moonkin_form.down&health.effective.pct>config.frenzied_regen_hp&!buff.frenzied_regeneration.up&!var.bear_defensive_active
+    - moonkin_form,name="Back to Moonkin",if=!talent.fluid_form&buff.moonkin_form.down&health.effective.pct>config.frenzied_regen_hp&!buff.frenzied_regeneration.up&!var.bear_defensive_active
     # A pre-pull Wrath used to sit here. Removed - the tank decides the pull.
 
     # --- Survival, then utility, then the burst window ---
@@ -596,6 +600,11 @@ lists:
     - call_action_list,name=interrupts
     - call_action_list,name=dispels
     - call_action_list,name=trinkets
+
+    # Nothing below may cast while the Bear defensive is holding you in Bear.
+    # Every damage spell cancels the form, and Panic Bear Form then pays another
+    # global to re-enter it.
+    - return,if=buff.bear_form.up&var.bear_defensive_active
 
     # Do NOT add player.combat to these calls: casting is what puts you in
     # combat, so requiring it first means the rotation never acts.
