@@ -71,7 +71,7 @@ config:
     type: toggle
     description: "Manual burst window. Only needed when Auto Burst is OFF."
 
-  # Same reasoning as inc_min_standing_time in Fe.
+  # Same reasoning as inc_min_standing_time in FerrazBalance.yaml:
   infernal_min_standing_time:
     label: "Infernal - Min Standing Still (s)"
     section: "Cooldowns"
@@ -213,7 +213,8 @@ config:
     type: checkbox
     default: true
 
-  # Defined locally rather than inherited, for th.
+  # Defined locally rather than inherited, for the same reason as in
+  # FerrazBalance.yaml:
   engine_auto_combat:
     label: "Auto Combat"
     section: "Engine"
@@ -268,16 +269,16 @@ config:
     url: "https://discord.com/channels/857767821093634068/1467268534420766854"
 
 variables:
-  # Verbatim from Simia's rotation_267. The secon.
+  # Verbatim from Simia's rotation_267.
   infernal_active: pet.infernal.active|(cooldown.summon_infernal.duration-cooldown.summon_infernal.remains)<20
 
-  # Diabolic Ritual builds toward Demonic Art. On.
+  # Diabolic Ritual builds toward Demonic Art.
   ritual_length: buff.diabolic_ritual_mother_of_chaos.remains+buff.diabolic_ritual_overlord.remains+buff.diabolic_ritual_pit_lord.remains
 
   # Burst allowed: auto or manual toggle.
   burst_ok: config.auto_burst|config.burst_toggle
 
-  # The pull is actually parked. Same shape as Fe.
+  # The pull is actually parked.
   pull_engaged: player.combat&player.standing.time>=config.infernal_min_standing_time&debuff.immolate.up
 
   # === TIME TO DIE === (target.boss always ignores TTD)
@@ -321,7 +322,7 @@ lists:
     - summon_felhunter,name="Summon Felhunter",range_check=none,if=config.auto_summon_pet&config.pet_choice=1&!pet.exists
     - summon_imp,name="Summon Imp",range_check=none,if=config.auto_summon_pet&config.pet_choice=2&!pet.exists
 
-  # Destruction has NO interrupt of its own — Spe.
+  # Destruction has NO interrupt of its own — Spell Lock is the Felhunter's.
   interrupts:
     - spell_lock,name="Spell Lock",if=interrupt.target.check
     - spell_lock.mouseover,name="Spell Lock (MO)",if=interrupt.mouseover.check
@@ -334,7 +335,7 @@ lists:
     - singe_magic.player,delay=500,name="Singe Magic (Self)",if=config.auto_dispel_self&config.pet_choice=2&player.dispelable.list
     - singe_magic,delay=500,cycle=party,name="Singe Magic (Party)",if=config.auto_dispel_party&config.pet_choice=2&cycle.dispelable.list
 
-  # Ahead of interrupts, so survival outranks uti.
+  # Ahead of interrupts, so survival outranks utility.
   defensives:
     - unending_resolve,name="Unending Resolve (predicted)",range_check=none,if=incoming.mitigated.pct>=config.unending_resolve_dmg_pct
     - dark_pact,name="Dark Pact (predicted)",range_check=none,if=incoming.mitigated.pct>=config.dark_pact_dmg_pct
@@ -346,7 +347,9 @@ lists:
   trinkets:
     - trinket_1,delay=150,name="Trinket 1",if=var.burst_ok&config.use_trinket_1&trinket_1.ready&player.combat&var.trinkets_ttd_ok&var.infernal_active
     - trinket_2,delay=150,name="Trinket 2",if=var.burst_ok&config.use_trinket_2&trinket_2.ready&player.combat&var.trinkets_ttd_ok&var.infernal_active
-    # fight_remains<=30 lets a potion that would ot.
+    # fight_remains<=30 lets a potion that would otherwise be wasted at the
+    # end of a fight go out anyway — the same clause that measured +0.61% in
+    # FerrazBalance.yaml.
     - combat_potion,delay=150,name="Combat Potion",if=var.burst_ok&config.use_potion&combat_potion.ready&player.combat&(var.potion_ttd_ok&var.infernal_active|fight_remains<=30)
 
   # Racials ride the same window, exactly as SimC's ogcd list does.
@@ -377,7 +380,7 @@ lists:
     # Execute, or a filler when the ritual has time left and no Art to spend.
     - shadowburn,name="Shadowburn",if=((!demonic_art&var.ritual_length>2)|target.health.pct<=20)&(buff.fiendish_cruelty.up|talent.conflagration_of_chaos)
 
-    # DoT. Pandemic-aware, and TTD-gated so it is n.
+    # DoT.
     - immolate,name="Immolate",if=(debuff.immolate.remains<debuff.immolate.duration*0.3|debuff.immolate.refreshable)&(!talent.soul_fire|cooldown.soul_fire.remains+action.soul_fire.cast_time>debuff.immolate.remains)&var.immolate_ttd_ok
 
     - conflagrate,name="Conflagrate (Filler)",if=soul_shard<=4.4&buff.backdraft.stack<1
@@ -415,7 +418,7 @@ lists:
     # Avatar of Destruction widens the Soul Fire cap from 5 to 10.
     - soul_fire,name="Soul Fire (AoE)",if=soul_shard<4&(talent.avatar_of_destruction&enemies.around_target<=10|enemies.around_target<=5)
 
-    # active_dot.immolate<=5 is SimC's cap on how w.
+    # active_dot.immolate<=5 is SimC's cap on how wide it is worth spreading.
     - immolate,name="Immolate (Spread)",if=debuff.immolate.refreshable&active_dot.immolate<=5&(target.boss|target.time_to_die>18|fight_remains>18)
 
     - conflagrate,name="Conflagrate (AoE Filler)",if=buff.backdraft.stack<2|!talent.backdraft

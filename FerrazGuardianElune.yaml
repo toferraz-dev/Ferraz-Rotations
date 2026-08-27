@@ -27,7 +27,7 @@ entry: main
 
 # SPELL OVERRIDES — AND-ed into every occurrenc.
 spell_overrides:
-  # Maul and Mangle deliberately NOT overridden g.
+  # Maul and Mangle deliberately NOT overridden globally:
 
   # Blocks re-suggesting Incarnation while its own buff is up.
   incarnation_guardian_of_ursoc: "!buff.incarnation_guardian_of_ursoc.up"
@@ -277,7 +277,7 @@ lists:
     - interact_target,delay=350,if=config.engine_loot_nearby&target.lootable&target.range<=5
     - interact_target,delay=350,if=config.engine_loot_nearby&loot_nearby
     - interact_mouseover,delay=350,if=config.engine_loot_nearby&mouseover.lootable&mouseover.range<=5
-    # Melee-only, and this file IS melee: keeps aut.
+    # Melee-only, and this file IS melee:
     - attack_target,off_gcd=true,delay=100,if=player.combat&target.exists&target.attackable&target.alive&target.in_melee&!player.auto_attacking
 
     - remove_corruption.player,delay=500,name="Remove Corruption (Self)",if=config.auto_dispel_self&player.dispelable.list
@@ -303,7 +303,7 @@ lists:
     # --- Temple of Sethraliss, Adderis and Aspix .
     - target_enemy,name="Swap Off Storm Blessed",delay=500,off_gcd=true,if=target.buff.1289229.up&enemies.combat.40y>=2
 
-  # Tank-buster prediction feeding the barkskin o.
+  # Tank-buster prediction feeding the barkskin override.
   set_tank_var:
     - variable,name=tank_buster_remains,value=999
     - variable,name=tank_buster_remains,value=encounter.next_tank.remains,if=encounter.next_tank.up&encounter.next_tank.severity>=1&encounter.next_tank.remains<variable.tank_buster_remains
@@ -323,11 +323,12 @@ lists:
     # +0.17% (noise). Moving check: it's a ground effect, running out wastes it.
     - lunar_beam,if=target.valid&(!config.lunar_beam_moving_check|player.moving.time<=1)
 
-    # Berserk/Incarnation are mutually exclusive ta.
+    # Berserk/Incarnation are mutually exclusive talents, both listed so the
+    # file works either way.
     - berserk,if=target.valid&(!config.auto_hotw|!talent.heart_of_the_wild|!cooldown_bypass.heart_of_the_wild.ready)
     - incarnation_guardian_of_ursoc,if=target.valid&(!config.auto_hotw|!talent.heart_of_the_wild|!cooldown_bypass.heart_of_the_wild.ready)
 
-    # Combat potion. With potion_sync_burst ON it r.
+    # Combat potion.
     - combat_potion,name="Combat Potion",if=config.use_potion&combat_potion.ready&player.combat&(!config.potion_sync_burst|buff.incarnation_guardian_of_ursoc.up|buff.berserk.up|fight_remains<=30)
 
     - wild_guardian,if=buff.lunar_beam.up
@@ -362,7 +363,7 @@ lists:
     - moonfire,name="Moonfire (maintain)",if=target.valid&dot.moonfire.refreshable
     - 77758,name="Thrash (Lunar Calling)",range_check=mob_count_8y,if=cooldown.77758.ready&talent.lunar_calling.enabled
 
-    # Must stay a real if=: target_if is a SimC mod.
+    # Must stay a real if=:
     - 77758,name="Thrash (stacks)",range_check=mob_count_8y,if=cooldown.77758.ready&(dot.thrash.refreshable|dot.thrash.stack<5&talent.flashing_claws.rank=2|dot.thrash.stack<4&talent.flashing_claws.rank=1|dot.thrash.stack<3&!talent.flashing_claws.enabled)
 
     # Dead while Wildpower Surge is untalented (removing measured -0.04%, nothing).
@@ -394,7 +395,7 @@ lists:
 
   # Entry point: first matching line wins the GCD.
   main:
-    # Convoke is a channel and nothing here ever wa.
+    # Convoke is a channel and nothing here ever wants to break it.
     - return,if=player.channeling
 
     - call_action_list,name=set_tank_var
@@ -404,7 +405,7 @@ lists:
     # !cat_form yields to the weave below so they don't fight each other.
     - bear_form,range_check=none,if=buff.bear_form.down&!buff.cat_form.up&(target.attackable|enemies.40y)
 
-    # --- Heart of the Wild weave — biggest block i.
+    # --- Heart of the Wild weave — biggest block in the file:
     - cat_form,name="Cat Form (HotW)",range_check=none,if=var.hotw_weave&buff.cat_form.down
     - heart_of_the_wild,name="Heart of the Wild",range_check=none,ignore_cds_toggle=true,if=buff.cat_form.up&cooldown_bypass.heart_of_the_wild.ready&target.valid&target.attackable
     - 1261868,name="Heart of the Wild (cat morph)",range_check=none,ignore_cds_toggle=true,if=buff.cat_form.up&cooldown_bypass.heart_of_the_wild.ready&target.valid&target.attackable
@@ -418,7 +419,7 @@ lists:
 
 
 
-    # NOTE: there used to be a `return,if=auto_comb.
+    # NOTE:
 
     - call_action_list,name=defensives
 

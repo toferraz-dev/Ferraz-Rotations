@@ -36,7 +36,9 @@ config:
     label: "Recommended Talent String"
     text: "CcGADBD3hSPCL9Y9gz68WcKvMAAAAAAwYMjxYmZMmtFWGbzMzYmZAAAAYJY2gxMjaGziZmZGjZegBAAAAAAwAAAAIAYWmZrZbmlNYmZAWMDGAAzMAYA"
 
-  # The panic Bear Form shift had a literal 25 an.
+  # The panic Bear Form shift had a literal 25 and no name=, the only
+  # threshold in either Feral file that was not a slider and the only
+  # defensive that did not show up in the execution log...
   panic_bear_hp_pct:
     label: "Panic Bear Form HP %"
     section: "Defensive HP Percentage"
@@ -206,7 +208,8 @@ config:
     url: "https://discord.com/channels/857767821093634068/1467268534420766854"
 
 variables:
-  # The channelled ids this spec can actually pro.
+  # The channelled ids this spec can actually produce, confirmed against
+  # client 69404:
   protected_channel: player.casting.spell_id=323764|player.casting.spell_id=391528
   bs_inc: buff.berserk.up|buff.incarnation_avatar_of_ashamane.up
   bs_inc_cd_remains: cooldown.berserk.remains>?cooldown.incarnation_avatar_of_ashamane.remains
@@ -239,7 +242,7 @@ lists:
     - interact_target,delay=350,if=config.engine_loot_nearby&target.lootable&target.range<=5
     - interact_target,delay=350,if=config.engine_loot_nearby&loot_nearby
     - interact_mouseover,delay=350,if=config.engine_loot_nearby&mouseover.lootable&mouseover.range<=5
-    # Melee-only, and this file IS melee: keeps aut.
+    # Melee-only, and this file IS melee:
     - attack_target,off_gcd=true,delay=100,if=player.combat&target.exists&target.attackable&target.alive&target.in_melee&!player.auto_attacking
 
     - remove_corruption.player,delay=500,name="Remove Corruption (Self)",if=config.auto_dispel_self&player.dispelable.list
@@ -281,21 +284,26 @@ lists:
     - ancestral_call,if=var.bs_inc
     - combat_potion,if=config.use_potion&combat_potion.ready&(var.bs_inc|fight_remains<32)
     - berserk,if=buff.tigers_fury.up&!var.holdBerserk
-    # Frantic Frenzy is NOT on the raid string, so .
+    # Frantic Frenzy is NOT on the raid string, so the first line is the live
+    # one here and the second is inert.
     - feral_frenzy,if=!talent.frantic_frenzy&combo_points<=2+(2*var.bs_inc)
     - frantic_frenzy,if=buff.tigers_fury.up|combo_points<=2+(2*var.bs_inc)
-    # The talent.ashamanes_guidance clause fires Co.
+    # The talent.ashamanes_guidance clause fires Convoke OUTSIDE the Berserk
+    # window when Berserk is far away.
     - convoke_the_spirits,if=(var.bs_inc|talent.ashamanes_guidance&(var.bs_inc_cd_remains>45|var.holdBerserk))&buff.tigers_fury.up&(prev_gcd.1.rip|prev_gcd.1.ferocious_bite|prev_gcd.1.primal_wrath|buff.tigers_fury.remains<=1+action.convoke_the_spirits.execute_time)
 
   finisher:
     - rip,if=combo_points>=5&(dot.rip.refreshable&(buff.tigers_fury.up|dot.rip.remains<cooldown.tigers_fury.remains)|buff.tigers_fury.up&!var.rip_tf&dot.rip.up|buff.tigers_fury.up&buff.tigers_fury.remains<2&dot.rip.up)
-    # RAID-SPECIFIC (+2.50% on the Wildstalker stri.
+    # RAID-SPECIFIC (+2.50% on the Wildstalker string, +2.87% on the old Druid
+    # of the Claw one):
     - return,if=combo_points>=5&energy<50
     - ferocious_bite,name="Ferocious Bite (Fallback)",if=combo_points>=5
     - ravage,name="Ravage (Fallback)",if=combo_points>=5
 
   aoe_finisher:
-    # Primal Wrath and Rampant Ferocity are NOT on .
+    # Primal Wrath and Rampant Ferocity are NOT on the raid string, so the
+    # lines gated on them are inert and the Rip/Bite fallbacks are the live
+    # path.
     - primal_wrath,name="Primal Wrath (Refresh)",if=combo_points>=5&enemies.combat.8y>1&(dot.rip.remains<6.5&!var.bs_inc|dot.rip.refreshable)
     - ravage,name="Ravage (No Primal Wrath)",if=combo_points>=5&!talent.primal_wrath&enemies.combat.8y>=2+(3*!talent.rampant_ferocity)
     - rip,if=combo_points>=5&!talent.primal_wrath&(dot.rip.down|dot.rip.refreshable&(buff.tigers_fury.up|!var.rip_tf))
@@ -308,10 +316,11 @@ lists:
 
   builder:
     - prowl,if=!player.combat&!buff.shadowmeld.up&(!var.rake_tf|dot.rake.refreshable)
-    # dreamgrove keeps a Druid-of-the-Claw-only Shr.
+    # dreamgrove keeps a Druid-of-the-Claw-only Shred on a Sudden Ambush proc,
+    # ahead of the Rake refresh.
     - shred,name="Shred (Sudden Ambush)",if=buff.sudden_ambush.up&hero_tree.druid_of_the_claw
     - rake,if=(buff.tigers_fury.up|dot.rake.remains<cooldown.tigers_fury.remains)&(dot.rake.refreshable&(buff.tigers_fury.up|!var.rake_tf)|dot.rake.remains<2|buff.tigers_fury.up&!var.rake_tf)
-    # Lunar Inspiration, live for the first time on.
+    # Lunar Inspiration, live for the first time on the Wildstalker string:
     - moonfire,if=talent.lunar_inspiration&(buff.tigers_fury.up|dot.moonfire.remains<cooldown.tigers_fury.remains)&(dot.moonfire.refreshable&(buff.tigers_fury.up|!var.moonfire_tf)|dot.moonfire.remains<2|buff.tigers_fury.up&!var.moonfire_tf)
     - shred
 
@@ -331,7 +340,8 @@ lists:
     - mark_of_the_wild,range_check=none,if=(buff.mark_of_the_wild.down.any|action.mark_of_the_wild.overlayed)&lastcast.mark_of_the_wild>=10
     - regrowth,range_check=none,if=health.pct<=config.regrowth_ooc_hp_pct&!player.combat
 
-  # Emergency Bear Form, Fluid Form auto-shift, m.
+  # Emergency Bear Form, Fluid Form auto-shift, manual Cat Form entry, and the
+  # pre-pull Prowl opener.
   form:
     # Bear costs the whole Cat rotation, so it has to buy something. Here the
     # only payoff is Heart of the Wild on the next line.
@@ -359,7 +369,7 @@ lists:
     - regrowth,delay=500,range_check=none,if=buff.predatory_swiftness.up&health.pct<=config.predatory_swiftness_heal_hp_pct&lastcast.regrowth>=2
 
   main:
-    # Convoke is a channel and nothing here ever wa.
+    # Convoke is a channel and nothing here ever wants to break it.
     - return,if=player.channeling|player.casting|var.protected_channel
 
     - call_action_list,name=engine
@@ -373,7 +383,7 @@ lists:
     - call_action_list,name=interrupts
 
 
-    # NOTE: do NOT add a `return,if=player.auto_com.
+    # NOTE:
 
     - call_action_list,name=defensives
     - call_action_list,name=predatory_swiftness

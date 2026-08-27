@@ -377,7 +377,8 @@ config:
 # VARIABLES.
 
 variables:
-  # The channelled ids this spec can actually pro.
+  # The channelled ids this spec can actually produce, confirmed against
+  # client 69404:
   protected_channel: player.casting.spell_id=740|player.casting.spell_id=323764|player.casting.spell_id=391528
   group_healthy: group.count(cycle.health.effective.pct<config.raid_catweave_group_hp)<config.raid_catweave_injured_max
   can_catweave: var.group_healthy&player.combat
@@ -425,7 +426,7 @@ lists:
 
   # Soothe (enrage purge) + AoE CC assist.
   interrupts:
-    # REMOVED: a `target_enemy,if=...&enemies.comba.
+    # REMOVED:
     - target_enemy,delay=100,name="Search Interrupt",if=!interrupt.target.check&interrupt.8y.any
     - incapacitating_roar,name="Roar (AoE CC)",if=interrupt.stun.aoe.check
     # Hovering is the only way to Soothe a mob you are not targeting — see
@@ -458,9 +459,11 @@ lists:
     - shadowmeld,name="Shadowmeld (Aggro Drop)",if=player.combat&player.aggro&!player.casting
     - thorn_bloom,name="Thorn Bloom",if=group.count(cycle.health.effective.pct<config.raid_thorn_bloom_threshold)>=config.raid_thorn_bloom_members&target.in_melee
 
-  # NS -> trinkets/potion -> Convoke (needs Abund.
+  # NS -> trinkets/potion -> Convoke (needs Abundance up, caster form) -> NS
+  # Regrowth -> Tranquility -> self Swiftmend (Archdruid) -> reactive
+  # Swiftmend -> Clearcasting Regrowth.
   cooldowns:
-    # CONVOKE IS FORM-DEPENDENT. In Cat Form it dea.
+    # CONVOKE IS FORM-DEPENDENT.
     - rejuvenation,name="Shift Out For Convoke",cycle=members,if=cooldown.convoke_the_spirits.ready&group.count(cycle.health.effective.pct<config.raid_convoke_threshold)>=config.raid_convoke_members&(buff.cat_form.up|buff.bear_form.up)
     - natures_swiftness,name="NS (Pre-Convoke)",range_check=none,if=cooldown.convoke_the_spirits.ready&group.count(cycle.health.effective.pct<config.raid_convoke_threshold)>=config.raid_convoke_members&!buff.cat_form.up&!buff.bear_form.up&!buff.moonkin_form.up&buff.abundance.up
     - trinket_1,name="Trinket 1",if=config.raid_use_trinket_1&trinket_1.ready&buff.natures_swiftness.up
@@ -472,10 +475,12 @@ lists:
     # Power of the Archdruid loop: Swiftmend on CD, spreads Rejuv to 3 targets.
     - swiftmend.player,name="Self Swiftmend (Archdruid)",range_check=none,if=talent.power_of_the_archdruid&player.combat&cooldown.swiftmend.ready&(buff.rejuvenation.up|buff.regrowth.up|buff.wild_growth.up)
     - swiftmend,name="Swiftmend for SotF/Treants",cycle=members,if=player.combat&cycle.health.effective.pct<config.raid_swiftmend_threshold&(cycle.buff.rejuvenation.up|cycle.buff.regrowth.up|cycle.buff.wild_growth.up)
-    # NO `|pred.cycle.buff.regrowth.down` branch. T.
+    # NO `|pred.cycle.buff.regrowth.down` branch.
     - regrowth,name="Clearcasting Regrowth",cycle=members,if=player.combat&buff.clearcasting.up&cycle.health.effective.pct<99
 
-  # SotF consumption -> self Efflorescence/Lifebl.
+  # SotF consumption -> self Efflorescence/Lifebloom(Everbloom)/Rejuvenation
+  # (Photosynthesis) loop -> tank Lifebloom fallback -> forced spread ->
+  # Abundance Regrowth -> Wild...
   active_healing:
     # Self-target fallback (bare health, not cycle.*) so solo content still
     # gets reactive healing. Runs first so it's never starved.
@@ -571,7 +576,7 @@ lists:
     - lifebloom.player,name="Self Lifebloom (Moving)",range_check=none,after=300,if=talent.everbloom&(buff.lifebloom.down|buff.lifebloom.remains<4.5)
     - lifebloom,name="Lifebloom (Moving)",cycle=members,if=!talent.everbloom&cycle.health.effective.pct<config.raid_lifebloom_threshold&cycle.buff.lifebloom.down&(group.count(cycle.buff.lifebloom.up)=0|tank1.buff.lifebloom.up|tank2.buff.lifebloom.up)
     - lifebloom,name="Lifebloom Tank (Moving)",cycle=tanks,if=!talent.everbloom&(cycle.buff.lifebloom.down|cycle.buff.lifebloom.remains<4.5)&(cycle.buff.lifebloom.up|group.count(cycle.buff.lifebloom.up)=0)
-    # config.raid_rejuvenation_threshold, not a lit.
+    # config.raid_rejuvenation_threshold, not a literal 95.
     - rejuvenation,name="Rejuvenation (Moving)",cycle=members,if=cycle.buff.rejuvenation.down&cycle.health.effective.pct<config.raid_rejuvenation_threshold
 
   # Unit-frame mouseover heals, HP-gated from main. No mouseover.buff.*
