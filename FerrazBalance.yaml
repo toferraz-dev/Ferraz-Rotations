@@ -61,7 +61,7 @@
 # Wild Mushroom, Power of Goldrinn, Orbit Breaker.
 # =============================================================================
 
-version: "3.9.3"
+version: "3.9.4"
 author: Ferraz
 patch: "12.1"
 spec: 102
@@ -78,7 +78,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-08-24 | Patch: 12.1 | Version: 3.9.3"
+    text: "Last update: 2026-08-27 | Patch: 12.1 | Version: 3.9.4"
 
   # ==========================================================================
   # RECOMMENDED BUILD — every number in this file was measured against this
@@ -437,7 +437,7 @@ config:
     section: "Defensives"
     type: checkbox
     default: true
-    description: "Soothe the current target when it has an enrage effect. ON by default — this is what Simia's shared list did before this file inlined its own plumbing, and it had no switch at all. Turn OFF on a key where the enrage is not worth the global."
+    description: "Shift to Bear as an emergency defensive when Heart of the Wild is ready or already up. Shifting just to shift costs Moonkin uptime for no mitigation, so this only fires when HotW backs it. The Frenzied Regeneration branch above is separate and always active."
 
   hotw_bear_hp:
     label: "HotW Bear Defensive HP%"
