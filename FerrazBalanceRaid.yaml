@@ -14,7 +14,7 @@
 # most of what looks improvable here was tried and reverted.
 # =============================================================================
 
-version: "2.12.0"
+version: "2.13.2"
 author: Ferraz
 patch: "12.1"
 spec: 102
@@ -29,7 +29,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-08-27 | Patch: 12.1 | Version: 2.12.0"
+    text: "Last update: 2026-08-27 | Patch: 12.1 | Version: 2.13.2"
 
   # Exact string every number here was measured against — Elune's Chosen, not Grove.
   recommended_talents:
@@ -240,6 +240,24 @@ config:
     default: true
     description: "Soothe whatever you are hovering, checked just before the current-target Soothe below. Simia cannot pick an enraged enemy by criteria — target_enemy is 'nearest enemy' with no filter and there is no .any(EXPR) for enemies — so hovering is the only way to Soothe a mob you are not targeting. This is an independent switch: turning Soothe Enrage off does not disable it. Guarded on mouseover.combat, so hovering an unpulled mob never pulls it."
 
+  # Emergency. The casting guard at the top of main returns before anything
+  # else, so a hardcast used to cost you the defensive entirely.
+  emergency_hp:
+    label: "Emergency HP% (mid-cast)"
+    section: "Defensives"
+    type: slider
+    min: 0
+    max: 100
+    default: 35
+    description: "Health below which defensives and consumables are allowed to fire while you are casting. The rotation normally does nothing at all mid-cast, so without this a hardcast swallows Barkskin, the healthstone and the health potion until it finishes. Set to 0 to go back to that."
+
+  emergency_stop_casting:
+    label: "Cut the Cast in an Emergency"
+    section: "Defensives"
+    type: checkbox
+    default: true
+    description: "Below the emergency HP, end the current cast so the next global can go to a real defensive. Barkskin and the consumables above do not need this - they are off-GCD and fire without touching the cast - so this only matters for the ones that cost a global, like Bear Form into Frenzied Regeneration. Protected channels are never cut."
+
   discord_button:
     section: "Help"
     type: button
@@ -259,6 +277,16 @@ variables:
   bear_defensive_active: health.effective.pct<=config.frenzied_regen_hp|(config.hotw_bear_defensive&health.effective.pct<=config.hotw_bear_hp&(cooldown.heart_of_the_wild.ready|buff.heart_of_the_wild.up))
 
 lists:
+  # Emergency, called from main ABOVE the casting guard. Everything here is
+  # off-GCD or an item, so it fires without touching the cast; only the last
+  # line ends it.
+  emergency:
+    - barkskin,name="Barkskin (Emergency)",range_check=none,off_gcd=true,ignore_queue=true,if=health.effective.pct<=config.emergency_hp
+    - healthstone,name="Healthstone (Emergency)",off_gcd=true,ignore_queue=true,delay=250,if=healthstone.ready&health.pct<=config.engine_healthstone
+    - health_potion,name="Health Potion (Emergency)",off_gcd=true,ignore_queue=true,delay=250,if=health_potion.ready&health.pct<=config.engine_health_potion
+    # Last, so the off-GCD options above get their chance first.
+    - stop_casting,name="Cut Cast (Emergency)",if=config.emergency_stop_casting&!player.channeling
+
   # Everything spell_queue / sanity_checks / auto.
   engine:
     # `&`, not `|`. With `|` the condition is true .
@@ -452,6 +480,10 @@ lists:
   main:
     # This opening block is kept IDENTICAL to FerrazBalance.yaml. The two files
     # diverge on purpose in their damage priorities, never in their plumbing.
+    # Emergency FIRST, above the casting guard below. Only reachable while you
+    # are actually casting and actually low, so it costs nothing otherwise.
+    - call_action_list,name=emergency,if=player.combat&(player.casting|player.channeling)&health.effective.pct<=config.emergency_hp
+
     - return,if=player.channeling|player.casting
 
     # --- Engine plumbing. Must stay at the top. ---
@@ -473,15 +505,23 @@ lists:
     - moonkin_form,name="Back to Moonkin",if=!talent.fluid_form&buff.moonkin_form.down&health.effective.pct>config.frenzied_regen_hp&!buff.frenzied_regeneration.up&!var.bear_defensive_active
     # A pre-pull Wrath used to sit here. Removed - the tank decides the pull.
 
-    - call_action_list,name=interrupts
-    - call_action_list,name=defensives
-    - call_action_list,name=dispels
-    - call_action_list,name=trinkets
-
     # Nothing below may cast while the Bear defensive is holding you in Bear.
     # Every damage spell cancels the form, and Panic Bear Form then pays another
     # global to re-enter it.
+    #
+    # The call below runs first, then this guard, then everything else. It
+    # sits under `defensives` and ABOVE interrupts on purpose.
+    # It used to sit under `trinkets`, which left Solar Beam free to cancel the
+    # form the shift had just paid for - the fuzzer found that in the current
+    # file after the first version of this guard was supposed to have fixed it.
+    # Dispels cancel the form the same way. Inside the Bear window survival
+    # outranks the kick; the window is short and health-gated.
+    - call_action_list,name=defensives
     - return,if=buff.bear_form.up&var.bear_defensive_active
+
+    - call_action_list,name=interrupts
+    - call_action_list,name=dispels
+    - call_action_list,name=trinkets
 
     # Do NOT add player.combat to these calls: casting is what puts you in
     # combat, so requiring it first means the rotation never acts.
