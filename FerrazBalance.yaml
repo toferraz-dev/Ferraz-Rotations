@@ -21,12 +21,34 @@
 #        weaving -> Starfire.
 #
 # ── HOW THE NUMBERS WERE MADE ────────────────────────────────────────────────
-# SimC 1210-01, fight_style=DungeonSlice (the M+ proxy), against the string in
-# config and against THIS CHARACTER'S gear (sim/Ferraz_balance.simc, SimC addon
-# export 2026-08-21: 12.52% crit / 32.64% haste). Harness sim/ab_test_balance.py,
-# table sim/BALANCE_AB_RESULTS.md. target_error=0.12-0.15 (~±0.06%), so anything
-# under 0.2% quoted here is noise. Patchwerk-only gains were rejected on purpose
-# and are flagged inline where relevant.
+# READ THIS BEFORE TRUSTING ANY PERCENTAGE BELOW.
+#
+# Every inline number in this file was measured with fight_style=DungeonSlice,
+# and SimC does not support that style for Balance Druid. It says so on every
+# run:
+#
+#   Severe: Player does not support fight style DungeonSlice, results are
+#   inaccurate and should not be used.
+#
+# Verified 2026-08-27: the warning appears with SimC's own stock APL and on the
+# previous binary too, so it is the spec module talking, not this repo's APL,
+# and it was never new — nothing had grepped for it. Balance supports Patchwerk
+# and DungeonRoute only.
+#
+# So the DungeonSlice percentages quoted throughout are SUSPECT, not void. They
+# were consistent with each other and several were confirmed against Patchwerk,
+# but none of them has been re-measured on a supported style. Treat every one as
+# provisional until it is.
+#
+# Current M+ setup (supported): fight_style=DungeonRoute with the pull events in
+# sim/dungeon_route.simc, gear sim/Tassiana_gear.simc (addon export 2026-08-27,
+# client 69497), APL mirror sim/apl_mplus_current.simc, target_error=0.15.
+# Route DPS is route-wide and includes travel delay, so it reads well below
+# Patchwerk on the same gear (100.6k vs 144.1k) — compare deltas, never levels.
+#
+# Older harness: sim/ab_test_balance.py, table sim/BALANCE_AB_RESULTS.md, gear
+# sim/Ferraz_balance.simc (export 2026-08-21: 12.52% crit / 32.64% haste). Both
+# still default to DungeonSlice and carry the caveat above.
 #
 # Baseline note for anyone re-running the harness: DEFAULTS there carries
 # wrath_filler=True, but this file ships it OFF — so the variant that matches
@@ -81,7 +103,7 @@
 # moonkin_form shift, which is a free global instead of a spent one.
 # =============================================================================
 
-version: "4.0.0"
+version: "4.0.2"
 author: Ferraz
 patch: "12.1"
 spec: 102
@@ -98,7 +120,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-08-27 | Patch: 12.1 | Version: 4.0.0"
+    text: "Last update: 2026-08-27 | Patch: 12.1 | Version: 4.0.2"
 
   # ==========================================================================
   # RECOMMENDED BUILD — every number in this file was measured against this
@@ -223,6 +245,12 @@ config:
   # ==========================================================================
   # SINGLE TARGET — gear-dependent knob, re-test after a big gear change.
   # ==========================================================================
+  # Re-confirmed 2026-08-27 on DungeonRoute with the 4.0.0 talent string and the
+  # 2026-08-27 gear: Wrath filler ON measured -1.02% against this file's OFF
+  # baseline, comfortably outside the noise bar. OFF stays right on the new
+  # build, so the conclusion below survives even though the style it was
+  # originally measured on does not.
+  #
   # Gear-dependent, measured at three points on DungeonSlice — the value of
   # keeping Wrath tracks crit almost linearly:
   #     12.5% crit / 32.6% haste  ->  -2.26% to keep it   (CURRENT gear)
@@ -825,8 +853,31 @@ lists:
     - wrath,if=config.wrath_filler&var.eclipse_down&enemies.combat.40y<=1
     - starfire
 
-  # 2+ enemies, standing still. 2-enemy threshold measured: raising to 3
-  # costs -1.48% DungeonSlice, 4 costs more.
+  # 2+ enemies, standing still.
+  #
+  # The 2-enemy threshold is RIGHT, but the old justification here was not: it
+  # cited "-1.48% DungeonSlice", a style Balance does not support. Re-measured
+  # 2026-08-27 on the supported one, by forcing each list at a fixed target
+  # count (Patchwerk, desired_targets=N, target_error=0.1). This asks the real
+  # question — at N enemies, which list is better? — and does not depend on any
+  # invented dungeon route:
+  #
+  #      2 targets   ec_st 197169   aoe 204374    aoe +3.65%
+  #      3 targets   ec_st 232799   aoe 266447    aoe +14.45%
+  #      4 targets   ec_st 265939   aoe 325297    aoe +22.32%
+  #      5 targets   ec_st 297875   aoe 383130    aoe +28.62%
+  #
+  # aoe already wins at 2, so raising the threshold would hand 2- and 3-target
+  # packs to the worse list.
+  #
+  # One caveat recorded honestly: on the DungeonRoute route file, thresholds of
+  # 3 and 4 read +0.21% and +0.36% — the opposite sign. That is an order of
+  # magnitude smaller than +3.65%, and it comes from an effect the fixed-target
+  # test cannot see: astral power carries ACROSS pulls in a route, so dumping it
+  # into Starfall on a two-mob pack that dies quickly leaves less for the boss
+  # behind it. Real effect, but the route's pack sizes are invented, so it is
+  # not evidence enough to move the threshold. Revisit with a route built from
+  # an actual key.
   aoe:
     - starfall,name="Starfall (AP Dump)",if=astral_power>=80&var.starfall_ttd_ok
 
