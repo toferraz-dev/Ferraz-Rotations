@@ -14,7 +14,7 @@
 # most of what looks improvable here was tried and reverted.
 # =============================================================================
 
-version: "1.14.1"
+version: "1.15.0"
 author: Ferraz
 patch: "12.1"
 spec: 105
@@ -31,7 +31,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-08-27 | Patch: 12.1 | Version: 1.14.1"
+    text: "Last update: 2026-08-28 | Patch: 12.1 | Version: 1.15.0"
 
   # String the talent.X checks below assume.
   recommended_talents:
@@ -403,6 +403,14 @@ config:
 
 # VARIABLES.
 
+  # Shapeshifting breaks roots, but only the ones the game lets it break.
+  root_cleanse:
+    label: "Break Roots by Shapeshifting"
+    section: "Defensives"
+    type: checkbox
+    default: true
+    description: "Shift form to break a root. Gated on an explicit list of the M+ 12.1 debuffs whose Mechanic is Root or Snare, so it never fires on something a shift cannot clear. line_cd caps it at one attempt every 8 seconds."
+
 variables:
   # The channelled ids this spec can actually produce, confirmed against
   # client 69404:
@@ -413,6 +421,31 @@ variables:
   has_soul: buff.soul_of_the_forest.up
 
 # LISTS.
+
+  # Debuffs a DRUID SHAPESHIFT actually removes. Built 2026-08-28 from the 36
+  # auras tagged `freedom` in simia_data_dump/_aura.yaml, each checked on
+  # Wowhead for its Mechanic field, keeping only Rooted and Snared.
+  #
+  # NOT debuff_list.freedom. _casts.yaml documents that tag as "Needs
+  # freedom/root break" - what a Blessing of Freedom clears. Four of the 36 are
+  # neither root nor snare and a shift does nothing to them:
+  #
+  #     1259789  Ritual Sacrifice   Stunned
+  #     1235125  Hearty Bellow      no mechanic
+  #     1218187  Fel Beam           no mechanic
+  #     1223298  Gravitic Orbs      no mechanic
+  #
+  # Any of those left the old gate true after the shift, so the rotation kept
+  # paying globals to shift at a root it could not break. Caught in game on the
+  # Balance file by snapshot: debuff_list.freedom.up = 1 [PASS] with nothing
+  # shapeshiftable on the player.
+  #
+  # Positive list on purpose: a new freedom-tagged debuff that is not a root
+  # will not match, so the failure mode is "no cleanse" instead of "loop".
+  #
+  # Dispel school is NOT a filter - Frost Nova is Magic and a shift breaks it.
+  # Mechanic is the discriminator.
+  druid_shapeshift_root: player.debuff.1282055.up|player.debuff.1266381.up|player.debuff.1271623.up|player.debuff.1269631.up|player.debuff.1258997.up|player.debuff.1241464.up|player.debuff.1263597.up|player.debuff.1259365.up|player.debuff.1214038.up|player.debuff.1254175.up|player.debuff.1259731.up|player.debuff.1269283.up|player.debuff.249081.up|player.debuff.1262509.up|player.debuff.1264186.up|player.debuff.1294569.up|player.debuff.273274.up|player.debuff.1306232.up|player.debuff.1287450.up|player.debuff.1296069.up|player.debuff.1309919.up|player.debuff.1310974.up|player.debuff.1249621.up|player.debuff.1238084.up|player.debuff.1305234.up|player.debuff.1294815.up|player.debuff.270499.up|player.debuff.1298104.up|player.debuff.1306763.up|player.debuff.1261921.up|player.debuff.1258437.up|player.debuff.1260709.up
 
 lists:
   # Emergency, called from main ABOVE the casting guard. Everything here is
@@ -558,8 +591,8 @@ lists:
 
   # Root cleanse (Bear/Cat shift), Innervate.
   utility:
-    - bear_form,name="Shapeshift Clear",if=player.rooted&!buff.bear_form.up&!player.stunned
-    - cat_form,name="Shapeshift Toggle",if=player.rooted&buff.bear_form.up&!player.stunned
+    - bear_form,name="Shapeshift Clear",line_cd=8,if=config.root_cleanse&var.druid_shapeshift_root&!player.stunned&!buff.bear_form.up
+    - cat_form,name="Shapeshift Toggle",line_cd=8,if=config.root_cleanse&var.druid_shapeshift_root&!player.stunned&buff.bear_form.up
     # innervate.player, not bare innervate. Without.
     - innervate.player,name="Innervate",off_gcd=true,ignore_queue=true,range_check=none,if=mana.pct<config.raid_innervate_threshold
 
