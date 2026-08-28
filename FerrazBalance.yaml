@@ -48,7 +48,7 @@
 # provisional.
 # =============================================================================
 
-version: "4.6.1"
+version: "4.7.0"
 author: Ferraz
 patch: "12.1"
 spec: 102
@@ -65,7 +65,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-08-27 | Patch: 12.1 | Version: 4.6.1"
+    text: "Last update: 2026-08-28 | Patch: 12.1 | Version: 4.7.0"
 
   # Reference build. The measured numbers assume this exact string.
   recommended_talents:
@@ -433,7 +433,19 @@ variables:
 
   # The Bear defensive still wants you in Bear. Mirrors both branches of the
   # Panic Bear Form line, so the exit gate below can never contradict it.
-  bear_defensive_active: health.effective.pct<=config.frenzied_regen_hp|(config.hotw_bear_defensive&health.effective.pct<=config.hotw_bear_hp&(cooldown.heart_of_the_wild.ready|buff.heart_of_the_wild.up))
+  #
+  # REAL health, not effective. health.effective.pct is
+  # healthPct - healAbsorbPct + incomingHealsPct, so a heal absorb - routine in
+  # a key - drags it far under the real number and the shift fires at 60% real
+  # health thinking it is at 30. Reported in game as "it turns into a bear
+  # constantly". Effective health answers "does this still need healing"; it is
+  # the wrong question for a defensive trigger.
+  #
+  # Every self check in this file moved together, on purpose. Entry and exit
+  # reading different metrics is what produced the Bear/Moonkin loop before.
+  # cycle.health.effective.pct in thorn_bloom is untouched: that one really is
+  # asking whether an ally still needs healing.
+  bear_defensive_active: health.pct<=config.frenzied_regen_hp|(config.hotw_bear_defensive&health.pct<=config.hotw_bear_hp&(cooldown.heart_of_the_wild.ready|buff.heart_of_the_wild.up))
 
   # === TIME TO DIE (TTD) VARIABLES === (target.boss always ignores TTD)
   inc_ttd_ok: (target.boss|target.time_to_die>=config.ttd_incarnation|fight_remains>=config.ttd_incarnation)
@@ -447,7 +459,7 @@ lists:
   # off-GCD or an item, so it fires without touching the cast; only the last
   # line ends it.
   emergency:
-    - barkskin,name="Barkskin (Emergency)",range_check=none,off_gcd=true,ignore_queue=true,if=health.effective.pct<=config.emergency_hp
+    - barkskin,name="Barkskin (Emergency)",range_check=none,off_gcd=true,ignore_queue=true,if=health.pct<=config.emergency_hp
     - healthstone,name="Healthstone (Emergency)",off_gcd=true,ignore_queue=true,delay=250,if=healthstone.ready&health.pct<=config.engine_healthstone
     - health_potion,name="Health Potion (Emergency)",off_gcd=true,ignore_queue=true,delay=250,if=health_potion.ready&health.pct<=config.engine_health_potion
     # Last, so the off-GCD options above get their chance first.
@@ -525,15 +537,15 @@ lists:
 
     # Two independent reasons to be in Bear, each with its own health gate and
     # its own preconditions. Neither available leaves you in Moonkin.
-    - bear_form,name="Panic Bear Form",if=!buff.bear_form.up&((health.effective.pct<=config.frenzied_regen_hp&cooldown.frenzied_regeneration.ready&buff.frenzied_regeneration.down)|(config.hotw_bear_defensive&health.effective.pct<=config.hotw_bear_hp&(cooldown.heart_of_the_wild.ready|buff.heart_of_the_wild.up)))
+    - bear_form,name="Panic Bear Form",if=!buff.bear_form.up&((health.pct<=config.frenzied_regen_hp&cooldown.frenzied_regeneration.ready&buff.frenzied_regeneration.down)|(config.hotw_bear_defensive&health.pct<=config.hotw_bear_hp&(cooldown.heart_of_the_wild.ready|buff.heart_of_the_wild.up)))
 
     # HotW before the heal so Frenzied Regen lands on the bigger pool. Cast by
     # name AND by the bear morph id - only one resolves per form.
-    - heart_of_the_wild,name="HotW (Bear defensive)",range_check=none,ignore_cds_toggle=true,if=config.hotw_bear_defensive&buff.bear_form.up&health.effective.pct<=config.hotw_bear_hp&!buff.heart_of_the_wild.up
-    - 1261872,name="HotW (Bear morph)",range_check=none,ignore_cds_toggle=true,if=config.hotw_bear_defensive&buff.bear_form.up&health.effective.pct<=config.hotw_bear_hp&!buff.heart_of_the_wild.up
+    - heart_of_the_wild,name="HotW (Bear defensive)",range_check=none,ignore_cds_toggle=true,if=config.hotw_bear_defensive&buff.bear_form.up&health.pct<=config.hotw_bear_hp&!buff.heart_of_the_wild.up
+    - 1261872,name="HotW (Bear morph)",range_check=none,ignore_cds_toggle=true,if=config.hotw_bear_defensive&buff.bear_form.up&health.pct<=config.hotw_bear_hp&!buff.heart_of_the_wild.up
 
-    - frenzied_regeneration,if=health.effective.pct<=config.frenzied_regen_hp&buff.bear_form.up
-    - barkskin,range_check=none,name="Barkskin (low HP)",if=health.effective.pct<=config.barkskin_hp
+    - frenzied_regeneration,if=health.pct<=config.frenzied_regen_hp&buff.bear_form.up
+    - barkskin,range_check=none,name="Barkskin (low HP)",if=health.pct<=config.barkskin_hp
 
     # Root cleanse needs a form CHANGE, so two lines: one line would loop when
     # you are already in the form it suggests.
@@ -639,7 +651,7 @@ lists:
   main:
     # Emergency FIRST, above the casting guard below. Only reachable while you
     # are actually casting and actually low, so it costs nothing otherwise.
-    - call_action_list,name=emergency,if=player.combat&(player.casting|player.channeling)&health.effective.pct<=config.emergency_hp
+    - call_action_list,name=emergency,if=player.combat&(player.casting|player.channeling)&health.pct<=config.emergency_hp
 
     - return,if=player.channeling|player.casting
 
@@ -659,8 +671,8 @@ lists:
 
     # Back to Moonkin. Two lines, split on Fluid Form: with it, Starfire shifts
     # you AND deals damage, so the return is a free global.
-    - starfire,name="Back to Moonkin (Fluid Form)",if=talent.fluid_form&buff.moonkin_form.down&health.effective.pct>config.frenzied_regen_hp&!buff.frenzied_regeneration.up&!var.bear_defensive_active
-    - moonkin_form,name="Back to Moonkin",if=!talent.fluid_form&buff.moonkin_form.down&health.effective.pct>config.frenzied_regen_hp&!buff.frenzied_regeneration.up&!var.bear_defensive_active
+    - starfire,name="Back to Moonkin (Fluid Form)",if=talent.fluid_form&buff.moonkin_form.down&health.pct>config.frenzied_regen_hp&!buff.frenzied_regeneration.up&!var.bear_defensive_active
+    - moonkin_form,name="Back to Moonkin",if=!talent.fluid_form&buff.moonkin_form.down&health.pct>config.frenzied_regen_hp&!buff.frenzied_regeneration.up&!var.bear_defensive_active
     # A pre-pull Wrath used to sit here. Removed - the tank decides the pull.
 
     # --- Survival, then utility, then the burst window ---
