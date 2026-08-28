@@ -17,7 +17,7 @@
 # most of what looks improvable here was tried and reverted.
 # =============================================================================
 
-version: "1.10.0"
+version: "1.10.1"
 patch: "12.1"
 spec: 104
 name: Guardian Druid Ferraz M+
@@ -53,7 +53,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-08-28 | Patch: 12.1 | Version: 1.10.0"
+    text: "Last update: 2026-08-28 | Patch: 12.1 | Version: 1.10.1"
 
   # Exact string every number here was measured against (sim/Tassiana_guardian.simc).
   recommended_talents:
@@ -273,8 +273,9 @@ variables:
   # SimC has no equivalent prediction, treats this as permanently false.
   heavy_incoming: incoming.mitigated.pct>=config.ironfur_dmg_pct
 
-  # Gate for the HotW weave: feature on, talented.
-  hotw_weave: config.auto_hotw&talent.heart_of_the_wild&cooldown_bypass.heart_of_the_wild.ready&target.valid&target.attackable&player.combat&combat.time>=config.hotw_delay&health.pct>=config.hotw_hp_pct&buff.ironfur.up&!buff.incarnation_guardian_of_ursoc.up&!buff.berserk.up
+  # Gate for the HotW weave. target.in_melee matters: without it the weave
+  # fired while running to the pack and burned the cooldown out of range.
+  hotw_weave: config.auto_hotw&talent.heart_of_the_wild&cooldown_bypass.heart_of_the_wild.ready&target.valid&target.attackable&target.in_melee&player.combat&combat.time>=config.hotw_delay&health.pct>=config.hotw_hp_pct&buff.ironfur.up&!buff.incarnation_guardian_of_ursoc.up&!buff.berserk.up
 
 lists:
   # spell_queue, sanity_checks and auto_target, inlined.
@@ -428,10 +429,11 @@ lists:
     # --- Heart of the Wild weave — biggest block in the file: -15%
     # DungeonSlice if removed.
     - cat_form,name="Cat Form (HotW)",range_check=none,if=var.hotw_weave&buff.cat_form.down
-    - heart_of_the_wild,name="Heart of the Wild",range_check=none,ignore_cds_toggle=true,if=buff.cat_form.up&cooldown_bypass.heart_of_the_wild.ready&target.valid&target.attackable
-    - 1261868,name="Heart of the Wild (cat morph)",range_check=none,ignore_cds_toggle=true,if=buff.cat_form.up&cooldown_bypass.heart_of_the_wild.ready&target.valid&target.attackable
-    # Escape hatches back to Bear if the cast is blocked, HP drops, or target dies mid-weave.
-    - bear_form,name="Bear Form (post-HotW)",range_check=none,if=buff.cat_form.up&(!cooldown_bypass.heart_of_the_wild.ready|health.pct<config.hotw_hp_pct|!target.valid|!target.attackable)
+    - heart_of_the_wild,name="Heart of the Wild",range_check=none,ignore_cds_toggle=true,if=buff.cat_form.up&cooldown_bypass.heart_of_the_wild.ready&target.valid&target.attackable&target.in_melee
+    - 1261868,name="Heart of the Wild (cat morph)",range_check=none,ignore_cds_toggle=true,if=buff.cat_form.up&cooldown_bypass.heart_of_the_wild.ready&target.valid&target.attackable&target.in_melee
+    # Escape hatches back to Bear if the cast is blocked, HP drops, or the
+    # target dies or walks out of melee mid-weave.
+    - bear_form,name="Bear Form (post-HotW)",range_check=none,if=buff.cat_form.up&(!cooldown_bypass.heart_of_the_wild.ready|health.pct<config.hotw_hp_pct|!target.valid|!target.attackable|!target.in_melee)
 
     - moonfire.mouseover,name="Moonfire (Pull)",if=config.MO_moonfire&config.allow_pull_with_mo&mouseover.enemy&mouseover.alive&mouseover.debuff.moonfire.down
     # COMBAT WALL - nothing below runs out of combat. player.combat, NOT
