@@ -14,7 +14,7 @@
 # most of what looks improvable here was tried and reverted.
 # =============================================================================
 
-version: "1.14.0"
+version: "1.14.1"
 author: Ferraz
 patch: "12.1"
 spec: 105
@@ -31,7 +31,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-08-27 | Patch: 12.1 | Version: 1.14.0"
+    text: "Last update: 2026-08-27 | Patch: 12.1 | Version: 1.14.1"
 
   # String the talent.X checks below assume.
   recommended_talents:
@@ -517,7 +517,7 @@ lists:
 
   # SotF consumption -> self Efflorescence/Lifebloom(Everbloom)/Rejuvenation
   # (Photosynthesis) loop -> tank Lifebloom fallback -> forced spread ->
-  # Abundance Regrowth -> Wild...
+  # Abundance window: cheap, crit-heavy Regrowth, spent before Wild Growth.
   active_healing:
     # Self-target fallback (bare health, not cycle.*) so solo content still
     # gets reactive healing. Runs first so it's never starved.

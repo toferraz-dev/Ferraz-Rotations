@@ -14,7 +14,7 @@
 # bug this file has already been through. Read it before changing a line -
 # most of what looks improvable here was tried and reverted.
 # =============================================================================
-version: "5.5.0"
+version: "5.5.1"
 author: Ferraz
 patch: "12.1"
 spec: 105
@@ -33,7 +33,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-08-27 | Patch: 12.1 | Version: 5.5.0"
+    text: "Last update: 2026-08-27 | Patch: 12.1 | Version: 5.5.1"
 
   # RECOMMENDED BUILD — the string the talent.X gates below assume.
   recommended_talents:
@@ -84,7 +84,9 @@ config:
     label: "Pad Abundance"
     section: "Healing"
     type: toggle
-    # 207640 (the Abundance buff), not 207383 (the talent):
+    # 207640 (the Abundance buff), not 207383 (the talent): the talent carries
+    # "Do Not Display (Spellbook, Aura Icon, Combat Log)" in its spell data
+    # and has no icon to render.
     spell: 207640
     description: "Bindable. Controls DOWNTIME only. In combat the rotation always pads Rejuvenation up to 5 so the Abundance window is ready — that half is not optional. This toggle decides whether it keeps doing it while you stand around between pulls, where it costs mana for as long as you are there."
   # Lowered 95 -> 85.
@@ -501,7 +503,7 @@ lists:
     - soothe.mouseover,name="Soothe Enrage (Mouseover)",range_check=mouseover,if=config.soothe_mouseover&mouseover.exists&mouseover.enemy&mouseover.attackable&!mouseover.dead&mouseover.combat&mouseover.purgeable.enrage
     - soothe,name="Soothe Enrage",if=target.purgeable.enrage
 
-  # Out of Combat:
+  # Out of Combat: Mark of the Wild, Symbiotic Relationship, and healing prep.
   out_of_combat:
     - mark_of_the_wild,range_check=none,if=(buff.mark_of_the_wild.down.any|action.mark_of_the_wild.overlayed)&lastcast.mark_of_the_wild>=10
     # Out of combat only — the spell refuses to cast in combat. The bond
@@ -516,7 +518,8 @@ lists:
     # Auto Stealth when all healing is done
     - prowl,name="Auto Stealth",if=config.auto_prowl&!buff.prowl.up&!buff.travel_form.up&!buff.bear_form.up
 
-  # Mitigations and Emergency Defensives:
+  # Mitigations and Emergency Defensives: Ironbark on Tanks/Members ->
+  # Barkskin -> Bear Form + Frenzied Regen.
   defensives:
     - barkskin,name="Barkskin",off_gcd=true,ignore_queue=true,if=health.pct<config.barkskin_threshold|incoming.pct>=config.barkskin_incoming_pct
     - ironbark,name="Ironbark (Tank)",off_gcd=true,ignore_queue=true,cycle=tanks,if=config.ironbark_target=1&(cycle.health.pct<config.ironbark_threshold|cycle.incoming.pct>config.ironbark_incoming_pct)&cycle.buff.ironbark.down
@@ -537,7 +540,9 @@ lists:
   cooldowns:
     # NO Mark of the Wild here.
     - natures_swiftness,name="Nature Swiftness",off_gcd=true,ignore_queue=true,delay=150,range_check=none,if=group.count(cycle.health.pct<config.natures_swiftness_threshold)>=1
-    # Overgrowth (new in 12.1) rides this line for free:
+    # Overgrowth (new in 12.1) rides this line for free: with Nature's
+    # Swiftness up, this Regrowth also applies Lifebloom, Rejuvenation and
+    # Wild Growth to the same target.
     - regrowth,name="Nature Swift Regrowth",cycle=members,if=buff.natures_swiftness.up&cycle.health.pct<config.natures_swiftness_threshold
     - rejuvenation,name="Reju Out Cat For Convoke",if=(group.count(cycle.health.effective.pct<config.convoke_threshold&!cycle.tank)>=config.convoke_members)&(buff.cat_form.up|buff.bear_form.up)
     - trinket_1,delay=150,name="Trinket 1",if=config.use_trinket_1&trinket_1.ready&(group.count(cycle.health.effective.pct<config.convoke_threshold&!cycle.tank)>=config.convoke_members)&!buff.cat_form.up&!buff.bear_form.up
@@ -545,7 +550,8 @@ lists:
     - combat_potion,delay=150,name="Combat Potion",if=combat_potion.ready&config.use_potion&(group.count(cycle.health.effective.pct<config.convoke_threshold&!cycle.tank)>=config.convoke_members)&!buff.cat_form.up&!buff.bear_form.up
     - convoke_the_spirits,global_delay=750,name="Convoke (Heal)",if=(group.count(cycle.health.effective.pct<config.convoke_threshold&!cycle.tank)>=config.convoke_members)&!buff.cat_form.up&!buff.bear_form.up
     - tranquility,global_delay=750,name="Tranquility",if=!config.manual_tranquility&group.count(cycle.health.effective.pct<config.tranquility_threshold&!cycle.tank)>=config.tranquility_members&!player.moving
-    # NEW in 5.0 — Power of the Archdruid:
+    # NEW in 5.0 — Power of the Archdruid: Swiftmend on cooldown spreads three
+    # Rejuvenations, which is what gets Abundance to 5 stacks fast.
     - swiftmend.player,name="Self Swiftmend (Archdruid)",range_check=none,if=talent.power_of_the_archdruid&player.combat&cooldown.swiftmend.ready&(buff.rejuvenation.up|buff.regrowth.up|buff.wild_growth.up)
     # Swiftmend to obtain Soul of the Forest buff (requires active HoT on target)
     - swiftmend,name="Swiftmend for SotF/Treants",cycle=members,if=cycle.health.effective.pct<config.swiftmend_threshold&(cycle.buff.rejuvenation.up|pred.cycle.buff.regrowth.up|pred.cycle.buff.wild_growth.up)
@@ -556,7 +562,8 @@ lists:
     # branch carries its own health gate.
     - regrowth,name="Clearcasting Regrowth",cycle=members,if=player.combat&buff.clearcasting.up&cycle.health.effective.pct<99
 
-    # RAW health, like Nature's Swiftness:
+    # RAW health, like Nature's Swiftness: effective adds incomingHealsPct, so
+    # with your HoTs rolling "50% effective" is roughly 30% real.
     - regrowth,name="Regrowth Emergency",cycle=members,if=cycle.health.pct<config.regrowth_emergency_threshold
 
     # Soul of the Forest is spent on REJUVENATION first.
@@ -611,7 +618,8 @@ lists:
     - rip,name="Rip AoE",if=combo_points>=5&debuff.rip.refreshable
     - ferocious_bite,name="Bite AoE",if=combo_points>=5
     - rake,name="Rake AoE",if=debuff.rake.refreshable
-    # talent.swipe:
+    # talent.swipe: the reference build does not take it and never casts it (0
+    # Swipe casts in 26.9 min).
     - 106785,name="Swipe AoE",if=talent.swipe
     - shred,name="Shred AoE"
 
