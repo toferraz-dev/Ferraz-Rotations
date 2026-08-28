@@ -13,7 +13,7 @@
 # most of what looks improvable here was tried and reverted.
 # =============================================================================
 
-version: "2.11.0"
+version: "2.12.0"
 author: Ferraz
 patch: "12.1"
 spec: 103
@@ -28,7 +28,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-08-28 | Patch: 12.1 | Version: 2.11.0"
+    text: "Last update: 2026-08-28 | Patch: 12.1 | Version: 2.12.0"
 
   recommended_talents:
     section: "Talents"
@@ -292,30 +292,33 @@ variables:
 
   rip_preempt: "enemies.combat.8y=1&combo_points>=5&dot.rip.up&(dot.rip.refreshable&(buff.tigers_fury.up|dot.rip.remains<cooldown.tigers_fury.remains)|buff.tigers_fury.up&!var.rip_tf|buff.tigers_fury.up&buff.tigers_fury.remains<2)"
 
-  # Debuffs a DRUID SHAPESHIFT actually removes. Built 2026-08-28 from the 36
-  # auras tagged `freedom` in simia_data_dump/_aura.yaml, each checked on
-  # Wowhead for its Mechanic field, keeping only Rooted and Snared.
+  # Debuffs a DRUID SHAPESHIFT actually removes: roots and snares, and nothing
+  # else.
+  #
+  # debuff.root and debuff.snare are Simia's own mechanic categories. Neither is
+  # in expression-catalog.json, but both are used by the shipped rotations -
+  # community_Holy.yaml gates Blessing of Freedom on
+  # (cycle.debuff.snare.up|cycle.debuff.root.up) - and debuff.curse is the same
+  # mechanism with 10 uses. Absent from the catalog is not evidence of invalid;
+  # see section 12 of SIMIA_DOCUMENTATION.md.
   #
   # NOT debuff_list.freedom. _casts.yaml documents that tag as "Needs
-  # freedom/root break" - what a Blessing of Freedom clears. Four of the 36 are
-  # neither root nor snare and a shift does nothing to them:
+  # freedom/root break", which is what a Blessing of Freedom clears. Four of its
+  # 36 entries are neither root nor snare and a shift does nothing to them -
+  # Ritual Sacrifice (1259789) is a Stun, Hearty Bellow (1235125), Fel Beam
+  # (1218187) and Gravitic Orbs (1223298) carry no mechanic at all. Any of them
+  # left the gate true after the shift, so the rotation kept paying globals to
+  # break a root it could not break. Caught in game by snapshot on the Balance
+  # file: debuff_list.freedom.up = 1 [PASS] with nothing shapeshiftable.
   #
-  #     1259789  Ritual Sacrifice   Stunned
-  #     1235125  Hearty Bellow      no mechanic
-  #     1218187  Fel Beam           no mechanic
-  #     1223298  Gravitic Orbs      no mechanic
+  # This replaced a hand-built list of the 32 root/snare ids from that same
+  # audit (see 2f141fe). The categories cover new content on their own; the list
+  # would have needed editing every patch.
   #
-  # Any of those left the old gate true after the shift, so the rotation kept
-  # paying globals to shift at a root it could not break. Caught in game on the
-  # Balance file by snapshot: debuff_list.freedom.up = 1 [PASS] with nothing
-  # shapeshiftable on the player.
-  #
-  # Positive list on purpose: a new freedom-tagged debuff that is not a root
-  # will not match, so the failure mode is "no cleanse" instead of "loop".
-  #
-  # Dispel school is NOT a filter - Frost Nova is Magic and a shift breaks it.
-  # Mechanic is the discriminator.
-  druid_shapeshift_root: player.debuff.1282055.up|player.debuff.1266381.up|player.debuff.1271623.up|player.debuff.1269631.up|player.debuff.1258997.up|player.debuff.1241464.up|player.debuff.1263597.up|player.debuff.1259365.up|player.debuff.1214038.up|player.debuff.1254175.up|player.debuff.1259731.up|player.debuff.1269283.up|player.debuff.249081.up|player.debuff.1262509.up|player.debuff.1264186.up|player.debuff.1294569.up|player.debuff.273274.up|player.debuff.1306232.up|player.debuff.1287450.up|player.debuff.1296069.up|player.debuff.1309919.up|player.debuff.1310974.up|player.debuff.1249621.up|player.debuff.1238084.up|player.debuff.1305234.up|player.debuff.1294815.up|player.debuff.270499.up|player.debuff.1298104.up|player.debuff.1306763.up|player.debuff.1261921.up|player.debuff.1258437.up|player.debuff.1260709.up
+  # UNVERIFIED IN GAME. If these do not resolve the variable is simply false and
+  # the cleanse stops firing - no loop, just a lost utility. Confirm with
+  # /simia snapshot while rooted: the trace should show the gate PASS.
+  druid_shapeshift_root: player.debuff.root.up|player.debuff.snare.up
 
 lists:
   # Everything spell_queue / sanity_checks / auto.
