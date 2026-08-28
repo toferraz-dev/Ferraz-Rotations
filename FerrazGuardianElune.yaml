@@ -6,13 +6,18 @@
 #   engine                  set_tank_var            defensives              cooldowns
 #   bear                    st                      aoe                     main
 #
+# REFERENCE BUILD 1.10.0: drops Raze, nothing else moved. Heart of the Wild,
+# Soul of the Forest, Lunar Calling, Lunation and Flashing Claws rank 2 all
+# stay, so the HotW weave and both Thrash lines are unaffected. The two Raze
+# lines in `bear` are now dead weight; the two Maul lines beside them are live.
+#
 # WHY ANY OF IT IS THE WAY IT IS: .agents/rationale/GuardianElune.md
 # That file carries every measurement, every rejected alternative and every
 # bug this file has already been through. Read it before changing a line -
 # most of what looks improvable here was tried and reverted.
 # =============================================================================
 
-version: "1.9.1"
+version: "1.10.0"
 patch: "12.1"
 spec: 104
 name: Guardian Druid Ferraz M+
@@ -27,9 +32,7 @@ entry: main
 
 # SPELL OVERRIDES — AND-ed into every occurrence of that spell in the file.
 spell_overrides:
-  # Maul and Mangle deliberately NOT overridden globally: an old Mangle
-  # override (Gore+low rage+Thrash-on-CD+<=3 enemies, all at once) cut it from
-  # Maul and Mangle are deliberately NOT overridden globally: the override cut
+  # Maul and Mangle deliberately NOT overridden globally: the old override cut
   # them from ~78 to ~15 casts a fight.
 
   # Blocks re-suggesting Incarnation while its own buff is up.
@@ -50,14 +53,14 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-08-27 | Patch: 12.1 | Version: 1.9.1"
+    text: "Last update: 2026-08-28 | Patch: 12.1 | Version: 1.10.0"
 
   # Exact string every number here was measured against (sim/Tassiana_guardian.simc).
   recommended_talents:
     section: "Talents"
     type: copy_text
     label: "Recommended Talent String"
-    text: "CgGADBD3hSPCL9Y9gz68WcKvMAAAAAAAAAAAAgZmxsMPwMjZWMLGmZZZgZzwoJamZWmZmZmlxMAAAAAAMjlZALbzMYMLDgpAAAAbYmBYxMYAbWAYmBwA"
+    text: "CgGADBD3hSPCL9Y9gz68WcKvMAAAAAAAAAAAAgZmxsYmZMziZxMmZZZgZzwoJamZWmZmZmlxMAAAAAAMzsZAbbzMYMLDgpAAAAbYmHAYxYYALWAYmBwA"
 
   # === DEFENSIVE HP THRESHOLDS === (reactive: fire once HP already dropped)
   survival_instincts_hp_pct:
@@ -115,7 +118,7 @@ config:
     default: 20
     description: "Maul fires once rage is within this much of the cap. Lower = more aggressive."
 
-  # HotW weave is the single most valuable thing .
+  # HotW weave is the single most valuable thing in the file.
   auto_hotw:
     section: "Cooldowns"
     label: "Auto Heart of the Wild"
@@ -147,7 +150,7 @@ config:
     default: true
     description: "Fire the combat potion automatically. Measured +3.45% DungeonSlice synced to the burst."
 
-  # Measured on DungeonSlice against this file's .
+  # Measured on DungeonSlice against this file's own baseline.
   potion_sync_burst:
     section: "Cooldowns"
     label: "Potion: sync with Incarnation"
@@ -171,7 +174,6 @@ config:
     type: checkbox
     default: true
 
-# VARIABLES.
   engine_loot_nearby:
     label: "Loot Nearby Corpses"
     section: "Engine"
@@ -275,9 +277,9 @@ variables:
   hotw_weave: config.auto_hotw&talent.heart_of_the_wild&cooldown_bypass.heart_of_the_wild.ready&target.valid&target.attackable&player.combat&combat.time>=config.hotw_delay&health.pct>=config.hotw_hp_pct&buff.ironfur.up&!buff.incarnation_guardian_of_ursoc.up&!buff.berserk.up
 
 lists:
-  # Everything spell_queue / sanity_checks / auto.
+  # spell_queue, sanity_checks and auto_target, inlined.
   engine:
-    # `&`, not `|`. With `|` the condition is true .
+    # `&`, not `|` - with `|` this is true on almost every pass.
     - queue_spell,if=!player.casting&!player.channeling
 
     - return,if=!state.rotation
@@ -312,7 +314,8 @@ lists:
     - target_enemy,delay=200,off_gcd=true,if=config.engine_auto_target.has(1)&target.dead&enemies.combat.8y>=1
     - target_enemy,delay=200,off_gcd=true,if=config.engine_auto_target.has(2)&target.range>=25&enemies.combat.8y>=1
 
-    # --- Temple of Sethraliss, Adderis and Aspix .
+    # Temple of Sethraliss: Storm Blessed is a hard damage immunity, so swap off
+    # its holder. 1289229 is the AURA, not the cast id.
     - target_enemy,name="Swap Off Storm Blessed",delay=500,off_gcd=true,if=target.buff.1289229.up&enemies.combat.40y>=2
 
   # Tank-buster prediction feeding the barkskin override.
@@ -364,7 +367,8 @@ lists:
     # Dumping at 40 like SimC's raid APL measured -2.86% DungeonSlice
     # (+9.41% Patchwerk) — a raid-only gain. Do not "fix" this to match SimC.
 
-    # --- Rage spenders. Split on talent.raze (pars.
+    # Rage spenders, split on talent.raze. Raze is NOT on the 1.10.0 build, so
+    # the Maul lines are the live pair.
     - maul,name="Maul (Gory Fur)",if=buff.1307881.up&!talent.raze.enabled&enemies.combat.8y<3&buff.ironfur.up&!var.heavy_incoming
     - raze,name="Raze (Gory Fur)",if=buff.1307881.up&talent.raze.enabled&buff.ironfur.up&!var.heavy_incoming
     - maul,name="Maul",if=!talent.raze.enabled&buff.ironfur.up&!var.heavy_incoming&rage.deficit<=config.rage_deficit_maul
@@ -435,8 +439,6 @@ lists:
     - return,if=!player.combat
 
 
-
-    # NOTE:
 
     - call_action_list,name=defensives
 
