@@ -201,6 +201,7 @@ class State:
         self.dead = False
         self.mounted = False
         self.pins = {}                     # expression -> value
+        self.root_pins = set()             # pins a shapeshift clears
 
     def eff(self):
         return self.health if self.health_effective is None else self.health_effective
@@ -229,6 +230,7 @@ class State:
         s.dead = self.dead
         s.mounted = self.mounted
         s.pins = dict(self.pins)
+        s.root_pins = set(self.root_pins)
         return s
 
 
@@ -465,6 +467,23 @@ def land_dot(state, base):
                 state.pins[k] = True
 
 
+def clear_root(state):
+    """A shapeshift breaks the root it was cast to break.
+
+    Without this the model holds the root pinned for the whole run, so the two
+    complementary Root Cleanse lines revolve forever and report a loop the game
+    does not have. Same class as land_dot: the rotation's own action changes the
+    state it was gated on.
+
+    Only pins the rotation itself treats as a root gate are cleared - collected
+    from player.rooted plus any player.debuff.<id> named inside a variable whose
+    key mentions root. A shift does not clear arbitrary debuffs.
+    """
+    for k in list(state.pins):
+        if k in state.root_pins:
+            state.pins[k] = False
+
+
 def apply_effect(state, spell):
     """Mutate state the way the game would. Returns a short description."""
     s = state
@@ -480,6 +499,7 @@ def apply_effect(state, spell):
         if s.form == FORM_BUFF[base]:
             return 'no-op (already in form)'
         s.form = FORM_BUFF[base]
+        clear_root(s)
         return 'form -> ' + s.form
     if base in NEUTRAL:
         return ''
@@ -487,10 +507,15 @@ def apply_effect(state, spell):
         if 'fluid_form' in s.talents:
             if s.form != 'moonkin':
                 s.form = 'moonkin'
+                # Entering Moonkin through Fluid Form is still a shapeshift and
+                # still breaks the root. Missing this kept the root pinned and
+                # reported a Moonkin/Bear loop the game does not have.
+                clear_root(s)
                 return 'form -> moonkin (Fluid Form)'
             return ''
         if s.form != 'caster':
             s.form = 'caster'
+            clear_root(s)
             return 'form -> caster'
         return ''
     if s.form in SAFE_FROM_FORM.get(base, ()):
@@ -500,6 +525,7 @@ def apply_effect(state, spell):
     if base in CASTER_SPELLS or base.isdigit():
         if s.form in ('bear', 'cat', 'travel'):
             s.form = 'caster'
+            clear_root(s)
             return 'form -> caster (cast cancelled the form)'
         return ''
     return ''
@@ -753,6 +779,21 @@ def walk(node, out):
         walk(x, out)
 
 
+def collect_root_refs(rot):
+    """Expressions this rotation uses as its "am I rooted" gate."""
+    out = {'player.rooted'}
+    for k, v in (rot.vars or {}).items():
+        if 'root' not in k.lower():
+            continue
+        try:
+            refs = set()
+            walk(parse_expr(str(v)), refs)
+        except ValueError:
+            continue
+        out |= {r for r in refs if r.startswith('player.debuff.')}
+    return out
+
+
 def collect_names(rot):
     """Every identifier the file actually reads, so the fuzzer randomises the
     things this rotation cares about instead of a generic guess."""
@@ -846,6 +887,7 @@ def random_state(rot, rng, names):
     st.pins = {}
     for o in names['opaque']:
         st.pins[o] = rng.random() < PIN_BIAS.get(o, 0.35)
+    st.root_pins = collect_root_refs(rot)
     return st
 
 
