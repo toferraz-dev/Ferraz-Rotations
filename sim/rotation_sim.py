@@ -586,6 +586,30 @@ class Engine:
         self.state = state
         self.unknown = set()
         self.errors = []
+        self.tick = 0
+        self.last_fired = {}      # action label -> tick it last fired
+
+    # A tick is one global, ~1.5s.
+    GCD = 1.5
+
+    def throttled(self, a):
+        """line_cd / delay hold a line back after it fires.
+
+        Without this the model reports a tight loop on a pair of lines the
+        addon would only let fire every few seconds - which is how the Root
+        Cleanse pair still looked broken after line_cd=8 had fixed it.
+        """
+        cd = a.mods.get('line_cd')
+        if not cd:
+            return False
+        last = self.last_fired.get(a.label())
+        if last is None:
+            return False
+        try:
+            secs = float(cd)
+        except ValueError:
+            return False
+        return (self.tick - last) * self.GCD < secs
 
     def cond_true(self, action):
         if action.cond is None:
@@ -612,6 +636,8 @@ class Engine:
             return None, 'recursion guard', fired
         name = list_name or self.rot.entry
         for a in self.rot.actions.get(name, []):
+            if self.throttled(a):
+                continue
             if not self.cond_true(a):
                 continue
             base = a.spell.split('.')[0]
@@ -634,8 +660,10 @@ class Engine:
             if base == 'variable':
                 continue
             if a.mods.get('off_gcd') == 'true' or base in OFF_GCD_ALWAYS:
+                self.last_fired[a.label()] = self.tick
                 fired.append((a, apply_effect(self.state, a.spell)))
                 continue
+            self.last_fired[a.label()] = self.tick
             return a, apply_effect(self.state, a.spell), fired
         return None, 'no action', fired
 
@@ -702,6 +730,7 @@ def run_scenario(rot, state, ticks):
                 return trace, ('LOOP', cycle)
             return trace, ('SETTLED', cycle)
         seen[k] = t
+        eng.tick = t
         action, effect, off = eng.step()
         trace.append((action, effect, off))
     acted = [a for a, _, off in trace if a is not None or off]
@@ -822,17 +851,23 @@ def random_state(rot, rng, names):
 
 # Loops that only exist because the environment is frozen.
 #
-# Root Cleanse (Balance/Feral) and Shapeshift Clear (Restoration) both shift
-# out of a root. Their gate - debuff_list.freedom / player.rooted - is Simia's
-# own list of what a shift actually removes, so in game the first shift clears
-# it and the condition falls away on its own. This model holds every pinned
-# expression still for the whole run, so the root never goes and the shift
-# keeps re-arming. Confirmed with the author as a modelling artifact, not a
-# rotation fault.
+# SUPPRESSION LIST - currently empty, and the history is the point.
 #
-# The suppression is by line NAME, so it only silences these specific lines.
-# A new shapeshift loop somewhere else still reports.
-BENIGN_MARKERS = ('Root Cleanse', 'Shapeshift Clear')
+# The fuzzer's top finding was Root Cleanse / Shapeshift Clear ping-ponging
+# Bear/Cat, 80 of 86 loops. It was dismissed as an artifact of the frozen
+# environment on the grounds that debuff_list.freedom only lists what a
+# shapeshift removes, so the first shift would clear the gate in game. Both
+# names went in here and the finding stopped being reported.
+#
+# That was wrong. _casts.yaml documents the tag as "Needs freedom/root break" -
+# what a Blessing of Freedom would clear, which includes magical roots a shift
+# cannot touch. The loop then showed up in game, and a snapshot caught it:
+# debuff_list.freedom.up = 1 [PASS] with nothing shapeshiftable to cleanse.
+#
+# So: suppressing a finding because it looks explainable is how a real bug gets
+# hidden. If something has to go in here, it needs evidence that the loop cannot
+# happen, not an argument that it probably does not.
+BENIGN_MARKERS = ()
 
 
 # Probability that an unmodelled expression is pinned true.
