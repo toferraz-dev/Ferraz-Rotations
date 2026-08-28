@@ -1,8 +1,9 @@
-# Tassiana - Guardian - 2026-08-13 12:25 - US/Area 52
-# SimC Addon 12.1.0-02
-# WoW 12.1.0.69283, TOC 120100
-# Requires SimulationCraft 1000-01 or newer
-
+# Tassiana - Guardian - SimC addon export 2026-08-28 12:00 (checksum 365938bf).
+# WoW 12.1.0.69497, addon 12.1.0-03.
+#
+# Talent string is the one on the `talents=` line of that export, which is the
+# active loadout. An earlier paste in the same session carried a different
+# string in the body than in talents=; this is the reconciled one.
 druid="Tassiana"
 level=90
 race=harronir
@@ -11,41 +12,21 @@ server=area_52
 role=tank
 professions=leatherworking=29/skinning=100
 spec=guardian
+talents=CgGADBD3hSPCL9Y9gz68WcKvMAAAAAAAAAAAAgZmxsYmZMziZxMmZZZgZzwoJamZWmZmZmlxMAAAAAAMzsZAbbzMYMLDgpAAAAbYmHAYxYYALWAYmBwA
+omnium_talents=136814:1/136818:1/136817:1/136819:1/136822:1
 
-talents=CgGADBD3hSPCL9Y9gz68WcKvMAAAAAAAAAAAAgZmxsMPwMjZWMLGmZZZgZzwoJamZWmZmZmlxMAAAAAAMjlZALbzMYMLDgpAAAAbYmBYxMYAbWAYmBwA
-
-omnium_talents=136814:1/136821:1/136817:1/136819:1/136822:1
-
-# Branches of the Luminous Bloom (289)
-head=,id=250024,enchant_id=7961,gem_id=240888,bonus_id=6652/13440/13338/13575/12806/13534
-# Pendant of Aching Grief (289)
-neck=,id=251096,gem_id=240983,bonus_id=13440/6652/13668/12699/12806
-# Silvermoon Agent's Mantle (285)
-shoulder=,id=244572,enchant_id=8031,bonus_id=12214/13667/12497/12066/12385/8960/8792/13622,content_tuning=3615,crafted_stats=40/49,crafting_quality=5
-# Potion-Stained Cloak (289)
-back=,id=193712,bonus_id=13440/6652/13577/12699/12806
-# Vest of the Void's Embrace (289)
-chest=,id=151313,enchant_id=7987,bonus_id=13440/43/13577/12699/12806
-# Bindings of the Luminous Bloom (289)
-wrist=,id=250020,bonus_id=12806/6652/12667/13440/3174
-# Arbortenders of the Luminous Bloom (289)
-hands=,id=250025,bonus_id=6652/13440/13337/13574/12806
-# Silvermoon Agent's Utility Belt (285)
-waist=,id=244573,gem_id=240888,bonus_id=12214/13667/12497/12066/12685/8960/8792/13622/12666,content_tuning=3615,crafted_stats=36/49,crafting_quality=5
-# Shifting Stalker Hide Pants (289)
-legs=,id=151314,enchant_id=8159,bonus_id=13440/6652/13577/12699/12806
-# Eclipse Espadrilles (289)
-feet=,id=251210,enchant_id=7993,bonus_id=13440/6652/13577/12699/12806
-# Omission of Light (289)
-finger1=,id=251093,enchant_id=8025,gem_id=240888,bonus_id=13440/6652/13668/12699/12806
-# Band of the Triumvirate (289)
-finger2=,id=151311,enchant_id=8025,gem_id=240894,bonus_id=13440/6652/13668/12699/12806
-# Emberwing Feather (298)
-trinket1=,id=250144,bonus_id=13440/6652/12699/13654
-# Gaze of the Alnseer (298)
+head=,id=271528,enchant_id=7961,bonus_id=13692/13440/6652/13696/13698/12851
+neck=,id=251142,gem_id=240983,bonus_id=12843/13440/6652/13668/12699,content_tuning=1279
+shoulder=,id=271526,bonus_id=6652/12843/13440/13694/13697/1564,redirected_base_stats=251146
+back=,id=193763,bonus_id=12843/13440/6652/13662/12699,content_tuning=1279
+chest=,id=271531,enchant_id=7987,bonus_id=6652/12843/13440/13690/13698/1564,redirected_base_stats=251159
+wrist=,id=244576,bonus_id=12214/12497/13751/8960/12384/8793/13836/13696,content_tuning=3615,crafted_stats=40/36,crafting_quality=5
+hands=,id=271529,bonus_id=12842/42/13440/13691/13697/1561,redirected_base_stats=193758
+waist=,id=251189,bonus_id=12843/13440/6652/13696/13662/12699,content_tuning=1279
+legs=,id=159313,enchant_id=7935,bonus_id=12843/13440/6652/13662/12699,content_tuning=1279
+feet=,id=268261,enchant_id=7993,bonus_id=42/13662/13333/12838,content_tuning=7359
+finger1=,id=252258,enchant_id=7967,gem_id=240900,bonus_id=13440/42/13668/12699/12843,content_tuning=1279
+finger2=,id=273792,enchant_id=7967,gem_id=240900,bonus_id=13440/6652/13668/12699/12846,content_tuning=1279
+trinket1=,id=273797,bonus_id=12843/13440/6652/12699,content_tuning=1279
 trinket2=,id=249343,bonus_id=6652/13335/13654
-# Toxin-Coated Warstaff (302)
-main_hand=,id=273783,enchant_id=8039,bonus_id=13439/6652/12701/12836,content_tuning=3025
-
-# Consumables. Inert until an action uses them — added for the potion A/B.
-potion=lights_potential_2
+main_hand=,id=273783,enchant_id=8039,bonus_id=13439/6652/12701/12838,content_tuning=3025
