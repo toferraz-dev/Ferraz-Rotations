@@ -15,6 +15,7 @@
 9. [Ações Virtuais](#9-ações-virtuais)
 10. [Erros Conhecidos & Boas Práticas](#10-erros-conhecidos--boas-práticas)
 11. [Catálogo de Referência de Expressões (634)](#11-catálogo-de-referência-de-expressões)
+12. [Expressões Não Catalogadas](#12-expressões-não-catalogadas)
 
 ---
 
@@ -1617,3 +1618,103 @@ Consulte o arquivo [expression-catalog.json](file:///c:/Games/Python/Rotations/e
 
 > [!TIP]
 > Consulte o catálogo JSON completo em [expression-catalog.json](file:///c:/Games/Python/Rotations/expression-catalog.json) para todas as 634 expressões com exemplos detalhados de uso.
+
+---
+
+## 12. Expressões Não Catalogadas
+
+O `expression-catalog.json` declara **634** expressões, e a seção 11 documenta essas.
+Mas as rotações oficiais e compartilhadas do próprio Simia usam mais do que isso.
+
+A tabela abaixo saiu de uma varredura do `simia_data_dump/` (dump de 2026-08-27,
+112 arquivos) atrás de expressões **estruturais** — as de vocabulário fixo, como
+`player.*`, `enemies.*`, `group.*`, `interrupt.*` — que não aparecem nem no
+catálogo nem no restante deste documento. Formas parametrizadas por magia
+(`buff.QUALQUER_COISA.up`) foram descartadas: são o padrão genérico, não
+expressões novas.
+
+**A conclusão prática: uma expressão ausente do catálogo NÃO é prova de que ela
+seja inválida.** As rotações oficiais em `simia_data_dump/rotation_*.yaml` e os
+arquivos `_shared.yaml` / `_common.yaml` são a especificação de verdade. Quando
+o catálogo e o dump discordarem, o dump vence.
+
+A coluna "usos" conta ocorrências no dump inteiro, e é o dado forte aqui: prova
+que a expressão existe e é aceita pelo motor.
+
+**As descrições são inferidas** do nome e do contexto em que a expressão aparece,
+não de documentação oficial nem de teste em jogo — não existe fonte publicada
+para elas. Trate como ponto de partida e confirme com um snapshot antes de
+apoiar uma linha importante numa delas. As duas únicas com comportamento
+verificado neste repositório são `interrupt.*.check`, usada nas rotações daqui, e
+`enemies.40y`, que difere de `enemies.combat.40y` justamente por não filtrar
+combate — a distinção que já causou bug neste repo.
+
+| Expressão | Usos | Descrição |
+| --- | --- | --- |
+| `interrupt.stun.aoe.check` | 211 | Filtro do Simia: vale a pena um stun em AoE agora. |
+| `interrupt.cc.check` | 157 | Filtro do Simia para CC (nao-kick). |
+| `interrupt.target.check` | 75 | Kick vale a pena no alvo atual (castando, interrompivel, no alcance, ninguem ja kickou). |
+| `interrupt.mouseover.check` | 69 | Idem, na unidade sob o mouse. |
+| `interrupt.focus.check` | 67 | Idem, no foco. |
+| `player.ininstancedpve` | 21 | Dentro de masmorra/raide instanciada. NOVO no dump de 2026-08-27. |
+| `enemies.40y` | 17 | Contagem de inimigos em 40y. SEM o filtro de combate que enemies.combat.40y aplica. |
+| `enemies.inrange` | 14 | Inimigos no alcance da habilidade avaliada. |
+| `player.solo` | 12 | Sem grupo. |
+| `player.group` | 12 | Em grupo. |
+| `interrupt.kick.soon` | 9 | Um kick do grupo esta prestes a sair — nao gaste o seu. |
+| `group.in_party` | 9 | Voce esta em party (nao raide). |
+| `player.inopenworld` | 8 | No mundo aberto. |
+| `player.spec_id` | 8 | ID numerico da especializacao. |
+| `enemies.8y.count` | 7 | Contagem em 8y, forma explicita com .count. |
+| `player.aggro` | 4 | Voce tem aggro de algum inimigo. |
+| `enemies.6y` | 4 | Contagem em 6y. |
+| `group.healers.lowest.range` | 4 | Distancia do healer mais ferido. |
+| `player.reflectable.up` | 4 | Voce carrega algo refletivel. |
+| `group.any` | 3 | O grupo tem ao menos um membro. |
+| `player.mana.pct` | 3 | Mana em percentual. |
+| `enemies.combat.22y` | 3 | Contagem em combate a 22y — o raio arbitrario e aceito. |
+| `enemies.5y` | 3 | Contagem em 5y. |
+| `player.class_id` | 3 | ID numerico da classe. |
+| `enemies.combat.any` | 2 | Existe ao menos um inimigo em combate. |
+| `interrupt.8y.any` | 2 | Existe algo interrompivel em 8y. |
+| `player.dispelable.magic` | 2 | Voce tem debuff magico dispelavel. |
+| `player.exists` | 2 | Sanidade: a unidade jogador existe. |
+| `player.meld.up` | 2 | Shadowmeld ativo. |
+| `enemies.near` | 2 | Inimigos proximos. |
+| `group.dps.lowest.range` | 1 | Distancia do dps mais ferido. |
+| `enemies.around.angle.90.4` | 1 | Inimigos num cone de 90 graus, 4 unidades. |
+| `player.race` | 1 | Raca do personagem. |
+| `group.tank.health.pct` | 1 | Vida do tank. |
+| `player.dispelable.purify_disease` | 1 | Doenca dispelavel por Purify Disease. |
+| `player.threat` | 1 | Nivel de ameaca. |
+| `player.dispelable.fear` | 1 | Debuff de medo dispelavel. |
+| `player.dispelable.sleep` | 1 | Debuff de sono dispelavel. |
+| `player.dispelable.charm` | 1 | Debuff de charm dispelavel. |
+| `group.moving_count` | 1 | Quantos membros estao se movendo. |
+| `player.blockable.up` | 1 | Voce carrega algo bloqueavel. |
+| `player.hp` | 1 | Vida (usado em _trinkets.yaml). |
+
+### 12.1 Novidades do dump de 2026-08-27
+
+O dump anterior era de 2026-08-23. Três coisas novas que mudam o que dá para
+escrever numa rotação:
+
+**`player.ininstancedpve`** — dentro de masmorra ou raide instanciada. Entrou no
+`_shared.yaml` para separar o comportamento de interrupção: dentro de PvE
+instanciado o Death Grip só é gasto em cast marcado `stunnable`, nunca como kick
+de reserva num cast `kickable` de boss ou trash; no mundo aberto ele volta a
+poder cobrir os dois.
+
+**`check_burst`** em `_trinkets.yaml` (versão 7 → 8) — campo novo por trinket,
+marcando os que devem ser sincronizados com a janela de burst em vez de usados
+na cooldown.
+
+**Tag `no_heal`** em `_aura.yaml` — remove o alvo da lista de candidatos a cura
+enquanto a aura durar. Criada para Siphoning Infection (1295224 / 1295380) na
+raide da Midnight temporada 2, onde a cura chega a zero por absorção mais
+redução de 100%.
+
+Também entraram tags `freedom` e `stunnable` em vários casts de masmorra,
+derivadas de logs de chave 14/15 — ou seja, a lista de "o que shapeshift/Freedom
+remove" e "o que dá para parar com stun" cresceu sem que nenhuma expressão
+mudasse.
