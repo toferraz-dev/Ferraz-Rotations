@@ -1,0 +1,24 @@
+# Guardian bag evaluation. Baseline = currently equipped gear.
+# Every profileset changes exactly ONE slot.
+fight_style=DungeonSlice
+target_error=0.15
+threads=8
+
+profileset."back_bloodthorn"+=back=,id=251190,bonus_id=12843/13440/6652/13662/12699,content_tuning=1279
+profileset."waist_dervish"+=waist=,id=159317,bonus_id=12843/13440/6652/13696/13662/12699,content_tuning=1279
+profileset."feet_hissing"+=feet=,id=271435,enchant_id=7993,bonus_id=6652/13662/13332/10844/12830,content_tuning=7360,crafted_stats=32/40
+profileset."ring_snarling"+=finger1=,id=251136,enchant_id=7967,gem_id=240900,bonus_id=13440/6652/13668/12699/12843,content_tuning=1279
+
+profileset."t1_mindpiercer"+=trinket1=,id=250224,bonus_id=13440/6652/12699/12844,content_tuning=1279
+profileset."t2_mindpiercer"+=trinket2=,id=250224,bonus_id=13440/6652/12699/12844,content_tuning=1279
+profileset."t1_freightrunner"+=trinket1=,id=250215,bonus_id=13439/6652/12699/12838,content_tuning=3025
+profileset."t2_freightrunner"+=trinket2=,id=250215,bonus_id=13439/6652/12699/12838,content_tuning=3025
+profileset."t1_sapling"+=trinket1=,id=250259,bonus_id=12843/13440/6652/12699,content_tuning=1279
+profileset."t2_sapling"+=trinket2=,id=250259,bonus_id=12843/13440/6652/12699,content_tuning=1279
+profileset."t1_emberwing"+=trinket1=,id=250144,bonus_id=13440/6652/12699/13654
+profileset."t2_emberwing"+=trinket2=,id=250144,bonus_id=13440/6652/12699/13654
+
+# Both bag weapons are INTELLECT - caster gear. Tested to show the size of it.
+profileset."wpn_fallen_speaker"+=main_hand=,id=251156,enchant_id=8039,bonus_id=13440/6652/12701/12845,content_tuning=1279
+profileset."wpn_lightwood_1h"+=main_hand=,id=273778,enchant_id=8041,bonus_id=13440/6652/12701/12846,content_tuning=1279
+profileset."wpn_lightwood_1h"+=off_hand=,id=245769,bonus_id=12214/13667/12497/13751/13771/8960/8793/13836,content_tuning=3615,crafted_stats=36/40,crafting_quality=5
