@@ -24,12 +24,31 @@
 # bug this file has already been through. Read it before changing a line -
 # most of what looks improvable here was tried and reverted.
 #
-# Reference talent string is in config below. Percentages quoted in that
-# rationale file were measured on fight_style=DungeonSlice, which Balance
-# does not support - see .agents/SIMC_METHODOLOGY.md.
+# REFERENCE BUILD, 4.6.0: the most-used Balance build on WarcraftLogs. It
+# replaced Jeannelin's +18 build and moved five nodes:
+#   gained  Sundered Firmament, Stellar Amplification, Meteorites
+#   lost    Orbit Breaker, Elune's Guidance
+# Fluid Form stays, hero tree stays Elune's Chosen, Starweaver is still absent
+# so the lines flagged dead for it remain dead.
+#
+# Losing Elune's Guidance is the change that matters: it shortened the
+# Incarnation cooldown, so the charge budget and the useful ttd_incarnation
+# both moved. Anything tuned against Incarnation frequency needs re-measuring
+# after a build change, not carrying over.
+#
+# Sundered Firmament is now talented and this file deliberately does NOT gate
+# Fury of Elune on it, unlike the raid file. Measured three ways on this build
+# and all three lost: the raid's own condition -0.64% AoE-only and -1.42%
+# applied to both lists, a bare atmospheric_exposure check -0.79%, and the loss
+# holds at 1, 3 and 5 fixed targets. Fury of Elune on cooldown is correct here.
+#
+# Percentages older than 4.6.0 in .agents/rationale/Balance.md were measured on
+# fight_style=DungeonSlice, which Balance does not support - see
+# .agents/SIMC_METHODOLOGY.md - and against the previous build. Treat them as
+# provisional.
 # =============================================================================
 
-version: "4.4.1"
+version: "4.6.0"
 author: Ferraz
 patch: "12.1"
 spec: 102
@@ -46,14 +65,14 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-08-27 | Patch: 12.1 | Version: 4.4.1"
+    text: "Last update: 2026-08-27 | Patch: 12.1 | Version: 4.6.0"
 
   # Reference build. The measured numbers assume this exact string.
   recommended_talents:
     section: "Talents"
     type: copy_text
     label: "Recommended Talent String"
-    text: "CYGADBD3hSPCL9Y9gz68WcKvMAAAAAAAAAAAAAAAAAWoMbNjxMDwsMzMzMLMYMLzsMzCzM2YZmlxMjxGGGgx22MDGz2IwEAAAgFmZmZwmhxYAAYmBLDA"
+    text: "CYGADBD3hSPCL9Y9gz68WcKvMAAAAAAAAAAAAAAAAAWoMbNMmZgxsYmZmBDGjZWmZxMzYhlZWGjZGbYYAGbbzMYMbjATAAAAWYmZmBbGzYMAAMzglBA"
 
   # Wait until the pull is parked before bursting. SimC cannot measure this.
   inc_min_standing_time:
@@ -99,14 +118,30 @@ config:
     default: true
 
   # Don't spend a long cooldown on trash about to die. Bosses ignore these.
+  # Re-measured on the 4.6.0 build, 8 seeds, counting Incarnations PER PULL
+  # rather than just total DPS:
+  #
+  #     15s   -          40% of pulls with none, 0% doubled, 0% boss missed
+  #     20s   +0.37%     40%                     0%          0%
+  #     25s   +0.61%     40%                     0%          0%
+  #     30s   +0.75%     41%                     1%          0%
+  #
+  # 25 is the last value that gains without reintroducing a double. The 40% of
+  # pulls that get no Incarnation at all is not a gate problem and no condition
+  # fixes it: 6 casts across 10 pulls is a charge budget, not a decision.
+  #
+  # This was briefly set to 20 off the same measurement run against the PREVIOUS
+  # build, which carried Elune's Guidance. That talent shortened the Incarnation
+  # cooldown, so charges came back fast enough to double up on a pull; without
+  # it they no longer do, and the useful value moved.
   ttd_incarnation:
     label: "Incarnation TTD (seconds)"
     section: "Time To Die"
     type: slider
     min: 5
     max: 30
-    default: 15
-    description: "Minimum fight time remaining to use Incarnation"
+    default: 25
+    description: "Minimum fight time remaining to use Incarnation. Below this the pull dies before the window pays for itself and the charge is better saved for the next one. Past 30 it starts skipping pulls that deserved it."
 
   ttd_fury_of_elune:
     label: "Fury of Elune TTD (seconds)"
