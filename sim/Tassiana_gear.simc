@@ -1,5 +1,7 @@
 # SimC addon export 2026-08-27 13:22, WoW 12.1.0.69497, addon 12.1.0-03.
-# Talent string is the 4.0.0 reference (Jeannelin's +18 build).
+# Talent string 2026-08-27: the most-used Balance build on WarcraftLogs.
+# Differs from Jeannelin's +18 by five nodes - gains Sundered Firmament,
+# Stellar Amplification and Meteorites, loses Orbit Breaker and Elune's Guidance.
 druid="Tassiana"
 level=90
 race=harronir
@@ -8,7 +10,7 @@ server=area_52
 role=spell
 professions=leatherworking=29/skinning=100
 spec=balance
-talents=CYGADBD3hSPCL9Y9gz68WcKvMAAAAAAAAAAAAAAAAAWoMbNjxMDwsMzMzMLMYMLzsMzCzM2YZmlxMjxGGGgx22MDGz2IwEAAAgFmZmZwmhxYAAYmBLDA
+talents=CYGADBD3hSPCL9Y9gz68WcKvMAAAAAAAAAAAAAAAAAWoMbNMmZgxsYmZmBDGjZWmZxMzYhlZWGjZGbYYAGbbzMYMbjATAAAAWYmZmBbGzYMAAMzglBA
 omnium_talents=136814:1/136818:1/136817:1/136819:1/136822:1
 
 head=,id=271528,enchant_id=7961,bonus_id=13692/13440/6652/13696/13698/12851
