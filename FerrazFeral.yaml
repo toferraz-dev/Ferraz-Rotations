@@ -13,7 +13,7 @@
 # most of what looks improvable here was tried and reverted.
 # =============================================================================
 
-version: "2.10.0"
+version: "2.10.1"
 author: Ferraz
 patch: "12.1"
 spec: 103
@@ -28,7 +28,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-08-27 | Patch: 12.1 | Version: 2.10.0"
+    text: "Last update: 2026-08-27 | Patch: 12.1 | Version: 2.10.1"
 
   recommended_talents:
     section: "Talents"
@@ -38,7 +38,8 @@ config:
 
   # The panic Bear Form shift had a literal 25 and no name=, the only
   # threshold in either Feral file that was not a slider and the only
-  # defensive that did not show up in the execution log...
+  # The panic Bear shift used to be a literal 25 with no name=, the only
+  # threshold in either Feral file that was not a slider.
   panic_bear_hp_pct:
     label: "Panic Bear Form HP %"
     section: "Defensive HP Percentage"
@@ -104,7 +105,8 @@ config:
     max: 100
     default: 40
 
-  # Defaults ON:
+  # Defaults ON: the whole cooldown block below (Berserk/Convoke/trinkets/
+  # potion) was entirely missing before — see the `cooldown` list comment.
   use_trinket_1:
     label: "Auto Trinket 1"
     section: "Cooldowns"
@@ -297,7 +299,7 @@ lists:
     - interact_target,delay=350,if=config.engine_loot_nearby&target.lootable&target.range<=5
     - interact_target,delay=350,if=config.engine_loot_nearby&loot_nearby
     - interact_mouseover,delay=350,if=config.engine_loot_nearby&mouseover.lootable&mouseover.range<=5
-    # Melee-only, and this file IS melee:
+    # Melee-only, and this file IS melee: keeps auto-attack running.
     - attack_target,off_gcd=true,delay=100,if=player.combat&target.exists&target.attackable&target.alive&target.in_melee&!player.auto_attacking
 
     - remove_corruption.player,delay=500,name="Remove Corruption (Self)",if=config.auto_dispel_self&player.dispelable.list
@@ -331,7 +333,9 @@ lists:
     - barkskin,name="Barkskin (HP)",off_gcd=true,ignore_queue=true,range_check=none,if=health.pct<=config.barkskin_hp_pct
 
   cooldown:
-    # This whole list used to be just the two finisher-CD lines below:
+    # This whole list used to be just the two finisher-CD lines below: the
+    # file computed var.holdBerserk and the Convoke count-remaining variables
+    # This list used to be just the two finisher-cooldown lines below.
     - trinket_1,if=config.use_trinket_1&trinket_1.ready&var.trinkets_ttd_ok
     - trinket_2,if=config.use_trinket_2&trinket_2.ready&var.trinkets_ttd_ok
     - berserking,if=var.bs_inc
@@ -395,9 +399,17 @@ lists:
 
     - shred,if=player.combat&target.attackable&target.in_melee&buff.cat_form.down&talent.fluid_form.enabled
     - rake,if=player.combat&target.attackable&target.in_melee&buff.cat_form.down&talent.fluid_form.enabled
+    # enemies.40y is BARE on purpose - not enemies.combat.40y. This runs before
+    # the pull, where the combat-filtered count is 0 by definition and the line
+    # would be dead. Do not "standardise" it.
     - cat_form,range_check=none,if=buff.cat_form.down&(target.attackable|enemies.40y)
 
-    # !player.combat added:
+    # !player.combat because Prowl cannot be cast in combat. Without it the
+    # condition never turns false and this line traps every GCD in combat.
+    # Pre-pull opener only.
+    # enemies.40y is BARE on purpose - not enemies.combat.40y. This runs before
+    # the pull, where the combat-filtered count is 0 by definition and the line
+    # would be dead. Do not "standardise" it.
     - prowl,range_check=none,if=!player.combat&!var.bs_inc&buff.prowl.down&buff.shadowmeld.down&(target.attackable|enemies.40y)
 
   interrupts:

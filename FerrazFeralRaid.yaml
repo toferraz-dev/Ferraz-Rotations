@@ -13,7 +13,7 @@
 # most of what looks improvable here was tried and reverted.
 # =============================================================================
 
-version: "1.9.0"
+version: "1.9.1"
 author: Ferraz
 patch: "12.1"
 spec: 103
@@ -28,7 +28,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-08-27 | Patch: 12.1 | Version: 1.9.0"
+    text: "Last update: 2026-08-27 | Patch: 12.1 | Version: 1.9.1"
 
   recommended_talents:
     section: "Talents"
@@ -38,7 +38,8 @@ config:
 
   # The panic Bear Form shift had a literal 25 and no name=, the only
   # threshold in either Feral file that was not a slider and the only
-  # defensive that did not show up in the execution log...
+  # The panic Bear shift used to be a literal 25 with no name=, the only
+  # threshold in either Feral file that was not a slider.
   panic_bear_hp_pct:
     label: "Panic Bear Form HP %"
     section: "Defensive HP Percentage"
@@ -252,7 +253,7 @@ lists:
     - interact_target,delay=350,if=config.engine_loot_nearby&target.lootable&target.range<=5
     - interact_target,delay=350,if=config.engine_loot_nearby&loot_nearby
     - interact_mouseover,delay=350,if=config.engine_loot_nearby&mouseover.lootable&mouseover.range<=5
-    # Melee-only, and this file IS melee:
+    # Melee-only, and this file IS melee: keeps auto-attack running.
     - attack_target,off_gcd=true,delay=100,if=player.combat&target.exists&target.attackable&target.alive&target.in_melee&!player.auto_attacking
 
     - remove_corruption.player,delay=500,name="Remove Corruption (Self)",if=config.auto_dispel_self&player.dispelable.list
@@ -331,6 +332,7 @@ lists:
     - shred,name="Shred (Sudden Ambush)",if=buff.sudden_ambush.up&hero_tree.druid_of_the_claw
     - rake,if=(buff.tigers_fury.up|dot.rake.remains<cooldown.tigers_fury.remains)&(dot.rake.refreshable&(buff.tigers_fury.up|!var.rake_tf)|dot.rake.remains<2|buff.tigers_fury.up&!var.rake_tf)
     # Lunar Inspiration, live for the first time on the Wildstalker string:
+    # worth +1.78% over the plain `refreshable` version below it.
     - moonfire,if=talent.lunar_inspiration&(buff.tigers_fury.up|dot.moonfire.remains<cooldown.tigers_fury.remains)&(dot.moonfire.refreshable&(buff.tigers_fury.up|!var.moonfire_tf)|dot.moonfire.remains<2|buff.tigers_fury.up&!var.moonfire_tf)
     - shred
 
@@ -360,10 +362,16 @@ lists:
 
     - shred,if=player.combat&target.attackable&target.in_melee&buff.cat_form.down&talent.fluid_form.enabled
     - rake,if=player.combat&target.attackable&target.in_melee&buff.cat_form.down&talent.fluid_form.enabled
+    # enemies.40y is BARE on purpose - not enemies.combat.40y. This runs before
+    # the pull, where the combat-filtered count is 0 by definition and the line
+    # would be dead. Do not "standardise" it.
     - cat_form,range_check=none,if=buff.cat_form.down&(target.attackable|enemies.40y)
 
     # Prowl cannot be cast in combat — pre-pull opener only. See the M+ file
     # for the full note on why this needs an explicit !player.combat.
+    # enemies.40y is BARE on purpose - not enemies.combat.40y. This runs before
+    # the pull, where the combat-filtered count is 0 by definition and the line
+    # would be dead. Do not "standardise" it.
     - prowl,range_check=none,if=!player.combat&!var.bs_inc&buff.prowl.down&buff.shadowmeld.down&(target.attackable|enemies.40y)
 
   interrupts:

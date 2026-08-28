@@ -14,7 +14,7 @@
 # most of what looks improvable here was tried and reverted.
 # =============================================================================
 
-version: "2.14.0"
+version: "2.14.1"
 author: Ferraz
 patch: "12.1"
 spec: 102
@@ -29,7 +29,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-08-27 | Patch: 12.1 | Version: 2.14.0"
+    text: "Last update: 2026-08-27 | Patch: 12.1 | Version: 2.14.1"
 
   # Exact string every number here was measured against — Elune's Chosen, not Grove.
   recommended_talents:

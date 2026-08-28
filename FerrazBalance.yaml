@@ -48,7 +48,7 @@
 # provisional.
 # =============================================================================
 
-version: "4.6.0"
+version: "4.6.1"
 author: Ferraz
 patch: "12.1"
 spec: 102
@@ -65,7 +65,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-08-27 | Patch: 12.1 | Version: 4.6.0"
+    text: "Last update: 2026-08-27 | Patch: 12.1 | Version: 4.6.1"
 
   # Reference build. The measured numbers assume this exact string.
   recommended_talents:

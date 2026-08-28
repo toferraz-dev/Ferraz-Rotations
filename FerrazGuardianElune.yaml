@@ -12,7 +12,7 @@
 # most of what looks improvable here was tried and reverted.
 # =============================================================================
 
-version: "1.9.0"
+version: "1.9.1"
 patch: "12.1"
 spec: 104
 name: Guardian Druid Ferraz M+
@@ -27,7 +27,10 @@ entry: main
 
 # SPELL OVERRIDES — AND-ed into every occurrence of that spell in the file.
 spell_overrides:
-  # Maul and Mangle deliberately NOT overridden globally:
+  # Maul and Mangle deliberately NOT overridden globally: an old Mangle
+  # override (Gore+low rage+Thrash-on-CD+<=3 enemies, all at once) cut it from
+  # Maul and Mangle are deliberately NOT overridden globally: the override cut
+  # them from ~78 to ~15 casts a fight.
 
   # Blocks re-suggesting Incarnation while its own buff is up.
   incarnation_guardian_of_ursoc: "!buff.incarnation_guardian_of_ursoc.up"
@@ -47,7 +50,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-08-27 | Patch: 12.1 | Version: 1.9.0"
+    text: "Last update: 2026-08-27 | Patch: 12.1 | Version: 1.9.1"
 
   # Exact string every number here was measured against (sim/Tassiana_guardian.simc).
   recommended_talents:
@@ -264,7 +267,7 @@ variables:
   # user's AoE toggle.
   aoe_mode: enemies.combat.8y>=2&state.aoe
 
-  # Big hit predicted -> routes rage to Ironfur over Raze/Maul. Unmeasured:
+  # Big hit predicted -> routes rage to Ironfur over Raze/Maul.
   # SimC has no equivalent prediction, treats this as permanently false.
   heavy_incoming: incoming.mitigated.pct>=config.ironfur_dmg_pct
 
@@ -286,7 +289,7 @@ lists:
     - interact_target,delay=350,if=config.engine_loot_nearby&target.lootable&target.range<=5
     - interact_target,delay=350,if=config.engine_loot_nearby&loot_nearby
     - interact_mouseover,delay=350,if=config.engine_loot_nearby&mouseover.lootable&mouseover.range<=5
-    # Melee-only, and this file IS melee:
+    # Melee-only, and this file IS melee: keeps auto-attack running.
     - attack_target,off_gcd=true,delay=100,if=player.combat&target.exists&target.attackable&target.alive&target.in_melee&!player.auto_attacking
 
     - remove_corruption.player,delay=500,name="Remove Corruption (Self)",if=config.auto_dispel_self&player.dispelable.list
@@ -372,7 +375,8 @@ lists:
     - moonfire,name="Moonfire (maintain)",if=target.valid&dot.moonfire.refreshable
     - 77758,name="Thrash (Lunar Calling)",range_check=mob_count_8y,if=cooldown.77758.ready&talent.lunar_calling.enabled
 
-    # Must stay a real if=:
+    # Must stay a real if=: target_if is a SimC modifier that does NOT exist
+    # in Simia (absent from all stepModifiers).
     - 77758,name="Thrash (stacks)",range_check=mob_count_8y,if=cooldown.77758.ready&(dot.thrash.refreshable|dot.thrash.stack<5&talent.flashing_claws.rank=2|dot.thrash.stack<4&talent.flashing_claws.rank=1|dot.thrash.stack<3&!talent.flashing_claws.enabled)
 
     # Dead while Wildpower Surge is untalented (removing measured -0.04%, nothing).
@@ -412,9 +416,13 @@ lists:
 
     - mark_of_the_wild,range_check=none,if=(buff.mark_of_the_wild.down.any|action.mark_of_the_wild.overlayed)&lastcast.mark_of_the_wild>=10
     # !cat_form yields to the weave below so they don't fight each other.
+    # enemies.40y is BARE on purpose - not enemies.combat.40y. This runs before
+    # the pull, where the combat-filtered count is 0 by definition and the line
+    # would be dead. Do not "standardise" it.
     - bear_form,range_check=none,if=buff.bear_form.down&!buff.cat_form.up&(target.attackable|enemies.40y)
 
-    # --- Heart of the Wild weave — biggest block in the file:
+    # --- Heart of the Wild weave — biggest block in the file: -15%
+    # DungeonSlice if removed.
     - cat_form,name="Cat Form (HotW)",range_check=none,if=var.hotw_weave&buff.cat_form.down
     - heart_of_the_wild,name="Heart of the Wild",range_check=none,ignore_cds_toggle=true,if=buff.cat_form.up&cooldown_bypass.heart_of_the_wild.ready&target.valid&target.attackable
     - 1261868,name="Heart of the Wild (cat morph)",range_check=none,ignore_cds_toggle=true,if=buff.cat_form.up&cooldown_bypass.heart_of_the_wild.ready&target.valid&target.attackable
