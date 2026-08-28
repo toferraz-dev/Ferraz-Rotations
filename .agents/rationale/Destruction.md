@@ -779,3 +779,35 @@ the bug that silently disabled four rotations in this repo.
 ```
 --- Damage priority: moving first (instant-only), then stationary. ---
 ```
+
+
+---
+
+## Moved out of the YAML on 2026-08-28
+
+The rotation files had grown back to roughly half comment while the root
+cleanse and Incarnation work was going on. These blocks were trimmed to a
+line or two each in the YAML; the full text is kept here.
+
+---
+
+### version: "1.0.2"
+
+`FerrazDestruction.yaml` line 1
+
+```
+=============================================================================
+Destruction Warlock Ferraz M+ - spec 267 - patch 12.1.
+=============================================================================
+
+Lists (entry point: main):
+  engine                  pet_support             interrupts              dispels
+  defensives              trinkets                racials                 st
+  aoe                     moving_st               moving_aoe              main
+
+WHY ANY OF IT IS THE WAY IT IS: .agents/rationale/Destruction.md
+That file carries every measurement, every rejected alternative and every
+bug this file has already been through. Read it before changing a line -
+most of what looks improvable here was tried and reverted.
+=============================================================================
+```

@@ -1148,3 +1148,197 @@ not yet.
 
 --- Damage priority: moving first (instant-only), then stationary. ---
 ```
+
+
+---
+
+## Moved out of the YAML on 2026-08-28
+
+The rotation files had grown back to roughly half comment while the root
+cleanse and Incarnation work was going on. These blocks were trimmed to a
+line or two each in the YAML; the full text is kept here.
+
+---
+
+### version: "4.9.0"
+
+`FerrazBalance.yaml` line 1
+
+```
+=============================================================================
+Balance Druid - spec 102 - patch 12.1 (Midnight) - Elune's Chosen, M+.
+=============================================================================
+
+Lists, in the order `main` calls them:
+  main            entry point: plumbing, target guards, form, then delegates
+  heal_support    Mark of the Wild, Thorn Bloom
+  defensives      Barkskin, Bear Form/HotW/Frenzied Regen, root cleanse
+  interrupts      Solar Beam (target/mouseover/focus)
+  dispels         Remove Corruption, Soothe (target and mouseover)
+  trinkets        trinkets + combat potion, tied to the burst window
+  moving_st/aoe   instant-only priority while moving
+  ec_st / aoe     stationary damage priority, 1 / 2+ enemies
+  mouseover_dots  called from `aoe`, spreads DoTs without changing target
+
+Priority:
+  ST   DoTs -> Eclipse -> Incarnation -> Fury of Elune -> free procs
+       -> Starsurge -> Starfire
+  AoE  anti-cap Starfall -> DoTs -> Eclipse -> Incarnation -> Fury of Elune
+       -> free procs -> Starfall -> Starsurge weave -> Starfire
+
+WHY ANY OF IT IS THE WAY IT IS: .agents/rationale/Balance.md
+That file carries every measurement, every rejected alternative and every
+bug this file has already been through. Read it before changing a line -
+most of what looks improvable here was tried and reverted.
+
+REFERENCE BUILD, 4.6.0: the most-used Balance build on WarcraftLogs. It
+replaced Jeannelin's +18 build and moved five nodes:
+  gained  Sundered Firmament, Stellar Amplification, Meteorites
+  lost    Orbit Breaker, Elune's Guidance
+Fluid Form stays, hero tree stays Elune's Chosen, Starweaver is still absent
+so the lines flagged dead for it remain dead.
+
+Losing Elune's Guidance is the change that matters: it shortened the
+Incarnation cooldown, so the charge budget and the useful ttd_incarnation
+both moved. Anything tuned against Incarnation frequency needs re-measuring
+after a build change, not carrying over.
+
+Sundered Firmament is now talented and this file deliberately does NOT gate
+Fury of Elune on it, unlike the raid file. Measured three ways on this build
+and all three lost: the raid's own condition -0.64% AoE-only and -1.42%
+applied to both lists, a bare atmospheric_exposure check -0.79%, and the loss
+holds at 1, 3 and 5 fixed targets. Fury of Elune on cooldown is correct here.
+
+Percentages older than 4.6.0 in .agents/rationale/Balance.md were measured on
+fight_style=DungeonSlice, which Balance does not support - see
+.agents/SIMC_METHODOLOGY.md - and against the previous build. Treat them as
+provisional.
+=============================================================================
+```
+
+---
+
+### ttd_incarnation:
+
+`FerrazBalance.yaml` line 120
+
+```
+Don't spend a long cooldown on trash about to die. Bosses ignore these.
+Re-measured on the 4.6.0 build, 8 seeds, counting Incarnations PER PULL
+rather than just total DPS:
+
+    15s   -          40% of pulls with none, 0% doubled, 0% boss missed
+    20s   +0.37%     40%                     0%          0%
+    25s   +0.61%     40%                     0%          0%
+    30s   +0.75%     41%                     1%          0%
+
+25 is the last value that gains without reintroducing a double. The 40% of
+pulls that get no Incarnation at all is not a gate problem and no condition
+fixes it: 6 casts across 10 pulls is a charge budget, not a decision.
+
+This was briefly set to 20 off the same measurement run against the PREVIOUS
+build, which carried Elune's Guidance. That talent shortened the Incarnation
+cooldown, so charges came back fast enough to double up on a pull; without
+it they no longer do, and the useful value moved.
+```
+
+---
+
+### bear_defensive_active: health.effective.pct<=config.frenzied_regen_hp|(config.hotw_bear_defensive&health.effective.pct<=config.hotw_bear_hp&(cooldown.heart_of_the_wild.ready|buff.heart_of_the_wild.up))
+
+`FerrazBalance.yaml` line 442
+
+```
+The Bear defensive still wants you in Bear. Mirrors both branches of the
+Panic Bear Form line, so the exit gate below can never contradict it.
+
+Effective health (healthPct - healAbsorbPct + incomingHealsPct), restored in
+4.7.2. It was swapped to real health in 4.7.0 to stop the rotation shifting
+to Bear constantly - but that turned out to be the Root Cleanse pair, not
+this. The swap fixed nothing and was reverted.
+
+Entry and exit must keep reading the SAME metric. Mismatching them is what
+produced the Bear/Moonkin loop in 189c467.
+```
+
+---
+
+### druid_shapeshift_root: player.debuff.root.up|player.debuff.snare.up
+
+`FerrazBalance.yaml` line 455
+
+```
+Debuffs a DRUID SHAPESHIFT actually removes: roots and snares, and nothing
+else.
+
+debuff.root and debuff.snare are Simia's own mechanic categories. Neither is
+in expression-catalog.json, but both are used by the shipped rotations -
+community_Holy.yaml gates Blessing of Freedom on
+(cycle.debuff.snare.up|cycle.debuff.root.up) - and debuff.curse is the same
+mechanism with 10 uses. Absent from the catalog is not evidence of invalid;
+see section 12 of SIMIA_DOCUMENTATION.md.
+
+NOT debuff_list.freedom. _casts.yaml documents that tag as "Needs
+freedom/root break", which is what a Blessing of Freedom clears. Four of its
+36 entries are neither root nor snare and a shift does nothing to them -
+Ritual Sacrifice (1259789) is a Stun, Hearty Bellow (1235125), Fel Beam
+(1218187) and Gravitic Orbs (1223298) carry no mechanic at all. Any of them
+left the gate true after the shift, so the rotation kept paying globals to
+break a root it could not break. Caught in game by snapshot on the Balance
+file: debuff_list.freedom.up = 1 [PASS] with nothing shapeshiftable.
+
+This replaced a hand-built list of the 32 root/snare ids from that same
+audit (see 2f141fe). The categories cover new content on their own; the list
+would have needed editing every patch.
+
+UNVERIFIED IN GAME. If these do not resolve the variable is simply false and
+the cleanse stops firing - no loop, just a lost utility. Confirm with
+/simia snapshot while rooted: the trace should show the gate PASS.
+```
+
+---
+
+### - bear_form,name="Root Cleanse (to Bear)",line_cd=8,if=config.root_cleanse&var.druid_shapeshift_root&!player.stunned&!buff.bear_form.up
+
+`FerrazBalance.yaml` line 583
+
+```
+Root cleanse needs a form CHANGE, so two lines: one line would loop when
+you are already in the form it suggests.
+
+player.rooted, NOT debuff_list.freedom.up. _casts.yaml documents that tag
+as "Needs freedom/root break" - a list of debuffs a Blessing of Freedom
+would clear, which is NOT the same as what a shapeshift clears. Ethereal
+Shackles is tagged [tank, magical, freedom]; shifting does nothing to a
+magical root. So the gate stayed true after the shift, the two lines
+ping-ponged Bear/Cat, and in game it read as turning into a bear
+constantly. Confirmed from a snapshot: debuff_list.freedom.up = 1 [PASS]
+on Root Cleanse (to Bear) with nothing to cleanse.
+
+line_cd caps the damage if it happens anyway. player.rooted is tighter but
+still cannot tell a magical root from a physical one, so a root the shift
+cannot break would loop again - at one attempt every 8s instead of every
+global.
+
+!player.stunned because a stun blocks the shift outright. Copied from
+FerrazRestoDruidRaid.yaml, which already had this right.
+```
+
+---
+
+### - return,if=buff.bear_form.up&var.bear_defensive_active
+
+`FerrazBalance.yaml` line 730
+
+```
+Nothing below may cast while the Bear defensive is holding you in Bear.
+Every damage spell cancels the form, and Panic Bear Form then pays another
+global to re-enter it.
+
+This sits directly under `defensives` and ABOVE interrupts on purpose.
+It used to sit under `trinkets`, which left Solar Beam free to cancel the
+form the shift had just paid for - the fuzzer found that in the current
+file after the first version of this guard was supposed to have fixed it.
+Dispels cancel the form the same way. Inside the Bear window survival
+outranks the kick; the window is short and health-gated.
+```
