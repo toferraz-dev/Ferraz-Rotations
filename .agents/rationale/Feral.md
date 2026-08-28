@@ -446,3 +446,70 @@ auto_combat.player found elsewhere. This gate's clear intent is a
 target-validity guard before the DPS lines below, matching the pattern
 Balance/Guardian use ahead of their own damage lists.
 ```
+
+
+---
+
+## Moved out of the YAML on 2026-08-28
+
+The rotation files had grown back to roughly half comment while the root
+cleanse and Incarnation work was going on. These blocks were trimmed to a
+line or two each in the YAML; the full text is kept here.
+
+---
+
+### version: "2.12.0"
+
+`FerrazFeral.yaml` line 1
+
+```
+=============================================================================
+Feral Druid Ferraz M+ - spec 103 - patch 12.1.
+=============================================================================
+
+Lists (entry point: main):
+  engine                  defensives              cooldown                finisher
+  aoe_finisher            builder                 aoe_builder             heal_support
+  form                    interrupts              predatory_swiftness     main
+
+WHY ANY OF IT IS THE WAY IT IS: .agents/rationale/Feral.md
+That file carries every measurement, every rejected alternative and every
+bug this file has already been through. Read it before changing a line -
+most of what looks improvable here was tried and reverted.
+=============================================================================
+```
+
+---
+
+### druid_shapeshift_root: player.debuff.root.up|player.debuff.snare.up
+
+`FerrazFeral.yaml` line 295
+
+```
+Debuffs a DRUID SHAPESHIFT actually removes: roots and snares, and nothing
+else.
+
+debuff.root and debuff.snare are Simia's own mechanic categories. Neither is
+in expression-catalog.json, but both are used by the shipped rotations -
+community_Holy.yaml gates Blessing of Freedom on
+(cycle.debuff.snare.up|cycle.debuff.root.up) - and debuff.curse is the same
+mechanism with 10 uses. Absent from the catalog is not evidence of invalid;
+see section 12 of SIMIA_DOCUMENTATION.md.
+
+NOT debuff_list.freedom. _casts.yaml documents that tag as "Needs
+freedom/root break", which is what a Blessing of Freedom clears. Four of its
+36 entries are neither root nor snare and a shift does nothing to them -
+Ritual Sacrifice (1259789) is a Stun, Hearty Bellow (1235125), Fel Beam
+(1218187) and Gravitic Orbs (1223298) carry no mechanic at all. Any of them
+left the gate true after the shift, so the rotation kept paying globals to
+break a root it could not break. Caught in game by snapshot on the Balance
+file: debuff_list.freedom.up = 1 [PASS] with nothing shapeshiftable.
+
+This replaced a hand-built list of the 32 root/snare ids from that same
+audit (see 2f141fe). The categories cover new content on their own; the list
+would have needed editing every patch.
+
+UNVERIFIED IN GAME. If these do not resolve the variable is simply false and
+the cleanse stops firing - no loop, just a lost utility. Confirm with
+/simia snapshot while rooted: the trace should show the gate PASS.
+```

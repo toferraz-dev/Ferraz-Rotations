@@ -712,3 +712,91 @@ not yet.
 
 --- Damage priority: burst ramp, then moving, then stationary. ---
 ```
+
+
+---
+
+## Moved out of the YAML on 2026-08-28
+
+The rotation files had grown back to roughly half comment while the root
+cleanse and Incarnation work was going on. These blocks were trimmed to a
+line or two each in the YAML; the full text is kept here.
+
+---
+
+### version: "2.16.0"
+
+`FerrazBalanceRaid.yaml` line 1
+
+```
+=============================================================================
+Balance Druid Ferraz Raid - spec 102 - patch 12.1.
+=============================================================================
+
+Lists (entry point: main):
+  engine                  mouseover_dots          dispels                 interrupts
+  trinkets                defensives              heal_support            moving_st
+  moving_aoe              st                      aoe                     opener_st
+  opener_aoe              main
+
+WHY ANY OF IT IS THE WAY IT IS: .agents/rationale/BalanceRaid.md
+That file carries every measurement, every rejected alternative and every
+bug this file has already been through. Read it before changing a line -
+most of what looks improvable here was tried and reverted.
+=============================================================================
+```
+
+---
+
+### druid_shapeshift_root: player.debuff.root.up|player.debuff.snare.up
+
+`FerrazBalanceRaid.yaml` line 287
+
+```
+Debuffs a DRUID SHAPESHIFT actually removes: roots and snares, and nothing
+else.
+
+debuff.root and debuff.snare are Simia's own mechanic categories. Neither is
+in expression-catalog.json, but both are used by the shipped rotations -
+community_Holy.yaml gates Blessing of Freedom on
+(cycle.debuff.snare.up|cycle.debuff.root.up) - and debuff.curse is the same
+mechanism with 10 uses. Absent from the catalog is not evidence of invalid;
+see section 12 of SIMIA_DOCUMENTATION.md.
+
+NOT debuff_list.freedom. _casts.yaml documents that tag as "Needs
+freedom/root break", which is what a Blessing of Freedom clears. Four of its
+36 entries are neither root nor snare and a shift does nothing to them -
+Ritual Sacrifice (1259789) is a Stun, Hearty Bellow (1235125), Fel Beam
+(1218187) and Gravitic Orbs (1223298) carry no mechanic at all. Any of them
+left the gate true after the shift, so the rotation kept paying globals to
+break a root it could not break. Caught in game by snapshot on the Balance
+file: debuff_list.freedom.up = 1 [PASS] with nothing shapeshiftable.
+
+This replaced a hand-built list of the 32 root/snare ids from that same
+audit (see 2f141fe). The categories cover new content on their own; the list
+would have needed editing every patch.
+
+UNVERIFIED IN GAME. If these do not resolve the variable is simply false and
+the cleanse stops firing - no loop, just a lost utility. Confirm with
+/simia snapshot while rooted: the trace should show the gate PASS.
+```
+
+---
+
+### - call_action_list,name=defensives
+
+`FerrazBalanceRaid.yaml` line 551
+
+```
+Nothing below may cast while the Bear defensive is holding you in Bear.
+Every damage spell cancels the form, and Panic Bear Form then pays another
+global to re-enter it.
+
+The call below runs first, then this guard, then everything else. It
+sits under `defensives` and ABOVE interrupts on purpose.
+It used to sit under `trinkets`, which left Solar Beam free to cancel the
+form the shift had just paid for - the fuzzer found that in the current
+file after the first version of this guard was supposed to have fixed it.
+Dispels cancel the form the same way. Inside the Bear window survival
+outranks the kick; the window is short and health-gated.
+```
