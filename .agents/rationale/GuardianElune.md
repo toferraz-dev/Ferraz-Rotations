@@ -723,3 +723,43 @@ bug this file has already been through. Read it before changing a line -
 most of what looks improvable here was tried and reverted.
 =============================================================================
 ```
+
+## HotW weave: added the forward-looking gates on 2026-08-30 (1.11.0)
+
+Reported symptom: the weave fires at bad moments — the character drops to Cat
+Form right as the tank is about to be hit.
+
+Cause: `var.hotw_weave` only asked *"am I healthy right now?"*
+(`health.pct>=config.hotw_hp_pct`). Nothing in the gate looked forward. The file
+already computed two damage predictors and used neither here:
+
+- `var.heavy_incoming` (`incoming.mitigated.pct>=config.ironfur_dmg_pct`,
+  defined for the rage-routing decision)
+- `variable.tank_buster_remains` (Encounter Timeline, set in `set_tank_var`,
+  consumed only by the Barkskin `spell_override`)
+
+At 100% HP with a swing inbound the old gate passed, so the weave shed Bear
+armour and Bear stamina at the worst possible instant.
+
+Three checks added, one config each so any of them can be set to 0 to restore
+the previous behaviour:
+
+| Check | Config | Default | Reason |
+|---|---|---|---|
+| `buff.ironfur.remains>=config.hotw_ironfur_remains` | `hotw_ironfur_remains` | 4 | Was `buff.ironfur.up`, which accepts 0.3s left. The weave costs 3-4 GCDs (Cat Form, HotW, morph, Bear Form), so a nearly-expired Ironfur drops mid-weave. |
+| `!var.heavy_incoming` | reuses `ironfur_dmg_pct` | 20 | Predicted damage. |
+| `variable.tank_buster_remains>config.hotw_buster_window` | `hotw_buster_window` | 6 | Covers the weave duration plus a GCD of margin. `set_tank_var` is called at the top of `main`, above the weave lines, so the value is fresh on the same pass. |
+| `target.time_to_die>=config.hotw_min_ttd` | `hotw_min_ttd` | 10 | HotW lasts 45s. Spending it on a pack about to die throws the cooldown away. |
+
+**Not measured, and not measurable here.** SimC models neither
+`incoming.mitigated` nor `encounter.next_tank` — it treats both as permanently
+false, so `var.heavy_incoming` and the buster gate are inert in every sim this
+repo can run. Only `target.time_to_die` and the Ironfur-remains check have any
+sim effect at all, and both can only *reduce* weave count. This is a survival
+change that is invisible to the sim and whose DPS cost is bounded by the real
+time the gates spend blocking. Judge it in game, not in a profileset.
+
+The `Bear Form (post-HotW)` escape hatch was deliberately left alone. It already
+bails on HP, target validity and melee range; adding the buster check there
+would be right in principle, but the escape only matters once the weave has
+started, and holding the *entry* is the cheaper fix.
