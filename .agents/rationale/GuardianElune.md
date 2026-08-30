@@ -763,3 +763,77 @@ The `Bear Form (post-HotW)` escape hatch was deliberately left alone. It already
 bails on HP, target validity and melee range; adding the buster check there
 would be right in principle, but the escape only matters once the weave has
 started, and holding the *entry* is the cheaper fix.
+
+## Trinkets: dropped `.sync` for a plain TTD gate on 2026-08-30 (1.12.0)
+
+Was:
+
+```yaml
+- trinket_1,if=trinket_1.sync
+- trinket_2,if=trinket_2.sync
+```
+
+Two bare lines, no config, no TTD, no on-use guard — the only one of the eight
+rotations in this repo with nothing configurable about trinkets.
+
+`trinket_X.sync` is not just "off cooldown". Per `_trinkets.yaml`, it is that
+file's per-item logic **AND** a burst check, and per `_spells.yaml` the burst
+window for a Guardian is exactly:
+
+```yaml
+- buff.berserk.remains>=5
+- buff.incarnation_guardian_of_ursoc.remains>=5
+```
+
+**Heart of the Wild is not in `burst_buffs`.** And the `cooldowns` list here
+deliberately withholds Berserk and Incarnation while the HotW weave is pending:
+
+```yaml
+- berserk,if=target.valid&(!config.auto_hotw|!talent.heart_of_the_wild|!cooldown_bypass.heart_of_the_wild.ready)
+```
+
+So HotW ready → Incarnation held → no burst buff → the trinket is held with it.
+The biggest damage window in the file (−15% DungeonSlice if removed) got no
+trinket support at all.
+
+This is the same trap the combat potion already hit and already documented:
+`potion_sync_burst` OFF measured **+1.89%**, for exactly this reason. The
+trinket lines had no equivalent escape hatch.
+
+### The gear as it stands
+
+| Slot | Item | |
+|---|---|---|
+| 1 | Tattered Amani War Banner (273797) | on-use, 15s buff / 90s CD, listed in `_trinkets.yaml` with `check_burst: true` |
+| 2 | Gaze of the Alnseer (249343) | **passive** — SimC recognises the item but it produces no action and no buff, so the line was inert either way. Not listed in `_trinkets.yaml`, which means it would default to the burst check too |
+
+Opportunity cost, 300s Patchwerk on SimC's own APL (which uses the banner
+freely): banner 3.75 casts against Incarnation 3.03 casts at 33.9% uptime.
+Chained to burst the banner caps at ~3 and only when the two align — roughly
+20% of its uses lost on a long single-target fight, and worse in M+ where pulls
+are short and Incarnation is being held on purpose.
+
+**That bound is not a measurement of the gate.** SimC has no `.sync`; it is a
+Simia-side concept. Those counts say how much room the banner has, not what our
+condition did with it.
+
+### What replaced it
+
+```yaml
+trinkets_ttd_ok: (target.boss|target.time_to_die>=config.ttd_trinkets|fight_remains>=config.ttd_trinkets)
+
+- trinket_1,name="Trinket 1",if=trinket_1.ready&var.trinkets_ttd_ok
+- trinket_2,name="Trinket 2",if=trinket_2.ready&var.trinkets_ttd_ok
+```
+
+`ttd_trinkets` defaults to 10s, matching Balance and Feral. Same variable shape
+as those files, so the three read alike.
+
+Deliberately **not** added, because the instruction was TTD and only TTD:
+`use_trinket_1`/`use_trinket_2` on/off switches (the other seven rotations have
+them, this one still does not), and any burst alignment — including the middle
+option of `trinket_1.sync|buff.heart_of_the_wild.up`, which would have kept
+Simia's per-item logic while letting the HotW window through.
+
+Trinkets now fire on cooldown, subject only to fight length. On a passive
+trinket the line simply never resolves.
