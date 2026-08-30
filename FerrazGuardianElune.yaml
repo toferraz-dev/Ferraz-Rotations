@@ -17,7 +17,7 @@
 # most of what looks improvable here was tried and reverted.
 # =============================================================================
 
-version: "1.10.1"
+version: "1.11.0"
 patch: "12.1"
 spec: 104
 name: Guardian Druid Ferraz M+
@@ -53,7 +53,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-08-28 | Patch: 12.1 | Version: 1.10.1"
+    text: "Last update: 2026-08-30 | Patch: 12.1 | Version: 1.11.0"
 
   # Exact string every number here was measured against (sim/Tassiana_guardian.simc).
   recommended_talents:
@@ -141,6 +141,32 @@ config:
     max: 100
     default: 80
     description: "Stay in Bear Form below this health. Leaving Bear drops bear armor and stamina."
+  # The three below hold the weave when the NEXT few seconds look bad, not just
+  # the current HP. Set any of them to 0 to disable that check.
+  hotw_ironfur_remains:
+    section: "Cooldowns"
+    label: "Heart of the Wild (min Ironfur remaining)"
+    type: slider
+    min: 0
+    max: 15
+    default: 4
+    description: "Seconds of Ironfur that must be left before leaving Bear Form. The weave costs 3-4 GCDs, so a nearly-expired Ironfur means the armor drops while you are in Cat."
+  hotw_buster_window:
+    section: "Cooldowns"
+    label: "Heart of the Wild (tank buster window)"
+    type: slider
+    min: 0
+    max: 20
+    default: 6
+    description: "Skip the weave when the Encounter Timeline predicts a tank buster within this many seconds. Same prediction the Barkskin hold uses."
+  hotw_min_ttd:
+    section: "Cooldowns"
+    label: "Heart of the Wild (minimum target TTD)"
+    type: slider
+    min: 0
+    max: 60
+    default: 10
+    description: "Skip the weave when the target dies sooner than this. Heart of the Wild lasts 45s; spending it on a pack that is about to die wastes the cooldown."
   # Combat potion. The file carried NO potion line at all before 1.1, which is
   # why every variant below beats the old baseline by so much.
   use_potion:
@@ -275,7 +301,9 @@ variables:
 
   # Gate for the HotW weave. target.in_melee matters: without it the weave
   # fired while running to the pack and burned the cooldown out of range.
-  hotw_weave: config.auto_hotw&talent.heart_of_the_wild&cooldown_bypass.heart_of_the_wild.ready&target.valid&target.attackable&target.in_melee&player.combat&combat.time>=config.hotw_delay&health.pct>=config.hotw_hp_pct&buff.ironfur.up&!buff.incarnation_guardian_of_ursoc.up&!buff.berserk.up
+  # Health alone is not enough: the last three checks look at the next few
+  # seconds (incoming damage, predicted buster, target TTD) instead.
+  hotw_weave: config.auto_hotw&talent.heart_of_the_wild&cooldown_bypass.heart_of_the_wild.ready&target.valid&target.attackable&target.in_melee&player.combat&combat.time>=config.hotw_delay&health.pct>=config.hotw_hp_pct&buff.ironfur.remains>=config.hotw_ironfur_remains&!var.heavy_incoming&variable.tank_buster_remains>config.hotw_buster_window&target.time_to_die>=config.hotw_min_ttd&!buff.incarnation_guardian_of_ursoc.up&!buff.berserk.up
 
 lists:
   # spell_queue, sanity_checks and auto_target, inlined.
