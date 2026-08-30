@@ -232,6 +232,27 @@ package; there is no 7-Zip on this machine. After updating, repoint every
 harness path and **re-verify the most important recent finding on the new
 binary** before trusting it.
 
+### Strip the GUI after extracting
+
+The nightly ships the Qt desktop app alongside the CLI. `simc.exe` is
+statically linked and needs none of it — verified by running a full Patchwerk
+sim after deleting the lot. Extracting leaves a 539 MB folder; stripped it is
+118 MB, and the CLI is 115 MB of that.
+
+Safe to delete from the extracted folder:
+
+```
+SimulationCraft.exe  QtWebEngineProcess.exe  Qt6*.dll
+dxcompiler.dll  dxil.dll  d3dcompiler_47.dll  opengl32sw.dll
+Welcome.png  Error.html
+resources/  qml/  qmltooling/  platforms/  imageformats/  styles/
+translations/  locale/  iconengines/  networkinformation/  position/
+tls/  generic/
+```
+
+Keep `simc.exe`, `profiles/` and the license files. `tls/` is a Qt network
+plugin, not the CLI's TLS — armory imports still work without it.
+
 ---
 
 ## 7. What a result is allowed to claim

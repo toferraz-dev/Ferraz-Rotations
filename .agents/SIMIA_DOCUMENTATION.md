@@ -1,5 +1,5 @@
 # Simia Rotation — Documentação Completa
-> **Fonte:** https://auth.simia.pro/rotation/ · **Site:** v2.0.0 · **Catálogo:** 1.0.0 (2026-08-10) · **Sincronizado em:** 2026-08-13
+> **Fonte:** https://auth.simia.pro/rotation/ · **Site:** v2.0.0 · **Catálogo:** 1.0.0 (2026-08-10) · **Sincronizado em:** 2026-08-30 (dump de 112 arquivos)
 
 ---
 
@@ -237,6 +237,23 @@ Modificadores controlam como um feitiço é avaliado e lançado. Eles vêm separ
 - `modifier=`: Define/sobrescreve a tecla modificadora (16=Shift, 17=Ctrl, 18=Alt).
 - `snapshot=`: Captura um log de diagnóstico em arquivo `SpellName_YYYYMMDD_HHMMSS.log` no momento em que é sugerido.
 
+### Grupo: Fora do Catálogo (observados no dump de 2026-08-30)
+
+O bloco `stepModifiers` do `expression-catalog.json` lista **26** modificadores.
+Os abaixo aparecem no `simia_data_dump/` e **não** estão nessa lista. Mesma regra
+da seção 12: ausência do catálogo não é prova de invalidade, mas nenhum destes
+foi verificado em jogo por este repositório.
+
+| Modificador | Usos | O que parece fazer | Onde aparece |
+|---|---|---|---|
+| `use_off_gcd=1` | 52 | Variante de `off_gcd=true`. Vários autores usam a forma `use_off_gcd=1` em vez da catalogada. **Não é confirmado que as duas sejam a mesma coisa** — se `use_off_gcd` for ignorado pelo motor, a linha simplesmente consome um GCD normal. As rotações Guardian deste repo dependem disso para o Ironfur. | `community_Argent_Crusade_Holy_Paladin`, `community_Battle_Nurse_Paladin`, Guardian daqui |
+| `use_while_casting=1` | 19 | Permite lançar durante o cast de outro feitiço. Sempre pareado com `use_off_gcd=1` + `interrupt=true` no padrão Fire Blast. | `community_Jecht_Fire_Mage` |
+| `chain=1` | 4 | Encadeia canalizações — mantém o canal rodando em vez de recomeçar. | `community_Shadow_priest___TeK` (Mind Flay) |
+| `interrupt_if=` | 3 | Corta a própria canalização quando a expressão vira verdadeira. Aceita número (`interrupt_if=2`, ticks) e expressão (`interrupt_if=energy.time_to_max<2`). | `community_LPOutlaw_V1`, `community_Shadow_priest___TeK` |
+| `moving=1` | 6 | Marca a linha como utilizável em movimento. Distinto de `ignore_movement=` (catalogado) — nenhum arquivo usa os dois juntos. | `rotation_262.yaml` (**rotação oficial**) |
+| `unit=` | 10 | Unidade fixa por token em vez de `cycle=`/`range_check=`. Valores vistos: `player`, `party1`..`party4`. Uma linha por membro. | `community_Jecht_Fire_Mage` (Remove Curse) |
+| `target_if=` | 1 | Modificador do SimC. **Só aparece uma vez em todo o dump**, num fork da rotação Guardian deste repo, e todas as outras ocorrências no dump estão comentadas como import de APL do SimC. Continua sem evidência de que o motor o implemente — as rotações daqui deliberadamente usam `if=` no lugar. | `community_Ferraz_Guardian_Druid_M___Elunes_` |
+
 ---
 
 ## 4. Estrutura Geral do Arquivo YAML
@@ -411,6 +428,13 @@ copy_macro:
   label: "Copy interrupt macro"
   text: "/cast [@mouseover,harm,nodead][@target] Pummel"
 ```
+
+### Não é um tipo: `bool`
+
+`type: bool` aparece **uma vez** no dump inteiro
+(`community_TeK_s_Derpwizard_Frost_mage.yaml`), contra 327 usos de `checkbox`.
+Um único uso isolado não é um tipo de widget — é um erro de digitação de um
+autor. Use `checkbox`.
 
 
 ---
@@ -1626,7 +1650,7 @@ Consulte o arquivo [expression-catalog.json](file:///c:/Games/Python/Rotations/e
 O `expression-catalog.json` declara **634** expressões, e a seção 11 documenta essas.
 Mas as rotações oficiais e compartilhadas do próprio Simia usam mais do que isso.
 
-A tabela abaixo saiu de uma varredura do `simia_data_dump/` (dump de 2026-08-27,
+A tabela abaixo saiu de uma varredura do `simia_data_dump/` (dump de 2026-08-30,
 112 arquivos) atrás de expressões **estruturais** — as de vocabulário fixo, como
 `player.*`, `enemies.*`, `group.*`, `interrupt.*` — que não aparecem nem no
 catálogo nem no restante deste documento. Formas parametrizadas por magia
@@ -1653,15 +1677,15 @@ combate — a distinção que já causou bug neste repo.
 | --- | --- | --- |
 | `interrupt.stun.aoe.check` | 211 | Filtro do Simia: vale a pena um stun em AoE agora. |
 | `interrupt.cc.check` | 157 | Filtro do Simia para CC (nao-kick). |
-| `interrupt.target.check` | 75 | Kick vale a pena no alvo atual (castando, interrompivel, no alcance, ninguem ja kickou). |
+| `interrupt.target.check` | 74 | Kick vale a pena no alvo atual (castando, interrompivel, no alcance, ninguem ja kickou). |
 | `interrupt.mouseover.check` | 69 | Idem, na unidade sob o mouse. |
 | `interrupt.focus.check` | 67 | Idem, no foco. |
-| `player.ininstancedpve` | 21 | Dentro de masmorra/raide instanciada. NOVO no dump de 2026-08-27. |
+| `player.ininstancedpve` | 21 | Dentro de masmorra/raide instanciada. Apareceu no dump de 2026-08-27. |
 | `enemies.40y` | 17 | Contagem de inimigos em 40y. SEM o filtro de combate que enemies.combat.40y aplica. |
-| `enemies.inrange` | 14 | Inimigos no alcance da habilidade avaliada. |
+| `enemies.inrange` | 13 | Inimigos no alcance da habilidade avaliada. |
 | `player.solo` | 12 | Sem grupo. |
 | `player.group` | 12 | Em grupo. |
-| `interrupt.kick.soon` | 9 | Um kick do grupo esta prestes a sair — nao gaste o seu. |
+| `interrupt.kick.soon` | 8 | Um kick do grupo esta prestes a sair — nao gaste o seu. |
 | `group.in_party` | 9 | Voce esta em party (nao raide). |
 | `player.inopenworld` | 8 | No mundo aberto. |
 | `player.spec_id` | 8 | ID numerico da especializacao. |
@@ -1669,7 +1693,7 @@ combate — a distinção que já causou bug neste repo.
 | `player.aggro` | 4 | Voce tem aggro de algum inimigo. |
 | `enemies.6y` | 4 | Contagem em 6y. |
 | `group.healers.lowest.range` | 4 | Distancia do healer mais ferido. |
-| `player.reflectable.up` | 4 | Voce carrega algo refletivel. |
+| `player.reflectable.up` | 3 | Voce carrega algo refletivel. |
 | `group.any` | 3 | O grupo tem ao menos um membro. |
 | `player.mana.pct` | 3 | Mana em percentual. |
 | `enemies.combat.22y` | 3 | Contagem em combate a 22y — o raio arbitrario e aceito. |
@@ -1678,9 +1702,9 @@ combate — a distinção que já causou bug neste repo.
 | `enemies.combat.any` | 2 | Existe ao menos um inimigo em combate. |
 | `interrupt.8y.any` | 2 | Existe algo interrompivel em 8y. |
 | `player.dispelable.magic` | 2 | Voce tem debuff magico dispelavel. |
-| `player.exists` | 2 | Sanidade: a unidade jogador existe. |
+| `player.exists` | 0 | Sanidade: a unidade jogador existe. **Zerou** no dump de 2026-08-30 (tinha 2 em 27/08) — o arquivo que a usava mudou. Sem uso vivo, não é mais evidência de nada. |
 | `player.meld.up` | 2 | Shadowmeld ativo. |
-| `enemies.near` | 2 | Inimigos proximos. |
+| `enemies.near` | 0 | Inimigos proximos. **Zerou** no dump de 2026-08-30 (tinha 2 em 27/08). Prefira o raio explícito (`enemies.combat.8y`). |
 | `group.dps.lowest.range` | 1 | Distancia do dps mais ferido. |
 | `enemies.around.angle.90.4` | 1 | Inimigos num cone de 90 graus, 4 unidades. |
 | `player.race` | 1 | Raca do personagem. |
@@ -1693,6 +1717,57 @@ combate — a distinção que já causou bug neste repo.
 | `group.moving_count` | 1 | Quantos membros estao se movendo. |
 | `player.blockable.up` | 1 | Voce carrega algo bloqueavel. |
 | `player.hp` | 1 | Vida (usado em _trinkets.yaml). |
+| `group.count` | 385 | Tamanho do grupo. **A expressão mais usada de todo o dump** que não está no catálogo — aparece em `_common.yaml` e em quase toda rotação da comunidade. |
+| `player.dispelable.list` | 29 | Você tem um debuff que a SUA lista de dispel cobre. Usada pelas rotações deste repo no dispel de si mesmo. |
+| `interrupt.stun.focus.check` | 9 | Variante de foco do filtro de stun. O catálogo só traz `interrupt.stun.aoe.check`; as três variantes por unidade abaixo existem igual. |
+| `interrupt.stun.mouseover.check` | 9 | Idem, na unidade sob o mouse. |
+| `interrupt.stun.target.check` | 7 | Idem, no alvo atual. |
+| `player.debuff.snare.up` | 8 | Você está com slow. **Toda ocorrência no dump vem dos arquivos deste repo** — não é evidência independente. Ver aviso abaixo. |
+| `player.health` | 7 | Vida bruta (não percentual). Aparece em `_aura.yaml`. |
+| `player.debuff.root.up` | 6 | Você está enraizado. Mesmo aviso de `player.debuff.snare.up`. |
+| `group.lowest.buff.remains` | 5 | Duração restante do buff no membro mais ferido. |
+| `player.channeling.remains` | 4 | Segundos restantes da própria canalização. |
+| `player.dispelable.list.fireblood` | 3 | Debuff dispelável especificamente pelo racial Fireblood. A forma `player.dispelable.list.RACIAL` filtra pelos tipos que aquele racial limpa. |
+| `group.under_pct_50` | 2 | Quantos membros do grupo estão abaixo de 50% de vida. Família completa vista em `rotation_256.yaml` (**rotação oficial**): `_30`, `_50`, `_75`, `_80`, `_85`, `_90`. O limiar faz parte do nome — não é parametrizável livremente. |
+| `group.lowest` | 1 | O membro mais ferido, usado como prefixo de unidade. |
+| `group.lowest.dispelable.purify_disease` | 1 | O membro mais ferido tem doença dispelável. |
+| `player.dispelable.list.stoneform` | 1 | Idem `fireblood`, para o racial Stoneform. |
+
+### Aviso: as suas próprias rotações não são evidência
+
+O `simia_data_dump/` inclui as rotações da comunidade, e as rotações **deste
+repositório estão publicadas lá** (`community_Balance_Druid_Ferraz_M_`,
+`community_Guardian_Druid_Ferraz_M_`, etc.). Uma contagem de usos que venha só
+desses arquivos não prova nada: é o próprio repo se citando.
+
+Isso vale hoje para `player.debuff.root.up` e `player.debuff.snare.up`, que
+sustentam o Root Cleanse das rotações de druida. As duas seguem **não
+verificadas em jogo** — o teste é um `/simia snapshot` enraizado.
+
+A varredura também achou `community_Ferraz_Guardian_Druid_M___Elunes_.yaml`: um
+fork da Guardian daqui, por outro autor. Ele usa `target_if=` e monta o
+`tank_buster_remains` a partir de encontros nomeados (`encounter.void_slash`,
+`encounter.bone_hack`, `encounter.rampage`) em vez do genérico
+`encounter.next_tank`. Não é fonte oficial, mas mostra que a abordagem por
+encontro nomeado é usada por gente que joga o spec.
+
+### Formas de prefixo e parametrizadas
+
+Estas não entram na tabela por não serem vocabulário fixo, mas aparecem no dump
+e são aceitas:
+
+- **`player.` como prefixo redundante:** `player.buff.X.up`, `player.buff.X.stacks`,
+  `player.buff.X.remains`, `player.debuff.X.up` funcionam igual às formas sem
+  prefixo. `_common.yaml` usa as duas.
+- **`player.casting.SPELL`:** você está lançando aquele feitiço específico.
+  `rotation_63.yaml` (oficial) usa `player.casting.fireball`,
+  `.pyroblast`, `.flamestrike`, `.scorch`; `community_Unknown.yaml` usa o id
+  numérico (`player.casting.19434`). Ou seja, aceita nome e id.
+- **`player.debuff.ID.up.any`:** `_shared.yaml` usa `player.debuff.440313.up.any`
+  para o afixo Devouring Rift.
+
+Uma ocorrência é erro de digitação e não expressão: `player.player.moving`, em
+`community_Vengeance.yaml`.
 
 ### 12.1 Novidades do dump de 2026-08-27
 
