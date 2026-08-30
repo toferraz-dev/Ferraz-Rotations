@@ -17,7 +17,7 @@
 # most of what looks improvable here was tried and reverted.
 # =============================================================================
 
-version: "1.11.0"
+version: "1.12.0"
 patch: "12.1"
 spec: 104
 name: Guardian Druid Ferraz M+
@@ -53,7 +53,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-08-30 | Patch: 12.1 | Version: 1.11.0"
+    text: "Last update: 2026-08-30 | Patch: 12.1 | Version: 1.12.0"
 
   # Exact string every number here was measured against (sim/Tassiana_guardian.simc).
   recommended_talents:
@@ -167,6 +167,19 @@ config:
     max: 60
     default: 10
     description: "Skip the weave when the target dies sooner than this. Heart of the Wild lasts 45s; spending it on a pack that is about to die wastes the cooldown."
+  # === TRINKETS === gated on TTD alone, deliberately not on trinket_X.sync.
+  # .sync AND-s in a burst check, and this file holds Berserk/Incarnation for
+  # the HotW weave, so the trinket waited for a burst that was being delayed.
+  # Same trap the potion hit -- see potion_sync_burst below.
+  ttd_trinkets:
+    label: "Trinkets TTD (seconds)"
+    section: "Time To Die"
+    type: slider
+    min: 5
+    max: 30
+    default: 10
+    description: "Minimum fight time remaining to use trinkets. Bosses ignore it."
+
   # Combat potion. The file carried NO potion line at all before 1.1, which is
   # why every variant below beats the old baseline by so much.
   use_potion:
@@ -298,6 +311,9 @@ variables:
   # Big hit predicted -> routes rage to Ironfur over Raze/Maul.
   # SimC has no equivalent prediction, treats this as permanently false.
   heavy_incoming: incoming.mitigated.pct>=config.ironfur_dmg_pct
+
+  # Bosses ignore the slider; fight_remains covers the no-target case.
+  trinkets_ttd_ok: (target.boss|target.time_to_die>=config.ttd_trinkets|fight_remains>=config.ttd_trinkets)
 
   # Gate for the HotW weave. target.in_melee matters: without it the weave
   # fired while running to the pack and burned the cooldown out of range.
@@ -489,8 +505,8 @@ lists:
     - growl.mouseover,name="Taunt MO",if=mouseover.threat<2&mouseover.combat&mouseover.threat!=-1&mouseover.exists&!player.inraid
 
 
-    - trinket_1,if=trinket_1.sync
-    - trinket_2,if=trinket_2.sync
+    - trinket_1,name="Trinket 1",if=trinket_1.ready&var.trinkets_ttd_ok
+    - trinket_2,name="Trinket 2",if=trinket_2.ready&var.trinkets_ttd_ok
 
     # Second Ironfur trigger outside `bear`, so armour tops up on GCDs the
     # damage lists own. Overlaps the bear-list lines on purpose.
