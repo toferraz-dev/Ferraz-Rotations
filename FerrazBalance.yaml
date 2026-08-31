@@ -5,7 +5,7 @@
 # Lists, in the order `main` calls them:
 #   main            entry point: plumbing, target guards, form, then delegates
 #   heal_support    Mark of the Wild, Thorn Bloom
-#   defensives      Barkskin, Bear Form/HotW/Frenzied Regen, root cleanse
+#   defensives      Barkskin, HotW party heal, Bear/Frenzied Regen, root cleanse
 #   interrupts      Solar Beam (target/mouseover/focus)
 #   dispels         Remove Corruption, Soothe (target and mouseover)
 #   trinkets        trinkets + combat potion, tied to the burst window
@@ -35,7 +35,7 @@
 # DungeonSlice, which Balance does not support, and against the previous build.
 # =============================================================================
 
-version: "4.9.0"
+version: "4.10.0"
 author: Ferraz
 patch: "12.1"
 spec: 102
@@ -52,7 +52,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-08-28 | Patch: 12.1 | Version: 4.9.0"
+    text: "Last update: 2026-08-30 | Patch: 12.1 | Version: 4.10.0"
 
   # Reference build. The measured numbers assume this exact string.
   recommended_talents:
@@ -320,17 +320,17 @@ config:
     max: 100
     default: 30
 
-  # HotW inside Bear Form: extra Stamina/Ironfur/Frenzied Regen charge. Sole
-  # use of the button now — party-heal use was removed to free the CD.
-  hotw_bear_defensive:
-    label: "HotW in Bear Form (Defensive)"
+  # HotW pressed in Moonkin puts a healing HoT on all five party members.
+  # Used to shift to Bear instead, which cost Moonkin uptime and healed nobody.
+  hotw_party_heal:
+    label: "HotW Party Heal (Moonkin)"
     section: "Defensives"
     type: checkbox
-    default: false
-    description: "Shift to Bear as an emergency defensive when Heart of the Wild is ready or already up. Shifting just to shift costs Moonkin uptime for no mitigation, so this only fires when HotW backs it. The Frenzied Regeneration branch above is separate and always active."
+    default: true
+    description: "Press Heart of the Wild in Moonkin Form when a party member drops below the HP% below. It lands a healing HoT on all five players and costs no form change."
 
-  hotw_bear_hp:
-    label: "HotW Bear Defensive HP%"
+  hotw_hp:
+    label: "HotW HP%"
     section: "Defensives"
     type: slider
     min: 0
@@ -411,9 +411,9 @@ variables:
   # Celestial Alignment/Incarnation active — trinkets/potion ride this window.
   cd_active: buff.celestial_alignment.up|buff.incarnation_chosen_of_elune.up
 
-  # Mirrors both branches of Panic Bear Form so the exit gate below can never
-  # contradict it. Entry and exit MUST read the same metric.
-  bear_defensive_active: health.effective.pct<=config.frenzied_regen_hp|(config.hotw_bear_defensive&health.effective.pct<=config.hotw_bear_hp&(cooldown.heart_of_the_wild.ready|buff.heart_of_the_wild.up))
+  # Mirrors Panic Bear Form so the exit gate below can never contradict it.
+  # Entry and exit MUST read the same metric.
+  bear_defensive_active: health.effective.pct<=config.frenzied_regen_hp
 
 
   # Roots and snares only - what a shapeshift actually breaks. NOT
@@ -509,14 +509,11 @@ lists:
 
     # Shift to Bear as its own step so it does not reshift mid-heal.
 
-    # Two independent reasons to be in Bear, each with its own health gate and
-    # its own preconditions. Neither available leaves you in Moonkin.
-    - bear_form,name="Panic Bear Form",if=!buff.bear_form.up&((health.effective.pct<=config.frenzied_regen_hp&cooldown.frenzied_regeneration.ready&buff.frenzied_regeneration.down)|(config.hotw_bear_defensive&health.effective.pct<=config.hotw_bear_hp&(cooldown.heart_of_the_wild.ready|buff.heart_of_the_wild.up)))
+    # Bear is now only ever entered for Frenzied Regeneration.
+    - bear_form,name="Panic Bear Form",if=!buff.bear_form.up&health.effective.pct<=config.frenzied_regen_hp&cooldown.frenzied_regeneration.ready&buff.frenzied_regeneration.down
 
-    # HotW before the heal so Frenzied Regen lands on the bigger pool. Cast by
-    # name AND by the bear morph id - only one resolves per form.
-    - heart_of_the_wild,name="HotW (Bear defensive)",range_check=none,ignore_cds_toggle=true,if=config.hotw_bear_defensive&buff.bear_form.up&health.effective.pct<=config.hotw_bear_hp&!buff.heart_of_the_wild.up
-    - 1261872,name="HotW (Bear morph)",range_check=none,ignore_cds_toggle=true,if=config.hotw_bear_defensive&buff.bear_form.up&health.effective.pct<=config.hotw_bear_hp&!buff.heart_of_the_wild.up
+    # HotW in Moonkin: HoT on all five party members, no form change.
+    - heart_of_the_wild,name="HotW (Party Heal)",range_check=none,ignore_cds_toggle=true,if=config.hotw_party_heal&buff.moonkin_form.up&group.count(cycle.health.effective.pct<config.hotw_hp)>=1
 
     - frenzied_regeneration,if=health.effective.pct<=config.frenzied_regen_hp&buff.bear_form.up
     - barkskin,range_check=none,name="Barkskin (low HP)",if=health.effective.pct<=config.barkskin_hp
@@ -529,8 +526,7 @@ lists:
   # Party utility, called before target guards. Unmeasured (not damage).
   heal_support:
     - mark_of_the_wild,range_check=none,if=(buff.mark_of_the_wild.down.any|action.mark_of_the_wild.overlayed)&lastcast.mark_of_the_wild>=10
-    # Heart of the Wild deliberately absent: the whole CD now belongs to the
-    # Bear-form defensive in `defensives` instead of double-dipping as a heal.
+    # Heart of the Wild is not here: it lives in `defensives`, which runs first.
     - thorn_bloom,name="Thorn Bloom",if=group.count(cycle.health.effective.pct<config.thorn_bloom_threshold)>=config.thorn_bloom_members&target.valid&target.enemy&!target.dead&target.range<=40
 
   # Spreads DoTs onto the mouseover unit without changing target. No target

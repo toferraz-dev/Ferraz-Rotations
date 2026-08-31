@@ -1342,3 +1342,73 @@ file after the first version of this guard was supposed to have fixed it.
 Dispels cancel the form the same way. Inside the Bear window survival
 outranks the kick; the window is short and health-gated.
 ```
+
+## HotW: Bear defensive removed, Moonkin party heal put in its place — 2026-08-30 (4.10.0)
+
+Heart of the Wild pressed in **Moonkin Form** lands a healing HoT on all five
+party members. The file was spending the cooldown on a Bear-form defensive
+instead: it shifted out of Moonkin, took the stamina/max-health morph, and
+healed nobody but the player.
+
+Removed:
+
+```yaml
+- heart_of_the_wild,name="HotW (Bear defensive)",...&buff.bear_form.up&...
+- 1261872,name="HotW (Bear morph)",...&buff.bear_form.up&...
+```
+
+`1261872` is the Bear morph — its tooltip is "Maximum health increased by
+$s1%", which is the whole of what that branch bought.
+
+Replaced by one line, no form change at all:
+
+```yaml
+- heart_of_the_wild,name="HotW (Party Heal)",range_check=none,ignore_cds_toggle=true,if=config.hotw_party_heal&buff.moonkin_form.up&group.count(cycle.health.effective.pct<config.hotw_hp)>=1
+```
+
+Three things fell out with it:
+
+- `Panic Bear Form` loses its second branch. Bear is now entered only for
+  Frenzied Regeneration, so the two-branch structure that 4.x built up (each
+  branch carrying its own health gate and preconditions) collapses back to one.
+- `bear_defensive_active` loses the HotW clause for the same reason. It still
+  mirrors Panic Bear Form exactly, which is the invariant that matters: entry
+  and exit must read the same metric.
+- `heal_support`'s note that "the whole CD now belongs to the Bear-form
+  defensive" is gone — it was describing the arrangement this change undoes.
+
+### Config rename
+
+`hotw_bear_defensive` → `hotw_party_heal`, `hotw_bear_hp` → `hotw_hp`. The keys
+changed because the meaning did; leaving "bear" in the name of a line that never
+touches Bear Form would be worse than the reset. **Saved values for the old keys
+do not carry over** — the new toggle starts at its default of ON, where the old
+one was OFF.
+
+### Not measured, and not measurable
+
+SimC has no party-healing model for this, and the deeper problem is that it does
+not model the ability at all for Balance: adding `heart_of_the_wild` to the M+
+APL fires it (2.88 executes on a Patchwerk run) while producing **no buff and no
+DPS change** — 146,952 → 147,000, inside the ±291 error. The action exists in the
+sim and does nothing. Nothing about this line can be judged from a profileset.
+
+### A spell-data trap, recorded so it is not walked into twice
+
+Two live spells share the name Heart of the Wild:
+
+| id | CD | What the data says |
+|---|---|---|
+| 108291 | 300s | "Damage of your Balance spells increased by 30%, and Starsurge is instant" |
+| 1261867 | 120s | "Perform a powerful off-role ability depending on your currently active shapeshift form" |
+
+Only **1261867** carries a `Talent Entry` (class tree, row 10, col 5) — it is the
+one on the 12.1 tree. 108291 is the older version still sitting in the DBC, and
+reading it first suggests HotW is a +30% damage cooldown for Balance, which it is
+not on this patch. The form morphs hang off 1261867: `1261868` Cat (what the
+Guardian file weaves for), `1261870` Moonkin, `1261872` Bear.
+
+`_morphs.yaml` has `heart_of_the_wild: 1261868` **commented out**, which is why
+this file and the Guardian one cast HotW by name rather than relying on Simia to
+resolve the morph. The new line casts by name only — the Moonkin morph id was
+not verified in game, and guessing an id here buys nothing.
