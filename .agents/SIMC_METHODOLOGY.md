@@ -255,6 +255,32 @@ plugin, not the CLI's TLS — armory imports still work without it.
 
 ---
 
+## 6b. Check fight-style support WITH the route attached
+
+Balance supports DungeonRoute but not DungeonSlice. **Elemental Shaman supports
+neither.** Guardian supports Patchwerk, DungeonSlice and DungeonRoute. Assume
+nothing per spec; probe it.
+
+The probe itself has a trap. Passing `fight_style=DungeonRoute` with **no route
+file** prints no warning at all — the validation only runs once `raid_events`
+pull entries exist, so a bare style check returns a false pass. Probe with the
+route attached:
+
+```bash
+./sim/tools/simc-*/simc.exe PROFILE.simc sim/dungeon_route.simc fight_style=DungeonRoute iterations=20 threads=8 2>&1 | grep -c "does not support"
+```
+
+0 means supported. Argument order does not matter; putting `fight_style=` first
+gives the same answer. Run it against a profile known to pass (a druid one) as a
+control before believing a failure.
+
+When a spec has no dungeon style, M+ numbers come from multi-target Patchwerk
+(`desired_targets=N`). That models a static pull of N mobs and nothing else — no
+pull cadence, no cooldown budgeting across a route, no travel. Say so in the
+writeup instead of letting the number imply a route.
+
+---
+
 ## 7. What a result is allowed to claim
 
 Absolute DPS is meaningless here. The Restoration harness runs on SimC's MID1

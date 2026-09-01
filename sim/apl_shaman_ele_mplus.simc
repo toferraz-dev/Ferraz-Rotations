@@ -1,0 +1,57 @@
+# Mirror of FerrazShamanEle.yaml 1.0.0 (M+ / DungeonRoute).
+#
+# DIVERGENCES — the sim cannot see these, so the lines are absent, not wrong:
+#   moving_st / moving_aoe    SimC never moves
+#   mouseover_dots            no mouseover model
+#   dispels, defensives       no dispel or damage-intake model
+#   engine, buffs             plumbing, not damage
+#   every ttd_* gate          left in via fight_remains where SimC has it
+#
+# The rotation splits ST/AoE at 3 enemies, same as SimC's own priority.
+
+actions.precombat=snapshot_stats
+actions.precombat+=/flametongue_weapon,if=talent.flametongue_weapon
+actions.precombat+=/lightning_shield
+actions.precombat+=/stormkeeper
+
+actions=wind_shear
+actions+=/blood_fury
+actions+=/berserking
+actions+=/fireblood
+actions+=/ancestral_call
+actions+=/use_item,slot=trinket1,use_off_gcd=1
+actions+=/use_item,slot=trinket2,use_off_gcd=1
+actions+=/lightning_shield,if=buff.lightning_shield.down
+actions+=/potion,if=buff.ascendance.up|fight_remains<=30
+actions+=/run_action_list,name=aoe,if=spell_targets.chain_lightning>=3
+actions+=/run_action_list,name=single_target
+
+# aoe — Stormkeeper and Ascendance offset, Voltaic Blaze on Purging Flames,
+# Earthquake on the ancestor buff, Elemental Blast otherwise.
+actions.aoe=stormkeeper,if=cooldown.ascendance.remains>10|cooldown.ascendance.remains<gcd|fight_remains<20
+actions.aoe+=/ancestral_swiftness
+actions.aoe+=/voltaic_blaze,if=dot.flame_shock.refreshable&cooldown.ascendance.remains>5|talent.purging_flames
+actions.aoe+=/ascendance,if=cooldown.stormkeeper.remains>15|fight_remains<20
+actions.aoe+=/earthquake,if=buff.call_of_the_ancestors.up|spell_targets.chain_lightning>=6
+actions.aoe+=/elemental_blast,if=spell_targets.chain_lightning<=5&!buff.call_of_the_ancestors.up
+actions.aoe+=/lava_burst,if=buff.purging_flames.up&(buff.lava_surge.up&buff.flowing_elements.stack<2|cooldown.voltaic_blaze.remains<2)
+actions.aoe+=/chain_lightning,if=buff.stormkeeper.up&maelstrom.deficit>(spell_targets.chain_lightning>?5)*(2+(spell_targets.chain_lightning>?5)+2)
+actions.aoe+=/chain_lightning
+
+# single_target — Flame Shock maintained, Lava Burst on charges/procs,
+# Elemental Blast as the Maelstrom spender (Earth Shock is not talented).
+actions.single_target=stormkeeper,if=cooldown.ascendance.remains>10|cooldown.ascendance.remains<gcd|fight_remains<20
+actions.single_target+=/ancestral_swiftness
+actions.single_target+=/flame_shock,if=dot.flame_shock.refreshable&cooldown.ascendance.remains>5
+actions.single_target+=/voltaic_blaze,if=dot.flame_shock.refreshable&cooldown.ascendance.remains>5|talent.purging_flames&spell_targets.chain_lightning=2
+actions.single_target+=/ascendance,if=cooldown.stormkeeper.remains>15|fight_remains<20
+actions.single_target+=/earthquake,if=buff.flowing_elements.up&buff.overcharge_tier.up&buff.call_of_the_ancestors.stack>=3&spell_targets.chain_lightning=2
+actions.single_target+=/elemental_blast,if=buff.flowing_elements.up&buff.overcharge_tier.up
+actions.single_target+=/lava_burst,if=maelstrom.deficit>15&((cooldown.lava_burst.charges_fractional>1.8|!buff.call_of_the_ancestors.up)&(talent.molten_wrath|talent.purging_flames)|buff.lava_surge.up)
+actions.single_target+=/lava_burst,if=maelstrom.deficit>15&buff.flowing_elements.up
+actions.single_target+=/lava_burst,if=maelstrom.deficit>15&buff.purging_flames.up&cooldown.voltaic_blaze.remains<2&active_dot.flame_shock=2
+actions.single_target+=/earthquake,if=buff.call_of_the_ancestors.stack>=3&maelstrom.deficit<15&spell_targets.chain_lightning=2
+actions.single_target+=/elemental_blast,if=maelstrom.deficit<15
+actions.single_target+=/voltaic_blaze,if=talent.crackling_fury&!buff.ascendance.up
+actions.single_target+=/chain_lightning,if=spell_targets.chain_lightning=2
+actions.single_target+=/lightning_bolt
