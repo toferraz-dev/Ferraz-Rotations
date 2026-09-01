@@ -8,6 +8,12 @@
 # Talents verified by execution probe against simc 1210.01.5f3ee6d:
 #   Farseer (call_of_the_ancestors). No Master of the Elements, no Tempest,
 #   no Lightning Rod, no Earth Shock.
+#
+# 2026-09-01: swapped to the most-used string from the logs sites. It is
+# byte-different from the one every number in the rationale was measured on
+# and resolves to an identical loadout - 157 talent names and 76 rank checks
+# agree, against a corruption control that proves the parser reads the tail.
+# So the measurements still stand.
 shaman="Ferraz_Shaman_Ele"
 source=default
 spec=elemental
@@ -15,7 +21,7 @@ level=90
 race=tauren
 role=spell
 position=ranged_back
-talents=CYQAAAAAAAAAAAAAAAAAAAAAAAAAAAzMbLzMGjZZZZMmhBAAAAsYmNYADY2YCZWAgZZmZGjtFTbMzYsMzMzYYZWMWmZGzMLAAzAgZGDDD
+talents=CYQAAAAAAAAAAAAAAAAAAAAAAAAAAAzMbLzMGjZZZZMmhBAAAAsYmNYADY2YCMLAwsMzMjx2ipNmZMWmZmZMsMLGLzMjZmFAgZAwMjhhB
 # Default consumables
 potion=lights_potential_2
 flask=flask_of_the_magisters_2
