@@ -1412,3 +1412,65 @@ Guardian file weaves for), `1261870` Moonkin, `1261872` Bear.
 this file and the Guardian one cast HotW by name rather than relying on Simia to
 resolve the morph. The new line casts by name only — the Moonkin morph id was
 not verified in game, and guessing an id here buys nothing.
+
+## Burst toggle: one Incarnation per flip — 2026-09-01 (4.11.0)
+
+Asked for: turn the Burst toggle on, let it fire Incarnation once, then have it
+switch itself off and wait to be turned on again.
+
+**The switching-itself-off half is not possible.** Nothing in Simia writes to a
+config. `actionTypes` in `expression-catalog.json` lists 24 special actions and
+none of them touch config; a scan of all 112 files in `simia_data_dump/` finds
+no rotation setting one either. `config.X` is read-only to a rotation.
+
+What is possible is the behaviour, via a latch:
+
+```yaml
+  burst_latch:
+    - variable,name=inc_spent,value=0,if=!config.burst_toggle
+    - variable,name=inc_spent,value=1,if=var.cd_active
+```
+
+```yaml
+burst_ok: config.auto_burst|(config.burst_toggle&(!config.burst_once|variable.inc_spent=0))
+```
+
+Toggle off zeroes the latch; the burst window going up sets it. So one flip
+buys exactly one window, and flipping OFF then ON is the rearm gesture.
+
+`burst_latch` is called from `main` directly above `heal_support`, i.e. above
+the combat wall, so the reset lands the moment the toggle goes off rather than
+waiting for the next pull.
+
+It latches on `var.cd_active` (`buff.celestial_alignment.up|buff.incarnation_chosen_of_elune.up`)
+rather than on the Incarnation cast, so it works whichever of the two talents is
+on the build and cannot miss the cast it was watching for.
+
+`config.burst_once` ships **OFF**, and the whole thing only matters with
+`auto_burst` off — the auto path never consults the toggle.
+
+### The part the user has to live with
+
+The toggle keeps showing **ON** after it is spent. There is no way to grey it
+out or flip it. The switch reads as active while granting nothing, which is a
+genuine wart; the alternative was not building the feature.
+
+### Unverified: whether an action-assigned variable persists between ticks
+
+The whole design rests on `variable,name=X,value=1` still reading 1 on the next
+tick. That is SimC's semantics, and `set_tank_var` in `FerrazGuardianElune.yaml`
+is written as though it holds — it resets `tank_buster_remains` to 999 at the
+top of every pass, which is only necessary if values carry over.
+
+But Simia's documentation says of the `variables:` block only that it is
+"evaluated every tick", and says nothing at all about the assignment action.
+Neither `expression-catalog.json` nor `SIMIA_DOCUMENTATION.md` states the
+lifetime, and no rotation in the dump depends on persistence in a way that would
+prove it.
+
+**If assignments do not persist**, `inc_spent` is 1 only on ticks where
+`var.cd_active` is already true, the latch never blocks anything, and the toggle
+behaves exactly as it does today — the failure is silent and harmless. Test in
+game: turn Auto Burst off, turn Burst Toggle on, take one Incarnation, and see
+whether a second window is offered while the toggle is still on. If it is, the
+assignment does not persist and this needs a different mechanism.
