@@ -1515,10 +1515,26 @@ an accidental cast is a rebuff and one global, nothing worse. A carrier like
 Moonkin Form would have cancelled the form, and Entangling Roots would have
 broken crowd control.
 
-`burst_toggle_hotkey` defaults to **0**, which disables the line entirely, so
-the feature is opt-in and the file behaves exactly as 4.11.1 until a scan code
-is entered. The modifier config takes the raw code (16 Shift, 17 Ctrl, 18 Alt)
-rather than a dropdown, because a dropdown returns its index and would need a
-mapping the DSL cannot express cleanly.
+`burst_toggle_hotkey` defaults to **88** (X, the key this character has the
+toggle bound to). That is safe to ship enabled because the line also requires
+`config.burst_once`, which defaults **false** — nobody who has not opted in can
+have a key pressed for them. Set the code to 0 to disable the line outright.
+
+The modifier config takes the raw code (16 Shift, 17 Ctrl, 18 Alt) rather than
+a dropdown, because a dropdown returns its index and would need a mapping the
+DSL cannot express cleanly.
+
+### These are virtual-key codes, not scan codes
+
+The documentation calls the field a "scan code" and it is not one. Its own
+example gives `1` as **49**, which is `VK_1`; the real scan code for the 1 key
+is 2. The modifier values it lists — 16, 17, 18 — are `VK_SHIFT`, `VK_CONTROL`
+and `VK_MENU`. Both only make sense as Windows virtual-key codes.
+
+This matters because the two tables disagree for most keys. X is **88** as a
+virtual-key code and **45** as a scan code, and someone reading the field name
+literally would enter 45 and get either nothing or the wrong key.
+
+Letters A–Z are 65–90. Digits 1–9 are 49–57, 0 is 48. F1–F12 are 112–123.
 
 Untested in game.
