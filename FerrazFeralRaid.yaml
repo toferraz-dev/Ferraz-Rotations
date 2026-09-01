@@ -13,7 +13,7 @@
 # most of what looks improvable here was tried and reverted.
 # =============================================================================
 
-version: "1.11.0"
+version: "1.12.0"
 author: Ferraz
 patch: "12.1"
 spec: 103
@@ -28,7 +28,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-08-28 | Patch: 12.1 | Version: 1.11.0"
+    text: "Last update: 2026-09-01 | Patch: 12.1 | Version: 1.12.0"
 
   recommended_talents:
     section: "Talents"
@@ -372,6 +372,8 @@ lists:
     # only payoff is Heart of the Wild on the next line.
     - bear_form,name="Panic Bear Form",range_check=none,if=health.pct<=config.panic_bear_hp_pct&!buff.bear_form.up&player.combat&(cooldown.heart_of_the_wild.ready|buff.heart_of_the_wild.up)
     - heart_of_the_wild,range_check=none,if=buff.bear_form.up&player.combat
+    # After HotW, so the heal lands on the larger pool the bear morph just made.
+    - frenzied_regeneration,range_check=none,if=buff.bear_form.up&player.combat
 
     - shred,if=player.combat&target.attackable&target.in_melee&buff.cat_form.down&talent.fluid_form.enabled
     - rake,if=player.combat&target.attackable&target.in_melee&buff.cat_form.down&talent.fluid_form.enabled

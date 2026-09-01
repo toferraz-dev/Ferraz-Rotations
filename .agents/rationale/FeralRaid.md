@@ -508,3 +508,44 @@ UNVERIFIED IN GAME. If these do not resolve the variable is simply false and
 the cleanse stops firing - no loop, just a lost utility. Confirm with
 /simia snapshot while rooted: the trace should show the gate PASS.
 ```
+
+## Frenzied Regeneration added to the bear panic — 2026-09-01
+
+```yaml
+- bear_form,name="Panic Bear Form",...&(cooldown.heart_of_the_wild.ready|buff.heart_of_the_wild.up)
+- heart_of_the_wild,range_check=none,if=buff.bear_form.up&player.combat
+- frenzied_regeneration,range_check=none,if=buff.bear_form.up&player.combat
+```
+
+The talent is on this build - verified by execution probe against the shipped
+talent string, `talent.frenzied_regeneration` reads true - and the rotation
+never cast it. The bear shift was already being paid for; the heal was not
+being collected.
+
+Placed after Heart of the Wild deliberately. HotW in Bear Form resolves to the
+max-health morph (1261872, "Maximum health increased by X%"), so casting it
+first means Frenzied Regeneration heals against the larger pool. Same ordering
+the Balance file used while it had a bear defensive.
+
+The condition is the same one the HotW line already carries, exactly as
+requested: `buff.bear_form.up&player.combat`, with no health check of its own.
+
+### The consequence of that condition
+
+`Shapeshift Clear` also puts you in Bear Form - it is the root cleanse, and it
+fires at any health. So both this line and the HotW line above it will fire
+after a root break at full HP, spending a Frenzied Regeneration charge on
+nothing.
+
+That flaw already existed for HotW; this adds a second button to it rather than
+introducing it. The narrow fix is a health gate on both lines, e.g.
+`&health.pct<=config.panic_bear_hp_pct`, which is not what was asked for here
+and is left as a decision rather than made silently.
+
+### Still gated on Heart of the Wild being available
+
+`Panic Bear Form` requires `cooldown.heart_of_the_wild.ready|buff.heart_of_the_wild.up`,
+so with HotW on cooldown the Feral never enters Bear at all and neither of
+these lines can run - including the new heal, in exactly the windows where the
+cooldown situation is worst. Loosening that gate was offered and not taken;
+the bear shift still has to buy HotW to justify losing the Cat rotation.
