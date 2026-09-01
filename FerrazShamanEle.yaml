@@ -25,7 +25,7 @@
 # WHY ANY OF IT IS THE WAY IT IS: .agents/rationale/ShamanEle.md
 # =============================================================================
 
-version: "1.0.0"
+version: "1.1.0"
 patch: "12.1"
 spec: 262
 name: Elemental Shaman Ferraz M+
@@ -51,7 +51,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-08-31 | Patch: 12.1 | Version: 1.0.0"
+    text: "Last update: 2026-08-31 | Patch: 12.1 | Version: 1.1.0"
 
   # Exact string this file's priority was written against.
   recommended_talents:
@@ -327,7 +327,10 @@ lists:
   # Maintenance buffs. Out of combat except Lightning Shield.
   buffs:
     - skyfury,range_check=none,if=(buff.skyfury.down.any|action.skyfury.overlayed)&lastcast.skyfury>=10
+    - skyfury,cycle=members,name="Skyfury (Party)",if=cycle.buff.skyfury.down&cycle.range<=40&!player.combat
     - lightning_shield,range_check=none,if=buff.lightning_shield.down
+    # Elemental Orbit allows a second shield on yourself. Dead without it.
+    - earth_shield.player,range_check=none,if=talent.elemental_orbit&buff.earth_shield.down
     - flametongue_weapon,range_check=none,if=talent.flametongue_weapon&mainhand.enchant.remains<600
     - healing_surge.player,name="Healing Surge (OOC)",range_check=none,if=!player.combat&health.pct<=config.healing_surge_ooc_hp_pct
     - ghost_wolf,range_check=none,if=config.engine_ghost_wolf&!player.combat&player.moving.time>1&buff.ghost_wolf.down
@@ -344,7 +347,10 @@ lists:
     - wind_shear,if=interrupt.target.check
     - wind_shear.mouseover,if=interrupt.mouseover.check
     - wind_shear.focus,if=interrupt.focus.check
-    - capacitor_totem.player,if=interrupt.stun.aoe.check
+    # .cursor, not .player: this is a ranged spec, and a stun totem at your own
+    # feet reaches nothing. Aim with the mouse.
+    - capacitor_totem.cursor,if=interrupt.stun.aoe.check&target.range<=30
+    - capacitor_totem.mouseover,if=interrupt.stun.mouseover.check&mouseover.combat
     # Racial stuns — only one exists per character, rest never resolve.
     - quaking_palm,if=interrupt.cc.check
     - haymaker,if=interrupt.cc.check
@@ -395,7 +401,7 @@ lists:
 
     # Farseer branch: the ancestor buff is what makes Earthquake worth a global
     # below 6 targets. 6 = 3 + 3, the SimC threshold with Elemental Blast.
-    - earthquake,name="Earthquake (Ancestors)",if=buff.call_of_the_ancestors.up|enemies.combat.40y>=6
+    - earthquake.cursor,name="Earthquake (Ancestors)",if=buff.call_of_the_ancestors.up|enemies.combat.40y>=6
     - elemental_blast,name="Elemental Blast (no Ancestors)",if=enemies.combat.40y<=5&!buff.call_of_the_ancestors.up
 
     - lava_burst,name="Lava Burst (Purging Flames)",if=buff.purging_flames.up&(buff.lava_surge.up&buff.flowing_elements.stack<2|cooldown.voltaic_blaze.remains<2)
@@ -412,14 +418,14 @@ lists:
 
     # Tier window. 1300222 is the set bonus buff SimC calls overcharge_tier -
     # dead until the 2-piece is on, and harmless while it is not.
-    - earthquake,name="Earthquake (Tier, 2T)",if=buff.flowing_elements.up&buff.1300222.up&buff.call_of_the_ancestors.stack>=3&enemies.combat.40y=2
+    - earthquake.cursor,name="Earthquake (Tier, 2T)",if=buff.flowing_elements.up&buff.1300222.up&buff.call_of_the_ancestors.stack>=3&enemies.combat.40y=2
     - elemental_blast,name="Elemental Blast (Tier)",if=buff.flowing_elements.up&buff.1300222.up
 
     - lava_burst,name="Lava Burst (charges)",if=maelstrom.deficit>15&((cooldown.lava_burst.charges_fractional>1.8|!buff.call_of_the_ancestors.up)&(talent.molten_wrath|talent.purging_flames)|buff.lava_surge.up)
     - lava_burst,name="Lava Burst (Flowing Elements)",if=maelstrom.deficit>15&buff.flowing_elements.up
     - lava_burst,name="Lava Burst (Purging Flames)",if=maelstrom.deficit>15&buff.purging_flames.up&cooldown.voltaic_blaze.remains<2&active_dot.flame_shock=2
 
-    - earthquake,name="Earthquake (Ancestors, 2T)",if=buff.call_of_the_ancestors.stack>=3&maelstrom.deficit<15&enemies.combat.40y=2
+    - earthquake.cursor,name="Earthquake (Ancestors, 2T)",if=buff.call_of_the_ancestors.stack>=3&maelstrom.deficit<15&enemies.combat.40y=2
     - elemental_blast,name="Elemental Blast (spend)",if=maelstrom.deficit<15
     - voltaic_blaze,name="Voltaic Blaze (Crackling Fury)",if=talent.crackling_fury&!buff.ascendance.up
     - chain_lightning,if=enemies.combat.40y=2
