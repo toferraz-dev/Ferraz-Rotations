@@ -1660,3 +1660,71 @@ The lesson is narrower than "test more": `burst_ok` was a name that answered
 two questions, and the latch changed the answer to one of them. Any gate that
 several unrelated lines read should be checked against each of those lines when
 its meaning changes, not just against the line it was written for.
+
+
+## Full validation pass — 2026-09-01 (4.16.0)
+
+Structure is clean: YAML parses, lint clean, no undefined config or variable,
+no orphan `call_action_list`, no unbalanced parentheses, and — checked
+specifically after 4.15.0 — **no line with a top-level `|` mixed with `&`
+outside parentheses**. That last check is worth keeping as a habit; it is the
+shape that froze the rotation and the linter cannot see it.
+
+Two logic defects found and fixed.
+
+### The Bear entry and exit had come apart
+
+```yaml
+bear_defensive_active: health.pct<=config.frenzied_regen_hp
+- bear_form,name="Panic Bear Form",if=...&health.pct<=...&cooldown.frenzied_regeneration.ready&buff.frenzied_regeneration.down
+- return,if=buff.bear_form.up&var.bear_defensive_active
+```
+
+The variable's own comment said *"Entry and exit MUST read the same metric"*
+and from 4.10.0 they did not. Entry needed low health **and** a Frenzied
+Regeneration to go get; the exit gate read health alone.
+
+The failure: Root Cleanse puts you in Bear at any health. Drop below the
+threshold with Frenzy on cooldown and `bear_defensive_active` is true, so the
+`return` blocks the whole rotation — while Panic Bear would never have entered
+that state, and there is no heal to collect. `Back to Moonkin` could not rescue
+it either, since it also required `health.pct>frenzied_regen_hp`.
+
+It broke when the HotW branch was removed in 4.10.0 and the variable was
+simplified to the health term alone.
+
+```yaml
+bear_defensive_active: health.pct<=config.frenzied_regen_hp&(cooldown.frenzied_regeneration.ready|buff.frenzied_regeneration.up)
+```
+
+`.ready|.up` rather than the entry's `.ready&.down` because the two ask
+different questions: the entry asks *is there a heal to go get*, the exit asks
+*is the Bear still buying me anything*, and a HoT already ticking counts.
+
+`Back to Moonkin` now reads `!var.bear_defensive_active` and nothing else. It
+used to also carry raw health and the Frenzy buff — the same question asked
+three times, and the copy that drifted is precisely how the gates came apart.
+Same failure as `burst_ok` a few hours earlier: **one variable owns one
+question.**
+
+### Frenzied Regeneration overwrote its own HoT
+
+```yaml
+- frenzied_regeneration,if=health.pct<=config.frenzied_regen_hp&buff.bear_form.up&buff.frenzied_regeneration.down
+```
+
+One charge, 36s recharge, 3s HoT. Without the `.down` guard the line recasts
+on the next global and throws the recharge away. Guardian had this guard;
+Balance never did.
+
+### Left alone
+
+Trinket lines carry no `has_onuse` guard, so a passive trinket makes a silently
+dead line. Reported, not fixed — it costs nothing and the fix belongs with a
+wider trinket pass.
+
+### FerrazBalanceRaid has both defects too
+
+Untouched here because the ask was the M+ file. Its `bear_defensive_active`
+still keeps the HotW branch, so the fix is not a copy-paste: the mirror has to
+cover both reasons for being in Bear.
