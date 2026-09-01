@@ -1,0 +1,456 @@
+# =============================================================================
+# Elemental Shaman - spec 262 - patch 12.1 (Midnight), M+.
+# =============================================================================
+#
+# Lists, in the order `main` calls them:
+#   emergency       off-GCD defensives + consumables, allowed mid-cast
+#   engine          spell queue, sanity checks, looting, auto target
+#   buffs           Skyfury, Lightning Shield, Flametongue, OOC Healing Surge
+#   defensives      Astral Shift, Earth Elemental, Healing Surge
+#   interrupts      Wind Shear (target/mouseover/focus), Capacitor Totem
+#   dispels         Poison Cleansing Totem, Purge
+#   cooldowns       trinkets, potion, racials
+#   moving_st/aoe   instant-only priority while moving
+#   st / aoe        stationary damage priority, <3 / 3+ enemies
+#
+# REFERENCE BUILD 1.0.0: Farseer. Call of the Ancestors, Ascendance,
+# Stormkeeper, Elemental Blast, Voltaic Blaze, Purging Flames, Inferno Arc,
+# Molten Wrath, Crackling Fury, Echo Chamber, Mountains Will Fall.
+#
+# NOT on this build, which removes a large part of SimC's default priority:
+# Master of the Elements, Tempest, Lightning Rod, Earth Shock, Eye of the
+# Storm, Power of the Maelstrom, Thunderstrike Ward. Every line those talents
+# gated is absent here rather than carried dead.
+#
+# WHY ANY OF IT IS THE WAY IT IS: .agents/rationale/ShamanEle.md
+# =============================================================================
+
+version: "1.0.0"
+patch: "12.1"
+spec: 262
+name: Elemental Shaman Ferraz M+
+author: Ferraz
+description: |
+  Elemental Shaman 262 engine for 12.1, tuned for Mythic+.
+  Farseer: Call of the Ancestors drives Earthquake in AoE and the Flowing
+  Elements windows in single target. Elemental Blast is the Maelstrom
+  spender - Earth Shock is not talented. ST/AoE split at 3 enemies.
+entry: main
+
+# Spiritwalker's Grace is the only thing that lets a cast go out while moving.
+movement_allowed: buff.spiritwalkers_grace.up
+
+# SPELL OVERRIDES — AND-ed into every occurrence of that spell in the file.
+spell_overrides:
+  # Blocks re-suggesting Ascendance while its own buff is up.
+  ascendance: "!buff.ascendance.up"
+
+config:
+  # Display-only build stamp — keep in sync with version:/patch: above.
+  about:
+    section: "Info"
+    type: note
+    label: "Rotation Info"
+    text: "Last update: 2026-08-31 | Patch: 12.1 | Version: 1.0.0"
+
+  # Exact string this file's priority was written against.
+  recommended_talents:
+    section: "Talents"
+    type: copy_text
+    label: "Recommended Talent String"
+    text: "CYQAAAAAAAAAAAAAAAAAAAAAAAAAAAzMbLzMGjZZZZMmhBAAAAsYmNYADY2YCZWAgZZmZGjtFTbMzYsMzMzYYZWMWmZGzMLAAzAgZGDDD"
+
+  # === AOE THRESHOLD ===
+  aoe_threshold:
+    section: "Damage"
+    label: "AoE Threshold (enemies)"
+    type: slider
+    min: 2
+    max: 6
+    default: 3
+    description: "Enemy count at which the AoE list takes over. 3 matches where SimC's own priority splits."
+
+  # === DEFENSIVES === reactive, unvalidated by simulation.
+  astral_shift_hp_pct:
+    section: "Defensives"
+    label: "Astral Shift HP%"
+    type: slider
+    min: 0
+    max: 100
+    default: 50
+
+  astral_shift_dmg_pct:
+    section: "Defensives"
+    label: "Astral Shift (Incoming Dmg%)"
+    type: slider
+    min: 0
+    max: 100
+    default: 50
+    description: "Post-mitigation predicted damage, NOT health. 50 here is not 50 on an HP slider."
+
+  earth_elemental_hp_pct:
+    section: "Defensives"
+    label: "Earth Elemental HP%"
+    type: slider
+    min: 0
+    max: 100
+    default: 35
+
+  healing_surge_hp_pct:
+    section: "Defensives"
+    label: "Healing Surge HP% (in combat)"
+    type: slider
+    min: 0
+    max: 100
+    default: 30
+    description: "Hard cast a Healing Surge on yourself below this. Costs a global and can be interrupted - keep it low."
+
+  healing_surge_ooc_hp_pct:
+    section: "Defensives"
+    label: "Healing Surge HP% (out of combat)"
+    type: slider
+    min: 0
+    max: 100
+    default: 70
+
+  emergency_hp:
+    section: "Defensives"
+    label: "Emergency HP% (mid-cast)"
+    type: slider
+    min: 0
+    max: 100
+    default: 35
+    description: "Health below which defensives and consumables may fire while you are casting. The rotation normally does nothing at all mid-cast."
+
+  emergency_stop_casting:
+    section: "Defensives"
+    label: "Cut the Cast in an Emergency"
+    type: checkbox
+    default: true
+    description: "Below the emergency HP, end the current cast so the next global can go to a real defensive. Protected channels are never cut."
+
+  # === COOLDOWNS ===
+  auto_burst:
+    section: "Cooldowns"
+    label: "Auto Burst (no toggle needed)"
+    type: checkbox
+    default: true
+    description: "Fires Ascendance, Stormkeeper, trinkets and potion by itself. The TTD sliders still hold them back on trash that is about to die."
+
+  burst_toggle:
+    section: "Cooldowns"
+    label: "Burst (Ascendance + Trinkets + Pot)"
+    spell: 114050
+    type: toggle
+    description: "Manual burst window. Only needed when Auto Burst is OFF."
+
+  use_potion:
+    section: "Cooldowns"
+    label: "Auto Combat Potion"
+    type: checkbox
+    default: true
+
+  # === TRINKETS === TTD only, deliberately not trinket_X.sync.
+  use_trinket_1:
+    section: "Trinkets"
+    label: "Auto Trinket 1"
+    type: checkbox
+    default: true
+
+  use_trinket_2:
+    section: "Trinkets"
+    label: "Auto Trinket 2"
+    type: checkbox
+    default: true
+
+  # === TIME TO DIE === (target.boss always ignores TTD)
+  ttd_cooldowns:
+    section: "Time To Die"
+    label: "Ascendance / Stormkeeper TTD (seconds)"
+    type: slider
+    min: 5
+    max: 30
+    default: 20
+    description: "Minimum fight time remaining to open the burst window. SimC's own priority stops using Ascendance below 20s left."
+
+  ttd_trinkets:
+    section: "Time To Die"
+    label: "Trinkets TTD (seconds)"
+    type: slider
+    min: 5
+    max: 30
+    default: 10
+
+  ttd_potion:
+    section: "Time To Die"
+    label: "Potion TTD (seconds)"
+    type: slider
+    min: 5
+    max: 30
+    default: 15
+
+  # === DISPELS ===
+  auto_cleanse_totem:
+    section: "Dispels"
+    label: "Poison Cleansing Totem"
+    type: checkbox
+    default: true
+    description: "Drop the totem when you or a party member has a dispelable poison. The totem is a ground effect, so it cleanses on its own timer."
+
+  auto_purge:
+    section: "Dispels"
+    label: "Purge Magic Buff"
+    type: checkbox
+    default: false
+    description: "Purge a magic buff off the current target. OFF by default: it costs a global and most trash buffs are not worth one."
+
+  # === MOUSEOVER ===
+  MO_flame_shock:
+    section: "Mouseover"
+    label: "Flame Shock on MO"
+    type: checkbox
+    default: true
+    description: "Spread Flame Shock onto the unit under the mouse without changing target. A boss under the mouse is skipped."
+
+  # === ENGINE ===
+  engine_loot_nearby:
+    section: "Engine"
+    label: "Loot Nearby Corpses"
+    type: checkbox
+    default: true
+
+  engine_ghost_wolf:
+    section: "Engine"
+    label: "Auto Ghost Wolf (OOC)"
+    type: checkbox
+    default: true
+    description: "Shift to Ghost Wolf while moving out of combat. Any suggestion in combat shifts you back out."
+
+  engine_auto_target:
+    section: "Engine"
+    label: "Auto Target (Ranged)"
+    type: multi_select
+    options:
+      - label: "No target"
+        value: 0
+      - label: "Target is dead"
+        value: 1
+      - label: "Target too far"
+        value: 2
+    default: [0, 1]
+
+  engine_healthstone:
+    section: "Engine"
+    label: "Healthstone HP%"
+    type: slider
+    min: 0
+    max: 100
+    default: 40
+
+  engine_health_potion:
+    section: "Engine"
+    label: "Health Potion HP%"
+    type: slider
+    min: 0
+    max: 100
+    default: 25
+
+  engine_affix_devour:
+    section: "Engine"
+    label: "Dispel Devouring Rift (Affix)"
+    type: checkbox
+    default: true
+    description: "Poison Cleansing Totem does not cover the affix - this uses Purge's dispel path instead. Bypasses normal type matching."
+
+  discord_button:
+    section: "Help"
+    type: button
+    label: "Discord - Ferraz"
+    text: "Join Discord - Ferraz"
+    url: "https://discord.com/channels/857767821093634068/1467268534420766854"
+
+variables:
+  # 3+ enemies in combat within 40y, and the user's threshold.
+  aoe_mode: enemies.combat.40y>=config.aoe_threshold
+
+  # Burst allowed: auto or manual toggle. Drives Ascendance/Stormkeeper/trinkets/potion.
+  burst_ok: config.auto_burst|config.burst_toggle
+
+  # === TIME TO DIE ===
+  cd_ttd_ok: (target.boss|target.time_to_die>=config.ttd_cooldowns|fight_remains>=config.ttd_cooldowns)
+  trinkets_ttd_ok: (target.boss|target.time_to_die>=config.ttd_trinkets|fight_remains>=config.ttd_trinkets)
+  potion_ttd_ok: (target.boss|target.time_to_die>=config.ttd_potion|fight_remains>=config.ttd_potion)
+
+  # Ascendance and Stormkeeper are deliberately offset, never stacked - this is
+  # what SimC's own priority does with them.
+  sk_ready: var.burst_ok&var.cd_ttd_ok&(cooldown.ascendance.remains>10|cooldown.ascendance.remains<gcd)
+  asc_ready: var.burst_ok&var.cd_ttd_ok&cooldown.stormkeeper.remains>15
+
+lists:
+  # Called from main ABOVE the casting guard. Everything here is off-GCD or an
+  # item, so it fires without touching the cast; only the last line ends it.
+  emergency:
+    - astral_shift,name="Astral Shift (Emergency)",range_check=none,off_gcd=true,ignore_queue=true,if=health.effective.pct<=config.emergency_hp
+    - healthstone,name="Healthstone (Emergency)",off_gcd=true,ignore_queue=true,delay=250,if=healthstone.ready&health.pct<=config.engine_healthstone
+    - health_potion,name="Health Potion (Emergency)",off_gcd=true,ignore_queue=true,delay=250,if=health_potion.ready&health.pct<=config.engine_health_potion
+    - stop_casting,name="Cut Cast (Emergency)",if=config.emergency_stop_casting&!player.channeling
+
+  # spell_queue, sanity_checks and auto_target_ranged, inlined.
+  engine:
+    # `&`, not `|` - with `|` this is true on almost every pass.
+    - queue_spell,if=!player.casting&!player.channeling
+
+    - return,if=!state.rotation
+    - return,if=player.dead
+    - return,if=state.blocked_inputs
+    - return,if=mounted
+
+    - interact_target,delay=350,if=config.engine_loot_nearby&target.lootable&target.range<=5
+    - interact_target,delay=350,if=config.engine_loot_nearby&loot_nearby
+    - interact_mouseover,delay=350,if=config.engine_loot_nearby&mouseover.lootable&mouseover.range<=5
+
+    # Devour affix. Direct spell-id check: type matching would skip it.
+    - purge,delay=500,cycle=party,cycle_order=player_first,name="Devouring Rift (Affix)",if=config.engine_affix_devour&cycle.debuff.440313.up.any
+
+    - healthstone,delay=250,if=healthstone.ready&health.pct<=config.engine_healthstone
+    - health_potion,delay=250,if=health_potion.ready&health.pct<=config.engine_health_potion
+
+    # Ranged auto target, 40y.
+    - target_enemy,delay=200,off_gcd=true,if=config.engine_auto_target.has(0)&!target.exists&enemies.combat.40y>=1
+    - target_enemy,delay=200,off_gcd=true,if=config.engine_auto_target.has(1)&target.dead&enemies.combat.40y>=1
+    - target_enemy,delay=200,off_gcd=true,if=config.engine_auto_target.has(2)&target.range>=40&enemies.combat.40y>=1
+
+    # Temple of Sethraliss: Storm Blessed is a hard damage immunity, so swap
+    # off its holder. 1289229 is the AURA, not the cast id.
+    - target_enemy,name="Swap Off Storm Blessed",delay=500,off_gcd=true,if=target.buff.1289229.up&enemies.combat.40y>=2
+
+  # Maintenance buffs. Out of combat except Lightning Shield.
+  buffs:
+    - skyfury,range_check=none,if=(buff.skyfury.down.any|action.skyfury.overlayed)&lastcast.skyfury>=10
+    - lightning_shield,range_check=none,if=buff.lightning_shield.down
+    - flametongue_weapon,range_check=none,if=talent.flametongue_weapon&mainhand.enchant.remains<600
+    - healing_surge.player,name="Healing Surge (OOC)",range_check=none,if=!player.combat&health.pct<=config.healing_surge_ooc_hp_pct
+    - ghost_wolf,range_check=none,if=config.engine_ghost_wolf&!player.combat&player.moving.time>1&buff.ghost_wolf.down
+
+  # Predicted damage first, reactive HP second. Unvalidated by simulation.
+  defensives:
+    - astral_shift,name="Astral Shift (Predicted)",range_check=none,if=incoming.mitigated.pct>=config.astral_shift_dmg_pct
+    - astral_shift,name="Astral Shift (HP)",range_check=none,if=health.effective.pct<=config.astral_shift_hp_pct
+    - earth_elemental,name="Earth Elemental",range_check=none,if=health.effective.pct<=config.earth_elemental_hp_pct
+    - healing_surge.player,name="Healing Surge (Combat)",range_check=none,if=health.effective.pct<=config.healing_surge_hp_pct
+
+  # interrupt.*.check = Simia's own kick filters.
+  interrupts:
+    - wind_shear,if=interrupt.target.check
+    - wind_shear.mouseover,if=interrupt.mouseover.check
+    - wind_shear.focus,if=interrupt.focus.check
+    - capacitor_totem.player,if=interrupt.stun.aoe.check
+    # Racial stuns — only one exists per character, rest never resolve.
+    - quaking_palm,if=interrupt.cc.check
+    - haymaker,if=interrupt.cc.check
+    - war_stomp,if=interrupt.stun.aoe.check
+    - bull_rush,if=interrupt.stun.aoe.check
+    - tail_swipe,if=interrupt.stun.aoe.check
+
+  dispels:
+    - poison_cleansing_totem,range_check=none,delay=500,name="Poison Cleansing Totem",if=config.auto_cleanse_totem&(player.dispelable.list|cycle.dispelable.list)
+    - purge,name="Purge (Magic Buff)",if=config.auto_purge&target.purgeable.magic
+
+  # Trinkets on TTD alone, potion on the burst window.
+  cooldowns:
+    - trinket_1,delay=150,name="Trinket 1",if=config.use_trinket_1&trinket_1.ready&player.combat&var.trinkets_ttd_ok
+    - trinket_2,delay=150,name="Trinket 2",if=config.use_trinket_2&trinket_2.ready&player.combat&var.trinkets_ttd_ok
+    # fight_remains clause lets an otherwise wasted potion go out at the end.
+    - combat_potion,delay=150,name="Combat Potion",if=var.burst_ok&config.use_potion&combat_potion.ready&player.combat&(var.potion_ttd_ok&buff.ascendance.up|fight_remains<=30)
+    # Racials, unconditional — only one exists per character.
+    - blood_fury
+    - berserking
+    - fireblood
+    - ancestral_call
+
+  # Spreads Flame Shock onto the mouseover unit without changing target.
+  mouseover_dots:
+    - flame_shock.mouseover,name="Flame Shock Mouseover",if=config.MO_flame_shock&mouseover.exists&mouseover.enemy&mouseover.attackable&!mouseover.dead&!mouseover.boss&mouseover.combat&mouseover.range<=40&mouseover.debuff.flame_shock.down
+
+  # Instant casts only, below the AoE threshold.
+  moving_st:
+    - spiritwalkers_grace,range_check=none,if=player.moving.time>1
+    - flame_shock,if=dot.flame_shock.refreshable
+    - voltaic_blaze
+    - frost_shock
+
+  # Instant casts only, at or above the AoE threshold.
+  moving_aoe:
+    - spiritwalkers_grace,range_check=none,if=player.moving.time>1
+    - flame_shock,if=dot.flame_shock.refreshable
+    - voltaic_blaze
+    - frost_shock
+
+  # 3+ enemies, standing still.
+  aoe:
+    - stormkeeper,if=var.sk_ready
+    - ancestral_swiftness
+    - voltaic_blaze,name="Voltaic Blaze (Purging Flames)",if=dot.flame_shock.refreshable&cooldown.ascendance.remains>5|talent.purging_flames
+    - ascendance,if=var.asc_ready
+
+    # Farseer branch: the ancestor buff is what makes Earthquake worth a global
+    # below 6 targets. 6 = 3 + 3, the SimC threshold with Elemental Blast.
+    - earthquake,name="Earthquake (Ancestors)",if=buff.call_of_the_ancestors.up|enemies.combat.40y>=6
+    - elemental_blast,name="Elemental Blast (no Ancestors)",if=enemies.combat.40y<=5&!buff.call_of_the_ancestors.up
+
+    - lava_burst,name="Lava Burst (Purging Flames)",if=buff.purging_flames.up&(buff.lava_surge.up&buff.flowing_elements.stack<2|cooldown.voltaic_blaze.remains<2)
+    - chain_lightning,name="Chain Lightning (Stormkeeper)",if=buff.stormkeeper.up&maelstrom.deficit>(enemies.combat.40y>?5)*(2+(enemies.combat.40y>?5)+2)
+    - chain_lightning
+
+  # 1-2 enemies, standing still.
+  st:
+    - stormkeeper,if=var.sk_ready
+    - ancestral_swiftness
+    - flame_shock,name="Flame Shock (maintain)",if=dot.flame_shock.refreshable&cooldown.ascendance.remains>5
+    - voltaic_blaze,name="Voltaic Blaze (refresh)",if=dot.flame_shock.refreshable&cooldown.ascendance.remains>5|talent.purging_flames&enemies.combat.40y=2
+    - ascendance,if=var.asc_ready
+
+    # Tier window. 1300222 is the set bonus buff SimC calls overcharge_tier -
+    # dead until the 2-piece is on, and harmless while it is not.
+    - earthquake,name="Earthquake (Tier, 2T)",if=buff.flowing_elements.up&buff.1300222.up&buff.call_of_the_ancestors.stack>=3&enemies.combat.40y=2
+    - elemental_blast,name="Elemental Blast (Tier)",if=buff.flowing_elements.up&buff.1300222.up
+
+    - lava_burst,name="Lava Burst (charges)",if=maelstrom.deficit>15&((cooldown.lava_burst.charges_fractional>1.8|!buff.call_of_the_ancestors.up)&(talent.molten_wrath|talent.purging_flames)|buff.lava_surge.up)
+    - lava_burst,name="Lava Burst (Flowing Elements)",if=maelstrom.deficit>15&buff.flowing_elements.up
+    - lava_burst,name="Lava Burst (Purging Flames)",if=maelstrom.deficit>15&buff.purging_flames.up&cooldown.voltaic_blaze.remains<2&active_dot.flame_shock=2
+
+    - earthquake,name="Earthquake (Ancestors, 2T)",if=buff.call_of_the_ancestors.stack>=3&maelstrom.deficit<15&enemies.combat.40y=2
+    - elemental_blast,name="Elemental Blast (spend)",if=maelstrom.deficit<15
+    - voltaic_blaze,name="Voltaic Blaze (Crackling Fury)",if=talent.crackling_fury&!buff.ascendance.up
+    - chain_lightning,if=enemies.combat.40y=2
+    - lightning_bolt
+
+  # Entry point: first matching line wins the GCD.
+  main:
+    # Emergency FIRST, above the casting guard below.
+    - call_action_list,name=emergency,if=player.combat&(player.casting|player.channeling)&health.effective.pct<=config.emergency_hp
+
+    - return,if=player.channeling|player.casting
+
+    - call_action_list,name=engine
+    - call_action_list,name=buffs
+
+    # COMBAT WALL - nothing below runs out of combat.
+    - return,if=!player.combat
+
+    # --- Target guards ---
+    - return,if=!target.valid|target.dead|!target.attackable
+
+    - call_action_list,name=defensives
+    - call_action_list,name=interrupts
+    - call_action_list,name=dispels
+    - call_action_list,name=cooldowns
+
+    - call_action_list,name=mouseover_dots,if=var.aoe_mode
+
+    # Do NOT add player.combat to these calls: casting is what puts you in
+    # combat, so requiring it first means the rotation never acts.
+    - call_action_list,name=moving_aoe,if=player.moving&var.aoe_mode
+    - call_action_list,name=moving_st,if=player.moving&!var.aoe_mode
+    - call_action_list,name=aoe,if=var.aoe_mode
+    - call_action_list,name=st,if=!var.aoe_mode
