@@ -837,3 +837,41 @@ Simia's per-item logic while letting the HotW window through.
 
 Trinkets now fire on cooldown, subject only to fight length. On a passive
 trinket the line simply never resolves.
+
+## Frenzied Regeneration reads effective health here, raw everywhere else — 2026-09-01 (1.13.0)
+
+```yaml
+- frenzied_regeneration,range_check=none,if=health.effective.pct<=config.frenzied_regeneration_hp_pct&buff.frenzied_regeneration.down
+```
+
+Every other druid rotation in this repo gates Frenzied Regeneration on
+`health.pct`. This one is the deliberate exception.
+
+`health.effective.pct` is not what its name suggests to most readers. The
+catalog defines it as:
+
+```
+healthPct - healAbsorbPct + incomingHealsPct   ("Healer triage metric")
+```
+
+It has nothing to do with predicted incoming damage — that is
+`incoming.mitigated.pct`, which the Barkskin and Survival Instincts lines use.
+What it adds is **heals already in flight toward you**, and what it subtracts is
+heal-absorption.
+
+Why the tank is the exception: a Guardian has a healer actively topping them,
+so a dip in the raw bar is frequently already answered by a heal mid-air.
+Reacting to the raw number spends a Frenzied Regeneration charge on a bar that
+was about to refill anyway. A DPS or a healer druid has no such stream, so raw
+health is the honest reading for them.
+
+The heal-absorb half cuts the other way and is also right here: with an absorb
+debuff on the tank, effective drops below raw and the charge comes out
+*earlier*, which is exactly when it is needed.
+
+The slider description says which metric it reads, because 75 against effective
+health is not 75 against the raw bar and nothing else in the UI would tell you.
+
+Unmeasured, like everything else in this file's defensive block — SimC has no
+healer, so `incomingHealsPct` is permanently zero there and the two metrics are
+identical in every sim this repo can run.
