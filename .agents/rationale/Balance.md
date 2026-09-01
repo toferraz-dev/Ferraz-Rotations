@@ -1620,3 +1620,43 @@ The latch is the ceiling. One flip of the toggle grants one Incarnation, and
 OFF then ON rearms it. The switch stays lit while spent — no config can be
 written by a rotation, and pressing its key from a rotation does not work
 either. That is a UI wart with no fix available from inside a rotation file.
+
+
+## The latch broke the trinkets — 2026-09-01 (4.14.1)
+
+Reported after the latch was confirmed working: Incarnation fires once as
+intended, and the trinkets and combat potion stopped coming out entirely.
+
+The latch and the trinkets were reading the same variable for two different
+questions.
+
+```
+toggle on          -> inc_spent=0 -> burst_ok true
+Incarnation up     -> cd_active true
+latch fires        -> inc_spent=1 -> burst_ok FALSE
+trinket lines need    burst_ok AND cd_active  -> never both true
+```
+
+`variable,name=inc_spent,value=1,if=var.cd_active` is spent by the buff going
+up, and the trinket and potion lines all end in `&var.cd_active` because they
+are meant to ride that window. So the latch closed the gate at the exact
+instant those three lines wanted it open. They were dead from 4.11.0 onward,
+and nothing in the file said so.
+
+Split into two variables:
+
+```yaml
+burst_armed: config.auto_burst|config.burst_toggle
+burst_ok: var.burst_armed&(!config.burst_once|variable.inc_spent=0)
+```
+
+- **`burst_armed`** — may the burst be used at all. Trinkets and potion read
+  this. They ride a window that is already open; whether another one may be
+  opened is none of their business.
+- **`burst_ok`** — may a NEW window be opened. Only `inc_waiting_to_stand` and
+  `inc_ready_to_cast` read it, and both are about casting Incarnation.
+
+The lesson is narrower than "test more": `burst_ok` was a name that answered
+two questions, and the latch changed the answer to one of them. Any gate that
+several unrelated lines read should be checked against each of those lines when
+its meaning changes, not just against the line it was written for.

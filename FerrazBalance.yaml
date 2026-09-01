@@ -35,7 +35,7 @@
 # DungeonSlice, which Balance does not support, and against the previous build.
 # =============================================================================
 
-version: "4.14.0"
+version: "4.14.1"
 author: Ferraz
 patch: "12.1"
 spec: 102
@@ -52,7 +52,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-09-01 | Patch: 12.1 | Version: 4.14.0"
+    text: "Last update: 2026-09-01 | Patch: 12.1 | Version: 4.14.1"
 
   # Reference build. The measured numbers assume this exact string.
   recommended_talents:
@@ -404,9 +404,16 @@ variables:
   eclipse_down: buff.eclipse_solar.down&buff.eclipse_lunar.down
 
 
-  # Burst allowed: auto, or the manual toggle while the latch below still has
-  # it armed. Drives Incarnation + both trinkets + potion.
-  burst_ok: config.auto_burst|(config.burst_toggle&(!config.burst_once|variable.inc_spent=0))
+  # Two different questions, and conflating them broke the trinkets in 4.11.0.
+  #
+  # burst_armed = may the burst be used at all. Trinkets and potion ride the
+  # window that is ALREADY open, so this is what they read.
+  burst_armed: config.auto_burst|config.burst_toggle
+  #
+  # burst_ok = may a NEW window be opened. The latch belongs only here: it is
+  # spent by cd_active, which is the same condition the trinkets need true, so
+  # gating them on this blocked them for exactly the window they wanted.
+  burst_ok: var.burst_armed&(!config.burst_once|variable.inc_spent=0)
 
   # A pull is actually underway: in combat, standing still, target is dotted.
   pull_engaged: player.combat&player.standing.time>=config.inc_min_standing_time&(debuff.moonfire.up|debuff.sunfire.up)
@@ -464,10 +471,10 @@ lists:
 
   # Ride along with Incarnation, after Fury of Elune is spent.
   trinkets:
-    - trinket_1,delay=150,name="Trinket 1",if=var.burst_ok&config.use_trinket_1&trinket_1.ready&player.combat&var.trinkets_ttd_ok&cooldown.fury_of_elune.remains>0&var.cd_active
-    - trinket_2,delay=150,name="Trinket 2",if=var.burst_ok&config.use_trinket_2&trinket_2.ready&player.combat&var.trinkets_ttd_ok&cooldown.fury_of_elune.remains>0&var.cd_active
+    - trinket_1,delay=150,name="Trinket 1",if=var.burst_armed&config.use_trinket_1&trinket_1.ready&player.combat&var.trinkets_ttd_ok&cooldown.fury_of_elune.remains>0&var.cd_active
+    - trinket_2,delay=150,name="Trinket 2",if=var.burst_armed&config.use_trinket_2&trinket_2.ready&player.combat&var.trinkets_ttd_ok&cooldown.fury_of_elune.remains>0&var.cd_active
     # fight_remains clause lets an otherwise wasted potion go out at the end.
-    - combat_potion,delay=150,name="Combat Potion",if=var.burst_ok&config.use_potion&combat_potion.ready&player.combat&(var.potion_ttd_ok&cooldown.fury_of_elune.remains>0&var.cd_active|fight_remains<=30)
+    - combat_potion,delay=150,name="Combat Potion",if=var.burst_armed&config.use_potion&combat_potion.ready&player.combat&(var.potion_ttd_ok&cooldown.fury_of_elune.remains>0&var.cd_active|fight_remains<=30)
 
   # spell_queue, sanity_checks and auto_target_ranged, inlined.
   engine:
