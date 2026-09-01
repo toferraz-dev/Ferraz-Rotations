@@ -1567,3 +1567,56 @@ carrier's own keybind. That is consistent with `hotkey=` working and hitting the
 wrong key, which is the reading this change acts on.
 
 Untested in game.
+
+
+## The hotkey experiment is dead — 2026-09-01 (4.14.0)
+
+Removed: the `Burst Toggle Off (key press)` line, `burst_toggle_hotkey` and
+`burst_toggle_modifier`. The latch stays; it works.
+
+`snapshot=true` settled it with three facts from one log.
+
+**The line fires.** Eight snapshots across twelve seconds, at the `line_cd`
+interval. Whether the condition was reached was never the problem.
+
+**No key was ever pressed.** `LAST CASTS` covers the preceding 10.4 seconds and
+holds only Starfall, Sunfire, Starfire and Moonfire. No Mark of the Wild — and
+the carrier is bound, `1126 -> keybind=79 modifier=0`. Neither the overridden
+key nor the carrier's own key went out. Nothing was pressed at all.
+
+**And the reason:**
+
+```
+OneButtonRotation: 194153     (Starfire)
+AutoCast: enabled=YES
+```
+
+That field tracks the suggestion: an earlier log shows `93402` (Sunfire). It is
+the spell currently mapped to the single button. At the instant Simia wrote a
+snapshot *for Mark of the Wild*, the one button was still pointing at Starfire.
+
+So the line evaluated true and produced a log, but **never became the
+suggestion**. With One Button Rotation active every press is delivered through
+that one button, and a line's own `hotkey=` is not part of that path.
+
+### What this cost, and the rule that comes out of it
+
+Four attempts: wrong key encoding (virtual-key instead of scan), wrong target
+(F12, which is a different toggle of the user's, flipped every two seconds for
+six firings), `off_gcd` removed on a hunch, then the right key. Only the fourth
+produced evidence, and only because the third added `snapshot=true`.
+
+**Instrument first.** The snapshot was available from the start and would have
+answered "does this press anything" before any of the guesses. Every attempt
+before it was theory against a black box.
+
+Recorded for anyone who tries this again: `hotkey=` still has zero working uses
+anywhere. It may do something in a non-one-button setup; that is untested and
+not worth chasing.
+
+### Where the burst toggle ends up
+
+The latch is the ceiling. One flip of the toggle grants one Incarnation, and
+OFF then ON rearms it. The switch stays lit while spent — no config can be
+written by a rotation, and pressing its key from a rotation does not work
+either. That is a UI wart with no fix available from inside a rotation file.
