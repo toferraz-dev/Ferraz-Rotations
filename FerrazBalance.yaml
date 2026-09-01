@@ -35,7 +35,7 @@
 # DungeonSlice, which Balance does not support, and against the previous build.
 # =============================================================================
 
-version: "4.12.0"
+version: "4.12.1"
 author: Ferraz
 patch: "12.1"
 spec: 102
@@ -52,7 +52,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-09-01 | Patch: 12.1 | Version: 4.12.0"
+    text: "Last update: 2026-09-01 | Patch: 12.1 | Version: 4.12.1"
 
   # Reference build. The measured numbers assume this exact string.
   recommended_talents:
@@ -94,18 +94,23 @@ config:
     default: false
     description: "With Auto Burst OFF: one flip of the toggle allows exactly one Incarnation. After it goes up the toggle stops granting burst until you switch it OFF and ON again. By itself the switch keeps showing ON while spent - set the scan code below to have the rotation actually press it off."
 
-  # EXPERIMENTAL. `hotkey=` overrides the scan code a line presses, and the
-  # toggle can be hotkeyed - so pressing its key from the rotation is the only
-  # way to actually switch it off. Nothing in the 112-file data dump has ever
-  # used hotkey=. Leave at 0 unless you are testing it.
+  # EXPERIMENTAL. `hotkey=` overrides the key a line presses, and the toggle can
+  # be hotkeyed - so pressing its key from the rotation is the only way to
+  # actually switch it off. Nothing in the 112-file data dump has ever used
+  # hotkey=. Set to 0 to disable.
+  #
+  # The docs call these "scan codes" but the numbers are Windows VIRTUAL-KEY
+  # codes: the doc's own example, "1 is 49", is VK_1, and the modifiers 16/17/18
+  # are VK_SHIFT/CONTROL/MENU. A real scan-code table would give X as 45 and
+  # would not work.
   burst_toggle_hotkey:
     label: "Burst Toggle - Key Scan Code (experimental)"
     section: "Cooldowns"
     type: number
     min: 0
     max: 255
-    default: 0
-    description: "Scan code of the key you bound to the Burst toggle. 0 disables this entirely. When set, the rotation presses that key once the toggle has been spent, so the switch really goes off instead of only being ignored. Untested: no rotation anywhere uses hotkey=. If the redirect fails the carrier spell (Mark of the Wild) is cast instead, which costs a global and nothing else. Common codes: 1-9 are 49-57, 0 is 48, F1-F12 are 112-123."
+    default: 88
+    description: "Key you bound to the Burst toggle, as a Windows virtual-key code. 88 is X. 0 disables this entirely. When set, the rotation presses that key once the toggle has been spent, so the switch really goes off instead of only being ignored. Untested: no rotation anywhere uses hotkey=. If the redirect fails the carrier spell (Mark of the Wild) is cast instead, which costs a global and nothing else. Letters A-Z are 65-90, so X=88 and Z=90. Digits 1-9 are 49-57 and 0 is 48. F1-F12 are 112-123."
 
   burst_toggle_modifier:
     label: "Burst Toggle - Key Modifier"
