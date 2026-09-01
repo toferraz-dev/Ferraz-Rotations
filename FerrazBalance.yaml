@@ -35,7 +35,7 @@
 # DungeonSlice, which Balance does not support, and against the previous build.
 # =============================================================================
 
-version: "4.14.2"
+version: "4.15.0"
 author: Ferraz
 patch: "12.1"
 spec: 102
@@ -52,7 +52,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-09-01 | Patch: 12.1 | Version: 4.14.2"
+    text: "Last update: 2026-09-01 | Patch: 12.1 | Version: 4.15.0"
 
   # Reference build. The measured numbers assume this exact string.
   recommended_talents:
@@ -141,15 +141,6 @@ config:
     max: 30
     default: 10
     description: "Minimum fight time remaining to use trinkets"
-
-  ttd_potion:
-    label: "Potion TTD (seconds)"
-    section: "Time To Die"
-    type: slider
-    min: 5
-    max: 30
-    default: 15
-    description: "Minimum fight time remaining to use combat potion"
 
   ttd_starfall:
     label: "Starfall TTD (seconds)"
@@ -442,7 +433,6 @@ variables:
   inc_ttd_ok: (target.boss|target.time_to_die>=config.ttd_incarnation|fight_remains>=config.ttd_incarnation)
   foe_ttd_ok: (target.boss|target.time_to_die>=config.ttd_fury_of_elune|fight_remains>=config.ttd_fury_of_elune)
   trinkets_ttd_ok: (target.boss|target.time_to_die>=config.ttd_trinkets|fight_remains>=config.ttd_trinkets)
-  potion_ttd_ok: (target.boss|target.time_to_die>=config.ttd_potion|fight_remains>=config.ttd_potion)
   starfall_ttd_ok: (target.boss|target.time_to_die>=config.ttd_starfall|fight_remains>=config.ttd_starfall)
 
 lists:
@@ -473,13 +463,14 @@ lists:
   trinkets:
     - trinket_1,delay=150,name="Trinket 1",if=var.burst_armed&config.use_trinket_1&trinket_1.ready&player.combat&var.trinkets_ttd_ok&cooldown.fury_of_elune.remains>0&var.cd_active
     - trinket_2,delay=150,name="Trinket 2",if=var.burst_armed&config.use_trinket_2&trinket_2.ready&player.combat&var.trinkets_ttd_ok&cooldown.fury_of_elune.remains>0&var.cd_active
-    # snapshot=true is DIAGNOSTIC, remove once the potion is settled. A
-    # Combat_Potion_*.log means the line passed and the press is at fault; no
-    # log means one of the conditions is false and the log cannot say which,
-    # so check use_potion, a potion in bags, and ttd_potion (15, vs 10 on the
-    # trinkets - a trash mob can satisfy one and not the other).
-    # fight_remains clause lets an otherwise wasted potion go out at the end.
-    - combat_potion,delay=150,name="Combat Potion",snapshot=true,if=var.burst_armed&config.use_potion&combat_potion.ready&player.combat&(var.potion_ttd_ok&cooldown.fury_of_elune.remains>0&var.cd_active|fight_remains<=30)
+    # Condition is now the trinket condition VERBATIM, on the same
+    # trinkets_ttd_ok gate: if a trinket fires the potion fires. The trailing
+    # |fight_remains<=30 can only add cases, never remove one.
+    #
+    # snapshot=true is DIAGNOSTIC. With the condition identical to a line that
+    # works, a log proving this one passed would leave combat_potion.ready as
+    # the only possible cause.
+    - combat_potion,delay=150,name="Combat Potion",snapshot=true,if=var.burst_armed&config.use_potion&combat_potion.ready&player.combat&var.trinkets_ttd_ok&cooldown.fury_of_elune.remains>0&var.cd_active|fight_remains<=30
 
   # spell_queue, sanity_checks and auto_target_ranged, inlined.
   engine:
