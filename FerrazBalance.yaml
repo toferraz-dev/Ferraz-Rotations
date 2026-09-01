@@ -35,7 +35,7 @@
 # DungeonSlice, which Balance does not support, and against the previous build.
 # =============================================================================
 
-version: "4.15.1"
+version: "4.16.0"
 author: Ferraz
 patch: "12.1"
 spec: 102
@@ -52,7 +52,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-09-01 | Patch: 12.1 | Version: 4.15.1"
+    text: "Last update: 2026-09-01 | Patch: 12.1 | Version: 4.16.0"
 
   # Reference build. The measured numbers assume this exact string.
   recommended_talents:
@@ -419,9 +419,16 @@ variables:
   # Celestial Alignment/Incarnation active — trinkets/potion ride this window.
   cd_active: buff.celestial_alignment.up|buff.incarnation_chosen_of_elune.up
 
-  # Mirrors Panic Bear Form so the exit gate below can never contradict it.
-  # Entry and exit MUST read the same metric.
-  bear_defensive_active: health.pct<=config.frenzied_regen_hp
+  # Mirrors Panic Bear Form. Entry and exit MUST agree, and from 4.10.0 to
+  # 4.15.1 they did not: entry also required Frenzied Regeneration to be
+  # available, this read health alone. Low HP with Frenzy on cooldown then made
+  # the exit gate hold you in Bear that Panic Bear would never have entered,
+  # with no heal to show for it and the return below blocking all damage.
+  #
+  # `.ready|.up`, not the entry's `.ready&.down`: the entry asks "is there a
+  # heal to go get", this asks "is the Bear still buying me anything", and a
+  # HoT already ticking counts.
+  bear_defensive_active: health.pct<=config.frenzied_regen_hp&(cooldown.frenzied_regeneration.ready|buff.frenzied_regeneration.up)
 
 
   # Roots and snares only - what a shapeshift actually breaks. NOT
@@ -537,7 +544,9 @@ lists:
     # HotW in Moonkin: HoT on all five party members, no form change.
     - heart_of_the_wild,name="HotW (Party Heal)",range_check=none,ignore_cds_toggle=true,if=config.hotw_party_heal&buff.moonkin_form.up&group.count(cycle.health.effective.pct<config.hotw_hp)>=1
 
-    - frenzied_regeneration,if=health.pct<=config.frenzied_regen_hp&buff.bear_form.up
+    # .down guard: one charge, 36s recharge, 3s HoT. Without it the line
+    # recasts over its own tick and throws the recharge away.
+    - frenzied_regeneration,if=health.pct<=config.frenzied_regen_hp&buff.bear_form.up&buff.frenzied_regeneration.down
     - barkskin,range_check=none,name="Barkskin (low HP)",if=health.effective.pct<=config.barkskin_hp
 
     # Two lines, because breaking a root needs a form CHANGE - one line would
@@ -664,8 +673,12 @@ lists:
 
     # Back to Moonkin. Two lines, split on Fluid Form: with it, Starfire shifts
     # you AND deals damage, so the return is a free global.
-    - starfire,name="Back to Moonkin (Fluid Form)",if=talent.fluid_form&buff.moonkin_form.down&health.pct>config.frenzied_regen_hp&!buff.frenzied_regeneration.up&!var.bear_defensive_active
-    - moonkin_form,name="Back to Moonkin",if=!talent.fluid_form&buff.moonkin_form.down&health.pct>config.frenzied_regen_hp&!buff.frenzied_regeneration.up&!var.bear_defensive_active
+    # Gated on var.bear_defensive_active ALONE. It used to also carry raw
+    # health and the Frenzy buff, which is the same question asked three times -
+    # and the copy that drifted is exactly how the two gates came apart. One
+    # variable owns it now.
+    - starfire,name="Back to Moonkin (Fluid Form)",if=talent.fluid_form&buff.moonkin_form.down&!var.bear_defensive_active
+    - moonkin_form,name="Back to Moonkin",if=!talent.fluid_form&buff.moonkin_form.down&!var.bear_defensive_active
     # A pre-pull Wrath used to sit here. Removed - the tank decides the pull.
 
     # --- Survival, then utility, then the burst window ---
