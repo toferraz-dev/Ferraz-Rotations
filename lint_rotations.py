@@ -19,6 +19,11 @@ import os
 import re
 import sys
 
+try:
+    import yaml
+except ImportError:  # parse check is skipped; every other check still runs
+    yaml = None
+
 SHARED_DIR = 'simia_data_dump'
 
 STEP_OPTIONS = {
@@ -167,6 +172,30 @@ def lint(path, shared_cfg, shared_lists, strict_options=False):
 
     def add(n, sev, msg):
         out.append((n + 1, sev, msg))
+
+    # --- Does it parse at all? -------------------------------------------
+    # Everything below is regex over lines and will happily call a file clean
+    # that Simia cannot load. FerrazShamanEle 1.3.0 shipped exactly that:
+    # `kick_ok_target: !config.x|...` is a YAML TAG, not a string, so the
+    # document failed to parse, the addon silently ignored the rotation, and
+    # this linter reported no findings.
+    if yaml is not None:
+        try:
+            yaml.safe_load(raw)
+        except yaml.YAMLError as exc:
+            mark = getattr(exc, 'problem_mark', None)
+            detail = getattr(exc, 'problem', None) or str(exc).split(chr(10))[0]
+            add(mark.line if mark else 0, 'E',
+                'YAML does not parse - Simia will not load this file: %s' % detail)
+
+    # A value opening with a YAML indicator needs quoting. `!` starts a tag and
+    # `&` an anchor, and both are ordinary operators in this DSL, so an
+    # unquoted one is a parse error carrying a very unhelpful message.
+    for _i, _text in enumerate(lines):
+        _m = re.match(r'^\s+[A-Za-z_][\w.]*:\s+([!&*])(?!\s)', _text)
+        if _m:
+            add(_i, 'E', 'value starts with YAML indicator %r - wrap the whole '
+                         'value in double quotes' % _m.group(1))
 
     defined_lists = collect_block_names(lines, re.compile(r'^lists:\s*$'),
                                         re.compile(r'^\s{2}(\w+):\s*$')) | shared_lists

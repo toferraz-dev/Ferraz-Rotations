@@ -46,6 +46,29 @@ extension's table.
 | Missing list name | `call_action_list` / `run_action_list` without `name=` |
 | Empty `call=` | `call=` with no list name |
 | Undefined list | `name=X` referencing a list not defined locally nor in `_shared.yaml` |
+| **YAML does not parse** | `yaml.safe_load` raises. Reported with the parser's own line and message. |
+| **Value opens with a YAML indicator** | `key: !expr` or `key: &expr` unquoted |
+
+> [!WARNING]
+> The last two are **not** extension rules — they are this repo's, added
+> 2026-09-01 after `FerrazShamanEle.yaml` 1.3.0 shipped a file Simia silently
+> refused to load while the linter called it clean.
+>
+> ```yaml
+> kick_ok_target: !config.interrupt_timing|target.channeling|(...)
+> ```
+>
+> A scalar opening with `!` is a YAML **tag**, and `&` is an **anchor**. Both are
+> ordinary operators in this DSL, so any variable whose expression starts with a
+> negation must be quoted:
+>
+> ```yaml
+> kick_ok_target: "!config.interrupt_timing|target.channeling|(...)"
+> ```
+>
+> Every other check in this file is a regex over lines and cannot see this. The
+> parse check runs first and needs PyYAML; without it the check is skipped and
+> the rest still runs.
 
 ## 3. Diagnostics — Warnings
 
