@@ -14,7 +14,7 @@
 # most of what looks improvable here was tried and reverted.
 # =============================================================================
 
-version: "1.17.0"
+version: "1.16.1"
 author: Ferraz
 patch: "12.1"
 spec: 105
@@ -31,7 +31,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-09-01 | Patch: 12.1 | Version: 1.17.0"
+    text: "Last update: 2026-09-01 | Patch: 12.1 | Version: 1.16.1"
 
   # String the talent.X checks below assume.
   recommended_talents:
@@ -432,7 +432,7 @@ lists:
   # off-GCD or an item, so it fires without touching the cast; only the last
   # line ends it, and never on a protected channel.
   emergency:
-    - barkskin,name="Barkskin (Emergency)",range_check=none,off_gcd=true,ignore_queue=true,if=health.pct<=config.emergency_hp
+    - barkskin,name="Barkskin (Emergency)",range_check=none,off_gcd=true,ignore_queue=true,if=health.effective.pct<=config.emergency_hp
     - healthstone,name="Healthstone (Emergency)",off_gcd=true,ignore_queue=true,delay=250,if=healthstone.ready&health.pct<=config.engine_healthstone
     - health_potion,name="Health Potion (Emergency)",off_gcd=true,ignore_queue=true,delay=250,if=health_potion.ready&health.pct<=config.engine_health_potion
     # Last, so the off-GCD options above get their chance first.
@@ -534,8 +534,8 @@ lists:
   active_healing:
     # Self-target fallback (bare health, not cycle.*) so solo content still
     # gets reactive healing. Runs first so it's never starved.
-    - rejuvenation.player,name="Emergency Self Rejuvenation",range_check=none,if=buff.rejuvenation.down&health.pct<config.raid_rejuvenation_threshold
-    - regrowth.player,name="Emergency Self Regrowth",range_check=none,if=health.pct<config.raid_regrowth_threshold
+    - rejuvenation.player,name="Emergency Self Rejuvenation",range_check=none,if=buff.rejuvenation.down&health.effective.pct<config.raid_rejuvenation_threshold
+    - regrowth.player,name="Emergency Self Regrowth",range_check=none,if=health.effective.pct<config.raid_regrowth_threshold
 
     - wild_growth,name="SotF Wild Growth",range_check=none,if=var.has_soul&group.count(cycle.health.effective.pct<config.raid_wild_growth_threshold)>=config.raid_wild_growth_members
     - regrowth,name="SotF Regrowth",cycle=members,if=var.has_soul&cycle.health.effective.pct<config.raid_regrowth_threshold
@@ -643,7 +643,7 @@ lists:
     # `player.channeling`, bare. This is what every.
     # Emergency FIRST, above the casting guard below. Only reachable while you
     # are actually casting and actually low, so it costs nothing otherwise.
-    - call_action_list,name=emergency,if=player.combat&(player.casting|player.channeling)&health.pct<=config.emergency_hp
+    - call_action_list,name=emergency,if=player.combat&(player.casting|player.channeling)&health.effective.pct<=config.emergency_hp
 
     - return,if=player.channeling|player.casting|var.protected_channel
 

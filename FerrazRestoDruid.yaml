@@ -14,7 +14,7 @@
 # bug this file has already been through. Read it before changing a line -
 # most of what looks improvable here was tried and reverted.
 # =============================================================================
-version: "5.8.0"
+version: "5.7.0"
 author: Ferraz
 patch: "12.1"
 spec: 105
@@ -33,7 +33,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-09-01 | Patch: 12.1 | Version: 5.8.0"
+    text: "Last update: 2026-08-28 | Patch: 12.1 | Version: 5.7.0"
 
   # RECOMMENDED BUILD — the string the talent.X gates below assume.
   recommended_talents:
@@ -503,7 +503,7 @@ lists:
   # off-GCD or an item, so it fires without touching the cast; only the last
   # line ends it, and never on a protected channel.
   emergency:
-    - barkskin,name="Barkskin (Emergency)",range_check=none,off_gcd=true,ignore_queue=true,if=health.pct<=config.emergency_hp
+    - barkskin,name="Barkskin (Emergency)",range_check=none,off_gcd=true,ignore_queue=true,if=health.effective.pct<=config.emergency_hp
     - healthstone,name="Healthstone (Emergency)",off_gcd=true,ignore_queue=true,delay=250,if=healthstone.ready&health.pct<=config.healthstone_pct
     - health_potion,name="Health Potion (Emergency)",off_gcd=true,ignore_queue=true,delay=250,if=health_potion.ready&health.pct<=config.health_potion_pct
     # Last, so the off-GCD options above get their chance first.
@@ -731,7 +731,7 @@ lists:
     # `player.channeling`, bare.
     # Emergency FIRST, above the casting guard below. Only reachable while you
     # are actually casting and actually low, so it costs nothing otherwise.
-    - call_action_list,name=emergency,if=player.combat&(player.casting|player.channeling)&health.pct<=config.emergency_hp
+    - call_action_list,name=emergency,if=player.combat&(player.casting|player.channeling)&health.effective.pct<=config.emergency_hp
 
     - return,if=player.channeling|player.casting|var.protected_channel
     - call_action_list,name=engine
