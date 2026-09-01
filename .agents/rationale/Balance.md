@@ -1468,9 +1468,57 @@ Neither `expression-catalog.json` nor `SIMIA_DOCUMENTATION.md` states the
 lifetime, and no rotation in the dump depends on persistence in a way that would
 prove it.
 
-**If assignments do not persist**, `inc_spent` is 1 only on ticks where
-`var.cd_active` is already true, the latch never blocks anything, and the toggle
-behaves exactly as it does today — the failure is silent and harmless. Test in
-game: turn Auto Burst off, turn Burst Toggle on, take one Incarnation, and see
-whether a second window is offered while the toggle is still on. If it is, the
-assignment does not persist and this needs a different mechanism.
+**Answered in game on 2026-09-01: assignments DO persist between ticks.** The
+latch holds — one flip of the toggle buys one Incarnation and no second window
+is offered while it stays on. That settles a question the Simia documentation
+does not answer anywhere: `variable,name=X,value=1` still reads 1 on later
+ticks, matching SimC semantics. Anything else in this repo that wants a latch
+can rely on it.
+
+
+## Pressing the burst toggle off — 2026-09-01 (4.12.0)
+
+The latch works but leaves the switch lit while spent, which reads as active
+and grants nothing. Nothing in Simia writes a config or an app state flag —
+checked against the catalog's `actionTypes`, the extension's special-action
+list, and a scan of all 112 dump files for write patterns; all 26 hits are
+reads inside conditions.
+
+One indirect path exists. `type: toggle` is documented as *"Ephemeral boolean
+toggle. State always starts OFF and is never saved. Shows spell icon on overlay
+when active. **Can be hotkeyed.**"* And `hotkey=` overrides the scan code a line
+presses. So the rotation can press the toggle's own key.
+
+```yaml
+- mark_of_the_wild,name="Burst Toggle Off (key press)",hotkey=config.burst_toggle_hotkey,modifier=config.burst_toggle_modifier,off_gcd=true,ignore_queue=true,ignore_usable=true,ignore_cooldown=true,line_cd=2,if=config.burst_once&config.burst_toggle&config.burst_toggle_hotkey>0&variable.inc_spent=1
+```
+
+**No reset variable is needed.** The press switches the toggle off, which zeroes
+`inc_spent` on the next tick through the line above it, which makes this line
+false. The toggle going off is its own reset. `line_cd=2` covers the window
+while the key registers — without it the line could fire again before the
+toggle state updates and flip it straight back on.
+
+`hotkey=config.X` is not invented: `delay=config.interrupt_timing` appears in
+`community_LPOutlaw_V1.yaml` and `community_TeK_s_Kidneyspears_outlaw.yaml`, so
+step modifiers do accept config values.
+
+### Why this ships at 0 and is labelled experimental
+
+**`hotkey=` has zero uses across all 112 files in the dump.** Not one rotation
+has ever used it. Everything above is read off the documentation and a
+same-shaped precedent, not off anything anyone has run.
+
+The failure mode is bounded but real: if the redirect does not happen, the
+carrier spell is cast instead. Mark of the Wild was picked for that reason —
+an accidental cast is a rebuff and one global, nothing worse. A carrier like
+Moonkin Form would have cancelled the form, and Entangling Roots would have
+broken crowd control.
+
+`burst_toggle_hotkey` defaults to **0**, which disables the line entirely, so
+the feature is opt-in and the file behaves exactly as 4.11.1 until a scan code
+is entered. The modifier config takes the raw code (16 Shift, 17 Ctrl, 18 Alt)
+rather than a dropdown, because a dropdown returns its index and would need a
+mapping the DSL cannot express cleanly.
+
+Untested in game.
