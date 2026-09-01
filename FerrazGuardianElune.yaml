@@ -17,7 +17,7 @@
 # most of what looks improvable here was tried and reverted.
 # =============================================================================
 
-version: "1.12.0"
+version: "1.13.0"
 patch: "12.1"
 spec: 104
 name: Guardian Druid Ferraz M+
@@ -53,7 +53,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-08-30 | Patch: 12.1 | Version: 1.12.0"
+    text: "Last update: 2026-09-01 | Patch: 12.1 | Version: 1.13.0"
 
   # Exact string every number here was measured against (sim/Tassiana_guardian.simc).
   recommended_talents:
@@ -77,6 +77,7 @@ config:
     min: 0
     max: 100
     default: 75
+    description: "Read against EFFECTIVE health (raw health, minus heal absorbs, plus heals already flying at you) - the only slider in this set that is. Every other druid rotation reads Frenzied Regeneration against raw health; a tank is being actively healed, so waiting on an inbound heal is worth more than reacting to the raw bar."
   barkskin_hp_pct:
     section: "Defensive HP Percentage"
     label: "Barkskin HP%"
@@ -374,7 +375,10 @@ lists:
     - barkskin,name="Barkskin (Predicted Damage)",range_check=none,if=incoming.mitigated.pct>=config.barkskin_dmg_pct
     - survival_instincts,name="Survival Instincts (Predicted Damage)",range_check=none,if=incoming.mitigated.pct>=config.survival_instincts_dmg_pct
     - survival_instincts,name="Survival Instincts (HP)",range_check=none,if=health.pct<=config.survival_instincts_hp_pct
-    - frenzied_regeneration,range_check=none,if=health.pct<=config.frenzied_regeneration_hp_pct&buff.frenzied_regeneration.down
+    # Effective health here, raw everywhere else in the set: a tank has a healer
+    # actively topping them, and effective counts heals already in flight, so
+    # the charge is not spent on a bar that is about to refill on its own.
+    - frenzied_regeneration,range_check=none,if=health.effective.pct<=config.frenzied_regeneration_hp_pct&buff.frenzied_regeneration.down
     - barkskin,name="Barkskin (HP)",range_check=none,if=health.pct<=config.barkskin_hp_pct
 
   cooldowns:
