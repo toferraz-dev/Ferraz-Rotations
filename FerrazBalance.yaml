@@ -35,7 +35,7 @@
 # DungeonSlice, which Balance does not support, and against the previous build.
 # =============================================================================
 
-version: "4.15.0"
+version: "4.15.1"
 author: Ferraz
 patch: "12.1"
 spec: 102
@@ -52,7 +52,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-09-01 | Patch: 12.1 | Version: 4.15.0"
+    text: "Last update: 2026-09-01 | Patch: 12.1 | Version: 4.15.1"
 
   # Reference build. The measured numbers assume this exact string.
   recommended_talents:
@@ -463,14 +463,17 @@ lists:
   trinkets:
     - trinket_1,delay=150,name="Trinket 1",if=var.burst_armed&config.use_trinket_1&trinket_1.ready&player.combat&var.trinkets_ttd_ok&cooldown.fury_of_elune.remains>0&var.cd_active
     - trinket_2,delay=150,name="Trinket 2",if=var.burst_armed&config.use_trinket_2&trinket_2.ready&player.combat&var.trinkets_ttd_ok&cooldown.fury_of_elune.remains>0&var.cd_active
-    # Condition is now the trinket condition VERBATIM, on the same
-    # trinkets_ttd_ok gate: if a trinket fires the potion fires. The trailing
-    # |fight_remains<=30 can only add cases, never remove one.
+    # Same gate as the trinkets (trinkets_ttd_ok): if a trinket fires, so does
+    # this. The fight_remains branch lets an otherwise wasted potion go out at
+    # the end.
     #
-    # snapshot=true is DIAGNOSTIC. With the condition identical to a line that
-    # works, a log proving this one passed would leave combat_potion.ready as
-    # the only possible cause.
-    - combat_potion,delay=150,name="Combat Potion",snapshot=true,if=var.burst_armed&config.use_potion&combat_potion.ready&player.combat&var.trinkets_ttd_ok&cooldown.fury_of_elune.remains>0&var.cd_active|fight_remains<=30
+    # THE PARENTHESES ARE LORE-BEARING. `&` binds tighter than `|`, so writing
+    # ...&var.cd_active|fight_remains<=30 without them means fight_remains<=30
+    # ALONE satisfies the whole line - no player.combat, no combat_potion.ready.
+    # Out of combat fight_remains is 0, the line goes permanently true at the
+    # top of this list, and the rotation locks on it and never reaches the
+    # damage lists. That shipped in 4.15.0 and froze the rotation mid-fight.
+    - combat_potion,delay=150,name="Combat Potion",if=var.burst_armed&config.use_potion&combat_potion.ready&player.combat&(var.trinkets_ttd_ok&cooldown.fury_of_elune.remains>0&var.cd_active|fight_remains<=30)
 
   # spell_queue, sanity_checks and auto_target_ranged, inlined.
   engine:
