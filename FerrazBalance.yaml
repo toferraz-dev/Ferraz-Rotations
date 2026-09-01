@@ -35,7 +35,7 @@
 # DungeonSlice, which Balance does not support, and against the previous build.
 # =============================================================================
 
-version: "4.12.0"
+version: "4.11.1"
 author: Ferraz
 patch: "12.1"
 spec: 102
@@ -52,7 +52,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-09-01 | Patch: 12.1 | Version: 4.12.0"
+    text: "Last update: 2026-09-01 | Patch: 12.1 | Version: 4.11.1"
 
   # Reference build. The measured numbers assume this exact string.
   recommended_talents:
@@ -443,7 +443,7 @@ lists:
   # off-GCD or an item, so it fires without touching the cast; only the last
   # line ends it.
   emergency:
-    - barkskin,name="Barkskin (Emergency)",range_check=none,off_gcd=true,ignore_queue=true,if=health.pct<=config.emergency_hp
+    - barkskin,name="Barkskin (Emergency)",range_check=none,off_gcd=true,ignore_queue=true,if=health.effective.pct<=config.emergency_hp
     - healthstone,name="Healthstone (Emergency)",off_gcd=true,ignore_queue=true,delay=250,if=healthstone.ready&health.pct<=config.engine_healthstone
     - health_potion,name="Health Potion (Emergency)",off_gcd=true,ignore_queue=true,delay=250,if=health_potion.ready&health.pct<=config.engine_health_potion
     # Last, so the off-GCD options above get their chance first.
@@ -532,7 +532,7 @@ lists:
     - heart_of_the_wild,name="HotW (Party Heal)",range_check=none,ignore_cds_toggle=true,if=config.hotw_party_heal&buff.moonkin_form.up&group.count(cycle.health.effective.pct<config.hotw_hp)>=1
 
     - frenzied_regeneration,if=health.pct<=config.frenzied_regen_hp&buff.bear_form.up
-    - barkskin,range_check=none,name="Barkskin (low HP)",if=health.pct<=config.barkskin_hp
+    - barkskin,range_check=none,name="Barkskin (low HP)",if=health.effective.pct<=config.barkskin_hp
 
     # Two lines, because breaking a root needs a form CHANGE - one line would
     # loop suggesting the form you are already in.
@@ -637,7 +637,7 @@ lists:
   main:
     # Emergency FIRST, above the casting guard below. Only reachable while you
     # are actually casting and actually low, so it costs nothing otherwise.
-    - call_action_list,name=emergency,if=player.combat&(player.casting|player.channeling)&health.pct<=config.emergency_hp
+    - call_action_list,name=emergency,if=player.combat&(player.casting|player.channeling)&health.effective.pct<=config.emergency_hp
 
     - return,if=player.channeling|player.casting
 
