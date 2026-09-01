@@ -206,3 +206,83 @@ likely to be wrong on first contact:
 - `capacitor_totem.player` as the AoE stun (copied from the official rotation)
 - whether `movement_allowed: buff.spiritwalkers_grace.up` behaves as the moving
   lists assume
+
+---
+
+## Compared against the two Elemental rotations in the dump — 1.1.0
+
+The data dump holds exactly two: `rotation_262.yaml` (Simia's own, a mechanical
+conversion of an older SimC APL) and `community_TeK_GOAT_Elemental.yaml` (TeK,
+hand-written, for **12.0**).
+
+TeK's file is written to run on *any* Elemental build — every branch is guarded
+by `talent.X`, including talents this build does not have. This file is written
+for one build and drops the dead branches. Neither approach is wrong; they
+answer different questions.
+
+Reading it found three things this file had wrong. All are targeting mistakes,
+not priority mistakes, and none of them is visible to SimC — the sim has no
+concept of where a ground effect lands.
+
+### 1. Earthquake is ground-targeted
+
+```
+Earthquake (id=61882) ... Range: 40 yards
+Causes the earth within $a1 yards of the target location to tremble
+```
+
+Three lines said `earthquake`; they now say `earthquake.cursor`. Without the
+suffix the addon has no location to give it. TeK uses `.cursor` on every
+Earthquake in the file.
+
+### 2. Capacitor Totem at your own feet
+
+Was `capacitor_totem.player`, copied from the official `rotation_262.yaml`.
+That drops the totem on the caster — fine for a melee spec, useless for one
+standing at 40 yards, which is where this rotation puts you. Now:
+
+```yaml
+- capacitor_totem.cursor,if=interrupt.stun.aoe.check&target.range<=30
+- capacitor_totem.mouseover,if=interrupt.stun.mouseover.check&mouseover.combat
+```
+
+The official file being a straight APL conversion is exactly why it carries
+this: SimC does not model totem placement, so nothing in the conversion could
+have caught it.
+
+### 3. Elemental Orbit was talented and unused
+
+```
+Elemental Orbit (id=383010): Increases the number of Elemental Shields you
+can have active on yourself by 1.
+```
+
+It is on this build, and the file only maintained Lightning Shield. Earth
+Shield now goes up alongside it, gated on `talent.elemental_orbit` so the line
+is dead on a build without it.
+
+Also taken from TeK: `skyfury,cycle=members`, to buff a party member who is
+missing it. Out of combat only.
+
+### Deliberately not taken
+
+- **`aoe_mode: active_enemies>=2`.** TeK splits AoE at 2, SimC's own priority at
+  3. This file keeps 3 as the default but exposes it as a slider from 2 to 6,
+  so the disagreement is the user's to settle rather than baked in.
+- **The whole interrupt-timing system** (`interrupt_timing_min/max`,
+  `target.casting.elapsed` windows). It is the most interesting thing in TeK's
+  file — it delays the kick into a window instead of firing on sight, which
+  defeats fake-casting. It is also a large subsystem with its own failure modes
+  and no way to validate it here. Worth revisiting on its own, not smuggled in
+  with a targeting fix.
+- **Thunderstorm as a backup interrupt.** Knocks mobs away from the tank; TeK
+  ships it OFF by default and so would this file, which makes it dead weight.
+- **`trinket_X.has_stat` / `trinket_X.cd`.** Neither is in
+  `expression-catalog.json`, though both appear in the official
+  `rotation_260.yaml`, so they are real. They would let the trinket lines tell a
+  stat-stick from a proc trinket. The current lines are TTD-only by choice and
+  this would be a genuine refinement rather than a fix — left for when the
+  trinket policy is revisited with a real character's trinkets in hand.
+- **`nameplates.debuff.flame_shock.count`** in place of `active_dot.flame_shock`.
+  Both are real; `active_dot` is the SimC-native spelling and is what
+  `rotation_262.yaml` uses. No reason to churn it.
