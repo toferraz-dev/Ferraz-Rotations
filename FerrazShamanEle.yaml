@@ -25,7 +25,7 @@
 # WHY ANY OF IT IS THE WAY IT IS: .agents/rationale/ShamanEle.md
 # =============================================================================
 
-version: "1.1.0"
+version: "1.2.0"
 patch: "12.1"
 spec: 262
 name: Elemental Shaman Ferraz M+
@@ -51,7 +51,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-08-31 | Patch: 12.1 | Version: 1.1.0"
+    text: "Last update: 2026-08-31 | Patch: 12.1 | Version: 1.2.0"
 
   # Exact string this file's priority was written against.
   recommended_talents:
@@ -204,6 +204,34 @@ config:
     default: false
     description: "Purge a magic buff off the current target. OFF by default: it costs a global and most trash buffs are not worth one."
 
+  # === INTERRUPTS === layered ON TOP of Simia's shared interrupt system, which
+  # already enforces casting.elapsed>=0.2 and the Interrupt After Cast % sliders.
+  # These only ever make it stricter, never looser.
+  interrupt_timing:
+    section: "Interrupts"
+    label: "Extra Interrupt Timing"
+    type: checkbox
+    default: true
+    description: "Adds a minimum delay and a latency margin on top of Simia's own interrupt checks. Turn OFF to use the shared Interrupt After Cast % sliders alone."
+
+  interrupt_min_delay:
+    section: "Interrupts"
+    label: "Minimum Delay (ms)"
+    type: slider
+    min: 0
+    max: 800
+    default: 150
+    description: "Wait this long into the cast before kicking. Anti fake-cast: a bait cast is already cancelled by the time this elapses. Simia enforces 200ms of its own, so anything below that does nothing."
+
+  interrupt_latency_margin:
+    section: "Interrupts"
+    label: "Latency Margin (ms)"
+    type: slider
+    min: 0
+    max: 800
+    default: 250
+    description: "Do not press the kick when the cast ends sooner than this - it would land after the cast completed and be wasted on the cooldown. Raise it if your latency is high. Channels ignore this."
+
   # === MOUSEOVER ===
   MO_flame_shock:
     section: "Mouseover"
@@ -276,6 +304,14 @@ variables:
   # Burst allowed: auto or manual toggle. Drives Ascendance/Stormkeeper/trinkets/potion.
   burst_ok: config.auto_burst|config.burst_toggle
 
+  # Kick timing, ANDed onto Simia's interrupt.*.check. A channel is exempt from
+  # the latency margin: there is no cast bar to finish ahead of the kick.
+  kick_min: config.interrupt_min_delay/1000
+  kick_margin: config.interrupt_latency_margin/1000
+  kick_ok_target: !config.interrupt_timing|target.channeling|(target.casting.elapsed>=var.kick_min&target.casting.remains>=var.kick_margin)
+  kick_ok_mouseover: !config.interrupt_timing|mouseover.channeling|(mouseover.casting.elapsed>=var.kick_min&mouseover.casting.remains>=var.kick_margin)
+  kick_ok_focus: !config.interrupt_timing|focus.channeling|(focus.casting.elapsed>=var.kick_min&focus.casting.remains>=var.kick_margin)
+
   # === TIME TO DIE ===
   cd_ttd_ok: (target.boss|target.time_to_die>=config.ttd_cooldowns|fight_remains>=config.ttd_cooldowns)
   trinkets_ttd_ok: (target.boss|target.time_to_die>=config.ttd_trinkets|fight_remains>=config.ttd_trinkets)
@@ -344,9 +380,9 @@ lists:
 
   # interrupt.*.check = Simia's own kick filters.
   interrupts:
-    - wind_shear,if=interrupt.target.check
-    - wind_shear.mouseover,if=interrupt.mouseover.check
-    - wind_shear.focus,if=interrupt.focus.check
+    - wind_shear,if=interrupt.target.check&var.kick_ok_target
+    - wind_shear.mouseover,if=interrupt.mouseover.check&var.kick_ok_mouseover
+    - wind_shear.focus,if=interrupt.focus.check&var.kick_ok_focus
     # .cursor, not .player: this is a ranged spec, and a stun totem at your own
     # feet reaches nothing. Aim with the mouse.
     - capacitor_totem.cursor,if=interrupt.stun.aoe.check&target.range<=30

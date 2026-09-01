@@ -286,3 +286,91 @@ missing it. Out of combat only.
 - **`nameplates.debuff.flame_shock.count`** in place of `active_dot.flame_shock`.
   Both are real; `active_dot` is the SimC-native spelling and is what
   `rotation_262.yaml` uses. No reason to churn it.
+
+---
+
+## Interrupt timing — 1.2.0
+
+### Simia already had one, and it is better than TeK's
+
+Before writing anything, `_common.yaml` was read. `interrupt.target.check` —
+which this file already used — expands to, among much else:
+
+```
+&target.casting.elapsed>=0.2
+&(... target.casting.important
+      &target.casting.elapsed*100>=config.interrupt_important_pct*(target.casting.remains+target.casting.elapsed)
+    | !target.casting.important
+      &target.casting.elapsed*100>=config.interrupt_pct*(target.casting.remains+target.casting.elapsed))
+&(!target.incoming_cast.kickable.min50.up|target.casting.elapsed*100>=50*(...))
+```
+
+So the shared system already ships:
+
+| Knob | Where | Default |
+|---|---|---|
+| hard 200ms minimum before any kick | hardcoded in the check | 0.2s |
+| `interrupt_pct` — "Interrupt After Cast %" | `_shared.yaml` `config_shared` | 25 |
+| `interrupt_important_pct` | same | 50 |
+| `interrupt_all`, `interrupt_target/mouseover/focus` | same | false / true |
+| per-spell forced ≥50% completion | `incoming_cast.kickable.min50` | — |
+| Spell Reflection guard | in the check | — |
+
+Those sliders appear in the Simia UI already; a rotation does not declare them.
+
+**Percentage of cast beats fixed milliseconds.** A 1.5s cast and a 4s cast need
+very different absolute delays to mean the same thing, and TeK's system —
+`interrupt_timing_min`/`max` in flat ms — treats them alike. It also bypasses
+the shared check entirely: TeK's lines gate on `interrupts.target.ready`, not
+`interrupt.target.check`, so the reflect guard, the important-cast split and
+the min50 rule are all lost. It is a reimplementation of a system that already
+existed, with less in it.
+
+### What was actually missing
+
+One thing, and it is real: **nothing in the shared check stops you from
+pressing the kick into a cast that is about to finish.** With
+`interrupt_pct` at 25, a cast 90% complete still satisfies every clause. Press
+it and the kick lands after the cast resolved — spell goes off, kick is on
+cooldown, and the next cast in that pack is now unkickable.
+
+So 1.2.0 adds a **latency margin**, plus a minimum delay for anyone who wants
+more anti-fake room than the built-in 200ms without touching the percentages:
+
+```yaml
+kick_min: config.interrupt_min_delay/1000
+kick_margin: config.interrupt_latency_margin/1000
+kick_ok_target: !config.interrupt_timing|target.channeling|(target.casting.elapsed>=var.kick_min&target.casting.remains>=var.kick_margin)
+```
+
+ANDed onto `interrupt.target.check`, never replacing it:
+
+```yaml
+- wind_shear,if=interrupt.target.check&var.kick_ok_target
+```
+
+Three properties this shape buys:
+
+- **It can only ever be stricter.** Every guard the shared check performs still
+  runs first. A bug here can suppress a kick; it cannot cause a bad one.
+- **`!config.interrupt_timing` short-circuits the whole thing**, so the file
+  falls back to stock Simia behaviour with one checkbox. That escape exists
+  because this is unverifiable outside the game.
+- **Channels are exempt from the margin.** `casting.remains` on a channel is
+  not a cast bar racing your kick, and gating on it would refuse to kick
+  channels near their end for no reason.
+
+Defaults: 150ms minimum (below Simia's own 200ms floor, so it is inert until
+raised — deliberately, so the shipped behaviour is unchanged), 250ms margin.
+
+### Untested, and the failure mode to watch for
+
+Not verified in game. If kicks stop happening entirely, the first suspects are
+`target.casting.remains` returning 0 or something odd for a spell type this
+assumed, or the `/1000` division not producing a fraction. Turn **Extra
+Interrupt Timing** off; if kicks resume, it is this layer and not the rotation.
+
+Not taken from TeK, still: the `_late` fallback window. In that file
+`safe_interrupt_window_late` re-permits everything past the max as long as
+`remains>0.3`, which makes the max slider almost decorative — the pair reduces
+to "wait at least min". Two sliders that collapse into one are worse than one.
