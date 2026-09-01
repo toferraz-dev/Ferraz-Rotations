@@ -35,7 +35,7 @@
 # DungeonSlice, which Balance does not support, and against the previous build.
 # =============================================================================
 
-version: "4.13.0"
+version: "4.13.1"
 author: Ferraz
 patch: "12.1"
 spec: 102
@@ -52,7 +52,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-09-01 | Patch: 12.1 | Version: 4.13.0"
+    text: "Last update: 2026-09-01 | Patch: 12.1 | Version: 4.13.1"
 
   # Reference build. The measured numbers assume this exact string.
   recommended_talents:
@@ -114,8 +114,8 @@ config:
     type: number
     min: 0
     max: 255
-    default: 68
-    description: "Keyboard SCAN code of the key bound to the Burst toggle. 68 is F10. 0 disables this entirely. Find yours in the BINDINGS block of a snapshot log - toggles are the ids in the 1000000xxx range. Function keys are 59-68 for F1-F10, 87 for F11 and 88 for F12; X is 45. Do NOT use a virtual-key table, the numbers differ. When set, the rotation presses that key once the toggle has been spent so the switch really goes off. If the redirect fails the carrier spell (Mark of the Wild) is cast instead, which costs a global and nothing else."
+    default: 45
+    description: "Keyboard SCAN code of the key bound to the Burst toggle. 45 is X, 68 is F10. 0 disables this entirely. Find yours in the BINDINGS block of a snapshot log - toggles are the ids in the 1000000xxx range. Function keys are 59-68 for F1-F10, 87 for F11 and 88 for F12; X is 45. Do NOT use a virtual-key table, the numbers differ. When set, the rotation presses that key once the toggle has been spent so the switch really goes off. If the redirect fails the carrier spell (Mark of the Wild) is cast instead, which costs a global and nothing else."
 
   burst_toggle_modifier:
     label: "Burst Toggle - Key Modifier"
