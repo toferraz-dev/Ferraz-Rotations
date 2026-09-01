@@ -35,7 +35,7 @@
 # DungeonSlice, which Balance does not support, and against the previous build.
 # =============================================================================
 
-version: "4.13.1"
+version: "4.14.0"
 author: Ferraz
 patch: "12.1"
 spec: 102
@@ -52,7 +52,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-09-01 | Patch: 12.1 | Version: 4.13.1"
+    text: "Last update: 2026-09-01 | Patch: 12.1 | Version: 4.14.0"
 
   # Reference build. The measured numbers assume this exact string.
   recommended_talents:
@@ -92,39 +92,7 @@ config:
     section: "Cooldowns"
     type: checkbox
     default: false
-    description: "With Auto Burst OFF: one flip of the toggle allows exactly one Incarnation. After it goes up the toggle stops granting burst until you switch it OFF and ON again. By itself the switch keeps showing ON while spent - set the scan code below to have the rotation actually press it off."
-
-  # EXPERIMENTAL. `hotkey=` overrides the key a line presses, and the toggle can
-  # be hotkeyed - so pressing its key from the rotation is the only way to
-  # actually switch it off. Nothing in the 112-file data dump has ever used
-  # hotkey=. Set to 0 to disable.
-  #
-  # These really are SCAN codes, proven by the BINDINGS block of a snapshot:
-  # the modifiers Simia stores are 29/42/56, which are LCtrl/LShift/LAlt as scan
-  # codes (0x1D/0x2A/0x38). Every toggle in that table sits on a function key -
-  # 60=F2 61=F3 63=F5 64=F6 67=F9 68=F10 87=F11 88=F12 - and X, scan code 45,
-  # is bound to nothing at all.
-  #
-  # Read your own numbers instead of guessing: put snapshot=true on any line,
-  # trigger it, and open the "=== BINDINGS ===" block of the log it writes.
-  # Toggles appear as ids in the 1000000xxx range.
-  burst_toggle_hotkey:
-    label: "Burst Toggle - Key Scan Code (experimental)"
-    section: "Cooldowns"
-    type: number
-    min: 0
-    max: 255
-    default: 45
-    description: "Keyboard SCAN code of the key bound to the Burst toggle. 45 is X, 68 is F10. 0 disables this entirely. Find yours in the BINDINGS block of a snapshot log - toggles are the ids in the 1000000xxx range. Function keys are 59-68 for F1-F10, 87 for F11 and 88 for F12; X is 45. Do NOT use a virtual-key table, the numbers differ. When set, the rotation presses that key once the toggle has been spent so the switch really goes off. If the redirect fails the carrier spell (Mark of the Wild) is cast instead, which costs a global and nothing else."
-
-  burst_toggle_modifier:
-    label: "Burst Toggle - Key Modifier"
-    section: "Cooldowns"
-    type: number
-    min: 0
-    max: 18
-    default: 0
-    description: "Modifier held with the key above, as a scan code: 0 none, 29 Ctrl, 42 Shift, 56 Alt. These are the values Simia itself stores - the 16/17/18 in the documentation are virtual-key codes and do not match."
+    description: "With Auto Burst OFF: one flip of the toggle allows exactly one Incarnation. After it goes up the toggle stops granting burst until you switch it OFF and ON again. The switch keeps showing ON while spent: nothing in Simia can flip a config, and pressing its key from the rotation was tried and does not work either. Treat OFF then ON as the rearm gesture."
 
   # All three ride the burst window.
   use_trinket_1:
@@ -486,20 +454,6 @@ lists:
   burst_latch:
     - variable,name=inc_spent,value=0,if=!config.burst_toggle
     - variable,name=inc_spent,value=1,if=var.cd_active
-    # off_gcd was REMOVED here on purpose: an off-GCD suggestion renders as the
-    # small overlay icon, a different channel from the main suggestion, and the
-    # input driver may only press the main one. As a normal suggestion this
-    # takes one tick of the priority, which line_cd=2 bounds.
-    #
-    # snapshot=true is DIAGNOSTIC, remove once this is settled: it writes a
-    # Mark_of_the_Wild_*.log the moment the line is suggested. A log means the
-    # line fires and the key press is what fails; no log means the line never
-    # ran and the hotkey is irrelevant.
-    # Presses the toggle's own key to switch it off. No reset variable is
-    # needed: the press turns the toggle off, which zeroes inc_spent above on
-    # the next tick, which makes this line false again. line_cd=2 covers the
-    # gap while the key registers, so it cannot flip the toggle back on.
-    - mark_of_the_wild,name="Burst Toggle Off (key press)",hotkey=config.burst_toggle_hotkey,modifier=config.burst_toggle_modifier,snapshot=true,ignore_usable=true,ignore_cooldown=true,line_cd=2,if=config.burst_once&config.burst_toggle&config.burst_toggle_hotkey>0&variable.inc_spent=1
 
   # Solar Beam on target/mouseover/focus. interrupt.*.check = Simia's own
   # kick filters (interruptible, important, in range, not already kicked).
