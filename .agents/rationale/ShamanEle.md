@@ -416,3 +416,80 @@ nothing to find.
 Why the tails differ is unknown. SimC reads both identically, so whatever
 differs is something it ignores — PvP talents, loadout metadata, or an
 equivalent serialisation from a different exporter. Not worth guessing at.
+
+---
+
+## Mouseover interrupt system — 1.3.0
+
+Modelled on `community_TeK_GOAT_Elemental.yaml`: hover the caster's nameplate,
+nothing swaps your target, and the kick has two fallbacks behind it.
+
+```
+Wind Shear  ->  Capacitor Totem  ->  Thunderstorm
+```
+
+```yaml
+- wind_shear,if=interrupt.target.check&var.kick_ok_target
+- wind_shear.mouseover,if=interrupt.mouseover.check&var.kick_ok_mouseover
+- wind_shear.focus,if=interrupt.focus.check&var.kick_ok_focus
+
+- capacitor_totem.mouseover,name="Cap Totem (Mouseover)",if=config.mo_cap_totem&!var.kick_ready&interrupt.stun.mouseover.check&mouseover.combat&mouseover.range<=40
+- capacitor_totem.cursor,name="Cap Totem (AoE)",if=config.cap_totem_aoe&!var.kick_ready&interrupt.stun.aoe.check
+
+- thunderstorm,name="Thunderstorm (Interrupt)",range_check=none,if=config.mo_thunderstorm&!var.kick_ready&interrupt.stun.target.check&target.range<=10
+```
+
+`kick_ready: cooldown.wind_shear.ready` gates both fallbacks, so neither spends
+a global while the kick itself is available.
+
+### Where this departs from TeK's version, and why
+
+**It keeps Simia's shared checks.** TeK gates on `interrupts.target.ready`;
+these lines gate on `interrupt.target.check` and `interrupt.stun.*.check`. The
+shared ones carry the Spell Reflection guard, the important-vs-ordinary cast
+split, the per-spell forced-50% rule, and the instanced-PvE filtering. Dropping
+them to hand-roll the same thing loses all four.
+
+**No duplicate "Mouseover Interrupt" switch.** Simia's `config_shared` already
+ships `interrupt_mouseover`, and `interrupt.mouseover.check` is gated on it.
+Adding a second checkbox here would let the two disagree, with the rotation
+appearing to ignore whichever the user set last. TeK needs his own switch only
+because he bypassed the shared check. Three new configs cover what is genuinely
+this file's to decide: `mo_cap_totem`, `cap_totem_aoe`, `mo_thunderstorm`.
+
+**Thunderstorm is not a mouseover ability.** TeK files it under the mouseover
+system, but the spell is centred on the caster:
+
+```
+Thunderstorm (51490): ...dealing Nature damage to all enemies within X yards,
+reducing their movement speed, and knocking them away from the Shaman.
+```
+
+So `target.range<=10` is the distance to **you**, not to the mouseover, and no
+`.mouseover` suffix would change that. It reaches a caster already standing on
+top of you and nothing else. It also knocks the whole pack off the tank, which
+is why it ships **OFF**, same as TeK's.
+
+It is baseline, not a talent — it does not appear anywhere in
+`spell_query=talent.class=shaman`, so the line is live on any build.
+
+### `kick_ready` and the comment in `_common.yaml`
+
+`_common.yaml` says each rotation defines `kick_ready: "action.<its kick>.ready"`
+and that the stun aliases are gated on `interrupt.kick.soon`. Only three files
+in the whole dump define `kick_ready`, and `interrupt.kick.soon` turns out to be
+self-contained — it enumerates every class kick, Wind Shear included, as
+`usable.wind_shear&cooldown.wind_shear.remains<0.2`, and `usable.X` returns 0
+for a spell the player does not have.
+
+So the shared stun checks already know when this spec's kick is up, without the
+rotation telling them. `kick_ready` is defined here for **this file's own**
+fallback ordering, not to feed the shared system. Read that comment as legacy
+wording rather than a requirement.
+
+### Untested
+
+None of it is verified in game. The stun path is the least certain: whether
+`capacitor_totem.mouseover` places the totem at the hovered unit rather than at
+the player, and whether `mouseover.range<=40` is the right placement limit, are
+both assumptions taken from TeK's file rather than from documentation.
