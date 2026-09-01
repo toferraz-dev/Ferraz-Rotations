@@ -35,7 +35,7 @@
 # DungeonSlice, which Balance does not support, and against the previous build.
 # =============================================================================
 
-version: "4.10.0"
+version: "4.11.0"
 author: Ferraz
 patch: "12.1"
 spec: 102
@@ -52,7 +52,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-08-30 | Patch: 12.1 | Version: 4.10.0"
+    text: "Last update: 2026-09-01 | Patch: 12.1 | Version: 4.11.0"
 
   # Reference build. The measured numbers assume this exact string.
   recommended_talents:
@@ -84,6 +84,15 @@ config:
     section: "Cooldowns"
     type: toggle
     description: "Manual burst window. Only needed when Auto Burst is OFF: toggle ON to allow Incarnation, trinkets and potion, OFF to hold CDs."
+
+  # Spends the toggle on ONE burst window. Nothing in Simia can flip a config,
+  # so the switch stays visually ON - it just stops granting burst.
+  burst_once:
+    label: "Burst Toggle Fires Once"
+    section: "Cooldowns"
+    type: checkbox
+    default: false
+    description: "With Auto Burst OFF: one flip of the toggle allows exactly one Incarnation. After it goes up the toggle stops granting burst until you switch it OFF and ON again. The toggle itself keeps showing ON - the rotation cannot change a config - so treat OFF/ON as the rearm gesture."
 
   # All three ride the burst window.
   use_trinket_1:
@@ -395,8 +404,9 @@ variables:
   eclipse_down: buff.eclipse_solar.down&buff.eclipse_lunar.down
 
 
-  # Burst allowed: auto or manual toggle. Drives Incarnation + both trinkets + potion.
-  burst_ok: config.auto_burst|config.burst_toggle
+  # Burst allowed: auto, or the manual toggle while the latch below still has
+  # it armed. Drives Incarnation + both trinkets + potion.
+  burst_ok: config.auto_burst|(config.burst_toggle&(!config.burst_once|variable.inc_spent=0))
 
   # A pull is actually underway: in combat, standing still, target is dotted.
   pull_engaged: player.combat&player.standing.time>=config.inc_min_standing_time&(debuff.moonfire.up|debuff.sunfire.up)
@@ -438,6 +448,12 @@ lists:
     - health_potion,name="Health Potion (Emergency)",off_gcd=true,ignore_queue=true,delay=250,if=health_potion.ready&health.pct<=config.engine_health_potion
     # Last, so the off-GCD options above get their chance first.
     - stop_casting,name="Cut Cast (Emergency)",if=config.emergency_stop_casting&!player.channeling
+
+  # Arms and spends the burst toggle. Runs every tick, in and out of combat, so
+  # flipping the toggle off rearms it immediately.
+  burst_latch:
+    - variable,name=inc_spent,value=0,if=!config.burst_toggle
+    - variable,name=inc_spent,value=1,if=var.cd_active
 
   # Solar Beam on target/mouseover/focus. interrupt.*.check = Simia's own
   # kick filters (interruptible, important, in range, not already kicked).
@@ -628,6 +644,7 @@ lists:
     # --- Engine plumbing. Must stay at the top. ---
     - call_action_list,name=engine
 
+    - call_action_list,name=burst_latch
     - call_action_list,name=heal_support
 
     # COMBAT WALL - nothing below runs out of combat. player.combat, NOT
