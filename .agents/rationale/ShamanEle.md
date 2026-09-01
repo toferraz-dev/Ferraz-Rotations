@@ -493,3 +493,46 @@ None of it is verified in game. The stun path is the least certain: whether
 `capacitor_totem.mouseover` places the totem at the hovered unit rather than at
 the player, and whether `mouseover.range<=40` is the right placement limit, are
 both assumptions taken from TeK's file rather than from documentation.
+
+---
+
+## Re-measured on the shipped string — 2026-09-01
+
+Everything above was measured before the reference string was swapped and
+before 1.3.0. Re-run on the string the file now ships, same profile, same
+`target_error=0.2`, Patchwerk. No `Severe`, no unsupported fight style, no
+unknown talent.
+
+| Targets | SimC default | this file | Δ | diff vs threshold | significant? |
+|---|---|---|---|---|---|
+| 1 | 220,086 ± 436 | 218,545 ± 434 | −0.70% | 1542 vs 1230 | yes |
+| 3 | 414,425 ± 792 | 411,485 ± 817 | −0.71% | 2940 vs 2276 | yes |
+| 5 | 753,839 ± 1486 | 749,298 ± 1438 | −0.60% | 4541 vs 4136 | yes |
+
+Same APL with SimC's trinket condition swapped in and nothing else changed:
+
+| Targets | this file + trinket sync | Δ | diff vs threshold | significant? |
+|---|---|---|---|---|
+| 1 | 219,467 ± 412 | −0.28% | 619 vs 1199 | no |
+| 3 | 413,259 ± 812 | −0.28% | 1166 vs 2269 | no |
+| 5 | 751,532 ± 1483 | −0.31% | 2307 vs 4199 | no |
+
+Cleaner than the first pass: the gap is a flat ~0.3% at every count and
+significant at none of them once the trinket condition matches. The earlier run
+had 5 targets already inside the error; this one has it outside until the
+trinket line is changed, and inside after. Same conclusion, better separated —
+the trinket policy is the whole measured difference and the damage priority is
+at parity.
+
+### What this run does NOT say
+
+Nothing about 1.3.0. SimC models no interrupts, no mouseover, no totem
+placement and no knockback, so the entire mouseover interrupt system — and the
+interrupt timing layer from 1.2.0 under it — is invisible to every number
+above. The APL mirror carries a bare `wind_shear` line purely so the sim does
+not error on its absence.
+
+These numbers confirm two narrower things: the priority still measures at
+parity on the string the file now ships, and 1.3.0 changed nothing in the
+damage lists. Both worth having. Neither is evidence that the interrupt work
+is correct.
