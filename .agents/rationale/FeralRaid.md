@@ -549,3 +549,36 @@ so with HotW on cooldown the Feral never enters Bear at all and neither of
 these lines can run - including the new heal, in exactly the windows where the
 cooldown situation is worst. Loosening that gate was offered and not taken;
 the bear shift still has to buy HotW to justify losing the Cat rotation.
+
+### Follow-ups the same day
+
+**The bear shift now fires for either payoff.** It was gated on Heart of the
+Wild alone, so with HotW on cooldown the Feral never entered Bear and the new
+heal could not run in the windows where cooldowns are scarcest:
+
+```yaml
+&(cooldown.heart_of_the_wild.ready|buff.heart_of_the_wild.up|cooldown.frenzied_regeneration.ready&buff.frenzied_regeneration.down)
+```
+
+The Frenzied Regeneration leg carries `buff.frenzied_regeneration.down` so a
+shift is never paid for to reapply a HoT already ticking.
+
+**Both payoffs are now gated on the panic threshold.**
+
+```yaml
+- heart_of_the_wild,...&player.combat&health.pct<=config.panic_bear_hp_pct
+- frenzied_regeneration,...&player.combat&health.pct<=config.panic_bear_hp_pct&buff.frenzied_regeneration.down
+```
+
+`Shapeshift Clear` puts you in Bear Form at any health to break a root. Without
+this gate both buttons fired on the way out of a root at full health, spending
+a cooldown on nothing. The bug predates the Frenzied Regeneration line — HotW
+had it alone — and is fixed for both here.
+
+`buff.frenzied_regeneration.down` on the cast: one charge, 36s recharge, and
+the HoT only lasts 3s, so without the guard the line recasts over its own tick
+and throws the recharge away.
+
+The threshold is reused rather than given its own slider. It already means
+"health low enough that losing the Cat rotation is worth it", which is exactly
+the question both lines are asking.
