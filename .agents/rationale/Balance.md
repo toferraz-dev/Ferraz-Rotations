@@ -1524,17 +1524,46 @@ The modifier config takes the raw code (16 Shift, 17 Ctrl, 18 Alt) rather than
 a dropdown, because a dropdown returns its index and would need a mapping the
 DSL cannot express cleanly.
 
-### These are virtual-key codes, not scan codes
+### They are scan codes after all — and how that was settled
 
-The documentation calls the field a "scan code" and it is not one. Its own
-example gives `1` as **49**, which is `VK_1`; the real scan code for the 1 key
-is 2. The modifier values it lists — 16, 17, 18 — are `VK_SHIFT`, `VK_CONTROL`
-and `VK_MENU`. Both only make sense as Windows virtual-key codes.
+An earlier version of this section claimed the opposite, confidently and
+wrongly: that the numbers were Windows virtual-key codes, reasoned from the
+documentation's "1 is 49" example. A snapshot log settled it with real data.
 
-This matters because the two tables disagree for most keys. X is **88** as a
-virtual-key code and **45** as a scan code, and someone reading the field name
-literally would enter 45 and get either nothing or the wrong key.
+`snapshot=true` writes a `=== BINDINGS ===` block listing every keybind Simia
+knows. The modifiers it stores are **29, 42 and 56** — LCtrl, LShift and LAlt
+as *scan* codes (0x1D, 0x2A, 0x38). As virtual-key codes those numbers are
+meaningless. And every toggle in the table sits on a function key, which decodes
+cleanly only as scan codes:
 
-Letters A–Z are 65–90. Digits 1–9 are 49–57, 0 is 48. F1–F12 are 112–123.
+```
+60=F2  61=F3  63=F5  64=F6  67=F9  68=F10  87=F11  88=F12   82=Numpad0
+```
+
+**Do not derive these from a table. Read them.** Put `snapshot=true` on any
+line, trigger it, open the log, and take the number Simia itself recorded.
+
+### What the first attempt was actually pressing
+
+The config shipped at 88, chosen from a virtual-key table as "X". In scan
+codes 88 is **F12**, which the bindings block shows belongs to pseudo-spell
+`1000000019` — a *different* toggle. So for six firings, two seconds apart, the
+rotation was flipping some other switch of the user's on and off. It failed
+safe only by luck.
+
+The burst toggle is `1000000074`, on **68 (F10) with no modifier**. It is the
+only id outside the `1000000001`–`1000000020` block, which is what a
+rotation-defined toggle looks like against Simia's built-in ones. Scan code 45,
+X, is bound to nothing in all 71 entries.
+
+### What the snapshot proved about the mechanism
+
+Six logs, at exactly two-second intervals matching `line_cd=2`. **The line
+fires.** Everything about "is it being suggested" is settled: it is, reliably.
+
+`Mark of the Wild`'s last cast in the same log was 284s earlier, so the carrier
+was never cast either — meaning the press did go somewhere other than the
+carrier's own keybind. That is consistent with `hotkey=` working and hitting the
+wrong key, which is the reading this change acts on.
 
 Untested in game.

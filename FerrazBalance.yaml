@@ -35,7 +35,7 @@
 # DungeonSlice, which Balance does not support, and against the previous build.
 # =============================================================================
 
-version: "4.12.3"
+version: "4.13.0"
 author: Ferraz
 patch: "12.1"
 spec: 102
@@ -52,7 +52,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-09-01 | Patch: 12.1 | Version: 4.12.3"
+    text: "Last update: 2026-09-01 | Patch: 12.1 | Version: 4.13.0"
 
   # Reference build. The measured numbers assume this exact string.
   recommended_talents:
@@ -99,18 +99,23 @@ config:
   # actually switch it off. Nothing in the 112-file data dump has ever used
   # hotkey=. Set to 0 to disable.
   #
-  # The docs call these "scan codes" but the numbers are Windows VIRTUAL-KEY
-  # codes: the doc's own example, "1 is 49", is VK_1, and the modifiers 16/17/18
-  # are VK_SHIFT/CONTROL/MENU. A real scan-code table would give X as 45 and
-  # would not work.
+  # These really are SCAN codes, proven by the BINDINGS block of a snapshot:
+  # the modifiers Simia stores are 29/42/56, which are LCtrl/LShift/LAlt as scan
+  # codes (0x1D/0x2A/0x38). Every toggle in that table sits on a function key -
+  # 60=F2 61=F3 63=F5 64=F6 67=F9 68=F10 87=F11 88=F12 - and X, scan code 45,
+  # is bound to nothing at all.
+  #
+  # Read your own numbers instead of guessing: put snapshot=true on any line,
+  # trigger it, and open the "=== BINDINGS ===" block of the log it writes.
+  # Toggles appear as ids in the 1000000xxx range.
   burst_toggle_hotkey:
     label: "Burst Toggle - Key Scan Code (experimental)"
     section: "Cooldowns"
     type: number
     min: 0
     max: 255
-    default: 88
-    description: "Key you bound to the Burst toggle, as a Windows virtual-key code. 88 is X. 0 disables this entirely. When set, the rotation presses that key once the toggle has been spent, so the switch really goes off instead of only being ignored. Untested: no rotation anywhere uses hotkey=. If the redirect fails the carrier spell (Mark of the Wild) is cast instead, which costs a global and nothing else. Letters A-Z are 65-90, so X=88 and Z=90. Digits 1-9 are 49-57 and 0 is 48. F1-F12 are 112-123."
+    default: 68
+    description: "Keyboard SCAN code of the key bound to the Burst toggle. 68 is F10. 0 disables this entirely. Find yours in the BINDINGS block of a snapshot log - toggles are the ids in the 1000000xxx range. Function keys are 59-68 for F1-F10, 87 for F11 and 88 for F12; X is 45. Do NOT use a virtual-key table, the numbers differ. When set, the rotation presses that key once the toggle has been spent so the switch really goes off. If the redirect fails the carrier spell (Mark of the Wild) is cast instead, which costs a global and nothing else."
 
   burst_toggle_modifier:
     label: "Burst Toggle - Key Modifier"
@@ -119,7 +124,7 @@ config:
     min: 0
     max: 18
     default: 0
-    description: "Modifier held with the key above. 0 none, 16 Shift, 17 Ctrl, 18 Alt."
+    description: "Modifier held with the key above, as a scan code: 0 none, 29 Ctrl, 42 Shift, 56 Alt. These are the values Simia itself stores - the 16/17/18 in the documentation are virtual-key codes and do not match."
 
   # All three ride the burst window.
   use_trinket_1:
