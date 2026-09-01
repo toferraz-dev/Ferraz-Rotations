@@ -35,7 +35,7 @@
 # DungeonSlice, which Balance does not support, and against the previous build.
 # =============================================================================
 
-version: "4.11.1"
+version: "4.12.0"
 author: Ferraz
 patch: "12.1"
 spec: 102
@@ -52,7 +52,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-09-01 | Patch: 12.1 | Version: 4.11.1"
+    text: "Last update: 2026-09-01 | Patch: 12.1 | Version: 4.12.0"
 
   # Reference build. The measured numbers assume this exact string.
   recommended_talents:
@@ -92,7 +92,29 @@ config:
     section: "Cooldowns"
     type: checkbox
     default: false
-    description: "With Auto Burst OFF: one flip of the toggle allows exactly one Incarnation. After it goes up the toggle stops granting burst until you switch it OFF and ON again. The toggle itself keeps showing ON - the rotation cannot change a config - so treat OFF/ON as the rearm gesture."
+    description: "With Auto Burst OFF: one flip of the toggle allows exactly one Incarnation. After it goes up the toggle stops granting burst until you switch it OFF and ON again. By itself the switch keeps showing ON while spent - set the scan code below to have the rotation actually press it off."
+
+  # EXPERIMENTAL. `hotkey=` overrides the scan code a line presses, and the
+  # toggle can be hotkeyed - so pressing its key from the rotation is the only
+  # way to actually switch it off. Nothing in the 112-file data dump has ever
+  # used hotkey=. Leave at 0 unless you are testing it.
+  burst_toggle_hotkey:
+    label: "Burst Toggle - Key Scan Code (experimental)"
+    section: "Cooldowns"
+    type: number
+    min: 0
+    max: 255
+    default: 0
+    description: "Scan code of the key you bound to the Burst toggle. 0 disables this entirely. When set, the rotation presses that key once the toggle has been spent, so the switch really goes off instead of only being ignored. Untested: no rotation anywhere uses hotkey=. If the redirect fails the carrier spell (Mark of the Wild) is cast instead, which costs a global and nothing else. Common codes: 1-9 are 49-57, 0 is 48, F1-F12 are 112-123."
+
+  burst_toggle_modifier:
+    label: "Burst Toggle - Key Modifier"
+    section: "Cooldowns"
+    type: number
+    min: 0
+    max: 18
+    default: 0
+    description: "Modifier held with the key above. 0 none, 16 Shift, 17 Ctrl, 18 Alt."
 
   # All three ride the burst window.
   use_trinket_1:
@@ -454,6 +476,11 @@ lists:
   burst_latch:
     - variable,name=inc_spent,value=0,if=!config.burst_toggle
     - variable,name=inc_spent,value=1,if=var.cd_active
+    # Presses the toggle's own key to switch it off. No reset variable is
+    # needed: the press turns the toggle off, which zeroes inc_spent above on
+    # the next tick, which makes this line false again. line_cd=2 covers the
+    # gap while the key registers, so it cannot flip the toggle back on.
+    - mark_of_the_wild,name="Burst Toggle Off (key press)",hotkey=config.burst_toggle_hotkey,modifier=config.burst_toggle_modifier,off_gcd=true,ignore_queue=true,ignore_usable=true,ignore_cooldown=true,line_cd=2,if=config.burst_once&config.burst_toggle&config.burst_toggle_hotkey>0&variable.inc_spent=1
 
   # Solar Beam on target/mouseover/focus. interrupt.*.check = Simia's own
   # kick filters (interruptible, important, in range, not already kicked).
