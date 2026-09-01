@@ -374,3 +374,45 @@ Not taken from TeK, still: the `_late` fallback window. In that file
 `safe_interrupt_window_late` re-permits everything past the max as long as
 `remains>0.3`, which makes the max slider almost decorative — the pair reduces
 to "wait at least min". Two sliders that collapse into one are worse than one.
+
+---
+
+## Reference string swapped — 2026-09-01 (1.2.1)
+
+`recommended_talents` and `sim/Ferraz_shaman_ele.simc` now carry the most-used
+Elemental string from the logs sites, replacing the one the file was originally
+written against.
+
+**It is a different string that resolves to the same loadout.** They agree on
+only 61 of 105 characters and diverge completely in the tail, so this was
+checked rather than assumed:
+
+| Check | Result |
+|---|---|
+| 157 talent names — 57 class, 51 Elemental spec, 52 hero — boolean | no differences |
+| the 76 talented nodes at `rank>=2` and `rank>=3` | no differences |
+| tree coverage | `class` 57 + `spec elemental` 51 + `hero` 52, complete |
+
+The tree list came from `spell_query=talent.class=shaman` (253 entries; the six
+`Tree: selection` nodes are the unnamed hero-subtree picks, already settled by
+`call_of_the_ancestors` being true in both).
+
+### The control, because "no differences" is also what a broken probe returns
+
+Corrupting the tail of the string makes SimC reject it outright:
+
+```
+Error: Hash '...XXXXXXXX': 58 ranks selected for node 94892, 1 ranks max.
+```
+
+and the corrupted build then reports `call_of_the_ancestors`, `stormkeeper` and
+`ascendance` all false. So the parser genuinely reads the tail, and the probe
+genuinely detects a changed loadout. It found nothing here because there is
+nothing to find.
+
+**Every measurement in this file still stands** — same talents, so the
+1/3/5-target numbers and the trinket-sync control were measured on this build.
+
+Why the tails differ is unknown. SimC reads both identically, so whatever
+differs is something it ignores — PvP talents, loadout metadata, or an
+equivalent serialisation from a different exporter. Not worth guessing at.
