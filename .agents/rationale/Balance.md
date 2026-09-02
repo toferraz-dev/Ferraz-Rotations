@@ -1827,3 +1827,96 @@ independent binaries agreeing is worth more than either number alone.
 Elune's Guidance is **still** unmodelled on the new binary — Incarnation is
 3.87 casts / 25.2% uptime old against 3.86 / 25.3% new, unchanged. The caveat
 above stands unaltered.
+
+
+## Five ideas from the official rotation_102.yaml — two shipped, one big win, two rejected — 4.18.0
+
+The refreshed dump brought a new `rotation_102.yaml` (Simia's own Balance
+conversion of the SimC APL). Five things in it looked worth taking. All five
+were checked against **this** build first, because most of that file is dead
+here: New Moon, Wild Mushroom, Force of Nature, Convoke and Power of Goldrinn
+are all untalented, and Renewal is not a talent in 12.1 at all.
+
+### Shipped, unmeasurable: the file never cast Solar Eclipse
+
+`grep` found two `lunar_eclipse` lines and **zero** `solar_eclipse`. Solar and
+Lunar are two castables sharing one cooldown with mutually exclusive `ready()`,
+so every time the game wanted Solar this rotation offered nothing and the
+global went to a filler. Both halves are now offered.
+
+This cannot be measured here: SimC models `eclipse` as **one** action covering
+both halves, so the split is a Simia-only concern and the APL mirror cannot
+express the bug or the fix.
+
+### Shipped, unmeasurable: the eclipse spell_overrides
+
+```yaml
+solar_eclipse: "buff.eclipse_solar.down"
+lunar_eclipse: "buff.eclipse_lunar.down"
+```
+
+Celestial Alignment / Incarnation puts **both** eclipse buffs up for its whole
+duration, and the game then refuses the cast while the line stays suggestible.
+The official file's comment says this stalls the rotation. This file was
+already protected by `var.eclipse_down` requiring both halves down, but that
+same condition is what blocked the Solar case above, so the guard belongs at
+the override level where it cannot be undone by a future edit to a line.
+
+### Shipped, +3.78%: the burst waits for DoTs spread across the pull
+
+```yaml
+dots_spread: active_dot.moonfire>=enemies.combat.40y|active_dot.moonfire>=10
+pull_engaged: player.combat&player.standing.time>=config.inc_min_standing_time&var.dots_spread
+```
+
+`pull_engaged` previously accepted **one** DoT on the current target. The
+official requires Moonfire on the whole pull. This is the same idea as the
+Elemental `pull_engaged` from earlier today, one step stricter.
+
+Measured twice on DungeonRoute as the only variable:
+
+| | target_error 0.3 | target_error 0.2 |
+|---|---|---|
+| baseline | 108,373 ± 306 | 108,167 ± 210 |
+| **dots_spread** | **111,973 ± 321** | **112,253 ± 222** |
+| | +3.32% | **+3.78%** |
+
+At 0.2 the difference is 4,086 against a threshold of 611. This is the largest
+single gain measured on this file.
+
+The TTD half of the official's gate (`target.time_to_die>20`) was **not**
+copied: `inc_ttd_ok` already applies `ttd_incarnation` at 25, which is stricter.
+
+### Rejected, −0.60%: eclipse_timings
+
+The official's `variable.eclipse_timings` collapses hard for this build — with
+Lunation talented the Fury of Elune term is multiplied by `!talent.lunation`
+= 0, and Force of Nature is untalented so its cooldown reads 0, leaving
+`eclipse_full_recharge_time < duration+2 | ca_inc_remains < duration+2 |
+fight_remains < duration`.
+
+On its own it measured −0.21% (inside the error). Stacked on the shipped
+change it measured **111,576 ± 215 against 112,253 ± 222** — a 677 difference
+on a 618 threshold, so it takes a real bite out of the gain. Not shipped.
+
+That may be the collapse being wrong rather than the idea; it is recorded so
+the next attempt starts from the measurement rather than from the tooltip.
+
+### Rejected, destroys the gain: the opener list
+
+A pre-first-CA ramp with `line_cd=999` one-shot lines. Alone: 107,777 ± 314
+against a 108,373 baseline. Stacked on the shipped change: **107,631 ± 210
+against 112,253** — it removes the entire +3.78%.
+
+Almost certainly the translation rather than the concept: SimC's
+`run_action_list` never returns to the caller, so an opener list that does not
+fall through locks the rotation inside it. The official file can afford that
+shape because its whole `main` is built around `run_action_list` dispatch; this
+file uses `call_action_list` and a fall-through priority. Not worth
+re-engineering on a guess.
+
+### What was not attempted
+
+`hero_tree.elunes_chosen` branching, `variable.Starfall_talents`, the Orbit
+Breaker stack id (`buff.1303480`), and auto Travel Form out of combat. All
+polish, none of it measured.

@@ -7,6 +7,10 @@
 #   swap_off_dying            no retargeting model
 #   every ttd_* gate          sim dummies live the whole fight
 #   inc_min_standing_time     player.standing.time is infinite here
+#
+# The variable.inc_ready gate carries var.dots_spread from the YAML:
+# active_dot.moonfire>=spell_targets|active_dot.moonfire>=10. That is the
+# +3.78% change, measured as the only variable against the previous mirror.
 #   engine, heal_support      plumbing, not damage
 #
 # The pre-pull Wrath the old copy of this file carried is gone: the rotation
@@ -14,7 +18,7 @@
 actions.precombat=snapshot_stats
 actions.precombat+=/moonkin_form
 
-actions=variable,name=inc_ready,value=cooldown.ca_inc.up&!buff.ca_inc.up&(cooldown.fury_of_elune.remains<2|buff.fury_of_elune.up)
+actions=variable,name=inc_ready,value=cooldown.ca_inc.up&!buff.ca_inc.up&(cooldown.fury_of_elune.remains<2|buff.fury_of_elune.up)&(active_dot.moonfire>=spell_targets|active_dot.moonfire>=10)&target.time_to_die>20
 actions+=/call_action_list,name=trinkets
 actions+=/run_action_list,name=aoe,if=spell_targets>=2
 actions+=/run_action_list,name=ec_st
