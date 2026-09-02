@@ -536,3 +536,72 @@ These numbers confirm two narrower things: the priority still measures at
 parity on the string the file now ships, and 1.3.0 changed nothing in the
 damage lists. Both worth having. Neither is evidence that the interrupt work
 is correct.
+
+
+---
+
+## Stormkeeper before Ascendance — 2026-09-01 (1.4.0)
+
+From a player report: the rotation casts Stormkeeper **inside** an active
+Ascendance. It should never do that — Stormkeeper goes first, Ascendance
+follows, and the two are meant to be one window.
+
+Both halves of the pairing were wrong.
+
+### `sk_ready` checked the cooldown when it meant the buff
+
+```yaml
+sk_ready: ...&(cooldown.ascendance.remains>10|cooldown.ascendance.remains<gcd)
+```
+
+That reads as "Ascendance is not about to come up", and it was standing in for
+"I am not in Ascendance". It cannot do that job: while the buff is **up** the
+cooldown reads ~180s, which satisfies `>10`, so the line was at its most
+permissive exactly when it needed to be closed. Stormkeeper fired mid-window.
+
+```yaml
+sk_ready: var.burst_ok&var.cd_ttd_ok&!buff.ascendance.up
+```
+
+A cooldown is not a proxy for a buff. `cooldown.X.remains` is large both when
+the spell was just used and when the buff from that use is still running, and
+those are opposite situations.
+
+### `asc_ready` was separating them, not pairing them
+
+```yaml
+asc_ready: ...&cooldown.stormkeeper.remains>15
+```
+
+This holds Ascendance until Stormkeeper is far from ready — the exact inverse
+of "Stormkeeper first". The old comment claimed the two were "deliberately
+offset, never stacked", which was a misreading of SimC's priority carried over
+when this file was written.
+
+```yaml
+asc_ready: var.burst_ok&var.cd_ttd_ok&(buff.stormkeeper.up|lastcast.stormkeeper<=config.sk_asc_gap)
+```
+
+Ascendance can now only follow Stormkeeper: while the buff is up, or within
+`sk_asc_gap` seconds of the cast. The player put that window at 8s.
+
+### Why the hold is correct rather than a loss
+
+Stormkeeper is 60s, Ascendance 180s. Ascendance holding for a Stormkeeper
+therefore waits at most one Stormkeeper cycle, and the two align on every third
+one. Stormkeeper itself is never held — it goes on cooldown as usual, it just
+refuses to go out during Ascendance.
+
+`sk_asc_gap` at 0 tightens this to "only while the Stormkeeper buff is still
+up"; raising it lets the pair drift.
+
+### Not touched
+
+The player also described syncing the trinket to Ascendance. The trinket lines
+here are TTD-only on purpose — see the Guardian rationale, `.sync` was dropped
+because the burst it waited on was itself being held. Changing that back is a
+policy decision, not part of this fix, and it has already been changed twice.
+
+Unmeasured: SimC's Elemental priority does not model this pairing, and this
+spec has no dungeon fight style at all, so the ordering cannot be checked
+against a profileset.
