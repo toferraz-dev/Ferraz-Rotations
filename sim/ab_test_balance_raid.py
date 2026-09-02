@@ -24,7 +24,7 @@ import subprocess
 import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-SIMC = os.path.join(ROOT, 'sim', 'tools', 'simc-1210.01.5f3ee6d-win64', 'simc.exe')
+SIMC = os.path.join(ROOT, 'sim', 'tools', 'simc-1210.01.f869791-win64', 'simc.exe')
 PROFILE = os.path.join(ROOT, 'sim', 'Ferraz_balance_raid.simc')
 APL_DIR = os.path.join(ROOT, 'sim', 'apl_balance_raid')
 OUT_DIR = os.path.join(ROOT, 'sim', 'out_balance_raid')
