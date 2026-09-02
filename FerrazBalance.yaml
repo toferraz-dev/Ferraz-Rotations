@@ -24,18 +24,26 @@
 # bug this file has already been through. Read it before changing a line -
 # most of what looks improvable here was tried and reverted.
 #
-# REFERENCE BUILD 4.6.0: the most-used Balance build on WarcraftLogs. Gained
-# Sundered Firmament, Stellar Amplification, Meteorites; lost Orbit Breaker and
-# Elune's Guidance. Fluid Form and Elune's Chosen stay, Starweaver still absent.
+# REFERENCE BUILD 4.17.0: reverses the 4.6.0 swap exactly. Gained Orbit
+# Breaker, Elune's Guidance, Sunseeker Mushroom, Astral Influence,
+# Incapacitating Roar, Improved Stampeding Roar; lost Sundered Firmament,
+# Stellar Amplification, Meteorites, Killer Instinct. Fluid Form and Elune's
+# Chosen stay, Starweaver still absent - every "Starweaver dead" comment below
+# is still accurate.
 #
-# Fury of Elune is deliberately NOT gated on Sundered Firmament here, unlike the
-# raid file - measured three ways on this build and all three lost.
+# NO LINE CHANGED. Nothing here was gated on a lost talent, and everything
+# gained is passive except Incapacitating Roar, which is deliberately not
+# auto-cast: it breaks on damage, and this spec has DoTs on everything.
+#
+# Sundered Firmament is no longer talented, so the Fury of Elune gating that
+# the raid file has and this one does not is moot on this build. The raid file
+# still differs; do not "sync" them on that line.
 #
 # Percentages older than 4.6.0 in the rationale file were measured on
 # DungeonSlice, which Balance does not support, and against the previous build.
 # =============================================================================
 
-version: "4.16.0"
+version: "4.17.0"
 author: Ferraz
 patch: "12.1"
 spec: 102
@@ -52,14 +60,15 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-09-01 | Patch: 12.1 | Version: 4.16.0"
+    text: "Last update: 2026-09-02 | Patch: 12.1 | Version: 4.17.0"
 
-  # Reference build. The measured numbers assume this exact string.
+  # Reference build, from the 2026-09-02 export. Measured -2.18% against the
+  # previous string on DungeonRoute - see the rationale before "fixing" that.
   recommended_talents:
     section: "Talents"
     type: copy_text
     label: "Recommended Talent String"
-    text: "CYGADBD3hSPCL9Y9gz68WcKvMAAAAAAAAAAAAAAAAAWoMbNMmZgxsYmZmBDGjZWmZxMzYhlZWGjZGbYYAGbbzMYMbjATAAAAWYmZmBbGzYMAAMzglBA"
+    text: "CYGADBD3hSPCL9Y9gz68WcKvMAAAAAAAAAAAAAAAAAWoMbNjxMDwsMzMzMLMYMLzsMzCzM2YZmlxMjxGGGgx22MDGz2IwEAAAgFmZmZwmhxYAAYmBLDA"
 
   # Wait until the pull is parked before bursting. SimC cannot measure this.
   inc_min_standing_time:

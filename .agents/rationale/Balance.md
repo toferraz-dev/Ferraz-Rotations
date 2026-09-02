@@ -1728,3 +1728,78 @@ wider trinket pass.
 Untouched here because the ask was the M+ file. Its `bear_defensive_active`
 still keeps the HotW branch, so the fix is not a copy-paste: the mirror has to
 cover both reasons for being in Bear.
+
+
+## New reference build, 2026-09-02 export — 4.17.0
+
+The build reverses the 4.6.0 swap exactly. Decoded by execution probe across
+177 druid talent names (class tree + Balance spec + every hero tree):
+
+| Lost | Gained |
+|---|---|
+| Sundered Firmament | Orbit Breaker |
+| Stellar Amplification | Elune's Guidance |
+| Meteorites | Sunseeker Mushroom |
+| Killer Instinct | Astral Influence |
+| | Incapacitating Roar |
+| | Improved Stampeding Roar |
+
+Starweaver is still absent, so every "Starweaver dead on this string" comment
+in the file stays true.
+
+**No line changed.** Nothing was gated on a lost talent — the only mentions
+were in the header. Everything gained is passive except Incapacitating Roar.
+
+### Incapacitating Roar is talented and deliberately not cast
+
+Guardian carries `incapacitating_roar,if=interrupt.stun.aoe.check` and copying
+it here would be wrong: the effect **breaks on damage**, and this spec has
+Moonfire, Sunfire and Starfall landing on everything. It would break on its own
+DoT tick. Left for the player to press deliberately.
+
+### Elune's Guidance modifies Incarnation, not Convoke
+
+Worth writing down because reading the tooltip top-down gets it backwards. The
+description ends with *"Convoke the Spirits has an increased chance to use an
+exceptional spell"*, but the spell it names first — `$@spellname394013` — is
+**Incarnation: Chosen of Elune**. Convoke is a **Restoration** spec talent
+(`391528`, tree=spec Restoration) and is not reachable from the Balance tree at
+all, so that clause is dead here.
+
+The first read of this said Convoke and concluded a talent point was wasted.
+It is not.
+
+### SimC does not model Elune's Guidance
+
+Incarnation casts and uptime are **identical** across the two builds on a 300s
+Patchwerk: 3.87 casts / 25.2% uptime old, 3.86 / 25.3% new. If the cooldown
+reduction were modelled the cast count would move. So `ttd_incarnation` at 25
+is **not** stale — an earlier draft of this section claimed it was, on the
+assumption the CD had changed, and the measurement says otherwise.
+
+### Measured: the new build is 2.18% behind on DungeonRoute
+
+`sim/Tassiana_gear.simc` against the same gear with only the talent string
+swapped, `apl_mplus_current.simc`, `target_error=0.3`, no Severe on either.
+
+| Build | DungeonRoute DPS |
+|---|---|
+| previous string | 106,556 ± 313 |
+| **new string** | **104,234 ± 299** |
+
+Difference 2,322 against a significance threshold of 866. Real, not noise.
+Patchwerk shows nothing (159,889 vs 159,195, diff 694 against a 934 threshold).
+
+**The number is honest but incomplete**, and both directions were checked:
+
+- SimC *does* implement the gained talents — `sunseeker_mushroom` is 1.04% of
+  damage in the new build and absent from the old, `minor_moon` appears only in
+  the new, and `sundered_firmament` only in the old. So the loss is not an
+  artifact of missing implementation.
+- SimC *does not* implement Elune's Guidance, per the Incarnation counts above.
+  Whatever that talent is worth in game is missing from the new build's side of
+  the comparison.
+
+So −2.18% is the floor, not the verdict. The build ships as the reference
+because it is the one being played; the number is recorded so nobody
+re-measures it in three months and thinks something regressed.

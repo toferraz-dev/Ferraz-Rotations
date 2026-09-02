@@ -1,7 +1,24 @@
-# SimC addon export 2026-08-27 13:22, WoW 12.1.0.69497, addon 12.1.0-03.
-# Talent string 2026-08-27: the most-used Balance build on WarcraftLogs.
-# Differs from Jeannelin's +18 by five nodes - gains Sundered Firmament,
-# Stellar Amplification and Meteorites, loses Orbit Breaker and Elune's Guidance.
+# Tassiana - Balance Druid - M+ measurement profile for FerrazBalance.yaml.
+#
+# Export: 2026-09-02 12:51, US/Area 52, SimC Addon 12.1.0-03,
+# WoW 12.1.0.69587 (TOC 120100).
+#
+# BUILD CHANGE vs the previous reference string, decoded by execution probe:
+#   lost    Sundered Firmament, Meteorites, Stellar Amplification,
+#           Killer Instinct
+#   gained  Elune's Guidance, Orbit Breaker, Sunseeker Mushroom,
+#           Astral Influence, Incapacitating Roar, Improved Stampeding Roar
+#
+# Elune's Guidance is the one that touches the rotation: it modifies spell
+# 394013, which is Incarnation: Chosen of Elune, NOT Convoke the Spirits -- the
+# tooltip names Convoke in a second clause and reading it first gets this
+# backwards. It cuts Incarnation's cooldown AND its duration, so ttd_incarnation
+# (25, measured by counting Incarnations per pull on the OLD build) is stale
+# until re-measured.
+#
+# Starweaver is still absent, so every "Starweaver dead on this string" comment
+# in the YAML stays accurate.
+
 druid="Tassiana"
 level=90
 race=harronir
@@ -10,22 +27,24 @@ server=area_52
 role=spell
 professions=leatherworking=29/skinning=100
 spec=balance
-talents=CYGADBD3hSPCL9Y9gz68WcKvMAAAAAAAAAAAAAAAAAWoMbNMmZgxsYmZmBDGjZWmZxMzYhlZWGjZGbYYAGbbzMYMbjATAAAAWYmZmBbGzYMAAMzglBA
+
+talents=CYGADBD3hSPCL9Y9gz68WcKvMAAAAAAAAAAAAAAAAAWoMbNjxMDwsMzMzMLMYMLzsMzCzM2YZmlxMjxGGGgx22MDGz2IwEAAAgFmZmZwmhxYAAYmBLDA
+
 omnium_talents=136814:1/136818:1/136817:1/136819:1/136822:1
 
 head=,id=271528,enchant_id=7961,bonus_id=13692/13440/6652/13696/13698/12851
 neck=,id=251142,gem_id=240983,bonus_id=12843/13440/6652/13668/12699,content_tuning=1279
 shoulder=,id=271526,bonus_id=6652/12843/13440/13694/13697/1564,redirected_base_stats=251146
-back=,id=193763,bonus_id=12843/13440/6652/13662/12699,content_tuning=1279
+back=,id=251190,bonus_id=12843/13440/6652/13662/12699,content_tuning=1279
 chest=,id=271531,enchant_id=7987,bonus_id=6652/12843/13440/13690/13698/1564,redirected_base_stats=251159
-wrist=,id=244576,bonus_id=12214/12497/13751/8960/12384/8793/13836/13696,content_tuning=3615,crafted_stats=40/36,crafting_quality=5
-hands=,id=271529,bonus_id=12842/42/13440/13691/13697/1561,redirected_base_stats=193758
-waist=,id=251189,bonus_id=12843/13440/6652/13696/13662/12699,content_tuning=1279
+wrist=,id=244576,bonus_id=12214/12497/13751/14001/8960/12384/8793/13836/13696,content_tuning=3615,crafted_stats=40/36,crafting_quality=5
+hands=,id=271529,bonus_id=42/13440/13691/13697/12843,redirected_base_stats=193758
+waist=,id=159317,bonus_id=12843/13440/6652/13696/13662/12699,content_tuning=1279
 legs=,id=159313,enchant_id=7935,bonus_id=12843/13440/6652/13662/12699,content_tuning=1279
-feet=,id=271435,enchant_id=7993,bonus_id=6652/13662/13332/10844/12830,content_tuning=7360,crafted_stats=32/40
+feet=,id=268261,enchant_id=7993,bonus_id=42/13662/13333/12838,content_tuning=7359
 finger1=,id=252258,enchant_id=7967,gem_id=240900,bonus_id=13440/42/13668/12699/12843,content_tuning=1279
-finger2=,id=251136,enchant_id=7967,gem_id=240900,bonus_id=13440/6652/13668/12699/12843,content_tuning=1279
-trinket1=,id=250215,bonus_id=13439/6652/12699/12838,content_tuning=3025
-trinket2=,id=250224,bonus_id=13440/6652/12699/12844,content_tuning=1279
+finger2=,id=273792,enchant_id=7967,gem_id=240900,bonus_id=13440/6652/13668/12699/12846,content_tuning=1279
+trinket1=,id=250215,bonus_id=13440/6652/12699/12846,content_tuning=1279
+trinket2=,id=250224,bonus_id=13440/6652/12699/12845,content_tuning=1279
 main_hand=,id=273778,enchant_id=8041,bonus_id=13440/6652/12701/12846,content_tuning=1279
-off_hand=,id=245769,bonus_id=12214/13667/12497/13751/13771/8960/8793/13836,content_tuning=3615,crafted_stats=36/40,crafting_quality=5
+off_hand=,id=245769,bonus_id=12214/13667/12497/13751/14001/13771/8960/8793/13836,content_tuning=3615,crafted_stats=36/40,crafting_quality=5
