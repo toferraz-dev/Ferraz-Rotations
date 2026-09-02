@@ -43,7 +43,7 @@
 # DungeonSlice, which Balance does not support, and against the previous build.
 # =============================================================================
 
-version: "4.17.0"
+version: "4.18.0"
 author: Ferraz
 patch: "12.1"
 spec: 102
@@ -51,6 +51,16 @@ name: Balance Druid Ferraz M+
 description: |
   Balance Druid Ferraz M+
 entry: main
+
+# SPELL OVERRIDES — AND-ed into every occurrence of that spell in the file.
+spell_overrides:
+  # Solar and Lunar Eclipse are two castables sharing one cooldown, with
+  # mutually exclusive ready(). Celestial Alignment / Incarnation puts BOTH
+  # buffs up for its whole duration, so without these the lines stay
+  # suggestible while the game refuses the cast and the rotation stalls.
+  # Lifted from the official rotation_102.yaml, which carries the same guard.
+  solar_eclipse: "buff.eclipse_solar.down"
+  lunar_eclipse: "buff.eclipse_lunar.down"
 
 config:
   # ==========================================================================
@@ -60,7 +70,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-09-02 | Patch: 12.1 | Version: 4.17.0"
+    text: "Last update: 2026-09-02 | Patch: 12.1 | Version: 4.18.0"
 
   # Reference build, from the 2026-09-02 export. Measured -2.18% against the
   # previous string on DungeonRoute - see the rationale before "fixing" that.
@@ -415,8 +425,13 @@ variables:
   # gating them on this blocked them for exactly the window they wanted.
   burst_ok: var.burst_armed&(!config.burst_once|variable.inc_spent=0)
 
-  # A pull is actually underway: in combat, standing still, target is dotted.
-  pull_engaged: player.combat&player.standing.time>=config.inc_min_standing_time&(debuff.moonfire.up|debuff.sunfire.up)
+  # Moonfire spread across the PULL, not just present on the current target.
+  # The 10 cap is the official rotation's; past it the DoT is on everything
+  # that matters. Measured +3.78% on DungeonRoute as the only change.
+  dots_spread: active_dot.moonfire>=enemies.combat.40y|active_dot.moonfire>=10
+
+  # A pull is actually underway: in combat, standing still, pull dotted.
+  pull_engaged: player.combat&player.standing.time>=config.inc_min_standing_time&var.dots_spread
 
   # Incarnation ready and only waiting for you to stop moving. Holds Fury of
   # Elune so the burst does not lose its alignment.
@@ -612,6 +627,9 @@ lists:
 
     # Yields to a ready Incarnation so the burst doesn't land on a window
     # about to be replaced (casting anyway measured -0.33%).
+    # BOTH halves. They share a cooldown and only one is ever castable, so
+    # offering only Lunar threw the global away whenever the game wanted Solar.
+    - solar_eclipse,if=var.eclipse_down&cooldown.solar_eclipse.ready&!var.inc_ready_to_cast
     - lunar_eclipse,if=var.eclipse_down&cooldown.lunar_eclipse.ready&!var.inc_ready_to_cast
     - incarnation_chosen_of_elune,if=var.inc_ready_to_cast
     - fury_of_elune,if=var.foe_ttd_ok
@@ -639,6 +657,9 @@ lists:
     - call_action_list,name=mouseover_dots
 
     # Same cooldown block as ec_st.
+    # BOTH halves. They share a cooldown and only one is ever castable, so
+    # offering only Lunar threw the global away whenever the game wanted Solar.
+    - solar_eclipse,if=var.eclipse_down&cooldown.solar_eclipse.ready&!var.inc_ready_to_cast
     - lunar_eclipse,if=var.eclipse_down&cooldown.lunar_eclipse.ready&!var.inc_ready_to_cast
     - incarnation_chosen_of_elune,if=var.inc_ready_to_cast
     - fury_of_elune,if=var.foe_ttd_ok
