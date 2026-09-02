@@ -1800,6 +1800,30 @@ Patchwerk shows nothing (159,889 vs 159,195, diff 694 against a 934 threshold).
   Whatever that talent is worth in game is missing from the new build's side of
   the comparison.
 
-So −2.18% is the floor, not the verdict. The build ships as the reference
+So the gap is a floor, not the verdict. The build ships as the reference
 because it is the one being played; the number is recorded so nobody
 re-measures it in three months and thinks something regressed.
+
+### Re-measured on simc f869791 (WoW 69587) — the result holds
+
+The first pass ran on `5f3ee6d`, whose bundled data was build **69497** while
+the character export said **69587**. The nightly that closed that gap carried
+**seven druid commits**, five of them on shapeshifting — *rework & fix
+autoshift/unshift*, *autoshifts happen after execute instead of before*,
+*correctly handle unshift for spells*, *don't autoshift to moonkin without
+talent* — plus *implement caster heart of the wild*. Fluid Form is talented
+here, so that is the machinery this file's form handling runs on.
+
+| Build | 5f3ee6d | f869791 |
+|---|---|---|
+| previous string | 106,556 ± 313 | 110,436 ± 316 |
+| **new string** | 104,234 ± 299 | **108,063 ± 307** |
+| gap | −2.18% | **−2.15%** |
+
+Both builds gained about 3,800 DPS from the binary alone, and the gap between
+them barely moved: 2,373 against a threshold of 882, still significant. Two
+independent binaries agreeing is worth more than either number alone.
+
+Elune's Guidance is **still** unmodelled on the new binary — Incarnation is
+3.87 casts / 25.2% uptime old against 3.86 / 25.3% new, unchanged. The caveat
+above stands unaltered.
