@@ -232,6 +232,19 @@ package; there is no 7-Zip on this machine. After updating, repoint every
 harness path and **re-verify the most important recent finding on the new
 binary** before trusting it.
 
+### `py`, not `python`, for the extraction
+
+Two Pythons are installed and they resolve differently from this shell. `py7zr`
+lives only in the one the `py` launcher finds:
+
+```
+python -> ModuleNotFoundError: No module named 'py7zr'
+py     -> Python314\python.exe, py7zr 1.1.3
+```
+
+`python` is fine for everything else in this repo; the extraction step is the
+one that needs `py`.
+
 ### Strip the GUI after extracting
 
 The nightly ships the Qt desktop app alongside the CLI. `simc.exe` is
