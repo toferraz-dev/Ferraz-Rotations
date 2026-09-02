@@ -605,3 +605,45 @@ policy decision, not part of this fix, and it has already been changed twice.
 Unmeasured: SimC's Elemental priority does not model this pairing, and this
 spec has no dungeon fight style at all, so the ordering cannot be checked
 against a profileset.
+
+
+## The burst no longer trusts TTD on the pull — 1.5.0
+
+`cd_ttd_ok` is meant to hold Stormkeeper and Ascendance off a pack that dies
+too fast. On the **first GCD of a pull it cannot do that job**: no damage has
+landed, so there is no history to estimate from, `target.time_to_die` comes out
+huge, the gate passes, and the burst goes into a pack that dies in 8 seconds —
+the exact case the slider exists to prevent.
+
+```yaml
+pull_engaged: player.combat&player.standing.time>=config.burst_min_standing_time&dot.flame_shock.up
+```
+
+ANDed into both `sk_ready` and `asc_ready`.
+
+Two independent proofs, and each covers a different failure:
+
+- **Flame Shock ticking** proves damage has landed, so the TTD estimate has
+  something to work from. This is the half that fixes the bug above.
+- **Standing still** proves the pull is parked rather than still being gathered.
+  Bursting while running to the pack wastes the window on travel time.
+
+Lifted from `FerrazBalance.yaml`, which has carried the same guard on
+Incarnation since 4.x using its own DoTs (`debuff.moonfire.up|debuff.sunfire.up`).
+The Elemental file was written without it, which is what left the TTD sliders
+looking unreliable.
+
+### Why Flame Shock is safe to require in both lists
+
+`st` casts Flame Shock directly, and `aoe` reaches it through Voltaic Blaze,
+which applies it and sits **above** Ascendance in the list. So the guard costs
+at most one global at the start of a pull, and never blocks the burst
+indefinitely. Had `aoe` had no path to Flame Shock, this would have silently
+disabled the AoE burst entirely — worth checking before adding a DoT
+requirement to any gate.
+
+`burst_min_standing_time` defaults to 2s and can be set to 0, which leaves the
+Flame Shock half alone.
+
+Unmeasured. SimC dummies live the whole fight, so every TTD gate is inert
+there, and this spec has no dungeon fight style to model a pull sequence with.
