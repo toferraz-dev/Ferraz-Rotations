@@ -17,7 +17,7 @@
 # most of what looks improvable here was tried and reverted.
 # =============================================================================
 
-version: "1.15.0"
+version: "1.16.0"
 patch: "12.1"
 spec: 104
 name: Guardian Druid Ferraz M+
@@ -53,7 +53,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-09-03 | Patch: 12.1 | Version: 1.15.0"
+    text: "Last update: 2026-09-04 | Patch: 12.1 | Version: 1.16.0"
 
   # Exact string every number here was measured against (sim/Tassiana_guardian.simc).
   recommended_talents:
@@ -142,16 +142,14 @@ config:
     max: 100
     default: 80
     description: "Stay in Bear Form below this health. Leaving Bear drops bear armor and stamina."
-  # The three below hold the weave when the NEXT few seconds look bad, not just
-  # the current HP. Set any of them to 0 to disable that check.
-  hotw_ironfur_remains:
-    section: "Cooldowns"
-    label: "Heart of the Wild (min Ironfur remaining)"
-    type: slider
-    min: 0
-    max: 15
-    default: 4
-    description: "Seconds of Ironfur that must be left before leaving Bear Form. The weave costs 3-4 GCDs, so a nearly-expired Ironfur means the armor drops while you are in Cat."
+  # The two below hold the weave when the NEXT few seconds look bad, not just
+  # the current HP. Set either to 0 to disable that check.
+  #
+  # An Ironfur-remaining gate lived here until 1.16.0, requiring 4s left before
+  # the weave. It was sized for a weave that cost "3-4 GCDs" - it does not.
+  # Shapeshift is off-GCD and only one of HotW/morph resolves per form, so the
+  # window is ONE GCD: measured at 1.10-1.20s across six weaves in a world-class
+  # Guardian log. Holding 4s of armour for a 1.15s trip was a 3x margin.
   hotw_buster_window:
     section: "Cooldowns"
     label: "Heart of the Wild (tank buster window)"
@@ -167,7 +165,7 @@ config:
     min: 0
     max: 60
     default: 10
-    description: "Skip the weave when the target dies sooner than this. Heart of the Wild lasts 45s; spending it on a pack that is about to die wastes the cooldown."
+    description: "Skip the weave when the target dies sooner than this. Heart of the Wild is a 120s cooldown that fires an off-role ability for the current form - Feral Frenzy in Cat - so spending it on a pack that is about to die throws the cooldown away."
   # === TRINKETS === the Incarnation window is the whole gate. No TTD slider:
   # Incarnation carries no TTD check either, so a second one on the trinkets
   # only desynced the pair on short pulls - the trinket sat out a window the
@@ -318,10 +316,11 @@ variables:
   burst_active: buff.incarnation_guardian_of_ursoc.up|buff.berserk.up
 
   # Gate for the HotW weave. target.in_melee matters: without it the weave
-  # fired while running to the pack and burned the cooldown out of range.
+  # fired while running to the pack and burned the cooldown out of range -
+  # the morph is Feral Frenzy, which has a 5 yard range.
   # Health alone is not enough: the last three checks look at the next few
   # seconds (incoming damage, predicted buster, target TTD) instead.
-  hotw_weave: config.auto_hotw&talent.heart_of_the_wild&cooldown_bypass.heart_of_the_wild.ready&target.valid&target.attackable&target.in_melee&player.combat&combat.time>=config.hotw_delay&health.pct>=config.hotw_hp_pct&buff.ironfur.remains>=config.hotw_ironfur_remains&!var.heavy_incoming&variable.tank_buster_remains>config.hotw_buster_window&target.time_to_die>=config.hotw_min_ttd&!buff.incarnation_guardian_of_ursoc.up&!buff.berserk.up
+  hotw_weave: config.auto_hotw&talent.heart_of_the_wild&cooldown_bypass.heart_of_the_wild.ready&target.valid&target.attackable&target.in_melee&player.combat&combat.time>=config.hotw_delay&health.pct>=config.hotw_hp_pct&!var.heavy_incoming&variable.tank_buster_remains>config.hotw_buster_window&target.time_to_die>=config.hotw_min_ttd&!buff.incarnation_guardian_of_ursoc.up&!buff.berserk.up
 
 lists:
   # spell_queue, sanity_checks and auto_target, inlined.

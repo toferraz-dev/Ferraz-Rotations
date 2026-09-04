@@ -964,3 +964,115 @@ directions. One gate for the pair, and the pair is Incarnation.
 Unmeasured, and not worth measuring: the change only affects pulls short enough
 to trip a 10s TTD gate, which the DungeonRoute file's own comment says is not
 what its health pools are shaped for.
+
+---
+
+## O que o Heart of the Wild virou no 12.1 — e a armadilha do spell id (2026-09-04)
+
+Ponto de partida: um log do Knowmedruid (Guardian de topo, Altar of Fangs, 28,8 min,
+`WarcraftLogs/Druid/Guardian/Altar of Fangs/`) foi analisado para comparar com este
+arquivo. A análise inicial concluiu, errada, que ele fazia um weave de Cat Form para
+lançar **Feral Frenzy** e que este arquivo tinha uma lacuna por não ter linha nenhuma
+dessa habilidade. Não tem lacuna: a linha 482 já é exatamente isso.
+
+**O HotW não é mais um buff.** Consultado pelo id correto:
+
+```
+Name        : Heart of the Wild (id=1261867)  [tree=class, row=10, col=5]
+Cooldown    : 120 seconds
+Duration    : 1 second
+Description : "Perform a powerful off-role ability depending on your
+               currently active shapeshift form."
+
+Name        : (id=1261868)
+Triggered By: Cat Form (768)
+Attributes  : Do Not Log (8)
+Effect #2   : Periodic Dummy every 0.2 seconds, Base Value 300
+```
+
+É um botão de 120s que executa a habilidade off-role da forma atual. Em Cat Form,
+**isso É o Feral Frenzy** — o 1261868 é o morph, e é por isso que a linha se chama
+"Heart of the Wild (cat morph)".
+
+### A armadilha
+
+Consultar `spell.name=heart_of_the_wild` devolve o **id 108291**, que é o HotW
+antigo: 300s de cooldown, 45s de duração, "+30% de dano das magias de Balance,
+Starsurge instantâneo". Esse não é o talento deste build. O daqui é o **1261867**.
+
+Quem cair no 108291 vai concluir três coisas erradas de uma vez: que o cooldown é
+300s, que existe um buff de 45s para manter, e que a janela de gato serve para
+lançar magias de Balance. Consulte sempre pelo id, nunca pelo nome:
+
+```bash
+./sim/tools/simc-*/simc.exe "spell_query=spell.id=1261867"
+```
+
+### O que isso invalida neste próprio documento
+
+Duas afirmações da seção "HotW weave: added the forward-looking gates on 2026-08-30"
+descrevem o HotW antigo e estão erradas:
+
+| Afirmação | Realidade |
+|---|---|
+| "The weave costs 3-4 GCDs (Cat Form, HotW, morph, Bear Form)" | Shapeshift é off-GCD e só um entre HotW/morph resolve por forma: **1 GCD**. Medido no log: 1,10-1,20s de Cat Form nas 6 janelas |
+| "HotW lasts 45s" (justificativa do `hotw_min_ttd`) | Duração é **1 segundo**. Não existe buff para manter |
+
+O gate `hotw_min_ttd` continua defensável — não gastar um cooldown de 120s num pacote
+que já vai morrer — mas o motivo escrito está errado, e a mesma frase está no
+`description` do config `hotw_min_ttd` no YAML.
+
+### O log confirma o desenho daqui
+
+Seis janelas de Cat Form em 28,8 min, cada uma com exatamente um Feral Frenzy dentro,
+todas de 1,10-1,20s. Os ticks caem a +352/+555/+758/+961/+1206ms — 0,2s de intervalo,
+batendo com o `Periodic Dummy every 0.2 seconds`. Um dos intervalos entre janelas é de
+125,2s, que só encaixa porque o cooldown é 120s.
+
+Ele fez 6 usos onde o cooldown permitiria ~14. Os gates de segurança de um Guardian de
+topo são tão conservadores quanto os daqui.
+
+### Por que o log parecia dizer o contrário
+
+Três coisas escondem esse mecanismo de quem analisa o log:
+
+1. **O 1261868 tem o atributo `Do Not Log (8)`.** Nenhum evento de "Heart of the Wild"
+   aparece no log inteiro — nem por nome, nem por id. Ausência dele não é evidência.
+2. **O Feral Frenzy resultante não gera evento `cast`** — só damage, applydebuff e
+   resourcechange. Uma análise filtrada em `type=='cast'` não vê nada.
+3. O export usado era só do `sourceID` 4 (69209 de 69209 eventos), então Starsurge
+   (197626, que é talento **de classe** disponível ao Guardian) e Fury of Elune
+   (211545, proc do Boundless Moonlight) parecem de outro jogador ou de Moonkin.
+   Não são: **Moonkin Form tem 0 eventos no log**. Tudo sai passivo, em Bear.
+
+### O SimC não mede nada disso
+
+O módulo Guardian abstrai a janela inteira num pseudo-ataque `heart_of_the_wild_cat`
+(8,3% do dano, 5 combo points, `TickCount=28`). Adicionar uma linha `feral_frenzy` ao
+APL traduzido é aceito pelo parser mas **nunca executa** — não aparece no breakdown de
+dano, e o delta fica em ruído (+97 DPS contra barra combinada de ±362, Patchwerk,
+build 7d86fb9). Não tente medir o conteúdo da janela de gato por profileset.
+
+### `hotw_ironfur_remains` removido — 1.16.0 (2026-09-04)
+
+Consequência direta da seção acima. O gate exigia 4s de Ironfur sobrando antes de
+sair de Bear, e a justificativa escrita era "the weave costs 3-4 GCDs, so a
+nearly-expired Ironfur means the armor drops while you are in Cat".
+
+O weave não custa 3-4 GCDs. Shapeshift é off-GCD e só um entre `heart_of_the_wild`
+e o morph `1261868` resolve por forma, então é **1 GCD**. Medido nas seis janelas do
+log do Knowmedruid: 1,10-1,20s cada. Segurar 4s de armadura para uma viagem de 1,15s
+era margem de 3x, e cada bloqueio custava uma janela inteira de Feral Frenzy.
+
+Removidos juntos: o bloco de config e o termo
+`buff.ironfur.remains>=config.hotw_ironfur_remains` da `var.hotw_weave`. Um slider
+que só bloqueia com premissa errada é pior do que um slider a menos.
+
+O que continua segurando o weave: `hotw_hp_pct` (80), `!var.heavy_incoming`,
+`hotw_buster_window` (6) e `hotw_min_ttd` (10). O gate de HP e os dois preditivos
+cobrem o caso real — não sair de Bear com pancada chegando — sem depender da duração
+restante da armadura.
+
+**Não medido.** Os dois preditivos são inertes no SimC, e o custo do gate era tempo
+de bloqueio em jogo, não DPS de profileset. A justificativa aqui é a aritmética do
+GCD, não um número de sim.
