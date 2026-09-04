@@ -875,3 +875,66 @@ health is not 75 against the raw bar and nothing else in the UI would tell you.
 Unmeasured, like everything else in this file's defensive block — SimC has no
 healer, so `incomingHealsPct` is permanently zero there and the two metrics are
 identical in every sim this repo can run.
+
+
+## Trinkets and potion ride the Incarnation window — 2026-09-03 (1.14.0)
+
+Requested: both should fire with Incarnation, and only in combat.
+
+```yaml
+burst_active: buff.incarnation_guardian_of_ursoc.up|buff.berserk.up
+
+- trinket_1,name="Trinket 1",if=trinket_1.ready&player.combat&var.trinkets_ttd_ok&(!config.trinket_sync_burst|var.burst_active)
+- combat_potion,name="Combat Potion",if=config.use_potion&combat_potion.ready&player.combat&(!config.potion_sync_burst|var.burst_active|fight_remains<=30)
+```
+
+Two of the three asks were already true and are now explicit rather than
+incidental:
+
+- **Only in combat.** The trinket lines sit below `main`'s combat wall, so they
+  were already unreachable out of combat — by *position*. `player.combat` is
+  now on the line itself, because these are exactly the lines someone moves.
+- **The potion already synced.** `potion_sync_burst` has defaulted to on since
+  1.1; the change is cosmetic, swapping the inline buff pair for the new
+  `var.burst_active` so both lines read the same.
+
+The real change is the trinkets, which were TTD-only by an explicit earlier
+decision. `trinket_sync_burst` ships **on**, with the old behaviour one
+checkbox away.
+
+### Measured: the sync costs nothing here
+
+DungeonRoute, a stripped APL where the trinket condition is the only variable:
+
+| Trinkets | DPS |
+|---|---|
+| free, TTD only | 37,789 ± 94 |
+| **synced to Incarnation** | 37,576 ± 71 |
+
+Difference 212 against a 236 threshold — **not significant**.
+
+**Two limits on that number.** The APL is a bare-bones priority written to
+isolate one condition, not the real rotation, so the absolute DPS is nowhere
+near what this file produces. And `sim/dungeon_route.simc` has health pools
+calibrated to a ~144k Balance profile, so a 37k Guardian stretches every pull
+well past what the route was shaped for. It bounds the change as "not a large
+loss"; it does not prove neutrality.
+
+### The standing argument against, which has not gone away
+
+`potion_sync_burst`'s own description records that turning the sync **off**
+measured **+1.89%**, because this file holds Berserk and Incarnation for the
+Heart of the Wild weave:
+
+```yaml
+- incarnation_guardian_of_ursoc,if=target.valid&(!config.auto_hotw|!talent.heart_of_the_wild|!cooldown_bypass.heart_of_the_wild.ready)
+```
+
+Incarnation only fires while HotW is *not* available. Anything synced to
+Incarnation inherits that hold. That is the exact reasoning that removed
+`.sync` from the trinkets in the first place, and it applies to this change
+too — the new measurement says the cost is small, not that the argument was
+wrong.
+
+Both switches are independent and both default on. Turning either off restores
+the previous behaviour for that item alone.
