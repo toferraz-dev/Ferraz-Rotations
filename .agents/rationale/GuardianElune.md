@@ -938,3 +938,29 @@ wrong.
 
 Both switches are independent and both default on. Turning either off restores
 the previous behaviour for that item alone.
+
+
+### The trinket TTD gate is gone — 1.15.0
+
+```yaml
+- trinket_1,name="Trinket 1",if=trinket_1.ready&player.combat&(!config.trinket_sync_burst|var.burst_active)
+```
+
+`var.trinkets_ttd_ok` and the `ttd_trinkets` slider are removed with it — both
+were dead the moment the line stopped reading them, and a slider that moves
+nothing is worse than one fewer slider.
+
+The reason it stops making sense once the trinkets follow Incarnation:
+**Incarnation has no TTD check of its own.**
+
+```yaml
+- incarnation_guardian_of_ursoc,if=target.valid&(!config.auto_hotw|!talent.heart_of_the_wild|!cooldown_bypass.heart_of_the_wild.ready)
+```
+
+So on a pull shorter than the slider, the burst opened and the trinket sat it
+out — two cooldowns that had just been tied together pulling in opposite
+directions. One gate for the pair, and the pair is Incarnation.
+
+Unmeasured, and not worth measuring: the change only affects pulls short enough
+to trip a 10s TTD gate, which the DungeonRoute file's own comment says is not
+what its health pools are shaped for.
