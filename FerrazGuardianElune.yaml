@@ -17,7 +17,7 @@
 # most of what looks improvable here was tried and reverted.
 # =============================================================================
 
-version: "1.14.0"
+version: "1.15.0"
 patch: "12.1"
 spec: 104
 name: Guardian Druid Ferraz M+
@@ -53,7 +53,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-09-03 | Patch: 12.1 | Version: 1.14.0"
+    text: "Last update: 2026-09-03 | Patch: 12.1 | Version: 1.15.0"
 
   # Exact string every number here was measured against (sim/Tassiana_guardian.simc).
   recommended_talents:
@@ -168,17 +168,11 @@ config:
     max: 60
     default: 10
     description: "Skip the weave when the target dies sooner than this. Heart of the Wild lasts 45s; spending it on a pack that is about to die wastes the cooldown."
-  # === TRINKETS === TTD, plus the Incarnation window when trinket_sync_burst
-  # is on (default). Still not trinket_X.sync: that AND-s in Simia's own burst
-  # check on top, which this file cannot see or tune.
-  ttd_trinkets:
-    label: "Trinkets TTD (seconds)"
-    section: "Time To Die"
-    type: slider
-    min: 5
-    max: 30
-    default: 10
-    description: "Minimum fight time remaining to use trinkets. Bosses ignore it."
+  # === TRINKETS === the Incarnation window is the whole gate. No TTD slider:
+  # Incarnation carries no TTD check either, so a second one on the trinkets
+  # only desynced the pair on short pulls - the trinket sat out a window the
+  # burst had already opened. Still not trinket_X.sync, which AND-s in Simia's
+  # own burst check on top, invisible to this file.
 
   trinket_sync_burst:
     section: "Cooldowns"
@@ -322,9 +316,6 @@ variables:
   # The burst window itself. Berserk and Incarnation are mutually exclusive
   # talents, so this covers whichever one the build has.
   burst_active: buff.incarnation_guardian_of_ursoc.up|buff.berserk.up
-
-  # Bosses ignore the slider; fight_remains covers the no-target case.
-  trinkets_ttd_ok: (target.boss|target.time_to_die>=config.ttd_trinkets|fight_remains>=config.ttd_trinkets)
 
   # Gate for the HotW weave. target.in_melee matters: without it the weave
   # fired while running to the pack and burned the cooldown out of range.
@@ -522,8 +513,8 @@ lists:
     # player.combat is redundant with the combat wall above and stated anyway:
     # these lines are the ones most likely to be moved, and the guard should
     # travel with them.
-    - trinket_1,name="Trinket 1",if=trinket_1.ready&player.combat&var.trinkets_ttd_ok&(!config.trinket_sync_burst|var.burst_active)
-    - trinket_2,name="Trinket 2",if=trinket_2.ready&player.combat&var.trinkets_ttd_ok&(!config.trinket_sync_burst|var.burst_active)
+    - trinket_1,name="Trinket 1",if=trinket_1.ready&player.combat&(!config.trinket_sync_burst|var.burst_active)
+    - trinket_2,name="Trinket 2",if=trinket_2.ready&player.combat&(!config.trinket_sync_burst|var.burst_active)
 
     # Second Ironfur trigger outside `bear`, so armour tops up on GCDs the
     # damage lists own. Overlaps the bear-list lines on purpose.
