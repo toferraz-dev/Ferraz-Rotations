@@ -17,7 +17,7 @@
 # most of what looks improvable here was tried and reverted.
 # =============================================================================
 
-version: "1.13.0"
+version: "1.14.0"
 patch: "12.1"
 spec: 104
 name: Guardian Druid Ferraz M+
@@ -53,7 +53,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-09-01 | Patch: 12.1 | Version: 1.13.0"
+    text: "Last update: 2026-09-03 | Patch: 12.1 | Version: 1.14.0"
 
   # Exact string every number here was measured against (sim/Tassiana_guardian.simc).
   recommended_talents:
@@ -168,10 +168,9 @@ config:
     max: 60
     default: 10
     description: "Skip the weave when the target dies sooner than this. Heart of the Wild lasts 45s; spending it on a pack that is about to die wastes the cooldown."
-  # === TRINKETS === gated on TTD alone, deliberately not on trinket_X.sync.
-  # .sync AND-s in a burst check, and this file holds Berserk/Incarnation for
-  # the HotW weave, so the trinket waited for a burst that was being delayed.
-  # Same trap the potion hit -- see potion_sync_burst below.
+  # === TRINKETS === TTD, plus the Incarnation window when trinket_sync_burst
+  # is on (default). Still not trinket_X.sync: that AND-s in Simia's own burst
+  # check on top, which this file cannot see or tune.
   ttd_trinkets:
     label: "Trinkets TTD (seconds)"
     section: "Time To Die"
@@ -180,6 +179,13 @@ config:
     max: 30
     default: 10
     description: "Minimum fight time remaining to use trinkets. Bosses ignore it."
+
+  trinket_sync_burst:
+    section: "Cooldowns"
+    label: "Trinkets: sync with Incarnation"
+    type: checkbox
+    default: true
+    description: "Hold the trinkets for the Incarnation/Berserk window. Turn OFF to fire them on cooldown under the TTD gate alone, which is what this file did before 1.14.0. Read the note on potion_sync_burst below before deciding - the same hold measured WORSE for the potion, because the burst itself is held for the Heart of the Wild weave."
 
   # Combat potion. The file carried NO potion line at all before 1.1, which is
   # why every variant below beats the old baseline by so much.
@@ -313,6 +319,10 @@ variables:
   # SimC has no equivalent prediction, treats this as permanently false.
   heavy_incoming: incoming.mitigated.pct>=config.ironfur_dmg_pct
 
+  # The burst window itself. Berserk and Incarnation are mutually exclusive
+  # talents, so this covers whichever one the build has.
+  burst_active: buff.incarnation_guardian_of_ursoc.up|buff.berserk.up
+
   # Bosses ignore the slider; fight_remains covers the no-target case.
   trinkets_ttd_ok: (target.boss|target.time_to_die>=config.ttd_trinkets|fight_remains>=config.ttd_trinkets)
 
@@ -393,7 +403,7 @@ lists:
     - incarnation_guardian_of_ursoc,if=target.valid&(!config.auto_hotw|!talent.heart_of_the_wild|!cooldown_bypass.heart_of_the_wild.ready)
 
     # Combat potion.
-    - combat_potion,name="Combat Potion",if=config.use_potion&combat_potion.ready&player.combat&(!config.potion_sync_burst|buff.incarnation_guardian_of_ursoc.up|buff.berserk.up|fight_remains<=30)
+    - combat_potion,name="Combat Potion",if=config.use_potion&combat_potion.ready&player.combat&(!config.potion_sync_burst|var.burst_active|fight_remains<=30)
 
     - wild_guardian,if=buff.lunar_beam.up
 
@@ -509,8 +519,11 @@ lists:
     - growl.mouseover,name="Taunt MO",if=mouseover.threat<2&mouseover.combat&mouseover.threat!=-1&mouseover.exists&!player.inraid
 
 
-    - trinket_1,name="Trinket 1",if=trinket_1.ready&var.trinkets_ttd_ok
-    - trinket_2,name="Trinket 2",if=trinket_2.ready&var.trinkets_ttd_ok
+    # player.combat is redundant with the combat wall above and stated anyway:
+    # these lines are the ones most likely to be moved, and the guard should
+    # travel with them.
+    - trinket_1,name="Trinket 1",if=trinket_1.ready&player.combat&var.trinkets_ttd_ok&(!config.trinket_sync_burst|var.burst_active)
+    - trinket_2,name="Trinket 2",if=trinket_2.ready&player.combat&var.trinkets_ttd_ok&(!config.trinket_sync_burst|var.burst_active)
 
     # Second Ironfur trigger outside `bear`, so armour tops up on GCDs the
     # damage lists own. Overlaps the bear-list lines on purpose.
