@@ -1,0 +1,352 @@
+# =============================================================================
+# Warlock Affliction - Spec ID 265
+# =============================================================================
+
+# Conversion notes - apply throughout this file:
+#   action.seed_of_corruption.in_flight NOT supported - dropped; prev → prev_gcd.1
+#   bare remains → dot.agony.remains
+
+morphs:
+  immolate: wither
+
+version: 3
+spec: 265
+entry: main
+
+config:
+  dark_pact_hp_pct:
+    section: "Defensive HP Percentage"
+    label: "Dark Pact HP%"
+    type: slider
+    min: 0
+    max: 100
+    default: 40
+  unending_resolve_hp_pct:
+    section: "Defensive HP Percentage"
+    label: "Unending Resolve HP%"
+    type: slider
+    min: 0
+    max: 100
+    default: 50
+
+  dark_pact_dmg_pct:
+    section: "Defensives Prediction Damage"
+    label: "Dark Pact (Incoming Dmg%)"
+    type: slider
+    min: 0
+    max: 100
+    default: 40
+  unending_resolve_dmg_pct:
+    section: "Defensives Prediction Damage"
+    label: "Unending Resolve (Incoming Dmg%)"
+    type: slider
+    min: 0
+    max: 100
+    default: 50
+
+variables:
+  # variable,name=cds_active,op=set,value=!talent.summon_darkglare|pet.darkglare.remains
+  cds_active: "!talent.summon_darkglare|pet.darkglare.remains"
+  # variable,name=darkglare_active,op=set,value=pet.darkglare.active|(cooldown.summon_darkglare.duration-cooldown.summon_darkglare.remains)<20
+  darkglare_active: "pet.darkglare.active|(cooldown.summon_darkglare.duration-cooldown.summon_darkglare.remains)<20"
+  # variable,name=malevolence_from_cast,value=0,op=set,if=buff.malevolence.up=0
+  # variable,name=malevolence_from_cast,value=1,op=set,if=prev_gcd.1.malevolence
+  # malevolence_from_cast is written but never read by any upstream line - not implemented.
+  # trinket_1_will_lose_cast / trinket_2_will_lose_cast NOT supported - dropped (uses trinket property math)
+
+lists:
+  # call_action_list,name=ogcd
+  # are unsupported and the racials are inline here, so the list has no YAML counterpart.
+  # ==========================================================================
+  # DEFENSIVES
+  # ==========================================================================
+  defensives:
+    # --- Prediction Damage: pre-fire on a predicted incoming hit (% of effective HP) ---
+    - dark_pact,range_check=none,if=incoming.mitigated.pct>=config.dark_pact_dmg_pct
+    - unending_resolve,range_check=none,if=incoming.mitigated.pct>=config.unending_resolve_dmg_pct
+
+    # --- HP Percentage: react when already low ---
+    - dark_pact,range_check=none,if=health.pct<=config.dark_pact_hp_pct
+    - unending_resolve,range_check=none,if=health.pct<=config.unending_resolve_hp_pct
+
+  # ==========================================================================
+  # END OF FIGHT
+  # ==========================================================================
+  end_of_fight:
+    # unstable_affliction,if=soul_shard&fight_remains<8&active_enemies<3
+    - unstable_affliction,if=soul_shard&fight_remains<8&enemies_around_target<3
+    # seed_of_corruption,if=soul_shard&fight_remains<8&active_enemies>2
+    - seed_of_corruption,if=soul_shard&fight_remains<8&enemies_around_target>2
+    # drain_soul,if=buff.nightfall.react&fight_remains<5
+    - drain_soul,if=buff.nightfall.stack&fight_remains<5
+    # shadow_bolt,if=buff.nightfall.react&fight_remains<5
+    - shadow_bolt,if=buff.nightfall.stack&fight_remains<5
+
+  # ==========================================================================
+  # SOUL HARVESTER DISPATCH (by enemies_around_target)
+  # ==========================================================================
+  soul_harvester:
+    # call_action_list,name=SH_st,if=active_enemies=1
+    - call_action_list,name=SH_st,if=enemies_around_target=1
+    # call_action_list,name=SH_cleave,if=active_enemies=2
+    - call_action_list,name=SH_cleave,if=enemies_around_target=2
+    # call_action_list,name=SH_aoe,if=active_enemies>2
+    - call_action_list,name=SH_aoe,if=enemies_around_target>2
+
+  # ==========================================================================
+  # HELLCALLER DISPATCH (by enemies_around_target)
+  # ==========================================================================
+  hellcaller:
+    # call_action_list,name=HC_st,if=active_enemies=1
+    - call_action_list,name=HC_st,if=enemies_around_target=1
+    # call_action_list,name=HC_cleave,if=active_enemies=2
+    - call_action_list,name=HC_cleave,if=enemies_around_target=2
+    # call_action_list,name=HC_aoe,if=active_enemies>2
+    - call_action_list,name=HC_aoe,if=enemies_around_target>2
+
+  # ==========================================================================
+  # SOUL HARVESTER - Single Target
+  # ==========================================================================
+  SH_st:
+    # haunt
+    - haunt
+    # agony,if=remains<3
+    - agony,if=dot.agony.remains<3
+    # corruption,if=remains<3
+    - corruption,if=dot.corruption.remains<3
+    # dark_harvest,if=soul_shard<3&execute_time<(dot.agony.remains<?dot.corruption.remains)&(!talent.cascading_calamity|buff.cascading_calamity.remains)&(!set_bonus.midnight_season_2_4pc|buff.unstable_empowerment.remains)
+    # buff.unstable_empowerment → buff.1305774 (two spells share the display name)
+    - dark_harvest,if=soul_shard<3&action.dark_harvest.execute_time<(dot.agony.remains<?dot.corruption.remains)&(!talent.cascading_calamity|buff.cascading_calamity.remains)&(!set_bonus.midnight_season_2_4pc|buff.1305774.remains)
+    # summon_darkglare,if=cooldown.dark_harvest.remains
+    - summon_darkglare,if=cooldown.dark_harvest.remains
+    # malefic_grasp,if=buff.nightfall.react>1|pet.darkglare.remains<gcd
+    - malefic_grasp,if=buff.nightfall.stack>1|pet.darkglare.remains<gcd
+    # drain_soul,if=buff.nightfall.react>1
+    - drain_soul,if=buff.nightfall.stack>1
+    # shadow_bolt,if=buff.nightfall.react>1
+    - shadow_bolt,if=buff.nightfall.stack>1
+    # seed_of_corruption,if=set_bonus.midnight_season_2_4pc&talent.siphon_life&buff.shard_instability.react
+    - seed_of_corruption,if=set_bonus.midnight_season_2_4pc&talent.siphon_life&buff.shard_instability.stack
+    # unstable_affliction,if=soul_shard|buff.shard_instability.react
+    - unstable_affliction,if=soul_shard|buff.shard_instability.stack
+
+  # ==========================================================================
+  # HELLCALLER - Single Target
+  # ==========================================================================
+  HC_st:
+    # haunt
+    - haunt
+    # agony,if=refreshable
+    - agony,if=dot.agony.refreshable
+    # wither,if=refreshable
+    - wither,if=dot.wither.refreshable
+    # malevolence
+    - malevolence
+    # malefic_grasp,if=buff.nightfall.react>1|pet.darkglare.remains<gcd
+    - malefic_grasp,if=buff.nightfall.stack>1|pet.darkglare.remains<gcd
+    # drain_soul,if=buff.nightfall.react>1
+    - drain_soul,if=buff.nightfall.stack>1
+    # shadow_bolt,if=buff.nightfall.react>1
+    - shadow_bolt,if=buff.nightfall.stack>1
+    # unstable_affliction,if=pet.darkglare.remains|buff.malevolence.remains|soul_shard>4|buff.shard_instability.react|buff.cascading_calamity.remains<gcd.max
+    - unstable_affliction,if=pet.darkglare.remains|buff.malevolence.remains|soul_shard>4|buff.shard_instability.stack|buff.cascading_calamity.remains<gcd.max
+    # summon_darkglare
+    - summon_darkglare
+    # dark_harvest,if=execute_time<(dot.agony.remains<?dot.corruption.remains)&(!talent.cascading_calamity|buff.cascading_calamity.remains)
+    - dark_harvest,if=action.dark_harvest.execute_time<(dot.agony.remains<?dot.corruption.remains)&(!talent.cascading_calamity|buff.cascading_calamity.remains)
+
+  # ==========================================================================
+  # SOUL HARVESTER - Cleave
+  # ==========================================================================
+  SH_cleave:
+    # haunt
+    - haunt
+    # seed_of_corruption,if=(!dot.corruption.ticking|dot.corruption.refreshable)&!dot.seed_of_corruption.ticking&!prev.seed_of_corruption&!action.seed_of_corruption.in_flight
+    - seed_of_corruption,if=(!dot.corruption.ticking|dot.corruption.refreshable)&!dot.seed_of_corruption.ticking&!prev_gcd.1.seed_of_corruption
+    # agony,target_if=refreshable
+    - agony,if=dot.agony.refreshable
+    # dark_harvest
+    - dark_harvest
+    # unstable_affliction,cycle_targets=1,if=!ticking&prev.dark_harvest
+    # cycle_targets dropped; bare !ticking → !dot.unstable_affliction.ticking; prev → prev_gcd.1
+    - unstable_affliction,if=!dot.unstable_affliction.ticking&prev_gcd.1.dark_harvest
+    # unstable_affliction
+    - unstable_affliction
+    # summon_darkglare
+    - summon_darkglare
+    # malefic_grasp,if=buff.nightfall.react>1|pet.darkglare.remains<gcd
+    - malefic_grasp,if=buff.nightfall.stack>1|pet.darkglare.remains<gcd
+    # drain_soul,if=buff.nightfall.react>1
+    - drain_soul,if=buff.nightfall.stack>1
+    # shadow_bolt,if=buff.nightfall.react>1
+    - shadow_bolt,if=buff.nightfall.stack>1
+
+  # ==========================================================================
+  # HELLCALLER - Cleave
+  # ==========================================================================
+  HC_cleave:
+    # haunt
+    - haunt
+    # seed_of_corruption,if=talent.sow_the_seeds&!dot.wither.ticking&!dot.seed_of_corruption.ticking&!prev.seed_of_corruption&!action.seed_of_corruption.in_flight
+    - seed_of_corruption,if=talent.sow_the_seeds&!dot.wither.ticking&!dot.seed_of_corruption.ticking&!prev_gcd.1.seed_of_corruption
+    # wither,target_if=min:remains,if=remains<5&!(action.seed_of_corruption.in_flight|dot.seed_of_corruption.remains>0)&fight_remains>remains+5
+    # action.seed_of_corruption.in_flight NOT supported - dropped; bare remains → dot.wither.remains
+    - wither,if=dot.wither.remains<5&dot.seed_of_corruption.remains=0&fight_remains>dot.wither.remains+5
+    # agony,target_if=refreshable
+    - agony,if=dot.agony.refreshable
+    # dark_harvest
+    - dark_harvest
+    # summon_darkglare
+    - summon_darkglare
+    # malevolence
+    - malevolence
+    # malefic_grasp,if=pet.darkglare.remains<gcd
+    - malefic_grasp,if=pet.darkglare.remains<gcd
+    # unstable_affliction
+    - unstable_affliction
+
+  # ==========================================================================
+  # SOUL HARVESTER - AoE
+  # ==========================================================================
+  SH_aoe:
+    # haunt
+    - haunt
+    # seed_of_corruption,if=(!dot.corruption.ticking|dot.corruption.refreshable)&!dot.seed_of_corruption.ticking&!prev.seed_of_corruption&!action.seed_of_corruption.in_flight
+    - seed_of_corruption,if=(!dot.corruption.ticking|dot.corruption.refreshable)&!dot.seed_of_corruption.ticking&!prev_gcd.1.seed_of_corruption
+    # dark_harvest
+    - dark_harvest
+    # seed_of_corruption,target_if=!dot.unstable_affliction.ticking&prev.dark_harvest,if=set_bonus.midnight_season_2_4pc&active_enemies<=5
+    - seed_of_corruption,if=set_bonus.midnight_season_2_4pc&enemies_around_target<=5
+    # agony,target_if=min:remains,if=active_dot.agony<12&remains<5
+    - agony,if=active_dot.agony<12&dot.agony.remains<5
+    # summon_darkglare
+    - summon_darkglare
+    # malefic_grasp,if=buff.nightfall.react>1&active_enemies<=6
+    - malefic_grasp,if=buff.nightfall.stack>1&enemies_around_target<=6
+    # shadow_bolt,if=buff.nightfall.react>1&active_enemies<=7
+    - shadow_bolt,if=buff.nightfall.stack>1&enemies_around_target<=7
+    # seed_of_corruption,if=talent.sow_the_seeds|active_enemies>5
+    - seed_of_corruption,if=talent.sow_the_seeds|enemies_around_target>5
+    # unstable_affliction
+    - unstable_affliction
+    # agony,target_if=min:remains,if=remains<duration*0.5
+    # bare remains/duration → dot.agony.remains/dot.agony.duration
+    - agony,if=dot.agony.remains<dot.agony.duration*0.5
+    # malefic_grasp,if=pet.darkglare.remains<gcd
+    - malefic_grasp,if=pet.darkglare.remains<gcd
+
+  # ==========================================================================
+  # HELLCALLER - AoE
+  # ==========================================================================
+  HC_aoe:
+    # haunt
+    - haunt
+    # seed_of_corruption,if=(!dot.wither.ticking|dot.wither.refreshable)&!dot.seed_of_corruption.ticking&!prev.seed_of_corruption&!action.seed_of_corruption.in_flight
+    - seed_of_corruption,if=(!dot.wither.ticking|dot.wither.refreshable)&!dot.seed_of_corruption.ticking&!prev_gcd.1.seed_of_corruption
+    # dark_harvest
+    - dark_harvest
+    # agony,target_if=min:remains,if=active_dot.agony<14&remains<5
+    - agony,if=active_dot.agony<14&dot.agony.remains<5
+    # summon_darkglare
+    - summon_darkglare
+    # malevolence
+    - malevolence
+    # seed_of_corruption,if=talent.sow_the_seeds|active_enemies>5
+    - seed_of_corruption,if=talent.sow_the_seeds|enemies_around_target>5
+    # unstable_affliction
+    - unstable_affliction
+    # agony,target_if=min:remains,if=remains<5
+    - agony,if=dot.agony.remains<5
+    # malefic_grasp,if=pet.darkglare.remains<gcd
+    - malefic_grasp,if=pet.darkglare.remains<gcd
+
+  # ==========================================================================
+  # MAIN
+  # ==========================================================================
+  main:
+    # Shared lists
+    - call_action_list,name=spell_queue
+    - call_action_list,name=sanity_checks
+    - call_action_list,name=auto_target
+
+    # Summon Pet (precombat: summon_pet; grimoire_of_sacrifice)
+    - summon_imp,range_check=none,if=!pet.exists
+    - grimoire_of_sacrifice,range_check=none,if=talent.grimoire_of_sacrifice&pet.exists
+
+    # Combat Check
+    - return,if=auto_combat.player
+
+    # Defensives
+    - call_action_list,name=defensives
+
+    # Interrupts
+    - spell_lock,if=interrupt.target.check
+    - spell_lock.mouseover,if=interrupt.mouseover.check
+    - spell_lock.focus,if=interrupt.focus.check
+    # Stun Interrupt
+    - axe_toss,if=interrupt.stun.target.check
+    - axe_toss.mouseover,if=interrupt.stun.mouseover.check
+    - axe_toss.focus,if=interrupt.stun.focus.check
+    # AoE Interrupt
+    - shadowfury,if=interrupt.stun.aoe.check
+    # Racial Interrupts
+    - quaking_palm,if=interrupt.cc.check
+    - haymaker,if=interrupt.cc.check
+    - war_stomp,if=interrupt.stun.aoe.check
+    - bull_rush,if=interrupt.stun.aoe.check
+    - tail_swipe,if=interrupt.stun.aoe.check
+
+    - call_action_list,name=auto_heal
+
+    # Target Check
+    - return,if=auto_combat.target
+
+    # End of fight
+    # call_action_list,name=end_of_fight
+    - call_action_list,name=end_of_fight
+
+    # Racials (ogcd list — potion dropped, use_off_gcd=1 dropped)
+    # berserking,use_off_gcd=1,if=variable.cds_active|fight_remains<14
+    - berserking,if=var.cds_active|fight_remains<14
+    # blood_fury,use_off_gcd=1,if=variable.cds_active|fight_remains<17
+    - blood_fury,if=var.cds_active|fight_remains<17
+    # fireblood,use_off_gcd=1,if=variable.cds_active|fight_remains<10
+    - fireblood,if=var.cds_active|fight_remains<10
+    # ancestral_call,use_off_gcd=1,if=variable.cds_active|fight_remains<17
+    - ancestral_call,if=var.cds_active|fight_remains<17
+
+    # actions.items=/use_item,name=stormbound_emblem_of_dazar,if=cooldown.summon_darkglare.remains<=4&dot.agony.remains&(dot.corruption.remains|dot.wither.remains)&cooldown.dark_harvest.remains>1
+    - use_item,name=stormbound_emblem_of_dazar,if=cooldown.summon_darkglare.remains<=4&dot.agony.remains&(dot.corruption.remains|dot.wither.remains)&cooldown.dark_harvest.remains>1
+    # actions.items+=/use_item,name=galactic_gladiators_badge_of_ferocity,if=(buff.malevolence.up|pet.darkglare.active)|fight_remains<20
+    - use_item,name=galactic_gladiators_badge_of_ferocity,if=(buff.malevolence.up|pet.darkglare.active)|fight_remains<20
+    # actions.items+=/use_item,name=hex_lords_dooming_idol,if=pet.darkglare.active|buff.hex_lords_doom.stack>19|fight_remains<=30
+    - use_item,name=hex_lords_dooming_idol,if=pet.darkglare.active|buff.hex_lords_doom.stack>19|fight_remains<=30
+    # actions.items+=/use_items,if=(buff.malevolence.up|pet.darkglare.active)|fight_remains<20
+    # actions.items+=/use_item,use_off_gcd=1,slot=main_hand
+    - trinket_1,if=trinket_1.sync
+    - trinket_2,if=trinket_2.sync
+
+    # Hero tree dispatch
+    # call_action_list,name=soul_harvester,if=hero_tree.soul_harvester
+    - call_action_list,name=soul_harvester,if=hero_tree.soul_harvester
+    # call_action_list,name=hellcaller,if=hero_tree.hellcaller
+    - call_action_list,name=hellcaller,if=hero_tree.hellcaller
+
+    # Fillers (after sub-lists, for nightfall procs and default casts)
+    # malefic_grasp,chain=1,early_chain_if=buff.nightfall.react,if=pet.darkglare.active
+    # chain/early_chain_if dropped; buff.nightfall.react → buff.nightfall.stack; bare execute_time → action.malefic_grasp.execute_time
+    - malefic_grasp,if=pet.darkglare.active&buff.nightfall.stack&(buff.nightfall.stack=2|buff.nightfall.remains<action.malefic_grasp.execute_time*2)
+    # drain_soul,chain=1,early_chain_if=buff.nightfall.react,interrupt_if=tick_time>0.5
+    # chain/early_chain_if/interrupt_if dropped; buff.nightfall.react → buff.nightfall.stack; bare execute_time → action.drain_soul.execute_time
+    - drain_soul,if=buff.nightfall.stack&(buff.nightfall.stack=2|buff.nightfall.remains<action.drain_soul.execute_time*2)
+    # shadow_bolt
+    # local addition: nightfall-capped variant hoisted above the bare shadow_bolt below.
+    # buff.nightfall.max_stack NOT supported - hardcoded to 2; bare execute_time → action.shadow_bolt.execute_time
+    - shadow_bolt,if=buff.nightfall.stack&(buff.nightfall.stack=2|buff.nightfall.remains<action.shadow_bolt.execute_time*2)
+    # malefic_grasp,chain=1,early_chain_if=buff.nightfall.react,if=pet.darkglare.active
+    # chain/early_chain_if dropped
+    - malefic_grasp,if=pet.darkglare.active
+    # drain_soul,chain=1,early_chain_if=buff.nightfall.react,interrupt_if=tick_time>0.5
+    - drain_soul
+    # shadow_bolt
+    - shadow_bolt

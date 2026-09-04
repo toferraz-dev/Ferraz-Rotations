@@ -1,0 +1,568 @@
+# Shared Rotation Lists
+# These lists are automatically available to all rotation files via call_action_list
+# Rotation-specific lists with the same name will override these
+
+version: 3
+
+# Health Potions and Healthstone usage
+config_shared:
+  lootnearby:
+    section: "General"
+    label: "Loot Nearby Corpses"
+    type: checkbox
+    default: true
+
+  healthpotion:
+    section: "Defensives"
+    label: "Health Potion"
+    type: slider
+    min: 0
+    max: 100
+    default: 25
+
+  healthstone:
+    section: "Defensives"
+    label: "Healthstone"
+    type: slider
+    min: 0
+    max: 100
+    default: 40
+
+  manapotion:
+    section: "Defensives"
+    label: "Mana Potion"
+    type: slider
+    min: 0
+    max: 100
+    default: 40
+
+  # Auto Target (Combat) - When to auto-target an enemy (melee)
+  auto_target:
+    section: "Targeting"
+    label: "Auto Target (Melee)"
+    type: multi_select
+    options:
+      - "No Target"
+      - "Target is dead"
+      - "Target too far"
+    default: [0, 1]  # No Target + Target is dead
+
+  # Auto Target (Combat-Ranged) - When to auto-target an enemy (ranged)
+  auto_target_ranged:
+    section: "Targeting"
+    label: "Auto Target (Ranged)"
+    type: multi_select
+    options:
+      - "No Target"
+      - "Target is dead"
+      - "Target too far"
+    default: [0, 1]  # No Target + Target is dead
+
+  # Auto Combat Settings [ Quest Mob | Target In Combat with Party | We're auto attacking 
+  auto_combat:
+    section: "Targeting"
+    label: "Auto Combat"
+    type: multi_select
+    options:
+      - "Off"
+      - "Quest Mob"
+      - "Target Combat"
+      - "Targeting Party"
+    default: [1, 2]  # Quest Mob + Target Combat
+
+  
+  auto_rez:
+    section: "Ressurection"
+    label: "Ressurection"
+    type: checkbox
+    default: true
+
+  auto_brez:
+    section: "Ressurection"
+    label: "Battle Ressurection"
+    type: checkbox
+    default: true
+
+  interrupt_all:
+    section: "Interrupts"
+    label: "Interrupt All"
+    type: checkbox
+    default: false
+
+  interrupt_target:
+    section: "Interrupts"
+    label: "Interrupt Target"
+    type: checkbox
+    default: true
+  
+  interrupt_mouseover:
+    section: "Interrupts"
+    label: "Interrupt Mouseover"
+    type: checkbox
+    default: true
+  
+  interrupt_focus:
+    section: "Interrupts"
+    label: "Interrupt Focus"
+    type: checkbox
+    default: true 
+
+  interrupt_pct:
+    section: "Interrupts"
+    label: "Interrupt After Cast %"
+    type: slider
+    min: 0
+    max: 100
+    default: 25
+
+  interrupt_important_pct:
+    section: "Interrupts"
+    label: "Interrupt (Important) After Cast %"
+    type: slider
+    min: 0
+    max: 100
+    default: 50
+
+  los_block_duration:
+    section: "Healer"
+    type: slider
+    label: LoS Block Duration
+    min: 1
+    max: 30
+    default: 3
+
+  # ===========================================================================
+  # Combat Potion — flat user-config. The gate is composed inline in the
+  # `auto_combat_potion` list below; every condition is plain SimC so you can
+  # tweak it without touching code.
+  #
+  #   1. Master enable    : combat_potion_enabled
+  #   2. Raid difficulties: combat_potion_difficulty  (Anywhere/LFR/Normal/Heroic/Mythic)
+  #   3. M+ keystone min  : combat_potion_mplus_min   (0 = M+ disabled)
+  #   4. Timing           : combat_potion_timing      (Before / After trinkets)
+  #
+  # In raid the gate implicitly requires a boss target (standard SimC use); in
+  # M+ any combat target qualifies. "Anywhere" bypasses the zone check (testing).
+  # ===========================================================================
+  combat_potion_enabled:
+    section: "Combat Potion"
+    label: "Combat Potion"
+    description: "Master enable for combat potion auto-use."
+    type: checkbox
+    default: true
+
+  combat_potion_difficulty:
+    section: "Combat Potion"
+    label: "Raid difficulty"
+    description: "Anywhere = bypass context check (handy for testing on a dummy or world content)."
+    type: multi_select
+    options:
+      - label: "Anywhere (testing)"
+        value: -1
+      - label: "LFR"
+        value: 17
+      - label: "Normal"
+        value: 14
+      - label: "Heroic"
+        value: 15
+      - label: "Mythic"
+        value: 16
+    default: [3, 4]   # Heroic + Mythic
+
+  combat_potion_mplus_min:
+    section: "Combat Potion"
+    label: "M+ keystone (0 = off)"
+    type: slider
+    min: 0
+    max: 20
+    default: 0
+
+  combat_potion_timing:
+    section: "Combat Potion"
+    label: "Fire"
+    description: "Before trinkets = potion fires when an on-use trinket is actually about to fire this tick (uses trinket_X.sync — requires the trinket to be usable AND its conditions to be met). After trinkets = potion fires within 3s of a real trinket on-use. If no on-use trinket is equipped / usable, the potion will NOT fire — equip on-use trinkets or pick a different sync."
+    type: dropdown
+    options:
+      - label: "Before trinkets"
+        value: 0
+      - label: "After trinkets"
+        value: 1
+    default: 0
+
+
+lists:
+  # ============================================================================
+  # Spell Queue - Check if Lua addon has queued a spell to cast
+  # Call this early in main to handle priority actions (interrupts, defensives)
+  # Queue is populated by Lua via MemData[10], checked in order queue[1], queue[2], etc.
+  # Only casts if the queued spell is usable (valid, off CD, has charges)
+  # ============================================================================
+  spell_queue:
+    - queue_spell, if=!player.casting|!player.channeling
+
+  # ============================================================================
+  # Sanity Checks - Pre-rotation guards (call first in main)\
+  # ============================================================================
+  special_actions:
+    - interact_target,delay=350,if=config.lootnearby&target.lootable&target.range<=5
+    - interact_target,delay=350,if=config.lootnearby&loot_nearby
+    - interact_mouseover,delay=350,if=config.lootnearby&mouseover.lootable&mouseover.range<=5
+
+  special_actions_combat:
+    - attack_target,off_gcd=true,delay=100,if=target.exists&target.attackable&target.alive&target.range<=8&!player.auto_attacking&player.melee
+
+  anti_cc:
+    # ── Anti-Stun ──
+    # Human racial — removes all stun effects (3 min CD)
+    - will_to_survive,delay=500,if=player.stunned
+    # ── Anti-Fear / Charm / Sleep ──
+    # DK — becomes Undead, breaking charm, fear, and sleep (incapacitate) for 10 sec
+    - lichborne,delay=500,if=player.feared|player.charmed|player.incapacitated
+    # Warrior — breaks and grants immunity to fear, sap, and incapacitate
+    - berserker_rage,delay=500,if=player.feared|player.incapacitated
+    # Warrior — breaks fear
+    - berserker_shout,delay=500,if=player.feared
+    # Undead racial — removes charm, fear, and sleep (incapacitate) effects (2 min CD)
+    - will_of_the_forsaken,delay=500,if=player.feared|player.charmed|player.incapacitated
+
+  auto_freedom:
+    # BoF: prefer party member with freedom debuff, fall back to self
+    # Healer: priority heal > dps > tank (cycle_order=role_heal_dps_tank, HP-sorted within each tier)
+    - blessing_of_freedom,delay=500,cycle=members,cycle_order=role_heal_dps_tank,if=player.healer&cycle.debuff_list.freedom.up
+    - blessing_of_freedom,delay=500,cycle=party,cycle_order=role_heal_dps_tank,if=!player.healer&cycle.debuff_list.freedom.up
+    # BoF: party member targeted by a freedom-tagged channel (e.g. Plungegrip) — no debuff on victim
+    - blessing_of_freedom,delay=500,cycle=members,cycle_order=role_heal_dps_tank,if=player.healer&incoming_cast.cycle.freedom.up
+    - blessing_of_freedom,delay=500,cycle=party,cycle_order=role_heal_dps_tank,if=!player.healer&incoming_cast.cycle.freedom.up
+    - blessing_of_freedom,delay=500,if=player.rooted
+    # Tiger's Lust: prefer party member, fall back to self
+    - tigers_lust,delay=500,cycle=members,if=player.healer&cycle.debuff_list.freedom.up
+    - tigers_lust,delay=500,cycle=party,if=!player.healer&cycle.debuff_list.freedom.up
+    # - tigers_lust,delay=500,cycle=members,if=player.healer&incoming_cast.cycle.freedom.up
+    # - tigers_lust,delay=500,cycle=party,if=!player.healer&incoming_cast.cycle.freedom.up
+    - tigers_lust,delay=500,if=player.rooted
+    # Master's Call: prefer party member, fall back to self (hunters are always DPS)
+    - masters_call,delay=500,cycle=party,if=cycle.debuff_list.freedom.up
+    - masters_call,delay=500,cycle=party,if=incoming_cast.cycle.freedom.up
+    - masters_call,delay=500,if=player.rooted
+    # Gnome racial — removes all immobilization and movement speed reduction effects (1 min CD)
+    - escape_artist,delay=500,if=player.rooted
+
+  # ============================================================================
+  # Auto Dispel - Friendly dispels for all specs that can dispel
+  # Healer specs use cycle=members (focus-based), DPS/Tank use cycle=party (party macros)
+  # Self fallback for solo play
+  # ============================================================================
+  auto_dispel:
+    # # ── Racial self-dispels ──
+    # # Dwarf racial — removes all poison, disease, curse, magic, and bleed effects + 10% DR for 8 sec (2 min CD)
+    # - stoneform,delay=500,if=player.dispelable.list
+    # # Dark Iron Dwarf racial — removes all poison, disease, curse, magic, and bleed effects + primary stat buff (2 min CD)
+    # - fireblood,delay=500,if=player.dispelable.list
+
+    # ── Priest ──
+    # Purify (Disc/Holy - healer only)
+    - purify,delay=500,cycle=members,if=cycle.dispelable.list
+    # Purify Disease (Shadow - DPS only)
+    - purify_disease,delay=500,cycle=party,if=cycle.dispelable.list
+
+    # ── Monk ──
+    # Detox (BM/WW spell_id=218164, MW spell_id=115450 - same name, different spell per spec)
+    - detox,delay=500,cycle=members,if=player.healer&cycle.dispelable.list
+    - detox,delay=500,cycle=party,if=!player.healer&cycle.dispelable.list
+
+    # ── Evoker ──
+    # Naturalize (Preservation - healer only)
+    - naturalize,delay=500,cycle=members,if=cycle.dispelable.list
+    # Expunge (Devastation/Augmentation - DPS only)
+    - expunge,delay=500,cycle=members,if=(player.spec_id=1473)&cycle.dispelable.list
+    - expunge,delay=500,cycle=party,if=!(player.spec_id=1473)&cycle.dispelable.list
+    # Cauterizing Flame (all Evoker specs)
+    - cauterizing_flame,delay=500,cycle=members,if=(player.healer|player.spec_id=1473)&cycle.dispelable.list
+    - cauterizing_flame,delay=500,cycle=party,if=!(player.healer|player.spec_id=1473)&cycle.dispelable.list
+
+    # ── Paladin ──
+    # Cleanse (Holy - healer only)
+    - cleanse,delay=500,cycle=members,if=cycle.dispelable.list
+    # Cleanse Toxins (Prot/Ret - DPS/Tank only)
+    - cleanse_toxins,delay=500,cycle=party,if=cycle.dispelable.list
+
+    # ── Shaman ──
+    # Purify Spirit (Restoration - healer only)
+    - purify_spirit,delay=500,cycle=members,if=cycle.dispelable.list
+    # Cleanse Spirit (Ele/Enh - DPS only)
+    - cleanse_spirit,delay=500,cycle=party,if=cycle.dispelable.list
+
+    # ── Druid ──
+    # Nature's Cure (Restoration - healer only)
+    - natures_cure,delay=500,cycle=members,if=cycle.dispelable.list
+    # Remove Corruption (Balance/Feral/Guardian - DPS/Tank only)
+    - remove_corruption,delay=500,cycle=party,if=cycle.dispelable.list
+
+    # ── Mage ──
+    # Remove Curse (all specs - DPS only)
+    - remove_curse,delay=500,cycle=party,if=cycle.dispelable.list
+
+    # ── Warlock ──
+    # Singe Magic — 119905 is the PLAYER's Command Demon cast, not the 89808 pet-bar
+    # ability. 7 spells share the name, so the bare name can resolve to 89808, which
+    # has no .partyN macro (RotationZ Spell/Macros/Warlock.lua binds 119905) — the step
+    # then passes sanity, wins the pick, and sits there unpressable. Pinned per CLAUDE.md 3.1.
+    - 119905,delay=500,cycle=party,if=cycle.dispelable.list
+
+  # ============================================================================
+  # Affix - M+ affix-specific dispels and responses
+  # Devour affix: Devouring Rift (440313) — dispelable by ALL dispel types.
+  # Direct spell ID check used instead of cycle.dispelable (bypasses type matching).
+  # ============================================================================
+  affix:
+    # ── Devour: Devouring Rift (440313) ──────────────────────────────────────
+
+    # ── Priest ──
+    - purify,delay=500,cycle=members,cycle_order=player_first,if=cycle.debuff.440313.up.any
+    - purify_disease,delay=500,cycle=party,cycle_order=player_first,if=cycle.debuff.440313.up.any
+
+    # ── Monk ──
+    - detox,delay=500,cycle=members,cycle_order=player_first,if=player.healer&cycle.debuff.440313.up.any
+    - detox,delay=500,cycle=party,cycle_order=player_first,if=!player.healer&cycle.debuff.440313.up.any
+
+    # ── Evoker ──
+    - naturalize,delay=500,cycle=members,cycle_order=player_first,if=cycle.debuff.440313.up.any
+    - expunge,delay=500,cycle=members,cycle_order=player_first,if=(player.spec_id=1473)&cycle.debuff.440313.up.any
+    - expunge,delay=500,cycle=party,cycle_order=player_first,if=!(player.spec_id=1473)&cycle.debuff.440313.up.any
+    - cauterizing_flame,delay=500,cycle=members,cycle_order=player_first,if=(player.healer|player.spec_id=1473)&cycle.debuff.440313.up.any
+    - cauterizing_flame,delay=500,cycle=party,cycle_order=player_first,if=!(player.healer|player.spec_id=1473)&cycle.debuff.440313.up.any
+
+    # ── Paladin ──
+    - cleanse,delay=500,cycle=members,cycle_order=player_first,if=cycle.debuff.440313.up.any
+    - cleanse_toxins,delay=500,cycle=party,cycle_order=player_first,if=cycle.debuff.440313.up.any
+
+    # ── Shaman ──
+    - purify_spirit,delay=500,cycle=members,cycle_order=player_first,if=cycle.debuff.440313.up.any
+    - cleanse_spirit,delay=500,cycle=party,cycle_order=player_first,if=cycle.debuff.440313.up.any
+
+    # ── Druid ──
+    - natures_cure,delay=500,cycle=members,cycle_order=player_first,if=cycle.debuff.440313.up.any
+    - remove_corruption,delay=500,cycle=party,cycle_order=player_first,if=cycle.debuff.440313.up.any
+
+    # ── Mage ──
+    - remove_curse,delay=500,cycle=party,cycle_order=player_first,if=cycle.debuff.440313.up.any
+
+    # ── Warlock ──
+    # Singe Magic — pinned to the player-castable id, see auto_dispel above.
+    - 119905,delay=500,cycle=party,cycle_order=player_first,if=cycle.debuff.440313.up.any
+
+    # ── Rogue (self only) ──
+    - cloak_of_shadows,delay=500,if=player.debuff.440313.up.any
+
+    # ── Snare-removal responses (Midnight: Devouring Rift includes 10% slow) ──
+
+    # ── Mage (self only, requires Energized Barriers) ──
+    - prismatic_barrier,delay=500,if=player.debuff.440313.up.any&talent.energized_barriers
+    - ice_barrier,delay=500,if=player.debuff.440313.up.any&talent.energized_barriers
+    - blazing_barrier,delay=500,if=player.debuff.440313.up.any&talent.energized_barriers
+
+    # ── Monk ──
+    - tigers_lust,delay=500,cycle=party,cycle_order=player_first,if=cycle.debuff.440313.up.any
+
+    # ── Paladin ──
+    - blessing_of_freedom,delay=500,cycle=party,cycle_order=player_first,if=cycle.debuff.440313.up.any
+
+    # ── Priest (self only, requires Phantasm) ──
+    - fade,delay=500,if=player.debuff.440313.up.any&talent.phantasm
+
+    # ── Shaman (self only) ──
+    - spirit_walk,delay=500,if=player.debuff.440313.up.any
+
+    # ── Warrior (self only, requires Fearless) ──
+    - berserker_rage,delay=500,if=player.debuff.440313.up.any&talent.fearless
+
+    # ── Death Knight (self only) ──
+    - death_charge,delay=500,if=player.debuff.440313.up.any
+
+  # ============================================================================
+  # Auto Feign Death - Drop incoming meld-tagged casts targeting the player
+  # Hunter-only; spell is unavailable on non-Hunters so no class gate needed
+  # ============================================================================
+  auto_feign_death:
+    - feign_death,delay=500,if=incoming_cast.player.meld.up
+
+  # ============================================================================
+  # Auto Death Grip - DK fallback interrupt when Mind Freeze can't take the cast
+  # Charges>=1.85 keeps a charge in reserve. Fires when an enemy is casting:
+  #   - stunnable-flagged (_casts.yaml) — anywhere, and the ONLY leg inside
+  #     instanced PvE: never a filler interrupt on a boss/trash kickable cast
+  #   - kickable AND Mind Freeze won't be ready in time — open world only
+  # Mirrors the interrupt.stun.*.check split in _common.yaml.
+  # Excludes bosses (immune to Death Grip). DK-only; spell unavailable elsewhere.
+  # ============================================================================
+  auto_death_grip:
+    - death_grip,delay=500,if=cooldown.death_grip.charges_fractional>=1.85&config.interrupt_target&target.enemy&!target.boss&!target.buff_list.spell_reflect.up&(target.incoming_cast.stunnable.up|!player.ininstancedpve&target.incoming_cast.kickable.up)&(cooldown.mind_freeze.remains>target.incoming_cast.kickable.remains|!target.incoming_cast.kickable.up)&target.casting.elapsed>=0.2
+    - death_grip.mouseover,delay=500,if=cooldown.death_grip.charges_fractional>=1.85&config.interrupt_mouseover&mouseover.enemy&!mouseover.boss&!mouseover.buff_list.spell_reflect.up&(mouseover.incoming_cast.stunnable.up|!player.ininstancedpve&mouseover.incoming_cast.kickable.up)&(cooldown.mind_freeze.remains>mouseover.incoming_cast.kickable.remains|!mouseover.incoming_cast.kickable.up)&mouseover.casting.elapsed>=0.2
+
+  # ============================================================================
+  # Auto Purge Enrage - Offensive enrage removal for all specs that can soothe
+  # Uses target.purgeable.enrage to confirm target has a purgeable enrage buff
+  # ============================================================================
+  auto_purge_enrage:
+    # ── Hunter ──
+    # Tranquilizing Shot (all specs) — removes 1 Enrage + 1 Magic effect, 10s CD
+    - tranquilizing_shot,if=target.purgeable.enrage
+
+    # ── Druid ──
+    # Soothe (all specs) — removes all enrage effects, 10s CD
+    - soothe,if=target.purgeable.enrage
+
+    # ── Rogue ──
+    # Shiv (all specs) — removes all enrage effects, 25s CD
+    - shiv,if=target.purgeable.enrage
+
+    # ── Evoker ──
+    # Oppressing Roar (all specs, requires Overawe talent) — AoE enrage removal, ~90s CD
+    - oppressing_roar,if=talent.overawe&target.purgeable.enrage
+
+    # ── Monk ──
+    # Paralysis (all specs, requires Pressure Points talent) — removes enrage, 45s CD
+    - paralysis,if=talent.pressure_points&target.purgeable.enrage
+
+  sanity_checks:
+    - return,if=!state.rotation
+    - return,if=player.dead
+    - return,if=state.blocked_inputs
+    - return,if=mounted
+    - return,if=buff.travel_form.up
+    - call_action_list,name=special_actions,if=!player.combat
+    - call_action_list,name=special_actions_combat,if=player.combat
+    - call_action_list,name=anti_cc,if=player.cc
+    - call_action_list,name=auto_freedom
+    - call_action_list,name=auto_feign_death
+    - call_action_list,name=auto_death_grip
+    - call_action_list,name=auto_dispel
+    - call_action_list,name=affix
+    - call_action_list,name=auto_purge_enrage
+    - call_action_list,name=auto_brez,if=config.auto_brez&mouseover.dead&mouseover.friendly&mouseover.unitframe&player.combat
+    - call_action_list,name=auto_rez,if=config.auto_rez&mouseover.dead&mouseover.friendly&mouseover.unitframe&!player.combat
+    # Combat potion — gated entirely by config.combat_potion_*. Master switch
+    # defaults ON; the difficulty multi_select still defaults to Heroic+Mythic,
+    # so it only fires in those contexts (or whatever the user picks).
+    # Fires off-GCD via combat_potion action, so it doesn't block the rotation.
+    - call_action_list,name=auto_combat_potion,if=config.combat_potion_enabled&player.combat
+  # ============================================================================
+
+
+
+    # TODO: player.mounted and player.in_vehicle need addon support
+    # - return,if=player.mounted
+    # - return,if=player.in_vehicle
+
+  # ============================================================================
+  # Auto Targeting (Melee) - Pick target for melee classes
+  # Uses config.auto_target: 0=No Target, 1=Dead, 2=Too far
+  # ============================================================================
+  auto_target:
+    - target_enemy,delay=200,off_gcd=true,if=config.auto_target.has(0)&!target.exists&enemies.combat.8y>=1
+    - target_enemy,delay=200,off_gcd=true,if=config.auto_target.has(1)&target.dead&enemies.combat.8y>=1
+    - target_enemy,delay=200,off_gcd=true,if=config.auto_target.has(2)&target.range>=25&enemies.combat.8y>=1
+
+  # ============================================================================
+  # Auto Targeting (Ranged) - Pick target for ranged classes
+  # Uses config.auto_target_ranged: 0=No Target, 1=Dead, 2=Too far
+  # ============================================================================
+  auto_target_ranged:
+    - target_enemy,delay=200,off_gcd=true,if=config.auto_target_ranged.has(0)&!target.exists&enemies.combat.40y>=1
+    - target_enemy,delay=200,off_gcd=true,if=config.auto_target_ranged.has(1)&target.dead&enemies.combat.40y>=1
+    - target_enemy,delay=200,off_gcd=true,if=config.auto_target_ranged.has(2)&target.range>=40&enemies.combat.40y>=1
+
+  # ============================================================================
+  # Auto Battle Rez - Cast battle resurrection on dead party/raid members via @mouseover
+  # Fires when hovering over a unit frame (party/raid) of a dead friendly unit.
+  # Classes: Druid (Rebirth), Death Knight (Raise Ally), Paladin (Intercession), Warlock (Soulstone)
+  # ============================================================================
+  auto_brez:
+    # ── Druid - Rebirth (cost: 30 rage in Bear Form, free in Cat Form, mana otherwise) ──
+    # Removed: natures_swiftness — Rebirth is already instant; on Shaman natures_swiftness
+    # morphs to ancestral_swiftness (_morphs.yaml) which would be wasted on a non-existent combat rez.
+    # - natures_swiftness,if=config.auto_brez&mouseover.dead&mouseover.friendly&mouseover.unitframe
+    - pool_resource,resource=rage,for_next=1,if=config.auto_brez&mouseover.dead&mouseover.friendly&mouseover.unitframe&(player.class_id=11)&buff.bear_form.up&cooldown.rebirth.ready
+    - rebirth.mouseover,if=config.auto_brez&mouseover.dead&mouseover.friendly&mouseover.unitframe
+
+    # ── Death Knight - Raise Ally (costs Runic Power) ──
+    - pool_resource,resource=runic_power,for_next=1,if=config.auto_brez&mouseover.dead&mouseover.friendly&mouseover.unitframe&(player.class_id=6)&cooldown.raise_ally.ready
+    - raise_ally.mouseover,if=config.auto_brez&mouseover.dead&mouseover.friendly&mouseover.unitframe
+
+    # ── Paladin - Intercession (costs Holy Power, requires Lay on Hands charge) ──
+    - pool_resource,resource=holy_power,for_next=1,if=config.auto_brez&mouseover.dead&mouseover.friendly&mouseover.unitframe&(player.class_id=2)&cooldown.intercession.ready
+    - intercession.mouseover,if=config.auto_brez&mouseover.dead&mouseover.friendly&mouseover.unitframe
+
+    # ── Warlock - Soulstone ──
+    - soulstone.mouseover,if=config.auto_brez&mouseover.dead&mouseover.friendly&mouseover.unitframe
+
+  # ============================================================================
+  # Auto Rez - Out-of-combat single resurrection via @mouseover
+  # Classes: Paladin (Redemption), Priest (Resurrection), Shaman (Ancestral Spirit),
+  #          Druid (Revive), Evoker (Reawaken / Return)
+  # ============================================================================
+  auto_rez:
+    # ── Paladin - Redemption ──
+    - redemption.mouseover,if=config.auto_rez&mouseover.dead&mouseover.friendly&mouseover.unitframe
+
+    # ── Priest - Resurrection ──
+    - resurrection.mouseover,if=config.auto_rez&mouseover.dead&mouseover.friendly&mouseover.unitframe
+
+    # ── Shaman - Ancestral Spirit ──
+    - ancestral_spirit.mouseover,if=config.auto_rez&mouseover.dead&mouseover.friendly&mouseover.unitframe
+
+    # ── Druid - Revive ──
+    - revive.mouseover,if=config.auto_rez&mouseover.dead&mouseover.friendly&mouseover.unitframe
+
+    # ── Evoker - Reawaken ──
+    - reawaken.mouseover,if=config.auto_rez&mouseover.dead&mouseover.friendly&mouseover.unitframe
+
+    # ── Evoker - Return (spell 361227; "return" is a reserved keyword so use numeric ID) ──
+    - 361227.mouseover,if=config.auto_rez&mouseover.dead&mouseover.friendly&mouseover.unitframe
+
+  auto_heal:
+    - healthstone,delay=250,if=healthstone.ready&health.pct<=config.healthstone
+    - health_potion,delay=250,if=health_potion.ready&health.pct<=config.healthpotion
+
+  auto_mana:
+    - mana_potion,delay=250,if=mana_potion.ready&mana.pct<=config.manapotion
+
+  # ============================================================================
+  # Auto Combat Potion
+  #
+  # All gating is composed inline below. Edit freely — every piece is a regular
+  # SimC expression. The structure is:
+  #
+  #   combat_potion.ready                              (potion off cooldown)
+  # & config.combat_potion_enabled                     (master switch)
+  # & (!player.inraid | target.boss                    (RAID TRASH GUARD —
+  #     | config.combat_potion_difficulty.has(-1))      never fire on raid trash,
+  #                                                     unless "Anywhere" is on
+  #                                                     for testing)
+  # & (                                                 ── CONTEXT block ──
+  #     config.combat_potion_difficulty.has(-1)        (Anywhere → testing)
+  #   | (player.inraid & target.boss & (               (raid: bosses only)
+  #       (config.combat_potion_difficulty.has(17) & player.raid_difficulty.lfr)
+  #       | (config.combat_potion_difficulty.has(14) & player.raid_difficulty.normal)
+  #       | (config.combat_potion_difficulty.has(15) & player.raid_difficulty.heroic)
+  #       | (config.combat_potion_difficulty.has(16) & player.raid_difficulty.mythic)
+  #     ))
+  #   | (config.combat_potion_mplus_min > 0            (M+: any combat target)
+  #       & player.inmythicplus
+  #       & player.keystonelevel >= config.combat_potion_mplus_min)
+  #   )
+  # & (                                                 ── TIMING block ──
+  #     (config.combat_potion_timing=0 & (trinket_1.sync | trinket_2.sync))
+  #   | (config.combat_potion_timing=1 & (trinket_1.lastcast<3 | trinket_2.lastcast<3))
+  #   | (!trinket_1.has_onuse & !trinket_2.has_onuse & player.burst.active)
+  #   )                                                  ← fallback: if both
+  #                                                       trinkets are passive,
+  #                                                       sync to burst CDs.
+  #
+  # Call from rotation: `call_action_list,name=auto_combat_potion`. Placement:
+  #   - "Before trinkets" → put the call BEFORE your trinket_X lines.
+  #   - "After trinkets"  → put the call AFTER your trinket_X lines so trinkets
+  #     win the same tick when both pass.
+  # ============================================================================
+  auto_combat_potion:
+    - combat_potion,if=combat_potion.ready&config.combat_potion_enabled&(!player.inraid|target.boss|config.combat_potion_difficulty.has(-1))&(config.combat_potion_difficulty.has(-1)|(player.inraid&target.boss&((config.combat_potion_difficulty.has(17)&player.raid_difficulty.lfr)|(config.combat_potion_difficulty.has(14)&player.raid_difficulty.normal)|(config.combat_potion_difficulty.has(15)&player.raid_difficulty.heroic)|(config.combat_potion_difficulty.has(16)&player.raid_difficulty.mythic)))|(config.combat_potion_mplus_min>0&player.inmythicplus&player.keystonelevel>=config.combat_potion_mplus_min))&((config.combat_potion_timing=0&(trinket_1.sync|trinket_2.sync))|(config.combat_potion_timing=1&(trinket_1.lastcast<3|trinket_2.lastcast<3))|(!trinket_1.has_onuse&!trinket_2.has_onuse&player.burst.active))

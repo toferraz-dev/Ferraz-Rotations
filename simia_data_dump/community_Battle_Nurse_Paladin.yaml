@@ -1,0 +1,349 @@
+version: 1.4
+author: Rollfacedk
+spec: 65
+name: Battle Nurse Paladin
+description: |
+  Rollfacedk Holy Paladin 1.4
+
+entry: main
+
+config:
+
+  holy_shock_dps:
+    section: "DPS"
+    label: "Use Holy shock for dps(turn off if in raid)"
+    type: checkbox
+    default: true
+
+  holy_shock_healing:
+    section: "Single Target Healing"
+    label: "Holy shock HP% (none-tank)"
+    type: slider
+    min: 1
+    max: 100
+    default: 90
+
+  holy_shock_healing_tank:
+    section: "Single Target Healing"
+    label: "Holy shock HP% (tank)"
+    type: slider
+    min: 1
+    max: 100
+    default: 80 
+
+  st_healing:
+    section: "Single Target Healing"
+    label: "ST Healing HP% Word of Glory, Flash Heal etc.(NONE-TANK)"
+    type: slider
+    min: 1
+    max: 100
+    default: 80
+
+  st_healing_tank:
+    section: "Single Target Healing"
+    label: "ST Healing HP% Word of Glory, Flash Heal etc.(TANK)"
+    type: slider
+    min: 1
+    max: 100
+    default: 60
+
+  aoe_divine_tol_healing:
+    section: "AOE Healing"
+    label: "aoe Divine tol/Prism HP%."
+    type: slider
+    min: 1
+    max: 100
+    default: 75
+
+  aoe_divine_tol__healing_targets:
+    section: "AOE Healing"
+    label: "targets of divine tol/prism to heal. (Tanks not included)"
+    type: slider
+    min: 1
+    max: 10
+    default: 3  
+  
+  aoe_healing:
+    section: "AOE Healing"
+    label: "light of dawn HP%."
+    type: slider
+    min: 1
+    max: 100
+    default: 95
+
+  aoe_healing_targets:
+    section: "AOE Healing"
+    label: "targets of light of dawn to heal. (Tanks not included)"
+    type: slider
+    min: 1
+    max: 10
+    default: 4
+
+  virtue_healing:
+    section: "AOE Healing"
+    label: "Beacon of Virtue HP%."
+    type: slider
+    min: 1
+    max: 100
+    default: 80
+
+  virtue_healing_targets:
+    section: "AOE Healing"
+    label: "beacon of virtue targets to heal (Tanks not included)"
+    type: slider
+    min: 1
+    max: 5
+    default: 3
+
+  divine_toll_healing:
+    section: "Emergency Healing"
+    label: "Divine toll when not enough holy power to Word of Glory,"
+    type: slider
+    min: 1
+    max: 100
+    default: 60
+
+  need_holy_light_healing:
+    section: "Emergency Healing"
+    label: "prioritize cast holy light hp%"
+    type: slider
+    min: 1
+    max: 100
+    default: 70 
+
+  need_holy_light_healing_tank:
+    section: "Emergency Healing"
+    label: "prioritize cast holy light hp% (TANK)"
+    type: slider
+    min: 1
+    max: 100
+    default: 60 
+
+  emergency_healing:
+    section: "Emergency Healing"
+    label: "Emergency ST healing"
+    type: slider
+    min: 1
+    max: 100
+    default: 35
+
+  filler_holy_light_healing:
+    section: "Filler"
+    label: "filler flash of light (rarely cast)"
+    type: slider
+    min: 1
+    max: 100
+    default: 90
+
+  ds_hp:
+    section: "Defensives"
+    label: "Divine Shield HP%"
+    type: slider
+    min: 1
+    max: 100
+    default: 25
+
+  dp_hp:
+    section: "Defensives"
+    label: "Divine Protection HP%"
+    type: slider
+    min: 1
+    max: 100
+    default: 35
+
+variables:
+
+  lod_herald: group.count(!cycle.tank&cycle.health.effective.pct<=config.aoe_healing&cycle.range<=40)>=config.aoe_healing_targets&group.count(cycle.buff.beacon_of_virtue.up)<=2
+  
+
+  trinket1_living_silk: trinket_1.id=242393
+  trinket2_living_silk: trinket_2.id=242393
+  has_living_silk: var.trinket1_living_silk|var.trinket2_living_silk
+
+
+lists:
+  emergency:
+    - divine_shield,interrupt=true,if=health.pct<=config.ds_hp
+    - lay_on_hands.focus,interrupt=true,if=focus.friendly&focus.health.pct<=25&focus.range<=40&player.combat
+    - divine_protection,if=buff.divine_shield.down&health.pct<=config.dp_hp
+    - blessing_of_sacrifice,cycle=tanks,if=cycle.health.pct<=45
+
+  major_cooldowns:
+    - aura_mastery,if=group.count(!cycle.tank&cycle.health.effective.pct<=60)>=4&!talent.ringing_of_the_heavens.enabled
+    - avenging_wrath,if=group.count(!cycle.tank&cycle.health.effective.pct<=60)>=4
+    - avenging_crusader,if=group.count(!cycle.tank&cycle.health.effective.pct<=60)>=4
+
+  mouseover_friendly:
+    - lay_on_hands.focus_mouseover,range_check=mouseover,use_off_gcd=1,if=mouseover.health.pct<=30&mouseover.friendly
+    - flash_of_light.focus_mouseover,range_check=mouseover,if=mouseover.health.effective.pct<=99&holy_power.deficit>=1&buff.infusion_of_light.up
+    - holy_shock.focus_mouseover,range_check=mouseover,if=mouseover.health.effective.pct<=99&mouseover.friendly&holy_power.deficit>=3
+    - eternal_flame.focus_mouseover,range_check=mouseover,if=mouseover.health.effective.pct<=99&mouseover.friendly
+    - word_of_glory.focus_mouseover,range_check=mouseover,if=mouseover.health.effective.pct<=99&mouseover.friendly
+    - divine_toll.focus_mouseover,range_check=mouseover,if=mouseover.health.effective.pct<=99&holy_power.deficit>=5&mouseover.friendly
+    - holy_light.focus_mouseover,range_check=mouseover,if=mouseover.health.effective.pct<=99&holy_power.deficit>=1
+
+  trinkets:
+    - trinket_1,if=var.trinket1_living_silk&trinket_1.ready&(buff.avenging_wrath.up|buff.avenging_crusader.up)
+    - trinket_2,if=var.trinket2_living_silk&trinket_2.ready&(buff.avenging_wrath.up|buff.avenging_crusader.up)
+    - trinket_1,if=!var.trinket1_living_silk&trinket_1.ready&trinket_1.sync&(buff.avenging_wrath.up|buff.avenging_crusader.up)
+    - trinket_2,if=!var.trinket2_living_silk&trinket_2.ready&trinket_2.sync&(buff.avenging_wrath.up|buff.avenging_crusader.up)
+    - trinket_1,if=!var.trinket1_living_silk&trinket_1.ready&(buff.avenging_wrath.up|buff.avenging_crusader.up)
+    - trinket_2,if=!var.trinket2_living_silk&trinket_2.ready&(buff.avenging_wrath.up|buff.avenging_crusader.up)
+
+  main:
+
+
+
+    - crusader_strike,if=target.in_melee&target.enemy
+
+    # Shared
+    - call_action_list,name=spell_queue
+
+    - crusader_aura,range_check=none,if=!buff.crusader_aura.up.any&player.mounted
+
+    - call_action_list,name=sanity_checks
+    - call_action_list,name=auto_target
+
+    # Auras
+    - devotion_aura,range_check=none,if=!buff.devotion_aura.up.any
+
+    - call_action_list,name=auto_heal
+
+    # Out of Combat
+    - rite_of_sanctification,range_check=none,if=!player.combat&!buff.433550.up&lastcast.rite_of_sanctification>=2700
+    - rite_of_sanctification,range_check=none,if=!player.combat&!buff.433550.up&lastcast.rite_of_sanctification>=2700
+    - devotion_aura,if=!player.combat&buff.devotion_aura.down
+    - beacon_of_light,cycle=healers,if=!player.combat&group.count(cycle.buff.beacon_of_light.up)=0
+    - beacon_of_faith,cycle=dps,if=!player.combat&talent.beacon_of_faith.enabled&group.count(cycle.buff.beacon_of_faith.up)=0
+    - word_of_glory,cycle=members,if=!player.combat&cycle.health.effective.pct<=85
+    - eternal_flame,cycle=members,if=!player.combat&cycle.health.effective.pct<=85
+    - holy_shock,cycle=members,if=!player.combat&cycle.health.effective.pct<=95&holy_power.deficit>=1
+    - holy_light,cycle=members,if=!player.combat&cycle.health.effective.pct<=90&holy_power.deficit>=1
+
+    # Combat Check
+    - return,if=auto_combat.player|player.casting|lastcast.holy_light<=gcd*0.40
+
+    # Emergency / Defensives
+    - call_action_list,name=emergency
+    - call_action_list,name=major_cooldowns
+
+    # Racial Defensive
+    - stoneform,if=player.dispelable.list
+    - fireblood,if=player.dispelable.list
+    - will_of_the_forsaken,if=player.feared|player.charmed
+    - escape_artist,if=player.rooted
+    - will_to_survive,if=player.stunned
+    - gift_of_the_naaru,if=health.effective.pct<=40
+    - regeneratin,if=health.effective.pct<=70&!player.combat
+    - stoneform,if=health.effective.pct<=60
+    - fireblood,if=health.effective.pct<=60
+
+    # Interrupts
+    - hammer_of_justice,if=interrupt.stun.target.check
+    - hammer_of_justice.mouseover,if=interrupt.stun.mouseover.check
+    - hammer_of_justice.focus,if=interrupt.stun.focus.check
+    - blinding_light,if=interrupt.stun.aoe.check
+    # Racial CC
+    - war_stomp,if=interrupt.stun.aoe.check
+    - quaking_palm,if=interrupt.cc.check
+    - haymaker,if=interrupt.cc.check
+    - bull_rush,if=interrupt.stun.aoe.check
+    - wing_buffet,if=interrupt.cc.check
+    - arcane_pulse,if=interrupt.stun.aoe.check
+
+    - return,if=player.cc
+
+    # Cleanse
+    - cleanse,cycle=members,if=cycle.dispelable.list
+
+    # keep it rolling
+    - sacred_weapon,if=holy_power.deficit>=3&cooldown.sacred_weapon.charges_fractional>=1.8
+    - holy_bulwark,if=holy_power.deficit>=3&cooldown.holy_bulwark.charges_fractional>=1.8
+    - sacred_weapon,if=holy_power.deficit>=3&buff.sacred_weapon.remains<=7&buff.holy_bulwark.remains<=7
+    - holy_bulwark,if=holy_power.deficit>=3&buff.sacred_weapon.remains<=7&buff.holy_bulwark.remains<=7
+
+    # Beacon Maintenance
+    - beacon_of_light,cycle=tanks,if=!talent.beacon_of_virtue.enabled&group.count(cycle.buff.beacon_of_light.up)=0&cycle.range>0&cycle.range<=40
+    - beacon_of_faith,cycle=dps,if=talent.beacon_of_faith.enabled&group.count(cycle.buff.beacon_of_faith.up)=0&cycle.range>0&cycle.range<=40
+
+    # Racial Offensive
+    - berserking,if=buff.avenging_wrath.up|buff.avenging_crusader.up
+    - blood_fury,if=buff.avenging_wrath.up|buff.avenging_crusader.up
+    - ancestral_call,if=buff.avenging_wrath.up|buff.avenging_crusader.up
+    - fireblood,if=(buff.avenging_wrath.up|buff.avenging_crusader.up)&!player.dispelable.list
+    - azerite_surge,if=(buff.avenging_wrath.up|buff.avenging_crusader.up)
+
+    # Racial Utility
+    - arcane_torrent,if=mana.pct<=90
+    - gift_of_the_naaru,target=lowest,if=group.lowest.health.effective.pct<=60
+    - bag_of_tricks,target=lowest,if=group.lowest.health.effective.pct<=60
+    - shadowmeld,if=target.threat>=3
+
+    # Mouseover Healing
+    - call_action_list,name=mouseover_friendly,if=mouseover.npcid=133392
+    
+
+    # Trinkets / Spenders / Generators
+    - call_action_list,name=trinkets
+
+    # Beacon of Virtue
+    - beacon_of_virtue,if=group.count(!cycle.tank&cycle.health.effective.pct<=config.virtue_healing)>=config.virtue_healing_targets
+
+    
+
+    # Emergency Healing
+    - holy_light,cycle=members,if=cycle.health.pct<=config.emergency_healing&buff.infusion_of_light.down&holy_power.deficit>=1&buff.hand_of_divinity.up
+    - word_of_glory,cycle=members,if=cycle.health.pct<=config.emergency_healing&buff.divine_purpose.up
+    - eternal_flame,cycle=members,if=cycle.health.pct<=config.emergency_healing&buff.divine_purpose.up
+    - flash_of_light,cycle=members,if=cycle.health.pct<=config.emergency_healing&holy_power.deficit>=1&buff.infusion_of_light.up
+    - word_of_glory,cycle=members,if=cycle.health.pct<=config.emergency_healing
+    - eternal_flame,cycle=members,if=cycle.health.pct<=config.emergency_healing
+    - holy_prism,cycle=members,if=cycle.health.effective.pct<=config.emergency_healing&holy_power.deficit>=3
+    - divine_toll,cycle=members,if=group.lowest.health.pct<=config.emergency_healing&holy_power.deficit>=3
+    - aura_mastery,if=group.lowest.health.pct<=config.emergency_healing&holy_power.deficit>=3&talent.ringing_of_the_heavens.enabled&focus.range<=40
+    - holy_light,cycle=members,if=cycle.health.pct<=config.emergency_healing&holy_power.deficit>=3
+
+    # AOE Healing
+    - light_of_dawn,range_check=none,if=var.lod_herald
+    - hammer_of_wrath,if=holy_power.deficit>=2&target.enemy&buff.infusion_of_light.up&var.lod_herald
+    - judgment,if=holy_power.deficit>=2&target.enemy&buff.infusion_of_light.up&var.lod_herald
+
+    # Major ST Healing
+    - holy_light,cycle=members,if=(cycle.tank&cycle.health.pct<=config.st_healing_tank|!cycle.tank&cycle.health.pct<=config.st_healing)&buff.infusion_of_light.down&holy_power.deficit>=1&buff.hand_of_divinity.up
+    - word_of_glory,cycle=members,if=(cycle.tank&cycle.health.pct<=config.st_healing_tank|!cycle.tank&cycle.health.pct<=config.st_healing)&buff.divine_purpose.up
+    - eternal_flame,cycle=members,if=(cycle.tank&cycle.health.pct<=config.st_healing_tank|!cycle.tank&cycle.health.pct<=config.st_healing)&buff.divine_purpose.up
+    - flash_of_light,cycle=members,if=(cycle.tank&cycle.health.pct<=config.st_healing_tank|!cycle.tank&cycle.health.pct<=config.st_healing)&holy_power.deficit>=1&buff.infusion_of_light.up&!var.lod_herald
+    - holy_shock,cycle=members,if=(cycle.tank&cycle.health.pct<=config.holy_shock_healing_tank|!cycle.tank&cycle.health.pct<=config.holy_shock_healing)&holy_power.deficit>=1&cooldown.holy_shock.charges>=1.8
+    - word_of_glory,cycle=members,if=(cycle.tank&cycle.health.pct<=config.st_healing_tank|!cycle.tank&cycle.health.pct<=config.st_healing)
+    - eternal_flame,cycle=members,if=(cycle.tank&cycle.health.pct<=config.st_healing_tank|!cycle.tank&cycle.health.pct<=config.st_healing)
+
+    #Avenging Crusader
+    - hammer_of_wrath,if=target.enemy&buff.avenging_crusader.up&((holy_power.deficit>=1&buff.infusion_of_light.down)|holy_power.deficit>=2)
+    - judgment,if=target.enemy&buff.avenging_crusader.up&((holy_power.deficit>=1&buff.infusion_of_light.down)|holy_power.deficit>=2)
+    - shield_of_the_righteous,override=avenging_wrath,ignore_usable=true,ignore_cooldown=true,range_check=none,if=buff.avenging_crusader.up&cooldown.crusader_strike.ready&target.in_melee&target.enemy&holy_power.deficit>=1
+    - crusader_strike,if=target.in_melee&target.enemy&holy_power.deficit>=1&buff.avenging_crusader.up
+
+    #aoe
+    - holy_prism,if=group.count(!cycle.tank&cycle.health.effective.pct<=config.aoe_divine_tol_healing)>=config.aoe_divine_tol__healing_targets&holy_power.deficit>=3
+    - divine_toll,cycle=members,if=group.count(!cycle.tank&cycle.health.effective.pct<=config.aoe_divine_tol_healing)>=config.aoe_divine_tol__healing_targets&holy_power.deficit>=3
+    - aura_mastery,if=group.count(!cycle.tank&cycle.health.effective.pct<=config.aoe_divine_tol_healing)>=config.aoe_divine_tol__healing_targets&holy_power.deficit>=3&talent.ringing_of_the_heavens.enabled
+    #st
+    - holy_prism,cycle=members,if=cycle.health.effective.pct<=config.divine_toll_healing&holy_power.deficit>=3
+    - divine_toll,cycle=members,if=group.lowest.health.effective.pct<=config.divine_toll_healing&holy_power.deficit>=3
+    - aura_mastery,if=group.lowest.health.effective.pct<=config.divine_toll_healing&holy_power.deficit>=3&talent.ringing_of_the_heavens.enabled
+    - holy_light,cycle=members,if=(cycle.tank&cycle.health.pct<=config.need_holy_light_healing_tank|!cycle.tank&cycle.health.pct<=config.need_holy_light_healing)&holy_power.deficit>=3
+    
+    # Rotation
+    - holy_shock,if=holy_power.deficit>=1&cooldown.holy_shock.charges>=1.8&target.enemy&config.holy_shock_dps
+    - hammer_of_wrath,if=((holy_power.deficit>=1&buff.infusion_of_light.down)|holy_power.deficit>=2)&target.enemy
+    - judgment,if=((holy_power.deficit>=1&buff.infusion_of_light.down)|holy_power.deficit>=2)&target.enemy
+    - holy_shock,cycle=members,if=(cycle.tank&cycle.health.pct<=config.holy_shock_healing_tank|!cycle.tank&cycle.health.pct<=config.holy_shock_healing)&holy_power.deficit>=1
+    - holy_shock,if=holy_power.deficit>=1&target.enemy&holy_power.deficit>=1&config.holy_shock_dps
+    - flash_of_light,cycle=members,if=cycle.health.effective.pct<=config.filler_holy_light_healing&buff.infusion_of_light.down&holy_power.deficit>=1
+
+
+    # filler dps
+    - shield_of_the_righteous,if=target.in_melee&target.enemy
+    - consecration,if=lastcast.holy_light>gcd*0.40&target.in_melee
+
+

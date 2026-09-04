@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "lastUpdated": "2026-08-10",
+  "lastUpdated": "2026-08-30",
   "operators": {
     "boolean": [
       {
@@ -628,7 +628,106 @@
           "description": "Action-bar proc glow is active for this spell (from IsSpellOverlayed). Checks the override spell too, so it covers SimC's demonsurge_available-style gates.",
           "example": "action.metamorphosis.overlayed"
         }
-      ]
+      ],
+      "expressions": [
+        {
+          "syntax": "action.SPELL.cast_time",
+          "returnType": "number",
+          "description": "Raw cast time in seconds (0 for instants). SimC's action.X.cast_time.",
+          "example": "action.aimed_shot.cast_time<1.5"
+        },
+        {
+          "syntax": "action.SPELL.execute_time",
+          "returnType": "number",
+          "description": "Time the cast occupies. Non-channel: max(cast_time, GCD). CHANNEL: the full hasted channel length, floored at one GCD - matching SimC, which returns composite_dot_duration + execute_time for channeled actions. Channel lengths come from SpellChannel.csv.",
+          "example": "buff.trick_shots.remains>action.rapid_fire.execute_time"
+        },
+        {
+          "syntax": "action.SPELL.cooldown",
+          "returnType": "number",
+          "description": "BASE cooldown in seconds, not remaining. Live value first so talent CDR is included; falls back to SpellCooldown.csv, which is what makes it answerable before the spell has ever been pressed (the live API reports 0 while a spell is ready).",
+          "example": "fight_remains%%action.blood_fury.cooldown<=action.blood_fury.duration"
+        },
+        {
+          "syntax": "action.SPELL.duration",
+          "returnType": "number",
+          "description": "Length of the aura this action applies, in seconds. NOT a SimC expression - SimC has no action.X.duration - but upstream APLs use it. Resolved from the cast spell's DBC duration, falling back to the same name in Buff context when the cast carries none (Fireblood 265221 has no duration; its 8s lives on buff 265226).",
+          "example": "action.berserking.duration"
+        },
+        {
+          "syntax": "action.SPELL.ready",
+          "returnType": "bool",
+          "description": "Full readiness, mirroring SimC's action_t::ready(): not user-blocked AND the game reports the spell usable AND the cooldown is up.",
+          "example": "tip_the_scales,if=action.fire_breath.ready"
+        },
+        {
+          "syntax": "action.SPELL.cost",
+          "returnType": "number",
+          "description": "Primary resource cost. Falls back to a same-name spellbook scan when the name resolves to a sibling id the player does not have, so cost=0 can no longer read true merely because the id was wrong.",
+          "example": "fury>=2*action.soul_cleave.cost"
+        },
+        {
+          "syntax": "action.SPELL.charges",
+          "returnType": "number",
+          "description": "Current charges.",
+          "example": "action.fracture.charges>=2"
+        },
+        {
+          "syntax": "action.SPELL.known",
+          "returnType": "bool",
+          "description": "Spell exists in the spellbook (exact id, no morph fallback).",
+          "example": "action.ravage.known"
+        },
+        {
+          "syntax": "action.SPELL.overlayed",
+          "returnType": "bool",
+          "description": "IsSpellOverlayed - the action-bar proc glow. Also spelled demonsurge_available (SimC).",
+          "example": "action.arcane_intellect.overlayed"
+        },
+        {
+          "syntax": "action.SPELL.blocked",
+          "returnType": "bool",
+          "description": "Spell is user-blocked in the UI.",
+          "example": "action.avenging_wrath.blocked"
+        },
+        {
+          "syntax": "action.SPELL.is_cooldown",
+          "returnType": "bool",
+          "description": "Spell is classified as a cooldown (cdSpells membership), morph-symmetric.",
+          "example": "action.recklessness.is_cooldown"
+        },
+        {
+          "syntax": "action.SPELL.tick_time",
+          "returnType": "number",
+          "description": "DBC dot period in seconds, hasted when the spell is flagged.",
+          "example": "action.agony.tick_time"
+        },
+        {
+          "syntax": "action.SPELL.max_range",
+          "returnType": "number",
+          "description": "DBC max range in yards.",
+          "example": "action.chaos_bolt.max_range"
+        },
+        {
+          "syntax": "action.SPELL.min_range",
+          "returnType": "number",
+          "description": "DBC min range in yards.",
+          "example": "action.disengage.min_range"
+        },
+        {
+          "syntax": "action.SPELL.is_melee",
+          "returnType": "bool",
+          "description": "DBC melee-range flag.",
+          "example": "action.mortal_strike.is_melee"
+        },
+        {
+          "syntax": "action.SPELL.rppm",
+          "returnType": "number",
+          "description": "Real procs per minute, hasted when flagged.",
+          "example": "action.X.rppm"
+        }
+      ],
+      "notes": "action.X.duration is the only member of this family with no SimC counterpart."
     },
     {
       "id": "resources",
@@ -783,7 +882,7 @@
           "example": "combo_points.charged>=1"
         }
       ],
-      "notes": "Resources can also be accessed with player. prefix: player.rage, player.energy, etc."
+      "notes": "time_to_max returns 9999 when the resource is not regenerating - SimC divides unguarded and yields +inf, so time_to_max<N is false in both - and returns 0 when the resource is already full."
     },
     {
       "id": "player",
@@ -1040,7 +1139,7 @@
                 "casting.elapsed"
               ],
               "returnType": "number",
-              "description": "Milliseconds into cast.",
+              "description": "Seconds elapsed into cast.",
               "example": "casting.elapsed>1000"
             },
             {
@@ -1429,6 +1528,32 @@
             }
           ]
         }
+      ],
+      "expressions": [
+        {
+          "syntax": "player.dispelable",
+          "returnType": "bool",
+          "description": "Player has a dispelable debuff. Suffixes: .list, .magic, .disease, .poison, .curse.",
+          "example": "player.dispelable.list"
+        },
+        {
+          "syntax": "player.buff.SPELL.PROPERTY",
+          "returnType": "varies",
+          "description": "Alias for buff.SPELL.PROPERTY - player. and the bare form mean the same unit. Not a SimC form; SimC has no player. prefix at all.",
+          "example": "!player.buff.retribution_aura.up.any"
+        },
+        {
+          "syntax": "player.buff.up(SPELL)",
+          "returnType": "bool",
+          "description": "Function-call form of buff.SPELL.up. Siblings: player.buff.down(X), player.buff.remains(X), player.buff.stacks(X).",
+          "example": "player.buff.up(450521)"
+        },
+        {
+          "syntax": "player.buff.SPELL.points.N",
+          "returnType": "number",
+          "description": "Effect point N (1-6) of the aura's point vector - SimC's buff.X.value. .estimated_points.N reads the second vector.",
+          "example": "player.buff.450521.points.1>0.3*health.max"
+        }
       ]
     },
     {
@@ -1570,8 +1695,38 @@
             {
               "syntax": "target.moving",
               "returnType": "bool",
-              "description": "Target is moving.",
+              "description": "Target is moving. Derived from object-manager position deltas, not from Lua: GetUnitSpeed returns a secret number for every unit but the player, so this read false for all units before 2026-08-30. Threshold is 0.5 yd/s (walk is 2.5, run 7.0), which ignores sampling jitter on a parked unit. Requires a world position on the unit; without one it reads false.",
               "example": "target.moving"
+            },
+            {
+              "syntax": "target.standing",
+              "returnType": "bool",
+              "description": "Target is not moving. Exact inverse of target.moving.",
+              "example": "target.standing"
+            },
+            {
+              "syntax": "target.moving.time",
+              "returnType": "number",
+              "description": "Seconds target has been moving continuously. 0 while standing.",
+              "example": "target.moving.time>1"
+            },
+            {
+              "syntax": "target.standing.time",
+              "returnType": "number",
+              "description": "Seconds target has been standing continuously. 0 while moving. Useful for ground-targeted AoE: wait for the unit to be parked long enough that the cast will land.",
+              "example": "target.standing.time>1.5"
+            },
+            {
+              "syntax": "target.speed",
+              "returnType": "number",
+              "description": "Target's speed in yards/sec, from object-manager position deltas. Walk is 2.5, run 7.0.",
+              "example": "target.speed>5"
+            },
+            {
+              "syntax": "target.closing_speed",
+              "returnType": "number",
+              "description": "Yards/sec the gap between you and target is shrinking: positive closing, negative opening. It measures the PAIR, so combine it with the two moving flags to say who is moving — 'target.closing_speed<-1&target.moving&!player.moving' is it fleeing you, 'target.closing_speed<-1&player.moving' is you kiting it. 0 when either side has no world position.",
+              "example": "target.closing_speed>1"
             },
             {
               "syntax": "target.tank",
@@ -1685,13 +1840,13 @@
             {
               "syntax": "target.casting.remains",
               "returnType": "number",
-              "description": "Milliseconds remaining on cast.",
-              "example": "target.casting.remains<2000"
+              "description": "Seconds remaining on cast.",
+              "example": "target.casting.remains<2"
             },
             {
               "syntax": "target.casting.elapsed",
               "returnType": "number",
-              "description": "Milliseconds into cast.",
+              "description": "Seconds elapsed into cast.",
               "example": "target.casting.elapsed"
             },
             {
@@ -1699,6 +1854,18 @@
               "returnType": "bool",
               "description": "Cast can be interrupted.",
               "example": "target.casting.interruptible"
+            },
+            {
+              "syntax": "target.casting.interrupt_after",
+              "returnType": "number",
+              "description": "Seconds of cast elapsed required before the shared kick aliases will interrupt this spell. From the per-cast `interrupt_after` field in _casts.yaml; 0 = no gate.",
+              "example": "target.casting.interrupt_after=0|target.casting.elapsed>=target.casting.interrupt_after"
+            },
+            {
+              "syntax": "target.casting.interrupt_remains",
+              "returnType": "number",
+              "description": "Seconds remaining at or below which the shared kick aliases will interrupt this spell. From the per-cast `interrupt_remains` field in _casts.yaml; 0 = no gate. ANDs with config.interrupt_pct (stricter only); `99` never restricts, the idiom for kick-on-sight. Values below 0.3 never fire — ShouldCastWithTag drops kickable casts with <0.3s left first.",
+              "example": "target.casting.interrupt_remains=0|target.casting.remains<=target.casting.interrupt_remains"
             },
             {
               "syntax": "target.casting.important",
@@ -1929,8 +2096,38 @@
             {
               "syntax": "focus.moving",
               "returnType": "bool",
-              "description": "Focus is moving.",
+              "description": "Focus is moving. Derived from object-manager position deltas, not from Lua: GetUnitSpeed returns a secret number for every unit but the player, so this read false for all units before 2026-08-30. Threshold is 0.5 yd/s (walk is 2.5, run 7.0), which ignores sampling jitter on a parked unit. Requires a world position on the unit; without one it reads false.",
               "example": "focus.moving"
+            },
+            {
+              "syntax": "focus.standing",
+              "returnType": "bool",
+              "description": "Focus is not moving. Exact inverse of focus.moving.",
+              "example": "focus.standing"
+            },
+            {
+              "syntax": "focus.moving.time",
+              "returnType": "number",
+              "description": "Seconds focus has been moving continuously. 0 while standing.",
+              "example": "focus.moving.time>1"
+            },
+            {
+              "syntax": "focus.standing.time",
+              "returnType": "number",
+              "description": "Seconds focus has been standing continuously. 0 while moving. Useful for ground-targeted AoE: wait for the unit to be parked long enough that the cast will land.",
+              "example": "focus.standing.time>1.5"
+            },
+            {
+              "syntax": "focus.speed",
+              "returnType": "number",
+              "description": "Focus's speed in yards/sec, from object-manager position deltas. Walk is 2.5, run 7.0.",
+              "example": "focus.speed>5"
+            },
+            {
+              "syntax": "focus.closing_speed",
+              "returnType": "number",
+              "description": "Yards/sec the gap between you and focus is shrinking: positive closing, negative opening. It measures the PAIR, so combine it with the two moving flags to say who is moving — 'focus.closing_speed<-1&focus.moving&!player.moving' is it fleeing you, 'focus.closing_speed<-1&player.moving' is you kiting it. 0 when either side has no world position.",
+              "example": "focus.closing_speed>1"
             },
             {
               "syntax": "focus.tank",
@@ -2004,6 +2201,18 @@
               "example": "focus.casting.interruptible"
             },
             {
+              "syntax": "focus.casting.interrupt_after",
+              "returnType": "number",
+              "description": "Seconds of cast elapsed required before the shared kick aliases will interrupt this spell. From the per-cast `interrupt_after` field in _casts.yaml; 0 = no gate.",
+              "example": "focus.casting.interrupt_after=0|focus.casting.elapsed>=focus.casting.interrupt_after"
+            },
+            {
+              "syntax": "focus.casting.interrupt_remains",
+              "returnType": "number",
+              "description": "Seconds remaining at or below which the shared kick aliases will interrupt this spell. From the per-cast `interrupt_remains` field in _casts.yaml; 0 = no gate. ANDs with config.interrupt_pct (stricter only); `99` never restricts, the idiom for kick-on-sight. Values below 0.3 never fire — ShouldCastWithTag drops kickable casts with <0.3s left first.",
+              "example": "focus.casting.interrupt_remains=0|focus.casting.remains<=focus.casting.interrupt_remains"
+            },
+            {
               "syntax": "focus.casting.important",
               "returnType": "bool",
               "description": "Cast is important.",
@@ -2022,6 +2231,14 @@
               "example": "focus.casting.death_bolt"
             }
           ]
+        }
+      ],
+      "expressions": [
+        {
+          "syntax": "focus.dispelable",
+          "returnType": "bool",
+          "description": "Focus has a debuff the player can dispel. Same suffixes as mouseover.dispelable.",
+          "example": "focus.dispelable.magic"
         }
       ]
     },
@@ -2156,8 +2373,38 @@
             {
               "syntax": "mouseover.moving",
               "returnType": "bool",
-              "description": "Mouseover is moving.",
+              "description": "Mouseover is moving. Derived from object-manager position deltas, not from Lua: GetUnitSpeed returns a secret number for every unit but the player, so this read false for all units before 2026-08-30. Threshold is 0.5 yd/s (walk is 2.5, run 7.0), which ignores sampling jitter on a parked unit. Requires a world position on the unit; without one it reads false.",
               "example": "mouseover.moving"
+            },
+            {
+              "syntax": "mouseover.standing",
+              "returnType": "bool",
+              "description": "Mouseover is not moving. Exact inverse of mouseover.moving.",
+              "example": "mouseover.standing"
+            },
+            {
+              "syntax": "mouseover.moving.time",
+              "returnType": "number",
+              "description": "Seconds mouseover has been moving continuously. 0 while standing.",
+              "example": "mouseover.moving.time>1"
+            },
+            {
+              "syntax": "mouseover.standing.time",
+              "returnType": "number",
+              "description": "Seconds mouseover has been standing continuously. 0 while moving. Useful for ground-targeted AoE: wait for the unit to be parked long enough that the cast will land.",
+              "example": "mouseover.standing.time>1.5"
+            },
+            {
+              "syntax": "mouseover.speed",
+              "returnType": "number",
+              "description": "Mouseover's speed in yards/sec, from object-manager position deltas. Walk is 2.5, run 7.0.",
+              "example": "mouseover.speed>5"
+            },
+            {
+              "syntax": "mouseover.closing_speed",
+              "returnType": "number",
+              "description": "Yards/sec the gap between you and mouseover is shrinking: positive closing, negative opening. It measures the PAIR, so combine it with the two moving flags to say who is moving — 'mouseover.closing_speed<-1&mouseover.moving&!player.moving' is it fleeing you, 'mouseover.closing_speed<-1&player.moving' is you kiting it. 0 when either side has no world position.",
+              "example": "mouseover.closing_speed>1"
             },
             {
               "syntax": "mouseover.tank",
@@ -2225,6 +2472,18 @@
               "example": "mouseover.casting.interruptible"
             },
             {
+              "syntax": "mouseover.casting.interrupt_after",
+              "returnType": "number",
+              "description": "Seconds of cast elapsed required before the shared kick aliases will interrupt this spell. From the per-cast `interrupt_after` field in _casts.yaml; 0 = no gate.",
+              "example": "mouseover.casting.interrupt_after=0|mouseover.casting.elapsed>=mouseover.casting.interrupt_after"
+            },
+            {
+              "syntax": "mouseover.casting.interrupt_remains",
+              "returnType": "number",
+              "description": "Seconds remaining at or below which the shared kick aliases will interrupt this spell. From the per-cast `interrupt_remains` field in _casts.yaml; 0 = no gate. ANDs with config.interrupt_pct (stricter only); `99` never restricts, the idiom for kick-on-sight. Values below 0.3 never fire — ShouldCastWithTag drops kickable casts with <0.3s left first.",
+              "example": "mouseover.casting.interrupt_remains=0|mouseover.casting.remains<=mouseover.casting.interrupt_remains"
+            },
+            {
               "syntax": "mouseover.casting.important",
               "returnType": "bool",
               "description": "Cast is important.",
@@ -2237,6 +2496,14 @@
               "example": "mouseover.casting.targeting_me"
             }
           ]
+        }
+      ],
+      "expressions": [
+        {
+          "syntax": "mouseover.dispelable",
+          "returnType": "bool",
+          "description": "Mouseover has a debuff the player can dispel (types auto-detected from spec/talents). Suffixes: .list (dispel_list filtering), .magic, .disease, .poison, .curse.",
+          "example": "natures_cure.mouseover,if=mouseover.dispelable.list"
         }
       ]
     },
@@ -2320,6 +2587,42 @@
               "returnType": "number",
               "description": "Pet NPC ID.",
               "example": "pet.npcid"
+            },
+            {
+              "syntax": "pet.moving",
+              "returnType": "bool",
+              "description": "Pet is moving. Derived from object-manager position deltas, not from Lua: GetUnitSpeed returns a secret number for every unit but the player, so this read false for all units before 2026-08-30. Threshold is 0.5 yd/s (walk is 2.5, run 7.0), which ignores sampling jitter on a parked unit. Requires a world position on the unit; without one it reads false.",
+              "example": "pet.moving"
+            },
+            {
+              "syntax": "pet.standing",
+              "returnType": "bool",
+              "description": "Pet is not moving. Exact inverse of pet.moving.",
+              "example": "pet.standing"
+            },
+            {
+              "syntax": "pet.moving.time",
+              "returnType": "number",
+              "description": "Seconds pet has been moving continuously. 0 while standing.",
+              "example": "pet.moving.time>1"
+            },
+            {
+              "syntax": "pet.standing.time",
+              "returnType": "number",
+              "description": "Seconds pet has been standing continuously. 0 while moving. Useful for ground-targeted AoE: wait for the unit to be parked long enough that the cast will land.",
+              "example": "pet.standing.time>1.5"
+            },
+            {
+              "syntax": "pet.speed",
+              "returnType": "number",
+              "description": "Pet's speed in yards/sec, from object-manager position deltas. Walk is 2.5, run 7.0.",
+              "example": "pet.speed>5"
+            },
+            {
+              "syntax": "pet.closing_speed",
+              "returnType": "number",
+              "description": "Yards/sec the gap between you and pet is shrinking: positive closing, negative opening. It measures the PAIR, so combine it with the two moving flags to say who is moving — 'pet.closing_speed<-1&pet.moving&!player.moving' is it fleeing you, 'pet.closing_speed<-1&player.moving' is you kiting it. 0 when either side has no world position.",
+              "example": "pet.closing_speed>1"
             }
           ]
         },
@@ -2545,6 +2848,21 @@
           "example": "boss1.time_to_die>30"
         }
       ]
+    },
+    {
+      "id": "spell_targets",
+      "name": "Spell Targets",
+      "description": "How many enemies a SPECIFIC ability would hit, resolved from that spell's own AoE footprint in the DBC (SpellRadius.csv). This is SimC's spell_targets.X; unlike SimC's default fallback it does not collapse to active_enemies.",
+      "syntax": "spell_targets.SPELL",
+      "expressions": [
+        {
+          "syntax": "spell_targets.SPELL",
+          "returnType": "number",
+          "description": "Enemy count inside SPELL's radius. The anchor is chosen from data: the DBC AroundCaster flag OR the spell having no targeted range means it is measured around the PLAYER (Fan of Knives 8y, Arcane Explosion 10y, Whirlwind 8y); otherwise around the CURRENT TARGET (Death and Decay 8y, Fire Breath 30y). A spell with no radius row falls back to active_enemies.",
+          "example": "fan_of_knives,if=spell_targets.fan_of_knives>1"
+        }
+      ],
+      "notes": "Honours the AoE toggle like active_enemies. Requires SpellRadius.csv; without it every lookup falls back to active_enemies, so it degrades rather than breaking. Keep upstream's spelling when converting - do NOT hand-substitute active_enemies any more."
     },
     {
       "id": "tank_refs",
@@ -3469,7 +3787,46 @@
             }
           ]
         }
-      ]
+      ],
+      "expressions": [
+        {
+          "syntax": "group.count(EXPR)",
+          "returnType": "number",
+          "description": "Living group members for which EXPR is true, evaluated with each member as the cycle context.",
+          "example": "group.count(cycle.health.effective.pct<70)>=3"
+        },
+        {
+          "syntax": "group.under_pct_N",
+          "returnType": "number",
+          "description": "Living members below N% EFFECTIVE health (heal-absorb and incoming heals folded in). Shorthand for group.count(cycle.health.effective.pct<N). N is any integer.",
+          "example": "ultimate_penitence,if=group.under_pct_50>=3"
+        },
+        {
+          "syntax": "group.tanks.count",
+          "returnType": "number",
+          "description": "Number of tanks in the group.",
+          "example": "group.tanks.count>=1"
+        },
+        {
+          "syntax": "group.lowest.PROPERTY",
+          "returnType": "number",
+          "description": "Property of the lowest-HP member. Also group.tanks.lowest.*, group.healers.lowest.*, group.dps.lowest.*.",
+          "example": "group.lowest.health.effective.pct<40"
+        },
+        {
+          "syntax": "group.missing.SPELL.lowest.PROPERTY",
+          "returnType": "number",
+          "description": "Property of the lowest-HP member missing SPELL.",
+          "example": "group.missing.power_word_shield.lowest.health.pct"
+        },
+        {
+          "syntax": "group.buff.SPELL.count",
+          "returnType": "number",
+          "description": "Members with SPELL up.",
+          "example": "group.buff.361022.count"
+        }
+      ],
+      "notes": "All group aggregates iterate LIVING members only; dead players live in a separate list reachable only via cycle=dead."
     },
     {
       "id": "nameplates",
@@ -3628,6 +3985,12 @@
           "returnType": "number",
           "description": "Missing HP of casting target.",
           "example": "target.casting_target.health.deficit"
+        },
+        {
+          "syntax": "casting_target.health.effective.pct",
+          "returnType": "number",
+          "description": "Effective health% of the casting target (healthPct - healAbsorbPct + incomingHealsPct). Prefer this over .health.pct for healing decisions.",
+          "example": "holy_shock,if=casting_target.health.effective.pct<80"
         }
       ],
       "notes": "Prefix with target., focus., or mouseover. to specify which caster. Example: focus.casting_target.buff.earth_shield.up"
@@ -4061,7 +4424,76 @@
             }
           ]
         }
-      ]
+      ],
+      "expressions": [
+        {
+          "syntax": "trinket_1.sync",
+          "returnType": "number",
+          "description": "1 when the slot's trinket is equipped, off cooldown, not disabled in _trinkets.yaml, and its burst/condition gates pass. The normal way to fire a generic trinket.",
+          "example": "trinket_1,if=trinket_1.sync"
+        },
+        {
+          "syntax": "trinket_1.ready",
+          "returnType": "number",
+          "description": "1 when the slot's trinket is off cooldown and not globally disabled. Ignores burst gating.",
+          "example": "trinket_2.ready"
+        },
+        {
+          "syntax": "trinket_1.usable",
+          "returnType": "number",
+          "description": "Same as .ready; alias spelling.",
+          "example": "trinket_1.usable"
+        },
+        {
+          "syntax": "trinket_1.has_onuse",
+          "returnType": "number",
+          "description": "1 when the slot holds an equipped item with an on-use effect, ignoring cooldown. Distinguishes an on-use trinket from a passive proc.",
+          "example": "!trinket_1.has_onuse&!trinket_2.has_onuse"
+        },
+        {
+          "syntax": "trinket_1.cd",
+          "returnType": "number",
+          "description": "Seconds remaining on the slot's item cooldown.",
+          "example": "trinket_1.cd>20"
+        },
+        {
+          "syntax": "trinket_1.id",
+          "returnType": "number",
+          "description": "Equipped itemId in the slot, 0 when empty.",
+          "example": "trinket_1.id=249344"
+        },
+        {
+          "syntax": "trinket_1.lastcast",
+          "returnType": "number",
+          "description": "Seconds since the slot's trinket was last used (9999 if never).",
+          "example": "trinket_1.lastcast>30"
+        },
+        {
+          "syntax": "trinket_1.has_buff",
+          "returnType": "number",
+          "description": "1 while the buff the slot's trinket puts on the player is active. The buff id comes from `trinket_buff:` on that item in _trinkets.yaml; an empty slot, an unlisted trinket, or one with no trinket_buff returns 0.",
+          "example": "trinket_1.has_buff"
+        },
+        {
+          "syntax": "trinket_1.buff.up",
+          "returnType": "number",
+          "description": "Alias of trinket_1.has_buff.",
+          "example": "trinket_2.buff.up"
+        },
+        {
+          "syntax": "trinket_1.buff.remains",
+          "returnType": "number",
+          "description": "Seconds left on that trinket buff, 0 when it is down. Use with a `>0` guard, since 0 also means 'no window'.",
+          "example": "trinket_1.buff.remains>0&trinket_1.buff.remains<=3"
+        },
+        {
+          "syntax": "equipped.ITEM_NAME",
+          "returnType": "number",
+          "description": "1 when the named item is equipped in any slot; resolves through the item database.",
+          "example": "equipped.algethar_puzzle_box"
+        }
+      ],
+      "notes": "Every expression exists for both slots — swap trinket_1 / trinket_2. has_buff / buff.remains are the only ones that need data: the item must have a `trinket_buff: <spellId>` entry in _trinkets.yaml. Only on-use trinkets are wired there — aligning a cooldown with the tail of a window you chose to open is a decision; chasing a passive proc's tail is not."
     },
     {
       "id": "consumables",
@@ -4986,10 +5418,11 @@
         "healers",
         "dps",
         "party",
-        "config.NAME"
+        "config.NAME",
+        "dead"
       ],
-      "description": "Iterate group members. Step runs on lowest-HP match.",
-      "example": "renew,cycle=members,if=cycle.buff.renew.down"
+      "description": "Iterate group members. Step runs on the lowest-HP match. Every group is LIVING members only, except cycle=dead, which iterates dead members nearest-first and is the only way a line can target a corpse (res / battle-res).",
+      "example": "renew,cycle=members,if=cycle.buff.renew.down  //  redemption,cycle=dead,if=!player.combat"
     },
     {
       "name": "cycle_order",

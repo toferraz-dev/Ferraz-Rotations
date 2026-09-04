@@ -1,0 +1,259 @@
+spec: 1468
+name: "Preservation Evoker - Chronowarden (Method)"
+version: "1.6.2"
+author: "Khan"
+date: "2026-03-26"
+patch: "12.0"
+description: "Method.GG two-layer model. Chronowarden only. M+/Raid dropdown, 4pc checkbox."
+
+movement_allowed: buff.hover.up|buff.spatial_paradox.up
+
+config:
+  content_mode:
+    section: "General v1.6.2"
+    label: "Content Mode"
+    type: dropdown
+    options:
+      - label: "Mythic+"
+        value: 1
+      - label: "Raid"
+        value: 2
+    default: 1
+
+  tier_set_4pc:
+    section: "General"
+    label: "4-Piece Tier Set Active"
+    type: checkbox
+    default: false
+
+  emergency_hp:
+    section: "Healing"
+    label: "Emergency Heal HP %"
+    type: slider
+    min: 15
+    max: 55
+    default: 45
+    show_override: true
+
+  verdant_hp:
+    section: "Healing"
+    label: "Verdant Embrace HP %"
+    type: slider
+    min: 40
+    max: 95
+    default: 65
+
+  reversion_hp:
+    section: "Healing"
+    label: "Reversion Target HP %"
+    type: slider
+    min: 60
+    max: 100
+    default: 90
+
+  tank_stasis_hp:
+    section: "Healing"
+    label: "Tank Stasis HP %"
+    type: slider
+    min: 20
+    max: 60
+    default: 50
+
+  obsidian_hp:
+    section: "Defensives"
+    label: "Obsidian Scales HP %"
+    type: slider
+    min: 20
+    max: 70
+    default: 50
+    show_override: true
+
+  dps_threshold:
+    section: "Damage"
+    label: "DPS Group HP Above %"
+    type: slider
+    min: 70
+    max: 100
+    default: 95
+    show_override: true
+
+  dream_breath_rank:
+    section: "Empowers"
+    label: "Dream Breath Rank"
+    type: dropdown
+    options:
+      - label: "Rank 1 (Default M+)"
+        value: 1
+      - label: "Rank 2"
+        value: 2
+      - label: "Rank 3 (Max)"
+        value: 3
+    default: 1
+
+  fire_breath_rank:
+    section: "Empowers"
+    label: "Fire Breath Empower Stage (1-4)"
+    type: slider
+    min: 1
+    max: 4
+    default: 1
+
+variables:
+  mb_proc: buff.merithras_blessing.up
+  twin_echoes_up: buff.twin_echoes.up
+  has_4pc: config.tier_set_4pc
+  essence_burst_up: buff.essence_burst.up
+  lifespark_up: buff.lifespark.up
+  group_healthy: group.lowest.health.effective.pct>=config.dps_threshold
+  tank1_low: tank1.exists&tank1.health.effective.pct<config.verdant_hp
+  tank1_critical: tank1.exists&tank1.health.effective.pct<config.emergency_hp
+  encounter_active: encounter.active
+  aoe_prep: encounter.next_deadly.remains<10&encounter.next_deadly.up&encounter.next_deadly.severity=1
+  ramp_spread: encounter.next_deadly.remains<10&encounter.next_deadly.remains>6&encounter.next_deadly.up&encounter.next_deadly.severity>=2
+  ramp_payoff: encounter.next_deadly.remains<=3&encounter.next_deadly.up&encounter.next_deadly.severity>=2
+  tank_buster: encounter.next_tank.remains<6&encounter.next_tank.up&encounter.next_tank.severity>=1
+  db_r1: config.dream_breath_rank=1
+  db_r2: config.dream_breath_rank=2
+  # db_r3 escalates from rank1 when 2+ members below 50%.
+  db_r3: config.dream_breath_rank=3|(config.dream_breath_rank=1&group.count(cycle.health.effective.pct<50)>=2)
+  stasis_filling: buff.stasis.up&!usable.370564
+  stasis_full: usable.370564
+  stasis_window: var.stasis_filling|var.stasis_full|(cooldown.stasis.ready&!buff.stasis.up&player.combat.time>5&(group.count(cycle.health.effective.pct<75)>=2|tank1.exists&tank1.health.effective.pct<config.tank_stasis_hp))
+  group_low: group.count(cycle.health.effective.pct<75)>=2
+
+lists:
+
+  main:
+    - call_action_list,name=spell_queue
+    - call_action_list,name=sanity_checks
+    - call_action_list,name=auto_target
+    - call_action_list,name=auto_heal,if=player.combat
+    - call_action_list,name=out_of_combat,if=!player.combat
+    - return,if=!player.combat
+    - call_action_list,name=defensives
+    - call_action_list,name=emergency
+    - call_action_list,name=cooldowns,if=state.cds
+    - call_action_list,name=stasis,if=var.stasis_window
+    - call_action_list,name=encounter_ramp,if=var.encounter_active
+    - call_action_list,name=healing
+    - call_action_list,name=damage,if=var.group_healthy
+
+  encounter_ramp:
+    - time_dilation,cycle=members,if=cycle.tank&var.tank_buster&cooldown.time_dilation.ready
+    - dream_breath,ignore_usable=true,ignore_cooldown=true,casting_check=dream_breath,if=player.empower_stage>=3&var.db_r3
+    - dream_breath,ignore_usable=true,ignore_cooldown=true,casting_check=dream_breath,if=player.empower_stage>=2&var.db_r2
+    - dream_breath,ignore_usable=true,ignore_cooldown=true,casting_check=dream_breath,if=player.empower_stage>=1&var.db_r1
+    - dream_breath,empower_to=3,if=var.ramp_payoff&!player.channeling&!player.moving&var.db_r3
+    - dream_breath,empower_to=2,if=var.ramp_payoff&!player.channeling&!player.moving&var.db_r2
+    - dream_breath,empower_to=1,if=var.ramp_payoff&!player.channeling&!player.moving&var.db_r1
+    - reversion,target=lowest,if=var.ramp_payoff&var.mb_proc&group.lowest.health.effective.pct<98&group.lowest.range<=30
+    - verdant_embrace,cycle=members,if=cycle.tank&var.ramp_payoff
+    - temporal_anomaly,if=var.ramp_spread&cooldown.temporal_anomaly.ready
+    - echo,target=missing.echo.lowest,if=var.ramp_spread&group.lowest.health.effective.pct<config.verdant_hp&essence>=2&group.missing.echo.lowest.range<=30
+    - reversion,target=lowest,if=var.ramp_spread&!var.mb_proc&group.lowest.health.effective.pct<config.verdant_hp&group.lowest.range<=30
+    - echo,cycle=members,if=cycle.tank&var.ramp_spread&cycle.buff.echo.down&essence>=2&group.lowest.health.effective.pct>=config.verdant_hp
+    - echo,cycle=members,if=var.ramp_spread&cycle.buff.echo.down&essence>=2&cycle.range<=30&group.lowest.health.effective.pct>=config.verdant_hp
+    - reversion,cycle=members,if=cycle.tank&var.ramp_spread&!var.mb_proc&cycle.buff.reversion.down&group.lowest.health.effective.pct>=config.verdant_hp
+    - reversion,cycle=members,if=var.ramp_spread&!var.mb_proc&cycle.buff.reversion.down&cycle.health.effective.pct<95&cycle.range<=30&group.lowest.health.effective.pct>=config.verdant_hp
+    - temporal_anomaly,if=var.aoe_prep&cooldown.temporal_anomaly.ready
+    - reversion,cycle=members,if=cycle.tank&var.aoe_prep&!var.mb_proc&cycle.buff.reversion.down
+    - reversion,cycle=members,if=var.aoe_prep&!var.mb_proc&cycle.buff.reversion.down&cycle.health.effective.pct<95&cycle.range<=30
+
+  stasis:
+    - 370564,if=var.stasis_full&var.group_low
+    - 370564,if=var.stasis_full&group.lowest.health.effective.pct<60
+    - 370564,if=var.stasis_full&tank1.exists&tank1.health.effective.pct<config.tank_stasis_hp
+    - 370564,if=var.stasis_full
+    - stasis,if=cooldown.stasis.ready&player.combat.time>5&tank1.exists&tank1.health.effective.pct<config.tank_stasis_hp&cooldown.dream_breath.ready
+    - stasis,if=cooldown.stasis.ready&player.combat.time>5&var.group_low&cooldown.dream_breath.ready
+    - dream_breath,ignore_usable=true,ignore_cooldown=true,casting_check=dream_breath,if=player.empower_stage>=3&var.db_r3
+    - dream_breath,ignore_usable=true,ignore_cooldown=true,casting_check=dream_breath,if=player.empower_stage>=2&var.db_r2
+    - dream_breath,ignore_usable=true,ignore_cooldown=true,casting_check=dream_breath,if=player.empower_stage>=1&var.db_r1
+    - dream_breath,empower_to=3,if=var.stasis_filling&buff.stasis.up&cooldown.dream_breath.ready&!player.channeling&!player.moving&var.db_r3
+    - dream_breath,empower_to=2,if=var.stasis_filling&buff.stasis.up&cooldown.dream_breath.ready&!player.channeling&!player.moving&var.db_r2
+    - dream_breath,empower_to=1,if=var.stasis_filling&buff.stasis.up&cooldown.dream_breath.ready&!player.channeling&!player.moving&var.db_r1
+    - temporal_anomaly,if=var.stasis_filling&cooldown.temporal_anomaly.ready
+    - verdant_embrace,cycle=tanks,if=var.stasis_filling&buff.stasis.up&cycle.health.effective.pct<config.tank_stasis_hp&group.lowest.health.effective.pct>=75&cycle.range<=30
+    - verdant_embrace,target=lowest,if=var.stasis_filling&buff.stasis.up&group.lowest.range<=30
+    - return,if=var.stasis_filling&group.lowest.health.effective.pct>config.emergency_hp
+
+  out_of_combat:
+    - blessing_of_the_bronze.player,range_check=none,if=!player.combat&buff.blessing_of_the_bronze.down
+    - reversion.player,range_check=none,if=!player.combat&buff.reversion.down
+    - reversion,cycle=members,if=cycle.health.effective.pct<90&cycle.buff.reversion.down&cycle.range<=30
+    - emerald_blossom,if=group.count(cycle.health.effective.pct<85)>=2
+    - living_flame,target=lowest,if=group.lowest.health.effective.pct<90&group.lowest.range<=30
+
+  defensives:
+    - obsidian_scales.player,range_check=none,if=health.pct<config.obsidian_hp
+
+  cooldowns:
+    - tip_the_scales,if=cooldown_bypass.tip_the_scales.ready&(var.ramp_payoff|(cooldown.dream_breath.ready|cooldown.fire_breath.ready))
+    - rewind,if=group.count(cycle.health.effective.pct<50)>=2&cooldown.rewind.ready
+    - time_dilation,cycle=members,if=cycle.tank&cycle.health.effective.pct<60&cooldown.time_dilation.ready
+    - trinket_1,if=trinket_1.usable&trinket_1.sync
+    - trinket_2,if=trinket_2.usable&trinket_2.sync
+
+  healing:
+    - call_action_list,name=emergency
+    - call_action_list,name=maintenance
+    - call_action_list,name=layer2
+
+  emergency:
+    - verdant_embrace.player,range_check=none,interrupt=true,if=health.pct<config.emergency_hp
+    - verdant_embrace,cycle=members,interrupt=true,if=cycle.tank&var.tank1_critical
+    - verdant_embrace,target=lowest,interrupt=true,if=group.lowest.health.effective.pct<config.emergency_hp&group.lowest.range<=30
+
+  maintenance:
+    - dream_breath,ignore_usable=true,ignore_cooldown=true,casting_check=dream_breath,if=player.empower_stage>=3&var.db_r3
+    - dream_breath,ignore_usable=true,ignore_cooldown=true,casting_check=dream_breath,if=player.empower_stage>=2&var.db_r2
+    - dream_breath,ignore_usable=true,ignore_cooldown=true,casting_check=dream_breath,if=player.empower_stage>=1&var.db_r1
+    - dream_breath,empower_to=3,if=cooldown.dream_breath.ready&!player.channeling&!player.moving&var.db_r3
+    - dream_breath,empower_to=2,if=cooldown.dream_breath.ready&!player.channeling&!player.moving&var.db_r2
+    - dream_breath,empower_to=1,if=cooldown.dream_breath.ready&!player.channeling&!player.moving&var.db_r1
+    - temporal_anomaly,if=cooldown.temporal_anomaly.ready
+    - reversion.player,range_check=none,if=!var.mb_proc&buff.reversion.down
+    - reversion,cycle=members,if=cycle.tank&!var.mb_proc&cycle.buff.reversion.down
+    - reversion.player,range_check=none,if=!var.mb_proc&buff.reversion.remains<6
+    - reversion,cycle=members,if=cycle.tank&!var.mb_proc&cycle.buff.reversion.remains<6
+    - reversion,cycle=members,if=!var.mb_proc&cycle.buff.reversion.down&cycle.health.effective.pct<config.reversion_hp&cycle.range<=30
+    - reversion,cycle=members,if=!var.mb_proc&cycle.buff.reversion.remains<6&cycle.health.effective.pct<config.reversion_hp&cycle.range<=30
+
+  layer2:
+    - echo,cycle=members,if=cycle.buff.echo.down&cycle.health.effective.pct<85&essence>=2&cycle.range<=30
+    - verdant_embrace,cycle=members,if=cycle.tank&cycle.buff.echo.up&cooldown.verdant_embrace.charges>=1
+    - verdant_embrace,cycle=members,if=cycle.buff.echo.up&cycle.health.effective.pct<95&cooldown.verdant_embrace.charges>=1&cycle.range<=30
+    - verdant_embrace,cycle=members,if=cycle.tank&cycle.health.effective.pct<config.verdant_hp&cooldown.verdant_embrace.charges>=1
+    - verdant_embrace,target=lowest,if=group.lowest.health.effective.pct<config.emergency_hp&cooldown.verdant_embrace.charges>=1&group.lowest.range<=30
+    - verdant_embrace,cycle=members,if=var.has_4pc&cycle.health.effective.pct<85&cooldown.verdant_embrace.charges>=1&cycle.range<=30
+    - verdant_embrace,target=lowest,if=cooldown.verdant_embrace.charges>=2&group.lowest.range<=30
+    - reversion,target=lowest,if=var.mb_proc&group.lowest.health.effective.pct<98&group.lowest.range<=30
+    - chrono_flames,target=lowest,if=var.lifespark_up&group.lowest.range<=30
+    - dream_breath,ignore_usable=true,ignore_cooldown=true,casting_check=dream_breath,if=player.empower_stage>=3&var.db_r3
+    - dream_breath,ignore_usable=true,ignore_cooldown=true,casting_check=dream_breath,if=player.empower_stage>=2&var.db_r2
+    - dream_breath,ignore_usable=true,ignore_cooldown=true,casting_check=dream_breath,if=player.empower_stage>=1&var.db_r1
+    - dream_breath,empower_to=3,if=cooldown.dream_breath.ready&!player.channeling&!player.moving&var.db_r3
+    - dream_breath,empower_to=2,if=cooldown.dream_breath.ready&!player.channeling&!player.moving&var.db_r2
+    - dream_breath,empower_to=1,if=cooldown.dream_breath.ready&!player.channeling&!player.moving&var.db_r1
+    - emerald_blossom,if=!var.has_4pc&group.count(cycle.health.effective.pct<75)>=2&(var.essence_burst_up|var.twin_echoes_up)
+    - emerald_blossom,if=!var.has_4pc&group.count(cycle.health.effective.pct<65)>=3
+    - emerald_blossom,if=var.has_4pc&group.count(cycle.health.effective.pct<65)>=3&var.essence_burst_up
+    - chrono_flames,target=lowest,if=group.lowest.health.effective.pct<80&group.lowest.range<=30&!player.channeling
+    - disintegrate,if=talent.energy_loop.enabled&!player.moving&!player.channeling&group.lowest.health.effective.pct>=80
+    - disintegrate,ignore_queue=true,if=talent.energy_loop.enabled&player.channeling&group.lowest.health.effective.pct>=80
+
+  damage:
+    - return,if=!var.group_healthy
+    - fire_breath,ignore_usable=true,ignore_cooldown=true,casting_check=fire_breath,if=player.empower_stage>=4&config.fire_breath_rank=4
+    - fire_breath,ignore_usable=true,ignore_cooldown=true,casting_check=fire_breath,if=player.empower_stage>=3&config.fire_breath_rank=3
+    - fire_breath,ignore_usable=true,ignore_cooldown=true,casting_check=fire_breath,if=player.empower_stage>=2&config.fire_breath_rank=2
+    - fire_breath,ignore_usable=true,ignore_cooldown=true,casting_check=fire_breath,if=player.empower_stage>=1&config.fire_breath_rank=1
+    - fire_breath,empower_to=4,if=!player.channeling&!player.moving&config.fire_breath_rank=4
+    - fire_breath,empower_to=3,if=!player.channeling&!player.moving&config.fire_breath_rank=3
+    - fire_breath,empower_to=2,if=!player.channeling&!player.moving&config.fire_breath_rank=2
+    - fire_breath,empower_to=1,if=!player.channeling&!player.moving&config.fire_breath_rank=1
+    - disintegrate,if=talent.energy_loop.enabled&!player.moving&!player.channeling
+    - disintegrate,ignore_queue=true,if=talent.energy_loop.enabled&player.channeling
+    - living_flame,if=!var.lifespark_up&!player.channeling
+    - chrono_flames,ignore_queue=true,if=!player.channeling
+    - azure_strike

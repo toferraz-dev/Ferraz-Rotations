@@ -1,0 +1,191 @@
+# To-Do
+
+version: 1.0
+spec: 260
+name: Outlaw by Kontro S2
+author: Kontroved
+description: Outlaw Rogue by Kontroved
+
+entry: main
+predictions:
+config:
+  lethal_poison:
+    section: "Poisons"
+    label: "Lethal Poison"
+    type: dropdown
+    options:
+      - label: "Instant Poison"
+        value: 0
+      - label: "Wound Poison"
+        value: 1
+      - label: "None"
+        value: 2
+    default: 0
+
+  nonlethal_poison:
+    section: "Poisons"
+    label: "Non-Lethal Poison"
+    type: dropdown
+    options:
+      - label: "Numbing Poison"
+        value: 0
+      - label: "Crippling Poison"
+        value: 1
+      - label: "Atrophic Poison"
+        value: 2
+      - label: "None"
+        value: 3
+    default: 0
+
+  blade_rush_melee_only:
+    section: "Rotation"
+    label: "Blade Rush: Melee Only"
+    description: "Only use Blade Rush when the current target is in melee range."
+    type: checkbox
+    default: true
+
+  mid1_2pc:
+    section: "Gear"
+    label: "Season 1 / MID1 2pc"
+    description: "Enable if you are still using the Season 1 / MID1 2-piece set bonus."
+    type: checkbox
+    default: true
+
+  kir_mode:
+    section: "Roll the Bones"
+    label: "Keep It Rolling Mode"
+    description: "Standard uses KIR at stage 3+. Aggressive uses KIR at stage 2+."
+    type: dropdown
+    options:
+      - label: "Standard - Stage 3+"
+        value: 3
+      - label: "Aggressive - Stage 2+"
+        value: 2
+    default: 3
+
+  # nearby_kick_remains_tenths:
+  #   section: "Interrupts"
+  #   label: "Nearby Kick Remaining Time 0.X"
+  #   description: "Value in tenths of a second. 5 means 0.5 seconds."
+  #   type: slider
+  #   min: 1
+  #   max: 30
+  #   default: 5
+
+variables:
+  opener: player.combat&combat.time<5
+  ambush_condition: (talent.hidden_opportunity|combo_points.deficit>=2+talent.improved_ambush)&energy>=50
+  rtb_stage: buff.jackpot.up*4+buff.triple_threat.up*3+buff.double_trouble.up*2+buff.one_of_a_kind.up
+  finish_condition: (combo_points>=combo_points.max-1-(!cooldown.between_the_eyes.ready&hero_tree.fatebound))|(buff.fang_strike.up&cooldown.between_the_eyes.down&cooldown.killing_spree.down)
+  supercharge_final: combo_points.charged=1
+  supercharge_any: combo_points.charged=2
+  blind_aoe_focus_interrupt: talent.airborne_irritant&focus.enemy&!focus.boss&focus.range<=8&((focus.incoming_cast.stunnable.up&focus.incoming_cast.stunnable.remains>gcd.remains&incoming_cast.8y.stunnable.count>=2)|(focus.incoming_cast.kickable.important.up&focus.incoming_cast.kickable.important.remains>gcd.remains&incoming_cast.8y.kickable.important.count>=3))
+  blind_aoe_mouseover_interrupt: talent.airborne_irritant&mouseover.enemy&!mouseover.boss&mouseover.range<=8&((mouseover.incoming_cast.stunnable.up&mouseover.incoming_cast.stunnable.remains>gcd.remains&incoming_cast.8y.stunnable.count>=2)|(mouseover.incoming_cast.kickable.important.up&mouseover.incoming_cast.kickable.important.remains>gcd.remains&incoming_cast.8y.kickable.important.count>=3))
+  blind_aoe_target_interrupt: talent.airborne_irritant&target.enemy&!target.boss&target.range<=8&((target.incoming_cast.stunnable.up&target.incoming_cast.stunnable.remains>gcd.remains&incoming_cast.8y.stunnable.count>=2)|(target.incoming_cast.kickable.important.up&target.incoming_cast.kickable.important.remains>gcd.remains&incoming_cast.8y.kickable.important.count>=3))
+  rogue_cc_focus_interrupt: focus.enemy&!focus.boss&((focus.incoming_cast.stunnable.up&focus.incoming_cast.stunnable.remains>gcd.remains)|(focus.incoming_cast.kickable.important.up&focus.incoming_cast.kickable.important.remains>gcd.remains))
+  rogue_cc_mouseover_interrupt: mouseover.enemy&!mouseover.boss&((mouseover.incoming_cast.stunnable.up&mouseover.incoming_cast.stunnable.remains>gcd.remains)|(mouseover.incoming_cast.kickable.important.up&mouseover.incoming_cast.kickable.important.remains>gcd.remains))
+  rogue_cc_target_interrupt: target.enemy&!target.boss&((target.incoming_cast.stunnable.up&target.incoming_cast.stunnable.remains>gcd.remains)|(target.incoming_cast.kickable.important.up&target.incoming_cast.kickable.important.remains>gcd.remains&cooldown.kick.remains>target.incoming_cast.kickable.important.remains))
+  #nearby_kick_remains: config.nearby_kick_remains_tenths/10
+  send_kick_key: (focus.enemy&focus.range<=5&focus.incoming_cast.kickable.up&focus.casting.elapsed*100>=config.interrupt_pct*(focus.casting.elapsed+focus.casting.remains))|(!focus.enemy&incoming_cast.5y.kickable.up&incoming_cast.5y.kickable.remains>0&incoming_cast.5y.kickable.remains<=var.nearby_kick_remains&gcd.remains<0.4)
+
+lists:
+  main:
+    - call_action_list,name=spell_queue
+    - call_action_list,name=sanity_checks
+    - call_action_list,name=auto_target
+    - call_action_list,name=auto_heal
+    - call_action_list,name=auto_dispel
+    - vanish,if=incoming_cast.player.meld.up
+    - return,if=player.channeling|player.casting
+    - call_action_list,name=precombat,if=!player.combat
+    - call_action_list,name=prepull,if=target.enemy&target.melee_gap<4&!player.combat&target.alive
+    - call_action_list,name=interrupts
+    - target_enemy,after=500,delay=500,off_gcd=true,if=target.enemy&target.alive&(!target.in_melee|(!player.facing.target&!player.indelve))&enemies.around.angle.90.4>=1
+    - call_action_list,name=opener,if=var.opener&!target.dead
+    - return,if=!target.combat|(!player.facing.target&!player.indelve)|target.dead
+    - call_action_list,name=cds
+    - run_action_list,name=finish,if=var.finish_condition
+    - call_action_list,name=build
+    - arcane_torrent,if=energy.deficit>=15+energy.regen
+    - arcane_pulse
+    - lights_judgment
+    - bag_of_tricks
+
+  precombat:
+    - tricks_of_the_trade,delay=4000,range_check=none,if=(group.count(cycle.tank&cycle.range<40)=1&talent.so_tricky&buff.tricks_of_the_trade.down)&!player.inraid
+
+    - numbing_poison,range_check=none,if=config.nonlethal_poison=0&pred.buff.numbing_poison.remains<2400&player.keystonelevel=0&!player.inmythicplus&state.rotation&!player.casting.numbing_poison
+    - crippling_poison,range_check=none,if=config.nonlethal_poison=1&pred.buff.crippling_poison.remains<2400&player.keystonelevel=0&!player.inmythicplus&state.rotation&!player.casting.crippling_poison
+    - atrophic_poison,range_check=none,if=config.nonlethal_poison=2&pred.buff.atrophic_poison.remains<2400&player.keystonelevel=0&!player.inmythicplus&state.rotation&!player.casting.atrophic_poison
+    - instant_poison,range_check=none,if=config.lethal_poison=0&pred.buff.instant_poison.remains<2400&player.keystonelevel=0&!player.inmythicplus&state.rotation&!player.casting.instant_poison
+    - wound_poison,range_check=none,if=config.lethal_poison=1&pred.buff.wound_poison.remains<2400&player.keystonelevel=0&!player.inmythicplus&state.rotation&!player.casting.wound_poison
+    - numbing_poison,range_check=none,if=config.nonlethal_poison=0&pred.buff.numbing_poison.remains<120&!player.casting.numbing_poison
+    - crippling_poison,range_check=none,if=config.nonlethal_poison=1&pred.buff.crippling_poison.remains<120&!player.casting.crippling_poison
+    - atrophic_poison,range_check=none,if=config.nonlethal_poison=2&pred.buff.atrophic_poison.remains<120&!player.casting.atrophic_poison
+    - instant_poison,range_check=none,if=config.lethal_poison=0&pred.buff.instant_poison.remains<120&!player.casting.instant_poison
+    - wound_poison,range_check=none,if=config.lethal_poison=1&pred.buff.wound_poison.remains<120&!player.casting.wound_poison
+
+    - stealth,range_check=none,delay=100,if=buff.stealth.down
+
+  prepull:
+    - roll_the_bones,range_check=none,if=buff.loaded_dice.up&var.rtb_stage<=2
+    - adrenaline_rush,range_check=none,if=talent.improved_adrenaline_rush&buff.adrenaline_rush.down&combo_points.charged=0&cooldown.killing_spree.up
+    - slice_and_dice,range_check=none,if=talent.improved_adrenaline_rush&buff.slice_and_dice.down&combo_points>=1
+  opener:
+    - roll_the_bones,range_check=none,if=buff.loaded_dice.up&var.rtb_stage<=2&target.melee_gap<4
+    - adrenaline_rush,if=talent.improved_adrenaline_rush&buff.adrenaline_rush.down&combo_points.charged=0&cooldown.killing_spree.up&target.melee_gap<4
+    - slice_and_dice,if=talent.improved_adrenaline_rush&buff.slice_and_dice.down&combo_points>=1
+    - blade_flurry,if=active_enemies>=2&buff.blade_flurry.remains<gcd
+  interrupts:
+    #- blind.focus,interrupt=true,if=var.blind_aoe_focus_interrupt
+    #- blind.mouseover,interrupt=true,if=var.blind_aoe_mouseover_interrupt
+    - blind,interrupt=true,if=var.blind_aoe_target_interrupt&!player.inraid
+
+    # Normal single-target interrupts.
+    - kick,interrupt=true,if=interrupt.target.check
+    - kick.mouseover,interrupt=true,if=interrupt.mouseover.check
+    - kick.focus,range_check=none,interrupt=true,if=interrupt.focus.check
+    - kick.focus,range_check=none,interrupt=true,if=var.send_kick_key
+    #- cheap_shot.focus,interrupt=true,if=buff.stealth.up&var.rogue_cc_focus_interrupt
+    #- cheap_shot.mouseover,interrupt=true,if=buff.stealth.up&var.rogue_cc_mouseover_interrupt
+    #- cheap_shot,interrupt=true,if=buff.stealth.up&var.rogue_cc_target_interrupt
+
+    #- kidney_shot.focus,interrupt=true,if=var.rogue_cc_focus_interrupt
+    #- kidney_shot.mouseover,interrupt=true,if=var.rogue_cc_mouseover_interrupt
+    - kidney_shot,if=(interrupt.cc.check&(target.casting.remains<gcd|target.channeling)&!player.inraid)&!interrupt.kick.soon
+
+    #- blind.focus,interrupt=true,if=var.rogue_cc_focus_interrupt
+    #- blind.mouseover,interrupt=true,if=var.rogue_cc_mouseover_interrupt
+    - blind,if=((interrupt.cc.check|(target.enemy&!target.boss&incoming_cast.8y.stunnable.count>=2))&!player.inraid)&!interrupt.kick.soon
+
+  cds:
+    - adrenaline_rush,if=buff.adrenaline_rush.down&combo_points.charged=0&cooldown.killing_spree.up
+    - blade_flurry,if=active_enemies>=2&buff.blade_flurry.remains<gcd
+    - roll_the_bones,range_check=none,if=target.melee_gap<4&(((buff.loaded_dice.up|cooldown.adrenaline_rush.remains>=10)&var.rtb_stage<=1)|(var.rtb_stage=2&buff.loaded_dice.up&cooldown.between_the_eyes.ready)|(buff.loaded_dice.up&var.rtb_remains<=5&buff.loaded_dice.remains<=1&cooldown.adrenaline_rush.remains>=30))
+    - preparation,if=(cooldown.adrenaline_rush.remains>30&cooldown.between_the_eyes.down&cooldown.killing_spree.down)&combo_points.charged=0
+    - keep_it_rolling,if=var.rtb_stage>=config.kir_mode
+    - blade_rush,if=(config.mid1_2pc|active_enemies>=3|(active_enemies<=2&buff.adrenaline_rush.down))&(!config.blade_rush_melee_only|target.in_melee)
+    - vanish,if=!var.finish_condition&talent.hidden_opportunity&buff.audacity.down&buff.opportunity.down
+    - shadowmeld,if=!var.finish_condition&talent.hidden_opportunity&buff.audacity.down&buff.opportunity.down
+    - blood_fury
+    - berserking
+    - fireblood
+    - ancestral_call
+    - trinket_1,if=trinket_1.sync&buff.adrenaline_rush.up
+    - trinket_2,if=trinket_2.sync&buff.adrenaline_rush.up
+  finish:
+    - between_the_eyes,if=!var.supercharge_final|!talent.supercharger|!cooldown.killing_spree.ready|(!buff.adrenaline_rush.up&combo_points>=1)
+    - pool_resource,for_next=1,if=talent.killing_spree&cooldown.killing_spree.up&(var.supercharge_any|buff.adrenaline_rush.up|!talent.supercharger)
+    - killing_spree,if=((combo_points.charged>=1&buff.adrenaline_rush.up)|buff.adrenaline_rush.up|!talent.supercharger)&lastcast.adrenaline_rush<=lastcast.killing_spree&(buff.blade_flurry.remains>=2|active_enemies=1)
+    - coup_de_grace
+    - dispatch
+  build:
+    - ambush,if=talent.hidden_opportunity&buff.audacity.up
+    - blade_flurry,if=talent.deft_maneuvers&active_enemies>=3
+    - pistol_shot,if=talent.audacity&talent.hidden_opportunity&buff.opportunity.up&buff.audacity.down
+    - pistol_shot,if=talent.fan_the_hammer&buff.opportunity.up&(buff.opportunity.stack>=6|buff.opportunity.remains<2)
+    - pistol_shot,if=talent.fan_the_hammer&buff.opportunity.up&(combo_points.deficit>=(1+talent.quick_draw+(talent.quick_draw*talent.fan_the_hammer.rank))&(combo_points>1|var.rtb_stage<2|!talent.deal_fate))
+    - pistol_shot,if=!talent.fan_the_hammer&buff.opportunity.up&(energy.deficit>energy.regen*1.5|combo_points.deficit<=1|talent.quick_draw|talent.audacity&buff.audacity.down)
+    - pool_resource,for_next=1,if=talent.hidden_opportunity&action.ambush.overlayed
+    - ambush,if=talent.hidden_opportunity
+    - sinister_strike

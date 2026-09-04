@@ -1,0 +1,188 @@
+# =============================================================================
+# Demon Hunter - Havoc - 577
+# =============================================================================
+#
+# IMPORTANT: Spell ID collisions — these auras share their display name with
+# other spells in SpellName.csv, so name-based lookup is ambiguous and the
+# numeric ID is mandatory:
+#   Inertia Trigger:            1215159  (2 rows "Inertia")
+#     (hidden "armed" aura applied by The Hunt / Vengeful Retreat, consumed by
+#      the next Fel Rush / Felblade; SimC models it as buff.inertia_trigger with
+#      spell_data_t::nil(), but Blizzard ships a real in-game aura)
+#   Initiative:                  391215  (4 rows) — sc_demon_hunter.cpp:11225
+#   Eternal Hunt (buff):        1271092  (4 rows) — sc_demon_hunter.cpp:11242
+#   Reaver's Glaive (buff):      444686  (4 rows) — sc_demon_hunter.cpp:11303
+#     (Havoc branch; 444764 is the Vengeance one)
+#   Reaver's Mark (debuff):      442624  (2 rows) — sc_demon_hunter.cpp:11289
+#   Rending Strike:              442442  (4 rows) — sc_demon_hunter.cpp:11291
+#   Glaive Flurry:               442435  — unique by name, left as a name
+#
+# UNRESOLVED: buff.demonsurge — 25 rows share the name "Demonsurge". SimC builds
+# it as hero_spec.demonsurge_trigger(453323)->effectN(1).trigger()
+# (sc_demon_hunter.cpp:11355-11357), and we do not mirror SpellEffect locally, so
+# the id cannot be derived here. Left as a bare name; pin it if a live snapshot
+# shows the demonsurge Immolation Aura line never firing.
+#
+# 2026-08-14 upstream refresh: the entire Havoc APL was rewritten upstream as the
+# Season 2 rotation. The old variables (fury_gen_per_sec, use_blade_dance,
+# eb_aligned, use_filler, ...) and the `meta` / `cooldown` sub-lists are gone
+# upstream and are removed here — everything now lives in one flat priority.
+
+version: 3
+spec: 577
+entry: main
+
+config:
+  blur_hp_pct:
+    section: "Defensive HP Percentage"
+    label: "Blur HP%"
+    type: slider
+    min: 0
+    max: 100
+    default: 40
+
+  darkness_hp_pct:
+    section: "Defensive HP Percentage"
+    label: "Darkness HP%"
+    type: slider
+    min: 0
+    max: 100
+    default: 35
+
+  blur_dmg_pct:
+    section: "Defensives Prediction Damage"
+    label: "Blur (Incoming Dmg%)"
+    type: slider
+    min: 0
+    max: 100
+    default: 40
+
+  felblade_range_check:
+    label: "Felblade Range Check"
+    type: checkbox
+    default: true
+
+# Felblade / Fel Devastation range gate — when enabled, only cast when target is in range
+spell_overrides:
+  felblade: "!config.felblade_range_check|target.range<=20"
+  fel_devastation: "!config.felblade_range_check|target.range<=20"
+
+lists:
+  defensives:
+    # --- Prediction Damage: pre-fire on a predicted incoming hit (% of effective HP) ---
+    - blur,range_check=none,if=incoming.mitigated.pct>=config.blur_dmg_pct
+
+    # --- HP Percentage: react when already low ---
+    # blur — use when below HP threshold
+    - blur,if=health.pct<=config.blur_hp_pct
+
+    # darkness — AoE defensive at low HP
+    - darkness,range_check=none,if=health.pct<=config.darkness_hp_pct
+
+  main:
+    - call_action_list,name=spell_queue
+    - call_action_list,name=sanity_checks
+    - call_action_list,name=auto_target
+
+    # Combat Check
+    - return,if=auto_combat.player
+
+    # Defensives
+    - call_action_list,name=defensives
+
+    # Interrupts
+    # Disrupt
+    - disrupt,if=interrupt.target.check
+    - disrupt.mouseover,if=interrupt.mouseover.check
+    - disrupt.focus,if=interrupt.focus.check
+    # CC Interrupt
+    - imprison,if=interrupt.cc.check
+    # AoE Interrupt
+    - chaos_nova,if=interrupt.stun.aoe.check
+    # Racial Interrupts
+    - quaking_palm,if=interrupt.cc.check
+    - haymaker,if=interrupt.cc.check
+    - war_stomp,if=interrupt.stun.aoe.check
+    - bull_rush,if=interrupt.stun.aoe.check
+
+    - call_action_list,name=auto_heal
+
+    # Target Check
+    - return,if=auto_combat.target
+
+    # actions=auto_attack — deleted
+
+    # actions+=/immolation_aura,if=talent.violent_transformation&talent.a_fire_inside&cooldown.metamorphosis.remains<gcd.max*3
+    - immolation_aura,if=talent.violent_transformation&talent.a_fire_inside&cooldown.metamorphosis.remains<gcd.max*3
+
+    # actions+=/metamorphosis,if=(!talent.chaotic_transformation|!cooldown.blade_dance.up&cooldown.eye_beam.remains>8)&!action.death_sweep.demonsurge_available&!action.annihilation.demonsurge_available
+    - metamorphosis.player,if=(!talent.chaotic_transformation|!cooldown.blade_dance.up&cooldown.eye_beam.remains>8)&!action.death_sweep.demonsurge_available&!action.annihilation.demonsurge_available
+
+    # actions+=/the_hunt,if=(!talent.eternal_hunt|cooldown.eye_beam.remains<10&cooldown.metamorphosis.remains>15|!cooldown.eye_beam.up&cooldown.metamorphosis.up|!hero_tree.felscarred)&!buff.reavers_glaive.up
+    - the_hunt,if=(!talent.eternal_hunt|cooldown.eye_beam.remains<10&cooldown.metamorphosis.remains>15|!cooldown.eye_beam.up&cooldown.metamorphosis.up|!hero_tree.felscarred)&!buff.444686.up
+
+    # actions+=/vengeful_retreat,use_off_gcd=1,if=gcd.remains<0.3&cooldown.metamorphosis.remains&cooldown.eye_beam.remains<gcd.max*0.3&!buff.initiative.up|cooldown.metamorphosis.up&cooldown.eye_beam.remains&cooldown.blade_dance.remains&!buff.eternal_hunt.up
+    - vengeful_retreat,if=gcd.remains<0.3&cooldown.metamorphosis.remains>0&cooldown.eye_beam.remains<gcd.max*0.3&!buff.391215.up|cooldown.metamorphosis.up&cooldown.eye_beam.remains>0&cooldown.blade_dance.remains>0&!buff.1271092.up
+
+    # actions+=/potion,if=cooldown.metamorphosis.up&(cooldown.eye_beam.up|!talent.chaotic_transformation)|fight_remains<=30
+
+    # actions+=/use_items,if=cooldown.metamorphosis.up|cooldown.eye_beam.up|fight_remains<=20
+    - trinket_1,if=trinket_1.sync
+    - trinket_2,if=trinket_2.sync
+
+    # actions+=/pick_up_fragment,type=all,use_off_gcd=1,if=fury<=40
+
+    # actions+=/reavers_glaive,if=buff.rending_strike.down&buff.glaive_flurry.down
+    - reavers_glaive,if=buff.442442.down&buff.glaive_flurry.down
+
+    # actions+=/annihilation,if=buff.rending_strike.up&buff.glaive_flurry.down&debuff.reavers_mark.stack<2|buff.rending_strike.up&active_enemies>=2
+    - annihilation,if=buff.442442.up&buff.glaive_flurry.down&debuff.442624.stack<2|buff.442442.up&active_enemies>=2
+
+    # actions+=/essence_break,if=action.death_sweep.demonsurge_available|action.annihilation.demonsurge_available
+    - essence_break,if=action.death_sweep.demonsurge_available|action.annihilation.demonsurge_available
+
+    # actions+=/death_sweep,if=debuff.essence_break.up|action.death_sweep.demonsurge_available
+    - death_sweep,if=debuff.essence_break.up|action.death_sweep.demonsurge_available
+
+    # actions+=/annihilation,if=debuff.essence_break.up|action.annihilation.demonsurge_available
+    - annihilation,if=debuff.essence_break.up|action.annihilation.demonsurge_available
+
+    # actions+=/immolation_aura,if=talent.a_fire_inside&talent.burning_wound&(charges=2|full_recharge_time<gcd.max*2)
+    - immolation_aura,if=talent.a_fire_inside&talent.burning_wound&(cooldown.immolation_aura.charges=2|cooldown.immolation_aura.full_recharge_time<gcd.max*2)
+
+    # actions+=/eye_beam
+    - eye_beam
+
+    # actions+=/immolation_aura,,if=action.immolation_aura.demonsurge_available&buff.demonsurge.remains<gcd.max
+    # double comma is an upstream typo, treated as one
+    - immolation_aura,if=action.immolation_aura.demonsurge_available&buff.demonsurge.remains<gcd.max
+
+    # actions+=/felblade,if=buff.inertia_trigger.up
+    - felblade,if=buff.1215159.up
+
+    # actions+=/essence_break,if=cooldown.eye_beam.remains>4
+    - essence_break,if=cooldown.eye_beam.remains>4
+
+    # actions+=/death_sweep
+    - death_sweep
+
+    # actions+=/blade_dance
+    - blade_dance
+
+    # actions+=/immolation_aura,if=active_enemies>1&(talent.a_fire_inside|talent.burning_wound)
+    - immolation_aura,if=active_enemies>1&(talent.a_fire_inside|talent.burning_wound)
+
+    # actions+=/annihilation
+    - annihilation
+
+    # actions+=/felblade,if=hero_tree.felscarred&fury<=100
+    - felblade,if=hero_tree.felscarred&fury<=100
+
+    # actions+=/chaos_strike
+    - chaos_strike
+
+    # actions+=/felblade
+    - felblade
+
+    # actions+=/immolation_aura
+    - immolation_aura

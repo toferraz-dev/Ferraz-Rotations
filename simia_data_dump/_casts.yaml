@@ -1,0 +1,941 @@
+version: 1
+
+# Tagged enemy casts - merged from old _interrupts.yaml + _defensives.yaml (defendmsives section)
+#
+# Each entry defines a spell that enemies cast, with tags controlling how it can be reacted to.
+#
+# Tags:
+#   kickable     - Can be interrupted with a kick (respects notInterruptible flag)
+#   stunnable    - Can be stopped with a stun (bypasses notInterruptible)
+#   channel      - Only react if the spell is being channeled
+#   aoe          - AoE damage spell
+#   avoid        - Positional mechanic (dodge/move out)
+#   frontal      - Frontal cone attack
+#   tank         - Tank-targeted hit (use with physical/magical/mixed)
+#   purge        - Enemy buff that can be purged (Magic)
+#   enrage       - Enemy buff that can be soothed (Enrage)
+#   important    - High-priority ability
+#   los          - Line-of-sight to avoid
+#   meld         - Droppable with Shadowmeld (channels) — also droppable with Feign Death
+#   freedom      - Needs freedom/root break
+#   physical, magical, mixed - Damage type
+#   nonphys      - Non-physical damage (shadow/arcane/etc.); treated as magical for DR — alias for non_phys used in _aura.yaml
+#   zephyr       - AoE spell mitigated by Zephyr & Feint
+#   stopcasting  - Marks a spell that locks a school on hit; use incoming_cast.stopcasting.up to trigger stop_casting
+#   blockable    - Physical hit that can be blocked; use incoming_cast.blockable.up to fire Shield Block / active-block cooldowns
+#   reflectable  - Can be deflected with Spell Reflection; incoming_cast.reflectable filters for the reflection reactive window (<0.3s remaining)
+#   trash        - Applies the 1.20 trash-mob affix multiplier to damage prediction (bosses use 1.15)
+#   show_on_me   - Cast bar notification shown only when the player is the cast's target (single-target spells like Polymorph/Hex)
+#   show_all     - Cast bar notification shown regardless of target (AoE spells the whole group must react to)
+#
+# Per-cast fields (not tags — plain keys on the entry, alongside `damage` / `dr_type`):
+#   interrupt_after: N    - seconds; shared kick aliases won't kick until casting.elapsed>=N
+#   interrupt_remains: N  - seconds; shared kick aliases only kick once casting.remains<=N
+#     Both default to 0 = no gate and AND on top of config.interrupt_pct, so they only ever
+#     make the gate stricter. Combine them to kick inside a window.
+#     `interrupt_remains: 99` is the idiom for "kick on sight" - no cast runs 99s, so the
+#     clause never restricts. Use it for a cast held notInterruptible until a mechanic
+#     clears: notInterruptible already blocks the kick, so this documents that no extra
+#     wait is wanted once it opens up. They replace the old min50 tag: percent
+#     scaled badly with cast length (Death Bolt 1278893 is a 10.0s cast, so min50 meant
+#     "wait until 5.0s have elapsed" — 5 seconds of dead air).
+#     interrupt_remains has a HARD FLOOR of 0.3s — ShouldCastWithTag drops kickable casts
+#     with <0.3s left before the alias is consulted, so anything lower never fires.
+#     NEVER set either on a channel: the kick aliases kick channels on sight and these
+#     gates would suppress that.
+# Expressions (right-to-left parsing):
+#   [unit.]incoming_cast.[filter.]<tags>.<property>
+#   Unit prefix: target., focus., mouseover.  (none = scan all)
+#   Filter: player, cycle, 5y, 8y, 10y, 15y, 40y
+#   Properties: up, down, ready (alias for up), remains, count
+#
+# Examples:
+#   target.incoming_cast.kickable.ready          - Target has interruptible cast
+#   target.incoming_cast.stunnable.ready         - Target has stunnable cast (ignores notInterruptible)
+#   target.incoming_cast.kickable.channel.ready  - Target channeling a kickable spell
+#   incoming_cast.10y.kickable.count             - Count of enemies casting kickable spells within 10y
+#   incoming_cast.aoe.up                         - Any enemy casting an AoE spell
+#   incoming_cast.player.magic.up                - Enemy casting magic spell at player
+
+casts:
+  # Magister Terrace
+  1282055: { name: "Ethereal Shackles", tags: [tank, magical, freedom] }
+  1282050: { name: "Arcane Beam", tags: [avoid, meld] }
+  473258: { name: "Crowd Dispersal", tags: [aoe, zephyr], damage: 91521, dr_type: magic }
+  468962:  { name: "Arcane Bolt", tags: [kickable, reflectable] }
+  468966:  { name: "Polymorph", tags: [kickable, important, stunnable, show_on_me] }
+  1252909: { name: "Arcane Blade", tags: [purge, tank, magical, important], damage: 400 }
+  1254306: { name: "Power Word: Shield", tags: [purge] }
+  1244985: { name: "Arcane Volley", tags: [aoe, important, zephyr, trash], damage: 220, dr_type: magic }
+  1254338: { name: "Ignition", tags: [aoe] }
+  1254294: { name: "Pyroblast", tags: [kickable, important] }
+  1254301: { name: "Flamestrike", tags: [avoid] }
+  1279992: { name: "Blink", tags: [aoe, important] }
+  1254595: { name: "Energy Release", tags: [aoe, zephyr] }
+  1244907: { name: "Runic Glaive", tags: [aoe, important, meld, show_on_me] }
+  1283901: { name: "Shield Slam", tags: [frontal] }
+  1255434: { name: "Void Gash", tags: [purge, tank, magical] }
+  1256015: { name: "Shadow Bolt", tags: [kickable, reflectable] }
+  1255187: { name: "Holy Fire", tags: [reflectable] }
+  1227020: { name: "Dimensional Shred", tags: [reflectable, important] }
+  1265977: { name: "Consuming Shadows", tags: [aoe, important, los] }
+  1264951: { name: "Void Eruption", tags: [aoe, zephyr] }
+  1248327: { name: "Shadow Bolt", tags: [kickable] }
+  1264693: { name: "Terror Wave", tags: [kickable, important, los] }
+  1264687: { name: "Devouring Strike", tags: [tank, magical] }
+  1248219: { name: "Void Bomb", tags: [avoid] }
+
+  # Maisara Caverns 
+  1255765: { name: "Blood Frenzy", tags: [enrage, tank, physical] }
+  1257088: { name: "Necrotic Wave", tags: [aoe, important, reflectable, show_all] }
+  1257155: { name: "Rain of Toads", tags: [avoid] }
+  1255964: { name: "Throw Spear", tags: [stunnable, important] }
+  1266381: { name: "Hooked Snare", tags: [kickable, freedom] }
+  1256561: { name: "Crunch Armor", tags: [tank, physical] }
+  1256584: { name: "Diseased Claws", tags: [tank, magical] }
+  1257781: { name: "Shredding Talons", tags: [frontal, stunnable] }
+  1256008: { name: "Hex", tags: [kickable, important, reflectable, stunnable, show_on_me] }
+  1258481: { name: "Searing Presence", tags: [aoe] }
+  1258475: { name: "Magma Surge", tags: [frontal, important, show_on_me] }
+  1258806: { name: "Ritual Firebrand", tags: [avoid] }
+  1256059: { name: "Rending Gore", tags: [tank, physical] }
+  1256047: { name: "Deafening Roar", tags: [aoe, important, zephyr, stopcasting], damage: 91521, dr_type: physical }
+  1263292: { name: "Shrink", tags: [kickable, stunnable, meld, reflectable] }
+  1265832: { name: "Shadow Burst", tags: [avoid] }
+  1270079: { name: "Grim Ward", tags: [aoe, purge] }
+  1257920: { name: "Dread Slash", tags: [tank, physical, blockable] }
+  1257716: { name: "Reanimation", tags: [kickable, stunnable] }
+  1259255: { name: "Spirit Rend", tags: [kickable, important, reflectable] }
+  1259270: { name: "Spectral Strikes", tags: [aoe] }
+  1259631: { name: "Staggering Blow", tags: [tank, physical] }
+  1257895: { name: "Ancestral Crush", tags: [avoid] }
+  1259777: { name: "Invoke Shadow", tags: [avoid] }
+  1259786: { name: "Ritual Sacrifice", tags: [important, freedom] }
+  1259789: { name: "Ritual Sacrifice", tags: [important, freedom] }
+  1259731: { name: "Cries of the Fallen", tags: [freedom] }
+  1259651: { name: "Soulstorms", tags: [avoid] }
+  269928:  { name: "Vigilant Defense", tags: [channel, frontal, trash] }   # also Kings Rest (S2)
+  1264327: { name: "Shadowfrost Blast", tags: [kickable, tank, magical, reflectable] }
+  1259677: { name: "Rend Souls", tags: [avoid] }
+  1271623: { name: "Frost Nova", tags: [avoid, freedom], damage: 81352, dr_type: magic }
+  1259182: { name: "Piercing Screech", tags: [kickable, frontal, tank, physical] }
+  1259887: { name: "Ritual Drums", tags: [aoe, avoid, important] }
+
+  # Nexus-Point 
+  1282745: { name: "Null Sunder", tags: [tank, mixed, important] }
+  1257701: { name: "Searing Rend", tags: [tank, mixed] }
+  1281657: { name: "Blistering Smite", tags: [important, reflectable] }
+  1264354: { name: "Luciferin Flare", tags: [frontal, zephyr] }
+  1277451: { name: "Arcane Zap", tags: [tank, magical] }
+  1285445: { name: "Arcane Explosion", tags: [kickable, stunnable] }
+  1252204: { name: "Leech Veil", tags: [stunnable] }
+  1252218: { name: "Leech Veil", tags: [stunnable] }
+  1257123: { name: "Daze", tags: [avoid] }
+  1257126: { name: "Mana Battery", tags: [aoe, important, zephyr] }
+  249081:  { name: "Suppression Field", tags: [avoid, important, freedom] }
+  1262088: { name: "Flux Collapse", tags: [avoid] }
+  1271094: { name: "Umbra Bolt", tags: [kickable] }
+  1257105: { name: "Erratic Zap", tags: [avoid] }
+  1249801: { name: "Arcing Mana", tags: [aoe, important] }
+  1262720: { name: "Power Flux", tags: [avoid] }
+  1281636: { name: "Creeping Void", tags: [aoe, zephyr] }
+  1252062: { name: "Entropic Leech", tags: [meld] }
+  1252076: { name: "Dark Beckoning", tags: [aoe, avoid] }
+  1258681: { name: "Nullify", tags: [kickable, important] }
+  1282722: { name: "Nullify", tags: [kickable, stunnable, important] }
+  1264295: { name: "Nullblast", tags: [kickable] }
+  1257268: { name: "Forfeit Essence", tags: [stunnable] }
+  1263775: { name: "Fixate", tags: [avoid] }
+  1282724: { name: "Dusk Frights", tags: [avoid] }
+  1252429: { name: "Nullwark Blast", tags: [tank, magical] }
+  1252406: { name: "Dreadbellow", tags: [aoe, important, zephyr, trash] }   # also Voidscar Arena (S2)
+  1282665: { name: "Void Lash", tags: [stunnable] }
+  1252436: { name: "Void Lash", tags: [frontal, tank, magical] }
+  1252622: { name: "Flailstorm", tags: [avoid] }
+  1282678: { name: "Flailstorm", tags: [stunnable] }
+  1263785: { name: "Holy Echo", tags: [avoid, purge] }
+  1263892: { name: "Holy Bolt", tags: [kickable, stunnable, important, reflectable], damage: 61014, dr_type: magic }
+  1277557: { name: "Burning Radiance", tags: [aoe, important, zephyr, show_on_me] }
+
+  # Windrunner Spire 
+  1216135: { name: "Spirit Bolt", tags: [kickable, reflectable] }
+  1216298: { name: "Soul Torment", tags: [aoe] }
+  1216133: { name: "Shear Armor", tags: [tank, physical] }
+  1216250: { name: "Arcane Salvo", tags: [aoe] }
+  1216848: { name: "Fire Spit", tags: [stunnable, important, meld] }
+  1216860: { name: "Bolstering Flames", tags: [purge] }
+  1216834: { name: "Acidic Demise", tags: [avoid] }
+  1277799: { name: "Brutal Chop", tags: [tank, physical, blockable], damage: 355916 }
+  1216985: { name: "Puncturing Bite", tags: [tank, physical, blockable] }
+  1217010: { name: "Ferocious Pounce", tags: [aoe, avoid] }
+  1219224: { name: "Freezing Trap", tags: [avoid] }
+  1216819: { name: "Fungal Bolt", tags: [kickable, reflectable] }
+  1216963: { name: "Spore Dispersal", tags: [aoe, tank, magical, important, zephyr] }
+  1216462: { name: "Precise Cut", tags: [tank, physical, blockable] }
+  473794:  { name: "Poison Blades", tags: [kickable, tank, magical, important] }
+  473647:  { name: "Phial Toss", tags: [avoid] }
+  473640:  { name: "Fierce Slash", tags: [tank, physical, blockable] }
+  473657:  { name: "Shadow Bolt", tags: [kickable] }
+  473663:  { name: "Pulsing Shriek", tags: [kickable, aoe, important] }
+  473668:  { name: "Pulsing Shriek", tags: [kickable, aoe, important] }
+  473776:  { name: "Fetid Spew", tags: [aoe, avoid] }
+  1216454: { name: "Arrow Rain", tags: [avoid, stunnable] }
+  471648:  { name: "Break Ranks", tags: [frontal] }
+  471643:  { name: "Interrupting Screech", tags: [aoe, zephyr, stopcasting] }
+  1277785: { name: "Intercepting Charge", tags: [tank, physical] }
+  1216419: { name: "Shoot", tags: [stunnable, blockable] }
+  468659:  { name: "Throw Axe", tags: [stunnable, important, blockable] }
+  1216643: { name: "Gore Whirl", tags: [avoid, stunnable] }
+  1216592: { name: "Chain Lightning", tags: [kickable, aoe, important] }
+  1251981: { name: "Chain Lightning", tags: [kickable, aoe, important] }
+  1270618: { name: "Flame Nova", tags: [aoe, zephyr], damage: 83894, dr_type: magic }
+  1216459: { name: "Ephemeral Bloodlust", tags: [enrage, important] }
+
+  # Algeth'ar Academy 
+  390918:  { name: "Detonation Seeds", tags: [avoid] }
+  1282244: { name: "Vile Bite", tags: [tank, physical] }
+  390938:  { name: "Agitation", tags: [enrage, tank, physical] }
+  377991:  { name: "Storm Slash", tags: [tank, magical] }
+  378011:  { name: "Deadly Winds", tags: [avoid, reflectable] }
+  377912: { name: "Expel Intruders", tags: [avoid, los], damage: 152814, dr_type: magic }
+  377344:  { name: "Peck", tags: [tank, physical, blockable] }
+  377383:  { name: "Gust", tags: [frontal, zephyr] }
+  377389:  { name: "Raging Screech", tags: [aoe, enrage, tank, physical, important] }
+  389054:  { name: "Vicious Lunge", tags: [tank, physical, blockable] }
+  388911:  { name: "Severing Slash", tags: [tank, physical, blockable] }
+  388940:  { name: "Vicious Ambush", tags: [avoid, important, meld, show_on_me] }
+  388976:  { name: "Rift Breath", tags: [frontal] }
+  388841:  { name: "Spellbound Weapon", tags: [tank, magical] }
+  388862: { name: "Surge", tags: [kickable, reflectable, show_on_me], damage: 177958, dr_type: magic }
+  390942:  { name: "Darting Sting", tags: [reflectable] }
+  388863:  { name: "Mana Void", tags: [aoe, avoid, important] }
+  388392:  { name: "Monotonous Lecture", tags: [kickable, stunnable, important] }
+  1279627: { name: "Arcane Bolt", tags: [kickable, reflectable], damage: 61014, dr_type: magic }
+  1270294: { name: "Mystic Brand", tags: [kickable, important] }
+  1270349: { name: "Astral Whirlwind", tags: [avoid] }
+  1270356: { name: "Arcane Smash", tags: [aoe, important, los, zephyr], damage: 91521, dr_type: magic }
+
+  # Seat of Triumvirate 
+ 
+  1269469: { name: "Rupture", tags: [aoe] }
+  1269470: { name: "Rupture", tags: [avoid] }
+  1262514: { name: "Relentless Pursuit", tags: [tank, physical] }
+  1264036: { name: "Battle Rage", tags: [enrage, tank, physical] }
+  1262509: { name: "Chains of Subjugation", tags: [aoe, avoid, important, freedom, show_all] }
+  1262510: { name: "Umbral Bolt", tags: [kickable, reflectable] }
+  1262523: { name: "Summon Voidcaller", tags: [kickable, important] }
+  1262522: { name: "Pulsing Void", tags: [aoe, important, zephyr] }
+  248830:  { name: "Swoop", tags: [tank, physical, blockable] }
+  1262519: { name: "Backstab", tags: [important] }
+  1277339: { name: "Shadowmend", tags: [kickable, stunnable] }
+  1277340: { name: "Shadowmend", tags: [kickable, stunnable] }
+  1264464: { name: "Stabilize", tags: [aoe] }
+  1264569: { name: "Rift Tear", tags: [aoe, avoid, important] }
+  1280326: { name: "Void Bash", tags: [tank, magical] }
+  1269183: { name: "Void Burst", tags: [avoid] }
+  1262429: { name: "Eruption", tags: [aoe, avoid, important] }
+  1262335: { name: "Void Cleave", tags: [frontal, zephyr] }
+  1262526: { name: "Abyssal Enhancement", tags: [kickable, aoe, purge, tank, magical, important] }
+  1264257: { name: "Gate of the Abyss", tags: [avoid] }
+  1262508: { name: "Void Infusion", tags: [meld, reflectable] }
+
+  # Skyreach 
+  153954: { name: "Cast down", tags: [nonphys, show_on_me] }
+  1253840: { name: "Lens Flare", tags: [magic, show_on_me] }
+  1254666: { name: "Ricocheting Chakram", tags: [aoe], damage: 40676, dr_type: magic }
+  1254670: { name: "Rushing Winds", tags: [purge, tank, physical] }
+  1254380: { name: "Shear", tags: [tank, mixed] }
+  1254475: { name: "Blade Rush", tags: [aoe, important], damage: 61014, dr_type: physical }
+  1254677: { name: "Wind Claws", tags: [tank, magical] }
+  1254678: { name: "Wrathful Wind", tags: [aoe, enrage, tank, mixed] }
+  1255922: { name: "Wind Blast", tags: [avoid] }
+  1254566: { name: "Dire Screech", tags: [aoe] }
+  1255377: { name: "Repel", tags: [kickable, aoe, important, stunnable, show_all] }
+  152953:  { name: "Blinding Light", tags: [kickable, important] }
+  1273356: { name: "Solar Barrier", tags: [aoe, purge] }
+  1254672: { name: "Fiery Talon", tags: [tank, magical, important] }
+  1254669: { name: "Solar Bolt", tags: [kickable, reflectable] }
+  1258217: { name: "Solar Fire", tags: [avoid] }
+  1254329: { name: "Solar Orb", tags: [aoe, important] }
+  1253446: { name: "Solar Flame", tags: [important, meld, reflectable] }
+  1253448: { name: "Solar Nova", tags: [avoid] }
+  1254686: { name: "Mark of Death", tags: [stunnable, important] }
+
+  # Magister Terrace (Boss) 
+  474496:  { name: "Repulsing Slam", tags: [tank, magical] }
+  1214081: { name: "Arcane Expulsion", tags: [aoe, avoid], damage: 76268, dr_type: magic }
+  1214038: { name: "Ethereal Shackles", tags: [aoe, freedom] }
+  474345:  { name: "Refueling Protocol", tags: [aoe] }
+  1243905: { name: "Unstable Energy", tags: [avoid] }
+  1225792: { name: "Runic Mark", tags: [aoe, avoid] }
+  1224903: { name: "Suppression Zone", tags: [avoid], damage: 203380, dr_type: magic }
+  1246446: { name: "Null Reaction", tags: [aoe, avoid] }
+  1248689: { name: "Hastening Ward", tags: [purge, tank, mixed] }
+  1225193: { name: "Wave of Silence", tags: [aoe] }
+  1283904: { name: "Cosmic Sting", tags: [aoe, avoid] }
+  1224299: { name: "Astral Grasp", tags: [aoe, avoid] }
+  1271066: { name: "Entropy Blast", tags: [tank, physical] }
+  1214714: { name: "Void Torrent", tags: [avoid] }
+  1280113: { name: "Hulking Fragment", tags: [avoid, tank, magical] }
+  1215897: { name: "Devouring Entropy", tags: [aoe, freedom] }
+  1215157: { name: "Unstable Void Essence", tags: [aoe, zephyr] }
+
+  # Maisara Caverns (Boss) 
+  1266480: { name: "Flanking Spear", tags: [tank, physical] }
+  1246666: { name: "Infected Pinions", tags: [aoe, zephyr] }
+  1260731: { name: "Freezing Trap", tags: [avoid] }
+  1243900: { name: "Fetid Quillstorm", tags: [avoid, show_all] }
+  1260643: { name: "Barrage", tags: [frontal, meld] }
+  1249479: { name: "Carrion Swoop", tags: [frontal] }
+  1264987: { name: "Withering Miasma", tags: [aoe] }
+  1251554: { name: "Drain Soul", tags: [tank, magical, reflectable] }
+  1251204: { name: "Wrest Phantoms", tags: [aoe, avoid] }
+  1252054: { name: "Unmake", tags: [frontal] }
+  1250708: { name: "Necrotic Convergence", tags: [kickable, aoe, avoid] }
+  1248863: { name: "Deathgorged Vessel", tags: [aoe, avoid] }
+  1251023: { name: "Spiritbreaker", tags: [avoid, tank, mixed, reflectable, blockable] }
+  1252676: { name: "Crush Souls", tags: [avoid] }
+  1252777: { name: "Soulbind", tags: [aoe, avoid] }
+  1253788: { name: "Soulrending Roar", tags: [aoe, avoid] }
+  1254010: { name: "Eternal Suffering", tags: [kickable, avoid] }
+  1251775: { name: "Final Pursuit", tags: [avoid] }
+  1252675: { name: "Crush Souls", tags: [avoid] }
+  1253844: { name: "Withering Soul", tags: [aoe] }
+  1255629: { name: "Spectral Residue", tags: [aoe] }
+  1251813: { name: "Lingering Dread", tags: [aoe, zephyr], damage: 41184, dr_type: magic }
+
+  # Nexus-Point (Boss) 
+  1250553: { name: "Arcane Zap", tags: [tank, magical] }
+  1251626: { name: "Leyline Array", tags: [avoid] }
+  1264040: { name: "Flux Collapse", tags: [avoid] }
+  1257509: { name: "Corespark Detonation", tags: [aoe, avoid] }
+  1247937: { name: "Umbral Lash", tags: [tank, mixed] }
+  1249014: { name: "Eclipsing Step", tags: [aoe, avoid] }
+  1253965: { name: "Lightscar", tags: [frontal] }
+  1247976: { name: "Lightscar Flare", tags: [aoe, frontal] }
+  1252883: { name: "Devour the Unworthy", tags: [aoe] }
+  1253950: { name: "Searing Rend", tags: [avoid, tank, mixed, blockable] }
+  1253855: { name: "Brilliant Dispersion", tags: [aoe, avoid] }
+  1271956: { name: "Mirrored Rend", tags: [avoid] }
+  1255531: { name: "Flicker", tags: [frontal] }
+  1271511: { name: "Core Exposure", tags: [aoe, zephyr] }
+  # Divine Guile is technically interruptible per method.gg, but intentionally not auto-kicked
+  # 1257595: { name: "Divine Guile", tags: [kickable] }
+
+  # Windrunner Spire (Boss)
+  466559:  { name: "Flaming Updraft", tags: [aoe, avoid] }
+  466064:  { name: "Searing Beak", tags: [tank, mixed, blockable] }
+  465904:  { name: "Burning Gale", tags: [aoe] }
+  469633:  { name: "Flaming Twisters", tags: [avoid] }
+  1217763: { name: "Fire Breath", tags: [frontal, zephyr] }
+  472724:  { name: "Shadow Bolt", tags: [kickable] }
+  472745:  { name: "Splattering Spew", tags: [aoe, avoid] }
+  472777:  { name: "Gunk Splatter", tags: [avoid] }
+  472888:  { name: "Bone Hack", tags: [tank, physical, blockable] }
+  472736:  { name: "Debilitating Shriek", tags: [aoe] }
+  472795:  { name: "Heaving Yank", tags: [frontal] }
+  467620:  { name: "Rampage", tags: [tank, physical, blockable] }
+  472053:  { name: "Reckless Leap", tags: [avoid] }
+  1253026: { name: "Intimidating Shout", tags: [avoid] }
+  472043:  { name: "Rallying Bellow", tags: [aoe] }
+  470963:  { name: "Bladestorm", tags: [avoid] }
+  1216042: { name: "Squall Leap", tags: [aoe, zephyr] }
+  472556:  { name: "Arrow Rain", tags: [avoid] }
+  468429:  { name: "Bullseye Windblast", tags: [avoid] }
+  472662:  { name: "Tempest Slash", tags: [tank, physical, blockable] }
+  1253979: { name: "Gust Shot", tags: [aoe, avoid] }
+  474528:  { name: "Bolt Gale", tags: [frontal, meld] }
+
+  # Algeth'ar Academy (Boss) 
+  388544:  { name: "Barkbreaker", tags: [tank, physical, blockable] }
+  388796:  { name: "Germinate", tags: [avoid] }
+  388623:  { name: "Branch Out", tags: [aoe, avoid] }
+  396640:  { name: "Healing Touch", tags: [kickable] }
+  388923: { name: "Burst Forth", tags: [aoe, zephyr], damage: 81352, dr_type: magic }
+  389033:  { name: "Lasher Toxin", tags: [tank, magical] }
+  376997:  { name: "Savage Peck", tags: [tank, physical] }
+  377004:  { name: "Deafening Screech", tags: [aoe, avoid, stopcasting] }
+  377034:  { name: "Overpowering Gust", tags: [frontal, zephyr] }
+  1276752: { name: "Ruinous Winds", tags: [aoe] }
+  376448:  { name: "Firestorm", tags: [aoe, avoid] }
+  376467:  { name: "Gale Force", tags: [avoid] }
+  387691:  { name: "Arcane Orbs", tags: [aoe] }
+  385958:  { name: "Arcane Expulsion", tags: [frontal, tank, magical, zephyr] }
+  386173:  { name: "Mana Bombs", tags: [aoe, avoid] }
+  388537: { name: "Arcane Fissure", tags: [aoe, avoid], damage: 81352, dr_type: magic }
+  439488:  { name: "Unleash Energy", tags: [aoe, avoid] }
+  389011:  { name: "Overwhelming Power", tags: [aoe] }
+  388901:  { name: "Arcane Rift", tags: [avoid] }
+  374352:  { name: "Energy Bomb", tags: [avoid, reflectable, meld] }
+  1282251: { name: "Astral Blast", tags: [tank, magical, reflectable] }
+  388822:  { name: "Power Vacuum", tags: [avoid] }
+
+  # Seat of Triumvirate (Boss) 
+  1263440: { name: "Void Slash", tags: [tank, mixed, reflectable, blockable] }
+  1263282: { name: "Decimate", tags: [avoid] }
+  1268916: { name: "Null Palm", tags: [frontal] }
+  1263399: { name: "Oozing Slam", tags: [aoe, zephyr] }
+  1263297: { name: "Crashing Void", tags: [aoe, zephyr], damage: 101690, dr_type: magic }
+  1266449: { name: "Rending Void", tags: [tank, magical] }
+  248831:  { name: "Dread Screech", tags: [kickable, aoe] }
+  246026: { name: "Void Bomb", tags: [avoid], damage: 61014, dr_type: magic }
+  1280067: { name: "Phase Dash", tags: [aoe, avoid] }
+  1263523: { name: "Overload", tags: [aoe, zephyr], damage: 50845, dr_type: magic }
+  244750:  { name: "Mind Blast", tags: [kickable, tank, magical, reflectable] }
+  1277358: { name: "Gates of the Abyss", tags: [avoid] }
+  1263542: { name: "Mass Void Infusion", tags: [aoe, zephyr, meld] }
+  1263538: { name: "Umbral Tentacles", tags: [aoe, meld] }
+  1263529: { name: "Collapsing Void", tags: [aoe, avoid] }
+  1265421: { name: "Dirge of Despair", tags: [aoe, zephyr], damage: 50845, dr_type: magic }
+  1264196: { name: "Disintegrate", tags: [avoid] }
+  1265464: { name: "Discordant Beam", tags: [aoe, frontal, zephyr] }
+  1265689: { name: "Grim Chorus", tags: [avoid] }
+  1267207: { name: "Abyssal Lance", tags: [tank, magical] }
+  1266001: { name: "Backlash", tags: [aoe, zephyr], damage: 91521, dr_type: magic }
+
+  # Skyreach (Boss) 
+  1252690: { name: "Gale Surge", tags: [aoe, avoid] }
+  153757:  { name: "Fan of Blades", tags: [aoe, zephyr] }
+  1258152: { name: "Wind Chakram", tags: [frontal] }
+  156793:  { name: "Chakram Vortex", tags: [avoid] }
+  1283770: { name: "Defensive Protocol", tags: [avoid] }
+  1279002: { name: "Blast Wave", tags: [aoe, zephyr] }
+  154110:  { name: "Fiery Smash", tags: [frontal] }
+  154139:  { name: "Energize", tags: [aoe, frontal] }
+  1281874: { name: "Heat Exhaustion", tags: [frontal, zephyr] }
+  154135: { name: "Supernova", tags: [aoe, zephyr], damage: 101690, dr_type: magic }
+  153898:  { name: "Screech", tags: [aoe, zephyr] }
+  1253519: { name: "Burning Claws", tags: [tank, mixed, blockable] }
+  1253510: { name: "Sunbreak", tags: [aoe, avoid], damage: 76268, dr_type: magic }
+  159381:  { name: "Searing Quills", tags: [avoid, los] }
+  1253543: { name: "Scorching Ray", tags: [aoe] }
+  154396:  { name: "Solar Blast", tags: [kickable, tank, magical, reflectable] }
+  154044:  { name: "Lens Flare", tags: [avoid] }
+  1258174: { name: "Dread Wind", tags: [magic, show_on_me], damage: 76268, dr_type: magic }
+
+  # Pit of Saron 
+  1258432: { name: "Tormenting Blade", tags: [tank, magical] }
+  1258434: { name: "Curse of Torment", tags: [important] }
+  1258461: { name: "Leaping Maul", tags: [avoid] }
+  1278963: { name: "Dark Rupture", tags: [avoid] }
+  1258439: { name: "Frostbane Slash", tags: [tank, mixed, blockable] }
+  1258435: { name: "Sunderstrike", tags: [tank, physical, blockable] }
+  1258448: { name: "Necromantic Infusion", tags: [purge] }
+  1271479: { name: "Netherburst", tags: [kickable, aoe, important] }
+  1271074: { name: "Icy Blast", tags: [kickable, tank, magical, important, reflectable] }
+  1258820: { name: "Torrent of Misery", tags: [meld, show_on_me] }
+  1258826: { name: "Torrent of Misery", tags: [meld, show_on_me] }
+  1258798: { name: "Dread Pulse", tags: [aoe, important] }
+  1258997: { name: "Plungegrip", tags: [kickable, stunnable, important, freedom] }
+  1259116: { name: "Blight Splatter", tags: [avoid] }
+  1259132: { name: "Plague Frenzy", tags: [enrage, stunnable] }
+  1258431: { name: "Shadow Bolt", tags: [kickable, reflectable], damage: 61014, dr_type: magic }
+  1258436: { name: "Icebolt", tags: [kickable, reflectable], damage: 61014, dr_type: magic }
+  1258437: { name: "Permeating Cold", tags: [important, freedom, reflectable] }
+  1271004: { name: "Icy Strikes", tags: [tank, magical] }
+  1278986: { name: "Frost Breath", tags: [frontal, zephyr] }
+  1259187: { name: "Cryoburst", tags: [aoe, avoid, important] }
+  1259226: { name: "Focused Guard", tags: [aoe, frontal] }
+
+  # Pit of Saron (Boss) 
+  1261806: { name: "Siphoning Chill", tags: [aoe] }
+  1261299: { name: "Throw Saronite", tags: [avoid] }
+  1261546: { name: "Orebreaker", tags: [avoid, tank, physical], damage: 355916 }
+  1262029: { name: "Glacial Overload", tags: [avoid, los] }
+  1261847: { name: "Cryostomp", tags: [aoe, zephyr, freedom], damage: 63556, dr_type: physical }
+  1264027: { name: "Shade Shift", tags: [aoe] }
+  1264186: { name: "Shadowbind", tags: [freedom] } # This is kickable, but we want to save for death bolt.
+  1278893: { name: "Death Bolt", tags: [kickable, reflectable, show_on_me], damage: 183042, dr_type: magic, interrupt_remains: 0.5 }  # 10.0s hard cast; was min50 (= hold until 5.0s elapsed). Trailing comment, NOT above the entry: see the category note in the header.
+  1264287: { name: "Blight Smash", tags: [avoid, tank, physical] }
+  1264336: { name: "Plague Explosion", tags: [aoe, avoid], damage: 61014, dr_type: magic }
+  1264363: { name: "Get 'Em, Ick!", tags: [avoid] }
+  1276648: { name: "Bone Infusion", tags: [aoe, zephyr] }
+  1262745: { name: "Rime Blast", tags: [aoe, avoid] }
+  1262582: { name: "Scourgelord's Brand", tags: [avoid, tank, physical, blockable] }
+  1263756: { name: "Death's Grasp", tags: [avoid] }
+  1262941: { name: "Plague Bolt", tags: [kickable, reflectable] }
+  1262997: { name: "Festering Pulse", tags: [aoe] }
+  1276948: { name: "Ice Barrage", tags: [avoid] }
+
+
+  # ===== Midnight Season 2 =====
+
+  # Altar of Fangs
+  1294557: { name: "Piercing Hiss", tags: [kickable, stunnable, important, trash], damage: 135775 }   # +stunnable: stopped with a stun in high-key logs
+  1294567: { name: "Paralyzing Shots", tags: [aoe, important, freedom, trash, reflectable] }   # was 1294569 (the damage id) - cast id confirmed from WCL
+  1294845: { name: "Corrosive Fangs", tags: [tank, mixed, trash], damage: 242456 }
+  1294849: { name: "Rattle", tags: [channel, aoe, important, trash] }
+  1294934: { name: "Noxious Spray", tags: [channel, frontal, tank, magical, trash] }
+  1295055: { name: "Virulent Whirl", tags: [avoid, trash] }
+  1303366: { name: "Venom Burst", tags: [aoe, trash] }
+  1306235: { name: "Septic Spatter", tags: [avoid, freedom, trash] }   # +freedom: its debuff 1306232 is dispelled by Freedom in key-14/15 logs
+  1306338: { name: "Ravenous Claws", tags: [enrage, trash, blockable], damage: 126077 }   # passive melee modifier - not a cast; `tank` dropped
+  1306385: { name: "Evolve", tags: [stunnable, channel, important, trash] }
+  1306641: { name: "Blood Sacrifice", tags: [aoe, important, trash], damage: 87284 }
+  1306668: { name: "Toxic Breath", tags: [channel, frontal, trash] }
+  1306852: { name: "Toxic Surge", tags: [channel, aoe, frontal, trash] }
+  1306893: { name: "Unstable Totem", tags: [aoe, trash] }
+  1306911: { name: "Dismember", tags: [tank, physical, trash, blockable], damage: 581894 }
+  1307526: { name: "Bloodletting", tags: [avoid, trash] }
+  1307567: { name: "Mass Envenom", tags: [kickable, important, trash] }
+  1308865: { name: "Infest", tags: [aoe, avoid, important, trash] }
+  1289416: { name: "Envenom", tags: [kickable, stunnable, trash, reflectable] }   # WCL: High Evolutionist; sheet gave 1307571 (the DoT)
+  1306381: { name: "Fetid Spit", tags: [stunnable, trash, reflectable] }   # WCL: Primal Serpent; stunned in logs
+
+  # Altar of Fangs (Boss)
+  1287811: { name: "Uncoil", tags: [aoe], damage: 145473 }
+  1296058: { name: "Regurgitate", tags: [avoid, frontal, freedom] }
+  1296220: { name: "Triple Shot", tags: [aoe, avoid, tank, magical, reflectable], damage: 116379 }
+  1298221: { name: "Ssscavenging", tags: [aoe] }
+  1298949: { name: "Tail Scythe", tags: [tank, physical, blockable], damage: 678876 }
+  1299053: { name: "Death Rattle", tags: [channel, aoe] }
+  1299130: { name: "Burrowing Charge", tags: [frontal] }
+  1299154: { name: "Synchronized Venom", tags: [aoe, reflectable] }
+  1300044: { name: "Venom Jet", tags: [frontal] }
+  1300876: { name: "Ritual of the Fang", tags: [channel, aoe] }
+  1301114: { name: "Axegrinder", tags: [avoid] }
+  1301217: { name: "Bloodletting", tags: [avoid] }
+  1301350: { name: "Chop Down", tags: [channel, tank, physical], damage: 484912 }
+  1301413: { name: "Boneslicer", tags: [aoe, frontal] }
+  1305393: { name: "Undermining", tags: [avoid] }
+  1306345: { name: "Messy Eater", tags: [aoe], damage: 116379 }
+  1307894: { name: "Ravenous Stomp", tags: [aoe, avoid], damage: 145473 }
+  1310358: { name: "Toxic Atrophy", tags: [kickable, freedom], damage: 96982 }
+  1310666: { name: "Toxic Atrophy", tags: [kickable, stunnable, freedom] }   # WCL: Uncoiled Writhe copy of Toxic Atrophy
+
+  # Blinding Vale
+  1237855: { name: "Earthrupture Strike", tags: [avoid, tank, physical, trash, blockable], damage: 533403 }
+  1238063: { name: "Light Bolt", tags: [kickable, stunnable, trash, reflectable], damage: 116379 }   # +stunnable: stopped with a stun in high-key logs
+  1238084: { name: "Spore Spines", tags: [tank, magical, freedom, trash] }
+  1238158: { name: "Lightbloom Pollination", tags: [important, trash] }
+  1238232: { name: "Seed Shot", tags: [kickable, stunnable, trash, reflectable], damage: 116379 }   # +stunnable: stopped with a stun in high-key logs
+  1238294: { name: "Disorienting Screech", tags: [kickable, stunnable, important, trash] }   # +stunnable: stopped with a stun in high-key logs
+  1238368: { name: "Lightmaw Beams", tags: [channel, aoe, avoid, important, meld, trash] }
+  1238581: { name: "Spiny Shield", tags: [purge, trash] }   # WCL: Spineshield Beetle buff, Spellstolen/dispelled 53x; 1238588 (the sheet's id) is the damage component
+  1238642: { name: "Bullet Seeds", tags: [frontal, trash] }
+  1242135: { name: "Grievous Gash", tags: [tank, physical, trash, blockable] }
+  1242138: { name: "Solar Breath", tags: [frontal, trash] }
+  1242180: { name: "Lightwarden's Blight", tags: [avoid, trash] }
+  1250100: { name: "Tongue Toss", tags: [tank, physical, trash], damage: 290947 }
+  1250829: { name: "Potad-Toss", tags: [stunnable, trash] }
+  1250937: { name: "Toxic Spew", tags: [aoe, important, trash] }
+  1255205: { name: "Uproot", tags: [aoe, important, trash], damage: 116379 }
+  1263636: { name: "Belch Spores", tags: [channel, avoid, trash] }
+  1271385: { name: "Spouting Floret", tags: [aoe, important, trash], damage: 87284 }
+  1301834: { name: "Light Bolt Volley", tags: [kickable, stunnable, aoe, important, trash], damage: 174568 }   # +stunnable: stopped with a stun in high-key logs
+  1303039: { name: "Hunting Leap", tags: [frontal, tank, physical] }   # sheet links the visual spell; real cast id unresolved
+  1238200: { name: "Frantic Blooming", tags: [kickable, channel, trash] }   # WCL: Radiant Spellsower; absent from sheet
+  269232: { name: "Hunting Leap", tags: [stunnable, channel, frontal, trash] }   # WCL: Thorny Saptor Hunting Leap
+
+  # Blinding Vale (Boss)
+  1234753: { name: "Bedrock Slam", tags: [aoe, avoid, tank, mixed], damage: 484912 }
+  1234850: { name: "Lightsower Dash", tags: [frontal] }
+  1235564: { name: "Lightblossom Beam", tags: [channel, aoe] }
+  1235616: { name: "Light Bolt", tags: [kickable, reflectable] }
+  1235752: { name: "Lightbloom Overgrowth", tags: [channel, aoe] }   # was 1235751 - never appears in logs; id confirmed from WCL
+  1235828: { name: "Light-Scorched Earth", tags: [avoid], damage: 96982 }   # was 1235814 - never appears in logs; id confirmed from WCL
+  1236658: { name: "Bloodthorn Roots", tags: [avoid, freedom] }
+  1236709: { name: "Thorncaller Roar", tags: [channel, aoe, avoid] }
+  1236746: { name: "Verdant Stomp", tags: [aoe], damage: 145473 }
+  1237073: { name: "Lightcrazed Frenzy", tags: [aoe] }
+  1253410: { name: "Bloodthirsty Gaze", tags: [aoe] }   # was 1237090 - never appears in logs; id confirmed from WCL
+  1239821: { name: "Warden's Wrath", tags: [kickable, tank, magical, reflectable] }
+  1239824: { name: "Lightfire", tags: [aoe, avoid] }
+  1240100: { name: "Lightfall", tags: [avoid] }   # was 1240098 - never appears in logs; id confirmed from WCL
+  1240210: { name: "Pulverizing Strikes", tags: [aoe, frontal, meld] }
+  1241058: { name: "Grievous Thrash", tags: [aoe] }
+  1246607: { name: "Concentrated Lightbeam", tags: [avoid, frontal] }
+  1246858: { name: "Lightbloom's Essence", tags: [aoe] }
+  1247377: { name: "Oozing Xylem", tags: [aoe] }
+  1247669: { name: "Lightspore Shot", tags: [kickable, stunnable, reflectable] }   # +stunnable: stopped with a stun in high-key logs
+  1247685: { name: "Thornspike", tags: [tank, mixed, reflectable] }
+  1261011: { name: "Fan Of Thorns", tags: [channel, avoid] }
+
+  # Den of Nalorakk
+  1297699: { name: "Rotten Supplies", tags: [avoid, trash, reflectable] }
+  1238053: { name: "Mother's Wrath", tags: [enrage, trash] }   # passive melee modifier - not a cast; `tank` dropped
+  1238687: { name: "Feast of Misery", tags: [channel, aoe, important, trash] }
+  1238760: { name: "Starvation Effigy", tags: [important, trash] }
+  1239394: { name: "Scavenge", tags: [kickable, stunnable, trash] }   # +stunnable: 14 casts stopped by stuns in key-14/15 logs
+  1239860: { name: "Cryo Surge", tags: [avoid, trash] }
+  1240280: { name: "Pulverize", tags: [avoid, trash] }
+  1241214: { name: "Earth Bolt", tags: [kickable, stunnable, trash, reflectable], damage: 116379 }   # +stunnable: stopped with a stun in high-key logs
+  1241464: { name: "Glacial Tomb", tags: [aoe, important, freedom, trash] }
+  1246687: { name: "Lightning Bolt", tags: [kickable, stunnable, trash, reflectable], damage: 116379 }   # +stunnable: stopped with a stun in high-key logs
+  1246820: { name: "Magma Totem", tags: [aoe, trash] }
+  1246847: { name: "Shoot", tags: [tank, physical, trash, blockable], damage: 193965 }
+  1246865: { name: "Bestial Wrath", tags: [tank, physical, enrage, trash] }
+  1246957: { name: "Primal Echo", tags: [aoe, important, trash] }
+  1246986: { name: "Poison Spear Volley", tags: [avoid, trash] }
+  1252825: { name: "Harsh Winds", tags: [avoid, trash] }
+  1266178: { name: "Snowdrift", tags: [avoid, trash] }
+  1290205: { name: "Lightning Bolt", tags: [kickable, trash, reflectable] }
+  1296519: { name: "Rumbling Ward", tags: [aoe, trash] }
+  1296722: { name: "Earthquake", tags: [aoe, avoid, trash], damage: 116379 }
+  1297696: { name: "Healing Breeze", tags: [kickable, stunnable, purge, important, trash] }   # +stunnable: stopped with a stun in high-key logs
+  1297699: { name: "Rotten Supplies", tags: [avoid, trash] }
+  1297778: { name: "Arc Lightning", tags: [kickable, stunnable, aoe, important, trash, reflectable] }   # +stunnable: stopped with a stun in high-key logs
+  1309919: { name: "Frigid Roar", tags: [kickable, stunnable, important, freedom, trash] }   # +stunnable: 54 casts stopped by stuns in key-14/15 logs
+  1309925: { name: "Volatile Totem", tags: [aoe, important, trash] }
+  1309964: { name: "Harsh Winter", tags: [aoe, trash] }
+  1311695: { name: "Shred Armor", tags: [tank, physical, trash] }
+
+  # Den of Nalorakk (Boss)
+  1234021: { name: "Earthshatter Slam", tags: [avoid, frontal] }
+  1234233: { name: "Spoiled Supplies", tags: [channel, aoe], damage: 96982 }
+  1234681: { name: "Ravenous Bellow", tags: [aoe] }
+  1235548: { name: "Glacial Torment", tags: [aoe] }
+  1235623: { name: "Raging Squall", tags: [avoid], damage: 339438 }
+  1235656: { name: "Frozen Tempest", tags: [channel, aoe] }
+  1235783: { name: "Shattering Frostspike", tags: [avoid] }
+  1235829: { name: "Winter's Shroud", tags: [kickable, stunnable, aoe], damage: 96982 }   # +stunnable: stopped with a stun in high-key logs
+  1242860: { name: "Echoing Maul", tags: [aoe, avoid], damage: 193965 }
+  1243002: { name: "Fury of the War God", tags: [channel, aoe] }
+  1255577: { name: "Spectral Slash", tags: [avoid] }
+  1262253: { name: "Demoralizing Scream", tags: [aoe], damage: 145473 }
+  1263590: { name: "Rimeshatter", tags: [aoe, freedom] }
+  1297792: { name: "Overwhelming Onslaught", tags: [channel, aoe], damage: 315193 }
+  1297797: { name: "Forceful Slam", tags: [tank, physical, blockable] }
+
+  # Kings Rest
+  272388: { name: "Shadow Barrage", tags: [reflectable, trash] }   # WCL: Shadow of Zul; absent from sheet
+  267763: { name: "Wretched Discharge", tags: [kickable, stunnable, aoe] }   # +stunnable: stopped with a stun in high-key logs
+  269935: { name: "Bound by Shadow", tags: [tank, physical, purge, trash] }
+  269972: { name: "Hex Volley", tags: [kickable, important, trash] }
+  269976: { name: "Ancestral Fury", tags: [tank, physical, enrage, trash] }
+  270003: { name: "Suppression Slam", tags: [frontal, trash] }
+  270016: { name: "Released Inihibitors", tags: [tank, physical, trash] }
+  270293: { name: "Purification Strike", tags: [aoe, avoid, important, trash], damage: 174568 }
+  270482: { name: "Violent Lunge", tags: [avoid, trash] }
+  270492: { name: "Hex", tags: [kickable, stunnable, important, trash, reflectable] }   # +stunnable: stopped with a stun in high-key logs
+  270497: { name: "Healing Tide Totem", tags: [important, trash] }
+  270502: { name: "Hunting Leap", tags: [stunnable, channel, frontal, trash], damage: 145473 }
+  270514: { name: "Seismic Upheaval", tags: [avoid, trash] }
+  270889: { name: "Overload", tags: [channel, avoid, trash] }
+  270901: { name: "Unholy Mending", tags: [kickable, stunnable, purge, important, trash] }   # +stunnable: heal cast stopped by stuns in key-15 logs
+  270920: { name: "Bind Soul", tags: [kickable, channel, trash] }
+  270927: { name: "Bladestorm", tags: [channel, avoid, meld, trash], damage: 164870 }
+  271555: { name: "Entomb", tags: [important, trash] }
+  271561: { name: "Wail of Mourning", tags: [channel, aoe, trash] }
+  271563: { name: "Embalming Fluid", tags: [avoid, freedom, trash] }
+  1309385: { name: "Pool of Darkness", tags: [aoe, important, trash] }   # was 273361 - never appears in logs; id confirmed from WCL
+  276031: { name: "Pit of Despair", tags: [avoid, trash] }   # was 273434 - never appears in logs; id confirmed from WCL
+  1294815: { name: "Shadowfrost Bolt", tags: [kickable, freedom, trash], damage: 116379 }
+  1294972: { name: "Soul Bolt", tags: [kickable, trash, reflectable], damage: 116379 }
+  1295125: { name: "Spectral Bolt", tags: [kickable, stunnable, trash, reflectable], damage: 116379 }   # +stunnable: stopped with a stun in high-key logs
+  1296671: { name: "Captain's Bulwark", tags: [purge, trash] }
+  1296719: { name: "Forked Lightning", tags: [aoe, trash, reflectable] }
+  1297763: { name: "Bestial Berserk", tags: [enrage, trash] }
+  1297918: { name: "Mortal Bleed", tags: [tank, trash, blockable] }
+  1297970: { name: "Blood Drain", tags: [aoe, trash], damage: 155172 }
+  1298304: { name: "Dark Revelation", tags: [aoe, avoid, trash] }
+  1301851: { name: "Bloodthirsty Axe", tags: [aoe, trash] }
+  1302028: { name: "Soul Crush", tags: [tank, physical, trash], damage: 727367 }
+  1305945: { name: "Shadow Whirlwind", tags: [aoe, avoid, important, trash], damage: 164870 }
+  1305982: { name: "Shadow Volley", tags: [channel, avoid, trash] }
+  1306056: { name: "Erupting Slam", tags: [avoid, meld, trash] }
+  1310755: { name: "Heavy Slams", tags: [aoe, important, trash] }
+  1311942: { name: "Shadow Slash", tags: [tank, magical, trash] }
+
+  # Kings Rest (Boss)
+  1303488: { name: "Savage Maul", tags: [tank, physical, blockable] }   # WCL: cast id; 1303490 is the impact
+  265773: { name: "Spit Gold", tags: [aoe, avoid] }
+  265781: { name: "Serpentine Gust", tags: [aoe], damage: 145473 }
+  265910: { name: "Tail Thrash", tags: [tank, physical, blockable], damage: 630385 }
+  266206: { name: "Whirling Axes", tags: [avoid] }
+  266237: { name: "Debilitating Backhand", tags: [tank, physical] }
+  266951: { name: "Barrel Through", tags: [aoe, meld] }
+  267060: { name: "Call of the Elements", tags: [avoid] }
+  267273: { name: "Poison Nova", tags: [kickable, aoe] }
+  267618: { name: "Drain Fluids", tags: [channel, avoid, meld] }
+  267639: { name: "Burn Corruption", tags: [avoid] }
+  268586: { name: "Blade Combo", tags: [channel, tank, physical, blockable], damage: 1105598 }
+  1303324: { name: "Quaking Leap", tags: [aoe, avoid, meld] }   # was 268932 - never appears in logs; id confirmed from WCL
+  269369: { name: "Deathly Roar", tags: [kickable, aoe] }
+  1302945: { name: "Impaling Spear", tags: [avoid] }
+  1303267: { name: "Gilded Destruction", tags: [aoe, frontal, tank, magical] }
+  1303490: { name: "Savage Maul", tags: [tank, physical, blockable] }
+  1305810: { name: "Arc Lightning", tags: [aoe, tank, magical, reflectable], damage: 135775 }
+  1312146: { name: "Awakening Slam", tags: [aoe], damage: 193965 }
+
+  # Murder Row
+  474515: { name: "Heartstop Poison", tags: [reflectable] }
+  1217633: { name: "Corroding Spittle", tags: [reflectable, trash] }   # WCL: Massive Felwyrm; absent from sheet
+  1216589: { name: "Heartstop Poison", tags: [reflectable, trash] }   # WCL: Street Sneak; maxroll lists it under Zaen Bladesorrow
+  1201554: { name: "Seduction", tags: [kickable, stunnable, channel, important, trash] }
+  1214922: { name: "Fel Rage", tags: [kickable, stunnable, tank, physical, enrage, important, trash] }   # +stunnable: stopped with a stun in high-key logs
+  1214966: { name: "Fel Infused", tags: [avoid, trash] }
+  1214980: { name: "Health Funnel", tags: [kickable, stunnable, channel, trash] }
+  1215985: { name: "Fel Beam", tags: [avoid, freedom, important, trash] }   # +freedom: its debuff 1218187 is dispelled by Freedom in key-15 logs
+  1216529: { name: "Shield Bash", tags: [tank, physical, trash], damage: 533403 }
+  1216571: { name: "Fel Missiles", tags: [kickable, stunnable, channel, trash, reflectable] }
+  1216954: { name: "Eye Beam", tags: [channel, frontal, trash] }
+  1216970: { name: "Back to Work!", tags: [tank, physical, enrage, trash] }
+  1217973: { name: "Curse of Doom", tags: [important, trash] }
+  1223204: { name: "Felfire Burst", tags: [kickable, stunnable, reflectable] }   # +stunnable: 57 casts stopped by stuns in key-14/15 logs
+  1229433: { name: "Fel Crazed", tags: [purge, trash] }
+  1256276: { name: "Deep Corruption", tags: [important, trash] }
+  1256299: { name: "Over-infused", tags: [aoe, avoid, trash] }
+  1258420: { name: "Doom Bolt", tags: [kickable, trash], damage: 87284 }
+  1294770: { name: "Demonic Frenzy", tags: [aoe, tank, physical, important, trash] }
+  1294824: { name: "Defiled Slam", tags: [channel, aoe, avoid, important, trash], damage: 145473 }
+  1295035: { name: "Glaive Toss", tags: [aoe, tank, physical, trash, blockable] }
+  1297676: { name: "Punishing Might", tags: [tank, physical, trash] }
+  1297691: { name: "Whirlwind", tags: [avoid, trash] }
+  1297693: { name: "Felfire Bombardment", tags: [avoid, trash] }
+  1302007: { name: "Blade Dance", tags: [channel, aoe, important, trash] }
+  1257877: { name: "Scathing Review", tags: [kickable, channel, trash] }   # WCL: Influentual Reviewer; mob absent from sheet
+
+  # Murder Row (Boss)
+  473898: { name: "Legion Strike", tags: [frontal, tank, physical] }
+  474197: { name: "Demonic Rage", tags: [aoe, avoid, tank, physical], damage: 145473 }
+  474375: { name: "Chaos Bolt", tags: [kickable], damage: 155172 }
+  474457: { name: "Fingers of Gul'dan", tags: [aoe, avoid] }
+  474478: { name: "Killing Spree", tags: [channel, aoe] }
+  474766: { name: "Same-Day Delivery", tags: [avoid] }   # was 474765 - never appears in logs; id confirmed from WCL
+  1201553: { name: "Fel-Infused Freight", tags: [aoe] }
+  1214357: { name: "Fire Bomb", tags: [aoe, avoid] }
+  1214663: { name: "Axe Toss", tags: [aoe], damage: 174568 }
+  1216945: { name: "Searing Fel Flame", tags: [aoe] }
+  1217384: { name: "Malefic Wave", tags: [avoid] }
+  1218347: { name: "Murder in a Row", tags: [channel, frontal] }
+  1220899: { name: "Summon Infernal", tags: [avoid] }
+  1222795: { name: "Envenom", tags: [tank, mixed], damage: 436420 }
+  1223906: { name: "Fel Nova", tags: [avoid] }
+  1230298: { name: "Chaos Barrage", tags: [aoe, tank, magical], damage: 290947 }
+  1253811: { name: "Fel Spray", tags: [channel, frontal] }
+  1264095: { name: "Mirror Images", tags: [aoe] }   # sheet links the visual spell; real cast id unresolved
+  1265412: { name: "Destabilized", tags: [channel, aoe] }
+  1295455: { name: "Infernal Crush", tags: [aoe, avoid] }
+  1264106: { name: "Felstorm", tags: [kickable, channel] }   # WCL: Kystia Manaheart; absent from sheet
+  1297682: { name: "Drain Life", tags: [meld] } 
+
+  # Ruby Life Pools
+  371984: { name: "Frostbolt", tags: [kickable, stunnable, trash, reflectable], damage: 116379 }   # +stunnable: stopped with a stun in high-key logs
+  372047: { name: "Steel Barrage", tags: [channel, aoe, avoid, tank, physical, important, trash, blockable], damage: 242456 }
+  372087: { name: "Blazing Rush", tags: [frontal, trash] }
+  372730: { name: "Crushing Smash", tags: [tank, mixed, trash, blockable], damage: 533403 }
+  372743: { name: "Ice Shield", tags: [kickable, stunnable, channel, trash] }
+  373614: { name: "Burnout", tags: [avoid, trash] }
+  373692: { name: "Inferno", tags: [aoe, important, meld, trash] }
+  373693: { name: "Living Bomb", tags: [avoid, trash] }
+  373972: { name: "Blaze of Glory", tags: [channel, avoid, purge, trash] }
+  384194: { name: "Cinderbolt", tags: [kickable, stunnable, trash, reflectable], damage: 116379 }   # +stunnable: stopped with a stun in high-key logs
+  385310: { name: "Storm Bolt", tags: [kickable, trash] }
+  385311: { name: "Thunderstorm", tags: [aoe, trash] }
+  385313: { name: "Lightning Rod", tags: [important, trash] }
+  385536: { name: "Flaming Barrage", tags: [stunnable, channel, tank, mixed, important, trash, blockable], damage: 242456 }
+  391031: { name: "Stormcloud Barrier", tags: [purge, trash] }
+  391723: { name: "Flame Breath", tags: [channel, frontal, trash] }
+  391726: { name: "Storm Breath", tags: [channel, frontal, trash] }
+  392394: { name: "Fire Maw", tags: [tank, mixed, trash, blockable], damage: 581894 }
+  392395: { name: "Thunder Jaw", tags: [tank, mixed, trash] }
+  392399: { name: "Stormcloud Detonation", tags: [avoid, trash] }
+  392569: { name: "Molten Blood", tags: [aoe, important, trash] }
+  392576: { name: "Thunder Blast", tags: [kickable, tank, magical, trash, reflectable] }
+  392641: { name: "Rolling Thunder", tags: [aoe, important, trash] }
+  1305201: { name: "Excavating Blast", tags: [aoe, avoid, important, trash] }
+  1305225: { name: "Tectonic Strike", tags: [tank, mixed, trash, blockable] }
+  1305955: { name: "Fiery Blast", tags: [kickable, tank, magical, trash, reflectable], damage: 358835 }
+  1307372: { name: "Fiery Demise", tags: [avoid, trash], damage: 96982 }
+  1307476: { name: "Thunder Stomper", tags: [aoe, important, trash] }
+  1310355: { name: "Tempest Stormshield", tags: [aoe, important, trash] }
+  384197: { name: "Cinderbolt", tags: [kickable, trash, reflectable] }   # WCL: Primalist Cinderweaver Cinderbolt variant
+
+  # Ruby Life Pools (Boss)
+  372107: { name: "Molten Boulder", tags: [avoid, frontal] }
+  372808: { name: "Frigid Shard", tags: [kickable, tank, physical, blockable], damage: 775859 }
+  372851: { name: "Chillstorm", tags: [aoe, avoid] }
+  372858: { name: "Searing Blows", tags: [channel, tank, mixed, blockable], damage: 407326 }
+  372863: { name: "Ritual of Blazebinding", tags: [avoid] }
+  373017: { name: "Blaze Volley", tags: [kickable, aoe] }
+  373087: { name: "Burnout", tags: [avoid] }
+  373680: { name: "Frost Overload", tags: [channel, aoe] }
+  381512: { name: "Stormslam", tags: [tank, mixed, blockable], damage: 387929 }
+  381516: { name: "Interrupting Cloudburst", tags: [aoe], damage: 96982 }
+  381517: { name: "Winds of Change", tags: [aoe] }
+  381525: { name: "Roaring Firebreath", tags: [channel, frontal] }
+  381602: { name: "Inferno Spit", tags: [aoe, avoid] }
+  384823: { name: "Inferno", tags: [aoe, meld] }
+  396044: { name: "Hailburst", tags: [aoe, avoid], damage: 121228 }
+
+  # Temple
+  1303443: { name: "Venomous Slash", tags: [tank, physical, blockable, trash] }   # WCL: Orb Guardian cast id; 1308546 is the magic component
+  264763: { name: "Spark Step", tags: [avoid, trash] }
+  265966: { name: "Ground Pound", tags: [aoe, important, trash], damage: 156626 }
+  267483: { name: "Loose Sparks", tags: [avoid, trash], damage: 290947 }   # damage-only id (Loose Spark / Spark Channeler) - NO cast events in any sampled report, so incoming_cast never sees it. Player debuff is 1225638. method.gg calls this id "Spark Vortex"; no spell by that name exists in DB2 or in any log - DB2 and WCL both say "Loose Sparks". Real cast id (if any) still unresolved
+  268013: { name: "Flame Shock", tags: [kickable, reflectable] }
+  272654: { name: "Head Butt", tags: [tank, physical, trash], damage: 727367 }
+  272655: { name: "Scouring Sand", tags: [frontal, trash] }
+  1291262: { name: "Lightning Bolt", tags: [kickable, stunnable, trash, reflectable], damage: 116379 }   # +stunnable: stopped with a stun in high-key logs
+  1291399: { name: "Serrated Charge", tags: [important, trash] }
+  1291468: { name: "Sunder Slam", tags: [tank, physical, trash, blockable], damage: 387929 }
+  1292585: { name: "Sandburst Arrow", tags: [avoid, trash] }
+  1292990: { name: "Swarming Krolusks", tags: [important, trash] }
+  # 1314082: { name: "Addle Mind", tags: [kickable, stunnable, channel, important, trash] }   # was 1293307 - never appears in logs; id confirmed from WCL
+  1293307: { name: "Addle Mind", tags: [kickable, stunnable, channel, important, trash] }   # REVERTED 2026-08-17: 1314082 absent from all 24 sampled S2 reports; 1293307 is live (Faithless Tender, 53 begincast / 57 interrupts)
+  1293464: { name: "Accumulate Charge", tags: [tank, physical, purge, trash] }   # the cast (Agitated Nimbus, 47 begincast); the purgeable buff it applies is 1310739
+  1310739: { name: "Accumulate Charge", tags: [purge, trash] }   # WCL: this id is the enemy buff players actually purge (58x); 1293464 is the cast
+  1293475: { name: "Release Charge", tags: [aoe, important, trash], damage: 145473 }
+  1293650: { name: "Call Lightning", tags: [avoid, trash] }
+  1296052: { name: "Imbued Conduction", tags: [important, trash] }
+  1302153: { name: "Latent Hex", tags: [aoe, avoid] }
+  1303486: { name: "Caustic Stomp", tags: [aoe, important, trash] }
+  1303535: { name: "Essence Disruption", tags: [kickable, stunnable, channel, trash] }
+  1308100: { name: "Poisoned Cheap Shot", tags: [kickable, trash] }
+  1308116: { name: "Arrow Barrage", tags: [important, meld, trash] }   # sheet links the visual spell; real cast id unresolved
+  1308546: { name: "Venomous Slash", tags: [avoid, tank, mixed, trash] }
+  1310396: { name: "Serpent's Stormcall", tags: [avoid, tank, magical, trash], damage: 116379 }
+  1310683: { name: "Venom Bolt", tags: [kickable, stunnable, trash, reflectable], damage: 116379 }   # +stunnable: stopped with a stun in high-key logs
+  1302158: { name: "Flame Shock", tags: [kickable, trash, reflectable] }   # WCL: Twisted Hexxer Flame Shock variant
+
+  # Temple (Boss)
+  1288457: { name: "Gust", tags: [reflectable] }   # WCL: Aspix; absent from sheet
+  264172: { name: "Burrow", tags: [aoe, avoid] }
+  1291598: { name: "Lightning Spire", tags: [channel, aoe, avoid], damage: 290947 }   # was 265986 - never appears in logs; id confirmed from WCL
+  266512: { name: "Consume Charge", tags: [aoe] }
+  267027: { name: "Poison Spit", tags: [kickable, stunnable, reflectable] }   # +stunnable: 15 casts stopped by stuns in key-15 logs
+  1288235: { name: "Thunder and Lightning", tags: [aoe, avoid] }
+  1288864: { name: "Tempest Winds", tags: [aoe, avoid] }
+  1289062: { name: "Gale Force", tags: [aoe, frontal] }
+  1289602: { name: "Thunder Spit", tags: [aoe, avoid] }
+  1290031: { name: "A Knot of Snakes", tags: [aoe] }
+  1290531: { name: "Induction", tags: [aoe, avoid], damage: 145473 }
+  1290797: { name: "Lightning Bite", tags: [tank, mixed, reflectable] }
+  1291622: { name: "Storm Catalyst", tags: [avoid] }
+  1293048: { name: "Serpentstorm", tags: [aoe, avoid] }
+  1300871: { name: "Corrupted Lifeforce", tags: [aoe, avoid] }
+  1301253: { name: "Agony of Sethraliss", tags: [avoid] }
+  1300803: { name: "Tainted Strike", tags: [tank, mixed, blockable] }   # was 1303446 (the magic component) - cast id confirmed from WCL
+
+  # Voidscar Arena
+  1228126: { name: "Macestorm", tags: [avoid, meld, trash] }
+  1228176: { name: "Lava Bolt", tags: [kickable, stunnable, trash, reflectable], damage: 116379 }   # +stunnable: stopped with a stun in high-key logs
+  1233264: { name: "Blisterburst", tags: [avoid, trash] }
+  1233398: { name: "Mad Shriek", tags: [kickable, stunnable, important, trash] }   # +stunnable: stopped with a stun in high-key logs
+  1233535: { name: "Shred Defense", tags: [tank, physical, trash, blockable], damage: 145473 }
+  1234855: { name: "Insidious Aura", tags: [channel, aoe, trash], damage: 87284 }
+  1234890: { name: "Smashing Charge", tags: [frontal, trash] }
+  1239856: { name: "Sky Strike", tags: [aoe, avoid, trash], damage: 145362 }
+  1245186: { name: "Head Bash", tags: [tank, magical, trash, reflectable], damage: 339438 }
+  1249238: { name: "Fire Spit", tags: [avoid, trash] }
+  1249621: { name: "Violent Sand", tags: [kickable, stunnable, aoe, important, freedom, trash] }   # +kickable: interrupted in high-key logs +stunnable: WCL key-14/15
+  1249661: { name: "Feral Rage", tags: [tank, physical, enrage, trash] }
+  1250021: { name: "Shell Guard", tags: [stunnable, channel, trash] }
+  1250043: { name: "Melt Armor", tags: [tank, mixed, trash] }
+  1250079: { name: "Ravenous Swarm", tags: [avoid, trash] }
+  1250640: { name: "Venomous Spit", tags: [avoid, trash] }
+  1254826: { name: "Bloodsurge", tags: [enrage, trash] }   # passive melee modifier - not a cast; `tank` dropped
+  1269284: { name: "Fel Steps", tags: [aoe, trash] }
+  1289265: { name: "Corrosive Essence", tags: [aoe, trash] }
+  1298899: { name: "Demoralizing Shout", tags: [kickable, stunnable, important, trash] }   # +stunnable: stopped with a stun in high-key logs
+  1298901: { name: "Brutal Slams", tags: [aoe, important, trash] }
+  1298908: { name: "Champion's Spear", tags: [aoe, important, trash] }
+  1299145: { name: "Earthsplitter", tags: [avoid, trash] }
+  1299270: { name: "Thundering Storm", tags: [channel, aoe, avoid, trash] }
+  1299913: { name: "Null Eruption", tags: [aoe, avoid, trash] }
+  1299938: { name: "Shadowbolt Volley", tags: [kickable, aoe, important, trash] }
+  1300243: { name: "Brutalize", tags: [channel, tank, physical, trash, blockable], damage: 678876 }
+  1300249: { name: "Devour", tags: [important, trash] }
+  1308385: { name: "Visceral Burst", tags: [kickable, important, trash] }   # WCL: Broodling of Ithraz; 439 begincast / only 23 completed / 409 interrupts. Absent from the sheet and from method.gg
+  1310319: { name: "Bolster", tags: [tank, physical, enrage, trash] }
+  1310324: { name: "Mending Void", tags: [kickable, stunnable, channel, trash] }
+  1311747: { name: "Orb of Disruption", tags: [aoe, important, trash] }
+  1311754: { name: "Forked Lightning", tags: [aoe, tank, magical, trash, reflectable] }
+  1311778: { name: "Rip and Slice", tags: [tank, physical, trash] }
+
+  # Voidscar Arena (Boss)
+  1222100: { name: "Nether Dash", tags: [channel, aoe, frontal] }   # was 1222098 - never appears in logs; id confirmed from WCL
+  1222642: { name: "Hulking Claw", tags: [tank, magical] }
+  1222724: { name: "Noxious Breath", tags: [frontal] }
+  1223298: { name: "Gravitic Orbs", tags: [aoe, freedom] }
+  1226120: { name: "Poison Splash", tags: [channel, aoe, avoid] }
+  1227197: { name: "Cosmic Crash", tags: [aoe, avoid] }
+  1227247: { name: "Void Cascade", tags: [channel, frontal, meld] }
+  1262497: { name: "Monstrous Roar", tags: [aoe], damage: 126077 }
+  1248112: { name: "Unstable Singularity", tags: [aoe] }   # was 1264191 - never appears in logs; id confirmed from WCL
+  1296963: { name: "Umbral Rupture", tags: [avoid] }
+  1297017: { name: "Void Blast", tags: [tank, magical, reflectable], damage: 271550 }
+  1300259: { name: "Dark Bloom", tags: [aoe, avoid], damage: 242456 }
+  1311923: { name: "Dark Waves", tags: [frontal, tank, magical] }
+
+  # Raid - Imperator Averzian
+  1255702: { name: "Pitch Bulwark", tags: [kickable, stunnable] }
+  1255749: { name: "Gathering Darkness", tags: [kickable, important] }
+
+  # Raid - Fallen King Salhadaar
+  1254088: { name: "Shadow Fracture", tags: [kickable, stunnable] }
+  1260052: { name: "Primordial Roar", tags: [tank, physical, blockable] }
+  1241692: { name: "Shadowclaw Slam", tags: [tank, mixed, blockable] }
+
+  # Raid - Vaelgor & Ezzorak
+  1245175: { name: "Voidbolt", tags: [kickable, stunnable] }
+  1245645: { name: "Rakfang", tags: [tank, mixed, blockable] }
+
+  # Raid - Lightblinded Vanguard
+  1258514: { name: "Blinding Light", tags: [kickable, show_all] }
+  1246745: { name: "Exorcism", tags: [reflectable, tank, magical] }
+  1251812: { name: "Final Verdict", tags: [reflectable, tank, magical] }
+  1251859: { name: "Shield of the Righteous", tags: [reflectable, tank, magical] }
+
+  # Raid - Crown of the Cosmos
+  1260000: { name: "Void Barrage", tags: [kickable, stunnable] }
+  1261531: { name: "Corrupting Essence", tags: [stunnable] }
+  1243743: { name: "Interrupting Tremor", tags: [kickable, important] }
+  1232467: { name: "Grasp of Emptiness", tags: [reflectable, tank, magical, important] }
+  1233787: { name: "Dark Hand", tags: [tank, mixed, blockable] }
+  1246461: { name: "Rift Slash", tags: [tank, physical, blockable] }
+
+  # Raid - Chimaerus, the Undreamt God
+  1249017: { name: "Fearsome Cry", tags: [kickable] }
+  1261997: { name: "Essence Bolt", tags: [stunnable] }
+  1262305: { name: "Alndust Upheaval", tags: [tank, mixed, blockable] }
+  1262053: { name: "Colossal Strikes", tags: [tank, mixed, blockable] }
+
+  # Raid - Belo'ren, Child of Al'ar
+  1264696: { name: "Light Blast / Void Blast", tags: [kickable, important] }
+  1243852: { name: "Light Eruption / Void Eruption", tags: [kickable, important] }
+
+  # Raid - Midnight Falls
+  1251392: { name: "Safeguard", tags: [kickable, important] }
+  # Raid - The Venomous Abyss
+  # kickable confirmed from WCL: interrupt events across 14 reports, filtered to raid fights
+  # only (gameZone 3004 The Venomous Abyss + 2987 The Tidebound Grotto). Mixed raid/M+ logs
+  # are why the filter matters - unfiltered, dungeon casts bleed in. Count = times actually
+  # kicked in those logs; caster names from the same events.
+  # Deliberately NOT tagged without evidence: stunnable, reflectable, aoe, tank/damage-type.
+  1290147: { name: "Poison Bolt", tags: [kickable] }              # WCL 499 kicks; Venomfang Seer/Venomcaller, Noxiss Venomcrest, Venomweaver Vexhiss
+  1286922: { name: "Icebound Flames", tags: [kickable] }          # WCL 323 kicks; Scrollsage Iku
+  1299465: { name: "Spirit Bolt", tags: [kickable] }              # WCL 311 kicks; Soulcoiler Oracle/Revenant
+  1303375: { name: "Spew Venom", tags: [kickable] }               # WCL 250 kicks; Hatchling of Vexhul
+  1290198: { name: "Toxin Infusion", tags: [kickable] }           # WCL 118 kicks; Venomfang Infuser
+  1290779: { name: "Malice", tags: [kickable, channel] }          # WCL 94 kicks; Doomscale Warden. +channel: SpellChannel.csv 6000ms
+  1305650: { name: "Anguished Cry", tags: [kickable] }            # WCL 86 kicks; Weakened Doomscale
+  1286399: { name: "Wail of Terror", tags: [kickable], interrupt_remains: 1.0 }  # WCL 85 kicks; Spiteful Soulcoiler. Disabled in fe8b224 because the kick fired too early; re-enabled with a last-second window instead. Cast is 10.0s or 15.0s by difficulty - remains-based, so the value holds for both.
+  1299745: { name: "Greater Healing Wave", tags: [kickable, important] }   # WCL 47 kicks; Soulcoiler Oracle. +important: enemy heal
+  1300238: { name: "Soulcoiler's Curse", tags: [kickable] }       # WCL 37 kicks; Drowned Echo (Nek'zali the Soulcoiler)
+  1286918: { name: "Eternal Nightfall", tags: [kickable], interrupt_remains: 99 }  # WCL 36 kicks; Hex Lord Malacrass (The Coiled Altar). 15.0s hard cast, protected until the shield breaks. remains: 99 = no cast runs 99s, so this never restricts -> kick as soon as it opens up. (The 3.7-12.4s spread in ranked logs is shield-break time, not players choosing to wait.)
+  1310764: { name: "Vicious Echoes", tags: [kickable] }           # WCL 33 kicks; Blightscale Shrieker
+  1299744: { name: "War Cry", tags: [kickable] }                  # WCL 31 kicks; Soulcoiler Defender
+  1290774: { name: "Venom Burst", tags: [kickable] }              # WCL 14 kicks; Lurking Venomspitter
+
+  # --- Auto-added from not_even_close (verify tags/placement) ---
+  244579: { name: "Decimate", tags: [aoe, avoid], damage: 81352, dr_type: magic }
+  245742: { name: "Shadow Pounce", tags: [], damage: 30507, dr_type: physical }
+  377009: { name: "Deafening Screech", tags: [aoe], damage: 61014, dr_type: magic }
+  386181: { name: "Mana Bomb (1 tick + hit)", tags: [], damage: 142033, dr_type: magic }
+  468221: { name: "Rallying Bellow", tags: [aoe], damage: 101690, dr_type: physical }
+  472672: { name: "Bolt Gale", tags: [aoe], damage: 244056, dr_type: magic }
+  473786: { name: "Fetid Spew", tags: [aoe, trash], damage: 183042, dr_type: magic }
+  1225201: { name: "Wave of Silence", tags: [], damage: 76268, dr_type: magic }
+  1252691: { name: "Gale Surge", tags: [], damage: 71183, dr_type: magic }
+  1259202: { name: "Cryoburst", tags: [aoe], damage: 76268, dr_type: magic }
+  1260648: { name: "Barrage", tags: [aoe], damage: 223718, dr_type: magic }
+  1262900: { name: "Ritual Drums", tags: [aoe, trash], damage: 50845, dr_type: physical }
+  1266485: { name: "Flanking Spear", tags: [tank], damage: 305071, dr_type: physical }
+  1276632: { name: "Raging Screech", tags: [aoe, trash], damage: 76268, dr_type: physical }
+  1280119: { name: "Hulking Fragment", tags: [aoe, tank], damage: 177958, dr_type: magic }
+  1288428: { name: "Overload", tags: [aoe], damage: 145473, dr_type: magic }
+
+  # Raid - Sporefall
+  1221714: { name: "Poison Burst", tags: [kickable, important], damage: 61014, dr_type: magic }

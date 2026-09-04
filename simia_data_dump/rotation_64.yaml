@@ -1,0 +1,255 @@
+# =============================================================================
+# Mage Frost - Spec ID 64
+# =============================================================================
+#
+# Upstream restructured this spec on 2026-08-12: ff_st/ff_aoe collapsed into one
+# `frostfire` list, ss_st/ss_aoe into one `spellslinger` list, and the sim-only
+# ff_tarswap / ss_tarswap lists (with variable.target_swapping) were deleted outright.
+
+version: 3
+spec: 64
+entry: main
+
+config:
+  ice_barrier_hp_pct:
+    section: "Defensive HP Percentage"
+    label: "Ice Barrier HP%"
+    type: slider
+    min: 0
+    max: 100
+    default: 50
+
+  ice_barrier_dmg_pct:
+    section: "Defensives Prediction Damage"
+    label: "Ice Barrier (Incoming Dmg%)"
+    type: slider
+    min: 0
+    max: 100
+    default: 40
+
+  ice_block_hp_pct:
+    section: "Defensive HP Percentage"
+    label: "Ice Block HP%"
+    type: slider
+    min: 0
+    max: 100
+    default: 20
+
+  ice_block_dmg_pct:
+    section: "Defensives Prediction Damage"
+    label: "Ice Block (Incoming Dmg%)"
+    type: slider
+    min: 0
+    max: 100
+    default: 75
+
+variables:
+  # variable,name=ff_trinket_timing,value=talent.frostfire_bolt&(fight_remains<15|prev_gcd.1.frozen_orb|prev_gcd.1.comet_storm|prev_gcd.1.glacial_spike|cooldown.ray_of_frost.charges>=1&debuff.freezing.react<12&buff.fingers_of_frost.react<2&buff.icicles.react<5&(!buff.frostfire_empowerment.react|active_enemies<=2)&(!buff.brain_freeze.react|buff.thermal_void.up))
+  ff_trinket_timing: "talent.frostfire_bolt&(fight_remains<15|prev_gcd.1.frozen_orb|prev_gcd.1.comet_storm|prev_gcd.1.glacial_spike|cooldown.ray_of_frost.charges>=1&debuff.freezing.stack<12&buff.fingers_of_frost.stack<2&buff.icicles.stack<5&(!buff.frostfire_empowerment.up|enemies_around_target<=2)&(!buff.brain_freeze.up|buff.thermal_void.up))"
+  # variable,name=ss_trinket_timing,value=!talent.frostfire_bolt&(fight_remains<15|prev_gcd.1.frozen_orb|time>1.5&cooldown.ray_of_frost.charges>=1&debuff.freezing.react<6&!buff.fingers_of_frost.react&buff.icicles.react<=3&(!buff.brain_freeze.react|buff.thermal_void.up))
+  # bare time → combat.time
+  ss_trinket_timing: "!talent.frostfire_bolt&(fight_remains<15|prev_gcd.1.frozen_orb|combat.time>1.5&cooldown.ray_of_frost.charges>=1&debuff.freezing.stack<6&!buff.fingers_of_frost.up&buff.icicles.stack<=3&(!buff.brain_freeze.up|buff.thermal_void.up))"
+
+lists:
+  defensives:
+    # --- Prediction Damage: pre-fire on a predicted incoming hit (% of effective HP) ---
+    - ice_barrier,range_check=none,if=incoming.mitigated.pct>=config.ice_barrier_dmg_pct
+    - ice_block,range_check=none,if=incoming.mitigated.pct>=config.ice_block_dmg_pct
+
+    # --- HP Percentage: react when already low ---
+    - ice_barrier,range_check=none,if=health.pct<=config.ice_barrier_hp_pct
+    - ice_block,range_check=none,if=health.pct<=config.ice_block_hp_pct
+
+  # ============================================================================
+  # CDS - Items, Racials, Openers, End-Of-Fight
+  # with no engine handler — dropped, raw line kept above each action.
+  # ============================================================================
+  cds:
+    # use_item,name=nevermelting_ice_crystal,if=variable.ff_trinket_timing|variable.ss_trinket_timing
+    - use_item,name=nevermelting_ice_crystal,if=var.ff_trinket_timing|var.ss_trinket_timing
+    # use_item,name=freightrunners_flask,if=variable.ff_trinket_timing|variable.ss_trinket_timing
+    - use_item,name=freightrunners_flask,if=var.ff_trinket_timing|var.ss_trinket_timing
+    # use_item,name=vaelgors_final_stare,if=(variable.ff_trinket_timing|variable.ss_trinket_timing)&(stat.haste_rating>stat.crit_rating|stat.versatility_rating>stat.crit_rating)
+    # Stripped: stat.* conditions (not supported)
+    - use_item,name=vaelgors_final_stare,if=var.ff_trinket_timing|var.ss_trinket_timing
+    # potion,if=variable.ff_trinket_timing|variable.ss_trinket_timing|fight_remains<35
+    # potion — not supported
+    # use_item,name=vaelgors_final_stare,if=variable.ff_trinket_timing|variable.ss_trinket_timing
+    - use_item,name=vaelgors_final_stare,if=var.ff_trinket_timing|var.ss_trinket_timing
+    # use_item,name=vile_vial_of_volatile_venom,if=variable.ff_trinket_timing|variable.ss_trinket_timing
+    - use_item,name=vile_vial_of_volatile_venom,if=var.ff_trinket_timing|var.ss_trinket_timing
+    # use_items
+    - trinket_1,if=trinket_1.sync
+    - trinket_2,if=trinket_2.sync
+
+    # blood_fury,if=variable.ff_trinket_timing|variable.ss_trinket_timing
+    - blood_fury,if=var.ff_trinket_timing|var.ss_trinket_timing
+    # berserking,if=variable.ff_trinket_timing|variable.ss_trinket_timing
+    - berserking,if=var.ff_trinket_timing|var.ss_trinket_timing
+    # fireblood,if=variable.ff_trinket_timing|variable.ss_trinket_timing
+    - fireblood,if=var.ff_trinket_timing|var.ss_trinket_timing
+    # ancestral_call,if=variable.ff_trinket_timing|variable.ss_trinket_timing
+    - ancestral_call,if=var.ff_trinket_timing|var.ss_trinket_timing
+
+    # Frostfire Opener: precast Frostfire Bolt/Blizzard --> Ray of Frost --> Flurry --> Frozen Orb.
+    # ray_of_frost,if=talent.frostfire_bolt,interrupt_if=!talent.hand_of_frost_4&active_enemies>=2&tick_time>gcd.remains&(!talent.crystalline_refraction|talent.crystalline_refraction&buff.fingers_of_frost.react=2),interrupt_global=1,interrupt_immediate=1,line_cd=9999
+    - ray_of_frost,if=talent.frostfire_bolt,line_cd=9999
+    # flurry,if=talent.frostfire_bolt&talent.wintertide,line_cd=9999
+    - flurry,if=talent.frostfire_bolt&talent.wintertide,line_cd=9999
+    # frozen_orb,if=talent.frostfire_bolt,line_cd=9999
+    - frozen_orb,if=talent.frostfire_bolt,line_cd=9999
+
+    # Spellslinger Opener: precast Frostbolt/Blizzard --> Flurry --> Frozen Orb --> Ray of Frost.
+    # flurry,if=!talent.frostfire_bolt&talent.wintertide,line_cd=9999
+    - flurry,if=!talent.frostfire_bolt&talent.wintertide,line_cd=9999
+    # frozen_orb,if=!talent.frostfire_bolt,line_cd=9999
+    - frozen_orb,if=!talent.frostfire_bolt,line_cd=9999
+    # ray_of_frost,if=!talent.frostfire_bolt,line_cd=9999
+    - ray_of_frost,if=!talent.frostfire_bolt,line_cd=9999
+
+    # End-Of-Fight actions and overcap protection.
+    # ray_of_frost,if=fight_remains<12|charges=2,interrupt_if=talent.frostfire_bolt&!talent.hand_of_frost_4&active_enemies>=2&tick_time>gcd.remains&(!talent.crystalline_refraction|talent.crystalline_refraction&buff.fingers_of_frost.react=2),interrupt_global=1,interrupt_immediate=1
+    # bare charges → cooldown.ray_of_frost.charges
+    - ray_of_frost,if=fight_remains<12|cooldown.ray_of_frost.charges=2
+    # comet_storm,if=fight_remains<8
+    - comet_storm,if=fight_remains<8
+
+    # invoke_external_buff,name=power_infusion,if=buff.power_infusion.down
+
+  # ============================================================================
+  # FROSTFIRE
+  # time-buff.rapid_refreezing.last_trigger has no engine handler (buff trigger
+  # timestamps are not tracked) — dropped, raw line kept above each action.
+  # ============================================================================
+  frostfire:
+    # glacial_spike,if=buff.glacial_spike.react|time-buff.rapid_refreezing.last_trigger<1.5
+    - glacial_spike,if=buff.glacial_spike.up
+    # comet_storm,if=active_enemies<=2|prev_gcd.2.glacial_spike&(time-buff.rapid_refreezing.last_trigger>1.5|!set_bonus.midnight_season_2_4pc)
+    - comet_storm,if=enemies_around_target<=2|prev_gcd.2.glacial_spike
+    # flurry,if=buff.brain_freeze.react&buff.thermal_void.down
+    - flurry,if=buff.brain_freeze.up&buff.thermal_void.down
+    # ice_lance,if=buff.fingers_of_frost.react=2
+    - ice_lance,if=buff.fingers_of_frost.stack=2
+    # ray_of_frost,if=!talent.hand_of_frost_4,interrupt_if=active_enemies>=2&tick_time>gcd.remains&(!talent.crystalline_refraction|talent.crystalline_refraction&buff.fingers_of_frost.react=2),interrupt_global=1,interrupt_immediate=1
+    # talent.hand_of_frost_4 → talent.hand_of_frost.rank>=4
+    - ray_of_frost,if=!talent.hand_of_frost.rank>=4
+    # frozen_orb
+    - frozen_orb
+    # blizzard,if=active_enemies>=(8-3*talent.freezing_winds-2*talent.freezing_rain)|active_enemies>=3&buff.freezing_rain.up
+    - blizzard,if=enemies_around_target>=(8-3*talent.freezing_winds-2*talent.freezing_rain)|enemies_around_target>=3&buff.freezing_rain.up
+    # ice_lance,if=buff.fingers_of_frost.react&buff.thermal_void.up
+    - ice_lance,if=buff.fingers_of_frost.up&buff.thermal_void.up
+    # ice_lance,if=debuff.freezing.stack>=12
+    - ice_lance,if=debuff.freezing.stack>=12
+    # flurry,if=cooldown_react
+    - flurry
+    # ice_nova,if=active_enemies>=5&talent.cone_of_frost&!buff.frostfire_empowerment.react&cooldown.ray_of_frost.charges>=1
+    - ice_nova,if=enemies_around_target>=5&talent.cone_of_frost&!buff.frostfire_empowerment.up&cooldown.ray_of_frost.charges>=1
+    # cone_of_cold,if=active_enemies>=5&talent.cone_of_frost&!buff.frostfire_empowerment.react&cooldown.ray_of_frost.charges>=1
+    - cone_of_cold,if=enemies_around_target>=5&talent.cone_of_frost&!buff.frostfire_empowerment.up&cooldown.ray_of_frost.charges>=1
+    # ray_of_frost,if=active_enemies<=2|!buff.frostfire_empowerment.react
+    - ray_of_frost,if=enemies_around_target<=2|!buff.frostfire_empowerment.up
+    # glacial_spike
+    - glacial_spike
+    # frostbolt
+    - frostbolt
+    # call_action_list,name=movement
+    - call_action_list,name=movement
+
+  # ============================================================================
+  # SPELLSLINGER
+  # ============================================================================
+  spellslinger:
+    # comet_storm
+    - comet_storm
+    # flurry,if=buff.brain_freeze.react&buff.thermal_void.down
+    - flurry,if=buff.brain_freeze.up&buff.thermal_void.down
+    # ice_lance,if=buff.fingers_of_frost.react=2
+    - ice_lance,if=buff.fingers_of_frost.stack=2
+    # frozen_orb
+    - frozen_orb
+    # glacial_spike,if=buff.glacial_spike.react|time-buff.rapid_refreezing.last_trigger<1.5
+    - glacial_spike,if=buff.glacial_spike.up
+    # blizzard,if=active_enemies>=(5-2*talent.freezing_winds)&buff.freezing_rain.up
+    - blizzard,if=enemies_around_target>=(5-2*talent.freezing_winds)&buff.freezing_rain.up
+    # ice_lance,if=buff.fingers_of_frost.react
+    - ice_lance,if=buff.fingers_of_frost.up
+    # ice_lance,if=debuff.freezing.react>=6
+    - ice_lance,if=debuff.freezing.stack>=6
+    # ray_of_frost,if=buff.icicles.react<=3|active_enemies>=3
+    - ray_of_frost,if=buff.icicles.stack<=3|enemies_around_target>=3
+    # flurry,if=cooldown_react
+    - flurry
+    # ice_nova,if=active_enemies>=4&talent.cone_of_frost
+    - ice_nova,if=enemies_around_target>=4&talent.cone_of_frost
+    # cone_of_cold,if=active_enemies>=4&talent.cone_of_frost
+    - cone_of_cold,if=enemies_around_target>=4&talent.cone_of_frost
+    # blizzard,if=active_enemies>=(7-2*talent.freezing_winds-2*talent.freezing_rain)
+    - blizzard,if=enemies_around_target>=(7-2*talent.freezing_winds-2*talent.freezing_rain)
+    # glacial_spike
+    - glacial_spike
+    # frostbolt
+    - frostbolt
+    # call_action_list,name=movement
+    - call_action_list,name=movement
+
+  # ============================================================================
+  # MOVEMENT
+  # ============================================================================
+  movement:
+    # any_blink,if=movement.distance>5
+    # blizzard,if=buff.freezing_rain.up
+    - blizzard,if=buff.freezing_rain.up
+    # ice_nova,if=talent.cone_of_frost
+    - ice_nova,if=talent.cone_of_frost
+    # cone_of_cold,if=talent.cone_of_frost
+    - cone_of_cold,if=talent.cone_of_frost
+    # ice_lance
+    - ice_lance
+
+  # ============================================================================
+  # MAIN
+  # ============================================================================
+  main:
+    # _shared.yaml lists
+    - call_action_list,name=spell_queue
+    - call_action_list,name=sanity_checks
+    - call_action_list,name=auto_target
+
+    # arcane_intellect
+    - arcane_intellect,range_check=none,if=(buff.arcane_intellect.down|action.arcane_intellect.overlayed)&lastcast.arcane_intellect>=10
+    # summon_water_elemental
+    - summon_water_elemental,range_check=none,if=!pet.alive
+
+    # Combat Check
+    - return,if=auto_combat.player
+
+    # Defensives
+    - call_action_list,name=defensives
+
+    # Interrupts
+    - counterspell,if=interrupt.target.check
+    - counterspell.mouseover,if=interrupt.mouseover.check
+    - counterspell.focus,if=interrupt.focus.check
+    # CC Interrupt
+    - dragons_breath,if=interrupt.cc.check
+    # Racial Interrupts
+    - quaking_palm,if=interrupt.cc.check
+    - haymaker,if=interrupt.cc.check
+    - war_stomp,if=interrupt.stun.aoe.check
+    - bull_rush,if=interrupt.stun.aoe.check
+    - tail_swipe,if=interrupt.stun.aoe.check
+
+    - call_action_list,name=auto_heal
+
+    # Target Check
+    - return,if=auto_combat.target
+
+    # CDs (items, racials, opener, end-of-fight; trinkets live in cds now)
+    # call_action_list,name=cds
+    - call_action_list,name=cds
+
+    # run_action_list,name=frostfire,if=talent.frostfire_bolt
+    - run_action_list,name=frostfire,if=talent.frostfire_bolt
+    # run_action_list,name=spellslinger
+    - run_action_list,name=spellslinger

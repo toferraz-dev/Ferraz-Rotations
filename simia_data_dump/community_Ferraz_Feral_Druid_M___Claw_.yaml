@@ -1,0 +1,191 @@
+version: 5.0
+author: Ferraz
+patch: "12.0.7"
+spec: 103
+name: Ferraz Feral Druid M+ (Claw)
+description: |
+  Ferraz Feral Druid M+ (Claw)
+entry: main
+
+config:
+  survival_instincts_hp_pct:
+    section: "Defensive HP Percentage"
+    label: "Survival Instincts HP%"
+    type: slider
+    min: 0
+    max: 100
+    default: 40
+
+  barkskin_hp_pct:
+    section: "Defensive HP Percentage"
+    label: "Barkskin HP%"
+    type: slider
+    min: 0
+    max: 100
+    default: 50
+
+  regrowth_ooc_hp_pct:
+    section: "Defensive HP Percentage"
+    label: "Regrowth OOC HP%"
+    type: slider
+    min: 0
+    max: 100
+    default: 60
+
+  predatory_swiftness_heal_solo_hp_pct:
+    section: "Defensive HP Percentage"
+    label: "Regrowth (Predatory Swiftness) HP% (Solo)"
+    type: slider
+    min: 0
+    max: 100
+    default: 80
+
+  predatory_swiftness_heal_group_hp_pct:
+    section: "Defensive HP Percentage"
+    label: "Regrowth (Predatory Swiftness) HP% (Group)"
+    type: slider
+    min: 0
+    max: 100
+    default: 40
+
+  survival_instincts_dmg_pct:
+    section: "Defensives Prediction Damage"
+    label: "Survival Instincts (Incoming Dmg%)"
+    type: slider
+    min: 0
+    max: 100
+    default: 55
+
+  barkskin_dmg_pct:
+    section: "Defensives Prediction Damage"
+    label: "Barkskin (Incoming Dmg%)"
+    type: slider
+    min: 0
+    max: 100
+    default: 40
+
+  travel_form_mode:
+    label: "Auto Travel Form"
+    type: checkbox
+    default: true
+
+variables:
+  bs_inc: buff.berserk.up|buff.incarnation_avatar_of_ashamane.up
+  bs_inc_remains: buff.berserk.remains+buff.incarnation_avatar_of_ashamane.remains
+  bs_inc_cd_remains: cooldown.berserk.remains>?cooldown.incarnation_avatar_of_ashamane.remains
+  bs_inc_cd_duration: cooldown.berserk.duration>?cooldown.incarnation_avatar_of_ashamane.duration
+  regrowth: 0
+  dotc_rake_threshold: 5-2*(talent.wild_slashes&!talent.infected_wounds)+3*(!talent.wild_slashes&talent.infected_wounds)
+  bs_inc_cd: var.bs_inc_cd_remains+10
+  convoke_cd: cooldown.convoke_the_spirits.remains+10
+  convokeCountRemaining: floor(((fight_remains-var.convoke_cd)%cooldown.convoke_the_spirits.duration)+(fight_remains>cooldown.convoke_the_spirits.remains))
+  zerkCountRemaining: floor(((fight_remains-var.bs_inc_cd)%var.bs_inc_cd_duration)+(fight_remains>var.bs_inc_cd_remains))
+  firstHoldBerserkCondition: var.zerkCountRemaining=1&var.convokeCountRemaining=1&cooldown.convoke_the_spirits.remains>10
+  secondHoldBerserkCondition: cooldown.convoke_the_spirits.remains>20&var.convokeCountRemaining=var.zerkCountRemaining&var.zerkCountRemaining=floor(((fight_remains-var.convoke_cd)%var.bs_inc_cd_duration)+(fight_remains>cooldown.convoke_the_spirits.remains))
+  holdBerserk: var.firstHoldBerserkCondition|var.secondHoldBerserkCondition
+  holdConvoke: var.convokeCountRemaining=1&var.zerkCountRemaining=1&!var.bs_inc
+  rake_tf: debuff.rake.visual_id=491160
+  rip_tf: debuff.rip.visual_id=491158
+  moonfire_tf: debuff.moonfire.visual_id=500891
+
+  rip_preempt: "active_enemies=1&combo_points>=5&dot.rip.up&(dot.rip.refreshable&(buff.tigers_fury.up|dot.rip.remains<cooldown.tigers_fury.remains)|buff.tigers_fury.up&!var.rip_tf|buff.tigers_fury.up&buff.tigers_fury.remains<2)"
+
+lists:
+  defensives:
+    - barkskin,off_gcd=true,ignore_queue=true,range_check=none,if=incoming.pct>=config.barkskin_dmg_pct
+    - survival_instincts,off_gcd=true,ignore_queue=true,range_check=none,if=incoming.pct>=config.survival_instincts_dmg_pct&incoming.mitigated.pct>=config.survival_instincts_dmg_pct
+    - bear_form,name="Shapeshift Clear",if=debuff_list.freedom.up&!buff.bear_form.up
+    - survival_instincts,off_gcd=true,ignore_queue=true,range_check=none,if=health.pct<=config.survival_instincts_hp_pct
+    - barkskin,off_gcd=true,ignore_queue=true,range_check=none,if=health.pct<=config.barkskin_hp_pct
+
+  cooldown:
+    - feral_frenzy,if=!talent.frantic_frenzy&combo_points<=2+(2*var.bs_inc)
+    - frantic_frenzy,if=buff.tigers_fury.up|combo_points<=2+(2*var.bs_inc)
+
+  finisher:
+    - rip,if=combo_points>=5&(dot.rip.refreshable&(buff.tigers_fury.up|dot.rip.remains<cooldown.tigers_fury.remains)|buff.tigers_fury.up&!var.rip_tf&dot.rip.up|buff.tigers_fury.up&buff.tigers_fury.remains<2&dot.rip.up)
+    - return,if=combo_points>=5&energy<50
+    - ferocious_bite,if=combo_points>=5
+    - ravage,if=combo_points>=5
+
+  aoe_finisher:
+    - primal_wrath,if=combo_points>=5&active_enemies>1&(dot.rip.remains<6.5&!var.bs_inc|dot.rip.refreshable)
+    - ravage,if=combo_points>=5&!talent.primal_wrath&active_enemies>=2+(3*!talent.rampant_ferocity)
+    - rip,if=combo_points>=5&!talent.primal_wrath&(dot.rip.down|dot.rip.refreshable&(buff.tigers_fury.up|!var.rip_tf))
+    - ferocious_bite,if=combo_points>=5&(talent.rampant_ferocity|buff.ravage.up&active_enemies<8|dot.bloodseeker_vines.ticking&active_enemies<5)
+    - ravage,if=combo_points>=5&(talent.rampant_ferocity|active_enemies<8|dot.bloodseeker_vines.ticking&active_enemies<5)
+    - primal_wrath,if=combo_points>=5
+    - ferocious_bite,if=combo_points>=5
+    - ravage,if=combo_points>=5
+    - thorn_bloom
+
+  builder:
+    - prowl,if=!buff.shadowmeld.up&(!var.rake_tf|dot.rake.refreshable)
+    - rake,if=(buff.tigers_fury.up|dot.rake.remains<cooldown.tigers_fury.remains)&(dot.rake.refreshable&(buff.tigers_fury.up|!var.rake_tf)|dot.rake.remains<2|buff.tigers_fury.up&!var.rake_tf)
+    - moonfire,if=talent.lunar_inspiration&(buff.tigers_fury.up|dot.moonfire.remains<cooldown.tigers_fury.remains)&(dot.moonfire.refreshable&(buff.tigers_fury.up|!var.moonfire_tf)|dot.moonfire.remains<2|buff.tigers_fury.up&!var.moonfire_tf)
+    - shred
+
+  aoe_builder:
+    - rake,if=dot.rake.refreshable&((talent.doubleclawed_rake&(!talent.lunar_inspiration|!talent.panthers_guile|active_dot.rake<5))|hero_tree.wildstalker&(active_dot.rake<2+!talent.panthers_guile+talent.lunar_inspiration))
+    - moonfire,if=talent.lunar_inspiration&dot.moonfire.refreshable
+    - 106785,if=hero_tree.druid_of_the_claw&var.bs_inc|buff.clearcasting.react&active_enemies>2&(hero_tree.druid_of_the_claw|active_enemies<7)
+    - 106785,if=buff.sudden_ambush.up&active_enemies>=5+(2*hero_tree.wildstalker)
+    - rake,if=dot.rake.refreshable&(hero_tree.wildstalker|active_enemies<=var.dotc_rake_threshold)
+    - rake,if=buff.tigers_fury.up&!var.rake_tf&active_enemies=2
+    - shred,if=combo_points<=1&active_enemies=2&talent.panthers_guile
+    - 106785,if=combo_points>1|active_enemies>2|!talent.panthers_guile
+
+  main:
+    - call_action_list,name=spell_queue
+    - call_action_list,name=sanity_checks
+    - call_action_list,name=auto_target
+
+    - mark_of_the_wild,range_check=none,if=(buff.mark_of_the_wild.down.any|action.mark_of_the_wild.overlayed)&lastcast.mark_of_the_wild>=10
+    - regrowth,range_check=none,if=health.pct<=config.regrowth_ooc_hp_pct&!player.combat
+
+    - travel_form,after=200,range_check=none,if=config.travel_form_mode&!player.combat&player.inopenworld&mount_usable&buff.travel_form.down&!target.quest_mob&!target.dummy
+
+    - bear_form,range_check=none,if=health.pct<=25&!buff.bear_form.up&player.combat
+    - heart_of_the_wild,range_check=none,if=buff.bear_form.up&player.combat
+
+    - shred,if=player.combat&target.attackable&target.in_melee&buff.cat_form.down&talent.fluid_form.enabled
+    - rake,if=player.combat&target.attackable&target.in_melee&buff.cat_form.down&talent.fluid_form.enabled
+    - cat_form,range_check=none,if=buff.cat_form.down&(target.attackable|enemies.40y)
+
+    - prowl,range_check=none,if=!var.bs_inc&buff.prowl.down&buff.shadowmeld.down&(target.attackable|enemies.40y)
+
+    - skull_bash,off_gcd=true,ignore_queue=true,if=interrupt.target.check
+    - skull_bash.mouseover,off_gcd=true,ignore_queue=true,if=interrupt.mouseover.check
+    - skull_bash.focus,off_gcd=true,ignore_queue=true,if=interrupt.focus.check
+    - mighty_bash,if=interrupt.cc.check
+    - incapacitating_roar,if=interrupt.stun.aoe.check
+
+    - call_action_list,name=auto_heal
+
+    - return,if=auto_combat.player
+
+    - call_action_list,name=defensives
+
+    - regrowth,delay=500,range_check=none,if=buff.predatory_swiftness.up&player.solo&health.pct<=config.predatory_swiftness_heal_solo_hp_pct&lastcast.regrowth>=2
+    - regrowth,delay=500,range_check=none,if=buff.predatory_swiftness.up&player.group&health.pct<=config.predatory_swiftness_heal_group_hp_pct&lastcast.regrowth>=2
+
+    - return,if=auto_combat.target
+
+    - rake,range_check=none,if=buff.prowl.up&target.in_melee
+    - return,if=buff.prowl.up
+
+    - tigers_fury,off_gcd=true,ignore_queue=true,if=(var.bs_inc_cd_remains<=1|var.bs_inc_cd_remains>10)&(cooldown.frantic_frenzy.remains<buff.tigers_fury.duration-1.5|cooldown.frantic_frenzy.remains>22|!talent.frantic_frenzy|active_enemies=1)
+
+    - chomp,if=buff.chomp_enabler.up
+
+    - call_action_list,name=cooldown
+
+    - ferocious_bite,if=buff.apex_predators_craving.up&!var.rip_preempt
+    - ravage,if=buff.apex_predators_craving.up&!var.rip_preempt
+
+    - call_action_list,name=finisher,if=active_enemies=1
+    - call_action_list,name=aoe_finisher,if=active_enemies>=2
+    - call_action_list,name=builder,if=active_enemies=1&combo_points<=4
+    - call_action_list,name=aoe_builder,if=active_enemies>1&combo_points<=4
+    - regrowth,range_check=none,if=buff.predatory_swiftness.up&var.regrowth
+    - tigers_fury,off_gcd=true,ignore_queue=true

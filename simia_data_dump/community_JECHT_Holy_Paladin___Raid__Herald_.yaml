@@ -1,0 +1,427 @@
+version: "1.123"
+spec: 65
+name: "JECHT Holy Paladin - Raid (Herald)"
+description: " JECHT Holy Paladin - Mythic Raid- Patch 12.1 test"
+author: "Jecht"
+patch: "12.1"
+
+movement_allowed: true
+entry: main
+
+config:
+
+  divine_shield_hp:
+    section: "1. Emergency & Defensives"
+    label: "Divine Shield HP %"
+    type: slider
+    min: 1
+    max: 100
+    default: 20
+
+  divine_protection_hp:
+    section: "1. Emergency & Defensives"
+    label: "Divine Protection HP %"
+    type: slider
+    min: 1
+    max: 100
+    default: 40
+
+  lay_on_hands_hp:
+    section: "1. Emergency & Defensives"
+    label: "LOH Target HP %"
+    type: slider
+    min: 1
+    max: 100
+    default: 20
+
+  blessing_of_sacrifice_hp:
+    section: "1. Emergency & Defensives"
+    label: "Blessing of Sacrifice HP %"
+    type: slider
+    min: 1
+    max: 100
+    default: 37
+
+  bos_targets:
+    section: "1. Emergency & Defensives"
+    label: "Blessing of Sacrifice Allowed Roles"
+    type: multi_select
+    options:
+      - label: "Tanks"
+        value: 0
+      - label: "Healers"
+        value: 1
+      - label: "DPS"
+        value: 2
+    default: [0]
+
+  bos_self_hp:
+    section: "1. Emergency & Defensives"
+    label: "Blessing of Sacrifice min self HP %"
+    type: slider
+    min: 1
+    max: 100
+    default: 60
+
+  avenging_wrath_hp:
+    section: "2. Major Cooldowns"
+    label: "Avenging Wrath Raid HP %"
+    type: slider
+    min: 1
+    max: 100
+    default: 70
+
+  avenging_wrath_injured:
+    section: "2. Major Cooldowns"
+    label: "Avenging Wrath min injured count"
+    type: slider
+    min: 1
+    max: 20
+    default: 5
+
+  beacon_of_virtue_hp:
+    section: "2. Major Cooldowns"
+    label: "Beacon of Virtue Raid HP %"
+    type: slider
+    min: 1
+    max: 100
+    default: 85
+
+  beacon_of_virtue_injured:
+    section: "2. Major Cooldowns"
+    label: "Beacon of Virtue min injured count"
+    type: slider
+    min: 1
+    max: 5
+    default: 3
+
+  tyrs_deliverance_hp:
+    section: "2. Major Cooldowns"
+    label: "Tyr's Deliverance Raid HP %"
+    type: slider
+    min: 1
+    max: 100
+    default: 70
+
+  tyrs_deliverance_injured:
+    section: "2. Major Cooldowns"
+    label: "Tyr's Deliverance min injured count"
+    type: slider
+    min: 1
+    max: 20
+    default: 4
+
+  holy_prism_hp:
+    section: "2. Major Cooldowns"
+    label: "Holy Prism Raid HP %"
+    type: slider
+    min: 1
+    max: 100
+    default: 80
+
+  holy_prism_injured:
+    section: "2. Major Cooldowns"
+    label: "Holy Prism min injured count"
+    type: slider
+    min: 1
+    max: 20
+    default: 3
+
+  aura_mastery_hp:
+    section: "2. Major Cooldowns"
+    label: "Aura Mastery Raid HP %"
+    type: slider
+    min: 1
+    max: 100
+    default: 65
+
+  aura_mastery_injured:
+    section: "2. Major Cooldowns"
+    label: "Aura Mastery min injured count"
+    type: slider
+    min: 1
+    max: 20
+    default: 6
+
+  dt_hp_threshold:
+    section: "2. Major Cooldowns"
+    label: "Divine Toll Raid HP %"
+    type: slider
+    min: 1
+    max: 100
+    default: 91
+
+  dt_injured_count:
+    section: "2. Major Cooldowns"
+    label: "Divine Toll min injured count"
+    type: slider
+    min: 1
+    max: 20
+    default: 3
+
+  holy_shock_hp:
+    section: "3. Healing Spells"
+    label: "Holy Shock HP %"
+    type: slider
+    min: 1
+    max: 100
+    default: 95
+
+  holy_light_mode:
+    section: "3. Healing Spells"
+    label: "Holy Light Mode (0=Instant-Only / 1=Fast Infusion Cast)"
+    type: slider
+    min: 0
+    max: 1
+    default: 0
+
+  fol_infusion_hp:
+    section: "3. Healing Spells"
+    label: "Flash of Light (With Infusion Proc) HP %"
+    type: slider
+    min: 1
+    max: 100
+    default: 89
+
+  hl_infusion_hp:
+    section: "3. Healing Spells"
+    label: "Holy Light (With Infusion Proc) HP %"
+    type: slider
+    min: 1
+    max: 100
+    default: 85
+
+  word_of_glory_hp:
+    section: "3. Healing Spells"
+    label: "WOG / Eternal Flame HP %"
+    type: slider
+    min: 1
+    max: 100
+    default: 85
+
+  flash_of_light_hp:
+    section: "3. Healing Spells"
+    label: "Flash of Light (Raw Emergency Cast) HP %"
+    type: slider
+    min: 1
+    max: 100
+    default: 30
+
+  lod_hp_threshold:
+    section: "3. Healing Spells"
+    label: "LOD Raid HP %"
+    type: slider
+    min: 1
+    max: 100
+    default: 98
+
+  mouseover_spells:
+    section: "4. Mouseover Options"
+    label: "Enable Mouseover Spells"
+    type: multi_select
+    options:
+      - label: "Lay on Hands"
+        value: 0
+      - label: "Word of Glory / Eternal Flame"
+        value: 1
+      - label: "Holy Shock"
+        value: 2
+      - label: "Holy Light"
+        value: 3
+      - label: "Flash of Light"
+        value: 4
+    default: [1, 2]
+
+variables:
+  has_ac:                 talent.avenging_crusader
+  has_eternal_flame:      talent.eternal_flame
+  has_divine_purpose:     talent.divine_purpose
+  has_hand_of_divinity:   talent.hand_of_divinity
+  has_beacon_of_faith:    talent.beacon_of_faith
+  has_tyrs_deliverance:   talent.tyrs_deliverance
+  has_bov:                talent.beacon_of_virtue
+  has_holy_prism:         talent.holy_prism
+
+  hp_capped:     holy_power>=5
+  hp_spendable:  holy_power>=3|buff.divine_purpose.up
+  in_burst:      buff.avenging_wrath.up|buff.avenging_crusader.up
+  iof_proc:      buff.infusion_of_light.up
+  dp_proc:       buff.divine_purpose.up
+  hod_proc:      buff.hand_of_divinity.up
+  tyrs_deliverance_up: buff.tyrs_deliverance.up
+  tyrs_deliverance_ready: var.has_tyrs_deliverance&cooldown.tyrs_deliverance.ready  
+
+  mo_friendly_valid:    mouseover.exists&mouseover.alive&mouseover.friendly&mouseover.range<=40
+  target_enemy_valid:   target.exists&target.enemy&target.alive
+
+  aw_condition:  group.count(cycle.health.effective.pct<config.avenging_wrath_hp)>=config.avenging_wrath_injured
+  am_condition:  group.count(cycle.health.effective.pct<config.aura_mastery_hp)>=config.aura_mastery_injured
+  dt_condition:  group.count(cycle.health.effective.pct<config.dt_hp_threshold)>=config.dt_injured_count
+  bov_condition: group.count(cycle.health.effective.pct<config.beacon_of_virtue_hp)>=config.beacon_of_virtue_injured
+  tyrs_condition: group.count(cycle.health.effective.pct<config.tyrs_deliverance_hp)>=config.tyrs_deliverance_injured
+  hp_condition:   group.count(cycle.health.effective.pct<config.holy_prism_hp)>=config.holy_prism_injured
+
+  lod_herald: group.count(cycle.health.effective.pct<=config.lod_hp_threshold&cycle.range<=40)>=6&talent.born_in_sunlight.enabled
+  lod_ls: group.count(cycle.health.effective.pct<=config.lod_hp_threshold&cycle.range<=40)>=8
+
+  t1_lightblind: trinket_1.id=230191
+  t2_lightblind: trinket_2.id=230191
+  has_lightblind: var.t1_lightblind|var.t2_lightblind
+
+lists:
+  out_of_combat:
+    - devotion_aura,range_check=none,if=!buff.devotion_aura.up&gcd.remains=0&(lastcast.devotion_aura>4|lastcast.devotion_aura=9999)
+    - crusader_aura,range_check=none,if=!buff.crusader_aura.up&player.mounted&gcd.remains=0&(lastcast.crusader_aura>4|lastcast.crusader_aura=9999)
+    - beacon_of_light,cycle=tanks,if=!var.has_bov&group.count(cycle.buff.beacon_of_light.up)=0&!cycle.buff.beacon_of_faith.up&cycle.range<=40
+    - beacon_of_faith,cycle=tanks,if=!var.has_bov&var.has_beacon_of_faith&group.count(cycle.buff.beacon_of_faith.up)=0&!cycle.buff.beacon_of_light.up&cycle.range<=40
+    - redemption,cycle=members,if=cycle.dead&cycle.range<=40
+    - word_of_glory,cycle=members,if=var.hp_spendable&!var.has_eternal_flame&cycle.health.effective.pct<config.word_of_glory_hp&cycle.range<=40
+    - eternal_flame,cycle=members,if=var.hp_spendable&var.has_eternal_flame&cycle.health.effective.pct<config.word_of_glory_hp&cycle.range<=40
+    - holy_shock,cycle=members,if=cooldown.holy_shock.charges>=1&cycle.health.effective.pct<config.holy_shock_hp&cycle.range<=40
+    - rite_of_sanctification,range_check=none,if=!player.combat&!buff.433550.up&lastcast.rite_of_sanctification>=10
+
+  emergency:
+    - gift_of_the_naaru,cycle=members,if=group.lowest.health.pct<=60
+    - divine_shield,interrupt=true,if=health.pct<config.divine_shield_hp&!debuff.forbearance.up
+    - divine_protection,if=health.pct<config.divine_protection_hp&cooldown.divine_protection.ready
+    - lay_on_hands.focus,range_check=focus,interrupt=true,if=focus.exists&focus.alive&focus.friendly&focus.health.effective.pct<config.lay_on_hands_hp&focus.range<=40&player.combat&config.loh_targets.has(0)&focus.tank
+    - lay_on_hands.focus,range_check=focus,interrupt=true,if=focus.exists&focus.alive&focus.friendly&focus.health.effective.pct<config.lay_on_hands_hp&focus.range<=40&player.combat&config.loh_targets.has(1)&focus.healer
+    - lay_on_hands.focus,range_check=focus,interrupt=true,if=focus.exists&focus.alive&focus.friendly&focus.health.effective.pct<config.lay_on_hands_hp&focus.range<=40&player.combat&config.loh_targets.has(2)&focus.dps
+    - blessing_of_sacrifice.focus,range_check=focus,interrupt=true,if=focus.exists&focus.alive&focus.friendly&focus.health.effective.pct<config.blessing_of_sacrifice_hp&focus.range<=40&player.health.effective.pct>config.bos_self_hp&player.combat&config.bos_targets.has(0)&focus.tank
+    - blessing_of_sacrifice.focus,range_check=focus,interrupt=true,if=focus.exists&focus.alive&focus.friendly&focus.health.effective.pct<config.blessing_of_sacrifice_hp&focus.range<=40&player.health.effective.pct>config.bos_self_hp&player.combat&config.bos_targets.has(1)&focus.healer
+    - blessing_of_sacrifice.focus,range_check=focus,interrupt=true,if=focus.exists&focus.alive&focus.friendly&focus.health.effective.pct<config.blessing_of_sacrifice_hp&focus.range<=40&player.health.effective.pct>config.bos_self_hp&player.combat&config.bos_targets.has(2)&focus.dps
+    - sacred_weapon,range_check=none,if=focus.health.pct<=60&focus.friendly&focus.range<=40&holy_power<=2&buff.hand_of_divinity.down&buff.infusion_of_light.down&buff.divine_purpose.down&lastcast.holy_light
+    - holy_bulwark,range_check=none,if=focus.health.pct<=60&focus.friendly&focus.range<=40&holy_power<=2&buff.hand_of_divinity.down&buff.infusion_of_light.down&buff.divine_purpose.down&lastcast.holy_light
+   
+  beacon_maintenance:
+    - beacon_of_light,cycle=tanks,if=!var.has_bov&group.count(cycle.buff.beacon_of_light.up)=0&!cycle.buff.beacon_of_faith.up&cycle.range<=40
+    - beacon_of_faith,cycle=tanks,if=!var.has_bov&var.has_beacon_of_faith&group.count(cycle.buff.beacon_of_faith.up)=0&!cycle.buff.beacon_of_light.up&cycle.range<=40
+
+  major_cooldowns:
+    - beacon_of_virtue,cycle=members,if=var.has_bov&cooldown.beacon_of_virtue.ready&cycle.health.effective.pct<=config.beacon_of_virtue_hp&cycle.range<=40&!cycle.is_player&var.bov_condition
+    - avenging_wrath,if=!var.has_ac&cooldown.avenging_wrath.ready&var.aw_condition
+    - avenging_crusader,if=var.has_ac&cooldown.avenging_crusader.ready&!buff.avenging_crusader.up&var.aw_condition
+    - aura_mastery,if=cooldown.aura_mastery.ready&var.am_condition
+    - divine_toll,range_check=none,interrupt=true,if=cooldown.divine_toll.ready&holy_power<=1&buff.avenging_wrath.up
+    - divine_toll,range_check=none,interrupt=true,if=cooldown.divine_toll.ready&holy_power<=1&var.dt_condition
+    - tyrs_deliverance,if=var.tyrs_deliverance_ready&var.tyrs_condition
+    - holy_prism,if=var.has_holy_prism&holy_power<=2&cooldown.holy_prism.ready&var.hp_condition&target.enemy
+    - holy_prism,target=lowest,if=var.has_holy_prism&holy_power<=2&cooldown.holy_prism.ready&var.hp_condition&!target.enemy
+
+  mouseover_friendly:
+    - lay_on_hands.mouseover,use_off_gcd=1,if=config.mouseover_spells.has(0)&mouseover.health.effective.pct<config.lay_on_hands_hp
+    - holy_light.mouseover,if=config.mouseover_spells.has(3)&var.hod_proc&mouseover.health.effective.pct<98
+    - holy_light.mouseover,if=config.mouseover_spells.has(3)&config.holy_light_mode=1&var.iof_proc&!player.moving&mouseover.health.effective.pct<config.hl_infusion_hp
+    - flash_of_light.mouseover,if=config.mouseover_spells.has(4)&var.iof_proc&mouseover.health.effective.pct<config.fol_infusion_hp
+    - eternal_flame.mouseover,if=config.mouseover_spells.has(1)&mouseover.health.effective.pct<config.word_of_glory_hp&var.hp_spendable&var.has_eternal_flame
+    - word_of_glory.mouseover,if=config.mouseover_spells.has(1)&mouseover.health.effective.pct<config.word_of_glory_hp&var.hp_spendable&!var.has_eternal_flame
+    - holy_shock.mouseover,if=config.mouseover_spells.has(2)&mouseover.health.effective.pct<config.holy_shock_hp&cooldown.holy_shock.charges>=1
+
+  trinkets:
+    - trinket_1,use_off_gcd=1,if=var.t1_lightblind&trinket_1.ready&cooldown.divine_toll.ready&buff.avenging_wrath.up&var.target_enemy_valid&target.range<=40
+    - trinket_2,use_off_gcd=1,if=var.t2_lightblind&trinket_2.ready&cooldown.divine_toll.ready&buff.avenging_wrath.up&var.target_enemy_valid&target.range<=40
+    - trinket_1,if=var.trinket1_living_silk&trinket_1.ready&var.in_burst
+    - trinket_2,if=var.trinket2_living_silk&trinket_2.ready&var.in_burst
+    - trinket_1,if=!var.trinket1_living_silk&!var.t1_lightblind&trinket_1.ready&trinket_1.sync&var.in_burst
+    - trinket_2,if=!var.trinket2_living_silk&!var.t2_lightblind&trinket_2.ready&trinket_2.sync&var.in_burst
+
+  spenders:
+    # 1. Priorité absolue aux soins ciblés / HoT puissants (WoG / Eternal Flame)
+    - eternal_flame,target=lowest,if=var.hp_spendable&var.has_eternal_flame&cycle.health.effective.pct<config.word_of_glory_hp&cycle.range<=40
+    - word_of_glory,target=lowest,if=var.hp_spendable&!var.has_eternal_flame&cycle.health.effective.pct<config.word_of_glory_hp&cycle.range<=40
+    
+    # 2. SotR pour DPS/regen mana si le groupe est globalement safe (pas de blessés en dessous de 95%)
+    - shield_of_the_righteous,if=var.hp_spendable&!buff.avenging_crusader.up&var.target_enemy_valid&target.range<=5&group.count(cycle.health.effective.pct<95)==0
+    
+    # 3. Light of Dawn uniquement en cas de besoin massif en multi-cible (si Eternal Flame risquerait l'overheal global)
+    - light_of_dawn,range_check=none,if=(var.lod_herald|var.lod_ls)
+    
+    # 4. Vidange de puissance sacrée si cap (5 HP)
+    - shield_of_the_righteous,if=var.hp_capped&var.target_enemy_valid&target.range<=5
+    - eternal_flame,target=lowest,if=var.hp_capped&var.has_eternal_flame&cycle.range<=40
+    - word_of_glory,target=lowest,if=var.hp_capped&!var.has_eternal_flame&cycle.range<=40
+
+  generators:
+    - holy_light,cycle=members,if=var.hod_proc&cycle.health.effective.pct<98&cycle.range<=40
+    - holy_shock,cycle=members,if=cooldown.holy_shock.charges>=1&cycle.health.effective.pct<config.holy_shock_hp&cycle.range<=40
+    - holy_light,cycle=members,if=config.holy_light_mode=1&var.iof_proc&!player.moving&cycle.health.effective.pct<config.hl_infusion_hp&cycle.range<=40
+    - flash_of_light,cycle=members,if=var.iof_proc&cycle.health.effective.pct<config.fol_infusion_hp&cycle.range<=40
+    - arcane_torrent,use_off_gcd=1,range_check=none,if=var.in_burst&holy_power<=4&active_enemies>=1
+    - holy_shock,cycle=members,if=cooldown.holy_shock.charges>=1&cycle.health.effective.pct<config.holy_shock_hp&cycle.range<=40
+    - holy_shock,cycle=members,if=var.holy_shock_ready&var.tyrs_deliverance_up&cycle.health.effective.pct<95
+    - hammer_of_wrath,if=holy_power.deficit>=1&var.target_enemy_valid&target.range<=30
+    - judgment,if=cooldown.judgment.ready&holy_power.deficit>=1&var.target_enemy_valid&target.range<=30
+    - holy_shock,if=cooldown.holy_shock.charges>=1&var.target_enemy_valid&target.range<=40
+    - flash_of_light,cycle=members,if=!var.iof_proc&!player.moving&cycle.health.effective.pct<config.flash_of_light_hp&cycle.range<=40
+    - sacred_weapon,range_check=none,if=focus.health.pct<=60&focus.friendly&focus.range<=40&holy_power<=2&buff.hand_of_divinity.down&buff.infusion_of_light.down&buff.divine_purpose.down&lastcast.holy_light
+    - holy_bulwark,range_check=none,if=focus.health.pct<=60&focus.friendly&focus.range<=40&holy_power<=2&buff.hand_of_divinity.down&buff.infusion_of_light.down&buff.divine_purpose.down&lastcast.holy_light
+
+  racial_defensive:
+    - stoneform,if=player.dispelable.list|health.pct<=60
+    - fireblood,if=player.dispelable.list|health.pct<=60
+    - will_to_survive,if=player.stunned
+    - gift_of_the_naaru,if=health.effective.pct<=40
+
+  racial_offensive:
+    - berserking,if=var.in_burst
+    - blood_fury,if=var.in_burst
+    - ancestral_call,if=var.in_burst
+
+  interrupts:
+    - hammer_of_justice,if=interrupt.stun.target.check
+    - hammer_of_justice.mouseover,if=interrupt.stun.mouseover.check
+    - hammer_of_justice.focus,if=interrupt.stun.focus.check
+    - blinding_light,if=interrupt.stun.aoe.check
+
+  main:
+    - call_action_list,name=spell_queue
+
+    # Aura Check
+    - devotion_aura,range_check=none,if=!buff.devotion_aura.up&gcd.remains=0&(lastcast.devotion_aura>4|lastcast.devotion_aura=9999)
+    
+    - call_action_list,name=sanity_checks
+    - call_action_list,name=auto_target
+
+    - call_action_list,name=out_of_combat
+
+    # Combat Check
+    - return,if=!player.combat
+
+    # Racial Interrupts
+    - quaking_palm,if=interrupt.cc.check
+    - haymaker,if=interrupt.cc.check
+    - war_stomp,if=interrupt.stun.aoe.check
+    - bull_rush,if=interrupt.stun.aoe.check
+    - tail_swipe,if=interrupt.stun.aoe.check
+
+    - call_action_list,name=auto_heal
+    
+    - call_action_list,name=interrupts
+
+    - return,if=player.casting
+
+    - devotion_aura,range_check=none,if=!buff.devotion_aura.up&gcd.remains=0&(lastcast.devotion_aura>4|lastcast.devotion_aura=9999)
+
+    - call_action_list,name=out_of_combat,if=!player.combat
+    - return,if=!player.combat
+
+    - call_action_list,name=emergency
+
+    - arcane_torrent,use_off_gcd=1,range_check=none,if=holy_power<=4&active_enemies>=1&target.exists&target.enemy&target.dispelable.buff
+
+    - call_action_list,name=trinkets
+    - call_action_list,name=major_cooldowns
+    - call_action_list,name=racial_defensive
+    - return,if=player.cc
+
+    - cleanse,cycle=members,if=cycle.dispelable.list&cycle.range<=40
+    - call_action_list,name=beacon_maintenance
+
+    - call_action_list,name=spenders,if=var.hp_capped
+    - call_action_list,name=mouseover_friendly,if=var_mo_friendly_valid
+    - call_action_list,name=spenders
+    - call_action_list,name=racial_offensive,if=var.in_burst
+    - call_action_list,name=generators
+
+    # Target Check
+    - return,if=auto_combat.target

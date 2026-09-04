@@ -1,0 +1,354 @@
+# SimC Class-Specific Aliases
+#
+# The base SimC syntax (buff.X.up, cooldown.X.remains, etc.) is handled natively
+# in simc_expr.cpp. This file contains only class-specific aliases and shortcuts.
+#
+# Format: alias → actual_expression
+
+expressions:
+  # ============================================================================
+  # Target immunity — target has an immunity buff (e.g. Divine Shield phase)
+  # Usage: !target.immune in DPS action conditions
+  # ============================================================================
+  target.immune: target.buff_list.immunity.up
+
+  # ============================================================================
+  # Instance type alias
+  # ============================================================================
+  player.ininstancedpve: (player.indungeon|player.inraid|player.inmythicplus)
+  player.inopenworld: (!player.indungeon&!player.inraid&!player.inarena&!player.inpvp)
+
+  # ============================================================================
+  # Group composition — presence of a living healer (group.count iterates
+  # GetSortedMembers which already filters out dead/invalid members).
+  # group: at least one healer alive; solo: no healer alive.
+  # ============================================================================
+  player.group: group.count(cycle.healer)>=1
+  player.solo: group.count(cycle.healer)=0
+
+  # ============================================================================
+  # Auto Combat return guards (open world only, never in instances)
+  # True = should return. Usage: return,if=auto_combat.player
+  # In instances: always return if not in combat (no override)
+  # In open world: return unless an auto_combat override matches
+  # ============================================================================
+  auto_combat.player: (!player.combat&(!player.inopenworld|config.auto_combat.has(0)|!((config.auto_combat.has(1)&target.quest_mob&target.enemy)|(config.auto_combat.has(2)&target.combat&target.enemy)|(config.auto_combat.has(3)&player.auto_attacking&target.enemy))))
+  auto_combat.target: ((!target.valid|target.dead|target.immune)&(!player.inopenworld|config.auto_combat.has(0)|!((config.auto_combat.has(1)&target.quest_mob&target.enemy&!target.dead)|(config.auto_combat.has(2)&target.combat&target.enemy&!target.dead)|(config.auto_combat.has(3)&target.targeting_party&target.enemy&!target.dead))))
+
+  # ============================================================================
+  # Interrupt condition aliases
+  #
+  # Focus precedence: when the player has an enemy focus, target/mouseover
+  # interrupts (and their stun variants) are suppressed — only the focus
+  # interrupt fires. AoE stun is unaffected (positional, not unit-targeted).
+  #
+  # In dungeon/raid:
+  #   Kick:  kickable-tagged spells only (stunnable-only casts cannot be kicked);
+  #          channels kick immediately; important casts kick once interrupt_important_pct%
+  #          of cast has elapsed; non-important casts kick once config.interrupt_pct% has
+  #          elapsed (0 = always, 100 = never). BOSSES INCLUDED.
+  #
+  #          The kick aliases used to carry `&!<unit>.boss` here, which silently killed
+  #          all 34 kickable entries filed under a (Boss)/Raid category — Shadow Fracture,
+  #          Blinding Light, Interrupting Tremor, Chaos Bolt, Poison Nova and the rest,
+  #          every one added with WCL kick counts. It was redundant belt-and-braces:
+  #          `incoming_cast.kickable.up` already requires the spell to be catalogued in
+  #          _casts.yaml AND tagged kickable, which IS the opt-in list. Removed 2026-08-28.
+  #          (Outside instances the alias always kicked bosses anyway, so the rule only
+  #          applied where our data is best — exactly backwards.)
+  #
+  #          The STUN aliases keep their !<unit>.boss: bosses are stun-immune, so that one
+  #          is a real mechanic, not a safety rail.
+  #
+  #          Per-cast timing windows, in SECONDS, from _casts.yaml (0/absent = no gate):
+  #            interrupt_after: N   -> require casting.elapsed>=N before kicking
+  #            interrupt_remains: N -> only kick once casting.remains<=N
+  #          Both AND on top of config.interrupt_pct, so they only ever make the gate
+  #          stricter. Set both to kick inside a window.
+  #
+  #          `interrupt_remains: 99` is the idiom for "kick on sight": no cast runs 99s, so
+  #          the clause never restricts and the kick lands as soon as the rest of the gate
+  #          allows. Use it for a cast held notInterruptible until a mechanic clears (a
+  #          shield) - notInterruptible already blocks the kick, so the field just documents
+  #          that no extra wait is wanted once it opens up.
+  #
+  #          These replace the old min50 tag. Percent was the wrong unit: Death Bolt
+  #          (1278893) is a 10.0s cast, so min50 held the kick until 5.0s had elapsed with
+  #          5.0s still to run. A new spell now needs a number in _casts.yaml and nothing
+  #          here — that is the whole point of moving the value into the data file.
+  #
+  #          interrupt_remains has a hard floor of 0.3s: ShouldCastWithTag drops any
+  #          kickable cast with <0.3s left before incoming_cast.kickable.up is even
+  #          answered, so a smaller value silently never fires.
+  #
+  #          NEVER put either field on a CHANNEL. These clauses AND against the whole
+  #          alias including its `channeling` leg, which kicks channels on sight; a timing
+  #          value there would suppress the immediate kick. 21 kickable entries are
+  #          channels. (min50 had this property too; it was just never written down.)
+  #   Stun:  stunnable-tagged only; never boss; suppressed while our own kick is ready
+  #          and the cast is kickable (the kick handles it)
+  #   AoE:   1+ stunnable within 8y; respects config.interrupt_target. Suppressed when
+  #          that is a single cast our ready kick already covers.
+  # Outside:
+  #   Kick:  any interruptible cast
+  #   Stun:  any non-boss cast (mobs are safe to stun, bosses are never stunned)
+  # ============================================================================
+  # Spell Reflection guard: don't interrupt/stun a target that has reflect up — our cast would bounce back.
+  interrupt.target.check: "!focus.enemy&config.interrupt_target&target.enemy&!target.buff_list.spell_reflect.up&(!player.ininstancedpve&target.casting.interruptible|player.ininstancedpve&(config.interrupt_all&target.casting.interruptible&(target.casting.remains<1|target.channeling)|target.incoming_cast.kickable.up&(target.channeling|target.casting.interrupt_after>0|target.casting.interrupt_remains>0|target.casting.important&target.casting.elapsed*100>=config.interrupt_important_pct*(target.casting.remains+target.casting.elapsed)|!target.casting.important&target.casting.elapsed*100>=config.interrupt_pct*(target.casting.remains+target.casting.elapsed))))&target.casting.elapsed>=0.2&(target.casting.interrupt_after=0|target.casting.elapsed>=target.casting.interrupt_after)&(target.casting.interrupt_remains=0|target.casting.remains<=target.casting.interrupt_remains)"
+  interrupt.mouseover.check: "!focus.enemy&config.interrupt_mouseover&mouseover.enemy&!mouseover.buff_list.spell_reflect.up&(!player.ininstancedpve&mouseover.casting.interruptible|player.ininstancedpve&(config.interrupt_all&mouseover.casting.interruptible&(mouseover.casting.remains<1|mouseover.channeling)|mouseover.incoming_cast.kickable.up&(mouseover.channeling|mouseover.casting.interrupt_after>0|mouseover.casting.interrupt_remains>0|mouseover.casting.important&mouseover.casting.elapsed*100>=config.interrupt_important_pct*(mouseover.casting.remains+mouseover.casting.elapsed)|!mouseover.casting.important&mouseover.casting.elapsed*100>=config.interrupt_pct*(mouseover.casting.remains+mouseover.casting.elapsed))))&mouseover.casting.elapsed>=0.2&(mouseover.casting.interrupt_after=0|mouseover.casting.elapsed>=mouseover.casting.interrupt_after)&(mouseover.casting.interrupt_remains=0|mouseover.casting.remains<=mouseover.casting.interrupt_remains)"
+  interrupt.focus.check: "config.interrupt_focus&focus.enemy&!focus.buff_list.spell_reflect.up&(!player.ininstancedpve&focus.casting.interruptible|player.ininstancedpve&(config.interrupt_all&focus.casting.interruptible&(focus.casting.remains<1|focus.channeling)|focus.incoming_cast.kickable.up&(focus.channeling|focus.casting.interrupt_after>0|focus.casting.interrupt_remains>0|focus.casting.important&focus.casting.elapsed*100>=config.interrupt_important_pct*(focus.casting.remains+focus.casting.elapsed)|!focus.casting.important&focus.casting.elapsed*100>=config.interrupt_pct*(focus.casting.remains+focus.casting.elapsed))))&focus.casting.elapsed>=0.2&(focus.casting.interrupt_after=0|focus.casting.elapsed>=focus.casting.interrupt_after)&(focus.casting.interrupt_remains=0|focus.casting.remains<=focus.casting.interrupt_remains)"
+  # Our own kick is up, or lands within 0.2s. Every class interrupt is listed; the
+  # player has exactly one, and `usable.X` returns 0 for a spell absent from the
+  # spellbook (evaluateUsable, simc_expr.cpp:2647), so every other term is dead. It
+  # also covers a school-locked or silenced kick. A user-BLOCKED kick is caught by
+  # the cooldown leg — evaluateCooldownImpl synthesizes Remains = 99999 when blocked.
+  #
+  # Never write the window as a bare `cooldown.X.remains<0.2`: evaluateCooldown
+  # returns 0 on a spellbook miss (:2263), so `<0.2` reads TRUE for a spell we do not
+  # have and the stun is suppressed forever. `usable.X` is what makes the term fail
+  # safe. 0.2s is enough of a wait because every stun alias already holds for
+  # casting.elapsed>=0.75 and re-evaluates each frame.
+  #
+  # Stun spells are deliberately absent (axe_toss, hammer_of_justice): they ARE the
+  # fallback, so listing one would make it suppress itself.
+  interrupt.kick.soon: "usable.counter_shot&cooldown.counter_shot.remains<0.2|usable.counterspell&cooldown.counterspell.remains<0.2|usable.disrupt&cooldown.disrupt.remains<0.2|usable.kick&cooldown.kick.remains<0.2|usable.mind_freeze&cooldown.mind_freeze.remains<0.2|usable.muzzle&cooldown.muzzle.remains<0.2|usable.pummel&cooldown.pummel.remains<0.2|usable.quell&cooldown.quell.remains<0.2|usable.rebuke&cooldown.rebuke.remains<0.2|usable.silence&cooldown.silence.remains<0.2|usable.skull_bash&cooldown.skull_bash.remains<0.2|usable.solar_beam&cooldown.solar_beam.remains<0.2|usable.spear_hand_strike&cooldown.spear_hand_strike.remains<0.2|usable.spell_lock&cooldown.spell_lock.remains<0.2|usable.wind_shear&cooldown.wind_shear.remains<0.2"
+
+  # CC fallback stun. Kick and stun are picked in SEPARATE slots (every kick is
+  # off-GCD, most stuns are on-GCD), so action-list order does NOT sequence them —
+  # both fire in the same frame on a cast tagged kickable+stunnable (47 of 129 are).
+  # Every stun alias is gated on interrupt.kick.soon: each rotation defines it as
+  # `kick_ready: "action.<its kick>.ready"`. Undefined => 0 => stun always allowed,
+  # so a spec with no kick (or one whose kick is blocked/on CD) keeps the fallback.
+  # In instance: stunnable-tagged spells only; never boss
+  # Outside: any non-boss cast (classification<6); never boss
+  interrupt.cc.check: "!focus.enemy&config.interrupt_target&target.enemy&!target.boss&!target.buff_list.spell_reflect.up&(!player.ininstancedpve&target.classification<6&(target.casting|target.channeling)|player.ininstancedpve&target.incoming_cast.stunnable.up)&target.casting.elapsed>=0.75&!(interrupt.kick.soon&(target.incoming_cast.kickable.up|(!player.ininstancedpve|config.interrupt_all)&target.casting.interruptible))"
+  # Stun-based primary interrupts (e.g., Warlock Axe Toss):
+  # In instance: stunnable-tagged spells only; never boss
+  # Outside: any non-boss cast; never boss
+  interrupt.stun.target.check: "!focus.enemy&config.interrupt_target&target.enemy&!target.boss&!target.buff_list.spell_reflect.up&(!player.ininstancedpve&target.classification<6&(target.casting|target.channeling)|player.ininstancedpve&target.incoming_cast.stunnable.up)&target.casting.elapsed>=0.75&!(interrupt.kick.soon&(target.incoming_cast.kickable.up|(!player.ininstancedpve|config.interrupt_all)&target.casting.interruptible))"
+  interrupt.stun.mouseover.check: "!focus.enemy&config.interrupt_mouseover&mouseover.enemy&!mouseover.boss&!mouseover.buff_list.spell_reflect.up&(!player.ininstancedpve&mouseover.classification<6&(mouseover.casting|mouseover.channeling)|player.ininstancedpve&mouseover.incoming_cast.stunnable.up)&mouseover.casting.elapsed>=0.75&!(interrupt.kick.soon&(mouseover.incoming_cast.kickable.up|(!player.ininstancedpve|config.interrupt_all)&mouseover.casting.interruptible))"
+  interrupt.stun.focus.check: "config.interrupt_focus&focus.enemy&!focus.boss&!focus.buff_list.spell_reflect.up&(!player.ininstancedpve&focus.classification<6&(focus.casting|focus.channeling)|player.ininstancedpve&focus.incoming_cast.stunnable.up)&focus.casting.elapsed>=0.75&!(interrupt.kick.soon&(focus.incoming_cast.kickable.up|(!player.ininstancedpve|config.interrupt_all)&focus.casting.interruptible))"
+  # AoE stun: any stunnable-tagged cast within 8y; never boss; respects config.interrupt_target
+  interrupt.stun.aoe.check: "config.interrupt_target&target.enemy&!target.boss&incoming_cast.8y.stunnable.count>=1&(incoming_cast.8y.stunnable.count>=2|!interrupt.kick.soon|!target.incoming_cast.kickable.up)"
+
+  # ============================================================================
+  # Death Knight - Hero Trees
+  # ============================================================================
+  hero_tree.deathbringer: talent.reapers_mark
+  hero_tree.sanlayn: talent.vampiric_strike
+  hero_tree.rider_of_the_apocalypse: talent.riders_champion
+  # Death Knight - Specific buff aliases
+  buff.lesser_ghoul_ready.stack: player.buff.stacks(1254252)
+  buff.lesser_ghoul.up: player.buff.remains(1242998)>0
+  pet.lesser_ghoul_army.active: minion.237409.count>0
+  # Army of the Dead applies a flat 30s self-buff (42650) on cast - measured at 30.01/30.01/
+  # 29.99/30.01/29.00s across 5 casts, no mastery term. Not minions: Army summons entities
+  # named "Lesser Ghoul", which Forbidden Knowledge also spawns, so a ghoul count cannot
+  # tell the two apart. The old lastcast formula read 22.5s at 53.78% mastery - 7.5s short.
+  pet.army_ghoul.active: buff.42650.up
+
+  # Temporary-summon lifetimes. The client stores none (proven with -difftimer: a
+  # settled guardian has one moving dword in its descriptor, a wall clock, and no
+  # expiry stamp), so remaining = duration - elapsed, with duration declared here.
+  # Durations come from SimC's set_default_duration calls — see SimC_APL_Reverser
+  # _minions.yaml, generated from sc_spell_data_ptr.inc. They are expressions, so a
+  # static talent modifier can be written inline: "25+5*talent.x".
+  # NOTE: .elapsed is exact; .remains is only as good as the duration. For a summon
+  # whose lifetime can be EXTENDED in combat, use .elapsed and avoid .remains.
+  # Parenthesised so `...remains<9` can never bind as `15-(elapsed<9)`.
+  #
+  # `.remains` is the LONGEST life left, because `.elapsed` is the age of the newest
+  # copy. With 4 Magi alive at staggered ages that is the one dying LAST — the right
+  # answer for "will one still be attacking in N seconds", the wrong one for "is one
+  # about to expire". For that, `.remains_min` uses `.max_elapsed` (the oldest copy).
+  # Identical for anything that only ever has one out (Gargoyle, Lord of the Dead).
+  #
+  # CAVEAT — our naming is INVERTED from SimC for multi-copy summons. SimC aliases
+  # `remains` to `min_remains` (pet_spawner_impl.hpp:604-605, `active_pet_min_remains`),
+  # so SimC's `pet.X.remains` is the copy dying SOONEST = our `.remains_min`, and
+  # SimC's `max_remains` is our `.remains`. Converting a SimC `pet.X.remains` on a
+  # summon that stacks (Army ghouls, Magi) must therefore use `.remains_min`.
+  # No rotation references those aliases today, so nothing is currently wrong; only
+  # `pet.lord_of_the_dead.*` is live and it never has more than one copy, where
+  # min == max and the distinction vanishes.
+  #
+  # Every `.remains` is clamped at BOTH ends: `<?0` (MAX) on the high side, and a
+  # `*minion.<id>.up` factor on the low side.
+  #   - Without the clamp, a guardian that outlives its declared duration drives
+  #     remains NEGATIVE and every `remains<N` gate flips permanently TRUE — the
+  #     opposite of "about to expire". Measured live 2026-08-17: Lord of the Dead was
+  #     still in the object manager at elapsed=30.9s against a declared 15
+  #     (snapshot_20260817_003515.log), so this is not theoretical.
+  #   - Without the `.up` factor, remains reads the FULL duration when nothing is
+  #     summoned, because `minion.<id>.elapsed` returns 0 in that case (and also when
+  #     the summon predates our first look, `ageKnown=false` — evaluateMinion,
+  #     simc_expr.cpp:2464). `15-0` = 15 "seconds left" on a guardian that does not
+  #     exist. 0 matches how `buff.X.remains` reports an absent buff.
+  # Both sentinels are 0, so `.remains` is only meaningful ANDed with `.active`/`.up`:
+  # a bare `remains<N` is true when nothing is out. Pair them, always.
+  minion.gargoyle.remains: (((25-minion.27829.elapsed)<?0)*minion.27829.up)
+  minion.army_ghoul.remains: (((30-minion.237409.elapsed)<?0)*minion.237409.up)
+  minion.magus.remains: (((15-minion.163366.elapsed)<?0)*minion.163366.up)
+  minion.lord_of_the_dead.remains: (((15-minion.264321.elapsed)<?0)*minion.264321.up)
+  minion.army_ghoul.remains_min: (((30-minion.237409.max_elapsed)<?0)*minion.237409.up)
+  minion.magus.remains_min: (((15-minion.163366.max_elapsed)<?0)*minion.163366.up)
+
+  # SimC pet.* spellings, so APL lines convert verbatim (see the Warlock/Priest
+  # pet aliases above — pet.<NAME>.* has no engine handler without one).
+  # SimC gives the LotD pet a FLAT 15s (set_default_duration(lord_of_the_dead
+  # ->effectN(2)) = 15000ms, sc_death_knight.cpp:14744). The pooled duration of the
+  # Magi it consumes (lotd_magus_dur, :4588) is NOT lifetime — it is handed to the
+  # pet at :6849 and used only in composite_player_multiplier (:4662,
+  # `m *= 1.0 + 0.01*magus_dur`), i.e. it makes the summon stronger, not longer.
+  # Live disagrees: the creature was still present at elapsed=30.9s. So `.active`
+  # carries the SimC window explicitly — past 15s SimC's pet no longer exists and
+  # every pet.lord_of_the_dead.* term must read false, which is what 1:1 means here.
+  # Only this summon is guarded; the others have shown no live/SimC divergence.
+  # SimC's spawner `active` is n_active_pets() — a COUNT, not a bool
+  # (pet_spawner_impl.hpp:600). Only one LotD is ever out so count is 0/1 either way,
+  # but keep the count form so `active>=N` would behave.
+  pet.lord_of_the_dead.active: (minion.264321.count*(minion.264321.elapsed<15))
+  pet.lord_of_the_dead.remains: (((15-minion.264321.elapsed)<?0)*minion.264321.up)
+  pet.gargoyle.active: minion.27829.count>0
+  pet.magus.active: minion.163366.count>0
+  buff.dark_transformation.up: pet.buff.dark_transformation.up
+  buff.dark_transformation.remains: pet.buff.dark_transformation.remains
+  buff.dark_transformation.elapsed: pet.buff.dark_transformation.elapsed
+  # Death Knight - Specific debuff aliases
+  drw.bp_ticking: target.debuff.remains(55078)>0
+
+  # ============================================================================
+  # Demon Hunter - Hero Trees
+  # ============================================================================
+  hero_tree.felscarred: talent.demonsurge
+  hero_tree.aldrachi_reaver: talent.art_of_the_glaive
+  hero_tree.annihilator: talent.untethered_rage
+  hero_tree.devourer: talent.void_ray
+  # Demon Hunter - Demonsurge buff (Felscarred hero tree, tracks surge charges)
+  buff.demonsurge.up: player.buff.remains(452416)>0
+  buff.demonsurge.stack: player.buff.stacks(452416)
+  buff.demonsurge.remains: player.buff.remains(452416)
+
+  # ============================================================================
+  # Druid - Hero Trees
+  # ============================================================================
+  hero_tree.druid_of_the_claw: talent.ravage
+  hero_tree.wildstalker: talent.bloodseeker_vines
+  hero_tree.elunes_chosen: talent.boundless_moonlight
+  hero_tree.keeper_of_the_grove: talent.dream_surge
+
+  # ============================================================================
+  # Rogue - Hero Trees
+  # ============================================================================
+  hero_tree.fatebound: talent.hand_of_fate
+  hero_tree.trickster: talent.unseen_blade
+  hero_tree.deathstalker: talent.deathstalkers_mark
+
+  # ============================================================================
+  # Warrior - Hero Trees
+  # ============================================================================
+  hero_tree.colossus: talent.demolish
+  hero_tree.slayer: talent.slayers_dominance
+  hero_tree.mountain_thane: talent.crashing_thunder
+
+  # ============================================================================
+  # Monk - Aspect of Harmony (Master of Harmony hero tree)
+  # Same buff name "Aspect of Harmony" but three different spell IDs:
+  #   Accumulator (450521) - "Harmony Collect"; up while a Vitality pool exists
+  #   Spender     (450711) - 10s release window; bonus healing on next casts
+  #   TFT         (450769) - empowered Harmony buff after Thunder Focus Tea
+  # NOTE: Accumulator and Spender are NOT mutually exclusive — both can be up
+  #       at the same time (you can keep storing while the spend window ticks).
+  #       Do not use accumulator as a proxy for "not in spend phase".
+  # ============================================================================
+  buff.aspect_of_harmony_accumulator.up: player.buff.up(450521)
+  # SimC's buff.aspect_of_harmony_accumulator.value is the pooled amount, compared
+  # against a fraction of max health. In-game that number lives in the aura's point
+  # vector (AuraData+0x28), which we expose as player.buff.<id>.points.N.
+  # POINT INDEX UNVERIFIED: needs one snapshot taken with the accumulator up. If it
+  # is wrong the Master of Harmony celestial_brew lines simply do not fire (the same
+  # as the buff.450521.icon hack this replaces) -- fix it HERE, not in the rotation.
+  buff.aspect_of_harmony_accumulator.value: player.buff.450521.points.1
+  buff.aspect_of_harmony_spender.up: player.buff.up(450711)
+  buff.aspect_of_harmony_tft.up: player.buff.up(450769)
+
+  # ============================================================================
+  # Monk - Hero Trees
+  # ============================================================================
+  hero_tree.conduit_of_the_celestials: talent.celestial_conduit
+  hero_tree.master_of_harmony: talent.aspect_of_harmony
+  hero_tree.shado_pan: talent.flurry_strikes
+
+  # ============================================================================
+  # Evoker - Augmentation aliases
+  # ============================================================================
+  # allied_cds_up: count of group members with Ebon Might buff (361022) who are
+  # casting a major cooldown. Approximated as group buff count of 361022.
+  evoker.allied_cds_up: group.buff.361022.count
+
+  # ============================================================================
+  # Hunter - Hero Trees
+  # ============================================================================
+  hero_tree.dark_ranger: talent.black_arrow
+  hero_tree.sentinel: talent.moonlight_chakram
+
+  # ============================================================================
+  # Warlock - Hero Trees
+  # ============================================================================
+  hero_tree.hellcaller: talent.wither
+  hero_tree.soul_harvester: talent.demonic_soul
+  hero_tree.diabolist: talent.diabolic_ritual
+  # Warlock - Demonic Art (Diabolist hero tree: any art buff active)
+  # Spell IDs: 428524 (Overlord), 432794 (Mother of Chaos), 432795 (Pit Lord)
+  demonic_art: player.buff.remains(428524)>0|player.buff.remains(432794)>0|player.buff.remains(432795)>0
+  # Warlock - Havoc active (any target has Havoc debuff)
+  havoc_active: active_dot.havoc>0
+  # ============================================================================
+  # Priest - Guardian pet aliases (GetTotemInfo-based)
+  # NOTE: Totem spell IDs may differ from cast spell IDs - verify in-game if not working
+  # ============================================================================
+  pet.mindbender.active: totem.mindbender.up
+  pet.mindbender.remains: totem.mindbender.remains
+  pet.voidwraith.active: totem.voidwraith.up
+  pet.voidwraith.remains: totem.voidwraith.remains
+  pet.shadowfiend.active: totem.shadowfiend.up
+  pet.shadowfiend.remains: totem.shadowfiend.remains
+
+  # Warlock - Pet aliases (GetTotemInfo-based)
+  # Darkglare: GetTotemInfo spellid=205180 (matches cast spell Summon Darkglare)
+  pet.darkglare.active: totem.summon_darkglare.up
+  pet.darkglare.remains: totem.summon_darkglare.remains
+  # Surging Totem (Enh/Resto Totemic). SimC 12.1 renamed totem.surging_totem.up ->
+  # pet.surging_totem.active in the Enhancement APL; it is still a totem-slot summon.
+  pet.surging_totem.active: totem.surging_totem.up
+  pet.surging_totem.remains: totem.surging_totem.remains
+
+  # Survival Hunter. sc_hunter.cpp:7485 defines howl_summon.ready as exactly the OR of the
+  # three Howl of the Pack Leader ready buffs. All three share the display name
+  # "Howl of the Pack Leader", so they must be addressed by id.
+  # ids 471878 / 472324 / 472325 (the three variants; .ready is the OR of all of them)
+  howl_summon.ready: buff.472325.up|buff.472324.up|buff.471878.up
+  # Infernal: GetTotemInfo spellid=111685 (NOT the cast spell 1122)
+  # Must use numeric ID because SpellDB resolves "summon_infernal" to cast spell 1122,
+  # but the totem entry uses spell ID 111685
+  pet.infernal.active: totem.111685.up
+  pet.infernal.remains: totem.111685.remains
+  # Demonic Tyrant: GetTotemInfo spellid=265187 (matches cast spell Summon Demonic Tyrant)
+  pet.demonic_tyrant.active: totem.summon_demonic_tyrant.up
+
+  # ============================================================================
+  # Paladin - Hammer of Light free cast detection
+  # No in-game aura tracks the free state. The addon picks the hasRequiredAura=true
+  # row from GetSpellPowerCost: 0 when the free proc is active, 5 otherwise.
+  # .remains is bounded by the Hammer of Light ready buff (427441) lifetime,
+  # since the free window can only exist while HoL is a castable finisher.
+  # 427441 - buff hammer of light4
+  # ============================================================================
+  # SimC's hammer_of_light_free is Light's Deliverance's free-cast proc, id 433732.
+  # NOT action.hammer_of_light.cost=0: sc_paladin.cpp zeroes the cost from TWO
+  # independent places -- the free buff (:2136) and Divine Purpose (:2138) -- so
+  # cost can never tell them apart. The bare name is also ambiguous (8 rows), which
+  # is why these must be numeric.
+  buff.hammer_of_light_free.up: buff.433732.up
+  buff.hammer_of_light_free.remains: buff.433732.remains
+  pet.demonic_tyrant.remains: totem.summon_demonic_tyrant.remains

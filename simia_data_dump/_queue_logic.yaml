@@ -1,0 +1,35 @@
+# _queue_logic.yaml — hard logic gates for queued spells
+# ----------------------------------------------------------------------------
+# Each entry attaches a HARD condition to a spell. When that spell is sitting
+# in WoW's spell queue (the player pressed it during a cast/channel/GCD), the
+# rotation will only suggest it if BOTH are true:
+#
+#     1. the game reports the spell as usable right now, AND
+#     2. the condition below evaluates true.
+#
+# When the condition is false the queued spell is suppressed entirely — no
+# stale suggestion, no fallback. This is an extra restriction layered on top
+# of normal availability, not a replacement for it.
+#
+# Keys may be either a spell ID (numeric) or a spell name (matched case- and
+# punctuation-insensitively, so "Chaos Strike", "chaos_strike" and
+# "chaos strike" are equivalent). The value is a SimC expression — use the
+# scalar shorthand, or a map with an `if:` key. Conditions support the full
+# SimC expression engine, including `&`, `|`, and `$variables`.
+#
+# This file is OPTIONAL. If absent, queued spells behave exactly as before.
+# ----------------------------------------------------------------------------
+
+queue_logic:
+  # --- examples (delete or edit) ---
+
+  # By spell ID, scalar shorthand: only fire this queued spell when the target
+  # is further than 8 yards away.
+  # 123456: "target.range>8"
+
+  # By name, map form with an explicit `if:`.
+  # chaos_strike:
+  #   if: "buff.metamorphosis.up"
+
+  # Combine conditions with the normal SimC operators.
+  # fel_rush: "buff.unbound_chaos.up & target.range>8"

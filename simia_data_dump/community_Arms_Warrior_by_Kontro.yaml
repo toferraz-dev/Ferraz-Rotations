@@ -1,0 +1,243 @@
+#TO DO
+
+version: 67
+
+author: Kontroved
+spec: 71
+name: Arms Warrior by Kontro
+description: Arms Warrior
+
+entry: main
+
+movement_allowed: buff.bladestorm.up
+
+config:
+  victory_rush_hp:
+    section: "Defensives"
+    label: "Victory Rush HP %"
+    type: slider
+    min: 0
+    max: 100
+    default: 70
+    show_override: true
+
+  die_by_the_sword_hp:
+    section: "Defensives"
+    label: "Die by the Sword HP %"
+    type: slider
+    min: 0
+    max: 100
+    default: 30
+    show_override: true
+
+  rallying_cry_hp:
+    section: "Defensives"
+    label: "Rallying Cry HP %"
+    type: slider
+    min: 0
+    max: 100
+    default: 15
+    show_override: true
+
+  storm_bolt_bladestorm:
+    section: "DPS"
+    label: "storm bolt during Bladestorm"
+    description: "use storm bolt while casting Bladestorm max dps but waste interrupt"
+    type: checkbox
+    default: false
+  facing_check:
+    section: "DPS"
+    label: "facing check (swap if not facing for 0.5s)"
+    description: "swaps if not facing target for more than 0.5s and another target infront of you"
+    type: checkbox
+    default: false
+  # nearby_kick_remains_tenths:
+  #   section: "Interrupts"
+  #   label: "Nearby Kick Remaining Time 0.X"
+  #   description: "Value in tenths of a second. 5 means 0.5 seconds."
+  #   type: slider
+  #   min: 1
+  #   max: 30
+  #   default: 20
+
+variables:
+  execute_phase: (talent.massacre.enabled&target.health.pct<35)|target.health.pct<20
+  send_kick_key: (focus.enemy&focus.range<=5&focus.incoming_cast.kickable.up&focus.casting.elapsed*100>=config.interrupt_pct*(focus.casting.elapsed+focus.casting.remains))|(!focus.enemy&incoming_cast.5y.kickable.up&incoming_cast.5y.kickable.remains>0&incoming_cast.5y.kickable.remains<=var.nearby_kick_remains)
+  #nearby_kick_remains: config.nearby_kick_remains_tenths/10
+
+lists:
+  main:
+    - call_action_list,name=spell_queue
+    - call_action_list,name=sanity_checks
+    - call_action_list,name=auto_target
+    - call_action_list,name=auto_heal
+    - call_action_list,name=precombat,if=!player.combat
+    - call_action_list,name=interrupts
+    - call_action_list,name=auto_heal
+    - shadowmeld,use_off_gcd=1,if=incoming_cast.player.meld.up
+    - spell_reflection,range_check=none,if=incoming_cast.player.reflectable.up|incoming_cast.aoe.reflectable.up
+    - call_action_list,name=defensives
+    - return,if=!target.valid
+    - target_enemy,after=500,delay=500,off_gcd=true,if=config.facing_check&target.enemy&target.alive&(!target.in_melee|(!player.facing.target&!player.indelve))&enemies.around.angle.90.4>=1
+    - return,if=!target.combat
+    - call_action_list,name=trinkets
+    - call_action_list,name=simc_racials
+    - return,if=(!player.facing.target&!player.indelve)
+    - run_action_list,name=simc_colossus_aoe,if=hero_tree.colossus&state.aoe&active_enemies>2
+    - run_action_list,name=simc_colossus_execute,if=hero_tree.colossus&var.execute_phase
+    - run_action_list,name=simc_colossus_st,if=hero_tree.colossus
+    - run_action_list,name=simc_slayer_aoe,if=hero_tree.slayer&state.aoe&active_enemies>2
+    - run_action_list,name=simc_slayer_execute,if=hero_tree.slayer&var.execute_phase
+    - run_action_list,name=simc_slayer_st,if=hero_tree.slayer
+
+  precombat:
+    - battle_stance,delay=1000,range_check=none,if=buff.battle_stance.down
+    - battle_shout,range_check=none,if=group.count(cycle.range<40&cycle.buff.battle_shout.down.any&cycle.health.pct>2)>=1&lastcast.battle_shout>10
+    - sweeping_strikes,range_check=none,if=buff.sweeping_strikes.stack<12
+  interrupts:
+    # Direct interrupt logic intentionally avoids enemy buff_list checks in this rotation file.
+    - pummel,interrupt=true,if=interrupt.target.check
+    - pummel.mouseover,interrupt=true,if=interrupt.mouseover.check
+    - pummel.focus,interrupt=true,if=interrupt.focus.check
+    - pummel.focus,interrupt=true,range_check=none,if=var.send_kick_key
+
+    - storm_bolt,if=interrupt.stun.target.check
+    #- storm_bolt.mouseover,if=interrupt.stun.mouseover.check
+    #- storm_bolt.focus,if=interrupt.stun.focus.check
+    - shockwave,if=interrupt.stun.aoe.check
+
+  defensives:
+    - victory_rush,if=buff.victorious.up&health.pct<=config.victory_rush_hp
+    - die_by_the_sword,range_check=none,if=health.pct<=config.die_by_the_sword_hp&buff.die_by_the_sword.down
+    - rallying_cry,range_check=none,if=health.pct<=config.rallying_cry_hp&buff.rallying_cry.down
+
+  trinkets:
+    # use_item,name=algethar_puzzle_box,if=cooldown.avatar.remains<2|cooldown.colossus_smash.remains<2
+    - use_item,name=algethar_puzzle_box,if=(cooldown.avatar.remains<2|cooldown.colossus_smash.remains<2)&state.cds
+    - trinket_1,if=buff.avatar.up&trinket_1.ready
+    - trinket_2,if=cooldown.avatar.remains>=20&debuff.colossus_smash.up&trinket_2.ready
+
+  simc_racials:
+    - arcane_torrent,if=cooldown.mortal_strike.remains>1.5&rage<50
+    - lights_judgment,if=debuff.colossus_smash.down&cooldown.mortal_strike.remains>0
+    - bag_of_tricks,if=debuff.colossus_smash.down&cooldown.mortal_strike.remains>0
+    - berserking,if=target.time_to_die>180&debuff.colossus_smash.up|target.time_to_die<180&var.execute_phase&debuff.colossus_smash.up|target.time_to_die<20
+    - blood_fury,if=debuff.colossus_smash.up
+    - fireblood,if=debuff.colossus_smash.up
+    - ancestral_call,if=debuff.colossus_smash.up
+  simc_colossus_aoe:
+    - sweeping_strikes,if=cooldown.colossus_smash.remains>10&buff.sweeping_strikes.down|!talent.broad_strokes
+    - ravager,if=target.in_melee
+    - avatar
+    - colossus_smash
+    - champions_spear
+    - cleave
+    - mortal_strike,if=buff.colossal_might.stack<10
+    - demolish
+    - overpower,if=talent.dreadnaught
+    - mortal_strike
+    - overpower
+    - execute,if=buff.sweeping_strikes.up&buff.sudden_death.up
+    - heroic_strike
+    - execute,if=talent.deep_wounds
+    - slam
+    - bladestorm,if=cooldown.colossus_smash.remains>=10|buff.avatar.up
+    - wrecking_throw
+    - whirlwind
+
+  simc_colossus_execute:
+    - sweeping_strikes,if=active_enemies=2
+    - avatar,if=debuff.colossus_smash.up|cooldown.colossus_smash.remains<10&cooldown.colossus_smash.remains>gcd
+    - ravager,if=cooldown.colossus_smash.remains<2
+    - colossus_smash
+    - heroic_strike
+    - demolish,if=debuff.colossus_smash.up
+    - mortal_strike,if=buff.colossal_might.stack<10|buff.executioners_precision.stack=2&buff.battlelord.remains
+    - execute,if=talent.deep_wounds&rage>75|buff.sudden_death.up
+    - overpower
+    - slam,if=!talent.deep_wounds
+    - execute
+    - bladestorm,if=active_enemies=2
+    - wrecking_throw
+
+  simc_colossus_st:
+    - sweeping_strikes,if=active_enemies=2
+    - mortal_strike,if=buff.colossal_might.stack<10
+    - cleave,if=dot.rend.remains<=gcd|cooldown.colossus_smash.remains<2&dot.rend.remains<=10
+    - rend,if=!talent.cleave&dot.rend.remains<=gcd|cooldown.colossus_smash.remains<2&dot.rend.remains<=10
+    - ravager,if=cooldown.colossus_smash.remains<2
+    - execute,if=buff.sudden_death.stack=2&cooldown.colossus_smash.remains<2&talent.tactical_edge
+    - avatar,if=debuff.colossus_smash.up|cooldown.colossus_smash.remains>gcd
+    - colossus_smash
+    - champions_spear
+    - demolish,if=buff.colossal_might.up&debuff.colossus_smash.up
+    - heroic_strike
+    - execute,if=buff.sudden_death.stack=2
+    - mortal_strike
+    - execute
+    - overpower
+    - cleave,if=buff.collateral_damage.stack=3
+    - cleave,if=dot.rend.remains<=gcd*5
+    - rend,if=!talent.cleave&dot.rend.remains<=gcd*5
+    - bladestorm,if=active_enemies=2
+    - slam
+    - wrecking_throw
+
+  simc_slayer_aoe:
+    - cleave,if=!dot.rend.remains&talent.rend
+    - sweeping_strikes
+    - avatar,if=cooldown.colossus_smash.remains<=10|nameplates.debuff.colossus_smash.count>=1|prev_gcd.1.colossus_smash|prev_gcd.2.colossus_smash|cooldown.colossus_smash.remains<10
+    - ravager,if=debuff.colossus_smash.up
+    - execute,if=buff.sudden_death.stack=2&cooldown.colossus_smash.remains<2
+    - colossus_smash
+    - cleave,if=buff.collateral_damage.stack=3
+    - bladestorm,if=cooldown.colossus_smash.remains>=10|active_enemies>=10
+    - execute,if=buff.sudden_death.stack=2
+    - cleave
+    - overpower,if=talent.dreadnaught&action.overpower.charges=2
+    - execute,if=buff.sudden_death.up
+    - overpower,if=talent.dreadnaught
+    - execute
+    - mortal_strike
+    - heroic_strike,if=!talent.fervor_of_battle|!talent.cleave
+    - slam
+    - wrecking_throw
+    - storm_bolt,use_while_casting=1,if=buff.bladestorm.up&(config.storm_bolt_bladestorm|target.boss)
+
+  simc_slayer_execute:
+    - sweeping_strikes,if=active_enemies=2
+    - cleave,if=dot.rend.remains<2&!talent.bloodletting
+    - rend,if=dot.rend.remains<2&!talent.bloodletting
+    - avatar,if=cooldown.colossus_smash.remains<=10|nameplates.debuff.colossus_smash.count>=1|prev_gcd.1.colossus_smash|prev_gcd.2.colossus_smash|cooldown.colossus_smash.remains<10
+    - colossus_smash
+    - heroic_strike
+    - bladestorm,if=debuff.colossus_smash.up|cooldown.colossus_smash.remains>10|(buff.avatar.remains<cooldown.colossus_smash.remais)|buff.executioners_precision.stack=2
+    - mortal_strike,if=buff.executioners_precision.stack=2&(dot.rend.remains<2|buff.martial_prowess.stack=3)
+    - overpower,if=buff.opportunist.stack=2&talent.opportunist
+    - execute,if=buff.sudden_death.up&buff.executioner.stack>0
+    - execute,if=rage>40
+    - overpower
+    - execute
+    - wrecking_throw
+    - storm_bolt,use_while_casting=1,if=buff.bladestorm.up&(config.storm_bolt_bladestorm|target.boss)
+
+  simc_slayer_st:
+    - sweeping_strikes,if=active_enemies=2
+    - cleave,if=dot.rend.remains<=gcd|cooldown.colossus_smash.remains<2&dot.rend.remains<=10
+    - rend,if=!talent.cleave&(dot.rend.remains<=gcd&active_enemies<2|cooldown.colossus_smash.remains<2&dot.rend.remains<=10&active_enemies<2)
+    - avatar,if=nameplates.debuff.colossus_smash.count>=1|prev_gcd.1.colossus_smash|prev_gcd.2.colossus_smash|cooldown.colossus_smash.remains<10
+    - ravager,if=cooldown.colossus_smash.remains<=gcd
+    - execute,if=buff.sudden_death.stack=2|cooldown.bladestorm.ready&(!buff.imminent_demise.stack=1|!buff.imminent_demise.stack=3)
+    - colossus_smash,if=buff.sudden_death.stack<2
+    - bladestorm,if=debuff.colossus_smash.up|(buff.avatar.remains<cooldown.colossus_smash.remais)|cooldown.colossus_smash.remains>10
+    - heroic_strike
+    - overpower,if=buff.opportunist.stack=2&talent.opportunist
+    - cleave,if=buff.collateral_damage.stack=3&active_enemies=2
+    - mortal_strike
+    - execute,if=buff.sudden_death.up&buff.executioner.up
+    - overpower
+    - cleave,if=active_enemies=2|dot.rend.remains<=5
+    - rend,if=!talent.cleave&dot.rend.remains<=5
+    - slam
+    - wrecking_throw,if=active_enemies=1
+    - storm_bolt,use_while_casting=1,if=buff.bladestorm.up&(config.storm_bolt_bladestorm|target.boss)

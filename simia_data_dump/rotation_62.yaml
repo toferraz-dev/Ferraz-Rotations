@@ -1,0 +1,197 @@
+# =============================================================================
+# Mage Arcane - Spec ID 62
+# =============================================================================
+
+version: 3
+spec: 62
+entry: main
+
+config:
+  prismatic_barrier_hp_pct:
+    section: "Defensive HP Percentage"
+    label: "Prismatic Barrier HP%"
+    type: slider
+    min: 0
+    max: 100
+    default: 50
+
+  prismatic_barrier_dmg_pct:
+    section: "Defensives Prediction Damage"
+    label: "Prismatic Barrier (Incoming Dmg%)"
+    type: slider
+    min: 0
+    max: 100
+    default: 40
+
+  ice_block_hp_pct:
+    section: "Defensive HP Percentage"
+    label: "Ice Block HP%"
+    type: slider
+    min: 0
+    max: 100
+    default: 20
+
+  ice_block_dmg_pct:
+    section: "Defensives Prediction Damage"
+    label: "Ice Block (Incoming Dmg%)"
+    type: slider
+    min: 0
+    max: 100
+    default: 75
+variables:
+  # variable,name=aoe_count,op=set,value=2+(3*talent.spellfire_spheres)
+  aoe_count: "2+(3*talent.spellfire_spheres)"
+
+  # The precombat trinket variables (20ssteroid_trinket_equipped / 15ssteroid / 12ssteroid /
+  # steroid_trinket_equipped / nonsteroid_trinket_equipped) only gate the generic `use_items`
+  # line, which becomes trinket_1/trinket_2 sync here — not converted.
+
+lists:
+  defensives:
+    # --- Prediction Damage: pre-fire on a predicted incoming hit (% of effective HP) ---
+    - prismatic_barrier,range_check=none,if=incoming.mitigated.pct>=config.prismatic_barrier_dmg_pct
+    - ice_block,range_check=none,if=incoming.mitigated.pct>=config.ice_block_dmg_pct
+
+    # --- HP Percentage: react when already low ---
+    - prismatic_barrier,range_check=none,if=health.pct<=config.prismatic_barrier_hp_pct
+    - ice_block,range_check=none,if=health.pct<=config.ice_block_hp_pct
+
+  cooldowns:
+    # arcane_orb,if=talent.splintering_sorcery,line_cd=999
+    - arcane_orb,if=talent.splintering_sorcery,line_cd=999
+
+    # touch_of_the_magi,use_off_gcd=1,if=(prev_gcd.1.prismatic_bolt|prev_gcd.1.arcane_barrage|(buff.arcane_surge.up&buff.arcane_surge.remains<12))&(buff.arcane_surge.up|cooldown.arcane_surge.remains>30)
+    # prismatic_bolt = 1295924 (five spells share the display name)
+    - touch_of_the_magi,use_off_gcd=1,if=(prev_gcd.1.1295924|prev_gcd.1.arcane_barrage|(buff.arcane_surge.up&buff.arcane_surge.remains<12))&(buff.arcane_surge.up|cooldown.arcane_surge.remains>30)
+
+    # arcane_surge,if=buff.lustrous_gleam.stack>=2|buff.lustrous_gleam.down
+    - arcane_surge,if=buff.lustrous_gleam.stack>=2|buff.lustrous_gleam.down
+
+    # cancel_action,if=action.evocation.channeling&mana.pct>=95
+
+    # evocation,if=mana.pct<10&buff.arcane_surge.down&debuff.touch_of_the_magi.down&cooldown.arcane_surge.remains>10
+    - evocation,if=mana.pct<10&buff.arcane_surge.down&debuff.touch_of_the_magi.down&cooldown.arcane_surge.remains>10
+
+    # presence_of_mind,use_off_gcd=1,if=buff.arcane_charge.stack<1&!buff.prismatic_bolt.up&!cooldown.arcane_orb.ready&!cooldown.arcane_pulse.ready&!cooldown.touch_of_the_magi.ready&(buff.clearcasting.react=0|!talent.high_voltage)&prev_gcd.1.arcane_barrage
+    # buff.prismatic_bolt = 1295942 (its WoW name is "Prismatic Bolt!" — the bare label resolves to the wrong row)
+    # buff.arcane_charge.stack -> arcane_charges (all 8 sites in this file): WoW puts aura 36032 in the
+    # player's DEBUFF list, so buff.X (which only scans unit.buffs) reads 0 forever. arcane_charges is
+    # the PowerType::ArcaneCharges resource and is the same number.
+    - presence_of_mind,use_off_gcd=1,if=arcane_charges<1&!buff.1295942.up&!cooldown.arcane_orb.ready&!cooldown.arcane_pulse.ready&!cooldown.touch_of_the_magi.ready&(buff.clearcasting.react=0|!talent.high_voltage)&prev_gcd.1.arcane_barrage
+
+  spellslinger:
+    # prismatic_bolt,if=(!set_bonus.midnight_season_2_4pc|buff.cumulative_power.stack>=6|active_enemies>=variable.aoe_count&buff.clearcasting.react=0)&(active_enemies>=variable.aoe_count&buff.clearcasting.react<3|buff.arcane_salvo.react>13)
+    - 1295924,if=(!set_bonus.midnight_season_2_4pc|buff.cumulative_power.stack>=6|enemies_around_target>=var.aoe_count&buff.clearcasting.react=0)&(enemies_around_target>=var.aoe_count&buff.clearcasting.react<3|buff.arcane_salvo.react>13)
+
+    # arcane_orb,if=cooldown.arcane_orb.charges_fractional>=1+(0.95*talent.charged_orb)&talent.orb_mastery&active_enemies>=variable.aoe_count
+    - arcane_orb,if=cooldown.arcane_orb.charges_fractional>=1+(0.95*talent.charged_orb)&talent.orb_mastery&enemies_around_target>=var.aoe_count
+
+    # arcane_barrage,if=buff.arcane_salvo.react>=(20-talent.orb_barrage)&(active_enemies<variable.aoe_count|buff.arcane_charge.stack=4)|prev_gcd.1.arcane_surge&buff.arcane_salvo.stack>=(10+5*talent.orb_barrage)
+    - arcane_barrage,if=buff.arcane_salvo.react>=(20-talent.orb_barrage)&(enemies_around_target<var.aoe_count|arcane_charges=4)|prev_gcd.1.arcane_surge&buff.arcane_salvo.stack>=(10+5*talent.orb_barrage)
+
+    # arcane_missiles,if=buff.clearcasting.react&(buff.arcane_salvo.stack<15|active_enemies<variable.aoe_count&buff.clearcasting.react=3),interrupt_if=tick_time>gcd.remains&(buff.overpowered_missiles.react=0|active_enemies>=variable.aoe_count|!talent.high_voltage),interrupt_global=1,interrupt_immediate=1
+    - arcane_missiles,chain=1,if=buff.clearcasting.react&(buff.arcane_salvo.stack<15|enemies_around_target<var.aoe_count&buff.clearcasting.react=3)
+
+    # prismatic_bolt
+    - 1295924
+
+    # arcane_orb,if=buff.arcane_charge.stack<(3+(active_enemies>=variable.aoe_count))|(talent.orb_mastery|active_enemies>=(variable.aoe_count+2))&cooldown.arcane_orb.charges_fractional>=(1+0.5*(talent.orb_mastery&active_enemies<variable.aoe_count&buff.arcane_surge.down))
+    - arcane_orb,if=arcane_charges<(3+(enemies_around_target>=var.aoe_count))|(talent.orb_mastery|enemies_around_target>=(var.aoe_count+2))&cooldown.arcane_orb.charges_fractional>=(1+0.5*(talent.orb_mastery&enemies_around_target<var.aoe_count&buff.arcane_surge.down))
+
+    # arcane_pulse,if=buff.arcane_charge.stack<3&buff.arcane_surge.down
+    - arcane_pulse,if=arcane_charges<3&buff.arcane_surge.down
+
+    # arcane_blast
+    - arcane_blast
+
+  sunfury:
+    # arcane_missiles,if=buff.clearcasting.react&buff.arcane_salvo.stack<12,chain=1
+    - arcane_missiles,chain=1,if=buff.clearcasting.react&buff.arcane_salvo.stack<12
+
+    # prismatic_bolt,if=((!set_bonus.midnight_season_2_4pc)|buff.cumulative_power.stack=8)&buff.arcane_soul.down
+    - 1295924,if=((!set_bonus.midnight_season_2_4pc)|buff.cumulative_power.stack=8)&buff.arcane_soul.down
+
+    # arcane_barrage,if=(buff.arcane_charge.stack=4&(((((cooldown.arcane_orb.charges_fractional>0.95|cooldown.arcane_pulse.charges_fractional>0.95)&active_enemies>=variable.aoe_count)|buff.clearcasting.react)&buff.arcane_salvo.react>=12)|((buff.arcane_surge.remains>gcd.max|buff.arcane_surge.down)&buff.arcane_salvo.react=25)))|buff.arcane_soul.up|(buff.arcane_salvo.react>8&cooldown.touch_of_the_magi.ready)
+    - arcane_barrage,if=(arcane_charges=4&(((((cooldown.arcane_orb.charges_fractional>0.95|cooldown.arcane_pulse.charges_fractional>0.95)&enemies_around_target>=var.aoe_count)|buff.clearcasting.react)&buff.arcane_salvo.react>=12)|((buff.arcane_surge.remains>gcd.max|buff.arcane_surge.down)&buff.arcane_salvo.react=25)))|buff.arcane_soul.up|(buff.arcane_salvo.react>8&cooldown.touch_of_the_magi.ready)
+
+    # prismatic_bolt
+    - 1295924
+
+    # arcane_orb,if=buff.arcane_charge.stack<1
+    - arcane_orb,if=arcane_charges<1
+
+    # arcane_pulse,if=active_enemies>=(variable.aoe_count-1)|buff.arcane_charge.stack<1
+    - arcane_pulse,if=enemies_around_target>=(var.aoe_count-1)|arcane_charges<1
+
+    # arcane_blast
+    - arcane_blast
+
+  main:
+    # _shared.yaml lists
+    - call_action_list,name=spell_queue
+    - call_action_list,name=sanity_checks
+    - call_action_list,name=auto_target_ranged
+
+    - arcane_intellect,range_check=none,if=(buff.arcane_intellect.down|action.arcane_intellect.overlayed)&lastcast.arcane_intellect>=10
+
+    # Combat Check
+    - return,if=auto_combat.player
+
+    # Defensives
+    - call_action_list,name=defensives
+
+
+    # Interrupts
+    - counterspell,if=interrupt.target.check
+    - counterspell.mouseover,if=interrupt.mouseover.check
+    - counterspell.focus,if=interrupt.focus.check
+    # CC Interrupt
+    - dragons_breath,if=interrupt.cc.check
+    # Racial Interrupts
+    - quaking_palm,if=interrupt.cc.check
+    - haymaker,if=interrupt.cc.check
+    - war_stomp,if=interrupt.stun.aoe.check
+    - bull_rush,if=interrupt.stun.aoe.check
+    - tail_swipe,if=interrupt.stun.aoe.check
+
+    - call_action_list,name=auto_heal
+
+    # Target Check
+    - return,if=auto_combat.target
+    # invoke_external_buff,name=power_infusion,if=(buff.arcane_surge.up&debuff.touch_of_the_magi.up)|(fight_remains<16)
+
+    # potion,if=cooldown.arcane_surge.ready|fight_remains<35
+
+    # berserking,if=(buff.arcane_surge.up&debuff.touch_of_the_magi.up)|(fight_remains<13)
+    - berserking,if=(buff.arcane_surge.up&debuff.touch_of_the_magi.up)|(fight_remains<13)
+
+    # blood_fury,if=(buff.arcane_surge.up&debuff.touch_of_the_magi.up)|(fight_remains<9)
+    - blood_fury,if=(buff.arcane_surge.up&debuff.touch_of_the_magi.up)|(fight_remains<9)
+
+    # fireblood,if=(buff.arcane_surge.up&debuff.touch_of_the_magi.up)|(fight_remains<16)
+    - fireblood,if=(buff.arcane_surge.up&debuff.touch_of_the_magi.up)|(fight_remains<16)
+
+    # ancestral_call,if=(buff.arcane_surge.up&debuff.touch_of_the_magi.up)|(fight_remains<16)
+    - ancestral_call,if=(buff.arcane_surge.up&debuff.touch_of_the_magi.up)|(fight_remains<16)
+
+    # use_item,name=stormbound_emblem_of_dazar,if=(cooldown.arcane_surge.remains<2)|cooldown.arcane_surge.ready|(fight_remains<22)
+    - use_item,name=stormbound_emblem_of_dazar,if=(cooldown.arcane_surge.remains<2)|cooldown.arcane_surge.ready|(fight_remains<22)
+
+    # use_items,if=((buff.arcane_surge.up&((variable.12ssteroid_trinket_equipped&debuff.touch_of_the_magi.up)|variable.15ssteroid_trinket_equipped))|(cooldown.arcane_surge.ready&variable.20ssteroid_trinket_equipped))|(fight_remains<13&variable.12ssteroid_trinket_equipped)|(fight_remains<16&variable.15ssteroid_trinket_equipped)|(fight_remains<21&variable.20ssteroid_trinket_equipped)|(variable.nonsteroid_trinket_equipped&((buff.arcane_surge.down&cooldown.arcane_surge.remains>20)|!variable.steroid_trinket_equipped))
+    - trinket_1,if=trinket_1.sync
+    - trinket_2,if=trinket_2.sync
+
+    # arcane_barrage,if=fight_remains<gcd.max*2&buff.arcane_charge.stack=4
+    - arcane_barrage,if=fight_remains<gcd.max*2&arcane_charges=4
+
+    # call_action_list,name=cooldowns
+    - call_action_list,name=cooldowns
+
+    # call_action_list,name=spellslinger,if=talent.splintering_sorcery
+    - call_action_list,name=spellslinger,if=talent.splintering_sorcery
+
+    # call_action_list,name=sunfury,if=!talent.splintering_sorcery
+    - call_action_list,name=sunfury,if=!talent.splintering_sorcery
+
+    # arcane_barrage,if=talent.spellfire_spheres&!buff.arcane_surge.up
+    - arcane_barrage,if=talent.spellfire_spheres&!buff.arcane_surge.up

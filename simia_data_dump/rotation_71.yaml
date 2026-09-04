@@ -1,0 +1,351 @@
+# =============================================================================
+# Warrior - Arms - 71
+# =============================================================================
+# Custom
+# rend_dot does not exist, is only rend.
+
+version: 3
+spec: 71
+
+config:
+  impending_victory_hp_pct:
+    label: "Impending Victory"
+    type: slider
+    min: 0
+    max: 100
+    default: 65
+  die_by_the_sword_hp_pct:
+    label: "Die by the Sword"
+    type: slider
+    min: 0
+    max: 100
+    default: 30
+  rallying_cry_hp_pct:
+    label: "Rallying Cry"
+    type: slider
+    min: 0
+    max: 100
+    default: 50
+
+variables:
+  # variable,name=st_planning,value=active_enemies=1&(raid_event.adds.in>15|!raid_event.adds.exists)
+  st_planning: active_enemies=1
+  # variable,name=adds_remain,value=active_enemies>=2&(!raid_event.adds.exists|raid_event.adds.exists&raid_event.adds.remains>5)
+  adds_remain: active_enemies>=2
+  # variable,name=execute_phase,value=(talent.massacre.enabled&target.health.pct<35)|target.health.pct<20
+  execute_phase: (talent.massacre&target.health.pct<35)|target.health.pct<20
+
+lists:
+  # Local conventions used throughout this file:
+  #   debuff.colossus_smash.up  -> lastcast.colossus_smash<=10
+  #   dot.rend_dot.*            -> dot.rend.*   (SimC _dot suffix stripped)
+  #   storm_bolt,if=buff.bladestorm.up — kept commented out, not useful in our system
+  colossus_aoe:
+    # actions.colossus_aoe=/sweeping_strikes
+    - sweeping_strikes
+    # actions.colossus_aoe+=/ravager
+    - ravager
+    # actions.colossus_aoe+=/avatar
+    - avatar
+    # actions.colossus_aoe+=/colossus_smash
+    - colossus_smash
+    # actions.colossus_aoe+=/champions_spear
+    - champions_spear
+    # actions.colossus_aoe+=/cleave
+    - cleave
+    # actions.colossus_aoe+=/mortal_strike,if=buff.colossal_might.stack<10
+    - mortal_strike,if=buff.colossal_might.stack<10
+    # actions.colossus_aoe+=/demolish
+    - demolish
+    # actions.colossus_aoe+=/overpower,if=talent.dreadnaught
+    - overpower,if=talent.dreadnaught
+    # actions.colossus_aoe+=/mortal_strike
+    - mortal_strike
+    # actions.colossus_aoe+=/overpower
+    - overpower
+    # actions.colossus_aoe+=/execute,if=buff.sweeping_strikes.up&buff.sudden_death.up
+    - execute,if=buff.sweeping_strikes.up&buff.sudden_death.up
+    # actions.colossus_aoe+=/heroic_strike
+    - heroic_strike
+    # actions.colossus_aoe+=/execute,if=talent.deep_wounds
+    - execute,if=talent.deep_wounds
+    # actions.colossus_aoe+=/slam
+    - slam
+    # actions.colossus_aoe+=/bladestorm
+    - bladestorm
+    # actions.colossus_aoe+=/wrecking_throw
+    - wrecking_throw
+    # actions.colossus_aoe+=/whirlwind
+    - whirlwind
+
+  colossus_execute:
+    # actions.colossus_execute=/sweeping_strikes,if=active_enemies=2
+    - sweeping_strikes,if=active_enemies=2
+    # actions.colossus_execute+=/avatar,if=debuff.colossus_smash.up|cooldown.colossus_smash.remains<10&cooldown.colossus_smash.remains>gcd
+    - avatar,if=lastcast.colossus_smash<=10|cooldown.colossus_smash.remains<10&cooldown.colossus_smash.remains>gcd
+    # actions.colossus_execute+=/ravager,if=cooldown.colossus_smash.remains<2
+    - ravager,if=cooldown.colossus_smash.remains<2
+    # actions.colossus_execute+=/colossus_smash
+    - colossus_smash
+    # actions.colossus_execute+=/heroic_strike
+    - heroic_strike
+    # actions.colossus_execute+=/demolish,if=debuff.colossus_smash.up
+    - demolish,if=lastcast.colossus_smash<=10
+    # actions.colossus_execute+=/mortal_strike,if=buff.colossal_might.stack<10|buff.executioners_precision.stack=2
+    - mortal_strike,if=buff.colossal_might.stack<10|buff.executioners_precision.stack=2
+    # actions.colossus_execute+=/execute,if=talent.deep_wounds&rage>75|buff.sudden_death.up
+    - execute,if=talent.deep_wounds&rage>75|buff.sudden_death.up
+    # actions.colossus_execute+=/overpower
+    - overpower
+    # actions.colossus_execute+=/execute
+    - execute
+    # actions.colossus_execute+=/bladestorm,if=active_enemies=2
+    - bladestorm,if=active_enemies=2
+    # actions.colossus_execute+=/wrecking_throw
+    - wrecking_throw
+
+  colossus_st:
+    # actions.colossus_st=/sweeping_strikes,if=active_enemies=2
+    - sweeping_strikes,if=active_enemies=2
+    # actions.colossus_st+=/mortal_strike,if=buff.colossal_might.stack<10
+    - mortal_strike,if=buff.colossal_might.stack<10
+    # actions.colossus_st+=/cleave,if=dot.rend_dot.remains<=gcd|cooldown.colossus_smash.remains<2&dot.rend_dot.remains<=10
+    - cleave,if=dot.rend.remains<=gcd|cooldown.colossus_smash.remains<2&dot.rend.remains<=10
+    # actions.colossus_st+=/rend,if=!talent.cleave&dot.rend_dot.remains<=gcd|cooldown.colossus_smash.remains<2&dot.rend_dot.remains<=10&!talent.cleave
+    - rend,if=!talent.cleave&dot.rend.remains<=gcd|cooldown.colossus_smash.remains<2&dot.rend.remains<=10&!talent.cleave
+    # actions.colossus_st+=/ravager,if=cooldown.colossus_smash.remains<2
+    - ravager,if=cooldown.colossus_smash.remains<2
+    # actions.colossus_st+=/execute,if=buff.sudden_death.stack=2&cooldown.colossus_smash.remains<2&talent.tactical_edge
+    - execute,if=buff.sudden_death.stack=2&cooldown.colossus_smash.remains<2&talent.tactical_edge
+    # actions.colossus_st+=/avatar,if=debuff.colossus_smash.up|cooldown.colossus_smash.remains>gcd
+    - avatar,if=lastcast.colossus_smash<=10|cooldown.colossus_smash.remains>gcd
+    # actions.colossus_st+=/colossus_smash
+    - colossus_smash
+    # actions.colossus_st+=/champions_spear
+    - champions_spear
+    # actions.colossus_st+=/demolish,if=buff.colossal_might.up&debuff.colossus_smash.up
+    - demolish,if=buff.colossal_might.up&lastcast.colossus_smash<=10
+    # actions.colossus_st+=/heroic_strike
+    - heroic_strike
+    # actions.colossus_st+=/execute,if=buff.sudden_death.stack=2
+    - execute,if=buff.sudden_death.stack=2
+    # actions.colossus_st+=/mortal_strike
+    - mortal_strike
+    # actions.colossus_st+=/cleave,if=buff.collateral_damage.stack=3
+    - cleave,if=buff.collateral_damage.stack=3
+    # actions.colossus_st+=/execute
+    - execute
+    # actions.colossus_st+=/overpower
+    - overpower
+    # actions.colossus_st+=/cleave,if=dot.rend_dot.remains<=gcd*5
+    - cleave,if=dot.rend.remains<=gcd*5
+    # actions.colossus_st+=/rend,if=!talent.cleave&dot.rend_dot.remains<=gcd*5
+    - rend,if=!talent.cleave&dot.rend.remains<=gcd*5
+    # actions.colossus_st+=/bladestorm,if=active_enemies=2
+    - bladestorm,if=active_enemies=2
+    # actions.colossus_st+=/slam
+    - slam
+    # actions.colossus_st+=/wrecking_throw
+    - wrecking_throw
+
+  slayer_aoe:
+    # actions.slayer_aoe=/cleave,if=!dot.rend_dot.remains&talent.rend
+    - cleave,if=!dot.rend.remains&talent.rend
+    # actions.slayer_aoe+=/sweeping_strikes
+    - sweeping_strikes
+    # actions.slayer_aoe+=/avatar
+    - avatar
+    # actions.slayer_aoe+=/ravager,if=debuff.colossus_smash.up
+    - ravager,if=lastcast.colossus_smash<=10
+    # actions.slayer_aoe+=/execute,if=buff.sudden_death.stack=2&cooldown.colossus_smash.remains<2
+    - execute,if=buff.sudden_death.stack=2&cooldown.colossus_smash.remains<2
+    # actions.slayer_aoe+=/colossus_smash
+    - colossus_smash
+    # actions.slayer_aoe+=/cleave,if=buff.collateral_damage.stack=3
+    - cleave,if=buff.collateral_damage.stack=3
+    # actions.slayer_aoe+=/bladestorm
+    - bladestorm
+    # actions.slayer_aoe+=/execute,if=buff.sudden_death.stack=2
+    - execute,if=buff.sudden_death.stack=2
+    # actions.slayer_aoe+=/cleave
+    - cleave
+    # actions.slayer_aoe+=/heroic_strike,if=!talent.fervor_of_battle
+    - heroic_strike,if=!talent.fervor_of_battle
+    # actions.slayer_aoe+=/overpower,if=talent.dreadnaught&charges=2
+    # bare charges → cooldown.overpower.charges
+    - overpower,if=talent.dreadnaught&cooldown.overpower.charges=2
+    # actions.slayer_aoe+=/execute,if=buff.sudden_death.up
+    - execute,if=buff.sudden_death.up
+    # actions.slayer_aoe+=/overpower,if=talent.dreadnaught
+    - overpower,if=talent.dreadnaught
+    # actions.slayer_aoe+=/execute
+    - execute
+    # actions.slayer_aoe+=/mortal_strike
+    - mortal_strike
+    # actions.slayer_aoe+=/overpower,if=!talent.dreadnaught
+    - overpower,if=!talent.dreadnaught
+    # actions.slayer_aoe+=/slam
+    - slam
+    # actions.slayer_aoe+=/wrecking_throw
+    - wrecking_throw
+    # actions.slayer_aoe+=/storm_bolt,if=buff.bladestorm.up
+    # - storm_bolt,if=buff.bladestorm.up
+
+  slayer_execute:
+    # actions.slayer_execute=/sweeping_strikes,if=active_enemies=2
+    - sweeping_strikes,if=active_enemies=2
+    # actions.slayer_execute+=/cleave,if=dot.rend_dot.remains<2&!talent.bloodletting
+    - cleave,if=dot.rend.remains<2&!talent.bloodletting
+    # actions.slayer_execute+=/rend,if=dot.rend_dot.remains<2&!talent.bloodletting&!talent.cleave
+    - rend,if=dot.rend.remains<2&!talent.bloodletting&!talent.cleave
+    # actions.slayer_execute+=/avatar,if=debuff.colossus_smash.up|cooldown.colossus_smash.remains>gcd|target.time_to_die<=20
+    - avatar,if=lastcast.colossus_smash<=10|cooldown.colossus_smash.remains>gcd|target.time_to_die<=20
+    # actions.slayer_execute+=/colossus_smash
+    - colossus_smash
+    # actions.slayer_execute+=/heroic_strike
+    - heroic_strike
+    # actions.slayer_execute+=/bladestorm,if=debuff.colossus_smash.up|cooldown.colossus_smash.remains>25|buff.avatar.up|buff.executioners_precision.stack=2
+    - bladestorm,if=lastcast.colossus_smash<=10|cooldown.colossus_smash.remains>25|buff.avatar.up|buff.executioners_precision.stack=2
+    # actions.slayer_execute+=/mortal_strike,if=buff.executioners_precision.stack=2
+    - mortal_strike,if=buff.executioners_precision.stack=2
+    # actions.slayer_execute+=/overpower,if=buff.opportunist.stack=2&talent.opportunist
+    - overpower,if=buff.opportunist.stack=2&talent.opportunist
+    # actions.slayer_execute+=/execute,if=buff.sudden_death.up&buff.executioner.stack>0
+    - execute,if=buff.sudden_death.up&buff.executioner.stack>0
+    # actions.slayer_execute+=/execute,if=rage>40
+    - execute,if=rage>40
+    # actions.slayer_execute+=/cleave,if=buff.collateral_damage.stack=3
+    - cleave,if=buff.collateral_damage.stack=3
+    # actions.slayer_execute+=/overpower
+    - overpower
+    # actions.slayer_execute+=/execute
+    - execute
+    # actions.slayer_execute+=/wrecking_throw
+    - wrecking_throw
+    # actions.slayer_execute+=/storm_bolt,if=buff.bladestorm.up
+    # - storm_bolt,if=buff.bladestorm.up
+
+  slayer_st:
+    # actions.slayer_st=/sweeping_strikes,if=active_enemies=2
+    - sweeping_strikes,if=active_enemies=2
+    # actions.slayer_st+=/cleave,if=dot.rend_dot.remains<=gcd|cooldown.colossus_smash.remains<2&dot.rend_dot.remains<=10
+    - cleave,if=dot.rend.remains<=gcd|cooldown.colossus_smash.remains<2&dot.rend.remains<=10
+    # actions.slayer_st+=/rend,if=!talent.cleave&(dot.rend_dot.remains<=gcd&active_enemies<2|cooldown.colossus_smash.remains<2&dot.rend_dot.remains<=10&active_enemies<2)
+    - rend,if=!talent.cleave&(dot.rend.remains<=gcd&active_enemies<2|cooldown.colossus_smash.remains<2&dot.rend.remains<=10&active_enemies<2)
+    # actions.slayer_st+=/avatar,if=debuff.colossus_smash.up|cooldown.colossus_smash.remains<10&cooldown.colossus_smash.remains>gcd
+    - avatar,if=lastcast.colossus_smash<=10|cooldown.colossus_smash.remains<10&cooldown.colossus_smash.remains>gcd
+    # actions.slayer_st+=/ravager,if=cooldown.colossus_smash.remains<=gcd
+    - ravager,if=cooldown.colossus_smash.remains<=gcd
+    # actions.slayer_st+=/execute,if=buff.sudden_death.stack=2|cooldown.bladestorm.ready&buff.imminent_demise.stack<1
+    - execute,if=buff.sudden_death.stack=2|cooldown.bladestorm.ready&buff.imminent_demise.stack<1
+    # actions.slayer_st+=/colossus_smash,if=buff.sudden_death.stack<2
+    - colossus_smash,if=buff.sudden_death.stack<2
+    # actions.slayer_st+=/bladestorm,if=debuff.colossus_smash.up|buff.avatar.up
+    - bladestorm,if=lastcast.colossus_smash<=10|buff.avatar.up
+    # actions.slayer_st+=/heroic_strike
+    - heroic_strike
+    # actions.slayer_st+=/overpower,if=buff.opportunist.stack=2&talent.opportunist
+    - overpower,if=buff.opportunist.stack=2&talent.opportunist
+    # actions.slayer_st+=/cleave,if=buff.collateral_damage.stack=3&active_enemies=2
+    - cleave,if=buff.collateral_damage.stack=3&active_enemies=2
+    # actions.slayer_st+=/mortal_strike
+    - mortal_strike
+    # actions.slayer_st+=/execute,if=buff.sudden_death.up&buff.executioner.up
+    - execute,if=buff.sudden_death.up&buff.executioner.up
+    # actions.slayer_st+=/overpower
+    - overpower
+    # actions.slayer_st+=/cleave,if=active_enemies=2|dot.rend_dot.remains<=5
+    - cleave,if=active_enemies=2|dot.rend.remains<=5
+    # actions.slayer_st+=/rend,if=!talent.cleave&dot.rend_dot.remains<=5
+    - rend,if=!talent.cleave&dot.rend.remains<=5
+    # actions.slayer_st+=/slam
+    - slam
+    # actions.slayer_st+=/wrecking_throw,if=active_enemies=1
+    - wrecking_throw,if=active_enemies=1
+    # actions.slayer_st+=/storm_bolt,if=buff.bladestorm.up
+    # - storm_bolt,if=buff.bladestorm.up
+
+  main:
+      # Shared
+    - call_action_list,name=spell_queue
+    - call_action_list,name=sanity_checks
+    - call_action_list,name=auto_target
+
+    # Shattering Throw — deals up to 500% increased damage to absorb shields
+    - shattering_throw,if=target.absorb>0
+    - wrecking_throw,if=target.absorb>0
+
+    - battle_shout,range_check=none,if=(!buff.battle_shout.up.any|buff.battle_shout.remains.any<60|action.battle_shout.overlayed)&lastcast.battle_shout>=10
+    - battle_stance,range_check=none,if=!buff.battle_stance.up
+
+    # Defensives
+    - die_by_the_sword,range_check=none,if=health.pct<=config.die_by_the_sword_hp_pct
+    - rallying_cry,range_check=none,if=health.pct<=config.rallying_cry_hp_pct
+    - impending_victory,if=health.effective.pct<=config.impending_victory_hp_pct
+    - spell_reflection,range_check=none,if=incoming_cast.player.reflectable.up|incoming_cast.aoe.reflectable.up
+
+    # Combat Check
+    - return,if=auto_combat.player
+
+    - call_action_list,name=auto_heal
+
+    # Interrupts
+    - pummel,if=interrupt.target.check
+    - pummel.mouseover,if=interrupt.mouseover.check
+    - pummel.focus,if=interrupt.focus.check
+
+    # CC Interrupt
+    - storm_bolt,if=interrupt.cc.check
+
+    # AoE Interrupt
+    - shockwave,if=interrupt.stun.aoe.check
+    # Racial Interrupts
+    - quaking_palm,if=interrupt.cc.check
+    - haymaker,if=interrupt.cc.check
+    - war_stomp,if=interrupt.stun.aoe.check
+    - bull_rush,if=interrupt.stun.aoe.check
+    - tail_swipe,if=interrupt.stun.aoe.check
+
+    # Target Check
+    - return,if=auto_combat.target
+
+    # actions=charge,if=time<=0.5|movement.distance>5
+    - charge,if=target.range>8&player.combat.time<=0.5
+
+    # Trinkets
+    # use_item,name=algethar_puzzle_box,if=cooldown.avatar.remains<2|cooldown.colossus_smash.remains<2
+    - use_item,name=algethar_puzzle_box,if=cooldown.avatar.remains<2|cooldown.colossus_smash.remains<2
+    - trinket_1,if=trinket_1.sync
+    - trinket_2,if=trinket_2.sync
+    # "auto_attack"
+    # "potion,if=gcd.remains=0&debuff.colossus_smash.remains>8|target.time_to_die<25"
+    # actions+=/arcane_torrent,if=cooldown.mortal_strike.remains>1.5&rage<50
+    - arcane_torrent,if=cooldown.mortal_strike.remains>1.5&rage<50
+    # actions+=/lights_judgment,if=debuff.colossus_smash.down&cooldown.mortal_strike.remains
+    - lights_judgment,if=debuff.colossus_smash.down&cooldown.mortal_strike.remains
+    # actions+=/bag_of_tricks,if=debuff.colossus_smash.down&cooldown.mortal_strike.remains
+    - bag_of_tricks,if=debuff.colossus_smash.down&cooldown.mortal_strike.remains
+    # actions+=/berserking,if=target.time_to_die>180&debuff.colossus_smash.up|target.time_to_die<180&variable.execute_phase&debuff.colossus_smash.up|target.time_to_die<20
+    - berserking,if=target.time_to_die>180&lastcast.colossus_smash<=10|target.time_to_die<180&var.execute_phase&lastcast.colossus_smash<=10|target.time_to_die<20
+    # actions+=/blood_fury,if=debuff.colossus_smash.up
+    - blood_fury,if=lastcast.colossus_smash<=10
+    # actions+=/fireblood,if=debuff.colossus_smash.up
+    - fireblood,if=lastcast.colossus_smash<=10
+    # actions+=/ancestral_call,if=debuff.colossus_smash.up
+    - ancestral_call,if=lastcast.colossus_smash<=10
+    # actions+=/invoke_external_buff,name=power_infusion,if=debuff.colossus_smash.up&fight_remains>=135|variable.execute_phase&buff.avatar.up|fight_remains<=25
+    # - invoke_external_buff,name=power_infusion,if=debuff.colossus_smash.up&fight_remains>=135|var.execute_phase&buff.avatar.up|fight_remains<=25
+    # actions+=/run_action_list,name=colossus_aoe,if=talent.demolish&active_enemies>2
+    - run_action_list,name=colossus_aoe,if=talent.demolish&active_enemies>2
+    # actions+=/run_action_list,name=colossus_execute,target_if=min:target.health.pct,if=talent.demolish&variable.execute_phase
+    # target_if=min:target.health.pct dropped
+    - run_action_list,name=colossus_execute,if=talent.demolish&var.execute_phase
+    # actions+=/run_action_list,name=colossus_st,if=talent.demolish
+    - run_action_list,name=colossus_st,if=talent.demolish
+    # actions+=/run_action_list,name=slayer_aoe,if=talent.slayers_dominance&active_enemies>2
+    - run_action_list,name=slayer_aoe,if=talent.slayers_dominance&active_enemies>2
+    # actions+=/run_action_list,name=slayer_execute,target_if=min:target.health.pct,if=talent.slayers_dominance&variable.execute_phase
+    # target_if=min:target.health.pct dropped
+    - run_action_list,name=slayer_execute,if=talent.slayers_dominance&var.execute_phase
+    # actions+=/run_action_list,name=slayer_st,if=talent.slayers_dominance
+    - run_action_list,name=slayer_st,if=talent.slayers_dominance

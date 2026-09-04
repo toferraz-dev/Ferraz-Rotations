@@ -1,0 +1,233 @@
+version: 3
+spec: 255
+
+# =============================================================================
+# Hunter - Survival - 255
+# =============================================================================
+
+spell_overrides:
+  takedown: "!config.takedown_range_check|target.range<=5"
+
+config:
+  takedown_range_check:
+    label: "Takedown (5yd)"
+    type: checkbox
+    default: true
+  
+  survival_of_the_fittest_hp_pct:
+    label: "Survival of the Fittest"
+    type: slider
+    min: 0
+    max: 100
+    default: 50
+
+  aspect_of_the_turtle_hp_pct:
+    label: "Aspect of the Turtle"
+    type: slider
+    min: 0
+    max: 100
+    default: 30
+  
+  exhilaration_hp_pct:
+    label: "Exhilaration"
+    type: slider
+    min: 0
+    max: 100
+    default: 50
+
+  mend_pet_high_prio_hp_pct:
+    section: "Pet Management"
+    label: "Mend Pet High Priority"
+    type: slider
+    min: 0
+    max: 100
+    default: 40
+
+  mend_pet_low_prio_hp_pct:
+    section: "Pet Management"
+    label: "Mend Pet Low Priority"
+    type: slider
+    min: 0
+    max: 100
+    default: 80
+
+  call_pet_number:
+    section: "Pet Management"
+    label: "Call Pet Number"
+    type: slider
+    min: 1
+    max: 5
+    default: 1
+
+lists:
+
+      # CDS
+  cds:
+    # blood_fury,if=buff.takedown.up|cooldown.takedown.ready
+    - blood_fury,if=buff.takedown.up|cooldown.takedown.ready
+    # use_items,check_existing=0,slots=trinket1:trinket2,if=this_trinket.has_use_damage
+    # use_items,check_existing=0,slots=trinket1:trinket2,if=this_trinket.has_use_buff&talent.takedown&!other_trinket.has_use_buff&this_trinket.cooldown.duration>=cooldown.takedown.duration*2&this_trinket.has_buff.haste&(buff.takedown.up|cooldown.takedown.remains>this_trinket.cooldown.duration*0.45)
+    # use_items,check_existing=0,slots=trinket1:trinket2,if=this_trinket.has_use_buff&(!talent.takedown|other_trinket.has_use_buff|this_trinket.cooldown.duration<cooldown.takedown.duration*2|!this_trinket.has_buff.haste)&(buff.takedown.up|cooldown.takedown.ready|cooldown.takedown.remains>20|!talent.takedown)
+    # use_item,name=algethar_puzzle_box,if=cooldown.takedown.remains<5|!talent.takedown
+    - use_item,name=algethar_puzzle_box,if=cooldown.takedown.remains<5|!talent.takedown
+    # invoke_external_buff,name=power_infusion,if=buff.takedown.up&!buff.power_infusion.up
+    # ancestral_call,if=buff.takedown.up|cooldown.takedown.ready
+    - ancestral_call,if=buff.takedown.up|cooldown.takedown.ready
+    # fireblood,if=buff.takedown.up|cooldown.takedown.ready
+    - fireblood,if=buff.takedown.up|cooldown.takedown.ready
+    # berserking,if=buff.takedown.up|cooldown.takedown.ready
+    - berserking,if=buff.takedown.up|cooldown.takedown.ready
+    # muzzle
+    # - muzzle
+    # potion,if=target.time_to_die<25|cooldown.takedown.ready
+    # - potion,if=target.time_to_die<25|cooldown.takedown.ready
+    # aspect_of_the_eagle,if=target.distance>=6
+    - aspect_of_the_eagle,if=target.range>=8&player.combat.time>10
+
+    # AOE - PL
+  plcleave:
+    # kill_command,if=buff.tip_of_the_spear.stack<2&(buff.howl_of_the_pack_leader_wyvern.remains|buff.howl_of_the_pack_leader_boar.remains|buff.howl_of_the_pack_leader_bear.remains)
+    - kill_command,if=buff.tip_of_the_spear.stack<2&howl_summon.ready
+    # kill_command,if=cooldown.takedown.remains<gcd&buff.tip_of_the_spear.stack<2&!talent.twin_fangs
+    - kill_command,if=cooldown.takedown.remains<gcd&buff.tip_of_the_spear.stack<2&!talent.twin_fangs
+    # takedown,if=buff.tip_of_the_spear.stack>0&!talent.twin_fangs|buff.tip_of_the_spear.stack=0&talent.twin_fangs
+    - takedown,if=buff.tip_of_the_spear.stack>0&!talent.twin_fangs|buff.tip_of_the_spear.stack=0&talent.twin_fangs
+    # wildfire_bomb,if=full_recharge_time<gcd
+    - wildfire_bomb,if=cooldown.wildfire_bomb.full_recharge_time<gcd
+    # boomstick,if=buff.tip_of_the_spear.up
+    - boomstick,if=buff.tip_of_the_spear.up
+    # wildfire_bomb,if=buff.tip_of_the_spear.up
+    - wildfire_bomb,if=buff.tip_of_the_spear.up
+    # raptor_strike,if=buff.tip_of_the_spear.up|!buff.raptor_swipe.up
+    - raptor_strike,if=buff.tip_of_the_spear.up|!buff.raptor_swipe.up
+    # kill_command,if=cooldown.takedown.remains
+    - kill_command,if=cooldown.takedown.remains
+    # wildfire_bomb
+    - wildfire_bomb
+    # takedown
+    - takedown
+
+    # ST - PL
+  plst:
+    # kill_command,if=buff.tip_of_the_spear.stack<2&howl_summon.ready
+    - kill_command,if=buff.tip_of_the_spear.stack<2&howl_summon.ready
+    # kill_command,if=cooldown.takedown.remains<gcd&buff.tip_of_the_spear.stack<2&!talent.twin_fangs
+    - kill_command,if=cooldown.takedown.remains<gcd&buff.tip_of_the_spear.stack<2&!talent.twin_fangs
+    # takedown,if=buff.tip_of_the_spear.stack>0&!talent.twin_fangs|buff.tip_of_the_spear.stack=0&talent.twin_fangs
+    - takedown,if=buff.tip_of_the_spear.stack>0&!talent.twin_fangs|buff.tip_of_the_spear.stack=0&talent.twin_fangs
+    # wildfire_bomb,if=buff.tip_of_the_spear.up&(talent.lethal_calibration&full_recharge_time<4+gcd|!talent.lethal_calibration)
+    - wildfire_bomb,if=buff.tip_of_the_spear.up&(talent.lethal_calibration&cooldown.wildfire_bomb.full_recharge_time<4+gcd|!talent.lethal_calibration)
+    # boomstick,if=buff.tip_of_the_spear.up
+    - boomstick,if=buff.tip_of_the_spear.up
+    # raptor_strike,if=(buff.tip_of_the_spear.up|!buff.raptor_swipe.up)
+    - raptor_strike,if=buff.tip_of_the_spear.up|!buff.raptor_swipe.up
+    # wildfire_bomb,if=buff.tip_of_the_spear.up
+    - wildfire_bomb,if=buff.tip_of_the_spear.up
+    # kill_command,if=cooldown.takedown.remains
+    - kill_command,if=cooldown.takedown.remains
+    # takedown
+    - takedown
+
+    # AOE - Sent
+  sentcleave:
+    # kill_command,if=buff.tip_of_the_spear.stack=0&(cooldown.takedown.remains|!talent.twin_fangs)
+    - kill_command,if=buff.tip_of_the_spear.stack=0&(cooldown.takedown.remains|!talent.twin_fangs)
+    # boomstick,if=buff.tip_of_the_spear.up
+    - boomstick,if=buff.tip_of_the_spear.up
+    # wildfire_bomb,target_if=max:debuff.sentinels_mark.remains,if=buff.tip_of_the_spear.up
+    - wildfire_bomb,if=buff.tip_of_the_spear.up
+    # kill_command,if=cooldown.takedown.remains<gcd&buff.tip_of_the_spear.stack<2&!talent.twin_fangs
+    - kill_command,if=cooldown.takedown.remains<gcd&buff.tip_of_the_spear.stack<2&!talent.twin_fangs
+    # takedown,target_if=min:debuff.sentinels_mark.remains,if=buff.tip_of_the_spear.stack>0&!talent.twin_fangs|buff.tip_of_the_spear.stack=0&talent.twin_fangs
+    - takedown,if=buff.tip_of_the_spear.stack>0&!talent.twin_fangs|buff.tip_of_the_spear.stack=0&talent.twin_fangs
+    # moonlight_chakram,target_if=min:debuff.sentinels_mark.remains,if=buff.tip_of_the_spear.up
+    - moonlight_chakram,if=buff.tip_of_the_spear.up
+    # raptor_strike,target_if=min:debuff.sentinels_mark.remains,if=buff.tip_of_the_spear.up&buff.raptor_swipe.up|!buff.raptor_swipe.up
+    - raptor_strike,if=buff.tip_of_the_spear.up&buff.raptor_swipe.up|!buff.raptor_swipe.up
+    # kill_command
+    - kill_command
+
+    # ST - Sent
+  sentst:
+    # kill_command,if=buff.tip_of_the_spear.stack=0&(cooldown.takedown.remains|!talent.twin_fangs)
+    - kill_command,if=buff.tip_of_the_spear.stack=0&(cooldown.takedown.remains|!talent.twin_fangs)
+    # boomstick
+    - boomstick
+    # wildfire_bomb,if=buff.tip_of_the_spear.up&(debuff.sentinels_mark.remains|full_recharge_time<4)
+    - wildfire_bomb,if=buff.tip_of_the_spear.up&(debuff.sentinels_mark.remains|cooldown.wildfire_bomb.full_recharge_time<4)
+    # kill_command,if=cooldown.takedown.remains<gcd&buff.tip_of_the_spear.stack<2&!talent.twin_fangs
+    - kill_command,if=cooldown.takedown.remains<gcd&buff.tip_of_the_spear.stack<2&!talent.twin_fangs
+    # takedown,if=buff.tip_of_the_spear.stack>0&!talent.twin_fangs|buff.tip_of_the_spear.stack=0&talent.twin_fangs
+    - takedown,if=buff.tip_of_the_spear.stack>0&!talent.twin_fangs|buff.tip_of_the_spear.stack=0&talent.twin_fangs
+    # moonlight_chakram
+    - moonlight_chakram
+    # raptor_strike
+    - raptor_strike
+    # kill_command,if=cooldown.takedown.remains
+    - kill_command,if=cooldown.takedown.remains
+    # wildfire_bomb
+    - wildfire_bomb
+    # takedown
+    - takedown
+
+  main:
+    # _shared.yaml lists
+    - call_action_list,name=spell_queue
+    - call_action_list,name=sanity_checks
+    - call_action_list,name=auto_target
+
+
+    # Pet Management
+    - revive_pet,range_check=none,if=!pet.alive&pet.exists
+
+    - 883,range_check=none,if=!pet.exists&config.call_pet_number=1
+    - 83242,range_check=none,if=!pet.exists&config.call_pet_number=2
+    - 83243,range_check=none,if=!pet.exists&config.call_pet_number=3
+    - 83244,range_check=none,if=!pet.exists&config.call_pet_number=4
+    - 83245,range_check=none,if=!pet.exists&config.call_pet_number=5
+    
+    # Combat Check
+    - return,if=auto_combat.player
+
+    - survival_of_the_fittest,range_check=none,if=health.pct<=config.survival_of_the_fittest_hp_pct
+    - aspect_of_the_turtle,if=health.pct<=config.aspect_of_the_turtle_hp_pct
+    - mend_pet,if=pet.health.pct<=config.mend_pet_high_prio_hp_pct&pet.alive&pet.exists
+    - exhilaration,range_check=none,if=health.pct<=config.exhilaration_hp_pct
+
+    - muzzle,if=interrupt.target.check
+    - muzzle.mouseover,if=interrupt.mouseover.check
+    - muzzle.focus,if=interrupt.focus.check
+    # CC Interrupt
+    - intimidation,if=interrupt.cc.check
+    # Racial Interrupts
+    - quaking_palm,if=interrupt.cc.check
+    - haymaker,if=interrupt.cc.check
+    - war_stomp,if=interrupt.stun.aoe.check
+    - bull_rush,if=interrupt.stun.aoe.check
+    - tail_swipe,if=interrupt.stun.aoe.check
+
+    - call_action_list,name=auto_heal
+
+    # Misdirection on tank at M+ pull start
+    - misdirection,target=tank1,if=!player.inraid&combat.time<3
+
+    # Target Check
+    - return,if=auto_combat.target
+
+    - trinket_1,if=trinket_1.sync
+    - trinket_2,if=trinket_2.sync
+
+    # retarget,target_if=max:target.health,line_cd=5,if=fight_style.dungeonroute
+    # Not converted: retarget is sim-only (fight_style.dungeonroute).
+
+    # call_action_list,name=cds
+    - call_action_list,name=cds
+    # call_action_list,name=plst,if=active_enemies<3&talent.howl_of_the_pack_leader
+    - call_action_list,name=plst,if=active_enemies<3&talent.howl_of_the_pack_leader
+    # call_action_list,name=plcleave,if=active_enemies>2&talent.howl_of_the_pack_leader
+    - call_action_list,name=plcleave,if=active_enemies>2&talent.howl_of_the_pack_leader
+    # call_action_list,name=sentst,if=active_enemies<3&!talent.howl_of_the_pack_leader
+    - call_action_list,name=sentst,if=active_enemies<3&!talent.howl_of_the_pack_leader
+    # call_action_list,name=sentcleave,if=active_enemies>2&!talent.howl_of_the_pack_leader
+    - call_action_list,name=sentcleave,if=active_enemies>2&!talent.howl_of_the_pack_leader
+

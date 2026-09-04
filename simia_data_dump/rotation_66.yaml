@@ -1,0 +1,258 @@
+# =============================================================================
+# Paladin - Protection - 66
+# SimC APL Conversion
+# =============================================================================
+# =============================================================================
+
+version: 3
+spec: 66
+
+config:
+  # ── Word of Glory ─────────────────────────────────────────────────────────
+  word_of_glory_emergency:
+    section: "Word of Glory"
+    label: "Emergency HP% (self)"
+    type: slider
+    min: 0
+    max: 100
+    default: 35
+  word_of_glory_free_hp_pct:
+    section: "Word of Glory"
+    label: "Free Proc HP% (Shining Light)"
+    type: slider
+    min: 0
+    max: 100
+    default: 85
+  word_of_glory_party_hp_pct:
+    section: "Word of Glory"
+    label: "Party HP%"
+    type: slider
+    min: 0
+    max: 100
+    default: 30
+  word_of_glory_party_mana:
+    section: "Word of Glory"
+    label: "Min Self Mana% to cast on Party"
+    type: slider
+    min: 0
+    max: 100
+    default: 50
+  # ── Lay on Hands ──────────────────────────────────────────────────────────
+  lay_on_hands_hp_pct:
+    section: "Lay on Hands"
+    label: "Self HP%"
+    type: slider
+    min: 0
+    max: 100
+    default: 15
+  lay_on_hands_party_hp:
+    section: "Lay on Hands"
+    label: "Party HP%"
+    type: slider
+    min: 0
+    max: 100
+    default: 20
+  lay_on_hands_party_target:
+    section: "Lay on Hands"
+    label: "Party Target Roles"
+    type: multi_select
+    options:
+      - "Tanks"
+      - "Healers"
+      - "DPS"
+    default: [1]
+  # ── Blessing of Sacrifice ─────────────────────────────────────────────────
+  blessing_of_sacrifice_party_hp:
+    section: "Blessing of Sacrifice"
+    label: "Party HP%"
+    type: slider
+    min: 0
+    max: 100
+    default: 40
+  blessing_of_sacrifice_self_hp:
+    section: "Blessing of Sacrifice"
+    label: "Min Self HP%"
+    type: slider
+    min: 0
+    max: 100
+    default: 60
+  blessing_of_sacrifice_party_target:
+    section: "Blessing of Sacrifice"
+    label: "Party Target Roles"
+    type: multi_select
+    options:
+      - "Tanks"
+      - "Healers"
+      - "DPS"
+    default: []
+  # ── Defensives ────────────────────────────────────────────────────────────
+  ardent_defender_hp_pct:
+    section: "Defensives"
+    label: "Ardent Defender HP%"
+    type: slider
+    min: 0
+    max: 100
+    default: 65
+  guardian_of_ancient_kings_hp_pct:
+    section: "Defensives"
+    label: "Guardian of Ancient Kings HP%"
+    type: slider
+    min: 0
+    max: 100
+    default: 30
+
+variables:
+  hammer_of_light_ready: (20-lastcast.divine_toll)*(lastcast.divine_toll<20)
+
+lists:
+  main:
+    - call_action_list,name=spell_queue
+    - crusader_aura,range_check=none,if=!buff.crusader_aura.up.any&player.mounted
+    - call_action_list,name=sanity_checks
+    - call_action_list,name=auto_target
+
+    # Auras / Enchants (OOC)
+    - devotion_aura,range_check=none,if=!buff.devotion_aura.up.any
+    - rite_of_sanctification,range_check=none,ignore_usable=true,ignore_queue=true,if=mainhand.enchant.id!=7143
+    - rite_of_adjuration,range_check=none,if=mainhand.enchant.id!=7144
+
+    # Combat Check
+    - return,if=auto_combat.player
+
+    # divine_toll,if=buff.avenging_wrath.up|(!talent.righteous_protector.enabled&cooldown.avenging_wrath.remains>30)
+    # local addition: |buff.sentinel.up
+    - divine_toll,range_check=none,if=buff.avenging_wrath.up|(!talent.righteous_protector.enabled&cooldown.avenging_wrath.remains>30)|buff.sentinel.up
+
+    # Defensives
+    - guardian_of_ancient_kings,delay=300,range_check=none,if=health.pct<=config.guardian_of_ancient_kings_hp_pct
+    - ardent_defender,range_check=none,if=health.pct<=config.ardent_defender_hp_pct
+    - lay_on_hands,range_check=none,if=health.pct<=config.lay_on_hands_hp_pct
+    # LoH Party - cast on party members by role (multi_select: 0=Tanks, 1=Healers, 2=DPS)
+    - lay_on_hands,delay=500,cycle=party,if=config.lay_on_hands_party_target.has(0)&cycle.tank&cycle.health.pct<=config.lay_on_hands_party_hp
+    - lay_on_hands,delay=500,cycle=party,if=config.lay_on_hands_party_target.has(1)&cycle.healer&cycle.health.pct<=config.lay_on_hands_party_hp
+    - lay_on_hands,delay=500,cycle=party,if=config.lay_on_hands_party_target.has(2)&cycle.dps&cycle.health.pct<=config.lay_on_hands_party_hp
+    # BoS Party - redirects 30% of their damage to us, so gate on our own HP (multi_select: 0=Tanks, 1=Healers, 2=DPS)
+    - blessing_of_sacrifice,delay=500,cycle=party,if=config.blessing_of_sacrifice_party_target.has(0)&cycle.tank&cycle.health.effective.pct<=config.blessing_of_sacrifice_party_hp&health.pct>=config.blessing_of_sacrifice_self_hp
+    - blessing_of_sacrifice,delay=500,cycle=party,if=config.blessing_of_sacrifice_party_target.has(1)&cycle.healer&cycle.health.effective.pct<=config.blessing_of_sacrifice_party_hp&health.pct>=config.blessing_of_sacrifice_self_hp
+    - blessing_of_sacrifice,delay=500,cycle=party,if=config.blessing_of_sacrifice_party_target.has(2)&cycle.dps&cycle.health.effective.pct<=config.blessing_of_sacrifice_party_hp&health.pct>=config.blessing_of_sacrifice_self_hp
+    - word_of_glory,if=health.effective.pct<=config.word_of_glory_emergency
+    # free-WoG check: 327510, not the colliding "Shining Light" name
+    - word_of_glory,if=buff.327510.up&health.effective.pct<=config.word_of_glory_free_hp_pct
+    # Party WoG — gate on min mana% since WoG costs mana when cast on others
+    - word_of_glory,delay=500,cycle=party,if=cycle.health.effective.pct<=config.word_of_glory_party_hp_pct&mana.pct>=config.word_of_glory_party_mana
+
+    # Interrupts
+    - rebuke,if=interrupt.target.check
+    - rebuke.mouseover,if=interrupt.mouseover.check
+    - rebuke.focus,if=interrupt.focus.check
+    # CC Interrupt
+    - hammer_of_justice,if=interrupt.cc.check
+    # AoE Interrupt
+    - blinding_light,if=interrupt.stun.aoe.check
+    # Racial Interrupts
+    - quaking_palm,if=interrupt.cc.check
+    - haymaker,if=interrupt.cc.check
+    - war_stomp,if=interrupt.stun.aoe.check
+    - bull_rush,if=interrupt.stun.aoe.check
+    - tail_swipe,if=interrupt.stun.aoe.check
+
+    # Taunt — grab aggro when not tanking (dungeon/M+ only, never raid)
+    - hand_of_reckoning,name="Taunt",if=target.threat<2&target.combat&target.threat!=-1&!player.inraid
+    - hand_of_reckoning.mouseover,name="Taunt MO",if=mouseover.threat<2&mouseover.combat&mouseover.threat!=-1&mouseover.exists&!player.inraid
+
+    - call_action_list,name=auto_heal
+
+    # Avenge'r Shields Interrupt
+    - avengers_shield,if=target.casting.interruptible|interrupt.target.check
+
+    # Avenger's Shield Mouseover
+    - avengers_shield.mouseover,if=mouseover.casting.interruptible|interrupt.mouseover.check
+
+    # Target Check
+    - return,if=auto_combat.target
+
+    # Trinkets
+    # use_item,name=algethar_puzzle_box
+    - use_item,name=algethar_puzzle_box
+    # use_items
+    - trinket_1,if=trinket_1.sync
+    - trinket_2,if=trinket_2.sync
+
+    # potion,if=buff.avenging_wrath.up — potion not supported, deleted
+
+    # avenging_wrath,if=cooldown.divine_toll.remains<=10
+    - avenging_wrath
+    - sentinel
+
+    # fireblood,if=buff.avenging_wrath.up
+    - fireblood,if=buff.avenging_wrath.up|buff.sentinel.up
+
+    # hammer_of_light,if=(!buff.undisputed_ruling.up|buff.hammer_of_light_ready.remains<5)&debuff.judgment.up
+    - hammer_of_light,if=(!buff.undisputed_ruling.up|buff.hammer_of_light.remains<5)&debuff.judgment.up
+
+    # shield_of_the_righteous,if=!buff.hammer_of_light_ready.up|(!buff.hammer_of_light_ready.remains<5&buff.undisputed_ruling.up)|buff.hammer_of_light_free.up|prev_gcd.1.divine_toll
+    # buff.hammer_of_light_free -> 433732 ("Light's Deliverance"); the SimC label is not a WoW name.
+    - shield_of_the_righteous,if=!buff.hammer_of_light.up|(!buff.hammer_of_light.remains<5&buff.undisputed_ruling.up)|buff.433732.up|prev_gcd.1.divine_toll
+
+    # holy_armaments,if=next_armament=sacred_weapon&(buff.sacred_weapon.remains<6|!buff.sacred_weapon.up)
+    # next_armament not supported — split into separate sacred_weapon / holy_bulwark entries
+    - sacred_weapon,if=buff.sacred_weapon.remains<6|!buff.sacred_weapon.up
+
+    # hammer_of_wrath,if=buff.hammer_of_light_ready.up&!debuff.judgment.up
+    - hammer_of_wrath,if=buff.hammer_of_light.up&!debuff.judgment.up
+
+    # judgment,if=buff.hammer_of_light_ready.up&!debuff.judgment.up
+    - judgment,if=buff.hammer_of_light.up&!debuff.judgment.up
+
+    # avengers_shield,if=buff.vanguard.up|(buff.avenging_wrath.up&apex.3)
+    # apex.3 → talent.glory_of_the_vanguard.rank>=4
+    - avengers_shield,if=buff.vanguard.up|((buff.avenging_wrath.up|buff.sentinel.up)&talent.glory_of_the_vanguard.rank>=4)
+
+    # holy_armaments,if=next_armament=holy_bulwark&cooldown.avenging_wrath.remains<5
+    # next_armament not supported — use holy_bulwark directly
+    - holy_bulwark,if=cooldown.avenging_wrath.remains<5
+
+    # consecration,if=buff.divine_guidance.stack>=5
+    - consecration,if=buff.divine_guidance.stack>=5
+
+    # hammer_of_wrath
+    - hammer_of_wrath
+
+    # judgment,if=full_recharge_time<=gcd*2
+    # full_recharge_time expanded to cooldown.judgment.full_recharge_time
+    - judgment,if=cooldown.judgment.full_recharge_time<=gcd*2
+
+    # avengers_shield
+    - avengers_shield
+
+    # hammer_of_the_righteous,if=buff.blessed_assurance.up
+    - hammer_of_the_righteous,if=buff.blessed_assurance.up
+
+    # blessed_hammer,if=buff.blessed_assurance.up
+    - blessed_hammer,if=buff.blessed_assurance.up
+
+    # judgment
+    - judgment
+
+    # holy_armaments,if=next_armament=holy_bulwark&charges=2
+    # next_armament not supported — use holy_bulwark directly; charges=2 → cooldown.holy_bulwark.charges>=2
+    - holy_bulwark,if=cooldown.holy_bulwark.charges>=2
+
+    # consecration,if=!consecration.up
+    - consecration,if=!buff.consecration.up
+
+    # blessed_hammer
+    - blessed_hammer
+
+    # hammer_of_the_righteous
+    - hammer_of_the_righteous
+
+    # arcane_torrent
+    - arcane_torrent
+
+    # word_of_glory,if=buff.shining_light_free.up
+    # buff.shining_light_free → 327510; six spells share the name "Shining Light"
+    - word_of_glory,if=buff.327510.up
+
+    # consecration
+    - consecration
