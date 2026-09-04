@@ -1076,3 +1076,82 @@ restante da armadura.
 **Não medido.** Os dois preditivos são inertes no SimC, e o custo do gate era tempo
 de bloqueio em jogo, não DPS de profileset. A justificativa aqui é a aritmética do
 GCD, não um número de sim.
+
+---
+
+## Dois gates de posicionamento — 1.17.0 e 1.18.0 (2026-09-04)
+
+Pedidos do Ferraz, no mesmo dia em que o morph do HotW foi descoberto. Os dois
+atacam o mesmo problema por ângulos diferentes: **cooldown gasto enquanto se corre
+entre pacotes não é cooldown gasto**.
+
+### `hotw_min_standing_time` — o weave espera você parar (1.17.0)
+
+```yaml
+player.standing.time>=config.hotw_min_standing_time    # slider 0-10, default 2
+```
+
+`player.standing.time` é "Seconds spent standing still" no catálogo. A `var.hotw_weave`
+já tinha `target.in_melee`, que responde *"o alvo está ao alcance agora?"* — e não
+responde *"vou continuar ao alcance no próximo segundo?"*.
+
+Isso importa porque o morph é Feral Frenzy: **5 yards, cinco ticks a cada 0,2s**. Não é
+instantâneo. Sair andando no meio do canal perde os ticks restantes, e o cooldown de
+120s já foi. Estar parado há 2s também significa que o pacote está parqueado em cima de
+você, que é quando o weave vale.
+
+Espelha `inc_min_standing_time` da `FerrazBalance.yaml` — mesma expressão, mesmo default
+2, mesma faixa. Os dois arquivos resolvem o mesmo problema do mesmo jeito de propósito.
+
+### `cds_require_melee` — cooldowns exigem alvo em melee (1.18.0)
+
+```yaml
+melee_engaged: "!config.cds_require_melee|enemies.combat.8y>=1"    # checkbox, default ON
+```
+
+AND-ado em **quatro** linhas: `trinket_1`, `trinket_2`, `combat_potion` e o par
+`berserk` / `incarnation_guardian_of_ursoc`.
+
+O par entra junto porque Berserk e Incarnation são talentos mutuamente exclusivos e o
+arquivo os trata como um slot só. Gatear só um faria um build de Berserk se comportar
+diferente de um de Incarnation sem nenhum motivo.
+
+**Por que `enemies.combat.8y>=1` e não `target.in_melee`:** num M+ o alvo atual é
+frequentemente um caster longe enquanto o resto do pacote está em cima de você.
+`target.in_melee` seria falso ali e o burst inteiro seria pulado — falso negativo caro.
+O contador de 8y é o mesmo que `var.aoe_mode` e o auto-target da engine já usam, então
+"range melee" quer dizer uma coisa só no arquivo inteiro.
+
+**Filtrado por combate de propósito.** `enemies.combat.8y`, não `enemies.8y` cru. São
+cooldowns de combate e não podem armar num pacote ainda não puxado — o oposto exato da
+linha `bear_form` do `main`, que usa o contador cru justamente por rodar antes do pull.
+
+Um checkbox para os quatro em vez de quatro sliders: o comportamento antigo volta de uma
+vez só.
+
+### O linter pegou um arquivo que não carregaria
+
+A primeira versão da variável foi escrita sem aspas:
+
+```yaml
+melee_engaged: !config.cds_require_melee|enemies.combat.8y>=1
+```
+
+`!` é indicador de YAML. `lint_rotations.py`:
+
+```
+error  YAML does not parse - Simia will not load this file: expected ' ', but found '|'
+error  value starts with YAML indicator '!' - wrap the whole value in double quotes
+```
+
+Não é o valor que quebra, é o **arquivo inteiro** que deixa de carregar. Qualquer
+variável ou override que comece com `!` vai entre aspas duplas, como os
+`spell_overrides` já fazem. Rodar o linter antes de terminar a edição não é formalidade.
+
+### Nenhum dos dois é mensurável
+
+`player.standing.time` e `enemies.combat.8y` não existem no SimC — a tradução em
+`sim/apl/ferraz.simc` não tem nem posicionamento nem deslocamento entre pacotes, e no
+Patchwerk o alvo está sempre em melee. Um profileset não consegue nem reproduzir o
+problema que estes gates resolvem, muito menos medir a solução. Julgue em jogo, com
+`/simia snapshot` correndo entre pacotes.

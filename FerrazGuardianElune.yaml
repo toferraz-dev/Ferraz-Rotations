@@ -17,7 +17,7 @@
 # most of what looks improvable here was tried and reverted.
 # =============================================================================
 
-version: "1.16.0"
+version: "1.18.0"
 patch: "12.1"
 spec: 104
 name: Guardian Druid Ferraz M+
@@ -53,7 +53,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-09-04 | Patch: 12.1 | Version: 1.16.0"
+    text: "Last update: 2026-09-04 | Patch: 12.1 | Version: 1.18.0"
 
   # Exact string every number here was measured against (sim/Tassiana_guardian.simc).
   recommended_talents:
@@ -119,6 +119,13 @@ config:
     default: 20
     description: "Maul fires once rage is within this much of the cap. Lower = more aggressive."
 
+  cds_require_melee:
+    section: "Cooldowns"
+    label: "Cooldowns require a mob in melee"
+    type: checkbox
+    default: true
+    description: "Hold the trinkets, the combat potion and Berserk/Incarnation until at least one enemy in combat is within 8 yards. Without it all three fire on cooldown while you are running between packs, and the window is spent on empty air. Turn OFF to go back to firing them the moment they are ready."
+
   # HotW weave is the single most valuable thing in the file.
   auto_hotw:
     section: "Cooldowns"
@@ -142,6 +149,14 @@ config:
     max: 100
     default: 80
     description: "Stay in Bear Form below this health. Leaving Bear drops bear armor and stamina."
+  hotw_min_standing_time:
+    section: "Cooldowns"
+    label: "Heart of the Wild (min standing still)"
+    type: slider
+    min: 0
+    max: 10
+    default: 2
+    description: "Seconds standing still before the weave may fire. The morph is Feral Frenzy, a 5 yard melee hit that channels five ticks over roughly a second - start it while still repositioning and you either leave range mid-channel or spend the window walking. Standing still also means the pull is parked and the pack is on you. 0 disables the check."
   # The two below hold the weave when the NEXT few seconds look bad, not just
   # the current HP. Set either to 0 to disable that check.
   #
@@ -315,12 +330,20 @@ variables:
   # talents, so this covers whichever one the build has.
   burst_active: buff.incarnation_guardian_of_ursoc.up|buff.berserk.up
 
+  # Is there anything actually in melee to spend a cooldown on. Gates the
+  # trinkets, the potion and Berserk/Incarnation - all three used to fire on
+  # cooldown while running between packs, burning a window on empty air.
+  # enemies.combat.8y, the same count var.aoe_mode and the engine's auto-target
+  # use, so "melee range" means one thing across the file. Combat-filtered on
+  # purpose: these are combat cooldowns and must not arm on an unpulled pack.
+  melee_engaged: "!config.cds_require_melee|enemies.combat.8y>=1"
+
   # Gate for the HotW weave. target.in_melee matters: without it the weave
   # fired while running to the pack and burned the cooldown out of range -
   # the morph is Feral Frenzy, which has a 5 yard range.
   # Health alone is not enough: the last three checks look at the next few
   # seconds (incoming damage, predicted buster, target TTD) instead.
-  hotw_weave: config.auto_hotw&talent.heart_of_the_wild&cooldown_bypass.heart_of_the_wild.ready&target.valid&target.attackable&target.in_melee&player.combat&combat.time>=config.hotw_delay&health.pct>=config.hotw_hp_pct&!var.heavy_incoming&variable.tank_buster_remains>config.hotw_buster_window&target.time_to_die>=config.hotw_min_ttd&!buff.incarnation_guardian_of_ursoc.up&!buff.berserk.up
+  hotw_weave: config.auto_hotw&talent.heart_of_the_wild&cooldown_bypass.heart_of_the_wild.ready&target.valid&target.attackable&target.in_melee&player.combat&combat.time>=config.hotw_delay&player.standing.time>=config.hotw_min_standing_time&health.pct>=config.hotw_hp_pct&!var.heavy_incoming&variable.tank_buster_remains>config.hotw_buster_window&target.time_to_die>=config.hotw_min_ttd&!buff.incarnation_guardian_of_ursoc.up&!buff.berserk.up
 
 lists:
   # spell_queue, sanity_checks and auto_target, inlined.
@@ -388,12 +411,13 @@ lists:
     - lunar_beam,if=target.valid&(!config.lunar_beam_moving_check|player.moving.time<=1)
 
     # Berserk/Incarnation are mutually exclusive talents, both listed so the
-    # file works either way.
-    - berserk,if=target.valid&(!config.auto_hotw|!talent.heart_of_the_wild|!cooldown_bypass.heart_of_the_wild.ready)
-    - incarnation_guardian_of_ursoc,if=target.valid&(!config.auto_hotw|!talent.heart_of_the_wild|!cooldown_bypass.heart_of_the_wild.ready)
+    # file works either way. Both carry var.melee_engaged: a burst opened while
+    # running between packs is a burst spent on nothing.
+    - berserk,if=target.valid&var.melee_engaged&(!config.auto_hotw|!talent.heart_of_the_wild|!cooldown_bypass.heart_of_the_wild.ready)
+    - incarnation_guardian_of_ursoc,if=target.valid&var.melee_engaged&(!config.auto_hotw|!talent.heart_of_the_wild|!cooldown_bypass.heart_of_the_wild.ready)
 
     # Combat potion.
-    - combat_potion,name="Combat Potion",if=config.use_potion&combat_potion.ready&player.combat&(!config.potion_sync_burst|var.burst_active|fight_remains<=30)
+    - combat_potion,name="Combat Potion",if=config.use_potion&combat_potion.ready&player.combat&var.melee_engaged&(!config.potion_sync_burst|var.burst_active|fight_remains<=30)
 
     - wild_guardian,if=buff.lunar_beam.up
 
@@ -512,8 +536,8 @@ lists:
     # player.combat is redundant with the combat wall above and stated anyway:
     # these lines are the ones most likely to be moved, and the guard should
     # travel with them.
-    - trinket_1,name="Trinket 1",if=trinket_1.ready&player.combat&(!config.trinket_sync_burst|var.burst_active)
-    - trinket_2,name="Trinket 2",if=trinket_2.ready&player.combat&(!config.trinket_sync_burst|var.burst_active)
+    - trinket_1,name="Trinket 1",if=trinket_1.ready&player.combat&var.melee_engaged&(!config.trinket_sync_burst|var.burst_active)
+    - trinket_2,name="Trinket 2",if=trinket_2.ready&player.combat&var.melee_engaged&(!config.trinket_sync_burst|var.burst_active)
 
     # Second Ironfur trigger outside `bear`, so armour tops up on GCDs the
     # damage lists own. Overlaps the bear-list lines on purpose.
