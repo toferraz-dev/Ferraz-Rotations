@@ -1,0 +1,269 @@
+version: "1.1.13"
+spec: 270
+name: "MW Monk No Apex M+"
+description: "M+ No-Apex build."
+author: "Khan"
+date: "2026-04-16"
+patch: "12.0.5"
+movement_allowed: true
+
+config:
+  recommended_talents:
+    section: "Talents"
+    type: copy_text        # aliases: copy, copytext, copy-text
+    label: "Recommended Talent String from www.wayofthecrane.io achieved every .1% Mythic+ title as MW"
+    text: "C4QAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAgxMWGLjZx2MmZsYstsNjZ2Mz2yyMjFGTzYGwgBMmZmZY2wMMLzEAAAAABYxyMLz2MDAAADAzAGDsIjZA"
+  aoe_threshold:
+    section: "Profile v1.1.13 No-Apex M+"
+    type: slider
+    label: "SCK Threshold (enemies in 8y)"
+    min: 1
+    max: 10
+    default: 3
+  use_spin_to_win:
+    section: "Melee Weave"
+    type: checkbox
+    label: "Spin to Win priority SCK when enough enemies in range"
+    default: true
+  spin_to_win_threshold:
+    section: "Melee Weave"
+    type: slider
+    label: "Spin to Win min enemies in 8y"
+    min: 5
+    max: 20
+    default: 10
+  renm_mob_threshold:
+    section: "Melee Weave"
+    type: slider
+    label: "RenM Use Below Target Count"
+    min: 1
+    max: 30
+    default: 3
+  chiji_hp_threshold:
+    section: "Cooldowns"
+    type: slider
+    label: "Chi-Ji - Min group HP% (2+ members below)"
+    min: 30
+    max: 90
+    default: 63
+  chiji_enemies_threshold:
+    section: "Cooldowns"
+    type: slider
+    label: "Chi-Ji - Min enemies in 8y"
+    min: 4
+    max: 15
+    default: 6
+  celestial_conduit_threshold:
+    section: "Cooldowns"
+    type: slider
+    label: "Celestial Conduit Threshold - group HP% (2+ members below)"
+    min: 20
+    max: 80
+    default: 67
+  auto_celestials:
+    section: "Cooldowns"
+    type: checkbox
+    label: "Auto-use Celestial CD (uncheck for manual)"
+    default: true
+  use_life_cocoon:
+    section: "Cooldowns"
+    type: checkbox
+    label: "Enable Life Cocoon"
+    default: true
+  life_cocoon_threshold:
+    section: "Cooldowns"
+    type: slider
+    label: "Life Cocoon HP% Threshold"
+    min: 1
+    max: 100
+    default: 35
+  melee_weave_hp:
+    section: "Melee Weave"
+    type: slider
+    label: "Melee Weave Above HP%"
+    min: 1
+    max: 100
+    default: 50
+  ancient_teachings_hp:
+    section: "Melee Weave"
+    type: slider
+    label: "TP/BoK Ancient Teachings HP% (2+ members below)"
+    min: 1
+    max: 100
+    default: 93
+  vv_proc_hp:
+    section: "Melee Weave"
+    type: slider
+    label: "Instant Sheiluns Gift HP%"
+    min: 1
+    max: 100
+    default: 75
+  fortifying_brew_hp:
+    section: "Defensives"
+    type: slider
+    label: "Fortifying Brew HP% Threshold"
+    min: 1
+    max: 99
+    default: 60
+  renm_prepull:
+    section: "Out of Combat"
+    label: "Pre-pull Renewing Mist (spread to group)"
+    type: checkbox
+    default: true
+
+variables:
+  is_cotc: talent.celestial_conduit
+  hotjs_active: buff.heart_of_the_jade_serpent.up
+  chiji_active: cooldown.invoke_chiji_the_red_crane.remains>=90
+  zen_pulse_ready: buff.zen_pulse.stack>=2
+  spiritfont_ready: buff.spiritfont.stack>=2
+  sox_proc: buff.strength_of_the_black_ox.up
+  vivacious_up: buff.vivacious_vivification.up
+  dance_of_chiji: buff.dance_of_chiji.up
+  has_rwk: talent.rushing_wind_kick
+  has_focused_thunder: talent.focused_thunder
+  has_pool_of_mists: talent.pool_of_mists
+  has_spiritfont: talent.spiritfont
+  has_sheiluns_gift: talent.sheiluns_gift
+  has_veil_of_pride: talent.veil_of_pride
+  has_endless_draught: talent.endless_draught
+  has_refreshment: talent.refreshment
+  has_celestial_harmony: talent.celestial_harmony
+  renm_capped: cooldown.renewing_mist.charges>=3
+  renm_has_charge: cooldown.renewing_mist.charges>=1
+  rsk_ready: cooldown.rising_sun_kick.ready
+  rwk_ready: cooldown.rushing_wind_kick.ready
+  tft_ready: cooldown.thunder_focus_tea.ready
+  tft_capped: cooldown.thunder_focus_tea.charges=cooldown.thunder_focus_tea.max_charges
+  melee_weave_ok: group.lowest.health.effective.pct>=config.melee_weave_hp
+  # Spin to Win: group safe (>80%), tank not critical (>60%), enough enemies to justify the channel
+  spin_to_win_ok: config.use_spin_to_win&enemies.combat.8y>=config.spin_to_win_threshold&group.lowest.health.effective.pct>=80&group.tanks.lowest.health.effective.pct>=60
+  group_needs_at: group.count(cycle.health.effective.pct<config.ancient_teachings_hp)>=2
+  renm_ok: enemies.combat.8y<config.renm_mob_threshold&group.lowest.health.effective.pct<90
+  group_critical: group.lowest.health.effective.pct<50
+  group_needs_cd: group.count(cycle.health.effective.pct<config.chiji_hp_threshold)>=2&enemies.combat.8y>=config.chiji_enemies_threshold
+  group_needs_conduit: group.count(cycle.health.effective.pct<config.celestial_conduit_threshold)>=2
+  sm_channeling: player.channeling&player.casting.spell_id=115175
+
+lists:
+
+  main:
+    - stop_casting,interrupt=true,if=var.sm_channeling&group.lowest.health.effective.pct>=75
+    - call_action_list,name=spell_queue
+    - call_action_list,name=sanity_checks
+    - call_action_list,name=auto_target
+    - call_action_list,name=auto_heal,if=player.combat
+    - call_action_list,name=out_of_combat,if=!player.combat
+    - return,if=!player.combat
+    # Celestial Conduit is a 4-sec channel — any cast breaks it. Return here to protect it.
+    # SM channel is excluded (handled by soothing_mist_channel list below).
+    - return,if=player.channeling&!var.sm_channeling
+    - touch_of_death,if=target.exists&target.enemy&target.range<=5&target.health.current<player.health.max&cooldown.touch_of_death.ready
+    - call_action_list,name=soothing_mist_channel,if=var.sm_channeling
+    - call_action_list,name=defensives
+    - call_action_list,name=emergency_heal
+    # Revival, Chi-Ji, Celestial Conduit all fire here at top priority.
+    # If CC just started channeling, stop the rest of main to protect it.
+    - return,if=player.channeling&!var.sm_channeling
+    - leg_sweep,if=interrupt.stun.aoe.check
+    - quaking_palm,if=interrupt.cc.check
+    - sheiluns_gift,target=lowest,if=var.has_sheiluns_gift&var.vivacious_up&group.lowest.health.effective.pct<config.vv_proc_hp&group.lowest.range<=40
+    - vivify,target=lowest,if=!var.has_sheiluns_gift&var.vivacious_up&group.lowest.health.effective.pct<config.vv_proc_hp&group.lowest.range<=40
+    - life_cocoon.focus,range_check=focus,interrupt=true,use_off_gcd=1,if=config.use_life_cocoon&focus.exists&focus.alive&focus.friendly&focus.health.effective.pct<config.life_cocoon_threshold&focus.range<=40&player.combat&cooldown.life_cocoon.ready
+    - spinning_crane_kick,if=var.dance_of_chiji&target.exists&target.enemy&target.range<=8
+    - rushing_wind_kick,if=var.has_rwk&buff.thunder_focus_tea.up&target.exists&target.enemy&target.range<=5
+    - rising_sun_kick,if=target.range<=5&target.enemy
+    - spinning_crane_kick,if=var.spin_to_win_ok&target.exists&target.enemy&target.range<=8
+    - call_action_list,name=cooldowns,if=state.cds
+    - thunder_focus_tea,range_check=none,if=var.tft_ready
+    - rushing_wind_kick
+    - call_action_list,name=noapex_mplus
+    # Guard: if CC just started inside noapex_mplus, stop here — don't let tank/healer/dps lists cancel it
+    - return,if=player.channeling&!var.sm_channeling
+    - call_action_list,name=tank_heal
+    - call_action_list,name=healer_heal
+    - call_action_list,name=dps_noapex,if=var.melee_weave_ok
+
+  out_of_combat:
+    - enveloping_mist,casting_check=any,ignore_usable=true,cycle=members,if=player.channeling&!cycle.buff.enveloping_mist.up&cycle.health.effective.pct<100&cycle.range<=40
+    - renewing_mist,cycle=members,if=player.channeling&!buff.thunder_focus_tea.up&!cycle.buff.renewing_mist.up&cycle.range<=40&var.renm_has_charge
+    - vivify,casting_check=any,ignore_usable=true,target=lowest,if=player.channeling&!var.has_sheiluns_gift&group.lowest.health.effective.pct<100&group.lowest.range<=40
+    - sheiluns_gift,casting_check=any,ignore_usable=true,target=lowest,if=player.channeling&var.has_sheiluns_gift&group.lowest.health.effective.pct<100&group.lowest.range<=40
+    - renewing_mist,cycle=members,if=config.renm_prepull&var.renm_has_charge&!cycle.buff.renewing_mist.up&cycle.range<=40
+    - sheiluns_gift,target=lowest,if=var.has_sheiluns_gift&var.vivacious_up&group.lowest.health.effective.pct<100&group.lowest.range<=40
+    - vivify,target=lowest,if=!var.has_sheiluns_gift&var.vivacious_up&group.lowest.health.effective.pct<100&group.lowest.range<=40
+    - sheiluns_gift,target=lowest,if=var.has_sheiluns_gift&group.lowest.health.effective.pct<100&group.lowest.range<=40&!player.moving
+    - vivify,target=lowest,if=!var.has_sheiluns_gift&group.lowest.health.effective.pct<100&group.lowest.range<=40&!player.moving
+  
+  soothing_mist_channel:
+    - spinning_crane_kick,if=var.melee_weave_ok&target.exists&target.enemy&enemies.combat.8y>=10&cycle.buff.renewing_mist.up&cycle.health.effective.pct>65
+    - vivify,casting_check=any,ignore_usable=true,target=lowest,if=player.channeling&!var.has_sheiluns_gift&group.lowest.health.effective.pct<40&group.lowest.range<=40
+    - sheiluns_gift,casting_check=any,ignore_usable=true,target=lowest,if=player.channeling&var.has_sheiluns_gift&group.lowest.health.effective.pct<40&group.lowest.range<=40
+    - enveloping_mist,casting_check=any,ignore_usable=true,cycle=members,if=player.channeling&!cycle.buff.enveloping_mist.up&cycle.health.effective.pct<75&cycle.range<=40
+    - renewing_mist,cycle=members,if=!buff.thunder_focus_tea.up&!cycle.buff.renewing_mist.up&cycle.range<=40&var.renm_has_charge
+    - vivify,casting_check=any,ignore_usable=true,target=lowest,if=player.channeling&!var.has_sheiluns_gift&group.lowest.health.effective.pct<75&group.lowest.range<=40
+    - sheiluns_gift,casting_check=any,ignore_usable=true,target=lowest,if=player.channeling&var.has_sheiluns_gift&group.lowest.health.effective.pct<75&group.lowest.range<=40
+
+  defensives:
+    - fortifying_brew,range_check=none,if=health.pct<=config.fortifying_brew_hp&cooldown.fortifying_brew.ready
+
+  emergency_heal:
+    - revival,interrupt=true,if=!talent.restoral&cooldown.revival.ready&group.lowest.range<=40&(group.count(cycle.health.effective.pct<35)>=3|(group.tanks.lowest.health.effective.pct<15&cooldown.life_cocoon.down))
+    - restoral,if=talent.restoral&cooldown.restoral.ready&group.lowest.range<=40&(group.count(cycle.health.effective.pct<40)>=3|(group.tanks.lowest.health.effective.pct<15&cooldown.life_cocoon.down))
+    # CC fires first — its 4s channel immediately blocks Chi-Ji via !player.channeling below.
+    # !var.chiji_active (cooldown proxy: remains>=90) blocks CC for ~30s after Chi-Ji is summoned.
+    - celestial_conduit,interrupt=true,if=state.cds&config.auto_celestials&cooldown.celestial_conduit.ready&var.group_needs_conduit&group.lowest.range<=40&!var.chiji_active
+    # !player.channeling: won't summon Chi-Ji while CC is active.
+    - invoke_chiji_the_red_crane,interrupt=true,if=state.cds&config.auto_celestials&cooldown.invoke_chiji_the_red_crane.ready&var.group_needs_cd&group.lowest.range<=40&!player.channeling
+    - soothing_mist,cycle=members,if=!player.channeling&!var.chiji_active&cycle.health.effective.pct<50&cycle.range<=40
+
+  tank_heal:
+    - vivify,target=tanks.lowest,if=!var.has_sheiluns_gift&group.tanks.lowest.health.effective.pct<50&group.tanks.lowest.range<=40&var.vivacious_up
+    - sheiluns_gift,target=tanks.lowest,if=var.has_sheiluns_gift&group.tanks.lowest.health.effective.pct<50&group.tanks.lowest.range<=40&var.vivacious_up
+
+  healer_heal:
+    - vivify,target=healers.lowest,if=!var.has_sheiluns_gift&group.healers.lowest.health.effective.pct<50&group.healers.lowest.range<=40&var.vivacious_up
+    - sheiluns_gift,target=healers.lowest,if=var.has_sheiluns_gift&group.healers.lowest.health.effective.pct<50&group.healers.lowest.range<=40&var.vivacious_up
+
+  cooldowns:
+    - trinket_1,if=trinket_1.usable&trinket_1.ready
+    - trinket_2,if=trinket_2.usable&trinket_2.ready
+
+  noapex_mplus:
+    - call_action_list,name=noapex_chiji,if=var.chiji_active
+    - call_action_list,name=noapex_hotjs,if=var.hotjs_active
+    - renewing_mist,cycle=members,if=!buff.thunder_focus_tea.up&var.renm_capped&!cycle.buff.renewing_mist.up&cycle.range<=40&var.renm_ok
+    - renewing_mist,if=!buff.thunder_focus_tea.up&var.renm_capped&var.renm_ok
+    - mana_tea,range_check=none,if=buff.mana_tea.stack>=2&mana.pct<98&group.lowest.health.effective.pct>85&!player.channeling
+    - mana_tea,range_check=none,if=buff.mana_tea.stack>=1&buff.mana_tea.stack<=3&!player.channeling
+    - blackout_kick,if=buff.teachings_of_the_monastery.stack>=2&target.range<=5
+    - tiger_palm,if=var.group_needs_at&target.exists&target.enemy&target.range<=5
+    - spinning_crane_kick,if=var.melee_weave_ok&target.exists&target.enemy&enemies.combat.8y>=config.aoe_threshold
+    - sheiluns_gift,target=lowest,if=var.has_sheiluns_gift&group.lowest.health.effective.pct<50&group.lowest.range<=40
+    - vivify,target=lowest,if=!var.has_sheiluns_gift&group.lowest.health.effective.pct<50&group.lowest.range<=40
+    - renewing_mist,cycle=members,if=!buff.thunder_focus_tea.up&!cycle.buff.renewing_mist.up&cycle.range<=40&var.renm_has_charge&var.renm_ok
+    - tiger_palm,if=target.exists&target.enemy&target.range<=5
+
+  noapex_chiji:
+    # Celestial Harmony makes EnvMist instant during Chi-Ji — spread to all members.
+    # Each cast chains a Renewing Mist via Rapid Diffusion automatically.
+    - enveloping_mist,delay=200,cycle=members,if=var.has_celestial_harmony&!buff.thunder_focus_tea.up&!cycle.buff.enveloping_mist.up&cycle.health.effective.pct<95&cycle.range<=40
+    # Without Celestial Harmony, EnvMist costs a GCD — only cast on low HP members.
+    - enveloping_mist,delay=200,cycle=members,if=!var.has_celestial_harmony&!buff.thunder_focus_tea.up&!cycle.buff.enveloping_mist.up&cycle.health.effective.pct<50&cycle.range<=40
+    # After EnvMist is spread, continue DPS — Ancient Teachings heals from every melee hit.
+    - sheiluns_gift,target=lowest,if=var.has_sheiluns_gift&group.lowest.health.effective.pct<50&group.lowest.range<=40
+    - tiger_palm,if=target.exists&target.enemy&target.range<=5
+
+  noapex_hotjs:
+    - renewing_mist,cycle=members,if=!buff.thunder_focus_tea.up&var.renm_capped&!cycle.buff.renewing_mist.up&cycle.range<=40&var.renm_ok
+    - renewing_mist,if=!buff.thunder_focus_tea.up&var.renm_capped&var.renm_ok
+    - thunder_focus_tea,range_check=none,if=var.tft_ready
+    - renewing_mist,cycle=members,if=!buff.thunder_focus_tea.up&!cycle.buff.renewing_mist.up&cycle.range<=40&var.renm_has_charge&var.renm_ok
+
+  dps_noapex:
+    - call_action_list,name=dps_noapex_hotjs,if=var.hotjs_active
+    - spinning_crane_kick,if=var.dance_of_chiji&target.exists&target.enemy
+    - spinning_crane_kick,if=target.exists&target.enemy&enemies.combat.8y>=config.aoe_threshold
+
+  dps_noapex_hotjs:
+    - thunder_focus_tea,range_check=none,if=var.tft_ready

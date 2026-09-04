@@ -1,0 +1,223 @@
+version: "1.1.0"
+author: Khan
+spec: 65
+name: Lightsmith Holy Paladin M+
+movement_allowed: true
+description: "Holy Paladin M+ Lightsmith"
+entry: main
+config:
+  auto_beacon_of_savior:
+    section: "Lightsmith Holy Paladin M+ v1.1.0  Use Holy Paladin - Wowhead / Herald of the Sun for Raids"
+    label: "Beacon of the Savior (auto, lowest hp)"
+    type: checkbox
+    default: true
+  blessing_of_sacrifice:
+    label: "Blessing of Sacrifice %"
+    type: slider
+    min: 20
+    max: 80
+    default: 45
+  divine_protection:
+    label: "Divine Protection %"
+    type: slider
+    min: 30
+    max: 90
+    default: 65
+  divine_shield:
+    label: "Divine Shield %"
+    type: slider
+    min: 10
+    max: 60
+    default: 22
+  flash_of_light:
+    label: "Flash of Light %"
+    type: slider
+    min: 30
+    max: 100
+    default: 35
+  holy_light:
+    label: "Holy Light %"
+    type: slider
+    min: 30
+    max: 100
+    default: 80
+  holy_shock:
+    label: "Holy Shock %"
+    type: slider
+    min: 70
+    max: 95
+    default: 85
+  lay_on_hands:
+    label: "Lay on Hands %"
+    type: slider
+    min: 5
+    max: 45
+    default: 27
+  mouseover_healing:
+    label: "Mouseover Healing"
+    type: checkbox
+    default: false
+  word_of_glory:
+    label: "Word of Glory %"
+    type: slider
+    min: 1
+    max: 99
+    default: 85
+variables:
+  avenging_crusader_active: buff.avenging_crusader.up
+  avenging_wrath_active: buff.avenging_wrath.up|buff.avenging_crusader.up
+  divine_purpose: buff.divine_purpose.up
+  group_critical: group.count(cycle.health.effective.pct<30)>=1
+  group_emergency: group.count(cycle.health.effective.pct<50)>=2
+  group_needs_healing: group.count(cycle.health.effective.pct<80)>=2
+  holy_bulwark_on_tank: buff.holy_bulwark.up.any
+  sacred_weapon_on_player: buff.sacred_weapon.up.any
+  holy_shock_ready: cooldown.holy_shock.charges>=1
+  hp_capped: holy_power>=5
+  hp_spendable: holy_power>=3|buff.divine_purpose.up
+  infusion_of_light: buff.infusion_of_light.up
+  infusion_stacking: buff.infusion_of_light.stack>=2
+  mo_friendly_valid: mouseover.exists&mouseover.alive&mouseover.friendly
+  needs_member_healing: group.lowest.health.effective.pct<config.word_of_glory
+  racial_defensive_hp: 50
+  racial_emergency_hp: 35
+  racial_heal_ally_hp: 60
+  righteous_judgment: talent.righteous_judgment.enabled
+lists:
+
+  out_of_combat:
+    - rite_of_sanctification,range_check=none,if=!buff.433550.up&lastcast.rite_of_sanctification>=10
+    - devotion_aura,if=buff.devotion_aura.down
+    - beacon_of_light,cycle=tanks,if=group.count(cycle.buff.beacon_of_light.up)=0&cycle.range>0&cycle.range<=40
+    - beacon_of_faith,cycle=dps,if=talent.beacon_of_faith.enabled&group.count(cycle.buff.beacon_of_faith.up)=0&cycle.range>0&cycle.range<=40
+    - beacon_of_the_savior,if=config.auto_beacon_of_savior&buff.beacon_of_the_savior.down
+    - redemption,cycle=members,if=cycle.dead
+    - word_of_glory,cycle=members,if=var.hp_spendable&cycle.health.effective.pct<95
+    - holy_shock,cycle=members,if=var.holy_shock_ready&cycle.health.effective.pct<98
+    - flash_of_light,cycle=members,if=cycle.health.effective.pct<98&var.infusion_of_light
+
+  emergency:
+    - divine_shield,range_check=none,interrupt=true,if=health.pct<config.divine_shield
+    - lay_on_hands.focus,range_check=focus,interrupt=true,use_off_gcd=1,if=focus.exists&focus.alive&focus.friendly&focus.health.effective.pct<config.lay_on_hands&focus.range<=40&player.combat&cooldown.lay_on_hands.ready
+    - divine_protection,range_check=none,if=health.pct<config.divine_protection
+    - blessing_of_sacrifice,cycle=tanks,if=cycle.health.effective.pct<config.blessing_of_sacrifice&health.pct>40
+    - word_of_glory,cycle=members,if=cycle.health.effective.pct<40&var.hp_spendable
+    - holy_shock,cycle=members,if=cycle.health.effective.pct<50&var.holy_shock_ready
+    - flash_of_light,cycle=members,if=cycle.health.effective.pct<40&var.infusion_of_light
+
+  holy_armaments:
+    - holy_bulwark,delay=900,cycle=tanks,if=!var.sacred_weapon_on_player&health.pct<98&!var.holy_bulwark_on_tank
+
+  major_cooldowns:
+    - avenging_wrath,if=talent.avenging_wrath&group.count(cycle.health.effective.pct<70)>=2&!buff.aura_mastery.up
+    - avenging_crusader,if=talent.avenging_crusader&target.health.pct>30&player.standing.time>2
+    - aura_mastery,if=(group.count(cycle.health.effective.pct<50)>=3|group.count(cycle.health.effective.pct<=45)>=2)&!var.avenging_wrath_active
+
+  trinkets:
+    - trinket_1,if=trinket_1.sync
+    - trinket_2,if=trinket_2.sync
+
+  beacons:
+    - beacon_of_light,cycle=tanks,if=group.count(cycle.buff.beacon_of_light.up)=0&cycle.range>0&cycle.range<=40
+    - beacon_of_faith,cycle=dps,if=talent.beacon_of_faith.enabled&group.count(cycle.buff.beacon_of_faith.up)=0&cycle.range>0&cycle.range<=40
+    - beacon_of_the_savior,if=config.auto_beacon_of_savior&buff.beacon_of_the_savior.down
+
+  member_healing:
+    - holy_shock.focus_mouseover,interrupt=true,range_check=mouseover,if=config.mouseover_healing&mouseover.health.effective.pct<=100&var.holy_shock_ready
+    - word_of_glory.focus_mouseover,interrupt=true,range_check=mouseover,if=config.mouseover_healing&mouseover.health.effective.pct<=100&var.hp_spendable
+    - flash_of_light,interrupt=true,target=lowest,if=var.infusion_stacking
+    - flash_of_light,interrupt=true,cycle=members,if=var.infusion_of_light&cycle.health.effective.pct<config.flash_of_light
+    - holy_shock,cycle=members,if=var.holy_shock_ready&cycle.health.effective.pct<config.holy_shock
+    - shield_of_the_righteous,if=var.hp_spendable&!var.group_needs_healing&target.exists&target.enemy&target.range<=5
+    - word_of_glory,cycle=members,if=var.hp_spendable&cycle.health.effective.pct<config.word_of_glory
+    - holy_light,cycle=members,if=cycle.health.effective.pct<config.word_of_glory&mana.pct>30
+    - judgment,if=holy_power.deficit>=1
+    - holy_shock,cycle=members,if=var.holy_shock_ready
+
+  mouseover_friendly:
+    - word_of_glory.mouseover,if=config.mouseover_healing&mouseover.health.effective.pct<config.word_of_glory&var.hp_spendable
+    - holy_shock.mouseover,if=config.mouseover_healing&mouseover.health.effective.pct<config.holy_shock&var.holy_shock_ready
+    - flash_of_light.mouseover,if=config.mouseover_healing&mouseover.health.effective.pct<config.flash_of_light&var.infusion_of_light
+    - holy_light.mouseover,if=config.mouseover_healing&mouseover.health.effective.pct<config.flash_of_light
+
+  moving:
+    - holy_shock,target=lowest,if=cycle.health.effective.pct<config.holy_shock&var.holy_shock_ready
+    - flash_of_light,interrupt=true,target=lowest,if=var.infusion_of_light&group.lowest.health.effective.pct<config.flash_of_light
+    - word_of_glory,target=lowest,if=var.hp_spendable&cycle.health.effective.pct<config.word_of_glory
+    - shield_of_the_righteous,if=var.hp_spendable&!var.group_needs_healing&target.exists&target.enemy&target.range<=5
+    - judgment,if=holy_power.deficit>=1
+    - hammer_of_wrath,if=holy_power.deficit>=1
+    - holy_shock,if=var.holy_shock_ready&target.enemy
+
+  racial_defensive:
+    - fireblood,if=health.pct<var.racial_defensive_hp
+    - gift_of_the_naaru,if=health.pct<var.racial_emergency_hp
+    - regeneratin,if=health.pct<var.racial_emergency_hp&!player.combat
+    - stoneform,if=health.pct<var.racial_defensive_hp
+
+  racial_offensive:
+    - ancestral_call,if=var.avenging_wrath_active
+    - berserking,if=var.avenging_wrath_active
+    - blood_fury,if=var.avenging_wrath_active
+    - fireblood,if=var.avenging_wrath_active
+
+  racial_cc:
+    - arcane_pulse,if=enemies.8y.count>=3
+    - bull_rush,if=target.casting.interruptible
+    - haymaker,if=target.casting.interruptible
+    - quaking_palm,if=target.casting.interruptible
+    - war_stomp,if=interrupts.8y.stun.count>=1
+    - wing_buffet,if=target.casting.interruptible
+
+  racial_utility:
+    - arcane_torrent,if=mana.pct<=90
+    - bag_of_tricks,target=lowest,if=group.lowest.health.effective.pct<var.racial_heal_ally_hp
+    - gift_of_the_naaru,target=lowest,if=group.lowest.health.effective.pct<var.racial_heal_ally_hp
+    - shadowmeld,if=target.threat>=3&!player.casting
+
+  avenging_crusader_rotation:
+    #- word_of_glory,cycle=members,if=var.hp_capped&cycle.health.effective.pct<config.word_of_glory
+    #- shield_of_the_righteous,if=var.hp_capped&!var.group_needs_healing
+    - judgment,if=holy_power.deficit>=1
+    - crusader_strike,if=holy_power.deficit>=1
+    - word_of_glory,cycle=members,if=var.hp_spendable&cycle.health.effective.pct<config.word_of_glory
+    - shield_of_the_righteous,if=var.hp_spendable&target.exists&target.enemy&target.range<=5
+    - holy_shock,if=var.holy_shock_ready&cooldown.judgment.remains>0&cooldown.crusader_strike.remains>0&target.enemy
+
+  damage_window:
+    - return,if=var.group_needs_healing
+    - judgment,if=holy_power.deficit>=1
+    - holy_shock,if=var.holy_shock_ready&holy_power.deficit>=1&target.enemy
+    - shield_of_the_righteous,if=var.hp_spendable&target.exists&target.enemy&target.range<=5
+    - hammer_of_wrath,if=holy_power.deficit>=1
+    - holy_shock,if=var.holy_shock_ready&target.enemy
+
+  main:
+    - call_action_list,name=spell_queue
+    - call_action_list,name=sanity_checks
+    - call_action_list,name=auto_target
+    - call_action_list,name=out_of_combat,if=!player.combat
+    - call_action_list,name=auto_heal,if=player.combat
+    - return,if=!player.combat&!((config.auto_combat.has(1)&target.quest_mob&target.enemy)|(config.auto_combat.has(2)&target.combat&target.enemy)|(config.auto_combat.has(3)&player.auto_attacking&target.enemy))
+    - return,if=!player.combat&config.auto_combat.has(0)
+    - return,if=!target.valid&config.auto_combat.has(0)
+    - return,if=player.channeling
+    - hammer_of_justice,if=interrupt.target.check
+    - hammer_of_justice.mouseover,if=interrupt.mouseover.check
+    - hammer_of_justice.focus,if=interrupt.focus.check
+    - blinding_light,if=interrupt.stun.aoe.check
+    - call_action_list,name=holy_armaments
+    - call_action_list,name=emergency
+    - call_action_list,name=major_cooldowns
+    - call_action_list,name=racial_defensive
+    - call_action_list,name=racial_cc
+    - return,if=player.cc
+    - call_action_list,name=beacons
+    - call_action_list,name=racial_offensive,if=var.avenging_wrath_active
+    - call_action_list,name=avenging_crusader_rotation,if=var.avenging_crusader_active
+    - call_action_list,name=moving,if=player.moving
+    - call_action_list,name=mouseover_friendly,if=var.mo_friendly_valid&!player.casting
+    - call_action_list,name=trinkets
+    - call_action_list,name=racial_utility
+    - call_action_list,name=member_healing,if=var.needs_member_healing
+    - call_action_list,name=damage_window

@@ -1,0 +1,274 @@
+# =============================================================================
+# Evoker Devastation - Spec ID 1467
+# =============================================================================
+
+# Conversion notes - apply throughout this file:
+#   max_stack not supported. Game reports 1; talent 375722 Essence Attunement adds 1.
+
+version: 3
+spec: 1467
+entry: main
+
+# Allow casting empowered spells while moving with Hover (Slipstream)
+movement_allowed: buff.hover.up
+
+config:
+  obsidian_scales_hp_pct:
+    section: "Defensive HP Percentage"
+    label: "Obsidian Scales HP%"
+    type: slider
+    min: 0
+    max: 100
+    default: 50
+
+  obsidian_scales_dmg_pct:
+    section: "Defensives Prediction Damage"
+    label: "Obsidian Scales (Incoming Dmg%)"
+    type: slider
+    min: 0
+    max: 100
+    default: 45
+
+  emerald_blossom_hp_pct:
+    section: "Defensive HP Percentage"
+    label: "Emerald Blossom HP%"
+    type: slider
+    min: 0
+    max: 100
+    default: 65
+
+  living_flame_hp_pct:
+    section: "Defensive HP Percentage"
+    label: "Living Flame HP%"
+    type: slider
+    min: 0
+    max: 100
+    default: 30
+
+variables:
+  # variable,name=dr_prep_time,default=6,op=reset
+  dr_prep_time: 6
+  # variable,name=dr_prep_time_aoe,default=4,op=reset
+  dr_prep_time_aoe: 4
+  # variable,name=can_use_empower,value=1,default=1,if=!talent.animosity|!talent.dragonrage
+  # variable,name=can_use_empower,op=set,value=cooldown.dragonrage.remains>=gcd.max*variable.dr_prep_time,if=talent.animosity&talent.dragonrage
+  can_use_empower: (!talent.animosity|!talent.dragonrage)|(cooldown.dragonrage.remains>=gcd.max*6)
+  # variable,name=next_dragonrage,value=cooldown.dragonrage.remains<?((cooldown.eternity_surge.remains-8)>?(cooldown.fire_breath.remains-8))
+  # next_dragonrage: cooldown.dragonrage.remains<?((cooldown.eternity_surge.remains-8)>?(cooldown.fire_breath.remains-8))
+
+  # variable,name=use_pyre_fs,op=set,value=talent.legacy_of_the_lifebinder&(active_enemies>=5|active_enemies>=3&(talent.volatility.rank=2|talent.feed_the_flames))
+  use_pyre_fs: talent.legacy_of_the_lifebinder&(enemies_around_target>=5|enemies_around_target>=3&(talent.volatility.rank=2|talent.feed_the_flames))
+
+  # variable,name=use_tts,op=set,value=(cooldown.eternity_surge.remains<=action.fire_breath.usable_in),if=talent.legacy_of_the_lifebinder
+  # action.X.usable_in not supported — Fire Breath is cooldown-gated, so cooldown.fire_breath.remains is the same value
+  use_tts: talent.legacy_of_the_lifebinder&(cooldown.eternity_surge.remains<=cooldown.fire_breath.remains)
+
+  # variable,name=r1_cast_time,value=1.0*spell_haste
+  # spell_haste not supported — not used in rotation conditions, omitting
+
+  # variable,name=has_external_pi,value=cooldown.invoke_power_infusion_0.duration>0
+  # cooldown.invoke_power_infusion_0 not supported — omitting
+
+  # --- Trinket variables (not supported, commented out) ---
+  # variable,name=trinket_1_buffs,...
+  # variable,name=trinket_2_buffs,...
+  # (all trinket variables omitted)
+
+lists:
+  defensives:
+    # --- Prediction Damage: pre-fire on a predicted incoming hit (% of effective HP) ---
+    - obsidian_scales,range_check=none,if=incoming.mitigated.pct>=config.obsidian_scales_dmg_pct
+
+    # --- HP Percentage: react when already low ---
+    - obsidian_scales,range_check=none,if=health.pct<=config.obsidian_scales_hp_pct
+    - emerald_blossom.player,range_check=none,if=health.pct<=config.emerald_blossom_hp_pct
+    - living_flame,range_check=none,if=health.pct<=config.living_flame_hp_pct
+
+  main:
+      # _shared.yaml lists
+    - call_action_list,name=spell_queue
+    - call_action_list,name=sanity_checks
+    - call_action_list,name=auto_target_ranged
+
+    - blessing_of_the_bronze,range_check=none,if=buff.blessing_of_the_bronze.down
+
+    # Combat Check
+    - return,if=auto_combat.player
+
+    # Defensives
+    - call_action_list,name=defensives
+
+    # Interrupts
+    - quell,if=interrupt.target.check
+    - quell.mouseover,if=interrupt.mouseover.check
+    - quell.focus,if=interrupt.focus.check
+    # AoE Interrupt
+    - tail_swipe,if=interrupt.stun.aoe.check
+    # Racial Interrupts
+    - quaking_palm,if=interrupt.cc.check
+    - haymaker,if=interrupt.cc.check
+    - war_stomp,if=interrupt.stun.aoe.check
+    - bull_rush,if=interrupt.stun.aoe.check
+
+    - call_action_list,name=auto_heal
+
+    # Target Check
+    - return,if=auto_combat.target
+
+    # potion,if=(!talent.dragonrage|buff.dragonrage.up)|fight_remains<35
+
+    # invoke_external_buff,name=power_infusion,if=...
+
+    - trinket_1,if=trinket_1.sync
+    - trinket_2,if=trinket_2.sync
+
+    # call_action_list,name=trinkets
+    # Trinket list not supported — all trinket logic commented out
+
+    # Precombat empowers (release if already channeling from pull)
+    - fire_breath,ignore_usable=true,ignore_cooldown=true,casting_check=fire_breath,if=player.empower_stage>=1
+    - eternity_surge,ignore_usable=true,ignore_cooldown=true,casting_check=eternity_surge,if=player.empower_stage>=1
+
+    # Route to correct sub-list based on talent
+    # run_action_list,name=sc,if=talent.mass_disintegrate
+    - run_action_list,name=sc,if=talent.mass_disintegrate
+    # run_action_list,name=fs
+    - run_action_list,name=fs
+
+  # ===========================================================================
+  # Eternity Surge - empower level selection
+  # ===========================================================================
+  es:
+    # eternity_surge,empower_to=1,target_if=max:target.health.pct,if=active_enemies<=3-talent.star_salvo
+    - eternity_surge,empower_to=1,if=enemies_around_target<=3-talent.star_salvo
+    # eternity_surge,empower_to=2,target_if=max:target.health.pct,if=(active_enemies>=2+2*talent.eternitys_span)-talent.star_salvo
+    - eternity_surge,empower_to=2,if=(enemies_around_target>=2+2*talent.eternitys_span)-talent.star_salvo
+    # eternity_surge,empower_to=3,target_if=max:target.health.pct,if=(active_enemies>=3+3*talent.eternitys_span)-talent.star_salvo
+    - eternity_surge,empower_to=3,if=(enemies_around_target>=3+3*talent.eternitys_span)-talent.star_salvo
+    # eternity_surge,empower_to=4,target_if=max:target.health.pct
+    - eternity_surge,empower_to=4
+
+  # ===========================================================================
+  # Fire Breath - empower level selection
+  # ===========================================================================
+  fb:
+    # fire_breath,empower_to=1,target_if=max:target.health.pct,if=active_enemies=1|variable.use_pyre_fs
+    - fire_breath,empower_to=1,if=enemies_around_target=1|var.use_pyre_fs
+    # fire_breath,empower_to=2,target_if=max:target.health.pct,if=active_enemies=2|buff.dragonrage.up|buff.rising_fury.up
+    # buff.rising_fury = 1271783 (nine spells share the display name)
+    - fire_breath,empower_to=2,if=enemies_around_target=2|buff.dragonrage.up|buff.1271783.up
+    # fire_breath,empower_to=3,target_if=max:target.health.pct,if=active_enemies>=3
+    - fire_breath,empower_to=3,if=enemies_around_target>=3
+
+  # ===========================================================================
+  # Green - Ancient Flame maintenance
+  # ===========================================================================
+  green:
+    # emerald_blossom
+    - emerald_blossom
+    # verdant_embrace
+    - verdant_embrace
+  # ===========================================================================
+  # Flameshaper List (fs)
+  # ===========================================================================
+  fs:
+    # fire_breath,target_if=max:target.health.pct,empower_to=1,if=cooldown.dragonrage.remains<gcd.max*2&active_dot.fire_breath_damage=0&(target.time_to_die>=15|!raid_event.adds.exists)&variable.use_pyre_fs
+    - fire_breath,empower_to=1,if=cooldown.dragonrage.remains<gcd.max*2&active_dot.fire_breath=0&target.time_to_die>=15&var.use_pyre_fs
+
+    # dragonrage,if=target.time_to_die>=30&raid_event.adds.in>=60|target.time_to_die>=15&active_enemies>4|!raid_event.adds.exists|raid_event.adds.in=0
+    - dragonrage,if=target.time_to_die>=30|target.time_to_die>=15&enemies_around_target>4
+
+    # hover,use_off_gcd=1,if=raid_event.movement.in<6&!buff.hover.up&gcd.remains>=0.5&!variable.use_pyre_fs
+
+    # tip_the_scales,use_off_gcd=1,if=buff.dragonrage.up&variable.use_tts
+    - tip_the_scales,if=buff.dragonrage.up&var.use_tts
+
+    # call_action_list,name=es,if=variable.can_use_empower|buff.tip_the_scales.up
+    - call_action_list,name=es,if=var.can_use_empower|buff.tip_the_scales.up
+
+    # call_action_list,name=fb,if=variable.can_use_empower&dot.fire_breath_damage.refreshable&!buff.tip_the_scales.up
+    - call_action_list,name=fb,if=var.can_use_empower&dot.fire_breath.refreshable&!buff.tip_the_scales.up
+
+    # pyre,target_if=max:target.health.pct,if=variable.use_pyre_fs
+    - pyre,if=var.use_pyre_fs
+
+    # disintegrate,target_if=max:dot.fire_breath_damage.remains,chain=1,if=(raid_event.movement.in>2|buff.hover.up),early_chain_if=ticks_remain<=1,interrupt_if=ticks_remain<=1
+    - disintegrate
+
+    # deep_breath,if=talent.imminent_destruction&active_dot.fire_breath_damage=0&active_enemies>=4,cancel_if=gcd.remains=0,interrupt_if=gcd.remains=0
+    - deep_breath,if=talent.imminent_destruction&active_dot.fire_breath=0&enemies_around_target>=4
+
+    # unbound_flame,target_if=max:dot.fire_breath_damage.remains,if=!buff.essence_burst.at_max_stacks&(!talent.scorching_embers|active_dot.fire_breath_damage>0)
+    # Castable Unbound Flame is 1292321 if the name ever mis-resolves.
+    - unbound_flame,if=buff.essence_burst.stack<1+talent.375722&(!talent.scorching_embers|active_dot.fire_breath>0)
+
+    # living_flame,if=buff.burnout.up|buff.leaping_flames.up&active_enemies>=4|(buff.leaping_flames.up|buff.ancient_flame.up)&raid_event.movement.in>execute_time
+    - living_flame,if=buff.burnout.up|buff.leaping_flames.up&enemies_around_target>=4|(buff.leaping_flames.up|buff.ancient_flame.up)
+
+    # azure_sweep
+    - azure_sweep
+
+    # living_flame,if=raid_event.movement.in>execute_time
+    - living_flame
+
+    # call_action_list,name=green,if=talent.ancient_flame&!buff.ancient_flame.up&talent.scarlet_adaptation&!buff.dragonrage.up&active_enemies<4
+    - call_action_list,name=green,if=talent.ancient_flame&!buff.ancient_flame.up&talent.scarlet_adaptation&!buff.dragonrage.up&enemies_around_target<4
+
+    # azure_strike
+    - azure_strike
+
+  # ===========================================================================
+  # Scalecommander (SC) - unified ST + AoE list (Mass Disintegrate talent)
+  # ===========================================================================
+  sc:
+    # deep_breath,if=buff.strafing_run.remains<=gcd.max*2,cancel_if=gcd.remains<=0
+    # buff.strafing_run = 1266165 (sixteen spells share the display name)
+    - deep_breath,if=buff.1266165.remains<=gcd.max*2
+
+    # dragonrage,if=target.time_to_die>=30&raid_event.adds.in>=60|!raid_event.adds.exists|raid_event.adds.in=0
+    - dragonrage,if=target.time_to_die>=30
+
+    # hover,use_off_gcd=1,if=raid_event.movement.in<6&!buff.hover.up&gcd.remains>=0.5|talent.slipstream&gcd.remains>=0.5
+    - hover,if=talent.slipstream&gcd.remains>=0.5
+
+    # azure_sweep,if=(buff.essence_burst.down|!buff.essence_burst.at_max_stacks)&set_bonus.mid1_2pc&cooldown.eternity_surge.remains<=6
+    - azure_sweep,if=(buff.essence_burst.down|buff.essence_burst.stack<1+talent.375722)&set_bonus.mid1_2pc&cooldown.eternity_surge.remains<=6
+
+    # call_action_list,name=es
+    - call_action_list,name=es
+
+    # tip_the_scales,use_off_gcd=1,if=action.fire_breath.ready
+    - tip_the_scales,if=action.fire_breath.ready
+
+    # fire_breath,empower_to=1
+    - fire_breath,empower_to=1
+
+    # deep_breath,if=active_enemies>=2,cancel_if=gcd.remains=0
+    - deep_breath,if=enemies_around_target>=2
+
+    # disintegrate,early_chain_if=ticks_remain<=1&buff.mass_disintegrate_stacks.up,if=(raid_event.movement.in>2|buff.hover.up)&buff.mass_disintegrate_stacks.up&buff.charged_blast.stack<15,interrupt_if=talent.volatility&active_enemies>=8
+    - disintegrate,if=buff.mass_disintegrate.up&buff.charged_blast.stack<15
+
+    # pyre,target_if=max:target.health.pct,if=(active_enemies>=5|active_enemies>=4&talent.volatility.rank=2)&!buff.mass_disintegrate_stacks.up|active_enemies>=3&talent.charged_blast&buff.charged_blast.stack>=15
+    - pyre,if=(enemies_around_target>=5|enemies_around_target>=4&talent.volatility.rank=2)&!buff.mass_disintegrate.up|enemies_around_target>=3&talent.charged_blast&buff.charged_blast.stack>=15
+
+    # disintegrate,target_if=max:dot.fire_breath_damage.remains,if=(raid_event.movement.in>2|buff.hover.up),early_chain_if=ticks_remain<=1,interrupt_if=ticks_remain<=1&active_enemies>=3
+    - disintegrate
+
+    # living_flame,if=buff.burnout.up&buff.leaping_flames.up&active_enemies<=1+buff.leaping_flames.stack
+    - living_flame,if=buff.burnout.up&buff.leaping_flames.up&enemies_around_target<=1+buff.leaping_flames.stack
+
+    # unbound_flame,if=!buff.essence_burst.at_max_stacks
+    - unbound_flame,if=buff.essence_burst.stack<1+talent.375722
+
+    # azure_sweep
+    - azure_sweep
+
+    # living_flame,if=raid_event.movement.in>execute_time|buff.hover.up
+    - living_flame
+
+    # call_action_list,name=green,if=talent.ancient_flame&!buff.ancient_flame.up&talent.scarlet_adaptation&!buff.dragonrage.up
+    - call_action_list,name=green,if=talent.ancient_flame&!buff.ancient_flame.up&talent.scarlet_adaptation&!buff.dragonrage.up
+
+    # azure_strike
+    - azure_strike

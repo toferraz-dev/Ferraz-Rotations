@@ -1,0 +1,251 @@
+# =============================================================================
+# Rogue Subtlety - Spec ID 261
+# =============================================================================
+
+# Conversion notes - apply throughout this file:
+#   buff.supercharge_1.up → combo_points.charged>=1 (Supercharger talent state)
+
+version: 3
+spec: 261
+entry: main
+
+config:
+  crimson_vial_hp_pct:
+    section: "Defensive HP Percentage"
+    label: "Crimson Vial HP%"
+    type: slider
+    min: 0
+    max: 100
+    default: 65
+
+  poison_mh:
+    label: "Poison MH"
+    type: dropdown
+    options:
+      - "Numbing"
+      - "Crippling"
+      - "None"
+      - "Atrophic"
+    default: 0
+
+  poison_oh:
+    label: "Poison OH"
+    type: dropdown
+    options:
+      - "Instant"
+      - "Wound"
+      - "None"
+    default: 0
+
+  vanish_enabled:
+    label: "Auto Vanish"
+    type: checkbox
+    default: false
+
+  stealth_mode:
+    label: "Stealth Mode"
+    type: dropdown
+    options:
+      - "Enemy Around"
+      - "Always"
+      - "Never"
+    default: 0
+
+  shadowmeld_usage:
+    label: "Shadowmeld Usage"
+    type: dropdown
+    options:
+      - "Disabled"
+      - "M+ Only"
+      - "Dungeon & Raid"
+      - "Boss Only"
+    default: 2
+
+variables:
+  shadowmeld_allowed: "(config.shadowmeld_usage=1&player.inmythicplus)|(config.shadowmeld_usage=2&(player.indungeon|player.inraid))|(config.shadowmeld_usage=3&target.classification>=5)"
+
+  # variable,name=stealth,value=buff.shadow_dance.up|buff.stealth.up|buff.vanish.up
+  stealth: "buff.shadow_dance.up|buff.stealth.up|buff.vanish.up"
+  # variable,name=targets,value=spell_targets.shuriken_storm
+  targets: active_enemies
+  # variable,name=racial_sync,value=(buff.shadow_blades.up&buff.shadow_dance.up)|fight_remains<20
+  racial_sync: "(buff.shadow_blades.up&buff.shadow_dance.up)|fight_remains<20"
+  # variable,name=dance_condition,value=!variable.stealth&energy>=30&buff.slice_and_dice.up&(combo_points<=2&talent.deathstalkers_mark|combo_points>=6)
+  dance_condition: "!var.stealth&energy>=30&buff.slice_and_dice.up&(combo_points<=2&talent.deathstalkers_mark|combo_points>=6)"
+  # variable,name=build_at_max_for_apex,value=talent.ancient_arts_3&!buff.ancient_arts.up&buff.shadow_techniques.stack>=5
+  # talent.ancient_arts_3 → talent.ancient_arts.rank>=3
+  build_at_max_for_apex: "talent.ancient_arts.rank>=3&!buff.ancient_arts.up&buff.shadow_techniques.stack>=5"
+  # variable,name=trinket_sync_slot,value=1,if=trinket.1.has_use_buff&(!trinket.2.has_use_buff|trinket.1.cooldown.duration>=trinket.2.cooldown.duration)
+  # variable,name=trinket_sync_slot,value=2,if=trinket.2.has_use_buff&(!trinket.1.has_use_buff|trinket.2.cooldown.duration>trinket.1.cooldown.duration)
+  # trinket.N.has_use_buff and trinket.N.cooldown.duration are not supported — variable dropped, generic trinket_1.sync / trinket_2.sync used instead
+
+lists:
+  defensives:
+    # --- Prediction Damage: (no self-mitigation defensives in this spec) ---
+
+    # --- HP Percentage: react when already low ---
+    - crimson_vial,range_check=none,if=health.pct<=config.crimson_vial_hp_pct
+
+  # Race Cooldowns
+  race:
+    # blood_fury,if=variable.racial_sync
+    - blood_fury,if=var.racial_sync
+    # berserking,if=variable.racial_sync
+    - berserking,if=var.racial_sync
+    # fireblood,if=variable.racial_sync
+    - fireblood,if=var.racial_sync
+    # ancestral_call,if=buff.shadow_blades.up
+    - ancestral_call,if=buff.shadow_blades.up
+    # invoke_external_buff,name=power_infusion,if=variable.racial_sync — not supported, removed
+
+  # Cooldowns
+  cd:
+    # potion,if=buff.shadow_blades.up|fight_remains<30 — potion not supported, removed
+
+    # goremaws_bite,if=buff.shadow_dance.up&!buff.ancient_arts.up|fight_remains<=14
+    - goremaws_bite,if=buff.shadow_dance.up&!buff.ancient_arts.up|fight_remains<=14
+
+    # shadow_blades,if=variable.dance_condition&cooldown.shadow_dance.charges_fractional>=1+0.8*talent.deathstalkers_mark&(buff.ancient_arts.up|!talent.unseen_blade)|(fight_remains<=20|target.time_to_die.remains<=20)
+    # target.time_to_die.remains is a SimC typo — using target.time_to_die
+    - shadow_blades,if=var.dance_condition&cooldown.shadow_dance.charges_fractional>=1+0.8*talent.deathstalkers_mark&(buff.ancient_arts.up|!talent.unseen_blade)|(fight_remains<=20|target.time_to_die<=20)
+
+    # Deathstalker: Send Shadow Dance when Darkest Night is up on ST and when its not up on AoE.
+    # shadow_dance,if=variable.dance_condition&talent.deathstalkers_mark&(variable.targets<=3&(buff.darkest_night.up|cooldown.secret_technique.ready&debuff.deathstalkers_mark.stack<=1)|variable.targets>3&debuff.deathstalkers_mark.stack>=2)&(cooldown.shadow_blades.remains>=35-cooldown.secret_technique.duration)|(fight_remains<=10|target.time_to_die-remains<=9)
+    # target.time_to_die-remains is a SimC typo — using target.time_to_die
+    - shadow_dance,if=var.dance_condition&talent.deathstalkers_mark&(var.targets<=3&(buff.darkest_night.up|cooldown.secret_technique.ready&debuff.deathstalkers_mark.stack<=1)|var.targets>3&debuff.deathstalkers_mark.stack>=2)&(cooldown.shadow_blades.remains>=35-cooldown.secret_technique.duration)|(fight_remains<=10|target.time_to_die<=9)
+
+    # Trickster: Send Shadow Dance whenever Secret Technique is ready
+    # shadow_dance,if=variable.dance_condition&talent.unseen_blade&(cooldown.secret_technique.ready&(cooldown.shadow_blades.remains>=25-cooldown.secret_technique.duration))|(fight_remains<=10|target.time_to_die-remains<=9)
+    # target.time_to_die-remains is a SimC typo — using target.time_to_die
+    - shadow_dance,if=var.dance_condition&talent.unseen_blade&(cooldown.secret_technique.ready&(cooldown.shadow_blades.remains>=25-cooldown.secret_technique.duration))|(fight_remains<=10|target.time_to_die<=9)
+
+    # Trickster: Second Shadow Dance later during Shadow Blades for better alignment.
+    # shadow_dance,if=buff.shadow_blades.up&(talent.unseen_blade|variable.targets>=3)
+    - shadow_dance,if=buff.shadow_blades.up&(talent.unseen_blade|var.targets>=3)
+
+    # vanish,if=!variable.stealth&energy>=50&!buff.subterfuge.up&combo_points<=2
+    - vanish,if=config.vanish_enabled&!var.stealth&energy>=50&!buff.subterfuge.up&combo_points<=2
+
+    # shadowmeld,if=energy>=50&!variable.stealth&combo_points.deficit>=2
+    - shadowmeld,if=var.shadowmeld_allowed&energy>=50&!var.stealth&combo_points.deficit>=2
+
+  # Builder (combo point generators)
+  build:
+    # shuriken_storm,if=buff.shadow_dance.up&buff.premeditation.up&(debuff.deathstalkers_mark.up|buff.darkest_night.up|!talent.deathstalkers_mark)
+    - shuriken_storm,if=buff.shadow_dance.up&buff.premeditation.up&(debuff.deathstalkers_mark.up|buff.darkest_night.up|!talent.deathstalkers_mark)
+    # shadowstrike,if=!debuff.deathstalkers_mark.up&talent.deathstalkers_mark&!buff.darkest_night.up|variable.targets<=2-set_bonus.midnight_season_2_2pc|variable.priority_rotation
+    # priority_rotation is a SimC sim option — dropped
+    - shadowstrike,if=!debuff.deathstalkers_mark.up&talent.deathstalkers_mark&!buff.darkest_night.up|var.targets<=2
+    # shuriken_storm,if=variable.targets>1
+    - shuriken_storm,if=var.targets>1
+    # gloomblade,if=variable.targets<2&!variable.stealth
+    - gloomblade,if=var.targets<2&!var.stealth
+    # backstab,if=variable.targets<2&!variable.stealth
+    - backstab,if=var.targets<2&!var.stealth
+
+  # Finishers (combo point spenders)
+  finish:
+    # eviscerate,if=buff.darkest_night.up|!buff.slice_and_dice.up
+    - eviscerate,if=buff.darkest_night.up|!buff.slice_and_dice.up
+    # secret_technique,if=buff.shadow_dance.up
+    - secret_technique,if=buff.shadow_dance.up
+    # secret_technique,if=talent.unseen_blade&cooldown.secret_technique.duration<18&!cooldown.shadow_dance.ready
+    - secret_technique,if=talent.unseen_blade&cooldown.secret_technique.duration<18&!cooldown.shadow_dance.ready
+    # coup_de_grace,if=cooldown.secret_technique.remains>=3|buff.shadow_dance.up
+    - coup_de_grace,if=cooldown.secret_technique.remains>=3|buff.shadow_dance.up
+    # Pool some Shadow Technique Stacks as Trickster before entering Shadow Dance by not finishing right before.
+    # black_powder,if=talent.unseen_blade&variable.targets>=(3-talent.potent_powder)&(cooldown.secret_technique.remains>=3|buff.shadow_dance.up|buff.shadow_blades.up)
+    - black_powder,if=talent.unseen_blade&var.targets>=(3-talent.potent_powder)&(cooldown.secret_technique.remains>=3|buff.shadow_dance.up|buff.shadow_blades.up)
+    # As Deathstalker just press BP
+    # black_powder,if=talent.deathstalkers_mark&variable.targets>=2
+    - black_powder,if=talent.deathstalkers_mark&var.targets>=2
+    # Pool some Shadow Technique Stacks as Trickster before entering Shadow Dance by not finishing right before.
+    # eviscerate,if=cooldown.secret_technique.remains>=3&talent.unseen_blade|buff.shadow_dance.up|buff.shadow_blades.up|debuff.deathstalkers_mark.stack>1|debuff.deathstalkers_mark.stack=1&buff.shadow_techniques.stack>=5
+    - eviscerate,if=cooldown.secret_technique.remains>=3&talent.unseen_blade|buff.shadow_dance.up|buff.shadow_blades.up|debuff.deathstalkers_mark.stack>1|debuff.deathstalkers_mark.stack=1&buff.shadow_techniques.stack>=5
+
+  # Filler racials
+  fill:
+    # arcane_torrent,if=energy.deficit>=15+energy.regen
+    - arcane_torrent,if=energy.deficit>=15+energy.regen
+    # arcane_pulse
+    - arcane_pulse
+    # lights_judgment
+    - lights_judgment
+    # bag_of_tricks
+    - bag_of_tricks
+
+  main:
+    - call_action_list,name=spell_queue
+    - call_action_list,name=sanity_checks
+    - call_action_list,name=auto_target
+
+    # Restealth based on config
+    - stealth,range_check=mob_count_40y,if=config.stealth_mode=0&!buff.stealth.up
+    - stealth,range_check=none,if=config.stealth_mode=1&!buff.stealth.up
+
+    # Poisons
+    - numbing_poison,range_check=none,if=config.poison_mh=0&pred.buff.numbing_poison.remains<120&!player.combat
+    - instant_poison,range_check=none,if=config.poison_oh=0&pred.buff.instant_poison.remains<120&!player.combat
+    - wound_poison,range_check=none,if=config.poison_oh=1&pred.buff.wound_poison.remains<120&!player.combat
+    - crippling_poison,range_check=none,if=config.poison_mh=1&pred.buff.crippling_poison.remains<120&!player.combat
+    - atrophic_poison,range_check=none,if=config.poison_mh=3&pred.buff.atrophic_poison.remains<120&!player.combat
+
+    # Combat Check
+    - return,if=auto_combat.player
+
+    - call_action_list,name=auto_heal
+    - call_action_list,name=defensives
+
+    # Interrupts
+    - kick,if=interrupt.target.check
+    - kick.mouseover,if=interrupt.mouseover.check
+    - kick.focus,if=interrupt.focus.check
+    # CC Interrupt
+    - kidney_shot,if=interrupt.cc.check
+    - blind,if=interrupt.cc.check
+    # Racial Interrupts
+    - quaking_palm,if=interrupt.cc.check
+    - haymaker,if=interrupt.cc.check
+    - war_stomp,if=interrupt.stun.aoe.check
+    - bull_rush,if=interrupt.stun.aoe.check
+    - tail_swipe,if=interrupt.stun.aoe.check
+
+    # Target Check
+    - return,if=auto_combat.target
+
+    # call_action_list,name=race
+    - call_action_list,name=race
+
+    # Trinkets and Items (actions.item)
+    # use_item,name=algethar_puzzle_box,if=cooldown.shadow_blades.ready&cooldown.secret_technique.remains<=2&combo_points>=6
+    - use_item,name=algethar_puzzle_box,if=cooldown.shadow_blades.ready&cooldown.secret_technique.remains<=2&combo_points>=6
+    # use_items,slots=trinket1,if=(variable.trinket_sync_slot=1&(buff.shadow_blades.up|fight_remains<=20)|(variable.trinket_sync_slot=2&(!trinket.2.cooldown.ready&cooldown.shadow_blades.remains>20))|!variable.trinket_sync_slot)
+    # use_items,slots=trinket2,if=(variable.trinket_sync_slot=2&(buff.shadow_blades.up|fight_remains<=20)|(variable.trinket_sync_slot=1&(!trinket.1.cooldown.ready&cooldown.shadow_blades.remains>20))|!variable.trinket_sync_slot)
+    # variable.trinket_sync_slot relies on trinket.X.has_use_buff (not supported) — converted to generic sync fallback
+    - trinket_1,if=trinket_1.sync
+    - trinket_2,if=trinket_2.sync
+
+    # call_action_list,name=cds
+    - call_action_list,name=cd
+
+    # shuriken_storm,if=variable.build_at_max_for_apex&variable.targets>=3&(buff.supercharge_1.up|cooldown.secret_technique.ready)
+    - shuriken_storm,if=var.build_at_max_for_apex&var.targets>=3&(combo_points.charged>=1|cooldown.secret_technique.ready)
+
+    # gloomblade,if=variable.build_at_max_for_apex&variable.targets<=2&(buff.darkest_night.up|(talent.unseen_blade&buff.supercharge_1.up)|cooldown.secret_technique.ready)&buff.lingering_shadow.stack>=35
+    # buff.supercharge_1.up → combo_points.charged>=1; buff.lingering_shadow → 385960
+    # (sc_rogue.cpp:10307 lingering_shadow_buff; 6 rows share the display name, 386081 is the attack)
+    - gloomblade,if=var.build_at_max_for_apex&var.targets<=2&(buff.darkest_night.up|(talent.unseen_blade&combo_points.charged>=1)|cooldown.secret_technique.ready)&buff.385960.stack>=35
+
+    # shadowstrike,if=variable.build_at_max_for_apex&variable.targets<=2&(buff.darkest_night.up|(talent.unseen_blade&buff.supercharge_1.up)|cooldown.secret_technique.ready)
+    - shadowstrike,if=var.build_at_max_for_apex&var.targets<=2&(buff.darkest_night.up|(talent.unseen_blade&combo_points.charged>=1)|cooldown.secret_technique.ready)
+
+    # call_action_list,name=finish,if=combo_points>=cp_max_spend-!buff.darkest_night.up
+    # cp_max_spend not supported — split into two lines using combo_points.max
+    - call_action_list,name=finish,if=buff.darkest_night.up&combo_points>=combo_points.max
+    - call_action_list,name=finish,if=!buff.darkest_night.up&combo_points>=combo_points.max-1
+
+    # call_action_list,name=build,if=variable.stealth|energy>60
+    - call_action_list,name=build,if=var.stealth|energy>60
+
+    # call_action_list,name=fill,if=!variable.stealth
+    - call_action_list,name=fill,if=!var.stealth

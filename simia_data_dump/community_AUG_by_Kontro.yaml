@@ -1,0 +1,122 @@
+version: 3.2
+author: Kontroved
+spec: 1473
+name: AUG by Kontro
+description: Augmentation Evoker by Kontroved
+
+entry: main
+
+movement_allowed: buff.hover.up|buff.spatial_paradox.up
+
+config:
+  breath_usage:
+    type: toggle
+    label: "Breath of Eons Usage"
+    spell: 442204
+    description: "toggle Breath usage"
+    
+  features2:
+    label: "Features"
+    type: multi_select
+    options:
+      - label: "PreCombat"
+        value: 1
+      - label: "Auto Blessing of the Bronze"
+        value: 3
+    default: [1,3]
+  # prescience_targets:
+  #   type: dropdown
+  #   label: "Prescience Targets"
+  #   options:
+  #     - label: "all/Raid"
+  #       value: 0
+  #     - label: "only dps"
+  #       value: 1
+  #   default: 0
+  obsidian_scales_hp_pct:
+    label: "Obsidian Scales HP%"
+    type: slider
+    min: 0
+    max: 100
+    default: 60
+  ebon_might_pandemic_threshold:
+    label: "Ebon Might Pandemic 0.X Threshold"
+    type: slider
+    min: 1
+    max: 6
+    default: 3
+  time_to_die:
+    label: "Time to Die (Empoweres and Ebon Might)"
+    type: slider
+    min: 0
+    max: 20
+    default: 10
+variables:
+  wing_buffet_usage: config.features2.has(0)
+  precombat_usage: config.features2.has(1)
+  breath_of_eons_usage: config.features2.has(2)
+  breath_usage: config.breath_usage
+  blessing_usage: config.features2.has(3)
+  obsidian_scales_hp_pct: config.obsidian_scales_hp_pct
+  ebon_might_pandemic_threshold: config.ebon_might_pandemic_threshold/10
+  temp_wound: debuff.temporal_wound.remains
+  ttd2: (fight_remains<?time_to_die)*var.ttd
+  ttd: (fight_remains<9999|time_to_die<9999)
+  ttd3: var.ttd2>config.time_to_die
+  stopcast: incoming_cast.stopcasting.remains<0.3&incoming_cast.stopcasting.up
+lists:
+  main:
+    - call_action_list,name=spell_queue
+    - call_action_list,name=sanity_checks
+    - call_action_list,name=auto_heal
+    - call_action_list,name=auto_target_ranged
+    - call_action_list,name=precombat
+    - call_action_list,name=interrupts
+    - call_action_list,name=defensives
+    - call_action_list,name=auto_dispel
+    - stop_casting,if=var.stopcast
+    - return,if=auto_combat.target&!var.stopcast
+    - call_action_list,name=simple
+
+
+  precombat:
+    - blessing_of_the_bronze,range_check=none,if=buff.blessing_of_the_bronze.down
+    - source_of_magic,name="PreCombat Source of Magic",cycle=healers,if=cycle.buff.source_of_magic.down&!player.inraid
+    - blistering_scales,cycle=tanks,if=cycle.buff.blistering_scales.down
+    - prescience,if=player.inraid
+    - prescience,cycle=dps,if=cycle.buff.prescience.down&cycle.range<=25&!cycle.range=0&!player.inraid
+    - ebon_might,name="Ebon Might PreCombat",cycle=tanks,if=!cycle.buff.395296.up&cycle.combat
+
+  interrupts:
+    - quell,if=interrupt.target.check
+    #- quell,interrupt=true,if=incoming_cast.25y.kickable.important.count>=1&!player.casting
+    - quell.mouseover,if=interrupt.mouseover.check
+    - quell.focus,if=interrupt.focus.check
+    - tail_swipe,if=interrupt.stun.aoe.check
+  
+  defensives:
+    - obsidian_scales,delay=100,if=player.health.pct<=var.obsidian_scales_hp_pct&incoming_cast.target_me.remains<0.5&incoming_cast.target_me.up&!buff.obsidian_scales.up
+    - obsidian_scales,if=incoming_cast.target_me.important.remains<0.1&incoming_cast.target_me.important.up&!buff.obsidian_scales.up
+    - zephyr, if=incoming_cast.zephyr.remains<1.3&incoming_cast.zephyr.up
+
+  simple:
+    - eruption.spread,if=pred.debuff.bombardments.up&buff.mass_eruption.up
+    - upheaval,ignore_usable=true,ignore_cooldown=true,casting_check=upheaval,if=player.empower_stage>=1&enemies_around_target<=5
+    - upheaval,ignore_usable=true,ignore_cooldown=true,casting_check=upheaval,if=player.empower_stage>=3&enemies_around_target>5
+    - upheaval,ignore_usable=true,ignore_cooldown=true,casting_check=upheaval,if=player.empower_stage>=4&enemies_around_target<active_enemies
+    - prescience,cycle=dps,if=cycle.prescience.down&cycle.range>0&!player.inraid
+    - prescience,if=group.count(!cycle.dead)>0|player.inraid
+    - ebon_might,if=(3+action.ebon_might.cast_time>=buff.395296.remains)&var.ttd3
+    - eruption,casting_check=ebon_might,if=player.casting.remains<0.2
+    - tip_the_scales,if=cooldown.upheaval.remains<1&usable.fire_breath&!cooldown.fire_breath.ready&var.ttd3
+    - eruption,name="dump Eruption breath",if=buff.iminent_destruction&essence.deficit=0&!buff.mass_eruption.up
+    - breath_of_eons,name="BOE on CD",delay=200,range_check=none,if=var.breath_usage&!player.moving&player.combat&cooldown.breath_of_eons.remains<1&var.ttd3
+    - fire_breath,empower_to=1,if=player.standing.time>=1&!buff.tip_the_scales.up&pred.buff.ebon_might.remains>=1.5&var.ttd3
+    - upheaval,if=buff.tip_the_scales.up&(pred.ebon_might.remains>=1|buff.395296.remains>1)&!player.moving&var.ttd3
+    - upheaval,empower_to=1,if=(!player.moving&pred.buff.ebon_might.remains>=1.5&enemies_around_target<=5)&var.ttd3
+    - upheaval,empower_to=4, if=(player.standing.time>=1&pred.buff.ebon_might.remains>=2.5&enemies_around_target<active_enemies)&var.ttd3
+    - upheaval,empower_to=3, if=(player.standing.time>=1&pred.buff.ebon_might.remains>=2&enemies_around_target>5)&var.ttd3
+    - eruption,if=buff.395296.remains>1.5
+    - eruption,name="eruption EB",if=(pred.buff.ebon_might.remains>action.eruption.cast_time|essence.deficit=0|buff.essence_burst.stack=2&cooldown.ebon_might.remains>4)
+    - living_flame,if=(!cooldown.eruption.ready&buff.395296.remains>=1.3)|(!buff.395296.up)
+    - azure_strike,if=moving.time>=0.7

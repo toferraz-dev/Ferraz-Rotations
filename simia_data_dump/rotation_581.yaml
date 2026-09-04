@@ -1,0 +1,610 @@
+# =============================================================================
+# Demon Hunter Vengeance - Spec ID 581
+# =============================================================================
+#
+# IMPORTANT: Spell ID collisions — "Voidfall" resolves to 5+ rows in SpellName.csv,
+# so name-based buff lookup is ambiguous. Annihilator buffs must use numeric IDs:
+#   Voidfall Building:  1256301  → buff.1256301.stack
+#   Voidfall Spending:  1256302  → buff.1256302.up / buff.1256302.stack
+
+# Conversion notes - apply throughout this file:
+#   soul_fragments → buff.soul_fragments.stack
+#   Trinket properties not supported — using sync
+#   soul_fragments.total → buff.soul_fragments.stack
+#   action.sigil_of_spite.placed not supported — stripped
+
+version: 3
+spec: 581
+entry: main
+
+config:
+  fiery_hp_pct:
+    section: "Defensive HP Percentage"
+    label: "Fiery Brand HP%"
+    type: slider
+    min: 0
+    max: 100
+    default: 95
+
+  meta_hp_pct:
+    section: "Defensive HP Percentage"
+    label: "Metamorphosis HP%"
+    type: slider
+    min: 0
+    max: 100
+    default: 40
+
+  darkness_hp_pct:
+    section: "Defensive HP Percentage"
+    label: "Darkness HP%"
+    type: slider
+    min: 0
+    max: 100
+    default: 65
+
+  demon_spikes_dmg_pct:
+    section: "Defensives Prediction Damage"
+    label: "Demon Spikes (Incoming Dmg%)"
+    type: slider
+    min: 0
+    max: 100
+    default: 40
+
+  meta_dmg_pct:
+    section: "Defensives Prediction Damage"
+    label: "Metamorphosis (Incoming Dmg%)"
+    type: slider
+    min: 0
+    max: 100
+    default: 50
+
+  fiery_dmg_pct:
+    section: "Defensives Prediction Damage"
+    label: "Fiery Brand (Incoming Dmg%)"
+    type: slider
+    min: 0
+    max: 100
+    default: 55
+
+  sigil_melee_check:
+    label: "Sigils Melee Check"
+    type: checkbox
+    default: true
+
+  save_infernal_strike:
+    label: "Conserve Infernal Strike"
+    type: checkbox
+    default: true
+
+  felblade_range_check:
+    label: "Felblade Range Check"
+    type: checkbox
+    default: true
+
+variables:
+  # Felblade range gate — when enabled, only cast when target is within Felblade's 20y range
+  felblade_ok: "!config.felblade_range_check|target.range<=20"
+  # Fel Devastation stationary gate — require standing still for >0.5s before channeling
+  fel_dev_ok: "player.standing.time>0.5"
+
+
+  # === Common Variables ===
+  # variable,name=single_target,value=spell_targets.spirit_bomb=1
+  single_target: "active_enemies=1"
+  # variable,name=aoe,value=spell_targets.spirit_bomb>=3
+  aoe: "active_enemies>=3"
+  # variable,name=execute,value=fight_remains<20
+  execute: "fight_remains<20"
+  # variable,name=is_dungeon,value=fight_style.dungeonroute|fight_style.dungeonslice
+  # fight_style not supported — always 0
+  # variable,name=dung_cd_ok — always true (is_dungeon=0)
+  # variable,name=dung_meta_ok — always true (is_dungeon=0)
+  # variable,name=trinket_1_buffs — trinket properties not supported
+  # variable,name=trinket_2_buffs — trinket properties not supported
+  # variable,name=trinket_priority — trinket properties not supported
+  # variable,name=damage_trinket_priority — trinket properties not supported
+  # variable,name=fiery_demise_active,value=talent.fiery_demise&dot.fiery_brand.ticking
+  fiery_demise_active: "talent.fiery_demise&dot.fiery_brand.ticking"
+  # variable,name=fire_cd_soon,value=cooldown.soul_carver.remains>?cooldown.fel_devastation.remains>?cooldown.sigil_of_spite.remains<(8+talent.charred_flesh.rank)
+  fire_cd_soon: "(cooldown.soul_carver.remains>?cooldown.fel_devastation.remains>?cooldown.sigil_of_spite.remains)<(8+talent.charred_flesh.rank)"
+  # variable,name=fragment_target,op=setif,value=5+apex.2,value_else=variable.fiery_demise_active*3+!variable.fiery_demise_active*(5-buff.metamorphosis.up),condition=hero_tree.aldrachi_reaver
+  fragment_target: "hero_tree.aldrachi_reaver*(5+(talent.untethered_rage.rank>=2))+!hero_tree.aldrachi_reaver*(var.fiery_demise_active*3+!var.fiery_demise_active*(5-buff.metamorphosis.up))"
+
+  # === AR TTNG Model Variables ===
+  # GCDs until next glaive, accounting for SC, SoS, and passive frags
+  # variable,name=frac_souls,value=2+buff.metamorphosis.up
+  frac_souls: "2+buff.metamorphosis.up"
+  # variable,name=base_deficit,value=(20-buff.art_of_the_glaive.stack-soul_fragments.total)<?0
+  # soul_fragments.total not supported — using buff.soul_fragments.stack
+  base_deficit: "(20-buff.art_of_the_glaive.stack-buff.soul_fragments.stack)<?0"
+  # variable,name=eff_recharge,value=cooldown.fracture.remains+(cooldown.fracture.charges>=2)*cooldown.fracture.duration
+  eff_recharge: "cooldown.fracture.remains+(cooldown.fracture.charges>=2)*cooldown.fracture.duration"
+  # variable,name=passive_per_sec,value=0.30+(talent.fallout&buff.immolation_aura.up)*0.30*spell_targets.spirit_bomb
+  passive_per_sec: "0.30+(talent.fallout&buff.immolation_aura.up)*0.30*active_enemies"
+  # variable,name=fracs_base,value=variable.base_deficit%variable.frac_souls
+  # variable,name=fracs_base,op=ceil
+  fracs_base: "ceil(var.base_deficit%var.frac_souls)"
+  # variable,name=base_gen_time,value=(variable.fracs_base>0)*((variable.fracs_base<=cooldown.fracture.charges)*variable.fracs_base*(1+apex.3)*gcd.max+(variable.fracs_base>cooldown.fracture.charges)*((cooldown.fracture.charges*(1+apex.3)*gcd.max<?variable.eff_recharge)+((variable.fracs_base-cooldown.fracture.charges-1)<?0)*cooldown.fracture.duration+gcd.max))
+  base_gen_time: "(var.fracs_base>0)*((var.fracs_base<=cooldown.fracture.charges)*var.fracs_base*(1+(talent.untethered_rage.rank>=4))*gcd.max+(var.fracs_base>cooldown.fracture.charges)*((cooldown.fracture.charges*(1+(talent.untethered_rage.rank>=4))*gcd.max<?var.eff_recharge)+((var.fracs_base-cooldown.fracture.charges-1)<?0)*cooldown.fracture.duration+gcd.max))"
+  # Pass 1: subtract SC (6 frags) and SoS (3 frags) if they arrive within the gen window
+  # variable,name=sc1,value=talent.soul_carver&cooldown.soul_carver.remains<variable.base_gen_time
+  sc1: "talent.soul_carver&cooldown.soul_carver.remains<var.base_gen_time"
+  # variable,name=net1,value=(variable.base_deficit-variable.sc1*6)<?0
+  net1: "(var.base_deficit-var.sc1*6)<?0"
+  # variable,name=fracs1,value=variable.net1%variable.frac_souls
+  # variable,name=fracs1,op=ceil
+  fracs1: "ceil(var.net1%var.frac_souls)"
+  # variable,name=gt1 — same gen_time formula with fracs1
+  gt1: "(var.fracs1>0)*((var.fracs1<=cooldown.fracture.charges)*var.fracs1*(1+(talent.untethered_rage.rank>=4))*gcd.max+(var.fracs1>cooldown.fracture.charges)*((cooldown.fracture.charges*(1+(talent.untethered_rage.rank>=4))*gcd.max<?var.eff_recharge)+((var.fracs1-cooldown.fracture.charges-1)<?0)*cooldown.fracture.duration+gcd.max))"
+  # variable,name=sos1,value=talent.sigil_of_spite&cooldown.sigil_of_spite.remains<variable.gt1
+  sos1: "talent.sigil_of_spite&cooldown.sigil_of_spite.remains<var.gt1"
+  # variable,name=N1,value=(variable.net1-variable.sos1*3)<?0
+  N1: "(var.net1-var.sos1*3)<?0"
+  # variable,name=fracs_np,value=variable.N1%variable.frac_souls
+  # variable,name=fracs_np,op=ceil
+  fracs_np: "ceil(var.N1%var.frac_souls)"
+  # variable,name=gt_np — same gen_time formula with fracs_np
+  gt_np: "(var.fracs_np>0)*((var.fracs_np<=cooldown.fracture.charges)*var.fracs_np*(1+(talent.untethered_rage.rank>=4))*gcd.max+(var.fracs_np>cooldown.fracture.charges)*((cooldown.fracture.charges*(1+(talent.untethered_rage.rank>=4))*gcd.max<?var.eff_recharge)+((var.fracs_np-cooldown.fracture.charges-1)<?0)*cooldown.fracture.duration+gcd.max))"
+  # T1: no-passive reference time (overhead GCD + fracture gen + SC/SoS cast GCDs)
+  # variable,name=T1,value=gcd.max+variable.gt_np+variable.sc1*gcd.max+variable.sos1*gcd.max
+  T1: "gcd.max+var.gt_np+var.sc1*gcd.max+var.sos1*gcd.max"
+  # Pass 2: proportional SC credit (scales by how early SC arrives relative to T1)
+  # variable,name=sc_prop,value=(talent.soul_carver&cooldown.soul_carver.remains<variable.T1)*((1-cooldown.soul_carver.remains%variable.T1)<?0)
+  sc_prop: "(talent.soul_carver&cooldown.soul_carver.remains<var.T1)*((1-cooldown.soul_carver.remains%var.T1)<?0)"
+  # variable,name=net_p,value=(variable.base_deficit-6*variable.sc_prop)<?0
+  net_p: "(var.base_deficit-6*var.sc_prop)<?0"
+  # variable,name=fracs_p,value=variable.net_p%variable.frac_souls
+  # variable,name=fracs_p,op=ceil
+  fracs_p: "ceil(var.net_p%var.frac_souls)"
+  # variable,name=gt_p — same gen_time formula with fracs_p
+  gt_p: "(var.fracs_p>0)*((var.fracs_p<=cooldown.fracture.charges)*var.fracs_p*(1+(talent.untethered_rage.rank>=4))*gcd.max+(var.fracs_p>cooldown.fracture.charges)*((cooldown.fracture.charges*(1+(talent.untethered_rage.rank>=4))*gcd.max<?var.eff_recharge)+((var.fracs_p-cooldown.fracture.charges-1)<?0)*cooldown.fracture.duration+gcd.max))"
+  # variable,name=sos_p,value=talent.sigil_of_spite&cooldown.sigil_of_spite.remains<variable.gt_p
+  sos_p: "talent.sigil_of_spite&cooldown.sigil_of_spite.remains<var.gt_p"
+  # variable,name=N_p,value=(variable.net_p-variable.sos_p*3)<?0
+  N_p: "(var.net_p-var.sos_p*3)<?0"
+  # variable,name=adj2,value=(variable.N_p-variable.passive_per_sec*variable.T1)<?0
+  adj2: "(var.N_p-var.passive_per_sec*var.T1)<?0"
+  # variable,name=fracs_p2,value=variable.adj2%variable.frac_souls
+  # variable,name=fracs_p2,op=ceil
+  fracs_p2: "ceil(var.adj2%var.frac_souls)"
+  # variable,name=gt_p2 — same gen_time formula with fracs_p2
+  gt_p2: "(var.fracs_p2>0)*((var.fracs_p2<=cooldown.fracture.charges)*var.fracs_p2*(1+(talent.untethered_rage.rank>=4))*gcd.max+(var.fracs_p2>cooldown.fracture.charges)*((cooldown.fracture.charges*(1+(talent.untethered_rage.rank>=4))*gcd.max<?var.eff_recharge)+((var.fracs_p2-cooldown.fracture.charges-1)<?0)*cooldown.fracture.duration+gcd.max))"
+  # T2: passive-adjusted estimate, averaged with T1 to tame oscillation
+  # variable,name=T2,value=gcd.max+variable.gt_p2+(variable.sc_prop>0)*gcd.max+variable.sos_p*gcd.max
+  T2: "gcd.max+var.gt_p2+(var.sc_prop>0)*gcd.max+var.sos_p*gcd.max"
+  # variable,name=T_avg,value=(variable.T1+variable.T2)%2
+  T_avg: "(var.T1+var.T2)%2"
+  # Final pass: use T_avg as the passive window for the definitive fracture count
+  # variable,name=adj_f,value=(variable.N_p-variable.passive_per_sec*variable.T_avg)<?0
+  adj_f: "(var.N_p-var.passive_per_sec*var.T_avg)<?0"
+  # variable,name=fracs_f,value=variable.adj_f%variable.frac_souls
+  # variable,name=fracs_f,op=ceil
+  fracs_f: "ceil(var.adj_f%var.frac_souls)"
+  # variable,name=gt_f — same gen_time formula with fracs_f
+  gt_f: "(var.fracs_f>0)*((var.fracs_f<=cooldown.fracture.charges)*var.fracs_f*(1+(talent.untethered_rage.rank>=4))*gcd.max+(var.fracs_f>cooldown.fracture.charges)*((cooldown.fracture.charges*(1+(talent.untethered_rage.rank>=4))*gcd.max<?var.eff_recharge)+((var.fracs_f-cooldown.fracture.charges-1)<?0)*cooldown.fracture.duration+gcd.max))"
+  # variable,name=passive_floor (3-step: divide, ceil, multiply — inlined)
+  # variable,name=passive_floor,value=variable.N_p%(variable.passive_per_sec*gcd.max)
+  # variable,name=passive_floor,op=ceil
+  # variable,name=passive_floor,value=variable.passive_floor*gcd.max
+  passive_floor: "ceil(var.N_p%(var.passive_per_sec*gcd.max))*gcd.max"
+  # variable,name=time_to_next_glaive (2-step: set then min with passive_floor — inlined)
+  # variable,name=time_to_next_glaive,value=gcd.max+variable.gt_f+(variable.sc_prop>0)*gcd.max+variable.sos_p*gcd.max
+  # variable,name=time_to_next_glaive,value=variable.time_to_next_glaive<?(variable.fracs_f=0&variable.N_p>0)*variable.passive_floor
+  time_to_next_glaive_base: "gcd.max+var.gt_f+(var.sc_prop>0)*gcd.max+var.sos_p*gcd.max"
+  time_to_next_glaive: "var.time_to_next_glaive_base<?(var.fracs_f=0&var.N_p>0)*var.passive_floor"
+  # RM application happens 2 GCDs into the cycle
+  # variable,name=time_to_next_rm_application,value=variable.time_to_next_glaive+2*gcd.max
+  time_to_next_rm_application: "var.time_to_next_glaive+2*gcd.max"
+  # variable,name=rm_remains — stateful time tracking not supported, using debuff approximation
+  # variable,name=rm_remains,value=(variable.last_rm_applied>0)*(20-(time-variable.last_rm_applied))<?0
+  rm_remains: "debuff.reavers_mark.remains"
+  # variable,name=prio_slashes — stateful last_slash_at/last_refresh_at not supported, simplified
+  # variable,name=prio_slashes,value=variable.aoe|variable.execute|(variable.rm_remains>0&variable.last_refresh_at>variable.last_slash_at)
+  prio_slashes: "var.aoe|var.execute|debuff.reavers_mark.up"
+  # variable,name=rg_imminent,value=(buff.reavers_glaive.up&(variable.execute|variable.rm_remains<=variable.time_to_next_rm_application|buff.art_of_the_glaive.stack+soul_fragments>=(20-variable.frac_souls)))|(buff.art_of_the_glaive.stack+soul_fragments>=20)|(soul_fragments>=6&buff.art_of_the_glaive.stack>=(20-variable.frac_souls)&cooldown.fracture.charges>=1)
+  rg_imminent: "(buff.reavers_glaive.up&(var.execute|var.rm_remains<=var.time_to_next_rm_application|buff.art_of_the_glaive.stack+buff.soul_fragments.stack>=(20-var.frac_souls)))|(buff.art_of_the_glaive.stack+buff.soul_fragments.stack>=20)|(buff.soul_fragments.stack>=6&buff.art_of_the_glaive.stack>=(20-var.frac_souls)&cooldown.fracture.charges>=1)"
+
+  # === Anni Variables ===
+  # variable,name=anni_meta_entry_time,value=3*gcd.max
+  anni_meta_entry_time: "3*gcd.max"
+
+lists:
+  defensives:
+    # --- Prediction Damage: pre-fire on a predicted incoming hit (% of effective HP) ---
+    - demon_spikes,range_check=none,if=incoming.mitigated.pct>=config.demon_spikes_dmg_pct&buff.demon_spikes.down
+    - metamorphosis.player,range_check=none,if=incoming.mitigated.pct>=config.meta_dmg_pct&buff.metamorphosis.down
+    - fiery_brand,range_check=none,if=incoming.mitigated.pct>=config.fiery_dmg_pct&debuff.fiery_brand.down
+
+    # --- HP Percentage: react when already low ---
+    # Demon Spikes - In Metamorphosis, use if buff down and will have charge before meta expires
+    - demon_spikes,if=buff.demon_spikes.down&active_enemies>=1&buff.metamorphosis.up&buff.metamorphosis.remains>cooldown.demon_spikes.full_recharge_time
+
+    # Demon Spikes - Not in Meta, some targets don't have Fiery Brand
+    - demon_spikes,if=buff.demon_spikes.down&active_enemies>=1&!buff.metamorphosis.up&nameplates.debuff.fiery_brand.count<active_enemies
+
+    # Demon Spikes - Not in Meta, about to cap charges
+    - demon_spikes,if=buff.demon_spikes.down&active_enemies>=1&!buff.metamorphosis.up&cooldown.demon_spikes.charges_fractional>1.8
+
+    # Demon Spikes - No Meta, no Fiery Brand on any target, capped charges
+    - demon_spikes,if=buff.demon_spikes.down&!buff.metamorphosis.up&nameplates.debuff.fiery_brand.count=0&cooldown.demon_spikes.charges_fractional>1.8
+
+    # Metamorphosis - Defensive use when low HP
+    - metamorphosis.player,if=health.pct<=config.meta_hp_pct&buff.metamorphosis.down
+
+    # Fiery Brand - Defensive use when low HP or danger
+    - fiery_brand,if=debuff.fiery_brand.down&health.pct<=config.fiery_hp_pct
+
+    # Darkness - Defensive use when low HP
+    - darkness,range_check=none,if=health.pct<=config.darkness_hp_pct
+
+  main:
+    # _shared.yaml lists
+    - call_action_list,name=spell_queue
+    - call_action_list,name=sanity_checks
+    - call_action_list,name=auto_target
+
+    # Combat Check
+    - return,if=auto_combat.player
+
+    # Defensives
+    - call_action_list,name=defensives
+
+    # Interrupts
+    - disrupt,if=interrupt.target.check
+    - disrupt.mouseover,if=interrupt.mouseover.check
+    - disrupt.focus,if=interrupt.focus.check
+    # CC Interrupt
+    - imprison,if=interrupt.cc.check
+    # AoE Interrupt
+    - chaos_nova,if=interrupt.stun.aoe.check
+    # Racial Interrupts
+    - quaking_palm,if=interrupt.cc.check
+    - haymaker,if=interrupt.cc.check
+    - war_stomp,if=interrupt.stun.aoe.check
+    - bull_rush,if=interrupt.stun.aoe.check
+    - tail_swipe,if=interrupt.stun.aoe.check
+
+    # Taunt — grab aggro when not tanking (dungeon/M+ only, never raid)
+    - torment,name="Taunt",if=target.threat<2&target.combat&target.threat!=-1&!player.inraid
+    - torment.mouseover,name="Taunt MO",if=mouseover.threat<2&mouseover.combat&mouseover.threat!=-1&mouseover.exists&!player.inraid
+
+    - call_action_list,name=auto_heal
+
+    # Target Check
+    - return,if=auto_combat.target
+
+    # disrupt,if=target.debuff.casting.react
+    # Handled by interrupts above
+    # auto_attack — deleted
+    # retarget_auto_attack,target_if=min:debuff.reavers_mark.remains,if=hero_tree.aldrachi_reaver — deleted (not supported)
+    # infernal_strike,use_off_gcd=1
+    - infernal_strike.player,if=!config.save_infernal_strike|cooldown.infernal_strike.full_recharge_time<gcd.max
+    # demon_spikes,use_off_gcd=1,if=!buff.demon_spikes.up&in_combat
+    - demon_spikes,if=!buff.demon_spikes.up&player.combat
+    # run_action_list,name=ar,if=hero_tree.aldrachi_reaver
+    - run_action_list,name=ar,if=hero_tree.aldrachi_reaver
+    # run_action_list,name=anni,if=hero_tree.annihilator
+    - run_action_list,name=anni
+
+  # ===========================================================================
+  # Aldrachi Reaver
+  # ===========================================================================
+  ar:
+    # felblade,if=prev_gcd.1.vengeful_retreat|prev_off_gcd.vengeful_retreat
+    - felblade,if=(prev_gcd.1.vengeful_retreat|prev_off_gcd.vengeful_retreat)&var.felblade_ok
+    # metamorphosis,use_off_gcd=1,if=buff.untethered_rage.up|(!buff.metamorphosis.up&variable.dung_meta_ok)
+    # dung_meta_ok always true (is_dungeon=0)
+    - metamorphosis.player,if=buff.untethered_rage.up|!buff.metamorphosis.up
+    # call_action_list,name=trinkets
+    - call_action_list,name=trinkets
+    # reavers_glaive,if=buff.reavers_glaive.up&!buff.rending_strike.up&!buff.glaive_flurry.up&(variable.execute|variable.prio_slashes|variable.rm_remains<=0|variable.rm_remains<10|buff.art_of_the_glaive.stack+soul_fragments>=(20-variable.frac_souls))
+    - reavers_glaive,if=buff.reavers_glaive.up&!buff.rending_strike.up&!buff.glaive_flurry.up&(var.execute|var.prio_slashes|var.rm_remains<=0|var.rm_remains<10|buff.art_of_the_glaive.stack+buff.soul_fragments.stack>=(20-var.frac_souls))
+    # call_action_list,name=ar_glaive_cycle,if=buff.rending_strike.up|buff.glaive_flurry.up|prev_gcd.1.reavers_glaive
+    - call_action_list,name=ar_glaive_cycle,if=buff.rending_strike.up|buff.glaive_flurry.up|prev_gcd.1.reavers_glaive
+    # fiery_brand,if=charges>=2|!variable.fiery_demise_active|variable.execute
+    - fiery_brand,if=cooldown.fiery_brand.charges>=2|!var.fiery_demise_active|var.execute
+    # sigil_of_spite,if=variable.dung_cd_ok&!buff.reavers_glaive.up&!buff.rending_strike.up&!buff.glaive_flurry.up
+    # dung_cd_ok always true
+    - sigil_of_spite.player,if=!buff.reavers_glaive.up&!buff.rending_strike.up&!buff.glaive_flurry.up
+    # call_action_list,name=ar_quick_consume,if=!buff.reavers_glaive.up&!buff.rending_strike.up&!buff.glaive_flurry.up&(buff.art_of_the_glaive.stack+soul_fragments>=20|(variable.aoe&soul_fragments>=6))
+    - call_action_list,name=ar_quick_consume,if=!buff.reavers_glaive.up&!buff.rending_strike.up&!buff.glaive_flurry.up&(buff.art_of_the_glaive.stack+buff.soul_fragments.stack>=20|(var.aoe&buff.soul_fragments.stack>=6))
+    # immolation_aura,if=in_combat
+    - immolation_aura,if=player.combat
+    # fel_devastation,if=variable.dung_cd_ok&fury>85&(soul_fragments.inactive>1|variable.aoe)&(!variable.rg_imminent|variable.aoe)
+    # dung_cd_ok always true; soul_fragments.inactive not supported — stripped
+    - fel_devastation,if=fury>85&var.aoe&(!var.rg_imminent|var.aoe)&var.fel_dev_ok
+    # sigil_of_flame
+    - sigil_of_flame.player
+    # soul_carver,if=variable.dung_cd_ok&(variable.fiery_demise_active|(variable.rm_remains<7&buff.art_of_the_glaive.stack+soul_fragments<20)|variable.execute)
+    # dung_cd_ok always true; soul_fragments → buff.soul_fragments.stack
+    - soul_carver,if=var.fiery_demise_active|(var.rm_remains<7&buff.art_of_the_glaive.stack+buff.soul_fragments.stack<20)|var.execute
+    # call_action_list,name=ar_fillers
+    - call_action_list,name=ar_fillers
+
+  # ===========================================================================
+  # AR Glaive Cycle
+  # ===========================================================================
+  ar_glaive_cycle:
+    # use_item,use_off_gcd=1,slot=trinket1,if=!variable.trinket_1_buffs&(variable.damage_trinket_priority=1|trinket.2.cooldown.remains|trinket.2.cooldown.duration=0)&gcd.remains>0.1
+    - trinket_1,if=trinket_1.sync&gcd.remains>0.1
+    # use_item,use_off_gcd=1,slot=trinket2,if=!variable.trinket_2_buffs&(variable.damage_trinket_priority=2|trinket.1.cooldown.remains|trinket.1.cooldown.duration=0)&gcd.remains>0.1
+    - trinket_2,if=trinket_2.sync&gcd.remains>0.1
+    # call_action_list,name=ar_glaive_cycle_filler,if=(variable.prio_slashes&((cooldown.fracture.charges<1&buff.rending_strike.up&buff.glaive_flurry.up)|fury<10))|(!variable.prio_slashes&((buff.rending_strike.up&buff.glaive_flurry.up&fury<35)|(buff.rending_strike.up&!buff.glaive_flurry.up&cooldown.fracture.charges<1)))
+    - call_action_list,name=ar_glaive_cycle_filler,if=(var.prio_slashes&((cooldown.fracture.charges<1&buff.rending_strike.up&buff.glaive_flurry.up)|fury<10))|(!var.prio_slashes&((buff.rending_strike.up&buff.glaive_flurry.up&fury<35)|(buff.rending_strike.up&!buff.glaive_flurry.up&cooldown.fracture.charges<1)))
+    # potion,use_off_gcd=1 — not supported, deleted
+    # invoke_external_buff,name=power_infusion — not supported, deleted
+    # variable,name=last_rm_applied,value=time,if=buff.rending_strike.up — stateful variable not supported
+    # Record RM application time when fracture is about to consume RS
+    # variable,name=last_rm_applied,value=time,if=buff.rending_strike.up
+    # fracture,if=buff.rending_strike.up&buff.glaive_flurry.up&variable.prio_slashes
+    - fracture,if=buff.rending_strike.up&buff.glaive_flurry.up&var.prio_slashes
+    # soul_cleave,if=buff.rending_strike.up&buff.glaive_flurry.up&!variable.prio_slashes
+    - soul_cleave,if=buff.rending_strike.up&buff.glaive_flurry.up&!var.prio_slashes
+    # fracture,if=buff.rending_strike.up&!buff.glaive_flurry.up
+    - fracture,if=buff.rending_strike.up&!buff.glaive_flurry.up
+    # soul_cleave,if=buff.glaive_flurry.up&!buff.rending_strike.up
+    - soul_cleave,if=buff.glaive_flurry.up&!buff.rending_strike.up
+    # call_action_list,name=ar_glaive_cycle_filler
+    - call_action_list,name=ar_glaive_cycle_filler
+
+  # ===========================================================================
+  # AR Glaive Cycle Filler — non-consuming actions while waiting for resources
+  # ===========================================================================
+  ar_glaive_cycle_filler:
+    # spirit_bomb,if=fury>75&soul_fragments>=variable.fragment_target
+    - spirit_bomb,if=fury>75&buff.soul_fragments.stack>=var.fragment_target
+    # immolation_aura
+    - immolation_aura
+    # fel_devastation,if=fury>=85
+    - fel_devastation,if=fury>=85&var.fel_dev_ok
+    # sigil_of_flame
+    - sigil_of_flame.player
+    # felblade
+    - felblade,if=var.felblade_ok
+    # soul_carver
+    - soul_carver
+    # vengeful_retreat,use_off_gcd=1,if=talent.unhindered_assault&!cooldown.felblade.up
+    - vengeful_retreat,if=talent.unhindered_assault&!cooldown.felblade.up
+    # soul_cleave,if=!buff.glaive_flurry.up
+    - soul_cleave,if=!buff.glaive_flurry.up
+    # throw_glaive
+    - throw_glaive
+
+  # ===========================================================================
+  # AR Quick Consume — rush to AotG 20. AoE uses lower SpB threshold
+  # ===========================================================================
+  ar_quick_consume:
+    # soul_cleave,if=soul_fragments<(3-variable.aoe)
+    - soul_cleave,if=buff.soul_fragments.stack<(3-var.aoe)
+    # spirit_bomb,if=soul_fragments>=(3-variable.aoe)
+    - spirit_bomb,if=buff.soul_fragments.stack>=(3-var.aoe)
+    # soul_cleave,if=!variable.aoe
+    - soul_cleave,if=!var.aoe
+
+  # ===========================================================================
+  # AR Fillers — outside glaive cycles. AoE lowers SpB threshold by 1
+  # ===========================================================================
+  ar_fillers:
+    # spirit_bomb,if=soul_fragments>=(variable.fragment_target-variable.aoe)
+    - spirit_bomb,if=buff.soul_fragments.stack>=(var.fragment_target-var.aoe)
+    # immolation_aura,if=variable.time_to_next_glaive>3*gcd.max
+    - immolation_aura,if=var.time_to_next_glaive>3*gcd.max
+    # felblade,if=cooldown.spirit_bomb.remains<gcd.max&soul_fragments.total>=variable.fragment_target&fury<40
+    - felblade,if=cooldown.spirit_bomb.remains<gcd.max&buff.soul_fragments.stack>=var.fragment_target&fury<40&var.felblade_ok
+    # vengeful_retreat,use_off_gcd=1,if=!cooldown.felblade.up&talent.unhindered_assault&cooldown.spirit_bomb.remains<gcd.max&soul_fragments.total>=variable.fragment_target&fury<40
+    - vengeful_retreat,if=!cooldown.felblade.up&talent.unhindered_assault&cooldown.spirit_bomb.remains<gcd.max&buff.soul_fragments.stack>=var.fragment_target&fury<40
+    # soul_cleave,if=((soul_fragments>=5&!variable.aoe)|soul_fragments<=1|fury.deficit<30)&(fury>=2*action.soul_cleave.cost|cooldown.fracture.charges>=1|cooldown.fracture.remains<=gcd.max)&(!buff.rending_strike.up|!buff.glaive_flurry.up|!variable.prio_slashes)
+    - soul_cleave,if=((buff.soul_fragments.stack>=5&!var.aoe)|buff.soul_fragments.stack<=1|fury.deficit<30)&(fury>=2*action.soul_cleave.cost|cooldown.fracture.charges>=1|cooldown.fracture.remains<=gcd.max)&(!buff.rending_strike.up|!buff.glaive_flurry.up|!var.prio_slashes)
+    # sigil_of_flame,if=variable.aoe
+    - sigil_of_flame.player,if=var.aoe
+    # fracture,if=buff.metamorphosis.up|full_recharge_time<gcd.max|buff.warblades_hunger.stack>=4
+    - fracture,if=buff.metamorphosis.up|cooldown.fracture.full_recharge_time<gcd.max|buff.warblades_hunger.stack>=4
+    # immolation_aura,if=!variable.is_dungeon|in_combat
+    # is_dungeon=0, always true
+    - immolation_aura
+    # sigil_of_flame
+    - sigil_of_flame.player
+    # soul_cleave,if=(fury>=2*action.soul_cleave.cost|cooldown.fracture.charges>=1|cooldown.fracture.remains<=gcd.max)&(!buff.rending_strike.up|!buff.glaive_flurry.up|!variable.prio_slashes)
+    - soul_cleave,if=(fury>=2*action.soul_cleave.cost|cooldown.fracture.charges>=1|cooldown.fracture.remains<=gcd.max)&(!buff.rending_strike.up|!buff.glaive_flurry.up|!var.prio_slashes)
+    # fracture
+    - fracture
+    # felblade
+    - felblade,if=var.felblade_ok
+    # vengeful_retreat,use_off_gcd=1,if=talent.unhindered_assault&!cooldown.felblade.up
+    - vengeful_retreat,if=talent.unhindered_assault&!cooldown.felblade.up
+    # soul_carver
+    - soul_carver
+    # fel_devastation
+    - fel_devastation,if=var.fel_dev_ok
+    # throw_glaive
+    - throw_glaive
+
+  # ===========================================================================
+  # Annihilator
+  # ===========================================================================
+  anni:
+    # potion,use_off_gcd=1,if=variable.execute&(!variable.is_dungeon|in_boss_encounter) — not supported, deleted
+    # invoke_external_buff,name=power_infusion — not supported, deleted
+    # call_action_list,name=anni_voidfall_spending,if=buff.voidfall_spending.up
+    - call_action_list,name=anni_voidfall_spending,if=buff.1256302.up
+    # call_action_list,name=anni_voidfall_fishing,if=buff.voidfall_building.stack>=2&!buff.voidfall_spending.up
+    - call_action_list,name=anni_voidfall_fishing,if=buff.1256301.stack>=2&!buff.1256302.up
+    # call_action_list,name=anni_meta_entry,if=buff.untethered_rage.up|(variable.dung_meta_ok&cooldown.metamorphosis.remains<variable.anni_meta_entry_time)
+    # dung_meta_ok always true
+    - call_action_list,name=anni_meta_entry,if=buff.untethered_rage.up|cooldown.metamorphosis.remains<var.anni_meta_entry_time
+    # call_action_list,name=anni_cooldowns,if=variable.dung_cd_ok&(!talent.fiery_demise|variable.fiery_demise_active|cooldown.fiery_brand.remains>20|variable.execute)
+    # dung_cd_ok always true
+    - call_action_list,name=anni_cooldowns,if=!talent.fiery_demise|var.fiery_demise_active|cooldown.fiery_brand.remains>20|var.execute
+    # fiery_brand,if=charges>=2|(!variable.fiery_demise_active&(!talent.fiery_demise|variable.fire_cd_soon|variable.execute))
+    - fiery_brand,if=cooldown.fiery_brand.charges>=2|(!var.fiery_demise_active&(!talent.fiery_demise|var.fire_cd_soon|var.execute))
+    # fracture,if=full_recharge_time<gcd.max
+    - fracture,if=cooldown.fracture.full_recharge_time<gcd.max
+    # immolation_aura,if=(talent.fallout&variable.aoe)|(talent.charred_flesh&variable.fiery_demise_active)
+    - immolation_aura,if=(talent.fallout&var.aoe)|(talent.charred_flesh&var.fiery_demise_active)
+    # spirit_bomb,if=soul_fragments>=variable.fragment_target
+    - spirit_bomb,if=buff.soul_fragments.stack>=var.fragment_target
+    # immolation_aura
+    - immolation_aura
+    # sigil_of_flame
+    - sigil_of_flame.player
+    # fracture,if=soul_fragments.total<=4|fury<40
+    - fracture,if=buff.soul_fragments.stack<=4|fury<40
+    # soul_cleave,if=soul_fragments<=1|fury.deficit<=15
+    - soul_cleave,if=buff.soul_fragments.stack<=1|fury.deficit<=15
+    # soul_cleave,if=!(apex.3&!buff.untethered_rage.up&buff.seething_anger.stack>=10)&!cooldown.metamorphosis.up
+    - soul_cleave,if=!((talent.untethered_rage.rank>=4)&!buff.untethered_rage.up&buff.seething_anger.stack>=10)&!cooldown.metamorphosis.up
+    # fracture
+    - fracture
+    # felblade
+    - felblade,if=var.felblade_ok
+    # throw_glaive
+    - throw_glaive
+
+  # ===========================================================================
+  # Anni Cooldowns
+  # ===========================================================================
+  anni_cooldowns:
+    # spirit_bomb,if=soul_fragments>=variable.fragment_target
+    - spirit_bomb,if=buff.soul_fragments.stack>=var.fragment_target
+    # soul_carver,if=soul_fragments<=3
+    - soul_carver,if=buff.soul_fragments.stack<=3
+    # sigil_of_spite,if=soul_fragments<=2+talent.soul_sigils
+    - sigil_of_spite.player,if=buff.soul_fragments.stack<=2+talent.soul_sigils
+    # fel_devastation
+    - fel_devastation,if=var.fel_dev_ok
+    # call_action_list,name=anni_generate_fury,if=cooldown.fel_devastation.up&fury<50
+    - call_action_list,name=anni_generate_fury,if=cooldown.fel_devastation.up&fury<50
+
+  # ===========================================================================
+  # Anni Voidfall Spending
+  # ===========================================================================
+  anni_voidfall_spending:
+    # fiery_brand,if=charges>=2|!variable.fiery_demise_active
+    - fiery_brand,if=cooldown.fiery_brand.charges>=2|!var.fiery_demise_active
+    # felblade,if=buff.voidfall_spending.stack=buff.voidfall_spending.max_stack&cooldown.spirit_bomb.ready&soul_fragments.total>=variable.fragment_target&fury>=30&fury<45&cooldown.fracture.charges>=1
+    # buff.voidfall_spending.max_stack not supported — hardcoded as 3; soul_fragments.total → buff.soul_fragments.stack
+    - felblade,if=buff.1256302.stack=3&cooldown.spirit_bomb.ready&buff.soul_fragments.stack>=var.fragment_target&fury>=30&fury<45&cooldown.fracture.charges>=1&var.felblade_ok
+    # fracture,if=buff.voidfall_spending.stack=buff.voidfall_spending.max_stack&cooldown.spirit_bomb.ready&soul_fragments.total>=variable.fragment_target&fury>=45&fury<75
+    - fracture,if=buff.1256302.stack=3&cooldown.spirit_bomb.ready&buff.soul_fragments.stack>=var.fragment_target&fury>=45&fury<75
+    # soul_cleave,if=cooldown.spirit_bomb.remains>gcd.max*4
+    - soul_cleave,if=cooldown.spirit_bomb.remains>gcd.max*4
+    # spirit_bomb,if=soul_fragments>=variable.fragment_target
+    - spirit_bomb,if=buff.soul_fragments.stack>=var.fragment_target
+    # felblade,if=(fury<40&cooldown.spirit_bomb.remains<=gcd.max)|(fury<25&cooldown.spirit_bomb.remains>gcd.max)
+    - felblade,if=((fury<40&cooldown.spirit_bomb.remains<=gcd.max)|(fury<25&cooldown.spirit_bomb.remains>gcd.max))&var.felblade_ok
+    # immolation_aura,if=(fury<40&cooldown.spirit_bomb.remains<=gcd.max)|(fury<25&cooldown.spirit_bomb.remains>gcd.max)
+    - immolation_aura,if=(fury<40&cooldown.spirit_bomb.remains<=gcd.max)|(fury<25&cooldown.spirit_bomb.remains>gcd.max)
+    # soul_carver,if=(cooldown.spirit_bomb.remains<=gcd.max)&soul_fragments.total<variable.fragment_target&(!talent.sigil_of_spite|!action.sigil_of_spite.placed)
+    - soul_carver,if=cooldown.spirit_bomb.remains<=gcd.max&buff.soul_fragments.stack<var.fragment_target
+    # fel_devastation,if=(cooldown.spirit_bomb.remains<=gcd.max)&soul_fragments.total<variable.fragment_target&(!talent.sigil_of_spite|!action.sigil_of_spite.placed)
+    - fel_devastation,if=cooldown.spirit_bomb.remains<=gcd.max&buff.soul_fragments.stack<var.fragment_target&var.fel_dev_ok
+    # immolation_aura,if=variable.aoe&(cooldown.spirit_bomb.remains<=gcd.max)&soul_fragments.total<variable.fragment_target&(!talent.sigil_of_spite|!action.sigil_of_spite.placed)
+    - immolation_aura,if=var.aoe&cooldown.spirit_bomb.remains<=gcd.max&buff.soul_fragments.stack<var.fragment_target
+    # sigil_of_spite,if=(cooldown.spirit_bomb.remains<=gcd.max)&soul_fragments.total<variable.fragment_target
+    - sigil_of_spite.player,if=cooldown.spirit_bomb.remains<=gcd.max&buff.soul_fragments.stack<var.fragment_target
+    # call_action_list,name=anni_filler_no_spend
+    - call_action_list,name=anni_filler_no_spend
+
+  # ===========================================================================
+  # Anni Meta Entry
+  # ===========================================================================
+  anni_meta_entry:
+    # potion,use_off_gcd=1,if=(variable.fiery_demise_active|variable.execute)&(!variable.is_dungeon|in_boss_encounter) — not supported, deleted
+    # call_action_list,name=trinkets
+    - call_action_list,name=trinkets
+    # invoke_external_buff,name=power_infusion — not supported, deleted
+    # metamorphosis,use_off_gcd=1,if=gcd.remains=0&buff.untethered_rage.up&!buff.voidfall_spending.up
+    - metamorphosis.player,if=gcd.remains=0&buff.untethered_rage.up&!buff.1256302.up
+    # call_action_list,name=anni_pre_meta_spb,if=cooldown.spirit_bomb.remains<variable.anni_meta_entry_time&soul_fragments.total<variable.fragment_target
+    - call_action_list,name=anni_pre_meta_spb,if=cooldown.spirit_bomb.remains<var.anni_meta_entry_time&buff.soul_fragments.stack<var.fragment_target
+    # fiery_brand,if=charges>=2|!variable.fiery_demise_active
+    - fiery_brand,if=cooldown.fiery_brand.charges>=2|!var.fiery_demise_active
+    # sigil_of_spite,if=soul_fragments>=variable.fragment_target&cooldown.spirit_bomb.up&cooldown.metamorphosis.up
+    - sigil_of_spite.player,if=buff.soul_fragments.stack>=var.fragment_target&cooldown.spirit_bomb.up&cooldown.metamorphosis.up
+    # spirit_bomb,if=soul_fragments>=variable.fragment_target&fury>=60
+    - spirit_bomb,if=buff.soul_fragments.stack>=var.fragment_target&fury>=60
+    # sigil_of_spite,if=soul_fragments.total<variable.fragment_target
+    - sigil_of_spite.player,if=buff.soul_fragments.stack<var.fragment_target
+    # call_action_list,name=anni_generate_fury,if=fury<75&cooldown.metamorphosis.up&cooldown.spirit_bomb.remains>gcd.max*3
+    - call_action_list,name=anni_generate_fury,if=fury<75&cooldown.metamorphosis.up&cooldown.spirit_bomb.remains>gcd.max*3
+    # metamorphosis,use_off_gcd=1,if=variable.dung_meta_ok&gcd.remains=0&cooldown.spirit_bomb.remains>gcd.max*3&(soul_fragments.total>=variable.fragment_target|(talent.sigil_of_spite&action.sigil_of_spite.placed))
+    # dung_meta_ok always true; action.sigil_of_spite.placed not supported — stripped
+    - metamorphosis.player,if=gcd.remains=0&cooldown.spirit_bomb.remains>gcd.max*3&(buff.soul_fragments.stack>=var.fragment_target|talent.sigil_of_spite)
+    # call_action_list,name=anni_filler_no_spend
+    - call_action_list,name=anni_filler_no_spend
+
+  # ===========================================================================
+  # Anni Pre-Meta Spirit Bomb — generate frags before meta entry
+  # ===========================================================================
+  anni_pre_meta_spb:
+    # fracture
+    - fracture
+    # immolation_aura,if=variable.aoe
+    - immolation_aura,if=var.aoe
+    # fiery_brand,if=charges>=2|!variable.fiery_demise_active
+    - fiery_brand,if=cooldown.fiery_brand.charges>=2|!var.fiery_demise_active
+    # soul_carver,if=(cooldown.soul_carver.up+cooldown.sigil_of_spite.up+cooldown.fel_devastation.up)>=2
+    - soul_carver,if=(cooldown.soul_carver.up+cooldown.sigil_of_spite.up+cooldown.fel_devastation.up)>=2
+    # fel_devastation,if=(cooldown.soul_carver.up+cooldown.sigil_of_spite.up+cooldown.fel_devastation.up)>=2
+    - fel_devastation,if=(cooldown.soul_carver.up+cooldown.sigil_of_spite.up+cooldown.fel_devastation.up)>=2&var.fel_dev_ok
+    # felblade
+    - felblade,if=var.felblade_ok
+    # call_action_list,name=anni_filler_no_spend
+    - call_action_list,name=anni_filler_no_spend
+
+  # ===========================================================================
+  # Anni Voidfall Fishing — build voidfall stacks
+  # ===========================================================================
+  anni_voidfall_fishing:
+    # fracture
+    - fracture
+    # call_action_list,name=anni_generate_fury,if=cooldown.fracture.charges_fractional>=0.75
+    - call_action_list,name=anni_generate_fury,if=cooldown.fracture.charges_fractional>=0.75
+
+  # ===========================================================================
+  # Anni Generate Fury
+  # ===========================================================================
+  anni_generate_fury:
+    # immolation_aura
+    - immolation_aura
+    # sigil_of_flame
+    - sigil_of_flame.player
+    # felblade
+    - felblade,if=var.felblade_ok
+    # fracture
+    - fracture
+
+  # ===========================================================================
+  # Anni Filler No Spend — fillers that avoid consuming voidfall stacks
+  # ===========================================================================
+  anni_filler_no_spend:
+    # soul_cleave,if=soul_fragments=0&!action.sigil_of_flame.placed&(!talent.sigil_of_spite|(talent.sigil_of_spite&!action.sigil_of_spite.placed))&!prev_gcd.2.soul_carver
+    # action.X.placed not supported — stripped
+    - soul_cleave,if=buff.soul_fragments.stack=0&!prev_gcd.2.soul_carver
+    # immolation_aura
+    - immolation_aura
+    # sigil_of_flame
+    - sigil_of_flame.player
+    # felblade
+    - felblade,if=var.felblade_ok
+    # fracture,if=!buff.voidfall_spending.up
+    - fracture,if=!buff.1256302.up
+    # soul_carver,if=(!talent.sigil_of_spite|(talent.sigil_of_spite&!action.sigil_of_spite.placed))
+    - soul_carver
+    # fel_devastation,if=(!talent.sigil_of_spite|(talent.sigil_of_spite&!action.sigil_of_spite.placed))
+    - fel_devastation,if=var.fel_dev_ok
+    # sigil_of_spite
+    - sigil_of_spite.player
+    # fracture
+    - fracture
+    # throw_glaive
+    - throw_glaive
+
+  # ===========================================================================
+  # Trinkets
+  # ===========================================================================
+  trinkets:
+    # use_item,slot=trinket1,if=variable.trinket_1_buffs&variable.dung_cd_ok&(!trinket.2.has_cooldown|trinket.2.cooldown.remains|variable.trinket_priority=1)
+    - trinket_1,if=trinket_1.sync
+    # use_item,slot=trinket2,if=variable.trinket_2_buffs&variable.dung_cd_ok&(!trinket.1.has_cooldown|trinket.1.cooldown.remains|variable.trinket_priority=2)
+    - trinket_2,if=trinket_2.sync

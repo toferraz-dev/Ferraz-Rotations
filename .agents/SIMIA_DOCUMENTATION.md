@@ -1,5 +1,5 @@
 # Simia Rotation — Documentação Completa
-> **Fonte:** https://auth.simia.pro/rotation/ · **Site:** v2.0.0 · **Catálogo:** 1.0.0 (2026-08-10) · **Sincronizado em:** 2026-08-30 (dump de 112 arquivos)
+> **Fonte:** https://auth.simia.pro/rotation/ · **Site:** v2.0.0 · **Catálogo:** 1.0.0 (2026-08-30) · **Sincronizado em:** 2026-09-04 (dump de 115 arquivos)
 
 ---
 
@@ -14,7 +14,7 @@
 8. [Operadores SimC](#8-operadores-simc)
 9. [Ações Virtuais](#9-ações-virtuais)
 10. [Erros Conhecidos & Boas Práticas](#10-erros-conhecidos--boas-práticas)
-11. [Catálogo de Referência de Expressões (634)](#11-catálogo-de-referência-de-expressões)
+11. [Catálogo de Referência de Expressões (688)](#11-catálogo-de-referência-de-expressões)
 12. [Expressões Não Catalogadas](#12-expressões-não-catalogadas)
 
 ---
@@ -897,7 +897,7 @@ Ações virtuais são comandos especiais que podem ser sugeridos na rotação su
 
 ## 11. Catálogo de Referência de Expressões
 
-O mecanismo de rotação Simia possui suporte a **634** expressões para formular as condições de lançamento.
+O mecanismo de rotação Simia possui suporte a **688** expressões para formular as condições de lançamento.
 
 
 ### 11.1 Buffs — `buff.SPELL.PROPERTY`
@@ -1017,7 +1017,7 @@ Exemplos de uso: `talent.SPELL.enabled` (ou simplesmente `talent.SPELL`) e `tale
 ### 11.7 Ações de Feitiço — `action.SPELL.PROPERTY`
 Verifica dados dinâmicos sobre a execução de um feitiço.
 
-**Total de Expressões:** 9
+**Total de Expressões:** 19
 
 | Propriedade / Sintaxe | Tipo Retornado | Descrição | Exemplo |
 | --- | --- | --- | --- |
@@ -1030,6 +1030,16 @@ Verifica dados dinâmicos sobre a execução de um feitiço.
 | `cooldown.ready` | bool | Spell is off cooldown. | `action.combustion.cooldown.ready` |
 | `cooldown.down` | bool | Spell is on cooldown. | `action.combustion.cooldown.down` |
 | `overlayed` | bool | Action-bar proc glow is active for this spell (from IsSpellOverlayed). Checks the override spell too, so it covers SimC's demonsurge_available-style gates. | `action.metamorphosis.overlayed` |
+| `cooldown` | number | BASE cooldown in seconds, not remaining. Uses the live value first, so talent CDR is included. | `fight_remains%action.blood_fury.cooldown<=action.blood_fury.duration` |
+| `duration` | number | Length of the aura this action applies, in seconds. NOT a SimC expression. | `action.berserking.duration` |
+| `ready` | bool | Full readiness, mirroring SimC's `action_t::ready()`: not user-blocked AND the game-state gates pass. | `tip_the_scales,if=action.fire_breath.ready` |
+| `cost` | number | Primary resource cost. Falls back to a same-name spellbook scan when the name resolves to nothing else. | `fury>=2*action.soul_cleave.cost` |
+| `known` | bool | Spell exists in the spellbook (exact id, no morph fallback). | `action.ravage.known` |
+| `tick_time` | number | DBC dot period in seconds, hasted when the spell is flagged. | `action.agony.tick_time` |
+| `max_range` | number | DBC max range in yards. | `action.chaos_bolt.max_range` |
+| `min_range` | number | DBC min range in yards. | `action.disengage.min_range` |
+| `is_melee` | bool | DBC melee-range flag. | `action.mortal_strike.is_melee` |
+| `rppm` | number | Real procs per minute, hasted when flagged. | `action.X.rppm` |
 
 ### 11.8 Recursos — `RESOURCE[.PROPERTY]`
 Verifica recursos do jogador (rage, energy, mana, focus, combo_points, runic_power, rune, soul_shards, holy_power, chi, insanity, stagger, arcane_charges, fury, pain, maelstrom, astral_power, essence).
@@ -1068,10 +1078,13 @@ Verifica recursos do jogador (rage, energy, mana, focus, combo_points, runic_pow
 ### 11.9 Player — `player.PROPERTY`
 Propriedades de estado do próprio jogador (vida, movimento, combate, montado, buffs ativos, CC, dispelabilidade, etc.).
 
-**Total de Expressões:** 80
+**Total de Expressões:** 83
 
 | Grupo | Propriedade / Sintaxe | Tipo Retornado | Descrição | Exemplo |
 | --- | --- | --- | --- | --- |
+| Buffs | `player.buff.SPELL.PROPERTY` | varies | Alias for `buff.SPELL.PROPERTY` — `player.` and the bare form mean the same unit. Not a SimC form; SimC has no `player.` prefix at all. | `!player.buff.retribution_aura.up.any` |
+| Buffs | `player.buff.up(SPELL)` | bool | Function-call form of `buff.SPELL.up`. Siblings: `player.buff.down(X)`, `player.buff.remains(X)`, `player.buff.stacks(X)`. | `player.buff.up(450521)` |
+| Buffs | `player.buff.SPELL.points.N` | number | Effect point N (1-6) of the aura's point vector — SimC's `buff.X.value`. `.estimated_points.N` reads the second vector. | `player.buff.450521.points.1>0.3*health.max` |
 | Health | `player.health.pct` | number | Player health percentage (0-100). | `player.health.pct<50` |
 | Health | `player.health.current` | number | Current health points. | `player.health.current<100000` |
 | Health | `player.health.max` | number | Maximum health. | `player.health.max` |
@@ -1099,7 +1112,7 @@ Propriedades de estado do próprio jogador (vida, movimento, combate, montado, b
 | Casting | `player.channeling` | bool | Player is channeling a spell. | `channeling` |
 | Casting | `player.casting.spell_id` | number | Spell ID being cast. | `casting.spell_id=12345` |
 | Casting | `player.casting.remains` | number | Milliseconds until cast finishes. | `casting.remains<500` |
-| Casting | `player.casting.elapsed` | number | Milliseconds into cast. | `casting.elapsed>1000` |
+| Casting | `player.casting.elapsed` | number | Seconds elapsed into cast (mudou de milissegundos para segundos em 2026-08-30). | `casting.elapsed>1000` |
 | Casting | `player.empower_stage` | number | Current empower stage (Evoker). | `empower_stage>=2` |
 | Crowd Control | `player.stunned` | bool | Player is stunned. | `stunned` |
 | Crowd Control | `player.stunned.remains` | number | Seconds of stun remaining. | `stunned.remains>2` |
@@ -1146,7 +1159,7 @@ Propriedades de estado do próprio jogador (vida, movimento, combate, montado, b
 | Dispels (Self) | `player.has_curse` | bool | Player has a Curse debuff. | `player.has_curse` |
 | Dispels (Self) | `player.has_disease` | bool | Player has a Disease debuff. | `player.has_disease` |
 | Dispels (Self) | `player.has_poison` | bool | Player has a Poison debuff. | `player.has_poison` |
-| Dispels (Self) | `player.dispelable` | bool | Player has any dispelable debuff (auto-detect). | `player.dispelable` |
+| Dispels (Self) | `player.dispelable` | bool | Player has any dispelable debuff (auto-detect). Suffixes: `.list`, `.magic`, `.disease`, `.poison`, `.curse`. | `player.dispelable.list` |
 | Dispels (Self) | `player.dispelable.SPELL` | bool | Player has debuff dispelable by SPELL. | `player.dispelable.remove_curse` |
 | Dispels (Self) | `player.dispelable.list.SPELL` | bool | Same as above but uses dispel_list filtering. | `player.dispelable.list.purify` |
 | Misc | `player.auto_combat` | bool | Config-based auto-combat check. | `player.auto_combat` |
@@ -1156,7 +1169,7 @@ Propriedades de estado do próprio jogador (vida, movimento, combate, montado, b
 ### 11.10 Target — `target.PROPERTY`
 Propriedades de estado do alvo atual.
 
-**Total de Expressões:** 54
+**Total de Expressões:** 61
 
 | Grupo | Propriedade / Sintaxe | Tipo Retornado | Descrição | Exemplo |
 | --- | --- | --- | --- | --- |
@@ -1180,7 +1193,12 @@ Propriedades de estado do alvo atual.
 | Status | `target.boss` | bool | Target is a boss. | `target.boss` |
 | Status | `target.combat` | bool | Target is in combat (extended check). | `target.combat` |
 | Status | `target.los` | bool | Target is in line of sight. | `target.los` |
-| Status | `target.moving` | bool | Target is moving. | `target.moving` |
+| Status | `target.moving` | bool | Target is moving. Derived from object-manager position deltas, not from Lua GetUnitSpeed (which returns a secret number for every unit but the player — this read false for all units before 2026-08-30). Threshold is 0.5 yd/s (walk is 2.5, run 7.0), ignoring sampling jitter on a parked unit. Requires a world position on the unit; without one it reads false. | `target.moving` |
+| Status | `target.standing` | bool | Target is not moving. Exact inverse of target.moving. | `target.standing` |
+| Status | `target.moving.time` | number | Seconds target has been moving continuously. 0 while standing. | `target.moving.time>1` |
+| Status | `target.standing.time` | number | Seconds target has been standing continuously. 0 while moving. Useful for ground-targeted AoE: wait for the unit to be parked long enough that the cast will land. | `target.standing.time>1.5` |
+| Status | `target.speed` | number | Target's speed in yards/sec, from object-manager position deltas. Walk is 2.5, run 7.0. | `target.speed>5` |
+| Status | `target.closing_speed` | number | Yards/sec the gap between you and target is shrinking: positive closing, negative opening. Measures the PAIR, so combine with the two moving flags to say who is moving. 0 when either side has no world position. | `target.closing_speed>1` |
 | Status | `target.tank` | bool | Target role is tank. | `target.tank` |
 | Status | `target.healer` | bool | Target role is healer. | `target.healer` |
 | Status | `target.dps` | bool | Target role is DPS. | `target.dps` |
@@ -1197,9 +1215,11 @@ Propriedades de estado do alvo atual.
 | Casting | `target.casting` | bool | Target is casting. | `target.casting` |
 | Casting | `target.channeling` | bool | Target is channeling. | `target.channeling` |
 | Casting | `target.casting.spell_id` | number | Spell ID being cast. | `target.casting.spell_id` |
-| Casting | `target.casting.remains` | number | Milliseconds remaining on cast. | `target.casting.remains<2000` |
-| Casting | `target.casting.elapsed` | number | Milliseconds into cast. | `target.casting.elapsed` |
+| Casting | `target.casting.remains` | number | Seconds remaining on cast (mudou de milissegundos para segundos em 2026-08-30). | `target.casting.remains<2` |
+| Casting | `target.casting.elapsed` | number | Seconds elapsed into cast (mudou de milissegundos para segundos em 2026-08-30). | `target.casting.elapsed` |
 | Casting | `target.casting.interruptible` | bool | Cast can be interrupted. | `target.casting.interruptible` |
+| Casting | `target.casting.interrupt_after` | number | Seconds of cast elapsed required before the shared kick aliases will interrupt this spell. From the per-cast `interrupt_after` field in `_casts.yaml`; 0 = no gate. | `target.casting.interrupt_after=0|target.casting.elapsed>=target.casting.interrupt_after` |
+| Casting | `target.casting.interrupt_remains` | number | Seconds remaining at or below which the shared kick aliases will interrupt this spell. From the per-cast `interrupt_remains` field in `_casts.yaml`; 0 = no gate. ANDs with `config.interrupt_pct` (stricter only); `99` never restricts. Values below 0.3 never fire. | `target.casting.interrupt_remains=0|target.casting.remains<=target.casting.interrupt_remains` |
 | Casting | `target.casting.important` | bool | Cast is marked as important (uninterruptible). | `target.casting.important` |
 | Casting | `target.casting.targeting_me` | bool | Cast targets the player. | `target.casting.targeting_me` |
 | Casting | `target.casting.SPELL` | bool | Target is casting a specific spell (dynamic). | `target.casting.death_bolt` |
@@ -1218,10 +1238,11 @@ Propriedades de estado do alvo atual.
 ### 11.11 Focus — `focus.PROPERTY`
 Propriedades do alvo em foco. Possui as mesmas propriedades de Target.
 
-**Total de Expressões:** 36
+**Total de Expressões:** 44
 
 | Grupo | Propriedade / Sintaxe | Tipo Retornado | Descrição | Exemplo |
 | --- | --- | --- | --- | --- |
+| Dispels | `focus.dispelable` | bool | Focus has a debuff the player can dispel. Same suffixes as mouseover.dispelable. | `focus.dispelable.magic` |
 | Health & Status | `focus.exists` | bool | Focus target exists. | `focus.exists` |
 | Health & Status | `focus.alive` | bool | Focus target is alive. | `focus.alive` |
 | Health & Status | `focus.dead` | bool | Focus target is dead. | `focus.dead` |
@@ -1243,7 +1264,12 @@ Propriedades do alvo em foco. Possui as mesmas propriedades de Target.
 | Health & Status | `focus.distance` | number | CENTER distance to focus in yards. For AoE radii and geometry. | `focus.distance<=8` |
 | Health & Status | `focus.los` | bool | Focus is in line of sight. | `focus.los` |
 | Health & Status | `focus.time_to_die` | number | Estimated TTD. | `focus.time_to_die>10` |
-| Health & Status | `focus.moving` | bool | Focus is moving. | `focus.moving` |
+| Health & Status | `focus.moving` | bool | Focus is moving. Derived from object-manager position deltas, not from Lua GetUnitSpeed (which returns a secret number for every unit but the player — this read false for all units before 2026-08-30). Threshold is 0.5 yd/s (walk is 2.5, run 7.0), ignoring sampling jitter on a parked unit. Requires a world position on the unit; without one it reads false. | `focus.moving` |
+| Health & Status | `focus.standing` | bool | Focus is not moving. Exact inverse of focus.moving. | `focus.standing` |
+| Health & Status | `focus.moving.time` | number | Seconds focus has been moving continuously. 0 while standing. | `focus.moving.time>1` |
+| Health & Status | `focus.standing.time` | number | Seconds focus has been standing continuously. 0 while moving. Useful for ground-targeted AoE. | `focus.standing.time>1.5` |
+| Health & Status | `focus.speed` | number | Focus's speed in yards/sec, from object-manager position deltas. Walk is 2.5, run 7.0. | `focus.speed>5` |
+| Health & Status | `focus.closing_speed` | number | Yards/sec the gap between you and focus is shrinking: positive closing, negative opening. Measures the PAIR, so combine with the two moving flags to say who is moving. 0 when either side has no world position. | `focus.closing_speed>1` |
 | Health & Status | `focus.tank` | bool | Focus role is tank. | `focus.tank` |
 | Health & Status | `focus.healer` | bool | Focus role is healer. | `focus.healer` |
 | Health & Status | `focus.dps` | bool | Focus role is DPS. | `focus.dps` |
@@ -1255,6 +1281,8 @@ Propriedades do alvo em foco. Possui as mesmas propriedades de Target.
 | Casting | `focus.casting.spell_id` | number | Spell ID being cast. | `focus.casting.spell_id` |
 | Casting | `focus.casting.remains` | number | Cast time remaining (ms). | `focus.casting.remains` |
 | Casting | `focus.casting.interruptible` | bool | Cast is interruptible. | `focus.casting.interruptible` |
+| Casting | `focus.casting.interrupt_after` | number | Seconds of cast elapsed required before the shared kick aliases will interrupt this spell. From the per-cast `interrupt_after` field in `_casts.yaml`; 0 = no gate. | `focus.casting.interrupt_after=0|focus.casting.elapsed>=focus.casting.interrupt_after` |
+| Casting | `focus.casting.interrupt_remains` | number | Seconds remaining at or below which the shared kick aliases will interrupt this spell. From the per-cast `interrupt_remains` field in `_casts.yaml`; 0 = no gate. ANDs with `config.interrupt_pct` (stricter only); `99` never restricts. Values below 0.3 never fire. | `focus.casting.interrupt_remains=0|focus.casting.remains<=focus.casting.interrupt_remains` |
 | Casting | `focus.casting.important` | bool | Cast is important. | `focus.casting.important` |
 | Casting | `focus.casting.targeting_me` | bool | Cast targets the player. | `focus.casting.targeting_me` |
 | Casting | `focus.casting.SPELL` | bool | Focus is casting specific spell. | `focus.casting.death_bolt` |
@@ -1262,10 +1290,11 @@ Propriedades do alvo em foco. Possui as mesmas propriedades de Target.
 ### 11.12 Mouseover — `mouseover.PROPERTY`
 Propriedades da unidade sob o cursor. Possui as mesmas propriedades de Target.
 
-**Total de Expressões:** 34
+**Total de Expressões:** 44
 
 | Grupo | Propriedade / Sintaxe | Tipo Retornado | Descrição | Exemplo |
 | --- | --- | --- | --- | --- |
+| Dispels | `mouseover.dispelable` | bool | Mouseover has a debuff the player can dispel (types auto-detected from spec/talents). Suffixes: `.list` (dispel_list filtering), `.magic`, `.disease`, `.poison`, `.curse`. | `natures_cure.mouseover,if=mouseover.dispelable.list` |
 | Health & Status | `mouseover.exists` | bool | Mouseover target exists. | `mouseover.exists` |
 | Health & Status | `mouseover.alive` | bool | Mouseover is alive. | `mouseover.alive` |
 | Health & Status | `mouseover.dead` | bool | Mouseover is dead. | `mouseover.dead` |
@@ -1289,7 +1318,12 @@ Propriedades da unidade sob o cursor. Possui as mesmas propriedades de Target.
 | Health & Status | `mouseover.distance` | number | CENTER distance to mouseover in yards. For AoE radii and geometry. | `mouseover.distance<=8` |
 | Health & Status | `mouseover.los` | bool | Mouseover in line of sight. | `mouseover.los` |
 | Health & Status | `mouseover.time_to_die` | number | Estimated TTD. | `mouseover.time_to_die>5` |
-| Health & Status | `mouseover.moving` | bool | Mouseover is moving. | `mouseover.moving` |
+| Health & Status | `mouseover.moving` | bool | Mouseover is moving. Derived from object-manager position deltas, not from Lua GetUnitSpeed (which returns a secret number for every unit but the player — this read false for all units before 2026-08-30). Threshold is 0.5 yd/s (walk is 2.5, run 7.0), ignoring sampling jitter on a parked unit. Requires a world position on the unit; without one it reads false. | `mouseover.moving` |
+| Health & Status | `mouseover.standing` | bool | Mouseover is not moving. Exact inverse of mouseover.moving. | `mouseover.standing` |
+| Health & Status | `mouseover.moving.time` | number | Seconds mouseover has been moving continuously. 0 while standing. | `mouseover.moving.time>1` |
+| Health & Status | `mouseover.standing.time` | number | Seconds mouseover has been standing continuously. 0 while moving. Useful for ground-targeted AoE. | `mouseover.standing.time>1.5` |
+| Health & Status | `mouseover.speed` | number | Mouseover's speed in yards/sec, from object-manager position deltas. Walk is 2.5, run 7.0. | `mouseover.speed>5` |
+| Health & Status | `mouseover.closing_speed` | number | Yards/sec the gap between you and mouseover is shrinking: positive closing, negative opening. Measures the PAIR, so combine with the two moving flags to say who is moving. 0 when either side has no world position. | `mouseover.closing_speed>1` |
 | Health & Status | `mouseover.tank` | bool | Mouseover role is tank. | `mouseover.tank` |
 | Health & Status | `mouseover.healer` | bool | Mouseover role is healer. | `mouseover.healer` |
 | Health & Status | `mouseover.dps` | bool | Mouseover role is DPS. | `mouseover.dps` |
@@ -1300,13 +1334,15 @@ Propriedades da unidade sob o cursor. Possui as mesmas propriedades de Target.
 | Casting | `mouseover.casting` | bool | Mouseover is casting. | `mouseover.casting` |
 | Casting | `mouseover.channeling` | bool | Mouseover is channeling. | `mouseover.channeling` |
 | Casting | `mouseover.casting.interruptible` | bool | Cast is interruptible. | `mouseover.casting.interruptible` |
+| Casting | `mouseover.casting.interrupt_after` | number | Seconds of cast elapsed required before the shared kick aliases will interrupt this spell. From the per-cast `interrupt_after` field in `_casts.yaml`; 0 = no gate. | `mouseover.casting.interrupt_after=0|mouseover.casting.elapsed>=mouseover.casting.interrupt_after` |
+| Casting | `mouseover.casting.interrupt_remains` | number | Seconds remaining at or below which the shared kick aliases will interrupt this spell. From the per-cast `interrupt_remains` field in `_casts.yaml`; 0 = no gate. ANDs with `config.interrupt_pct` (stricter only); `99` never restricts. Values below 0.3 never fire. | `mouseover.casting.interrupt_remains=0|mouseover.casting.remains<=mouseover.casting.interrupt_remains` |
 | Casting | `mouseover.casting.important` | bool | Cast is important. | `mouseover.casting.important` |
 | Casting | `mouseover.casting.targeting_me` | bool | Cast targets the player. | `mouseover.casting.targeting_me` |
 
 ### 11.13 Pet — `pet.PROPERTY`
 Propriedades do pet do jogador.
 
-**Total de Expressões:** 19
+**Total de Expressões:** 25
 
 Consulte o arquivo [expression-catalog.json](file:///c:/Games/Python/Rotations/expression-catalog.json) para a listagem detalhada de todas as propriedades desta categoria.
 
@@ -1462,7 +1498,9 @@ Propriedades do membro do grupo atualmente avaliado no cycle de cura.
 ### 11.25 Grupo (Cura) — `group.SELECTOR.PROPERTY`
 Estatísticas agregadas de vida e estados de buffs no grupo.
 
-**Total de Expressões:** 25
+**Total de Expressões:** 30
+
+> Novas em 2026-08-30: `group.under_pct_N` (generaliza os `group.under_pct_50` etc. já usados nas rotações), `group.tanks.count`, `group.lowest.PROPERTY` (forma genérica — cobre qualquer propriedade no membro mais ferido), `group.missing.SPELL.lowest.PROPERTY` e `group.buff.SPELL.count`.
 
 Consulte o arquivo [expression-catalog.json](file:///c:/Games/Python/Rotations/expression-catalog.json) para a listagem detalhada de todas as propriedades desta categoria.
 
@@ -1500,7 +1538,7 @@ que ele seja target/focus/mouseover — varre as nameplates inteiras (ao contrá
 ### 11.28 Alvo do Lançamento — `[unit.]casting_target.PROPERTY`
 Permite verificar dados da unidade que está sendo visada pelo cast atual de um inimigo/aliado.
 
-**Total de Expressões:** 5
+**Total de Expressões:** 6
 
 Consulte o arquivo [expression-catalog.json](file:///c:/Games/Python/Rotations/expression-catalog.json) para a listagem detalhada de todas as propriedades desta categoria.
 
@@ -1569,7 +1607,9 @@ Só os NPC ids realmente referenciados por uma rotação são coletados em parse
 ### 11.32 Equipamento & Berloques — `trinket_N.ready/cd/sync`
 Verifica CDs de berloques, conjuntos de itens (sets) e itens ativáveis.
 
-**Total de Expressões:** 32
+**Total de Expressões:** 35
+
+> Novas em 2026-08-30: `trinket_1.has_buff` (1 enquanto a buff do berloque estiver ativa no jogador; o id vem do campo `trinket_buff:` em `_trinkets.yaml`), `trinket_1.buff.up` (alias) e `trinket_1.buff.remains` (segundos restantes dessa buff, 0 quando ela está caída — use com uma guarda `>0`).
 
 Consulte o arquivo [expression-catalog.json](file:///c:/Games/Python/Rotations/expression-catalog.json) para a listagem detalhada de todas as propriedades desta categoria.
 
@@ -1639,19 +1679,35 @@ Verifica se a rotação, aoe ou cooldowns estão habilitados na interface do Sim
 
 Consulte o arquivo [expression-catalog.json](file:///c:/Games/Python/Rotations/expression-catalog.json) para a listagem detalhada de todas as propriedades desta categoria.
 
+### 11.40 Spell Targets — `spell_targets.SPELL`
+**Categoria nova (adicionada no catálogo em 2026-08-30).** Quantos inimigos uma habilidade
+**específica** atingiria, resolvido a partir do footprint de AoE daquele feitiço no DBC
+(`SpellRadius.csv`). É o `spell_targets.X` do SimC; ao contrário do fallback padrão do
+SimC, este NÃO colapsa para `active_enemies`.
+
+> [!NOTE]
+> Honra o toggle de AoE como `active_enemies`. Exige `SpellRadius.csv`; sem ele, toda
+> consulta cai para `active_enemies` — ou seja, degrada em vez de quebrar. Mantenha a
+> grafia do catálogo ao converter — não substitua manualmente por `active_enemies`.
+
+**Total de Expressões:** 1
+
+| Propriedade / Sintaxe | Tipo Retornado | Descrição | Exemplo |
+| --- | --- | --- | --- |
+| `spell_targets.SPELL` | number | Enemy count inside SPELL's radius. The anchor is chosen from data: the DBC AroundCaster flag OR the spell having no targeted range means it is measured around the PLAYER (Fan of Knives 8y, Arcane Explosion 10y, Whirlwind 8y); otherwise around the CURRENT TARGET (Death and Decay 8y, Fire Breath 30y). A spell with no radius row falls back to active_enemies. | `fan_of_knives,if=spell_targets.fan_of_knives>1` |
 
 > [!TIP]
-> Consulte o catálogo JSON completo em [expression-catalog.json](file:///c:/Games/Python/Rotations/expression-catalog.json) para todas as 634 expressões com exemplos detalhados de uso.
+> Consulte o catálogo JSON completo em [expression-catalog.json](file:///c:/Games/Python/Rotations/expression-catalog.json) para todas as 688 expressões com exemplos detalhados de uso.
 
 ---
 
 ## 12. Expressões Não Catalogadas
 
-O `expression-catalog.json` declara **634** expressões, e a seção 11 documenta essas.
+O `expression-catalog.json` declara **688** expressões, e a seção 11 documenta essas.
 Mas as rotações oficiais e compartilhadas do próprio Simia usam mais do que isso.
 
-A tabela abaixo saiu de uma varredura do `simia_data_dump/` (dump de 2026-08-30,
-112 arquivos) atrás de expressões **estruturais** — as de vocabulário fixo, como
+A tabela abaixo saiu de uma varredura do `simia_data_dump/` (dump de 2026-09-04,
+115 arquivos) atrás de expressões **estruturais** — as de vocabulário fixo, como
 `player.*`, `enemies.*`, `group.*`, `interrupt.*` — que não aparecem nem no
 catálogo nem no restante deste documento. Formas parametrizadas por magia
 (`buff.QUALQUER_COISA.up`) foram descartadas: são o padrão genérico, não
@@ -1675,17 +1731,17 @@ combate — a distinção que já causou bug neste repo.
 
 | Expressão | Usos | Descrição |
 | --- | --- | --- |
-| `interrupt.stun.aoe.check` | 211 | Filtro do Simia: vale a pena um stun em AoE agora. |
-| `interrupt.cc.check` | 157 | Filtro do Simia para CC (nao-kick). |
-| `interrupt.target.check` | 74 | Kick vale a pena no alvo atual (castando, interrompivel, no alcance, ninguem ja kickou). |
-| `interrupt.mouseover.check` | 69 | Idem, na unidade sob o mouse. |
-| `interrupt.focus.check` | 67 | Idem, no foco. |
+| `interrupt.stun.aoe.check` | 217 | Filtro do Simia: vale a pena um stun em AoE agora. |
+| `interrupt.cc.check` | 163 | Filtro do Simia para CC (nao-kick). |
+| `interrupt.target.check` | 78 | Kick vale a pena no alvo atual (castando, interrompivel, no alcance, ninguem ja kickou). |
+| `interrupt.mouseover.check` | 72 | Idem, na unidade sob o mouse. |
+| `interrupt.focus.check` | 70 | Idem, no foco. |
 | `player.ininstancedpve` | 21 | Dentro de masmorra/raide instanciada. Apareceu no dump de 2026-08-27. |
-| `enemies.40y` | 17 | Contagem de inimigos em 40y. SEM o filtro de combate que enemies.combat.40y aplica. |
-| `enemies.inrange` | 13 | Inimigos no alcance da habilidade avaliada. |
+| `enemies.40y` | 22 | Contagem de inimigos em 40y. SEM o filtro de combate que enemies.combat.40y aplica. |
+| `enemies.inrange` | 14 | Inimigos no alcance da habilidade avaliada. |
 | `player.solo` | 12 | Sem grupo. |
 | `player.group` | 12 | Em grupo. |
-| `interrupt.kick.soon` | 8 | Um kick do grupo esta prestes a sair — nao gaste o seu. |
+| `interrupt.kick.soon` | 9 | Um kick do grupo esta prestes a sair — nao gaste o seu. |
 | `group.in_party` | 9 | Voce esta em party (nao raide). |
 | `player.inopenworld` | 8 | No mundo aberto. |
 | `player.spec_id` | 8 | ID numerico da especializacao. |
@@ -1693,20 +1749,18 @@ combate — a distinção que já causou bug neste repo.
 | `player.aggro` | 4 | Voce tem aggro de algum inimigo. |
 | `enemies.6y` | 4 | Contagem em 6y. |
 | `group.healers.lowest.range` | 4 | Distancia do healer mais ferido. |
-| `player.reflectable.up` | 3 | Voce carrega algo refletivel. |
 | `group.any` | 3 | O grupo tem ao menos um membro. |
 | `player.mana.pct` | 3 | Mana em percentual. |
 | `enemies.combat.22y` | 3 | Contagem em combate a 22y — o raio arbitrario e aceito. |
-| `enemies.5y` | 3 | Contagem em 5y. |
+| `enemies.5y` | 2 | Contagem em 5y. |
 | `player.class_id` | 3 | ID numerico da classe. |
 | `enemies.combat.any` | 2 | Existe ao menos um inimigo em combate. |
 | `interrupt.8y.any` | 2 | Existe algo interrompivel em 8y. |
 | `player.dispelable.magic` | 2 | Voce tem debuff magico dispelavel. |
-| `player.exists` | 0 | Sanidade: a unidade jogador existe. **Zerou** no dump de 2026-08-30 (tinha 2 em 27/08) — o arquivo que a usava mudou. Sem uso vivo, não é mais evidência de nada. |
-| `player.meld.up` | 2 | Shadowmeld ativo. |
-| `enemies.near` | 0 | Inimigos proximos. **Zerou** no dump de 2026-08-30 (tinha 2 em 27/08). Prefira o raio explícito (`enemies.combat.8y`). |
+| `player.exists` | 0 | Sanidade: a unidade jogador existe. As 2 ocorrências no dump de 2026-09-04 estão comentadas (`#- return,if=player.exists`) — sem uso vivo, não é evidência de nada. |
+| `enemies.near` | 0 | Inimigos proximos. As ocorrências no dump de 2026-09-04 vêm de `rotation_277.yaml`, um arquivo com sintaxe estranha (`castable(...)`, `UnknownConditionType`) que não é Simia YAML válido — não é evidência. Prefira o raio explícito (`enemies.combat.8y`). |
 | `group.dps.lowest.range` | 1 | Distancia do dps mais ferido. |
-| `enemies.around.angle.90.4` | 1 | Inimigos num cone de 90 graus, 4 unidades. |
+| `enemies.around.angle.90.4` | 2 | Inimigos num cone de 90 graus, 4 unidades. |
 | `player.race` | 1 | Raca do personagem. |
 | `group.tank.health.pct` | 1 | Vida do tank. |
 | `player.dispelable.purify_disease` | 1 | Doenca dispelavel por Purify Disease. |
@@ -1715,22 +1769,18 @@ combate — a distinção que já causou bug neste repo.
 | `player.dispelable.sleep` | 1 | Debuff de sono dispelavel. |
 | `player.dispelable.charm` | 1 | Debuff de charm dispelavel. |
 | `group.moving_count` | 1 | Quantos membros estao se movendo. |
-| `player.blockable.up` | 1 | Voce carrega algo bloqueavel. |
 | `player.hp` | 1 | Vida (usado em _trinkets.yaml). |
-| `group.count` | 385 | Tamanho do grupo. **A expressão mais usada de todo o dump** que não está no catálogo — aparece em `_common.yaml` e em quase toda rotação da comunidade. |
-| `player.dispelable.list` | 29 | Você tem um debuff que a SUA lista de dispel cobre. Usada pelas rotações deste repo no dispel de si mesmo. |
-| `interrupt.stun.focus.check` | 9 | Variante de foco do filtro de stun. O catálogo só traz `interrupt.stun.aoe.check`; as três variantes por unidade abaixo existem igual. |
-| `interrupt.stun.mouseover.check` | 9 | Idem, na unidade sob o mouse. |
-| `interrupt.stun.target.check` | 7 | Idem, no alvo atual. |
+| `group.count` | 387 | Tamanho do grupo. **A expressão mais usada de todo o dump** que não está no catálogo — aparece em `_common.yaml` e em quase toda rotação da comunidade. |
+| `player.dispelable.list` | 31 | Você tem um debuff que a SUA lista de dispel cobre. Usada pelas rotações deste repo no dispel de si mesmo. |
+| `interrupt.stun.focus.check` | 10 | Variante de foco do filtro de stun. O catálogo só traz `interrupt.stun.aoe.check`; as três variantes por unidade abaixo existem igual. |
+| `interrupt.stun.mouseover.check` | 10 | Idem, na unidade sob o mouse. |
+| `interrupt.stun.target.check` | 8 | Idem, no alvo atual. |
 | `player.debuff.snare.up` | 8 | Você está com slow. **Toda ocorrência no dump vem dos arquivos deste repo** — não é evidência independente. Ver aviso abaixo. |
-| `player.health` | 7 | Vida bruta (não percentual). Aparece em `_aura.yaml`. |
+| `player.health` | 8 | Vida bruta (não percentual). Todas as ocorrências estão em comentários de `_aura.yaml`, não em condições `if=` reais. |
 | `player.debuff.root.up` | 6 | Você está enraizado. Mesmo aviso de `player.debuff.snare.up`. |
-| `group.lowest.buff.remains` | 5 | Duração restante do buff no membro mais ferido. |
 | `player.channeling.remains` | 4 | Segundos restantes da própria canalização. |
 | `player.dispelable.list.fireblood` | 3 | Debuff dispelável especificamente pelo racial Fireblood. A forma `player.dispelable.list.RACIAL` filtra pelos tipos que aquele racial limpa. |
-| `group.under_pct_50` | 2 | Quantos membros do grupo estão abaixo de 50% de vida. Família completa vista em `rotation_256.yaml` (**rotação oficial**): `_30`, `_50`, `_75`, `_80`, `_85`, `_90`. O limiar faz parte do nome — não é parametrizável livremente. |
-| `group.lowest` | 1 | O membro mais ferido, usado como prefixo de unidade. |
-| `group.lowest.dispelable.purify_disease` | 1 | O membro mais ferido tem doença dispelável. |
+| `group.lowest` | 1 | O membro mais ferido, usado como prefixo de unidade (não uma leitura de propriedade — por isso não é coberto por `group.lowest.PROPERTY`, ver seção 11.25). |
 | `player.dispelable.list.stoneform` | 1 | Idem `fireblood`, para o racial Stoneform. |
 
 ### Aviso: as suas próprias rotações não são evidência
@@ -1758,7 +1808,10 @@ e são aceitas:
 
 - **`player.` como prefixo redundante:** `player.buff.X.up`, `player.buff.X.stacks`,
   `player.buff.X.remains`, `player.debuff.X.up` funcionam igual às formas sem
-  prefixo. `_common.yaml` usa as duas.
+  prefixo. `_common.yaml` usa as duas. **Desde 2026-08-30 isso está formalmente
+  catalogado** como `player.buff.SPELL.PROPERTY` na seção 11.9 (junto com a forma
+  de função `player.buff.up(SPELL)` e o acesso a pontos de efeito
+  `player.buff.SPELL.points.N`) — mantido aqui só por contexto histórico.
 - **`player.casting.SPELL`:** você está lançando aquele feitiço específico.
   `rotation_63.yaml` (oficial) usa `player.casting.fireball`,
   `.pyroblast`, `.flamestrike`, `.scorch`; `community_Unknown.yaml` usa o id
@@ -1793,3 +1846,42 @@ Também entraram tags `freedom` e `stunnable` em vários casts de masmorra,
 derivadas de logs de chave 14/15 — ou seja, a lista de "o que shapeshift/Freedom
 remove" e "o que dá para parar com stun" cresceu sem que nenhuma expressão
 mudasse.
+
+### 12.2 Novidades do dump de 2026-09-04
+
+O dump anterior documentado aqui era de 2026-08-30 (112 arquivos); o atual tem
+**115 arquivos**. Os quatro nomes de arquivo mais chamativos são
+`rotation_1467.yaml`, `rotation_1468.yaml`, `rotation_1473.yaml` e
+`rotation_1480.yaml` — IDs bem acima de qualquer `rotation_*` anterior (o maior
+até então era `rotation_581`), o que sugere que são chegadas novas desde a
+última sincronização. Sem uma cópia do dump antigo para comparar arquivo a
+arquivo, não dá para confirmar exatamente o que mudou nos outros 111 arquivos,
+só o delta de contagem (+3) e esses quatro candidatos.
+
+Varri os quatro arquivos novos atrás de vocabulário estrutural inédito. Nenhum
+achado: eles usam só formas já catalogadas ou já listadas na seção 12
+(`interrupt.*.check`, `target.health.pct`, `target.time_to_die`, `group.count`,
+`group.lowest.health.effective.pct`, `active_dot.*`, `incoming.mitigated.pct`,
+`one_button_assistant.*`, `player.moving`, `player.casting`/`.channeling`,
+`player.empower_stage`). A única coisa digna de nota é um **falso alarme**: um
+comentário em `rotation_1473.yaml` (linha 145) mostra uma condição SimC original
+com `target.role.attack`, `target.role.spell`, `target.role.dps` e
+`target.spec.augmentation` — sintaxe de target_if do SimC que o Simia **não
+suporta**, explicitamente marcada no próprio comentário
+(`# target role/spec conditions not supported; time -> combat.time`) e
+substituída na linha ativa por `prescience,if=combat.time<=8`. Não é uma
+expressão Simia, catalogada ou não — é o registro de uma conversão.
+
+Esta revarredura também corrigiu três falsos positivos herdados de contagens
+anteriores por correspondência de substring: `player.reflectable.up`,
+`player.meld.up` e `player.blockable.up` nunca apareceram como formas
+independentes no dump — toda ocorrência faz parte da expressão mais longa
+`incoming_cast.player.<tags>.up`, que **já está catalogada** (seção 11.34,
+grupo "Incoming Cast (Target Filter)"). As três linhas foram removidas da
+tabela da seção 12.
+
+Por fim, três linhas saíram da tabela por terem sido formalmente catalogadas em
+2026-08-30: `group.under_pct_50` (agora coberto pelo padrão genérico
+`group.under_pct_N`), `group.lowest.buff.remains` e
+`group.lowest.dispelable.purify_disease` (ambos cobertos pelo padrão genérico
+`group.lowest.PROPERTY` — ver seção 11.25).

@@ -1,0 +1,399 @@
+spec: 264
+name: "JECHT RShaman - RAID (Totemic / Farseer)"
+description: "JECHT RShaman - Mythic Raid - Patch 12.1"
+author: "Jecht"
+patch: "12.07 and 12.1"
+version: "3.36"
+
+movement_allowed: true
+entry: main
+
+config:
+  astral_shift_hp:
+    section: "1. Emergency & Defensives"
+    label: "Astral Shift HP %"
+    type: slider
+    min: 0
+    max: 100
+    default: 35
+
+  earth_elemental_hp:
+    section: "1. Emergency & Defensives"
+    label: "Earth Elemental HP %"
+    type: slider
+    min: 0
+    max: 100
+    default: 60
+
+  earth_shield_target:
+    section: "2. Earth Shield"
+    label: "Earth Shield Tank (Raid)"
+    type: unit_select
+    max: 1
+    filter: tanks
+    show_override: true
+
+  spirit_link_totem_hp:
+    section: "3. Major Cooldowns"
+    label: "Spirit Link Totem Raid HP %"
+    type: slider
+    min: 0
+    max: 100
+    default: 45
+
+  spirit_link_totem_injured:
+    section: "3. Major Cooldowns"
+    label: "Spirit Link Totem min injured count"
+    type: slider
+    min: 0
+    max: 20
+    default: 5
+
+  ascendance_hp:
+    section: "3. Major Cooldowns"
+    label: "Ascendance Raid HP %"
+    type: slider
+    min: 0
+    max: 100
+    default: 70
+
+  ascendance_injured:
+    section: "3. Major Cooldowns"
+    label: "Ascendance min injured count"
+    type: slider
+    min: 0
+    max: 20
+    default: 5
+
+  healing_tide_totem_hp:
+    section: "3. Major Cooldowns"
+    label: "Healing Tide Totem Raid HP %"
+    type: slider
+    min: 0
+    max: 100
+    default: 65
+
+  healing_tide_totem_injured:
+    section: "3. Major Cooldowns"
+    label: "Healing Tide Totem min injured count"
+    type: slider
+    min: 0
+    max: 20
+    default: 6
+
+  surging_totem_hp:
+    section: "3. Major Cooldowns"
+    label: "Surging Totem / Healing Rain Raid HP %"
+    type: slider
+    min: 0
+    max: 100
+    default: 90
+
+  surging_totem_injured:
+    section: "3. Major Cooldowns"
+    label: "Surging Totem / Healing Rain min injured count"
+    type: slider
+    min: 0
+    max: 20
+    default: 4
+
+  unleash_life_hp:
+    section: "4. Healing Spells"
+    label: "Unleash Life HP %"
+    type: slider
+    min: 0
+    max: 100
+    default: 90
+
+  unleash_life_injured:
+    section: "4. Healing Spells"
+    label: "Unleash Life min injured count"
+    type: slider
+    min: 0
+    max: 10
+    default: 2
+
+  healing_stream_totem_hp:
+    section: "4. Healing Spells"
+    label: "Healing Stream Totem HP %"
+    type: slider
+    min: 0
+    max: 100
+    default: 88
+
+  healing_stream_totem_injured:
+    section: "4. Healing Spells"
+    label: "Healing Stream Totem min injured count"
+    type: slider
+    min: 0
+    max: 10
+    default: 2
+
+  riptide_hp:
+    section: "4. Healing Spells"
+    label: "Riptide HP %"
+    type: slider
+    min: 0
+    max: 100
+    default: 99
+
+  healing_wave_hp:
+    section: "4. Healing Spells"
+    label: "Healing Wave (Emergency) HP %"
+    type: slider
+    min: 0
+    max: 100
+    default: 20
+
+  chain_heal_hp:
+    section: "4. Healing Spells"
+    label: "Chain Heal Raid HP %"
+    type: slider
+    min: 0
+    max: 100
+    default: 91
+
+  chain_heal_injured:
+    section: "4. Healing Spells"
+    label: "Chain Heal min bounced targets"
+    type: slider
+    min: 0
+    max: 6
+    default: 3
+
+  natures_swiftness_chain_heal_hp:
+    section: "4. Healing Spells"
+    label: "Nature's Swiftness + Chain Heal HP %"
+    type: slider
+    min: 0
+    max: 100
+    default: 65
+
+  strict_chain_heal_riptide:
+    section: "4. Healing Spells"
+    label: "Require Riptide for Chain Heal (Mana Efficiency)"
+    type: checkbox
+    default: true
+
+  dps_threshold:
+    section: "5. Damage"
+    label: "DPS Filler - Group HP % Minimum"
+    type: slider
+    min: 1
+    max: 100
+    default: 92
+
+  mouseover_spells:
+    section: "6. Utility"
+    label: "Enable Mouseover Spells"
+    type: multi_select
+    options:
+      - label: "Riptide"
+        value: 0
+      - label: "Healing Wave"
+        value: 1
+      - label: "Chain Heal"
+        value: 2
+      - label: "Earth Shield"
+        value: 3
+      - label: "Purify Spirit"
+        value: 4
+      - label: "Unleash Life"
+        value: 5
+    default: [1]
+
+variables:
+  has_totemic: talent.totemic
+  has_farseer: talent.farseer
+  has_unleash_life: talent.unleash_life
+  has_surging_totem: talent.surging_totem
+  has_healing_rain: talent.healing_rain
+  has_stormstream: talent.stormstream_totem
+  has_stormkeeper: talent.stormkeeper
+  has_acid_rain: talent.acid_rain
+  has_chain_lightning: talent.chain_lightning
+  has_natures_swiftness: talent.natures_swiftness
+
+  in_burst: buff.ascendance.up|buff.unleash_life.up|buff.healing_tide_totem.up
+  tidal_waves_up: buff.tidal_waves.up
+  surging_expires_soon: buff.surging_totem.remains<10
+  unleash_life_up: buff.unleash_life.up
+  swirling_currents: buff.swirling_currents.up
+  healing_rain_active: buff.healing_rain.up
+  swg_proc: buff.spiritwalkers_grace.up
+  ns_active: buff.natures_swiftness.up
+
+  mo_friendly_valid: mouseover.exists&mouseover.alive&mouseover.friendly&mouseover.range<=40
+  target_enemy_valid: target.exists&target.enemy&target.alive
+
+  slt_condition: group.count(cycle.health.effective.pct<config.spirit_link_totem_hp|cycle.heal_absorb>0)>=config.spirit_link_totem_injured
+  ascendance_condition: group.count(cycle.health.effective.pct<config.ascendance_hp|cycle.heal_absorb>0)>=config.ascendance_injured
+  htt_condition: group.count(cycle.health.effective.pct<config.healing_tide_totem_hp|cycle.heal_absorb>0)>=config.healing_tide_totem_injured
+  st_condition: group.count(cycle.health.effective.pct<config.surging_totem_hp|cycle.heal_absorb>0)>=config.surging_totem_injured
+  hr_condition: group.count(cycle.health.effective.pct<config.surging_totem_hp|cycle.heal_absorb>0)>=config.surging_totem_injured
+  ch_condition: group.count(cycle.health.effective.pct<=config.chain_heal_hp|cycle.heal_absorb>0&cycle.range<=40)>=config.chain_heal_injured
+  ns_chain_heal_condition: group.count(cycle.health.effective.pct<=config.natures_swiftness_chain_heal_hp|cycle.heal_absorb>0&cycle.range<=40)>=config.chain_heal_injured
+  needs_member_healing: group.lowest.health.effective.pct<config.healing_wave_hp|group.lowest.heal_absorb>0
+
+  t1_lightblind: trinket_1.id=230191
+  t2_lightblind: trinket_2.id=230191
+  has_lightblind: var.t1_lightblind|var.t2_lightblind
+
+  trinket1_living_silk: trinket_1.id=242393
+  trinket2_living_silk: trinket_2.id=242393
+
+  lava_surge_up: buff.lava_surge.up
+  surging_totem_up: buff.surging_totem.up
+  is_totemic: talent.totemic|talent.farseer
+  earth_mote: talent.earth_shield
+  surging_condition: group.count(cycle.health.effective.pct<config.surging_totem_hp|cycle.heal_absorb>0)>=config.surging_totem_injured
+
+
+lists:
+  out_of_combat:
+    - water_shield,if=buff.water_shield.down
+    - skyfury,range_check<=39,if=group.count(cycle.buff.skyfury.down.any)>0
+    - earth_shield,cycle=members,if=config.earth_shield_target&config.earth_shield_target.has(cycle.name)&!cycle.buff.earth_shield.up&cycle.range<=40
+    - ancestral_vision,cycle=members,if=cycle.dead&cycle.range<=40
+    - riptide,cycle=members,if=(cycle.health.effective.pct<config.riptide_hp|cycle.heal_absorb>0)&!cycle.buff.riptide.up&cycle.range<=40
+
+  emergency:
+    - earth_elemental,if=(health.pct<config.earth_elemental_hp|player.heal_absorb>0)&cooldown.earth_elemental.ready
+    - astral_shift,if=(health.pct<config.astral_shift_hp|player.heal_absorb>0)&cooldown.astral_shift.ready
+    - earth_elemental,if=health.pct<40&!cooldown.earth_elemental.ready
+    - natures_swiftness,if=var.has_natures_swiftness&cooldown.natures_swiftness.ready&ns_chain_heal_condition
+    - unleash_life,cycle=members,if=var.has_unleash_life&cooldown.unleash_life.ready&(cycle.health.effective.pct<60|cycle.heal_absorb>0)&cycle.range<=40
+    - healing_wave,cycle=members,if=(cycle.health.effective.pct<config.healing_wave_hp|cycle.heal_absorb>0)&cycle.range<=40
+    - riptide,cycle=members,if=cycle.heal_absorb>0&!cycle.buff.riptide.up&cycle.range<=40
+    - healing_wave,cycle=members,if=cycle.heal_absorb>0&cycle.range<=40
+    - chain_heal,cycle=members,if=cycle.heal_absorb>0&var.ch_condition
+
+  ns_burst_combo:
+    - unleash_life,cycle=members,if=var.ns_active&var.has_unleash_life&cooldown.unleash_life.ready&!buff.unleash_life.up&(cycle.health.effective.pct<config.natures_swiftness_chain_heal_hp|cycle.heal_absorb>0)&cycle.range<=40
+    - chain_heal,cycle=members,if=var.ns_active&(cycle.health.effective.pct<=config.natures_swiftness_chain_heal_hp|cycle.heal_absorb>0)&cycle.range<=40
+
+  shield_maintenance:
+    - water_shield,if=buff.water_shield.down
+    - earth_shield,cycle=members,if=config.earth_shield_target&config.earth_shield_target.has(cycle.name)&!cycle.buff.earth_shield.up&cycle.index==1&cycle.range<=40
+
+  major_cooldowns:
+    - spirit_link_totem,if=cooldown.spirit_link_totem.ready&var.slt_condition
+    - healing_tide_totem,if=cooldown.healing_tide_totem.ready&var.htt_condition
+    - surging_totem,range_check=none,if=var.has_surging_totem&cooldown.surging_totem.ready&var.st_condition&!player.moving
+    - ascendance,if=cooldown.ascendance.ready&var.ascendance_condition
+
+  mouseover_friendly:
+    - unleash_life.mouseover,if=config.mouseover_spells.has(5)&var.has_unleash_life&(mouseover.health.effective.pct<75|mouseover.heal_absorb>0)
+    - riptide.mouseover,if=config.mouseover_spells.has(0)&(mouseover.health.effective.pct<config.riptide_hp|mouseover.heal_absorb>0)&!mouseover.buff.riptide.up
+    - healing_wave.mouseover,if=config.mouseover_spells.has(1)&(mouseover.health.effective.pct<config.healing_wave_hp|mouseover.heal_absorb>0)
+    - chain_heal.mouseover,if=config.mouseover_spells.has(2)&(mouseover.health.effective.pct<config.chain_heal_hp|mouseover.heal_absorb>0)
+    - earth_shield.mouseover,if=config.mouseover_spells.has(3)&!mouseover.buff.earth_shield.up
+    - purify_spirit.mouseover,if=config.mouseover_spells.has(4)&mouseover.dispelable.list
+
+  trinkets:
+    - trinket_1,use_off_gcd=1,if=var.t1_lightblind&trinket_1.ready&buff.ascendance.up&var.target_enemy_valid&target.range<=40
+    - trinket_2,use_off_gcd=1,if=var.t2_lightblind&trinket_2.ready&buff.ascendance.up&var.target_enemy_valid&target.range<=40
+    - trinket_1,if=var.trinket1_living_silk&trinket_1.ready&var.in_burst
+    - trinket_2,if=var.trinket2_living_silk&trinket_2.ready&var.in_burst
+    - trinket_1,if=!var.trinket1_living_silk&!var.t1_lightblind&trinket_1.ready&trinket_1.sync&var.in_burst
+    - trinket_2,if=!var.trinket2_living_silk&!var.t2_lightblind&trinket_2.ready&trinket_2.sync&var.in_burst
+
+  moving:
+    - spiritwalkers_grace,interrupt=true,range_check=none,if=!buff.spiritwalkers_grace.up&var.needs_member_healing&group.lowest.health.effective.pct<75
+    - natures_swiftness,if=var.has_natures_swiftness&cooldown.natures_swiftness.ready&ns_chain_heal_condition
+    - surging_totem,range_check=none,if=var.has_surging_totem&!var.healing_rain_active&cooldown.surging_totem.ready&var.st_condition
+    - riptide,cycle=members,if=cycle.buff.riptide.down&(cycle.health.effective.pct<config.riptide_hp|cycle.heal_absorb>0)&cycle.range<=40
+    - unleash_life,interrupt=true,cycle=members,if=var.has_unleash_life&cooldown.unleash_life.ready&(cycle.health.effective.pct<config.unleash_life_hp|cycle.heal_absorb>0)&cycle.range<=40
+    - flame_shock,if=var.target_enemy_valid&(group.lowest.health.effective.pct>=config.dps_threshold)&(dot.flame_shock.down|dot.flame_shock.remains<3)&target.range<=30
+    - lava_burst,if=var.target_enemy_valid&(group.lowest.health.effective.pct>=config.dps_threshold)&cooldown.lava_burst.charges>=1&target.range<=40
+    - lava_burst,if=var.lava_surge_up
+
+  totem:
+    - surging_totem,if=talent.surging_totem.enabled&!var.surging_totem_up&cooldown.surging_totem.ready&var.surging_condition
+    - healing_rain,if=!talent.surging_totem.enabled&!var.surging_totem_up&var.surging_condition
+    - downpour,if=var.is_totemic&var.surging_totem_up&cooldown.downpour.charges>=1&var.surging_expires_soon
+    - downpour,if=var.is_totemic&var.surging_totem_up&cooldown.downpour.charges>=1&active_enemies>=1
+    - healing_stream_totem,if=cooldown.healing_stream_totem.charges>=1&group.count(cycle.health.effective.pct<config.healing_stream_totem_hp|cycle.heal_absorb>0)>=config.healing_stream_totem_injured
+
+  hps:
+    - natures_swiftness,if=var.has_natures_swiftness&cooldown.natures_swiftness.ready&ns_chain_heal_condition
+    - unleash_life,if=var.has_unleash_life&cooldown.unleash_life.ready&group.count(cycle.health.effective.pct<config.unleash_life_hp|cycle.heal_absorb>0)>=config.unleash_life_injured
+    - riptide,cycle=members,if=!cycle.buff.riptide.up&(cycle.health.effective.pct<config.riptide_hp|cycle.heal_absorb>0)&cycle.range<=40
+    - chain_heal,cycle=members,if=var.ch_condition&(!config.strict_chain_heal_riptide|cycle.buff.riptide.up)&(cycle.health.effective.pct<=config.chain_heal_hp|cycle.heal_absorb>0)&(!player.moving|var.swg_proc)&cycle.range<=40
+    - chain_heal,cycle=members,if=var.ch_condition&!config.strict_chain_heal_riptide&(!player.moving|var.swg_proc)&cycle.range<=40
+
+  dps_filler:
+    - flame_shock,if=var.target_enemy_valid&(dot.flame_shock.down|dot.flame_shock.remains<3)&target.range<=30
+    - chain_lightning,if=var.has_chain_lightning&var.target_enemy_valid&active_enemies>=3&target.range<=40&!player.moving
+    - lava_burst,if=cooldown.lava_burst.charges>=1&var.target_enemy_valid&target.range<=40
+    - lightning_bolt,if=var.target_enemy_valid&target.range<=40&!player.moving
+
+  racial_defensive:
+    - stoneform,if=player.dispelable.list|health.pct<=60|player.heal_absorb>0
+    - fireblood,if=player.dispelable.list|health.pct<=60|player.heal_absorb>0
+    - blood_fury,if=health.pct<=60
+    - berserking,if=health.pct<=60
+
+  racials:
+    - fireblood,if=buff.ascendance.up|buff.unleash_life.up|buff.healing_tide_totem.up
+    - berserking,if=buff.ascendance.up|buff.unleash_life.up|buff.healing_tide_totem.up
+    - blood_fury,if=buff.ascendance.up|buff.unleash_life.up|buff.healing_tide_totem.up
+    - ancestral_call,if=buff.ascendance.up|buff.unleash_life.up|buff.healing_tide_totem.up
+
+  main:
+    - call_action_list,name=spell_queue
+    - call_action_list,name=sanity_checks
+    - call_action_list,name=auto_target
+
+    - skyfury,range_check=none,if=(buff.skyfury.down.any|action.skyfury.overlayed)&lastcast.skyfury>=10
+
+    - water_shield,range_check=none,if=!buff.water_shield.up
+
+    - call_action_list,name=out_of_combat,if=!player.combat
+    - return,if=!player.combat
+
+    # Combat Check
+    - return,if=!player.combat
+    
+    # Interrupts
+    - wind_shear,if=interrupt.target.check
+    - wind_shear.mouseover,if=interrupt.mouseover.check
+    - wind_shear.focus,if=interrupt.focus.check
+    
+    # CC / AoE Interrupts
+    - hex,if=interrupt.cc.check
+    - capacitor_totem,if=interrupt.stun.aoe.check
+    
+    # Racial Interrupts
+    - quaking_palm,if=interrupt.cc.check
+    - haymaker,if=interrupt.cc.check
+    - war_stomp,if=interrupt.stun.aoe.check
+    - bull_rush,if=interrupt.stun.aoe.check
+    - tail_swipe,if=interrupt.stun.aoe.check
+
+    - call_action_list,name=auto_heal
+    - call_action_list,name=emergency
+    
+    - return,if=player.casting
+    - call_action_list,name=ns_burst_combo,if=var.ns_active
+
+    - call_action_list,name=out_of_combat,
+
+    - purge,target=target,if=target.exists&target.enemy&target.dispelable.buff
+    - call_action_list,name=trinkets
+    - call_action_list,name=major_cooldowns
+    - call_action_list,name=racial_defensive
+    - return,if=player.cc
+
+    - call_action_list,name=totem
+    - purify_spirit,cycle=members,if=cycle.dispelable.list&cycle.range<=40
+    
+    - call_action_list,name=shield_maintenance
+    - call_action_list,name=hps,if=player.combat
+    - call_action_list,name=moving,if=player.moving
+    - call_action_list,name=mouseover_friendly,if=var.mo_friendly_valid&!player.casting
+    - call_action_list,name=racials
+    - call_action_list,name=dps_filler,if=group.lowest.health.effective.pct>=config.dps_threshold
+
+    # Target Check
+    - return,if=auto_combat.target
