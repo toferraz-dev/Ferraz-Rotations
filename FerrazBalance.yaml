@@ -43,7 +43,7 @@
 # DungeonSlice, which Balance does not support, and against the previous build.
 # =============================================================================
 
-version: "5.19.0"
+version: "6.19.0"
 author: Ferraz
 patch: "12.1"
 spec: 102
@@ -70,7 +70,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-09-08 | Patch: 12.1 | Version: 5.19.0"
+    text: "Last update: 2026-09-08 | Patch: 12.1 | Version: 6.19.0"
 
   # Reference build, from the 2026-09-02 export. Measured -2.18% against the
   # previous string on DungeonRoute - see the rationale before "fixing" that.
@@ -91,18 +91,23 @@ config:
     description: "Seconds standing still before Incarnation may fire. While you are still repositioning the pull is not parked yet, so the burst waits. 0 disables the check. Raise it if the burst still goes out too early; lower it on fights where you are forced to keep moving."
 
   auto_burst:
-    label: "Auto Burst (no toggle needed)"
+    label: "Auto Burst"
     section: "Cooldowns"
     type: checkbox
     default: true
-    description: "Fires Incarnation, trinkets and potion by itself, without the toggle. The TTD sliders still hold them back on trash that is about to die. Turn OFF to go back to driving the burst by the toggle below."
+    description: "Fires Incarnation, trinkets and potion by itself. The TTD sliders still hold them back on trash that is about to die. Turn OFF to press Incarnation yourself through Simia's own queue - pair that with Incarnation Manual below so trinkets/potion still ride your manual cast."
 
-  burst_toggle:
-    label: "Burst (Inc + Trinkets + Pot)"
-    spell: 102560
+  # OFF (default): trinkets/potion ride var.cd_active, which auto_burst is what
+  # opens. ON: they ignore auto_burst/cd_active entirely and fire straight off
+  # buff.incarnation_chosen_of_elune.up, for a manually-queued Incarnation with
+  # Auto Burst turned off - no toggle spell needed, Simia's own queue does that
+  # job now.
+  incarnation_manual:
+    label: "Incarnation Manual"
     section: "Cooldowns"
-    type: toggle
-    description: "Manual burst window. Only needed when Auto Burst is OFF: toggle ON to allow Incarnation, trinkets and potion, OFF to hold CDs."
+    type: checkbox
+    default: false
+    description: "Trinkets and potion fire the instant Incarnation is up, however it was cast - queued manually or by Auto Burst. Turn ON if you queue Incarnation yourself with Auto Burst OFF."
 
   # All three ride the burst window.
   use_trinket_1:
@@ -396,14 +401,10 @@ variables:
   eclipse_down: buff.eclipse_solar.down&buff.eclipse_lunar.down
 
 
-  # Two different questions, and conflating them broke the trinkets in 4.11.0.
-  #
-  # burst_armed = may the burst be used at all. Trinkets and potion ride the
-  # window that is ALREADY open, so this is what they read.
-  burst_armed: config.auto_burst|config.burst_toggle
-  #
-  # burst_ok = may a NEW window be opened.
-  burst_ok: var.burst_armed
+  # burst_ok = may a NEW Incarnation window be opened automatically. No toggle
+  # fallback anymore - with Auto Burst OFF, Incarnation only goes out through
+  # Simia's own queue (manual), and this variable simply never opens one.
+  burst_ok: config.auto_burst
 
   # Moonfire spread across the PULL, not just present on the current target.
   # The 10 cap is the official rotation's; past it the DoT is on everything
@@ -414,14 +415,34 @@ variables:
   pull_engaged: player.combat&player.standing.time>=config.inc_min_standing_time&var.dots_spread
 
   # Incarnation ready and only waiting for you to stop moving. Holds Fury of
-  # Elune so the burst does not lose its alignment.
-  inc_waiting_to_stand: var.burst_ok&talent.incarnation_chosen_of_elune&cooldown.incarnation_chosen_of_elune.charges>0&var.inc_ttd_ok&!var.cd_active&player.combat&(debuff.moonfire.up|debuff.sunfire.up)
+  # Elune so it doesn't go out alone while you are still repositioning -
+  # !var.pull_engaged is what turns this off the instant standing-still is
+  # satisfied, letting Fury of Elune fire that same GCD. Without it this
+  # stayed true forever once the pull was dotted, deadlocking against the
+  # buff.fury_of_elune.up requirement below (Fury of Elune held by this,
+  # Incarnation waiting on Fury of Elune - neither ever fires).
+  inc_waiting_to_stand: var.burst_ok&talent.incarnation_chosen_of_elune&cooldown.incarnation_chosen_of_elune.charges>0&var.inc_ttd_ok&!var.cd_active&!var.pull_engaged&player.combat&(debuff.moonfire.up|debuff.sunfire.up)
 
-  # Incarnation ready, and aligned with Fury of Elune.
-  inc_ready_to_cast: var.burst_ok&talent.incarnation_chosen_of_elune&cooldown.incarnation_chosen_of_elune.charges>0&var.inc_ttd_ok&var.pull_engaged&!var.cd_active&(cooldown.fury_of_elune.remains<2|buff.fury_of_elune.up)
+  # Incarnation ready, and Fury of Elune ALREADY up - not just close, per
+  # 98 Incarnation casts across 6 top-player M+ logs (2026-09-08 WCL
+  # analysis): Fury of Elune lands one GCD before Incarnation in the large
+  # majority of them (median delta -0.3 to -0.7s), never after. The old
+  # `cooldown.fury_of_elune.remains<2` branch was true almost every pull
+  # (Fury of Elune is usually already off cooldown by the time Incarnation
+  # is), so Incarnation fired first and Fury of Elune followed next GCD -
+  # backwards from what the logs show. Fury of Elune is now the one that
+  # goes out first (see its reordered line above, no longer held once
+  # !var.inc_waiting_to_stand flips true from var.pull_engaged), and
+  # Incarnation waits for buff.fury_of_elune.up to actually be true.
+  inc_ready_to_cast: var.burst_ok&talent.incarnation_chosen_of_elune&cooldown.incarnation_chosen_of_elune.charges>0&var.inc_ttd_ok&var.pull_engaged&!var.cd_active&buff.fury_of_elune.up
 
-  # Celestial Alignment/Incarnation active — trinkets/potion ride this window.
+  # Celestial Alignment/Incarnation active.
   cd_active: buff.celestial_alignment.up|buff.incarnation_chosen_of_elune.up
+
+  # What the trinkets/potion actually read. Manual mode ignores auto_burst
+  # entirely and fires the instant Incarnation itself is up (however it was
+  # cast); automatic mode rides cd_active, which auto_burst is what opens.
+  burst_window: config.incarnation_manual&buff.incarnation_chosen_of_elune.up|!config.incarnation_manual&var.cd_active
 
   # Mirrors Panic Bear Form. Entry and exit MUST agree, and from 4.10.0 to
   # 4.15.1 they did not: entry also required Frenzied Regeneration to be
@@ -463,23 +484,13 @@ lists:
     - solar_beam.mouseover,if=interrupt.mouseover.check
     - solar_beam.focus,if=interrupt.focus.check
 
-  # Ride along with Incarnation, after Fury of Elune is spent. No TTD gate:
-  # if Incarnation is up, the trinkets/potion fire, full stop - the pull
-  # already justified itself by the time inc_ready_to_cast let Incarnation
-  # through.
+  # Ride the burst window (var.burst_window - see its own comment for the
+  # manual/automatic split). No TTD gate: if the window is open, the
+  # trinkets/potion fire, full stop.
   trinkets:
-    - trinket_1,delay=150,name="Trinket 1",if=config.use_trinket_1&trinket_1.ready&player.combat&var.cd_active
-    - trinket_2,delay=150,name="Trinket 2",if=config.use_trinket_2&trinket_2.ready&player.combat&var.cd_active
-    # The fight_remains branch lets an otherwise wasted potion go out at
-    # the end.
-    #
-    # THE PARENTHESES ARE LORE-BEARING. `&` binds tighter than `|`, so writing
-    # ...&var.cd_active|fight_remains<=30 without them means fight_remains<=30
-    # ALONE satisfies the whole line - no player.combat, no combat_potion.ready.
-    # Out of combat fight_remains is 0, the line goes permanently true at the
-    # top of this list, and the rotation locks on it and never reaches the
-    # damage lists. That shipped in 4.15.0 and froze the rotation mid-fight.
-    - combat_potion,delay=150,name="Combat Potion",if=config.use_potion&combat_potion.ready&player.combat&var.cd_active
+    - trinket_1,delay=150,name="Trinket 1",if=config.use_trinket_1&trinket_1.ready&player.combat&var.burst_window
+    - trinket_2,delay=150,name="Trinket 2",if=config.use_trinket_2&trinket_2.ready&player.combat&var.burst_window
+    - combat_potion,delay=150,name="Combat Potion",if=config.use_potion&combat_potion.ready&player.combat&var.burst_window
 
   # spell_queue, sanity_checks and auto_target_ranged, inlined.
   engine:
@@ -602,12 +613,21 @@ lists:
 
     # Yields to a ready Incarnation so the burst doesn't land on a window
     # about to be replaced (casting anyway measured -0.33%).
-    # BOTH halves. They share a cooldown and only one is ever castable, so
-    # offering only Lunar threw the global away whenever the game wanted Solar.
+    # BOTH halves offered. They share a cooldown and only one is ever
+    # castable, so offering only Lunar threw the global away whenever the
+    # game wanted Solar - except on THIS build it never does: 0 of 311
+    # Eclipse casts across 6 top-player M+ logs (2026-09-08) were Solar,
+    # only Lunar. Lunar Calling (carried on the recommended string) is the
+    # likely mechanical reason. Kept, like the Starweaver lines, for if the
+    # build ever drops Lunar Calling - currently dead weight, not a bug.
     - solar_eclipse,if=var.eclipse_down&cooldown.solar_eclipse.ready&!var.inc_ready_to_cast
     - lunar_eclipse,if=var.eclipse_down&cooldown.lunar_eclipse.ready&!var.inc_ready_to_cast
-    - incarnation_chosen_of_elune,if=var.inc_ready_to_cast
+    # Fury of Elune before Incarnation, not after: 98 Incarnation casts across
+    # 6 top-player M+ logs (2026-09-08) land Fury of Elune one GCD earlier in
+    # the large majority of pulls, never later. inc_ready_to_cast now requires
+    # buff.fury_of_elune.up, so this line firing first is what makes that true.
     - fury_of_elune,if=var.foe_ttd_ok
+    - incarnation_chosen_of_elune,if=var.inc_ready_to_cast
 
     # Free procs (Starweaver dead on this string, kept for when it returns).
     - starfall,name="Starfall (Proc or AP Dump)",if=buff.starweavers_weft.up|buff.touch_the_cosmos.react
@@ -636,8 +656,12 @@ lists:
     # offering only Lunar threw the global away whenever the game wanted Solar.
     - solar_eclipse,if=var.eclipse_down&cooldown.solar_eclipse.ready&!var.inc_ready_to_cast
     - lunar_eclipse,if=var.eclipse_down&cooldown.lunar_eclipse.ready&!var.inc_ready_to_cast
-    - incarnation_chosen_of_elune,if=var.inc_ready_to_cast
+    # Fury of Elune before Incarnation, not after: 98 Incarnation casts across
+    # 6 top-player M+ logs (2026-09-08) land Fury of Elune one GCD earlier in
+    # the large majority of pulls, never later. inc_ready_to_cast now requires
+    # buff.fury_of_elune.up, so this line firing first is what makes that true.
     - fury_of_elune,if=var.foe_ttd_ok
+    - incarnation_chosen_of_elune,if=var.inc_ready_to_cast
 
     - starfall,if=buff.starweavers_weft.up|buff.touch_the_cosmos.react
     - starfall,name="Starfall (Eclipse Down)",if=!var.eclipse_down&astral_power>=40&var.starfall_ttd_ok
