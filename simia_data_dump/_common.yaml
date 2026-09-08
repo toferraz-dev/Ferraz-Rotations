@@ -351,4 +351,12 @@ expressions:
   # is why these must be numeric.
   buff.hammer_of_light_free.up: buff.433732.up
   buff.hammer_of_light_free.remains: buff.433732.remains
+
+  # ============================================================================
+  # Paladin - Hero Trees
+  # Gateway talent of each tree in sc_paladin.hpp's talents struct (:690/:716/:740).
+  # ============================================================================
+  hero_tree.lightsmith: talent.holy_armaments
+  hero_tree.templar: talent.lights_guidance
+  hero_tree.herald_of_the_sun: talent.dawnlight
   pet.demonic_tyrant.remains: totem.summon_demonic_tyrant.remains

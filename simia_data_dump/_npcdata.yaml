@@ -89,6 +89,7 @@ npcs:
   265057: { BypassCombat: true} # SEARCH ON WOWHEAD
   135971: { BypassCombat: true} # SEARCH ON WOWHEAD
   269227: { BypassCombat: true} # SEARCH ON WOWHEAD
+  139110: { BypassCombat: true} # SEARCH ON WOWHEAD
 
   # PvP
   243211: { BypassCombat: true }  # Training Dummy

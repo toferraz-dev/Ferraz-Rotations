@@ -201,6 +201,9 @@ lists:
     # hammer_of_wrath,if=buff.hammer_of_light_ready.up&!debuff.judgment.up
     - hammer_of_wrath,if=buff.hammer_of_light.up&!debuff.judgment.up
 
+    # hammer_of_wrath,if=hero_tree.lightsmith
+    - hammer_of_wrath,if=hero_tree.lightsmith
+
     # judgment,if=buff.hammer_of_light_ready.up&!debuff.judgment.up
     - judgment,if=buff.hammer_of_light.up&!debuff.judgment.up
 

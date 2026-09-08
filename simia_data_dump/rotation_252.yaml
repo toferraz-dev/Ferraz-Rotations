@@ -100,8 +100,8 @@ variables:
   adds_remain: var.enemies_count>=2
   # variable,name=cds_active,value=pet.army_ghoul.active|buff.forbidden_knowledge.up|buff.dark_transformation.up&buff.dark_transformation.remains>5
   cds_active: pet.army_ghoul.active|buff.forbidden_knowledge.up|buff.dark_transformation.up&buff.dark_transformation.remains>5
-  # variable,name=epidemic_prio,value=active_enemies>=4&!buff.forbidden_knowledge.up|active_enemies>=6&buff.forbidden_knowledge.up
-  epidemic_prio: (var.enemies_count>=4&!buff.forbidden_knowledge.up|var.enemies_count>=6&buff.forbidden_knowledge.up)
+  # variable,name=epidemic_prio,value=active_enemies>=3&!buff.forbidden_knowledge.up|active_enemies>=4&buff.forbidden_knowledge.up
+  epidemic_prio: (var.enemies_count>=3&!buff.forbidden_knowledge.up|var.enemies_count>=4&buff.forbidden_knowledge.up)
 
 lists:
   #to be used only on dungeons/m+/delves?
@@ -147,7 +147,7 @@ lists:
     # (variable.st_planning|variable.adds_remain) dropped: once raid_event is stripped they are
     # enemies=1 and enemies>=2, so the OR is a tautology in combat. buff.festering_scythe_tt → 1241077.
     - army_of_the_dead,if=buff.1241077.up|!talent.festering_scythe
-    # dark_transformation,if=(variable.st_planning|variable.adds_remain)&!buff.blightfall.up&(pet.army_ghoul.active|cooldown.army_of_the_dead.remains>30|!talent.army_of_the_dead)|buff.blightfall.up&(talent.reaping&talent.soul_reaper&debuff.soul_reaper_debuff.up&debuff.soul_reaper_debuff.remains<gcd*2|!talent.soul_reaper|!talent.reaping)
+    # dark_transformation,if=(variable.st_planning|variable.adds_remain)&!buff.blightfall.up&(pet.army_ghoul.active|cooldown.army_of_the_dead.remains>30|!talent.army_of_the_dead)|buff.blightfall.up&(talent.reaping&talent.soul_reaper&debuff.soul_reaper_debuff.up&debuff.soul_reaper_debuff.remains<gcd*2|!talent.soul_reaper&buff.dark_transformation.remains<gcd*2|!talent.reaping&buff.dark_transformation.remains<gcd*2|raid_event.adds.exists&raid_event.adds.remains<3|fight_remains<3)
     # (variable.st_planning|variable.adds_remain) dropped: tautology, see army_of_the_dead above.
     # gcd -> gcd.max, _debuff suffix stripped. Ids pinned: talent.reaping 377514, soul_reaper debuff
     # 1241521, lastcast 343294 Soul Reaper / 1233448 Dark Transformation.
@@ -155,7 +155,7 @@ lists:
     # so it strands Blightfall on a target swap or an early death (and a held Blightfall also blocks
     # the next DT). nameplates.debuff.1241521.lowest is target-swap proof; the lastcast gates anchor
     # the window to THIS DT and >=20 is the release valve. Rationale and WCL data: CLAUDE.md 8.11.
-    - dark_transformation,if=!buff.blightfall.up&(pet.army_ghoul.active|cooldown.army_of_the_dead.remains>30|!talent.army_of_the_dead)|buff.blightfall.up&(talent.377514&talent.soul_reaper&(lastcast.343294>=0.5&lastcast.343294<lastcast.1233448&nameplates.debuff.1241521.lowest<gcd.max*2|lastcast.1233448>=20)|!talent.soul_reaper|!talent.377514)
+    - dark_transformation,if=!buff.blightfall.up&(pet.army_ghoul.active|cooldown.army_of_the_dead.remains>30|!talent.army_of_the_dead)|buff.blightfall.up&(talent.377514&talent.soul_reaper&(lastcast.343294>=0.5&lastcast.343294<lastcast.1233448&nameplates.debuff.1241521.lowest<gcd.max*2|lastcast.1233448>=20)|!talent.soul_reaper&buff.dark_transformation.remains<gcd.max*2|!talent.377514&buff.dark_transformation.remains<gcd.max*2|fight_remains<3)
 
   defensives:
     # --- Prediction Damage: pre-fire on a predicted incoming hit (% of effective HP) ---

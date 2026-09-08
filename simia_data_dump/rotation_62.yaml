@@ -42,9 +42,19 @@ variables:
   # variable,name=aoe_count,op=set,value=2+(3*talent.spellfire_spheres)
   aoe_count: "2+(3*talent.spellfire_spheres)"
 
-  # The precombat trinket variables (20ssteroid_trinket_equipped / 15ssteroid / 12ssteroid /
-  # steroid_trinket_equipped / nonsteroid_trinket_equipped) only gate the generic `use_items`
-  # line, which becomes trinket_1/trinket_2 sync here — not converted.
+  # The precombat trinket variables 20ssteroid_trinket_equipped / 15ssteroid / 12ssteroid only
+  # gate the generic `use_items` line, which becomes trinket_1/trinket_2 sync here — not converted.
+  # The three below ARE converted: the new named hex_lords_dooming_idol / font_of_venomous_rage
+  # lines reference them directly, and `use_item,name=X` is supported natively (CLAUDE.md 1.6).
+
+  # variable,name=steroid_trinket_equipped,op=set,value=equipped.lily_of_the_eternal_weave|equipped.sunblood_amethyst|equipped.astral_gladiators_badge_of_ferocity|equipped.arazs_ritual_forge|equipped.freightrunners_flask|equipped.emberwing_feather|equipped.vaelgors_final_stare|equipped.galactic_gladiators_badge_of_ferocity|equipped.nevermelting_ice_crystal|equipped.ever_collapsing_void_fissure|equipped.signet_of_the_priory|equipped.incorporeal_essencegorger|equipped.sealed_chaos_urn|equipped.venomous_gladiators_badge_of_ferocity|equipped.vile_vial_of_volatile_venom|equipped.stormbound_emblem_of_dazar|equipped.hex_lords_dooming_idol
+  steroid_trinket_equipped: "equipped.lily_of_the_eternal_weave|equipped.sunblood_amethyst|equipped.astral_gladiators_badge_of_ferocity|equipped.arazs_ritual_forge|equipped.freightrunners_flask|equipped.emberwing_feather|equipped.vaelgors_final_stare|equipped.galactic_gladiators_badge_of_ferocity|equipped.nevermelting_ice_crystal|equipped.ever_collapsing_void_fissure|equipped.signet_of_the_priory|equipped.incorporeal_essencegorger|equipped.sealed_chaos_urn|equipped.venomous_gladiators_badge_of_ferocity|equipped.vile_vial_of_volatile_venom|equipped.stormbound_emblem_of_dazar|equipped.hex_lords_dooming_idol"
+
+  # variable,name=nonsteroid_trinket_equipped,op=set,value=equipped.mereldars_toll|equipped.perfidious_projector|equipped.chaotic_nethergate|equipped.wraps_of_cosmic_madness|equipped.astalors_anguish_agitator|equipped.sethraliss_defiled_relic|equipped.vexhuls_everflowing_gland|equipped.font_of_venomous_rage|equipped.ophidian_bone_whistle|equipped.spiritrending_poison
+  nonsteroid_trinket_equipped: "equipped.mereldars_toll|equipped.perfidious_projector|equipped.chaotic_nethergate|equipped.wraps_of_cosmic_madness|equipped.astalors_anguish_agitator|equipped.sethraliss_defiled_relic|equipped.vexhuls_everflowing_gland|equipped.font_of_venomous_rage|equipped.ophidian_bone_whistle|equipped.spiritrending_poison"
+
+  # variable,name=hex_double_on_use,op=set,value=(equipped.lily_of_the_eternal_weave|equipped.sunblood_amethyst|equipped.astral_gladiators_badge_of_ferocity|equipped.arazs_ritual_forge|equipped.freightrunners_flask|equipped.emberwing_feather|equipped.vaelgors_final_stare|equipped.galactic_gladiators_badge_of_ferocity|equipped.nevermelting_ice_crystal|equipped.ever_collapsing_void_fissure|equipped.signet_of_the_priory|equipped.incorporeal_essencegorger|equipped.sealed_chaos_urn|equipped.venomous_gladiators_badge_of_ferocity|equipped.vile_vial_of_volatile_venom|equipped.stormbound_emblem_of_dazar)&equipped.hex_lords_dooming_idol
+  hex_double_on_use: "(equipped.lily_of_the_eternal_weave|equipped.sunblood_amethyst|equipped.astral_gladiators_badge_of_ferocity|equipped.arazs_ritual_forge|equipped.freightrunners_flask|equipped.emberwing_feather|equipped.vaelgors_final_stare|equipped.galactic_gladiators_badge_of_ferocity|equipped.nevermelting_ice_crystal|equipped.ever_collapsing_void_fissure|equipped.signet_of_the_priory|equipped.incorporeal_essencegorger|equipped.sealed_chaos_urn|equipped.venomous_gladiators_badge_of_ferocity|equipped.vile_vial_of_volatile_venom|equipped.stormbound_emblem_of_dazar)&equipped.hex_lords_dooming_idol"
 
 lists:
   defensives:
@@ -117,8 +127,8 @@ lists:
     # prismatic_bolt
     - 1295924
 
-    # arcane_orb,if=buff.arcane_charge.stack<1
-    - arcane_orb,if=arcane_charges<1
+    # arcane_orb,if=buff.arcane_charge.stack<3
+    - arcane_orb,if=arcane_charges<3
 
     # arcane_pulse,if=active_enemies>=(variable.aoe_count-1)|buff.arcane_charge.stack<1
     - arcane_pulse,if=enemies_around_target>=(var.aoe_count-1)|arcane_charges<1
@@ -174,12 +184,23 @@ lists:
     # ancestral_call,if=(buff.arcane_surge.up&debuff.touch_of_the_magi.up)|(fight_remains<16)
     - ancestral_call,if=(buff.arcane_surge.up&debuff.touch_of_the_magi.up)|(fight_remains<16)
 
+    # use_item,name=font_of_venomous_rage,if=((buff.arcane_surge.down&buff.arcane_soul.down&debuff.touch_of_the_magi.down)|(!potion.liquid_luster&time<5))&(time>25|!variable.steroid_trinket_equipped|equipped.hex_lords_dooming_idol)|fight_remains<30
+    # potion.liquid_luster has no handler; the sub-term is dropped, leaving the leg as the
+    # no-liquid-luster case. time -> combat.time.
+    - use_item,name=font_of_venomous_rage,if=((buff.arcane_surge.down&buff.arcane_soul.down&debuff.touch_of_the_magi.down)|combat.time<5)&(combat.time>25|!var.steroid_trinket_equipped|equipped.hex_lords_dooming_idol)|fight_remains<30
+
+    # use_item,name=hex_lords_dooming_idol,if=(buff.hex_lords_doom.stack>(24-(15*equipped.vile_vial_of_volatile_venom))&(cooldown.arcane_surge.ready|buff.arcane_surge.up)&variable.hex_double_on_use)|((cooldown.arcane_surge.ready|buff.arcane_surge.up)&!variable.hex_double_on_use)
+    - use_item,name=hex_lords_dooming_idol,if=(buff.hex_lords_doom.stack>(24-(15*equipped.vile_vial_of_volatile_venom))&(cooldown.arcane_surge.ready|buff.arcane_surge.up)&var.hex_double_on_use)|((cooldown.arcane_surge.ready|buff.arcane_surge.up)&!var.hex_double_on_use)
+
     # use_item,name=stormbound_emblem_of_dazar,if=(cooldown.arcane_surge.remains<2)|cooldown.arcane_surge.ready|(fight_remains<22)
     - use_item,name=stormbound_emblem_of_dazar,if=(cooldown.arcane_surge.remains<2)|cooldown.arcane_surge.ready|(fight_remains<22)
 
-    # use_items,if=((buff.arcane_surge.up&((variable.12ssteroid_trinket_equipped&debuff.touch_of_the_magi.up)|variable.15ssteroid_trinket_equipped))|(cooldown.arcane_surge.ready&variable.20ssteroid_trinket_equipped))|(fight_remains<13&variable.12ssteroid_trinket_equipped)|(fight_remains<16&variable.15ssteroid_trinket_equipped)|(fight_remains<21&variable.20ssteroid_trinket_equipped)|(variable.nonsteroid_trinket_equipped&((buff.arcane_surge.down&cooldown.arcane_surge.remains>20)|!variable.steroid_trinket_equipped))
+    # use_items,if=((buff.arcane_surge.up&((variable.12ssteroid_trinket_equipped&debuff.touch_of_the_magi.up)|variable.15ssteroid_trinket_equipped))|(cooldown.arcane_surge.ready&variable.20ssteroid_trinket_equipped))|(fight_remains<13&variable.12ssteroid_trinket_equipped)|(fight_remains<16&variable.15ssteroid_trinket_equipped)|(fight_remains<21&variable.20ssteroid_trinket_equipped)|(variable.nonsteroid_trinket_equipped&((buff.arcane_surge.down&cooldown.arcane_surge.remains>20)|!variable.steroid_trinket_equipped))|fight_remains<((20*variable.steroid_trinket_equipped)+(20*variable.nonsteroid_trinket_equipped)+(10*equipped.hex_lords_dooming_idol))
     - trinket_1,if=trinket_1.sync
     - trinket_2,if=trinket_2.sync
+
+    # use_item,name=hex_lords_dooming_idol,if=(fight_remains<(40+(3*variable.nonsteroid_trinket_equipped)+(20*variable.hex_double_on_use)-(15*equipped.vile_vial_of_volatile_venom)))
+    - use_item,name=hex_lords_dooming_idol,if=(fight_remains<(40+(3*var.nonsteroid_trinket_equipped)+(20*var.hex_double_on_use)-(15*equipped.vile_vial_of_volatile_venom)))
 
     # arcane_barrage,if=fight_remains<gcd.max*2&buff.arcane_charge.stack=4
     - arcane_barrage,if=fight_remains<gcd.max*2&arcane_charges=4
