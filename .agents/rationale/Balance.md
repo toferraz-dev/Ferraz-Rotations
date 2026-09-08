@@ -9,6 +9,79 @@ that was already tried and failed.
 
 ---
 
+## version: "6.19.0" — Fury of Elune before Incarnation, from WCL evidence, 2026-09-08
+
+User felt their overall M+ DPS was below top players despite good gear and
+dropped 6 raw WarcraftLogs event exports (top-1 parses, 3 different players,
+6 different dungeons) into `WarcraftLogs/Druid/Balance/` for analysis. A
+background agent parsed all 6 (8,870 casts, 180.7 min combat, 49.1 CPM avg —
+real high-uptime parses, not clipped) and diffed observed behavior against
+this file's `inc_ready_to_cast` gating. Full report kept out of this file;
+ask if you need the raw numbers again.
+
+**Applied — best-supported finding**: across all 98 Incarnation casts in the
+sample, the nearest Fury of Elune cast landed ~0.2-1.0s *before* Incarnation
+in the large majority (tight, near-zero outliers in 3 of 6 logs; majority in
+the rest), never after. `inc_ready_to_cast` used to accept
+`cooldown.fury_of_elune.remains<2|buff.fury_of_elune.up` — and Fury of Elune
+is usually already off cooldown (remains=0, which satisfies `<2` trivially)
+by the time Incarnation comes up, so that branch was true almost every pull.
+Incarnation fired, Fury of Elune followed next GCD — backwards from what
+every log showed.
+
+Fix: `inc_ready_to_cast` now requires `buff.fury_of_elune.up` (already
+active), and the `fury_of_elune,if=var.foe_ttd_ok` line in `ec_st`/`aoe` was
+moved ABOVE `incarnation_chosen_of_elune,if=var.inc_ready_to_cast` (was
+below). Once a pull is parked, Fury of Elune fires that GCD, Incarnation
+fires the next — matching the logs.
+
+This required also fixing `inc_waiting_to_stand`, which holds Fury of Elune
+back while Incarnation isn't ready yet so it doesn't fire alone before the
+window opens. It never checked `var.pull_engaged` (the standing-still gate)
+at all, so once the pull was dotted it stayed true FOREVER regardless of
+whether you'd actually stood still — which would have deadlocked against the
+new `buff.fury_of_elune.up` requirement (Fury of Elune held by this forever,
+Incarnation waiting on Fury of Elune forever, neither ever fires). Added
+`!var.pull_engaged` to it: it now only holds Fury of Elune while genuinely
+still waiting on the standing-still timer, and lets go the instant
+`pull_engaged` flips true.
+
+**Confirmed by the same analysis, no changes made:**
+- Trinket/potion `var.cd_active`/`var.burst_window` gating: 90.7% of
+  trinket/potion casts (68/75) landed within 2s of an Incarnation cast,
+  mostly same-GCD. Matches this file's design and the rationale's own
+  rejection (below, "+0.28% but loses a trinket use per fight") of firing
+  them off-cooldown regardless of the burst window.
+- Uncapped Moonfire/Sunfire mouseover spread: observed concurrency up to
+  17-36 simultaneous dotted targets, consistent with `dots_spread`'s design
+  and `enable_mouseover_dots` default ON.
+- `wrath_filler` default OFF: "Wrath" appeared **once** in 8,870 casts total
+  across all 6 top players.
+
+**Flagged, not acted on (inconclusive from WCL data alone):**
+- `inc_min_standing_time=2s` - top players are already stationary well
+  before Incarnation comes off cooldown in these logs, so the gate is never
+  observed to bind. Cannot confirm it's the *right* number, only that it
+  isn't visibly costing anything here. WCL cast/buff events carry no
+  position data at all, so this can't be measured more precisely than that.
+- Offensive potion usage: 3 of 6 logs show zero potion casts despite 15-18
+  Incarnations each; the other 3 use it 4-6 times. Consistent with potions
+  having their own long shared cooldown, not enough signal to change
+  `use_potion`'s default.
+
+**Also found, separately confirmed against this file's own known history**:
+0 of 311 aggregate Eclipse casts across all 6 logs were Solar - only Lunar,
+across all 3 players and all 6 dungeons. This matches "Shipped, unmeasurable:
+the file never cast Solar Eclipse" further down this file, which was about a
+past BUG (only offering `lunar_eclipse`) already fixed by offering both
+halves. The WCL data now shows something different: even with both offered,
+Solar mechanically never comes up on this build - Lunar Calling (carried on
+the recommended string) is the likely reason. The `solar_eclipse` line is
+therefore live-but-dead on this exact build, same category as the
+Starweaver lines - kept for if Lunar Calling is ever dropped, not removed.
+
+---
+
 ## version: "4.0.2"
 
 `FerrazBalance.yaml` line 1
