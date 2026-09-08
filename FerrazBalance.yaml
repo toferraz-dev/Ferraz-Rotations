@@ -43,7 +43,7 @@
 # DungeonSlice, which Balance does not support, and against the previous build.
 # =============================================================================
 
-version: "4.18.0"
+version: "4.19.0"
 author: Ferraz
 patch: "12.1"
 spec: 102
@@ -70,7 +70,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-09-02 | Patch: 12.1 | Version: 4.18.0"
+    text: "Last update: 2026-09-08 | Patch: 12.1 | Version: 4.19.0"
 
   # Reference build, from the 2026-09-02 export. Measured -2.18% against the
   # previous string on DungeonRoute - see the rationale before "fixing" that.
@@ -103,15 +103,6 @@ config:
     section: "Cooldowns"
     type: toggle
     description: "Manual burst window. Only needed when Auto Burst is OFF: toggle ON to allow Incarnation, trinkets and potion, OFF to hold CDs."
-
-  # Spends the toggle on ONE burst window. Nothing in Simia can flip a config,
-  # so the switch stays visually ON - it just stops granting burst.
-  burst_once:
-    label: "Burst Toggle Fires Once"
-    section: "Cooldowns"
-    type: checkbox
-    default: false
-    description: "With Auto Burst OFF: one flip of the toggle allows exactly one Incarnation. After it goes up the toggle stops granting burst until you switch it OFF and ON again. The switch keeps showing ON while spent: nothing in Simia can flip a config, and pressing its key from the rotation was tried and does not work either. Treat OFF then ON as the rearm gesture."
 
   # All three ride the burst window.
   use_trinket_1:
@@ -420,10 +411,8 @@ variables:
   # window that is ALREADY open, so this is what they read.
   burst_armed: config.auto_burst|config.burst_toggle
   #
-  # burst_ok = may a NEW window be opened. The latch belongs only here: it is
-  # spent by cd_active, which is the same condition the trinkets need true, so
-  # gating them on this blocked them for exactly the window they wanted.
-  burst_ok: var.burst_armed&(!config.burst_once|variable.inc_spent=0)
+  # burst_ok = may a NEW window be opened.
+  burst_ok: var.burst_armed
 
   # Moonfire spread across the PULL, not just present on the current target.
   # The 10 cap is the official rotation's; past it the DoT is on everything
@@ -476,12 +465,6 @@ lists:
     - health_potion,name="Health Potion (Emergency)",off_gcd=true,ignore_queue=true,delay=250,if=health_potion.ready&health.pct<=config.engine_health_potion
     # Last, so the off-GCD options above get their chance first.
     - stop_casting,name="Cut Cast (Emergency)",if=config.emergency_stop_casting&!player.channeling
-
-  # Arms and spends the burst toggle. Runs every tick, in and out of combat, so
-  # flipping the toggle off rearms it immediately.
-  burst_latch:
-    - variable,name=inc_spent,value=0,if=!config.burst_toggle
-    - variable,name=inc_spent,value=1,if=var.cd_active
 
   # Solar Beam on target/mouseover/focus. interrupt.*.check = Simia's own
   # kick filters (interruptible, important, in range, not already kicked).
@@ -689,7 +672,6 @@ lists:
     # --- Engine plumbing. Must stay at the top. ---
     - call_action_list,name=engine
 
-    - call_action_list,name=burst_latch
     - call_action_list,name=heal_support
 
     # COMBAT WALL - nothing below runs out of combat. player.combat, NOT

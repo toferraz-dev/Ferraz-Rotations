@@ -108,7 +108,7 @@ spec_profiles:
           hotw_hp: 25
           use_potion: true
           ttd_fury_of_elune: 15
-          auto_burst: true
+          auto_burst: false
           inc_min_combat_time: 6
           inc_min_standing_time: 2
           ttd_incarnation: 25
@@ -369,7 +369,7 @@ toggle_hotkeys:
       modifier: 0
   102:
     burst_toggle:
-      scancode: 45
+      scancode: 59
       modifier: 0
   103:
     burst_toggle:
@@ -385,7 +385,7 @@ toggle_hotkeys:
 selected_rotation:
   105: C:\Games\Python\Rotations\FerrazRestoDruid.yaml
   103: C:\Games\Python\Rotations\FerrazFeral.yaml
-  102: C:\Games\Python\Rotations\FerrazBalanceRaid.yaml
+  102: C:\Games\Python\Rotations\FerrazBalance.yaml
   262: C:\Games\Python\Rotations\FerrazShamanEle.yaml
   104: C:\Games\Python\Rotations\FerrazGuardianElune.yaml
 selected_community_rotation_name:
@@ -399,8 +399,8 @@ queue_icons_mode: 2
 queue_icons_size: 35
 queue_icons_grow: 0
 queue_icons_max: 3
-queue_icons_x: 1221
-queue_icons_y: 967
+queue_icons_x: 1220
+queue_icons_y: 968
 queue_icons_locked: true
 queue_bindings:
   104:
@@ -535,3 +535,16 @@ queue_bindings:
         - spell: 106898
           target: 0
           if: ""
+    - name: Incarnation
+      scancode: 45
+      modifier: 0
+      admit: cooldown.incarnation_chosen_of_elune.up
+      expire: ""
+      unqueue_on_cast: true
+      ttl: 0
+      priority_list: false
+      enabled: true
+      steps:
+        - spell: 102560
+          target: 0
+          if: "cooldown.fury_of_elune.ready&(trinket_1.ready|trinket_2.ready)&!buff.incarnation_chosen_of_elune.up"
