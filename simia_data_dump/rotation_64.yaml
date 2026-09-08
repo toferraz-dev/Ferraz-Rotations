@@ -65,6 +65,27 @@ lists:
   # with no engine handler — dropped, raw line kept above each action.
   # ============================================================================
   cds:
+    # Externals.
+    # invoke_external_buff,name=power_infusion,if=buff.power_infusion.down&(variable.ff_trinket_timing|variable.ss_trinket_timing)
+
+    # Racials.
+    # blood_fury,if=variable.ff_trinket_timing|variable.ss_trinket_timing
+    - blood_fury,if=var.ff_trinket_timing|var.ss_trinket_timing
+    # berserking,if=variable.ff_trinket_timing|variable.ss_trinket_timing
+    - berserking,if=var.ff_trinket_timing|var.ss_trinket_timing
+    # fireblood,if=variable.ff_trinket_timing|variable.ss_trinket_timing
+    - fireblood,if=var.ff_trinket_timing|var.ss_trinket_timing
+    # ancestral_call,if=variable.ff_trinket_timing|variable.ss_trinket_timing
+    - ancestral_call,if=var.ff_trinket_timing|var.ss_trinket_timing
+
+    # Flat-damage on-use trinkets are used immediately, after Potion of Recklessness on combat start.
+    # use_item,name=font_of_venomous_rage,if=cooldown.potion.remains|!potion.potion_of_recklessness
+    # Both legs are potion expressions with no handler; with no potion modelling the condition
+    # reduces to "use immediately", so it is dropped rather than left to read off an unknown token.
+    - use_item,name=font_of_venomous_rage
+    # use_item,name=vexhuls_everflowing_gland,if=cooldown.potion.remains|!potion.potion_of_recklessness
+    - use_item,name=vexhuls_everflowing_gland
+
     # use_item,name=nevermelting_ice_crystal,if=variable.ff_trinket_timing|variable.ss_trinket_timing
     - use_item,name=nevermelting_ice_crystal,if=var.ff_trinket_timing|var.ss_trinket_timing
     # use_item,name=freightrunners_flask,if=variable.ff_trinket_timing|variable.ss_trinket_timing
@@ -72,7 +93,7 @@ lists:
     # use_item,name=vaelgors_final_stare,if=(variable.ff_trinket_timing|variable.ss_trinket_timing)&(stat.haste_rating>stat.crit_rating|stat.versatility_rating>stat.crit_rating)
     # Stripped: stat.* conditions (not supported)
     - use_item,name=vaelgors_final_stare,if=var.ff_trinket_timing|var.ss_trinket_timing
-    # potion,if=variable.ff_trinket_timing|variable.ss_trinket_timing|fight_remains<35
+    # potion,if=variable.ff_trinket_timing|variable.ss_trinket_timing|(trinket.font_of_venomous_rage.cooldown.ready|trinket.vexhuls_everflowing_gland.cooldown.ready)&potion.potion_of_recklessness|fight_remains<35
     # potion — not supported
     # use_item,name=vaelgors_final_stare,if=variable.ff_trinket_timing|variable.ss_trinket_timing
     - use_item,name=vaelgors_final_stare,if=var.ff_trinket_timing|var.ss_trinket_timing
@@ -82,14 +103,8 @@ lists:
     - trinket_1,if=trinket_1.sync
     - trinket_2,if=trinket_2.sync
 
-    # blood_fury,if=variable.ff_trinket_timing|variable.ss_trinket_timing
-    - blood_fury,if=var.ff_trinket_timing|var.ss_trinket_timing
-    # berserking,if=variable.ff_trinket_timing|variable.ss_trinket_timing
-    - berserking,if=var.ff_trinket_timing|var.ss_trinket_timing
-    # fireblood,if=variable.ff_trinket_timing|variable.ss_trinket_timing
-    - fireblood,if=var.ff_trinket_timing|var.ss_trinket_timing
-    # ancestral_call,if=variable.ff_trinket_timing|variable.ss_trinket_timing
-    - ancestral_call,if=var.ff_trinket_timing|var.ss_trinket_timing
+    # use_item,name=hex_lords_dooming_idol,if=variable.ff_trinket_timing|variable.ss_trinket_timing
+    - use_item,name=hex_lords_dooming_idol,if=var.ff_trinket_timing|var.ss_trinket_timing
 
     # Frostfire Opener: precast Frostfire Bolt/Blizzard --> Ray of Frost --> Flurry --> Frozen Orb.
     # ray_of_frost,if=talent.frostfire_bolt,interrupt_if=!talent.hand_of_frost_4&active_enemies>=2&tick_time>gcd.remains&(!talent.crystalline_refraction|talent.crystalline_refraction&buff.fingers_of_frost.react=2),interrupt_global=1,interrupt_immediate=1,line_cd=9999
@@ -113,8 +128,6 @@ lists:
     - ray_of_frost,if=fight_remains<12|cooldown.ray_of_frost.charges=2
     # comet_storm,if=fight_remains<8
     - comet_storm,if=fight_remains<8
-
-    # invoke_external_buff,name=power_infusion,if=buff.power_infusion.down
 
   # ============================================================================
   # FROSTFIRE

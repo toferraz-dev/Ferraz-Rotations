@@ -3,6 +3,12 @@
 # Do not edit manually - changes will be overwritten
 
 rotations:
+- name: Arcane Mage by Kontro
+  author: Kontroved
+  version: '2.1'
+  description: Arcane Mage first test rotation
+  spec: 62
+  url: https://raw.githubusercontent.com/Kontroved/WoW/main/Arcane%20Mage/Arcane_Kontro_S2.yaml
 - name: Jecht Fire Mage v1.464
   author: Jecht
   version: '1.464'
@@ -67,7 +73,7 @@ rotations:
   url: https://raw.githubusercontent.com/Kontroved/WoW/main/Arms%20Warrior/Arrms_Kontro_S2.yaml
 - name: Balance Druid Ferraz M+
   author: Ferraz
-  version: 4.16.0
+  version: 4.18.0
   description: 'Balance Druid Ferraz M+
 
     '
@@ -99,7 +105,7 @@ rotations:
   url: https://raw.githubusercontent.com/toferraz-dev/Ferraz-Rotations/main/FerrazFeralRaid.yaml
 - name: Guardian Druid Ferraz M+
   author: Ferraz
-  version: 1.13.0
+  version: 1.18.0
   description: 'Guardian Druid 104 engine for 12.1, tuned for Mythic+.
 
     Elune''s Chosen: Lunar Calling turns Thrash into Moonfire, while Lunation
