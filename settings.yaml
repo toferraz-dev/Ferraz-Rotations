@@ -143,9 +143,12 @@ spec_profiles:
         auto_enabled: true
         values:
           innervate_threshold: 75
+          use_heart_of_the_wild: true
           manual_tranquility: false
+          use_trinket_2: true
           raid_use_potion: true
           raid_use_trinket_1: true
+          use_trinket_1: true
           raid_use_trinket_2: true
         shared_values:
           interrupt_all: true
