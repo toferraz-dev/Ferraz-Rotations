@@ -14,7 +14,7 @@
 # bug this file has already been through. Read it before changing a line -
 # most of what looks improvable here was tried and reverted.
 # =============================================================================
-version: "6.8.0"
+version: "8.11.0"
 author: Ferraz
 patch: "12.1"
 spec: 105
@@ -27,13 +27,27 @@ predictions:
   8936:  { name: "Regrowth", buff: 8936 }
   48438: { name: "Wild Growth", buff: 48438 }
 
+# SPELL OVERRIDES — AND-ed into every occurrence of that spell in the file.
+#
+# Simia cannot cast either of these while shapeshifted into Cat or Bear Form:
+# it keeps suggesting them, the client refuses, and the rotation stalls on the
+# line instead of moving on. Gated here rather than per line — Rejuvenation has
+# 12 call sites across 7 lists and Ironbark 2, and a line added later would
+# reintroduce the bug silently.
+#
+# Numeric ids, not names, because the call sites are numeric (774 / 102342) —
+# see rotation_1480.yaml and rotation_266.yaml for the same pattern.
+spell_overrides:
+  774:    "!buff.cat_form.up&!buff.bear_form.up"
+  102342: "!buff.cat_form.up&!buff.bear_form.up"
+
 config:
   # BUILD STAMP — display only. Keep in sync with version:/patch: above.
   about:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-09-09 | Patch: 12.1 | Version: 6.8.0"
+    text: "Last update: 2026-09-09 | Patch: 12.1 | Version: 8.11.0"
 
   # RECOMMENDED BUILD — the string the talent.X gates below assume.
   recommended_talents:
@@ -533,7 +547,11 @@ lists:
   defensives:
     - barkskin,name="Barkskin",off_gcd=true,ignore_queue=true,if=health.pct<config.barkskin_threshold|incoming.pct>=config.barkskin_incoming_pct
     - 102342,name="Ironbark (Tank)",off_gcd=true,ignore_queue=true,cycle=tanks,if=config.ironbark_target=1&(cycle.health.pct<config.ironbark_threshold|cycle.incoming.pct>config.ironbark_incoming_pct)&cycle.buff.ironbark.down
-    - 102343,name="Ironbark (Members)",off_gcd=true,ignore_queue=true,cycle=members,if=config.ironbark_target=2&(cycle.health.pct<config.ironbark_threshold|cycle.incoming.pct>config.ironbark_incoming_pct)&cycle.buff.ironbark.down
+    # 102342 on BOTH lines. This one said 102343, an id that exists neither in
+    # Simia's own _spells.yaml (`ironbark  # id=102342`) nor anywhere in a
+    # 29-minute reference log - so with Ironbark Target set to Members the line
+    # could never resolve a spell at all.
+    - 102342,name="Ironbark (Members)",off_gcd=true,ignore_queue=true,cycle=members,if=config.ironbark_target=2&(cycle.health.pct<config.ironbark_threshold|cycle.incoming.pct>config.ironbark_incoming_pct)&cycle.buff.ironbark.down
     - bear_form,name="Panic Bear",if= health.pct<config.frenzied_regen_threshold&!buff.bear_form.up&cooldown.frenzied_regeneration.ready
     - frenzied_regeneration,name="Frenzied Regen",if= health.pct<config.frenzied_regen_threshold&buff.bear_form.up
     - bear_form,name="Root Cleanse (to Bear)",line_cd=8,if=config.root_cleanse&var.druid_shapeshift_root&!player.stunned&!buff.bear_form.up
@@ -556,7 +574,32 @@ lists:
     # Swiftness up, this Regrowth also applies Lifebloom, Rejuvenation and
     # Wild Growth to the same target.
     - regrowth,name="Nature Swift Regrowth",cycle=members,if=buff.natures_swiftness.up&cycle.health.pct<config.natures_swiftness_threshold
-    - 774,name="Reju Out Cat For Convoke",if=(group.count(cycle.health.effective.pct<config.convoke_threshold&!cycle.tank)>=config.convoke_members)&(buff.cat_form.up|buff.bear_form.up)
+    # Drop the form so the Convoke/trinket/potion lines below - all gated on
+    # !buff.cat_form.up&!buff.bear_form.up - can fire on the next pass.
+    #
+    # This used to cast Rejuvenation here on purpose: a caster spell breaks the
+    # form as a side effect. That is dead now, because the spell_overrides
+    # block at the top of this file forbids Rejuvenation in Cat/Bear entirely
+    # (Simia keeps suggesting it in form, the client refuses, the rotation
+    # stalls on the line). Cancelling the form directly is the same intent
+    # without needing a spell the client will not cast.
+    #
+    # UNVERIFIED IN GAME, and the weakest line in this file. `cancel_buff` is
+    # in neither SIMIA_DOCUMENTATION.md nor expression-catalog.json, and the
+    # rotation-yaml-intellisense extension flags it `Unknown spell` - while it
+    # does NOT flag stop_casting/target_enemy/healthstone, which it knows. So
+    # the editor thinks this action does not exist. `lint_rotations.py` passes
+    # it. The one precedent is community_TeK_s_Jesus_Juice.yaml:404, bare
+    # `cancel_buff` to leave Ghost Wolf so the shaman can heal - same shape as
+    # this, but that line is itself unvalidated.
+    #
+    # VERIFY with `/simia snapshot` in Cat Form with the group hurt: the trace
+    # should show this line SANITY PASS and get Selected. If it shows
+    # "no spell data" or never fires, the fallback to try is re-casting the
+    # form to toggle it off (`cat_form,if=buff.cat_form.up`) - also unverified,
+    # since every form cast in this repo and in rotation_105.yaml is gated on
+    # the form being DOWN, never up.
+    - cancel_buff,name="Leave Form For Convoke",if=(group.count(cycle.health.effective.pct<config.convoke_threshold&!cycle.tank)>=config.convoke_members)&(buff.cat_form.up|buff.bear_form.up)
     - trinket_1,delay=150,name="Trinket 1",if=config.use_trinket_1&trinket_1.ready&(group.count(cycle.health.effective.pct<config.convoke_threshold&!cycle.tank)>=config.convoke_members)&!buff.cat_form.up&!buff.bear_form.up
     - trinket_2,delay=150,name="Trinket 2",if=config.use_trinket_2&trinket_2.ready&(group.count(cycle.health.effective.pct<config.convoke_threshold&!cycle.tank)>=config.convoke_members)&!buff.cat_form.up&!buff.bear_form.up
     - combat_potion,delay=150,name="Combat Potion",if=combat_potion.ready&config.use_potion&(group.count(cycle.health.effective.pct<config.convoke_threshold&!cycle.tank)>=config.convoke_members)&!buff.cat_form.up&!buff.bear_form.up
@@ -612,7 +655,7 @@ lists:
   catweave_st:
     - rip,name="Rip ST",if=combo_points>=5&debuff.rip.refreshable
     - ferocious_bite,name="Bite ST",if=combo_points>=5
-    - rake,name="Rake ST",if=debuff.rake.refreshable
+    - 1822,name="Rake ST",if=debuff.rake.refreshable
     - shred,name="Shred ST"
 
   # Cat Form DPS Rotation (AoE).
@@ -620,7 +663,7 @@ lists:
     - target_enemy,name="Search Bleed Target",if=combo_points>=5&!debuff.rip.refreshable&active_dot.rip<enemies.combat.8y
     - rip,name="Rip AoE",if=combo_points>=5&debuff.rip.refreshable
     - ferocious_bite,name="Bite AoE",if=combo_points>=5
-    - rake,name="Rake AoE",if=debuff.rake.refreshable
+    - 1822,name="Rake AoE",if=debuff.rake.refreshable
     # talent.swipe: the reference build does not take it and never casts it (0
     # Swipe casts in 26.9 min).
     - 106785,name="Swipe AoE",if=talent.swipe
@@ -630,7 +673,15 @@ lists:
   catweave:
     # Fluid Form does the shifting, so the entry is a DAMAGE cast, not a form
     # cast — Rake enters Cat AND applies the bleed in one global.
-    - rake,name="Fluid Rake",if=!buff.cat_form.up
+    #
+    # An explicit `cat_form` entry shipped as 8.10.0 and was reverted here in
+    # 8.11.0, without being tested in game. The case for it was the Zinney log (top-tier, THIS
+    # talent string): 102 explicit Cat Form casts against 91 Rakes, nearly 1:1.
+    # The case against is the global it costs on every single entry, which is
+    # what this Fluid Form entry exists to save. If the Fluid entry ever fails
+    # in game the way Rejuvenation/Ironbark do in form, that is the moment to
+    # revisit - not before.
+    - 1822,name="Fluid Rake",if=!buff.cat_form.up
     - cat_form,name="Manual Cat Shift",if=!talent.fluid_form&!buff.cat_form.up
     - return,if=!buff.cat_form.up
 
