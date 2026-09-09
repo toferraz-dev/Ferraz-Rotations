@@ -6,7 +6,7 @@
 #   interrupts              out_of_combat           defensives              racials
 #   cooldowns               active_healing          utility                 abundance_maintenance
 #   catweave_st             catweave_aoe            catweave                ranged_dps
-#   bearweave               moving                  avatar_sethraliss       mouseover_healing_emergency
+#   moving                  avatar_sethraliss       mouseover_healing_emergency
 #   auto_rez                engine                  main
 #
 # WHY ANY OF IT IS THE WAY IT IS: .agents/rationale/RestoDruid.md
@@ -14,7 +14,7 @@
 # bug this file has already been through. Read it before changing a line -
 # most of what looks improvable here was tried and reverted.
 # =============================================================================
-version: "5.7.0"
+version: "6.7.0"
 author: Ferraz
 patch: "12.1"
 spec: 105
@@ -33,14 +33,14 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-08-28 | Patch: 12.1 | Version: 5.7.0"
+    text: "Last update: 2026-09-09 | Patch: 12.1 | Version: 6.7.0"
 
   # RECOMMENDED BUILD — the string the talent.X gates below assume.
   recommended_talents:
     section: "Talents"
     type: copy_text
     label: "Recommended Talent String"
-    text: "CkGADBD3hSPCL9Y9gz68WcKvMMMmZZMjZmxsN8AMzsMjNbzAAAAAAAAAAglBNbzw0MjBmFzMzMLzwDYAAAAAMAAzAAQAAAz2MbNbzsYjZmBMzCoZAAmZAYA"
+    text: "CkGADBD3hSPCL9Y9gz68WcKvMMMmZZMjZmxsNMYmNjNbzAAAAAAAAAAglBNbGmmZM8AmFzMzMLzwDYAAAAAAAwAAQAAAzyMbNbzsYjZmZwMzCoZAAmZAYA"
 
   # HEALING — the core thresholds.
   use_mouseover:
@@ -485,9 +485,6 @@ variables:
   in_dps_form: buff.cat_form.up|buff.bear_form.up
   # Friendly and valid mouseover target
   mo_friendly_valid: mouseover.exists&mouseover.alive&mouseover.friendly&mouseover.unitframe
-  # Heart of the Wild is ready and enabled. While this is true the bearweave
-  # list yields, so the rotation goes straight to Cat Form and fires it.
-  hotw_pending: config.use_heart_of_the_wild&talent.heart_of_the_wild&cooldown.heart_of_the_wild.ready
   # Soul of the Forest proc is active
   has_soul: buff.soul_of_the_forest.up
   # Stampeding Roar conditions based on the interface
@@ -540,7 +537,7 @@ lists:
     - bear_form,name="Panic Bear",if= health.pct<config.frenzied_regen_threshold&!buff.bear_form.up&cooldown.frenzied_regeneration.ready
     - frenzied_regeneration,name="Frenzied Regen",if= health.pct<config.frenzied_regen_threshold&buff.bear_form.up
     - bear_form,name="Root Cleanse (to Bear)",line_cd=8,if=config.root_cleanse&var.druid_shapeshift_root&!player.stunned&!buff.bear_form.up
-    - cat_form,name="Root Cleanse (from Bear)",line_cd=8,if=config.root_cleanse&var.druid_shapeshift_root&!player.stunned&buff.bear_form.up    
+    - cat_form,name="Root Cleanse (from Bear)",line_cd=8,if=config.root_cleanse&var.druid_shapeshift_root&!player.stunned&buff.bear_form.up
 
   # Racial Abilities and Specific Mobility
   racials:
@@ -649,13 +646,6 @@ lists:
     - sunfire,name="Sunfire Refresh",if=talent.sunfire&debuff.sunfire.refreshable
     - moonfire,name="Moonfire Refresh",if=debuff.moonfire.refreshable
 
-  # Defensive rotation and debuffs in Bear Form (Bearweave) !var.hotw_pending
-  # on both bear casts is what lets Heart of the Wild happen at all.
-  bearweave:
-    - thrash,name="Thrash (BearmForm Bleed)",if=(dot.thrash.stack<3|dot.thrash.remains<=8)&!var.hotw_pending
-    - mangle,name="Mangle (BearForm)",if=!buff.bear_form.up&(dot.thrash.remains<=8|dot.thrash.stack<3)&!var.hotw_pending
-    - call_action_list,name=catweave
-
   # Healing on the Move: Instant spells only (HoTs and Lifebloom)
   moving:
     - lifebloom,name="Lifebloom Tank (Moving)",cycle=tanks,if=cycle.buff.lifebloom.down|cycle.buff.lifebloom.refreshable
@@ -751,4 +741,11 @@ lists:
 
     # DPS weaving when the group is healthy
     - call_action_list,name=ranged_dps,if=config.ranged_dps&var.can_catweave&target.exists&target.alive&!target.friendly&!target.in_melee
-    - call_action_list,name=bearweave,if=config.melee_dps&var.can_catweave&target.exists&target.alive&!target.friendly&target.in_melee
+    # Cat only. Bear Form is defensive-only in this file now - see the
+    # `defensives` list for Panic Bear/Frenzied Regeneration and the root
+    # cleanse. Zinney (top-tier, this exact talent string, 28.9min M+ log)
+    # spends 2.9% of the fight in Bear, casts Mangle ZERO times and Thrash 8
+    # times total, and every Bear entry pairs with Frenzied Regeneration or
+    # Barkskin. The old `bearweave` list's Thrash/Mangle bleed upkeep is not
+    # what a top player does with Bear on this build.
+    - call_action_list,name=catweave,if=config.melee_dps&var.can_catweave&target.exists&target.alive&!target.friendly&target.in_melee

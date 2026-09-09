@@ -610,3 +610,42 @@ queue_bindings:
         - spell: 106898
           target: 0
           if: ""
+    - name: Tranquility
+      scancode: 41
+      modifier: 0
+      admit: cooldown.tranquility.up
+      expire: ""
+      unqueue_on_cast: true
+      ttl: 0
+      priority_list: false
+      enabled: true
+      steps:
+        - spell: 740
+          target: 0
+          if: ""
+    - name: Convoke
+      scancode: 2
+      modifier: 0
+      admit: cooldown.convoke_the_spirits.up
+      expire: ""
+      unqueue_on_cast: true
+      ttl: 0
+      priority_list: false
+      enabled: true
+      steps:
+        - spell: 391528
+          target: 0
+          if: "!buff.cat_form.up"
+    - name: Wild
+      scancode: 3
+      modifier: 0
+      admit: cooldown.wild_growth.up
+      expire: ""
+      unqueue_on_cast: true
+      ttl: 0
+      priority_list: false
+      enabled: true
+      steps:
+        - spell: 48438
+          target: 0
+          if: ""
