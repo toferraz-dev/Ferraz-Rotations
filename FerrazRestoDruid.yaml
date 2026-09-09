@@ -565,7 +565,6 @@ lists:
     - tranquility,global_delay=750,name="Tranquility",if=!config.manual_tranquility&group.count(cycle.health.effective.pct<config.tranquility_threshold&!cycle.tank)>=config.tranquility_members&!player.moving
     # NEW in 5.0 — Power of the Archdruid: Swiftmend on cooldown spreads three
     # Rejuvenations, which is what gets Abundance to 5 stacks fast.
-    - swiftmend.player,name="Self Swiftmend (Archdruid)",range_check=none,if=talent.power_of_the_archdruid&player.combat&cooldown.swiftmend.ready&(buff.rejuvenation.up|buff.regrowth.up|buff.wild_growth.up)
     # Swiftmend to obtain Soul of the Forest buff (requires active HoT on target)
     - swiftmend,name="Swiftmend for SotF/Treants",cycle=members,if=cycle.health.effective.pct<config.swiftmend_threshold&(cycle.buff.rejuvenation.up|pred.cycle.buff.regrowth.up|pred.cycle.buff.wild_growth.up)
 
@@ -589,7 +588,6 @@ lists:
 
     # NEW in 5.0 — Everbloom self loop. after=300 debounces Everbloom's own
     # restack tick; refreshing under 4.5s keeps the stacks it has built.
-    - lifebloom.player,name="Self Lifebloom (Everbloom)",range_check=none,after=300,if=config.lifebloom_target=1&talent.everbloom&(buff.lifebloom.down|buff.lifebloom.remains<4.5)
     - lifebloom,name="Lifebloom (Tank)",cycle=tanks,if=config.lifebloom_target=2&(cycle.buff.lifebloom.down|cycle.buff.lifebloom.refreshable)
 
     # NEW in 5.0 — Photosynthesis wants a Rejuvenation on yourself.
