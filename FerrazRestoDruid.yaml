@@ -14,7 +14,7 @@
 # bug this file has already been through. Read it before changing a line -
 # most of what looks improvable here was tried and reverted.
 # =============================================================================
-version: "9.11.0"
+version: "10.11.0"
 author: Ferraz
 patch: "12.1"
 spec: 105
@@ -27,30 +27,13 @@ predictions:
   8936:  { name: "Regrowth", buff: 8936 }
   48438: { name: "Wild Growth", buff: 48438 }
 
-# SPELL OVERRIDES — AND-ed into every occurrence of that spell in the file.
-#
-# Ironbark (102342) is not castable while shapeshifted into Cat or Bear Form:
-# Simia keeps suggesting it, the client refuses, and the rotation stalls on the
-# line instead of moving on. Gated here rather than per line — 2 call sites, and
-# a line added later would reintroduce the bug silently.
-#
-# Rejuvenation (774) was gated the same way and is deliberately NOT anymore: the
-# `Reju Out Cat For Convoke` line below casts it IN form on purpose, using the
-# form break as its whole point. A global override cannot make an exception for
-# one line, so the choice is one or the other.
-#
-# Numeric id, not the name, because the call sites are numeric — see
-# rotation_1480.yaml and rotation_266.yaml for the same pattern.
-spell_overrides:
-  102342: "!buff.cat_form.up&!buff.bear_form.up"
-
 config:
   # BUILD STAMP — display only. Keep in sync with version:/patch: above.
   about:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-09-09 | Patch: 12.1 | Version: 9.11.0"
+    text: "Last update: 2026-09-09 | Patch: 12.1 | Version: 10.11.0"
 
   # RECOMMENDED BUILD — the string the talent.X gates below assume.
   recommended_talents:
@@ -599,9 +582,10 @@ lists:
     - combat_potion,delay=150,name="Combat Potion",if=combat_potion.ready&config.use_potion&(group.count(cycle.health.effective.pct<config.convoke_threshold&!cycle.tank)>=config.convoke_members)&!buff.cat_form.up&!buff.bear_form.up
     - convoke_the_spirits,global_delay=750,name="Convoke (Heal)",if=(group.count(cycle.health.effective.pct<config.convoke_threshold&!cycle.tank)>=config.convoke_members)&!buff.cat_form.up&!buff.bear_form.up
     - tranquility,global_delay=750,name="Tranquility",if=!config.manual_tranquility&group.count(cycle.health.effective.pct<config.tranquility_threshold&!cycle.tank)>=config.tranquility_members&!player.moving
-    # NEW in 5.0 — Power of the Archdruid: Swiftmend on cooldown spreads three
-    # Rejuvenations, which is what gets Abundance to 5 stacks fast.
-    # Swiftmend to obtain Soul of the Forest buff (requires active HoT on target)
+    # Power of the Archdruid: Swiftmend spreads three Rejuvenations, which is
+    # what gets Abundance to 5 stacks fast.
+    - swiftmend.player,name="Self Swiftmend (Archdruid)",range_check=none,if=talent.power_of_the_archdruid&player.combat&cooldown.swiftmend.ready&(buff.rejuvenation.up|buff.regrowth.up|buff.wild_growth.up)
+    # Swiftmend for Soul of the Forest (needs an active HoT on the target).
     - swiftmend,name="Swiftmend for SotF/Treants",cycle=members,if=cycle.health.effective.pct<config.swiftmend_threshold&(cycle.buff.rejuvenation.up|pred.cycle.buff.regrowth.up|pred.cycle.buff.wild_growth.up)
 
   # Sequential Active Healing: SotF consumption -> Lifebloom maintenance -> AoE and ST heals
@@ -623,8 +607,12 @@ lists:
     - efflorescence,name="Efflorescence (no Lifetreading)",range_check=none,if=talent.efflorescence&!talent.lifetreading&!totem.efflorescence.up
 
     # NEW in 5.0 — Everbloom self loop. after=300 debounces Everbloom's own
-    # restack tick; refreshing under 4.5s keeps the stacks it has built.
+    # Everbloom self loop. after=300 debounces Everbloom's own restack tick.
+    - lifebloom.player,name="Self Lifebloom (Everbloom)",range_check=none,after=300,if=config.lifebloom_target=1&talent.everbloom&(buff.lifebloom.down|buff.lifebloom.remains<4.5)
     - lifebloom,name="Lifebloom (Tank)",cycle=tanks,if=config.lifebloom_target=2&(cycle.buff.lifebloom.down|cycle.buff.lifebloom.refreshable)
+
+    # Photosynthesis wants a Rejuvenation on yourself.
+    - 774.player,name="Self Rejuvenation (Photosynthesis)",range_check=none,if=talent.photosynthesis&player.combat&buff.rejuvenation.down
 
     # Spend the Abundance window. Regrowth at -60% .
     - regrowth,name="Abundance Regrowth",cycle=members,if=buff.abundance.up&cycle.health.effective.pct<config.regrowth_threshold
@@ -638,6 +626,8 @@ lists:
 
   # Utilities, Mobility, and Mana Recovery
   utility:
+    # innervate.player, not bare innervate: bare would go to the current target.
+    - innervate.player,name="Innervate",off_gcd=true,ignore_queue=true,delay=150,range_check=none,if=talent.innervate&mana.pct<config.innervate_threshold&fight_remains>15
     - stampeding_roar,name="Stampeding Roar",if=var.use_stampeding_roar&config.stampeding_roar_usage!=0
 
   # ABUNDANCE CHANGED IN 12.1 and this list was still written for the old one.
@@ -669,7 +659,7 @@ lists:
     # cast — Rake enters Cat AND applies the bleed in one global.
     #
     # An explicit `cat_form` entry shipped as 8.10.0 and was reverted here in
-    # 9.11.0, without being tested in game. The case for it was the Zinney log (top-tier, THIS
+    # 10.11.0, without being tested in game. The case for it was the Zinney log (top-tier, THIS
     # talent string): 102 explicit Cat Form casts against 91 Rakes, nearly 1:1.
     # The case against is the global it costs on every single entry, which is
     # what this Fluid Form entry exists to save. If the Fluid entry ever fails

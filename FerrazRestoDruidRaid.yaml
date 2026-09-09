@@ -14,7 +14,7 @@
 # most of what looks improvable here was tried and reverted.
 # =============================================================================
 
-version: "3.17.0"
+version: "3.18.0"
 author: Ferraz
 patch: "12.1"
 spec: 105
@@ -22,23 +22,6 @@ name: Restoration Druid Ferraz Raid
 description: |
   Restoration Druid Ferraz Raid
 entry: main
-
-# SPELL OVERRIDES — AND-ed into every occurrence of that spell in the file.
-#
-# Ironbark (102342) is not castable while shapeshifted into Cat or Bear Form:
-# Simia keeps suggesting it, the client refuses, and the rotation stalls on the
-# line instead of moving on. Gated here rather than per line — 2 call sites, and
-# a line added later would reintroduce the bug silently.
-#
-# Rejuvenation (774) was gated the same way and is deliberately NOT anymore: the
-# `Shift Out For Convoke` line below casts it IN form on purpose, using the form
-# break as its whole point. A global override cannot make an exception for one
-# line, so the choice is one or the other. Same block as FerrazRestoDruid.yaml.
-#
-# Numeric id, not the name, because the call sites are numeric — see
-# rotation_1480.yaml and rotation_266.yaml for the same pattern.
-spell_overrides:
-  102342: "!buff.cat_form.up&!buff.bear_form.up"
 
 # CONFIG — thresholds below are untested defaults, tune to your team.
 
@@ -48,7 +31,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-09-09 | Patch: 12.1 | Version: 3.17.0"
+    text: "Last update: 2026-09-09 | Patch: 12.1 | Version: 3.18.0"
 
   # String the talent.X checks below assume.
   recommended_talents:
