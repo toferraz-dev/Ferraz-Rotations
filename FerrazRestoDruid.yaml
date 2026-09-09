@@ -590,10 +590,6 @@ lists:
     # restack tick; refreshing under 4.5s keeps the stacks it has built.
     - lifebloom,name="Lifebloom (Tank)",cycle=tanks,if=config.lifebloom_target=2&(cycle.buff.lifebloom.down|cycle.buff.lifebloom.refreshable)
 
-    # NEW in 5.0 — Photosynthesis wants a Rejuvenation on yourself.
-    - rejuvenation.player,name="Self Rejuvenation (Photosynthesis)",range_check=none,if=talent.photosynthesis&player.combat&buff.rejuvenation.down
-
-
     # Spend the Abundance window. Regrowth at -60% .
     - regrowth,name="Abundance Regrowth",cycle=members,if=buff.abundance.up&cycle.health.effective.pct<config.regrowth_threshold
 
@@ -607,8 +603,6 @@ lists:
   # Utilities, Mobility, and Mana Recovery
   utility:
     - bear_form,name="Shapeshift Clear",line_cd=8,if=config.root_cleanse&var.druid_shapeshift_root&!player.stunned&!buff.bear_form.up
-    # innervate.player, not bare innervate. Without.
-    - innervate.player,name="Innervate",off_gcd=true,ignore_queue=true,delay=150,range_check=none,if=talent.innervate&mana.pct<config.innervate_threshold&fight_remains>15
     - stampeding_roar,name="Stampeding Roar",if=var.use_stampeding_roar&config.stampeding_roar_usage!=0
 
   # ABUNDANCE CHANGED IN 12.1 and this list was still written for the old one.
