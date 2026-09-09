@@ -14,7 +14,7 @@
 # bug this file has already been through. Read it before changing a line -
 # most of what looks improvable here was tried and reverted.
 # =============================================================================
-version: "8.11.0"
+version: "9.11.0"
 author: Ferraz
 patch: "12.1"
 spec: 105
@@ -29,16 +29,19 @@ predictions:
 
 # SPELL OVERRIDES — AND-ed into every occurrence of that spell in the file.
 #
-# Simia cannot cast either of these while shapeshifted into Cat or Bear Form:
-# it keeps suggesting them, the client refuses, and the rotation stalls on the
-# line instead of moving on. Gated here rather than per line — Rejuvenation has
-# 12 call sites across 7 lists and Ironbark 2, and a line added later would
-# reintroduce the bug silently.
+# Ironbark (102342) is not castable while shapeshifted into Cat or Bear Form:
+# Simia keeps suggesting it, the client refuses, and the rotation stalls on the
+# line instead of moving on. Gated here rather than per line — 2 call sites, and
+# a line added later would reintroduce the bug silently.
 #
-# Numeric ids, not names, because the call sites are numeric (774 / 102342) —
-# see rotation_1480.yaml and rotation_266.yaml for the same pattern.
+# Rejuvenation (774) was gated the same way and is deliberately NOT anymore: the
+# `Reju Out Cat For Convoke` line below casts it IN form on purpose, using the
+# form break as its whole point. A global override cannot make an exception for
+# one line, so the choice is one or the other.
+#
+# Numeric id, not the name, because the call sites are numeric — see
+# rotation_1480.yaml and rotation_266.yaml for the same pattern.
 spell_overrides:
-  774:    "!buff.cat_form.up&!buff.bear_form.up"
   102342: "!buff.cat_form.up&!buff.bear_form.up"
 
 config:
@@ -47,7 +50,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-09-09 | Patch: 12.1 | Version: 8.11.0"
+    text: "Last update: 2026-09-09 | Patch: 12.1 | Version: 9.11.0"
 
   # RECOMMENDED BUILD — the string the talent.X gates below assume.
   recommended_talents:
@@ -584,22 +587,13 @@ lists:
     # stalls on the line). Cancelling the form directly is the same intent
     # without needing a spell the client will not cast.
     #
-    # UNVERIFIED IN GAME, and the weakest line in this file. `cancel_buff` is
-    # in neither SIMIA_DOCUMENTATION.md nor expression-catalog.json, and the
-    # rotation-yaml-intellisense extension flags it `Unknown spell` - while it
-    # does NOT flag stop_casting/target_enemy/healthstone, which it knows. So
-    # the editor thinks this action does not exist. `lint_rotations.py` passes
-    # it. The one precedent is community_TeK_s_Jesus_Juice.yaml:404, bare
-    # `cancel_buff` to leave Ghost Wolf so the shaman can heal - same shape as
-    # this, but that line is itself unvalidated.
-    #
-    # VERIFY with `/simia snapshot` in Cat Form with the group hurt: the trace
-    # should show this line SANITY PASS and get Selected. If it shows
-    # "no spell data" or never fires, the fallback to try is re-casting the
-    # form to toggle it off (`cat_form,if=buff.cat_form.up`) - also unverified,
-    # since every form cast in this repo and in rotation_105.yaml is gated on
-    # the form being DOWN, never up.
-    - cancel_buff,name="Leave Form For Convoke",if=(group.count(cycle.health.effective.pct<config.convoke_threshold&!cycle.tank)>=config.convoke_members)&(buff.cat_form.up|buff.bear_form.up)
+    # A `cancel_buff` version of this line shipped briefly and was reverted: it
+    # is in neither SIMIA_DOCUMENTATION.md nor expression-catalog.json, and
+    # rotation-yaml-intellisense flags it `Unknown spell`. Casting Rejuvenation
+    # is the mechanism that was here originally and is what the official
+    # rotation_105.yaml also relies on (it casts rejuvenation with
+    # `buff.cat_form.up` in the gate, line 328).
+    - 774,name="Reju Out Cat For Convoke",if=(group.count(cycle.health.effective.pct<config.convoke_threshold&!cycle.tank)>=config.convoke_members)&(buff.cat_form.up|buff.bear_form.up)
     - trinket_1,delay=150,name="Trinket 1",if=config.use_trinket_1&trinket_1.ready&(group.count(cycle.health.effective.pct<config.convoke_threshold&!cycle.tank)>=config.convoke_members)&!buff.cat_form.up&!buff.bear_form.up
     - trinket_2,delay=150,name="Trinket 2",if=config.use_trinket_2&trinket_2.ready&(group.count(cycle.health.effective.pct<config.convoke_threshold&!cycle.tank)>=config.convoke_members)&!buff.cat_form.up&!buff.bear_form.up
     - combat_potion,delay=150,name="Combat Potion",if=combat_potion.ready&config.use_potion&(group.count(cycle.health.effective.pct<config.convoke_threshold&!cycle.tank)>=config.convoke_members)&!buff.cat_form.up&!buff.bear_form.up
@@ -675,7 +669,7 @@ lists:
     # cast — Rake enters Cat AND applies the bleed in one global.
     #
     # An explicit `cat_form` entry shipped as 8.10.0 and was reverted here in
-    # 8.11.0, without being tested in game. The case for it was the Zinney log (top-tier, THIS
+    # 9.11.0, without being tested in game. The case for it was the Zinney log (top-tier, THIS
     # talent string): 102 explicit Cat Form casts against 91 Rakes, nearly 1:1.
     # The case against is the global it costs on every single entry, which is
     # what this Fluid Form entry exists to save. If the Fluid entry ever fails

@@ -14,7 +14,7 @@
 # most of what looks improvable here was tried and reverted.
 # =============================================================================
 
-version: "2.17.0"
+version: "3.17.0"
 author: Ferraz
 patch: "12.1"
 spec: 105
@@ -25,16 +25,19 @@ entry: main
 
 # SPELL OVERRIDES — AND-ed into every occurrence of that spell in the file.
 #
-# Simia cannot cast either of these while shapeshifted into Cat or Bear Form:
-# it keeps suggesting them, the client refuses, and the rotation stalls on the
-# line instead of moving on. Gated here rather than per line — Rejuvenation has
-# 11 call sites and Ironbark 2, and a line added later would reintroduce the
-# bug silently. Same block as FerrazRestoDruid.yaml.
+# Ironbark (102342) is not castable while shapeshifted into Cat or Bear Form:
+# Simia keeps suggesting it, the client refuses, and the rotation stalls on the
+# line instead of moving on. Gated here rather than per line — 2 call sites, and
+# a line added later would reintroduce the bug silently.
 #
-# Numeric ids, not names, because the call sites are numeric (774 / 102342) —
-# see rotation_1480.yaml and rotation_266.yaml for the same pattern.
+# Rejuvenation (774) was gated the same way and is deliberately NOT anymore: the
+# `Shift Out For Convoke` line below casts it IN form on purpose, using the form
+# break as its whole point. A global override cannot make an exception for one
+# line, so the choice is one or the other. Same block as FerrazRestoDruid.yaml.
+#
+# Numeric id, not the name, because the call sites are numeric — see
+# rotation_1480.yaml and rotation_266.yaml for the same pattern.
 spell_overrides:
-  774:    "!buff.cat_form.up&!buff.bear_form.up"
   102342: "!buff.cat_form.up&!buff.bear_form.up"
 
 # CONFIG — thresholds below are untested defaults, tune to your team.
@@ -45,7 +48,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-09-09 | Patch: 12.1 | Version: 2.17.0"
+    text: "Last update: 2026-09-09 | Patch: 12.1 | Version: 3.17.0"
 
   # String the talent.X checks below assume.
   recommended_talents:
@@ -527,21 +530,14 @@ lists:
   # Regrowth -> Tranquility -> self Swiftmend (Archdruid) -> reactive
   # Swiftmend -> Clearcasting Regrowth.
   cooldowns:
-    # CONVOKE IS FORM-DEPENDENT.
-    # Drop the form so the Convoke line below - gated on !buff.cat_form.up&
+    # CONVOKE IS FORM-DEPENDENT. Casting Rejuvenation here breaks the form as a
+    # side effect, so the Convoke line below - gated on !buff.cat_form.up&
     # !buff.bear_form.up&!buff.moonkin_form.up - can fire on the next pass.
     #
-    # This used to cast Rejuvenation here on purpose: a caster spell breaks the
-    # form as a side effect. That is dead now, because the spell_overrides
-    # block at the top of this file forbids Rejuvenation in Cat/Bear entirely.
-    #
-    # UNVERIFIED IN GAME - see the twin line in FerrazRestoDruid.yaml for the
-    # full evidence: `cancel_buff` is in neither SIMIA_DOCUMENTATION.md nor
-    # expression-catalog.json, and rotation-yaml-intellisense flags it
-    # `Unknown spell`. Verify with `/simia snapshot` in Cat Form with the raid
-    # hurt and Convoke ready: this line should show SANITY PASS and get
-    # Selected.
-    - cancel_buff,name="Leave Form For Convoke",if=cooldown.convoke_the_spirits.ready&group.count(cycle.health.effective.pct<config.raid_convoke_threshold)>=config.raid_convoke_members&(buff.cat_form.up|buff.bear_form.up)
+    # A `cancel_buff` version shipped briefly and was reverted: it is in neither
+    # SIMIA_DOCUMENTATION.md nor expression-catalog.json, and
+    # rotation-yaml-intellisense flags it `Unknown spell`.
+    - 774,name="Shift Out For Convoke",cycle=members,if=cooldown.convoke_the_spirits.ready&group.count(cycle.health.effective.pct<config.raid_convoke_threshold)>=config.raid_convoke_members&(buff.cat_form.up|buff.bear_form.up)
     - natures_swiftness,name="NS (Pre-Convoke)",range_check=none,if=cooldown.convoke_the_spirits.ready&group.count(cycle.health.effective.pct<config.raid_convoke_threshold)>=config.raid_convoke_members&!buff.cat_form.up&!buff.bear_form.up&!buff.moonkin_form.up&buff.abundance.up
     - trinket_1,name="Trinket 1",if=config.raid_use_trinket_1&trinket_1.ready&buff.natures_swiftness.up
     - trinket_2,name="Trinket 2",if=config.raid_use_trinket_2&trinket_2.ready&buff.natures_swiftness.up
@@ -617,11 +613,10 @@ lists:
   # Entry into physical DPS (Fluid Form auto-shift or manual), then hands off
   # to catweave_st/catweave_aoe.
   catweave:
-    # Name is now historical: the spell_overrides block forbids Rejuvenation in
-    # Cat/Bear, so this can only fire in caster form - which is fine, because it
-    # sits ABOVE the entry lines below and tops the raid up right before you
-    # dive in. The `buff.cat_form.up` half of its own gate is dead weight; the
-    # `talent.fluid_form` half is what keeps the line alive on this build.
+    # Sits ABOVE the entry lines below, so it tops the raid up right before you
+    # dive in, and keeps Rejuvenation rolling from inside Cat Form too - the
+    # `buff.cat_form.up` half of the gate is live again now that Rejuvenation is
+    # no longer in spell_overrides.
     - 774,name="Cat Rejuvenation",cycle=members,if=cycle.buff.rejuvenation.remains<4&(buff.cat_form.up|talent.fluid_form)&(!target.in_melee|!var.group_healthy)
     - 1822,name="Fluid Rake",if=talent.fluid_form&!buff.cat_form.up&debuff.rake.refreshable
     - shred,name="Fluid Shred",if=talent.fluid_form&!buff.cat_form.up
