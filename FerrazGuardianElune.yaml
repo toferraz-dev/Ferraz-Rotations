@@ -6,18 +6,10 @@
 #   engine                  set_tank_var            defensives              cooldowns
 #   bear                    st                      aoe                     main
 #
-# REFERENCE BUILD 1.10.0: drops Raze, nothing else moved. Heart of the Wild,
-# Soul of the Forest, Lunar Calling, Lunation and Flashing Claws rank 2 all
-# stay, so the HotW weave and both Thrash lines are unaffected. The two Raze
-# lines in `bear` are now dead weight; the two Maul lines beside them are live.
-#
-# WHY ANY OF IT IS THE WAY IT IS: .agents/rationale/GuardianElune.md
-# That file carries every measurement, every rejected alternative and every
-# bug this file has already been through. Read it before changing a line -
-# most of what looks improvable here was tried and reverted.
-# =============================================================================
+# Build drops Raze: the two Raze lines in bear are dead weight, the Maul
+# lines beside them are live.
 
-version: "1.18.0"
+version: "1.19.0"
 patch: "12.1"
 spec: 104
 name: Guardian Druid Ferraz M+
@@ -53,7 +45,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-09-04 | Patch: 12.1 | Version: 1.18.0"
+    text: "Last update: 2026-09-04 | Patch: 12.1 | Version: 1.19.0"
 
   # Exact string every number here was measured against (sim/Tassiana_guardian.simc).
   recommended_talents:
@@ -160,11 +152,8 @@ config:
   # The two below hold the weave when the NEXT few seconds look bad, not just
   # the current HP. Set either to 0 to disable that check.
   #
-  # An Ironfur-remaining gate lived here until 1.16.0, requiring 4s left before
-  # the weave. It was sized for a weave that cost "3-4 GCDs" - it does not.
-  # Shapeshift is off-GCD and only one of HotW/morph resolves per form, so the
-  # window is ONE GCD: measured at 1.10-1.20s across six weaves in a world-class
-  # Guardian log. Holding 4s of armour for a 1.15s trip was a 3x margin.
+  # No Ironfur gate: the weave is ONE GCD (~1.15s measured), not the 3-4 GCDs
+  # an old gate was sized for.
   hotw_buster_window:
     section: "Cooldowns"
     label: "Heart of the Wild (tank buster window)"
@@ -182,10 +171,8 @@ config:
     default: 10
     description: "Skip the weave when the target dies sooner than this. Heart of the Wild is a 120s cooldown that fires an off-role ability for the current form - Feral Frenzy in Cat - so spending it on a pack that is about to die throws the cooldown away."
   # === TRINKETS === the Incarnation window is the whole gate. No TTD slider:
-  # Incarnation carries no TTD check either, so a second one on the trinkets
-  # only desynced the pair on short pulls - the trinket sat out a window the
-  # burst had already opened. Still not trinket_X.sync, which AND-s in Simia's
-  # own burst check on top, invisible to this file.
+  # No TTD check here: Incarnation has none either, and a second one only
+  # desynced the pair on short pulls.
 
   trinket_sync_burst:
     section: "Cooldowns"
@@ -330,19 +317,14 @@ variables:
   # talents, so this covers whichever one the build has.
   burst_active: buff.incarnation_guardian_of_ursoc.up|buff.berserk.up
 
-  # Is there anything actually in melee to spend a cooldown on. Gates the
-  # trinkets, the potion and Berserk/Incarnation - all three used to fire on
-  # cooldown while running between packs, burning a window on empty air.
-  # enemies.combat.8y, the same count var.aoe_mode and the engine's auto-target
-  # use, so "melee range" means one thing across the file. Combat-filtered on
-  # purpose: these are combat cooldowns and must not arm on an unpulled pack.
+  # Is there anything in melee to spend a cooldown on. Gates trinkets, potion
+  # and Berserk/Incarnation, which used to fire while running between packs.
+  # Combat-filtered on purpose - must not arm on an unpulled pack.
   melee_engaged: "!config.cds_require_melee|enemies.combat.8y>=1"
 
-  # Gate for the HotW weave. target.in_melee matters: without it the weave
-  # fired while running to the pack and burned the cooldown out of range -
-  # the morph is Feral Frenzy, which has a 5 yard range.
-  # Health alone is not enough: the last three checks look at the next few
-  # seconds (incoming damage, predicted buster, target TTD) instead.
+  # Gate for the HotW weave. target.in_melee matters - the morph is Feral
+  # Frenzy, which has a 5 yard range. Health alone is not enough, so the last
+  # three checks look at the next few seconds instead.
   hotw_weave: config.auto_hotw&talent.heart_of_the_wild&cooldown_bypass.heart_of_the_wild.ready&target.valid&target.attackable&target.in_melee&player.combat&combat.time>=config.hotw_delay&player.standing.time>=config.hotw_min_standing_time&health.pct>=config.hotw_hp_pct&!var.heavy_incoming&variable.tank_buster_remains>config.hotw_buster_window&target.time_to_die>=config.hotw_min_ttd&!buff.incarnation_guardian_of_ursoc.up&!buff.berserk.up
 
 lists:
@@ -398,9 +380,8 @@ lists:
     - barkskin,name="Barkskin (Predicted Damage)",range_check=none,if=incoming.mitigated.pct>=config.barkskin_dmg_pct
     - survival_instincts,name="Survival Instincts (Predicted Damage)",range_check=none,if=incoming.mitigated.pct>=config.survival_instincts_dmg_pct
     - survival_instincts,name="Survival Instincts (HP)",range_check=none,if=health.pct<=config.survival_instincts_hp_pct
-    # Effective health here, raw everywhere else in the set: a tank has a healer
-    # actively topping them, and effective counts heals already in flight, so
-    # the charge is not spent on a bar that is about to refill on its own.
+    # Effective health here, raw everywhere else: a tank has a healer topping
+    # them, so the charge is not spent on a bar about to refill on its own.
     - frenzied_regeneration,range_check=none,if=health.effective.pct<=config.frenzied_regeneration_hp_pct&buff.frenzied_regeneration.down
     - barkskin,name="Barkskin (HP)",range_check=none,if=health.pct<=config.barkskin_hp_pct
 
@@ -410,9 +391,8 @@ lists:
     # +0.17% (noise). Moving check: it's a ground effect, running out wastes it.
     - lunar_beam,if=target.valid&(!config.lunar_beam_moving_check|player.moving.time<=1)
 
-    # Berserk/Incarnation are mutually exclusive talents, both listed so the
-    # file works either way. Both carry var.melee_engaged: a burst opened while
-    # running between packs is a burst spent on nothing.
+    # Berserk/Incarnation are exclusive talents, both listed so the file works
+    # either way. var.melee_engaged stops a burst opened on nothing.
     - berserk,if=target.valid&var.melee_engaged&(!config.auto_hotw|!talent.heart_of_the_wild|!cooldown_bypass.heart_of_the_wild.ready)
     - incarnation_guardian_of_ursoc,if=target.valid&var.melee_engaged&(!config.auto_hotw|!talent.heart_of_the_wild|!cooldown_bypass.heart_of_the_wild.ready)
 
@@ -492,10 +472,8 @@ lists:
     - call_action_list,name=engine
 
     - mark_of_the_wild,range_check=none,if=(buff.mark_of_the_wild.down.any|action.mark_of_the_wild.overlayed)&lastcast.mark_of_the_wild>=10
-    # !cat_form yields to the weave below so they don't fight each other.
-    # enemies.40y is BARE on purpose - not enemies.combat.40y. This runs before
-    # the pull, where the combat-filtered count is 0 by definition and the line
-    # would be dead. Do not "standardise" it.
+    # !cat_form yields to the weave below. enemies.40y is BARE on purpose -
+    # pre-pull the combat-filtered count is 0.
     - bear_form,range_check=none,if=buff.bear_form.down&!buff.cat_form.up&(target.attackable|enemies.40y)
 
     # --- Heart of the Wild weave — biggest block in the file: -15%
@@ -533,9 +511,8 @@ lists:
     - growl.mouseover,name="Taunt MO",if=mouseover.threat<2&mouseover.combat&mouseover.threat!=-1&mouseover.exists&!player.inraid
 
 
-    # player.combat is redundant with the combat wall above and stated anyway:
-    # these lines are the ones most likely to be moved, and the guard should
-    # travel with them.
+    # player.combat is redundant with the combat wall above, kept so the guard
+    # travels with these lines if they move.
     - trinket_1,name="Trinket 1",if=trinket_1.ready&player.combat&var.melee_engaged&(!config.trinket_sync_burst|var.burst_active)
     - trinket_2,name="Trinket 2",if=trinket_2.ready&player.combat&var.melee_engaged&(!config.trinket_sync_burst|var.burst_active)
 

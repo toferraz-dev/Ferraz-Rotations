@@ -7,13 +7,10 @@
 #   aoe_finisher            builder                 aoe_builder             heal_support
 #   form                    interrupts              predatory_swiftness     main
 #
-# WHY ANY OF IT IS THE WAY IT IS: .agents/rationale/FeralRaid.md
-# That file carries every measurement, every rejected alternative and every
-# bug this file has already been through. Read it before changing a line -
-# most of what looks improvable here was tried and reverted.
+# Why each line is the way it is: .agents/rationale/FeralRaid.md
 # =============================================================================
 
-version: "1.13.0"
+version: "1.14.0"
 author: Ferraz
 patch: "12.1"
 spec: 103
@@ -28,7 +25,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-09-01 | Patch: 12.1 | Version: 1.13.0"
+    text: "Last update: 2026-09-01 | Patch: 12.1 | Version: 1.14.0"
 
   recommended_talents:
     section: "Talents"
@@ -36,10 +33,6 @@ config:
     label: "Recommended Talent String"
     text: "CcGADBD3hSPCL9Y9gz68WcKvMAAAAAAwYMjxYmZMmtFWGbzMzYmZAAAAYJY2gxMjaGziZmZGjZegBAAAAAAwAAAAIAYWmZrZbmlNYmZAWMDGAAzMAYA"
 
-  # The panic Bear Form shift had a literal 25 and no name=, the only
-  # threshold in either Feral file that was not a slider and the only
-  # The panic Bear shift used to be a literal 25 with no name=, the only
-  # threshold in either Feral file that was not a slider.
   panic_bear_hp_pct:
     label: "Panic Bear Form HP %"
     section: "Defensive HP Percentage"
@@ -246,9 +239,8 @@ variables:
   rip_tf: debuff.rip.visual_id=491158
   moonfire_tf: debuff.moonfire.visual_id=500891
 
-  # Roots and snares only - what a shapeshift actually breaks. NOT
-  # debuff_list.freedom, which also lists stuns and untagged debuffs a shift
-  # does nothing to, and which looped the cleanse in game. See the rationale.
+  # Roots and snares only - what a shift actually breaks. NOT
+  # debuff_list.freedom.
   druid_shapeshift_root: player.debuff.root.up|player.debuff.snare.up
 
 lists:
@@ -325,9 +317,8 @@ lists:
     - ravage,name="Ravage (Fallback)",if=combo_points>=5
 
   aoe_finisher:
-    # Primal Wrath and Rampant Ferocity are NOT on the raid string, so the
-    # lines gated on them are inert and the Rip/Bite fallbacks are the live
-    # path.
+    # Primal Wrath and Rampant Ferocity are not on the raid string, so those
+    # lines are inert and Rip/Bite are the live path.
     - primal_wrath,name="Primal Wrath (Refresh)",if=combo_points>=5&enemies.combat.8y>1&(dot.rip.remains<6.5&!var.bs_inc|dot.rip.refreshable)
     - ravage,name="Ravage (No Primal Wrath)",if=combo_points>=5&!talent.primal_wrath&enemies.combat.8y>=2+(3*!talent.rampant_ferocity)
     - rip,if=combo_points>=5&!talent.primal_wrath&(dot.rip.down|dot.rip.refreshable&(buff.tigers_fury.up|!var.rip_tf))
@@ -374,23 +365,17 @@ lists:
     # Both gated on the panic threshold: Shapeshift Clear also puts you in Bear,
     # at any health, and neither of these is worth spending on a root break.
     - heart_of_the_wild,range_check=none,if=buff.bear_form.up&player.combat&health.pct<=config.panic_bear_hp_pct
-    # After HotW, so the heal lands on the larger pool the bear morph just made.
-    # One charge, 36s recharge, 3s HoT - the .down guard stops it overwriting
-    # its own tick and burning the recharge for nothing.
+    # After HotW, so it heals against the bigger pool. .down guard stops it
+    # overwriting its own tick.
     - frenzied_regeneration,range_check=none,if=buff.bear_form.up&player.combat&health.pct<=config.panic_bear_hp_pct&buff.frenzied_regeneration.down
 
     - shred,if=player.combat&target.attackable&target.in_melee&buff.cat_form.down&talent.fluid_form.enabled
     - rake,if=player.combat&target.attackable&target.in_melee&buff.cat_form.down&talent.fluid_form.enabled
-    # enemies.40y is BARE on purpose - not enemies.combat.40y. This runs before
-    # the pull, where the combat-filtered count is 0 by definition and the line
-    # would be dead. Do not "standardise" it.
+    # enemies.40y is BARE on purpose - pre-pull the combat count is 0.
     - cat_form,range_check=none,if=buff.cat_form.down&(target.attackable|enemies.40y)
 
-    # Prowl cannot be cast in combat — pre-pull opener only. See the M+ file
-    # for the full note on why this needs an explicit !player.combat.
-    # enemies.40y is BARE on purpose - not enemies.combat.40y. This runs before
-    # the pull, where the combat-filtered count is 0 by definition and the line
-    # would be dead. Do not "standardise" it.
+    # Pre-pull opener only: Prowl cannot be cast in combat, so without
+    # !player.combat this traps every GCD. enemies.40y is BARE on purpose.
     - prowl,range_check=none,if=!player.combat&!var.bs_inc&buff.prowl.down&buff.shadowmeld.down&(target.attackable|enemies.40y)
 
   interrupts:

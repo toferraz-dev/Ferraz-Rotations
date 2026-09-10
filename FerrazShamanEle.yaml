@@ -17,15 +17,11 @@
 # Stormkeeper, Elemental Blast, Voltaic Blaze, Purging Flames, Inferno Arc,
 # Molten Wrath, Crackling Fury, Echo Chamber, Mountains Will Fall.
 #
-# NOT on this build, which removes a large part of SimC's default priority:
-# Master of the Elements, Tempest, Lightning Rod, Earth Shock, Eye of the
-# Storm, Power of the Maelstrom, Thunderstrike Ward. Every line those talents
-# gated is absent here rather than carried dead.
-#
-# WHY ANY OF IT IS THE WAY IT IS: .agents/rationale/ShamanEle.md
-# =============================================================================
+# Not on this build: Master of the Elements, Tempest, Lightning Rod, Earth
+# Shock, Eye of the Storm, Power of the Maelstrom, Thunderstrike Ward. The
+# lines they gate are absent rather than carried dead.
 
-version: "1.5.0"
+version: "1.6.0"
 patch: "12.1"
 spec: 262
 name: Elemental Shaman Ferraz M+
@@ -51,7 +47,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-09-01 | Patch: 12.1 | Version: 1.5.0"
+    text: "Last update: 2026-09-01 | Patch: 12.1 | Version: 1.6.0"
 
   # The most-used Elemental string on the logs sites. Byte-different from the
   # one this file was written against, same talents - see the rationale.
@@ -251,9 +247,8 @@ config:
     default: 250
     description: "Do not press the kick when the cast ends sooner than this - it would land after the cast completed and be wasted on the cooldown. Raise it if your latency is high. Channels ignore this."
 
-  # Fallbacks for when Wind Shear is on cooldown. Wind Shear on the mouseover
-  # itself needs no switch here - Simia's shared "Interrupt Mouseover" already
-  # owns it, and duplicating that switch would just let the two disagree.
+  # Fallbacks for when Wind Shear is on cooldown. Mouseover Wind Shear is
+  # already owned by Simia's shared list.
   mo_cap_totem:
     section: "Interrupts"
     label: "Mouseover Capacitor Totem"
@@ -364,31 +359,19 @@ variables:
   trinkets_ttd_ok: (target.boss|target.time_to_die>=config.ttd_trinkets|fight_remains>=config.ttd_trinkets)
   potion_ttd_ok: (target.boss|target.time_to_die>=config.ttd_potion|fight_remains>=config.ttd_potion)
 
-  # TTD cannot be trusted on the first GCD of a pack: with no damage dealt yet
-  # there is no history to estimate from, target.time_to_die comes out huge,
-  # cd_ttd_ok passes, and the burst flies into a pack that dies in 8s. Flame
-  # Shock ticking is the proof that damage has landed and the estimate has
-  # converged; the standing time is the proof the pull is parked. Same shape as
-  # FerrazBalance's pull_engaged, which uses its own DoTs.
-  #
-  # Flame Shock is reachable in both lists - the st list casts it directly, and
-  # in aoe Voltaic Blaze applies it and sits above Ascendance - so this costs at
-  # most one global at the start of a pull.
+  # TTD is not trustworthy on the first GCD of a pack - with no damage dealt
+  # it reads huge and the burst flies into a pack that dies in 8s. Flame Shock
+  # ticking proves damage landed; standing time proves the pull is parked.
+  # Flame Shock is reachable in both lists, so this costs at most one global.
   pull_engaged: player.combat&player.standing.time>=config.burst_min_standing_time&dot.flame_shock.up
 
   # STORMKEEPER FIRST, THEN ASCENDANCE. Both halves were wrong before 1.4.0.
   #
-  # sk_ready used cooldown.ascendance.remains>10 to mean "not in Ascendance".
-  # It does not: with the buff UP the cooldown reads ~180, which is >10, so
-  # Stormkeeper fired in the middle of Ascendance - the thing you never want.
-  # The buff is what has to be checked, not its cooldown.
+  # Checks the BUFF, not the cooldown: with Ascendance up its cooldown reads
+  # ~180, so a remains>10 test fired Stormkeeper mid-Ascendance.
   sk_ready: var.burst_ok&var.cd_ttd_ok&var.pull_engaged&!buff.ascendance.up
-  #
-  # asc_ready required Stormkeeper to be FAR from ready, which separated the
-  # two instead of pairing them. Ascendance now only follows Stormkeeper: while
-  # its buff is up, or within sk_asc_gap seconds of the cast. Stormkeeper is
-  # 60s and Ascendance 180s, so Ascendance holds for the third Stormkeeper
-  # rather than going out alone.
+  # Ascendance only follows Stormkeeper - while its buff is up, or within
+  # sk_asc_gap of the cast. It holds for the third Stormkeeper, never goes alone.
   asc_ready: var.burst_ok&var.cd_ttd_ok&var.pull_engaged&(buff.stormkeeper.up|lastcast.stormkeeper<=config.sk_asc_gap)
 
 lists:
@@ -447,18 +430,16 @@ lists:
     - earth_elemental,name="Earth Elemental",range_check=none,if=health.effective.pct<=config.earth_elemental_hp_pct
     - healing_surge.player,name="Healing Surge (Combat)",range_check=none,if=health.effective.pct<=config.healing_surge_hp_pct
 
-  # Mouseover interrupt system. Hover the caster's nameplate - nothing here
-  # swaps your target. Priority: Wind Shear -> Capacitor Totem -> Thunderstorm.
-  # interrupt.*.check = Simia's own kick filters.
+  # Hover the caster's nameplate - nothing here swaps your target.
+  # Wind Shear -> Capacitor Totem -> Thunderstorm.
   interrupts:
     # --- Wind Shear, 30y ---
     - wind_shear,if=interrupt.target.check&var.kick_ok_target
     - wind_shear.mouseover,if=interrupt.mouseover.check&var.kick_ok_mouseover
     - wind_shear.focus,if=interrupt.focus.check&var.kick_ok_focus
 
-    # --- Capacitor Totem, only while the kick is actually down. .cursor and
-    # .mouseover, never .player: a stun totem at your own feet reaches nothing
-    # from 40 yards.
+    # Capacitor Totem, only while the kick is down. .cursor and .mouseover,
+    # never .player - a stun at your own feet reaches nothing from 40 yards.
     - capacitor_totem.mouseover,name="Cap Totem (Mouseover)",if=config.mo_cap_totem&!var.kick_ready&interrupt.stun.mouseover.check&mouseover.combat&mouseover.range<=40
     - capacitor_totem.cursor,name="Cap Totem (AoE)",if=config.cap_totem_aoe&!var.kick_ready&interrupt.stun.aoe.check
 

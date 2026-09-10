@@ -8,13 +8,10 @@
 #   moving_aoe              st                      aoe                     opener_st
 #   opener_aoe              main
 #
-# WHY ANY OF IT IS THE WAY IT IS: .agents/rationale/BalanceRaid.md
-# That file carries every measurement, every rejected alternative and every
-# bug this file has already been through. Read it before changing a line -
-# most of what looks improvable here was tried and reverted.
+# Why each line is the way it is: .agents/rationale/BalanceRaid.md
 # =============================================================================
 
-version: "2.16.1"
+version: "2.17.0"
 author: Ferraz
 patch: "12.1"
 spec: 102
@@ -29,7 +26,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-09-01 | Patch: 12.1 | Version: 2.16.1"
+    text: "Last update: 2026-09-01 | Patch: 12.1 | Version: 2.17.0"
 
   # Exact string every number here was measured against — Elune's Chosen, not Grove.
   recommended_talents:
@@ -284,15 +281,13 @@ variables:
   # Panic Bear Form line, so the exit gate below can never contradict it.
   bear_defensive_active: health.pct<=config.frenzied_regen_hp|(config.hotw_bear_defensive&health.effective.pct<=config.hotw_bear_hp&(cooldown.heart_of_the_wild.ready|buff.heart_of_the_wild.up))
 
-  # Roots and snares only - what a shapeshift actually breaks. NOT
-  # debuff_list.freedom, which also lists stuns and untagged debuffs a shift
-  # does nothing to, and which looped the cleanse in game. See the rationale.
+  # Roots and snares only - what a shift actually breaks. NOT
+  # debuff_list.freedom.
   druid_shapeshift_root: player.debuff.root.up|player.debuff.snare.up
 
 lists:
-  # Emergency, called from main ABOVE the casting guard. Everything here is
-  # off-GCD or an item, so it fires without touching the cast; only the last
-  # line ends it.
+  # Called ABOVE the casting guard. All off-GCD or items, so nothing here
+  # touches the cast - only the last line ends it.
   emergency:
     - barkskin,name="Barkskin (Emergency)",range_check=none,off_gcd=true,ignore_queue=true,if=health.effective.pct<=config.emergency_hp
     - healthstone,name="Healthstone (Emergency)",off_gcd=true,ignore_queue=true,delay=250,if=healthstone.ready&health.pct<=config.engine_healthstone
@@ -427,11 +422,8 @@ lists:
     # Lunar, not Solar: build-correct for Lunar Calling (SimC can't
     # distinguish, it models Eclipse as one spell).
     - lunar_eclipse,if=var.eclipse_down
-    # Fury of Elune on cooldown, NOT held for the Sundered Firmament window.
-    # Measured on the raid build and current gear, Patchwerk: dropping the
-    # gate here is +0.72% at one target and noise at 2, 5 and 8. The same
-    # removal in `aoe` LOSES (-0.31% at 2, -0.21% at 5), so that list keeps
-    # its gate - this is deliberately not symmetric.
+    # On cooldown, NOT held for Sundered Firmament. The aoe list keeps its
+    # gate - the asymmetry is deliberate.
     - fury_of_elune
     - force_of_nature,if=var.cd_active|cooldown.incarnation_chosen_of_elune.remains>30
 
@@ -498,10 +490,8 @@ lists:
 
   # Entry point: first matching line wins the GCD.
   main:
-    # This opening block is kept IDENTICAL to FerrazBalance.yaml. The two files
-    # diverge on purpose in their damage priorities, never in their plumbing.
-    # Emergency FIRST, above the casting guard below. Only reachable while you
-    # are actually casting and actually low, so it costs nothing otherwise.
+    # IDENTICAL to FerrazBalance.yaml on purpose - the two files diverge in
+    # damage priorities, never in plumbing.
     - call_action_list,name=emergency,if=player.combat&(player.casting|player.channeling)&health.effective.pct<=config.emergency_hp
 
     - return,if=player.channeling|player.casting

@@ -7,13 +7,10 @@
 #   defensives              trinkets                racials                 st
 #   aoe                     moving_st               moving_aoe              main
 #
-# WHY ANY OF IT IS THE WAY IT IS: .agents/rationale/Destruction.md
-# That file carries every measurement, every rejected alternative and every
-# bug this file has already been through. Read it before changing a line -
-# most of what looks improvable here was tried and reverted.
+# Why each line is the way it is: .agents/rationale/Destruction.md
 # =============================================================================
 
-version: "1.0.2"
+version: "1.1.0"
 author: Ferraz
 patch: "12.1"
 spec: 267
@@ -28,7 +25,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-08-27 | Patch: 12.1 | Version: 1.0.2"
+    text: "Last update: 2026-08-27 | Patch: 12.1 | Version: 1.1.0"
 
   # RECOMMENDED BUILD — the string this priority .
   recommended_talents:
@@ -71,9 +68,7 @@ config:
     type: toggle
     description: "Manual burst window. Only needed when Auto Burst is OFF."
 
-  # Same reasoning as inc_min_standing_time in FerrazBalance.yaml: while you
-  # are still repositioning behind the tank the pull is not parked, and an
-  # An Infernal dropped on a pack nobody has gathered is wasted, so the burst
+  # An Infernal dropped on a pack nobody gathered is wasted, so the burst
   # waits until the pull is parked.
   infernal_min_standing_time:
     label: "Infernal - Min Standing Still (s)"
@@ -351,9 +346,7 @@ lists:
   trinkets:
     - trinket_1,delay=150,name="Trinket 1",if=var.burst_ok&config.use_trinket_1&trinket_1.ready&player.combat&var.trinkets_ttd_ok&var.infernal_active
     - trinket_2,delay=150,name="Trinket 2",if=var.burst_ok&config.use_trinket_2&trinket_2.ready&player.combat&var.trinkets_ttd_ok&var.infernal_active
-    # fight_remains<=30 lets a potion that would otherwise be wasted at the
-    # end of a fight go out anyway — the same clause that measured +0.61% in
-    # FerrazBalance.yaml.
+    # fight_remains<=30 lets an otherwise wasted potion go out at the end.
     - combat_potion,delay=150,name="Combat Potion",if=var.burst_ok&config.use_potion&combat_potion.ready&player.combat&(var.potion_ttd_ok&var.infernal_active|fight_remains<=30)
 
   # Racials ride the same window, exactly as SimC's ogcd list does.
