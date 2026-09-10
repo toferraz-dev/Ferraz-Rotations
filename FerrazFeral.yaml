@@ -10,7 +10,7 @@
 # Why each line is the way it is: .agents/rationale/Feral.md
 # =============================================================================
 
-version: "4.1.0"
+version: "4.2.0"
 author: Ferraz
 patch: "12.1"
 spec: 103
@@ -25,7 +25,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-09-10 | Patch: 12.1 | Version: 4.1.0"
+    text: "Last update: 2026-09-10 | Patch: 12.1 | Version: 4.2.0"
 
   recommended_talents:
     section: "Talents"
@@ -295,12 +295,27 @@ variables:
   trinkets_ttd_ok: (target.boss|target.time_to_die>=config.ttd_trinkets|fight_remains>=config.ttd_trinkets)
   potion_ttd_ok: (target.boss|target.time_to_die>=config.ttd_potion|fight_remains>=config.ttd_potion)
 
-  # Burst sync. bs_inc_cd_remains<=5 lets a trinket land just BEFORE Berserk so
-  # its buff covers the whole window instead of starting one GCD late.
   # Parked long enough to spend a cooldown, and actually fighting. Guards
   # everything wasted by running out of the window it just opened.
   cd_ready_to_stand: player.combat&player.standing.time>=config.cd_standing_time
-  burst_now: var.bs_inc|var.bs_inc_cd_remains<=5
+
+  # Burst sync, anchored on Convoke.
+  #
+  # Convoke is the biggest single payoff in the window and it only fires inside
+  # Berserk, so it is what the trinkets and the potion key off - not Berserk's
+  # first GCD.
+  #
+  # convoke_worth_waiting: Convoke is talented, not ready yet, but back within
+  # 10s. Berserk lasts long enough to still contain it, so nothing is spent
+  # until it lands. Without this the trinkets dump on the opening GCD of
+  # Berserk and half their buff is gone by the time Convoke goes out.
+  convoke_burst_window: talent.convoke_the_spirits&cooldown.convoke_the_spirits.ready&var.convoke_ttd_ok&var.bs_inc
+  convoke_worth_waiting: talent.convoke_the_spirits&!cooldown.convoke_the_spirits.ready&cooldown.convoke_the_spirits.remains<=10
+
+  # Falls back to plain Berserk sync when Convoke is untalented or on a long
+  # cooldown. bs_inc_cd_remains<=5 lets a trinket land just BEFORE Berserk so
+  # its buff covers the whole window instead of starting one GCD late.
+  burst_now: var.convoke_burst_window|!var.convoke_worth_waiting&(var.bs_inc|var.bs_inc_cd_remains<=5)
   trinket_sync_ok: "!config.trinkets_burst_only|var.burst_now|fight_remains<25"
 
   rip_preempt: "enemies.combat.8y=1&combo_points>=5&dot.rip.up&(dot.rip.refreshable&(buff.tigers_fury.up|dot.rip.remains<cooldown.tigers_fury.remains)|buff.tigers_fury.up&!var.rip_tf|buff.tigers_fury.up&buff.tigers_fury.remains<2)"
