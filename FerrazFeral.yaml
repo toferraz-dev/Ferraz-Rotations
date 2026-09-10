@@ -10,7 +10,7 @@
 # Why each line is the way it is: .agents/rationale/Feral.md
 # =============================================================================
 
-version: "4.0.0"
+version: "4.1.0"
 author: Ferraz
 patch: "12.1"
 spec: 103
@@ -25,7 +25,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-09-10 | Patch: 12.1 | Version: 4.0.0"
+    text: "Last update: 2026-09-10 | Patch: 12.1 | Version: 4.1.0"
 
   recommended_talents:
     section: "Talents"
@@ -109,6 +109,15 @@ config:
     section: "Cooldowns"
     type: checkbox
     default: true
+
+  cd_standing_time:
+    label: "Cooldowns - Min Seconds Standing Still"
+    section: "Cooldowns"
+    type: slider
+    min: 0
+    max: 10
+    default: 1
+    description: "Hold trinkets, the combat potion, Berserk, Tiger's Fury and Convoke until you have stood still this long, and only in combat. Stops a whole burst window being spent while running between packs. Set to 0 to fire them the moment their own condition is met."
 
   trinkets_burst_only:
     label: "Trinkets Only In Burst"
@@ -288,6 +297,9 @@ variables:
 
   # Burst sync. bs_inc_cd_remains<=5 lets a trinket land just BEFORE Berserk so
   # its buff covers the whole window instead of starting one GCD late.
+  # Parked long enough to spend a cooldown, and actually fighting. Guards
+  # everything wasted by running out of the window it just opened.
+  cd_ready_to_stand: player.combat&player.standing.time>=config.cd_standing_time
   burst_now: var.bs_inc|var.bs_inc_cd_remains<=5
   trinket_sync_ok: "!config.trinkets_burst_only|var.burst_now|fight_remains<25"
 
@@ -344,20 +356,20 @@ lists:
     - barkskin,name="Barkskin (HP)",off_gcd=true,ignore_queue=true,range_check=none,if=health.pct<=config.barkskin_hp_pct
 
   cooldown:
-    - trinket_1,name="Trinket 1 (Burst Sync)",if=config.use_trinket_1&trinket_1.ready&var.trinkets_ttd_ok&var.trinket_sync_ok
-    - trinket_2,name="Trinket 2 (Burst Sync)",if=config.use_trinket_2&trinket_2.ready&var.trinkets_ttd_ok&var.trinket_sync_ok
+    - trinket_1,name="Trinket 1 (Burst Sync)",if=var.cd_ready_to_stand&config.use_trinket_1&trinket_1.ready&var.trinkets_ttd_ok&var.trinket_sync_ok
+    - trinket_2,name="Trinket 2 (Burst Sync)",if=var.cd_ready_to_stand&config.use_trinket_2&trinket_2.ready&var.trinkets_ttd_ok&var.trinket_sync_ok
     - berserking,if=var.bs_inc
     - blood_fury,if=var.bs_inc
     - fireblood,if=var.bs_inc
     - ancestral_call,if=var.bs_inc
-    - combat_potion,if=config.use_potion&combat_potion.ready&(var.burst_now&var.potion_ttd_ok|fight_remains<32)
-    - berserk,if=buff.tigers_fury.up&!var.holdBerserk&var.berserk_ttd_ok
+    - combat_potion,if=var.cd_ready_to_stand&config.use_potion&combat_potion.ready&(var.burst_now&var.potion_ttd_ok|fight_remains<32)
+    - berserk,if=var.cd_ready_to_stand&buff.tigers_fury.up&!var.holdBerserk&var.berserk_ttd_ok
     - feral_frenzy,if=!talent.frantic_frenzy&combo_points<=2+(2*var.bs_inc)
     - frantic_frenzy,if=buff.tigers_fury.up|combo_points<=2+(2*var.bs_inc)
     # Inside Berserk, on Tiger's Fury, on the GCD right after a finisher so the
     # channel snapshots a full window. Also fires when Tiger's Fury is about to
     # drop, since the channel outlives the buff otherwise.
-    - convoke_the_spirits,if=talent.convoke_the_spirits&var.bs_inc&var.convoke_ttd_ok&buff.tigers_fury.up&(prev_gcd.1.rip|prev_gcd.1.ferocious_bite|prev_gcd.1.primal_wrath|buff.tigers_fury.remains<=1+action.convoke_the_spirits.execute_time)
+    - convoke_the_spirits,if=var.cd_ready_to_stand&talent.convoke_the_spirits&var.bs_inc&var.convoke_ttd_ok&buff.tigers_fury.up&(prev_gcd.1.rip|prev_gcd.1.ferocious_bite|prev_gcd.1.primal_wrath|buff.tigers_fury.remains<=1+action.convoke_the_spirits.execute_time)
 
   finisher:
     - rip,if=combo_points>=5&(dot.rip.refreshable&(buff.tigers_fury.up|dot.rip.remains<cooldown.tigers_fury.remains)|buff.tigers_fury.up&!var.rip_tf&dot.rip.up|buff.tigers_fury.up&buff.tigers_fury.remains<2&dot.rip.up)
@@ -451,7 +463,7 @@ lists:
     - rake,range_check=none,if=buff.prowl.up&target.in_melee
     - return,if=buff.prowl.up
 
-    - tigers_fury,name="Tigers Fury (Refresh)",off_gcd=true,ignore_queue=true,if=(var.bs_inc_cd_remains<=1|var.bs_inc_cd_remains>10)&(cooldown.frantic_frenzy.remains<buff.tigers_fury.duration-1.5|cooldown.frantic_frenzy.remains>22|!talent.frantic_frenzy|enemies.combat.8y=1)
+    - tigers_fury,name="Tigers Fury (Refresh)",off_gcd=true,ignore_queue=true,if=var.cd_ready_to_stand&(var.bs_inc_cd_remains<=1|var.bs_inc_cd_remains>10)&(cooldown.frantic_frenzy.remains<buff.tigers_fury.duration-1.5|cooldown.frantic_frenzy.remains>22|!talent.frantic_frenzy|enemies.combat.8y=1)
 
     - chomp,if=buff.chomp_enabler.up
 
@@ -465,4 +477,4 @@ lists:
     - call_action_list,name=builder,if=enemies.combat.8y=1&combo_points<=4
     - call_action_list,name=aoe_builder,if=enemies.combat.8y>1&combo_points<=4
     - regrowth,range_check=none,if=buff.predatory_swiftness.up&var.regrowth
-    - tigers_fury,name="Tigers Fury (Fallback)",off_gcd=true,ignore_queue=true
+    - tigers_fury,name="Tigers Fury (Fallback)",off_gcd=true,ignore_queue=true,if=var.cd_ready_to_stand
