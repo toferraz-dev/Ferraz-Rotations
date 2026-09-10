@@ -11,7 +11,7 @@
 # Why each line is the way it is: .agents/rationale/RestoDruidRaid.md
 # =============================================================================
 
-version: "4.1.0"
+version: "4.2.0"
 author: Ferraz
 patch: "12.1"
 spec: 105
@@ -28,7 +28,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-09-09 | Patch: 12.1 | Version: 4.1.0"
+    text: "Last update: 2026-09-09 | Patch: 12.1 | Version: 4.2.0"
 
   # String the talent.X checks below assume.
   recommended_talents:
@@ -488,10 +488,8 @@ lists:
     # config.raid_use_mark_of_the_wild was defined but no line read it, so the
     # checkbox did nothing at all. Wired up here.
     - mark_of_the_wild,name="Mark of the Wild",range_check=none,if=config.raid_use_mark_of_the_wild&(buff.mark_of_the_wild.down.any|action.mark_of_the_wild.overlayed)&lastcast.mark_of_the_wild>=10
-    # Out of combat only - the spell refuses to cast in combat. The bond
-    # produces NO trackable aura of its own, so .any reads the two partner
-    # auras instead (one lands on the healer, one on the tank).
-    - symbiotic_relationship,cycle=tanks,if=(cycle.buff.symbiotic_relationship.down.any)&cycle.range<=40
+    # NO Symbiotic Relationship. Added in 4.1.0, pulled back out in 4.2.0 - it
+    # did not work in game. The M+ file keeps its own copy of the line.
 
     - lifebloom,name="OOC Lifebloom",cycle=members,if=((player.inraid|player.indungeon)&!talent.everbloom&cycle.health.effective.pct<config.raid_lifebloom_threshold&cycle.buff.lifebloom.down&(group.count(cycle.buff.lifebloom.up)=0|tank1.buff.lifebloom.up|tank2.buff.lifebloom.up)&!player.combat)&cycle.range<=40
     - lifebloom,name="OOC Lifebloom (Tank)",cycle=tanks,if=((player.inraid|player.indungeon)&!talent.everbloom&(cycle.buff.lifebloom.down|cycle.buff.lifebloom.remains<4.5)&(cycle.buff.lifebloom.up|group.count(cycle.buff.lifebloom.up)=0)&!player.combat)&cycle.range<=40
