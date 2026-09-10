@@ -10,7 +10,7 @@
 # Why each line is the way it is: .agents/rationale/FeralRaid.md
 # =============================================================================
 
-version: "1.14.0"
+version: "2.0.0"
 author: Ferraz
 patch: "12.1"
 spec: 103
@@ -25,13 +25,13 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-09-01 | Patch: 12.1 | Version: 1.14.0"
+    text: "Last update: 2026-09-10 | Patch: 12.1 | Version: 2.0.0"
 
   recommended_talents:
     section: "Talents"
     type: copy_text
     label: "Recommended Talent String"
-    text: "CcGADBD3hSPCL9Y9gz68WcKvMAAAAAAwYMjxYmZMmtFWGbzMzYmZAAAAYJY2gxMjaGziZmZGjZegBAAAAAAwAAAAIAYWmZrZbmlNYmZAWMDGAAzMAYA"
+    text: "CcGADBD3hSPCL9Y9gz68WcKvMAAAAAAAjZ2YmZmxY2WGLjtZmZmHYmBAAAglgZDGzMqZMLMzMjxMzAAAAAAAYAAAAEAMbzs0sMzyGYmBYxMDDAgZGAMA"
 
   panic_bear_hp_pct:
     label: "Panic Bear Form HP %"
@@ -105,6 +105,13 @@ config:
     section: "Cooldowns"
     type: checkbox
     default: true
+
+  trinkets_burst_only:
+    label: "Trinkets Only In Burst"
+    section: "Cooldowns"
+    type: checkbox
+    default: true
+    description: "Hold on-use trinkets for the Berserk window (they also fire 5s before it opens, and at the end of a fight). Turn it off to spend them on cooldown."
 
   use_potion:
     label: "Auto Combat Potion"
@@ -234,10 +241,15 @@ variables:
   zerkCountRemaining: floor(((fight_remains-var.bs_inc_cd)%var.bs_inc_cd_duration)+(fight_remains>var.bs_inc_cd_remains))
   firstHoldBerserkCondition: var.zerkCountRemaining=1&var.convokeCountRemaining=1&cooldown.convoke_the_spirits.remains>10
   secondHoldBerserkCondition: cooldown.convoke_the_spirits.remains>20&var.convokeCountRemaining=var.zerkCountRemaining&var.zerkCountRemaining=floor(((fight_remains-var.convoke_cd)%var.bs_inc_cd_duration)+(fight_remains>cooldown.convoke_the_spirits.remains))
-  holdBerserk: var.firstHoldBerserkCondition|var.secondHoldBerserkCondition
+  holdBerserk: talent.convoke_the_spirits&(var.firstHoldBerserkCondition|var.secondHoldBerserkCondition)
   rake_tf: debuff.rake.visual_id=491160
   rip_tf: debuff.rip.visual_id=491158
   moonfire_tf: debuff.moonfire.visual_id=500891
+
+  # Burst sync. bs_inc_cd_remains<=5 lets a trinket land just BEFORE Berserk so
+  # its buff covers the whole window instead of starting one GCD late.
+  burst_now: var.bs_inc|var.bs_inc_cd_remains<=5
+  trinket_sync_ok: "!config.trinkets_burst_only|var.burst_now|fight_remains<25"
 
   # Roots and snares only - what a shift actually breaks. NOT
   # debuff_list.freedom.
@@ -292,13 +304,13 @@ lists:
     - barkskin,name="Barkskin (HP)",off_gcd=true,ignore_queue=true,range_check=none,if=health.pct<=config.barkskin_hp_pct
 
   cooldown:
-    - trinket_1,if=config.use_trinket_1&trinket_1.ready
-    - trinket_2,if=config.use_trinket_2&trinket_2.ready
+    - trinket_1,name="Trinket 1 (Burst Sync)",if=config.use_trinket_1&trinket_1.ready&var.trinket_sync_ok
+    - trinket_2,name="Trinket 2 (Burst Sync)",if=config.use_trinket_2&trinket_2.ready&var.trinket_sync_ok
     - berserking,if=var.bs_inc
     - blood_fury,if=var.bs_inc
     - fireblood,if=var.bs_inc
     - ancestral_call,if=var.bs_inc
-    - combat_potion,if=config.use_potion&combat_potion.ready&(var.bs_inc|fight_remains<32)
+    - combat_potion,if=config.use_potion&combat_potion.ready&(var.burst_now|fight_remains<32)
     - berserk,if=buff.tigers_fury.up&!var.holdBerserk
     # Frantic Frenzy is NOT on the raid string, so the first line is the live
     # one here and the second is inert.
@@ -361,10 +373,10 @@ lists:
   form:
     # Bear costs the whole Cat rotation, so it has to buy something: Heart of
     # the Wild, or Frenzied Regeneration, or both.
-    - bear_form,name="Panic Bear Form",range_check=none,if=health.pct<=config.panic_bear_hp_pct&!buff.bear_form.up&player.combat&(cooldown.heart_of_the_wild.ready|buff.heart_of_the_wild.up|cooldown.frenzied_regeneration.ready&buff.frenzied_regeneration.down)
+    - bear_form,name="Panic Bear Form",range_check=none,if=health.pct<=config.panic_bear_hp_pct&!buff.bear_form.up&player.combat&(talent.heart_of_the_wild&(cooldown.heart_of_the_wild.ready|buff.heart_of_the_wild.up)|cooldown.frenzied_regeneration.ready&buff.frenzied_regeneration.down)
     # Both gated on the panic threshold: Shapeshift Clear also puts you in Bear,
     # at any health, and neither of these is worth spending on a root break.
-    - heart_of_the_wild,range_check=none,if=buff.bear_form.up&player.combat&health.pct<=config.panic_bear_hp_pct
+    - heart_of_the_wild,range_check=none,if=talent.heart_of_the_wild&buff.bear_form.up&player.combat&health.pct<=config.panic_bear_hp_pct
     # After HotW, so it heals against the bigger pool. .down guard stops it
     # overwriting its own tick.
     - frenzied_regeneration,range_check=none,if=buff.bear_form.up&player.combat&health.pct<=config.panic_bear_hp_pct&buff.frenzied_regeneration.down
