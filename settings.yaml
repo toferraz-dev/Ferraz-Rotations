@@ -37,7 +37,7 @@ spec_profiles:
           innervate_threshold: 50
           skull_bash_delay: 100
           use_potion: true
-          use_trinket_2: false
+          use_trinket_2: true
           regrowth_threshold: 35
           stampeding_roar_movement_time: 1
           aoe_threshold: 3
@@ -407,7 +407,7 @@ selected_rotation:
   102: C:\Games\Python\Rotations\FerrazBalanceRaid.yaml
   262: C:\Games\Python\Rotations\FerrazShamanEle.yaml
   104: C:\Games\Python\Rotations\FerrazGuardianElune.yaml
-  105: C:\Games\Python\Rotations\FerrazRestoDruidRaid.yaml
+  105: C:\Games\Python\Rotations\FerrazRestoDruid.yaml
 selected_community_rotation_name:
   104: "[Community] Khan No Apex Guardian Druid (1.0.7) - Khan"
   102: "[Community] Balance Druid Ferraz Raid (1.0) - Ferraz"
@@ -422,8 +422,8 @@ queue_icons_mode: 2
 queue_icons_size: 35
 queue_icons_grow: 0
 queue_icons_max: 3
-queue_icons_x: 1220
-queue_icons_y: 971
+queue_icons_x: 1221
+queue_icons_y: 976
 queue_icons_locked: true
 queue_bindings:
   104:
@@ -661,5 +661,58 @@ queue_bindings:
       enabled: true
       steps:
         - spell: 48438
+          target: 0
+          if: ""
+  103:
+    - name: Thorn
+      scancode: 5
+      modifier: 0
+      admit: cooldown.thorn_bloom.up
+      expire: ""
+      unqueue_on_cast: true
+      ttl: 0
+      priority_list: false
+      enabled: true
+      steps:
+        - spell: 1237885
+          target: 0
+          if: ""
+    - name: Vortex
+      scancode: 24
+      modifier: 0
+      admit: cooldown.ursols_vortex.up
+      expire: ""
+      unqueue_on_cast: true
+      ttl: 0
+      priority_list: false
+      enabled: true
+      steps:
+        - spell: 102793
+          target: 0
+          if: ""
+    - name: Typhoon
+      scancode: 33
+      modifier: 0
+      admit: cooldown.typhoon.up
+      expire: ""
+      unqueue_on_cast: true
+      ttl: 0
+      priority_list: false
+      enabled: true
+      steps:
+        - spell: 132469
+          target: 0
+          if: ""
+    - name: Roar
+      scancode: 35
+      modifier: 0
+      admit: cooldown.stampeding_roar.up
+      expire: ""
+      unqueue_on_cast: true
+      ttl: 0
+      priority_list: false
+      enabled: true
+      steps:
+        - spell: 106898
           target: 0
           if: ""
