@@ -28,9 +28,9 @@ name: Elemental Shaman Ferraz M+
 author: Ferraz
 description: |
   Elemental Shaman 262 engine for 12.1, tuned for Mythic+.
-  Farseer: Call of the Ancestors drives Earthquake in AoE and the Flowing
+  Farseer: Call of the Ancestors drives Earthquake in AoE the Flowing
   Elements windows in single target. Elemental Blast is the Maelstrom
-  spender - Earth Shock is not talented. ST/AoE split at 3 enemies.
+  spender - Earth Shock is nottalented. ST/AoE split at 3 enemies.
 entry: main
 
 # Spiritwalker's Grace is the only thing that lets a cast go out while moving.
