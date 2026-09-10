@@ -632,3 +632,96 @@ and throws the recharge away.
 The threshold is reused rather than given its own slider. It already means
 "health low enough that losing the Cat rotation is worth it", which is exactly
 the question both lines are asking.
+
+## 2026-09-10 — Convoke build is back, and cooldowns are synced to it
+
+The recommended string went back to **Convoke the Spirits + Berserk**, dropping
+Incarnation: Avatar of Ashamane. This reverses the 2026-09-08 swap. It is the
+user's live M+ build, so the file follows it.
+
+Measured, DungeonSlice, target_error=0.05, the user's own 12.1 gear
+(`sim/Tassiana_feral_gear.simc`, SimC 1210-01 c1935b9):
+
+| build | DPS |
+| --- | --- |
+| Incarnation (previous recommendation) | 190 142 |
+| Convoke (new recommendation, live build) | 185 881 |
+| Raider.IO build | 185 876 |
+
+Convoke sims **2.3% behind** Incarnation on this profile. That is real, not
+noise. It is recorded here rather than argued with: DungeonSlice is a single
+scripted pull with no downtime, no movement and no forced target swaps, all of
+which pay Convoke back and none of which a sim charges for. The rotation now
+supports Convoke properly instead of half-supporting a build the file was not
+written for.
+
+**Ashamane's Guidance is NOT on this string.** Confirmed by execution probe —
+the build gains `convoke_the_spirits` and `berserk_cat` and loses
+`incarnation_avatar_of_ashamane`, with no Ashamane's Guidance anywhere. So the
+SimC APL's `talent.ashamanes_guidance` branches, which let Convoke fire outside
+Berserk, are deliberately not carried over. Convoke only goes out inside
+Berserk here.
+
+### The three things that were actually broken
+
+**1. Convoke had no line at all.** It was removed on 2026-09-08 as dead weight.
+Restored with SimC's own condition:
+
+```yaml
+- convoke_the_spirits,if=talent.convoke_the_spirits&var.bs_inc&var.convoke_ttd_ok&buff.tigers_fury.up&(prev_gcd.1.rip|prev_gcd.1.ferocious_bite|prev_gcd.1.primal_wrath|buff.tigers_fury.remains<=1+action.convoke_the_spirits.execute_time)
+```
+
+The `prev_gcd` clause is the whole point: Convoke fires on the GCD right after
+a finisher, so the channel snapshots a window that is not about to be spent.
+The `buff.tigers_fury.remains<=...` leg is the escape hatch — if Tiger's Fury
+is about to fall off, cast now rather than lose the multiplier entirely.
+
+Convoke is worth ~7.4% of total damage in the sim, spread across eleven
+`*_convoke` damage sources. Not casting it was the single largest loss.
+
+**2. Trinkets fired on cooldown, never on Berserk.** The lines used
+`trinket_1.ready`, which the expression catalog defines as "off cooldown and
+not globally disabled — **ignores burst gating**". Vile Vial of Volatile Venom
+(273796) is listed in `_trinkets.yaml` with `check_burst: true` and a 15s buff
+on a 120s cooldown; that flag was being bypassed on every cast.
+
+```yaml
+- trinket_1,name="Trinket 1 (Burst Sync)",if=config.use_trinket_1&trinket_1.ready&var.trinkets_ttd_ok&var.trinket_sync_ok
+```
+
+with
+
+```yaml
+burst_now: var.bs_inc|var.bs_inc_cd_remains<=5
+trinket_sync_ok: "!config.trinkets_burst_only|var.burst_now|fight_remains<25"
+```
+
+`bs_inc_cd_remains<=5` is not decoration. A trinket cast the same GCD as
+Berserk starts its buff one GCD late and ends one GCD early; firing it in the
+five seconds before Berserk covers the whole window.
+
+The new `trinkets_burst_only` checkbox (default on) is the escape hatch, so a
+player who would rather spend trinkets on cooldown can still do it without
+editing the file.
+
+`trinket_1.sync` was considered and rejected. It routes through
+`_trinkets.yaml`'s own `player.burst.active`, which depends on the user's burst
+toggle being pressed — the exact failure that made Balance's trinkets silently
+never fire when `auto_burst` was off.
+
+**3. The combat potion waited for Berserk to already be up.** Same one-GCD-late
+problem; it now shares `var.burst_now`.
+
+Note that **Lightspire Core (250214), in trinket slot 1, is a passive proc** —
+it is not in `_trinkets.yaml` and has no on-use effect. `Auto Trinket 1` is
+toggling a slot with nothing to press. Harmless, left alone, but that is why
+only slot 2 changes behaviour today.
+
+### holdBerserk is live again
+
+It was pinned to `0` on 2026-09-08 with the comment "No Convoke on this build,
+so there is nothing to hold Berserk for". With Convoke back, the full SimC
+count-the-remaining-windows formula is restored, plus a
+`talent.convoke_the_spirits&` guard so it collapses to false — instead of
+evaluating `cooldown.convoke_the_spirits` on an untalented spell — if the
+player ever swaps back to Incarnation.
