@@ -29,9 +29,9 @@ spec_profiles:
         auto_enabled: true
         values:
           game_mode: 1
-          use_heart_of_the_wild: true
           predatory_swiftness_heal_solo_hp_pct: 75
           barkskin_threshold: 59
+          use_heart_of_the_wild: true
           stampeding_roar_usage: 1
           survival_instincts_threshold: 55
           innervate_threshold: 50
@@ -39,22 +39,22 @@ spec_profiles:
           use_potion: true
           use_trinket_2: false
           regrowth_threshold: 35
-          aoe_threshold: 3
           stampeding_roar_movement_time: 1
+          aoe_threshold: 3
           frenzied_regen_threshold: 30
           shadowmeld_usage: 1
           barkskin_hp_pct: 35
-          predatory_swiftness_heal_group_hp_pct: 50
           survival_instincts_hp_pct: 30
+          predatory_swiftness_heal_group_hp_pct: 50
           survival_instincts_dmg_pct: 40
           barkskin_dmg_pct: 35
         shared_values:
-          interrupt_all: true
           healthstone: 50
-          healthpotion: 45
+          interrupt_all: true
           interrupt_pct: 10
-          manapotion: 60
+          healthpotion: 45
           interrupt_important_pct: 10
+          manapotion: 60
           interrupt_mouseover: true
           combat_potion_mplus_min: 18
           combat_potion_enabled: false
@@ -69,21 +69,21 @@ spec_profiles:
         auto_enabled: true
         values:
           allow_pull_with_mo: false
-          hotw_min_ttd: 10
-          auto_dispel_party: true
           auto_purge_enrage: true
+          auto_dispel_party: true
+          hotw_min_ttd: 10
           hotw_hp_pct: 95
           engine_health_potion: 25
-          auto_hotw: true
           engine_healthstone: 30
+          auto_hotw: true
           ttd_trinkets: 25
         shared_values:
-          interrupt_all: true
           healthstone: 50
-          healthpotion: 40
+          interrupt_all: true
           interrupt_pct: 25
-          manapotion: 60
+          healthpotion: 40
           interrupt_important_pct: 20
+          manapotion: 60
           combat_potion_mplus_min: 18
           combat_potion_enabled: true
   102:
@@ -96,16 +96,16 @@ spec_profiles:
         values:
           use_trinket_2: true
           use_trinket_1: true
-          enable_hotw: false
           inc_min_enemies: 3
           barkskin_hp: 45
+          enable_hotw: false
           auto_dispel_party: false
           enable_mouseover_dots: true
           frenzied_regen_hp: 20
           renewal_hp: 30
-          hotw_hp_threshold: 50
-          swap_off_dying: false
           hotw_hp: 25
+          swap_off_dying: false
+          hotw_hp_threshold: 50
           use_potion: true
           ttd_fury_of_elune: 15
           auto_burst: false
@@ -126,12 +126,12 @@ spec_profiles:
           engine_health_potion: 30
           burst_once: false
         shared_values:
-          interrupt_all: true
           healthstone: 50
-          healthpotion: 40
+          interrupt_all: true
           interrupt_pct: 25
-          manapotion: 60
+          healthpotion: 40
           interrupt_important_pct: 20
+          manapotion: 60
           combat_potion_mplus_min: 10
           combat_potion_enabled: true
   105:
@@ -143,22 +143,34 @@ spec_profiles:
         auto_enabled: true
         values:
           innervate_threshold: 75
-          use_heart_of_the_wild: true
           manual_tranquility: false
-          use_trinket_2: true
-          raid_use_potion: true
+          use_heart_of_the_wild: true
           raid_use_trinket_1: true
+          raid_use_potion: true
+          use_trinket_2: true
+          stampeding_roar_usage: 0
           use_trinket_1: true
           raid_use_trinket_2: true
           swiftmend_threshold: 85
           regrowth_threshold: 90
+          emergency_hp: 30
+          ironbark_threshold: 75
+          frenzied_regen_threshold: 35
+          convoke_threshold: 75
+          tranquility_threshold: 70
+          wild_growth_threshold: 88
+          convoke_members: 3
+          tranquility_members: 3
+          barkskin_threshold: 80
+          aoe_threshold: 2
+          thorn_bloom_members: 2
         shared_values:
-          interrupt_all: true
           healthstone: 50
-          healthpotion: 40
+          interrupt_all: true
           interrupt_pct: 25
-          manapotion: 60
+          healthpotion: 40
           interrupt_important_pct: 20
+          manapotion: 60
           combat_potion_mplus_min: 18
           combat_potion_enabled: true
   252:
@@ -171,34 +183,34 @@ spec_profiles:
         values:
           stampeding_roar_movement_time: 1
           survival_instincts_threshold: 40
-          frenzied_regen_threshold: 55
           stampeding_roar_usage: 3
           use_trinket_1: false
+          frenzied_regen_threshold: 55
           manual_barkskin: false
           use_potion: true
           use_growl: true
           use_trinket_2: false
           auto_incarn_st: false
         shared_values:
+          auto_rez: true
+          healthpotion: 40
           interrupt_pct: 25
           lootnearby: true
-          healthpotion: 40
-          auto_rez: true
-          healthstone: 50
           auto_target_ranged:
             - 0
             - 1
+          healthstone: 50
           manapotion: 60
+          combat_potion_mplus_min: 18
+          interrupt_mouseover: true
           auto_target:
             - 0
             - 1
-          interrupt_mouseover: true
-          combat_potion_mplus_min: 18
           auto_combat:
             - 1
             - 2
-          auto_brez: true
           interrupt_target: true
+          auto_brez: true
           interrupt_all: true
           interrupt_focus: true
           interrupt_important_pct: 20
@@ -217,32 +229,32 @@ spec_profiles:
         auto_enabled: true
         values:
           darksuccor_solo_hp_pct: 75
-          darksuccor_group_hp_pct: 25
           death_pact_hp_pct: 15
-          deathstrike_solo_hp_pct: 50
+          darksuccor_group_hp_pct: 25
           icebound_fortitude_hp_pct: 50
-          deathstrike_group_hp_pct: 15
+          deathstrike_solo_hp_pct: 50
           icebound_fortitude_dmg_pct: 50
+          deathstrike_group_hp_pct: 15
         shared_values:
+          auto_rez: true
+          healthpotion: 40
           interrupt_pct: 25
           lootnearby: true
-          healthpotion: 40
-          auto_rez: true
-          healthstone: 50
           auto_target_ranged:
             - 0
             - 1
+          healthstone: 50
           manapotion: 60
+          combat_potion_mplus_min: 18
+          interrupt_mouseover: true
           auto_target:
             - 0
             - 1
-          interrupt_mouseover: true
-          combat_potion_mplus_min: 18
           auto_combat:
             - 1
             - 2
-          auto_brez: true
           interrupt_target: true
+          auto_brez: true
           interrupt_all: true
           interrupt_focus: true
           interrupt_important_pct: 20
@@ -260,58 +272,58 @@ spec_profiles:
         scenarios: 0
         auto_enabled: true
         values:
-          astral_shift_dmg_pct: 50
           earth_elemental_hp_pct: 35
-          engine_loot_nearby: true
+          astral_shift_dmg_pct: 50
           aoe_threshold: 3
+          engine_loot_nearby: true
           ttd_cooldowns: 20
           astral_shift_hp_pct: 50
           healing_surge_hp_pct: 30
           emergency_stop_casting: true
           healing_surge_ooc_hp_pct: 70
-          emergency_hp: 35
           engine_healthstone: 40
-          auto_burst: true
+          emergency_hp: 35
           interrupt_min_delay: 150
+          auto_burst: true
           use_potion: true
           use_trinket_1: true
           use_trinket_2: true
-          ttd_trinkets: 10
-          mo_cap_totem: true
           engine_affix_devour: true
+          mo_cap_totem: true
+          ttd_trinkets: 10
           ttd_potion: 15
           auto_cleanse_totem: true
           auto_purge: false
           interrupt_timing: true
-          interrupt_latency_margin: 250
           engine_ghost_wolf: true
+          interrupt_latency_margin: 250
           cap_totem_aoe: true
           mo_thunderstorm: false
-          MO_flame_shock: true
           engine_health_potion: 25
+          MO_flame_shock: true
           engine_auto_target:
             - 0
             - 1
         shared_values:
+          auto_rez: true
+          healthpotion: 25
           interrupt_pct: 25
           lootnearby: true
-          healthpotion: 25
-          auto_rez: true
-          healthstone: 40
           auto_target_ranged:
             - 0
             - 1
+          healthstone: 40
           manapotion: 40
+          combat_potion_mplus_min: 0
+          interrupt_mouseover: true
           auto_target:
             - 0
             - 1
-          interrupt_mouseover: true
-          combat_potion_mplus_min: 0
           auto_combat:
             - 1
             - 2
-          auto_brez: true
           interrupt_target: true
+          auto_brez: true
           interrupt_all: false
           interrupt_focus: true
           interrupt_important_pct: 50
@@ -322,23 +334,20 @@ spec_profiles:
             - 16
           combat_potion_timing: 0
 shared_config:
-  healthstone: 50
   interrupt_all: true
-  interrupt_pct: 25
+  healthstone: 50
   healthpotion: 40
-  interrupt_important_pct: 20
+  interrupt_pct: 25
   manapotion: 60
+  interrupt_important_pct: 20
   combat_potion_mplus_min: 18
   combat_potion_enabled: true
 toggle_hotkeys:
   105:
-    spread_rejuvs:
-      scancode: 45
-      modifier: 0
     force_convoke:
       scancode: 44
       modifier: 0
-    force_spread:
+    spread_rejuvs:
       scancode: 45
       modifier: 0
     force_dps:
@@ -347,11 +356,14 @@ toggle_hotkeys:
     manual_tranquility:
       scancode: 44
       modifier: 0
-    rejuvenation_spread:
+    force_spread:
       scancode: 45
       modifier: 0
     manual_convoke:
       scancode: 44
+      modifier: 0
+    rejuvenation_spread:
+      scancode: 45
       modifier: 0
     raid_force_spread:
       scancode: 45
@@ -363,13 +375,13 @@ toggle_hotkeys:
     use_incarnation:
       scancode: 45
       modifier: 0
-    use_hotw:
+    starfall_combo:
       scancode: 45
       modifier: 0
     pool_rage:
       scancode: 44
       modifier: 0
-    starfall_combo:
+    use_hotw:
       scancode: 45
       modifier: 0
     use_feral_frenzy:

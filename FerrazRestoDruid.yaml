@@ -9,12 +9,9 @@
 #   moving                  avatar_sethraliss       mouseover_healing_emergency
 #   auto_rez                engine                  main
 #
-# WHY ANY OF IT IS THE WAY IT IS: .agents/rationale/RestoDruid.md
-# That file carries every measurement, every rejected alternative and every
-# bug this file has already been through. Read it before changing a line -
-# most of what looks improvable here was tried and reverted.
+# Why each line is the way it is: .agents/rationale/RestoDruid.md
 # =============================================================================
-version: "10.11.0"
+version: "10.12.0"
 author: Ferraz
 patch: "12.1"
 spec: 105
@@ -33,7 +30,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-09-09 | Patch: 12.1 | Version: 10.11.0"
+    text: "Last update: 2026-09-09 | Patch: 12.1 | Version: 10.12.0"
 
   # RECOMMENDED BUILD — the string the talent.X gates below assume.
   recommended_talents:
@@ -84,9 +81,7 @@ config:
     label: "Pad Abundance"
     section: "Healing"
     type: toggle
-    # 207640 (the Abundance buff), not 207383 (the talent): the talent carries
-    # "Do Not Display (Spellbook, Aura Icon, Combat Log)" in its spell data
-    # and has no icon to render.
+    # 207640 (the buff), not 207383 (the talent) - the talent has no icon.
     spell: 207640
     description: "Bindable. Controls DOWNTIME only. In combat the rotation always pads Rejuvenation up to 5 so the Abundance window is ready — that half is not optional. This toggle decides whether it keeps doing it while you stand around between pulls, where it costs mana for as long as you are there."
   # Lowered 95 -> 85.
@@ -439,7 +434,6 @@ config:
     max: 100
     default: 30
 
-  # HELP.
   # Emergency. The casting guard at the top of main returns before anything
   # else, so a hardcast used to cost you the defensive entirely.
   emergency_hp:
@@ -490,15 +484,13 @@ variables:
   # Stampeding Roar conditions based on the interface
   use_stampeding_roar: moving.time>=config.stampeding_roar_movement_time&buff.stampeding_roar.down&((config.stampeding_roar_usage=1&player.combat)|(config.stampeding_roar_usage=2&!player.combat)|(config.stampeding_roar_usage=3))
 
-  # Roots and snares only - what a shapeshift actually breaks. NOT
-  # debuff_list.freedom, which also lists stuns and untagged debuffs a shift
-  # does nothing to, and which looped the cleanse in game. See the rationale.
+  # Roots and snares only - what a shift actually breaks. NOT
+  # debuff_list.freedom.
   druid_shapeshift_root: player.debuff.root.up|player.debuff.snare.up
 
 lists:
-  # Emergency, called from main ABOVE the casting guard. Everything here is
-  # off-GCD or an item, so it fires without touching the cast; only the last
-  # line ends it, and never on a protected channel.
+  # Called ABOVE the casting guard. All off-GCD or items, so nothing here
+  # touches the cast - only the last line ends it, never on a protected channel.
   emergency:
     - barkskin,name="Barkskin (Emergency)",range_check=none,off_gcd=true,ignore_queue=true,if=health.effective.pct<=config.emergency_hp
     - healthstone,name="Healthstone (Emergency)",off_gcd=true,ignore_queue=true,delay=250,if=healthstone.ready&health.pct<=config.healthstone_pct
@@ -533,15 +525,10 @@ lists:
   defensives:
     - barkskin,name="Barkskin",off_gcd=true,ignore_queue=true,if=health.pct<config.barkskin_threshold|incoming.pct>=config.barkskin_incoming_pct
     - 102342,name="Ironbark (Tank)",off_gcd=true,ignore_queue=true,cycle=tanks,if=config.ironbark_target=1&(cycle.health.pct<config.ironbark_threshold|cycle.incoming.pct>config.ironbark_incoming_pct)&cycle.buff.ironbark.down
-    # 102342 on BOTH lines. This one said 102343, an id that exists neither in
-    # Simia's own _spells.yaml (`ironbark  # id=102342`) nor anywhere in a
-    # 29-minute reference log - so with Ironbark Target set to Members the line
-    # could never resolve a spell at all.
+    # 102342 on BOTH lines. This one said 102343, an id that does not exist.
     - 102342,name="Ironbark (Members)",off_gcd=true,ignore_queue=true,cycle=members,if=config.ironbark_target=2&(cycle.health.pct<config.ironbark_threshold|cycle.incoming.pct>config.ironbark_incoming_pct)&cycle.buff.ironbark.down
     - bear_form,name="Panic Bear",if= health.pct<config.frenzied_regen_threshold&!buff.bear_form.up&cooldown.frenzied_regeneration.ready
     - frenzied_regeneration,name="Frenzied Regen",if= health.pct<config.frenzied_regen_threshold&buff.bear_form.up
-    - bear_form,name="Root Cleanse (to Bear)",line_cd=8,if=config.root_cleanse&var.druid_shapeshift_root&!player.stunned&!buff.bear_form.up
-    - cat_form,name="Root Cleanse (from Bear)",line_cd=8,if=config.root_cleanse&var.druid_shapeshift_root&!player.stunned&buff.bear_form.up
 
   # Racial Abilities and Specific Mobility
   racials:
@@ -556,26 +543,11 @@ lists:
   cooldowns:
     # NO Mark of the Wild here.
     - natures_swiftness,name="Nature Swiftness",off_gcd=true,ignore_queue=true,delay=150,range_check=none,if=group.count(cycle.health.pct<config.natures_swiftness_threshold)>=1
-    # Overgrowth (new in 12.1) rides this line for free: with Nature's
-    # Swiftness up, this Regrowth also applies Lifebloom, Rejuvenation and
-    # Wild Growth to the same target.
+    # Overgrowth rides this for free: with Nature's Swiftness up, this Regrowth
+    # also applies Lifebloom, Rejuvenation and Wild Growth to the same target.
     - regrowth,name="Nature Swift Regrowth",cycle=members,if=buff.natures_swiftness.up&cycle.health.pct<config.natures_swiftness_threshold
-    # Drop the form so the Convoke/trinket/potion lines below - all gated on
-    # !buff.cat_form.up&!buff.bear_form.up - can fire on the next pass.
-    #
-    # This used to cast Rejuvenation here on purpose: a caster spell breaks the
-    # form as a side effect. That is dead now, because the spell_overrides
-    # block at the top of this file forbids Rejuvenation in Cat/Bear entirely
-    # (Simia keeps suggesting it in form, the client refuses, the rotation
-    # stalls on the line). Cancelling the form directly is the same intent
-    # without needing a spell the client will not cast.
-    #
-    # A `cancel_buff` version of this line shipped briefly and was reverted: it
-    # is in neither SIMIA_DOCUMENTATION.md nor expression-catalog.json, and
-    # rotation-yaml-intellisense flags it `Unknown spell`. Casting Rejuvenation
-    # is the mechanism that was here originally and is what the official
-    # rotation_105.yaml also relies on (it casts rejuvenation with
-    # `buff.cat_form.up` in the gate, line 328).
+    # Casting Rejuvenation breaks the form as a side effect, which is the point:
+    # the Convoke/trinket/potion lines below are all gated on being out of form.
     - 774,name="Reju Out Cat For Convoke",if=(group.count(cycle.health.effective.pct<config.convoke_threshold&!cycle.tank)>=config.convoke_members)&(buff.cat_form.up|buff.bear_form.up)
     - trinket_1,delay=150,name="Trinket 1",if=config.use_trinket_1&trinket_1.ready&(group.count(cycle.health.effective.pct<config.convoke_threshold&!cycle.tank)>=config.convoke_members)&!buff.cat_form.up&!buff.bear_form.up
     - trinket_2,delay=150,name="Trinket 2",if=config.use_trinket_2&trinket_2.ready&(group.count(cycle.health.effective.pct<config.convoke_threshold&!cycle.tank)>=config.convoke_members)&!buff.cat_form.up&!buff.bear_form.up
@@ -658,13 +630,8 @@ lists:
     # Fluid Form does the shifting, so the entry is a DAMAGE cast, not a form
     # cast — Rake enters Cat AND applies the bleed in one global.
     #
-    # An explicit `cat_form` entry shipped as 8.10.0 and was reverted here in
-    # 10.11.0, without being tested in game. The case for it was the Zinney log (top-tier, THIS
-    # talent string): 102 explicit Cat Form casts against 91 Rakes, nearly 1:1.
-    # The case against is the global it costs on every single entry, which is
-    # what this Fluid Form entry exists to save. If the Fluid entry ever fails
-    # in game the way Rejuvenation/Ironbark do in form, that is the moment to
-    # revisit - not before.
+    # An explicit cat_form entry was tried and reverted: it costs a global on
+    # every entry, which is what this Fluid Form entry exists to save.
     - 1822,name="Fluid Rake",if=!buff.cat_form.up
     - cat_form,name="Manual Cat Shift",if=!talent.fluid_form&!buff.cat_form.up
     - return,if=!buff.cat_form.up
@@ -720,6 +687,9 @@ lists:
     - interact_target,delay=350,if=config.loot_nearby&loot_nearby&!player.combat
     - interact_mouseover,delay=350,if=config.loot_nearby&mouseover.lootable&mouseover.range<=5&!player.combat
 
+    - bear_form,name="Root Cleanse (to Bear)",line_cd=8,if=config.root_cleanse&var.druid_shapeshift_root&!player.stunned&!buff.bear_form.up
+    - cat_form,name="Root Cleanse (from Bear)",line_cd=8,if=config.root_cleanse&var.druid_shapeshift_root&!player.stunned&buff.bear_form.up
+
     # Nature's Cure removes MAGIC, curse and poison — the healer dispel. It had
     # no toggle before; dispelling is your job, so it defaults ON.
     - natures_cure,delay=500,cycle=members,name="Nature's Cure",if=config.auto_dispel&cycle.dispelable.list
@@ -745,10 +715,8 @@ lists:
 
   # Main Rotation (main) with combat priorities
   main:
-    # Aborts if channeling crucial abilities (Tranquility/Convoke)
-    # `player.channeling`, bare.
-    # Emergency FIRST, above the casting guard below. Only reachable while you
-    # are actually casting and actually low, so it costs nothing otherwise.
+    # Aborts while channeling Tranquility/Convoke. Emergency comes FIRST, above
+    # the casting guard - only reachable while casting and low, so it is free.
     - call_action_list,name=emergency,if=player.combat&(player.casting|player.channeling)&health.effective.pct<=config.emergency_hp
 
     - return,if=player.channeling|player.casting|var.protected_channel
@@ -776,11 +744,6 @@ lists:
 
     # DPS weaving when the group is healthy
     - call_action_list,name=ranged_dps,if=config.ranged_dps&var.can_catweave&target.exists&target.alive&!target.friendly&!target.in_melee
-    # Cat only. Bear Form is defensive-only in this file now - see the
-    # `defensives` list for Panic Bear/Frenzied Regeneration and the root
-    # cleanse. Zinney (top-tier, this exact talent string, 28.9min M+ log)
-    # spends 2.9% of the fight in Bear, casts Mangle ZERO times and Thrash 8
-    # times total, and every Bear entry pairs with Frenzied Regeneration or
-    # Barkskin. The old `bearweave` list's Thrash/Mangle bleed upkeep is not
-    # what a top player does with Bear on this build.
+    # Cat only. Bear is defensive-only here - see defensives for Panic Bear and
+    # the root cleanse.
     - call_action_list,name=catweave,if=config.melee_dps&var.can_catweave&target.exists&target.alive&!target.friendly&target.in_melee

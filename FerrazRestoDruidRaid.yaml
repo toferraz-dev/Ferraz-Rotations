@@ -8,13 +8,10 @@
 #   catweave_st             catweave_aoe            catweave                ranged_dps
 #   bearweave               moving                  mouseover_healing_emergency  main
 #
-# WHY ANY OF IT IS THE WAY IT IS: .agents/rationale/RestoDruidRaid.md
-# That file carries every measurement, every rejected alternative and every
-# bug this file has already been through. Read it before changing a line -
-# most of what looks improvable here was tried and reverted.
+# Why each line is the way it is: .agents/rationale/RestoDruidRaid.md
 # =============================================================================
 
-version: "3.18.0"
+version: "3.20.0"
 author: Ferraz
 patch: "12.1"
 spec: 105
@@ -31,7 +28,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-09-09 | Patch: 12.1 | Version: 3.18.0"
+    text: "Last update: 2026-09-09 | Patch: 12.1 | Version: 3.20.0"
 
   # String the talent.X checks below assume.
   recommended_talents:
@@ -422,15 +419,13 @@ variables:
 
 # LISTS.
 
-  # Roots and snares only - what a shapeshift actually breaks. NOT
-  # debuff_list.freedom, which also lists stuns and untagged debuffs a shift
-  # does nothing to, and which looped the cleanse in game. See the rationale.
+  # Roots and snares only - what a shift actually breaks. NOT
+  # debuff_list.freedom.
   druid_shapeshift_root: player.debuff.root.up|player.debuff.snare.up
 
 lists:
-  # Emergency, called from main ABOVE the casting guard. Everything here is
-  # off-GCD or an item, so it fires without touching the cast; only the last
-  # line ends it, and never on a protected channel.
+  # Called ABOVE the casting guard. All off-GCD or items, so nothing here
+  # touches the cast - only the last line ends it, never on a protected channel.
   emergency:
     - barkskin,name="Barkskin (Emergency)",range_check=none,off_gcd=true,ignore_queue=true,if=health.effective.pct<=config.emergency_hp
     - healthstone,name="Healthstone (Emergency)",off_gcd=true,ignore_queue=true,delay=250,if=healthstone.ready&health.pct<=config.engine_healthstone
@@ -453,9 +448,11 @@ lists:
     - interact_target,delay=350,if=config.engine_loot_nearby&loot_nearby
     - interact_mouseover,delay=350,if=config.engine_loot_nearby&mouseover.lootable&mouseover.range<=5
 
+    - bear_form,name="Root Cleanse (to Bear)",line_cd=8,if=config.root_cleanse&var.druid_shapeshift_root&!player.stunned&!buff.bear_form.up
+    - cat_form,name="Root Cleanse (from Bear)",line_cd=8,if=config.root_cleanse&var.druid_shapeshift_root&!player.stunned&buff.bear_form.up
+
     # Nature's Cure: cycle=members (the healer form), not cycle=party.
     - natures_cure,delay=500,cycle=members,name="Nature's Cure",if=config.auto_dispel_group&cycle.dispelable.list
-    - natures_cure,delay=500,cycle=members,cycle_order=player_first,name="Devouring Rift (Affix)",if=config.engine_affix_devour&cycle.debuff.440313.up.any
 
     - pool_resource,resource=rage,for_next=1,if=config.engine_auto_brez&mouseover.dead&mouseover.friendly&mouseover.unitframe&buff.bear_form.up&cooldown.rebirth.ready
     - rebirth.mouseover,name="Rebirth (Mouseover)",if=config.engine_auto_brez&mouseover.dead&mouseover.friendly&mouseover.unitframe&player.combat
@@ -509,17 +506,11 @@ lists:
     - shadowmeld,name="Shadowmeld (Aggro Drop)",if=player.combat&player.aggro&!player.casting
     - thorn_bloom,name="Thorn Bloom",if=group.count(cycle.health.effective.pct<config.raid_thorn_bloom_threshold)>=config.raid_thorn_bloom_members&target.in_melee
 
-  # NS -> trinkets/potion -> Convoke (needs Abundance up, caster form) -> NS
-  # Regrowth -> Tranquility -> self Swiftmend (Archdruid) -> reactive
-  # Swiftmend -> Clearcasting Regrowth.
+  # NS -> trinkets/potion -> Convoke -> NS Regrowth -> Tranquility -> self
+  # Swiftmend -> reactive Swiftmend -> Clearcasting Regrowth.
   cooldowns:
-    # CONVOKE IS FORM-DEPENDENT. Casting Rejuvenation here breaks the form as a
-    # side effect, so the Convoke line below - gated on !buff.cat_form.up&
-    # !buff.bear_form.up&!buff.moonkin_form.up - can fire on the next pass.
-    #
-    # A `cancel_buff` version shipped briefly and was reverted: it is in neither
-    # SIMIA_DOCUMENTATION.md nor expression-catalog.json, and
-    # rotation-yaml-intellisense flags it `Unknown spell`.
+    # CONVOKE IS FORM-DEPENDENT. Casting Rejuvenation breaks the form as a side
+    # effect, so the Convoke line below can fire on the next pass.
     - 774,name="Shift Out For Convoke",cycle=members,if=cooldown.convoke_the_spirits.ready&group.count(cycle.health.effective.pct<config.raid_convoke_threshold)>=config.raid_convoke_members&(buff.cat_form.up|buff.bear_form.up)
     - natures_swiftness,name="NS (Pre-Convoke)",range_check=none,if=cooldown.convoke_the_spirits.ready&group.count(cycle.health.effective.pct<config.raid_convoke_threshold)>=config.raid_convoke_members&!buff.cat_form.up&!buff.bear_form.up&!buff.moonkin_form.up&buff.abundance.up
     - trinket_1,name="Trinket 1",if=config.raid_use_trinket_1&trinket_1.ready&buff.natures_swiftness.up
@@ -533,9 +524,8 @@ lists:
     # NO `|pred.cycle.buff.regrowth.down` branch.
     - regrowth,name="Clearcasting Regrowth",cycle=members,if=player.combat&buff.clearcasting.up&cycle.health.effective.pct<99
 
-  # SotF consumption -> self Efflorescence/Lifebloom(Everbloom)/Rejuvenation
-  # (Photosynthesis) loop -> tank Lifebloom fallback -> forced spread ->
-  # Abundance window: cheap, crit-heavy Regrowth, spent before Wild Growth.
+  # SotF consumption -> self Everbloom/Photosynthesis loop -> tank Lifebloom
+  # -> forced spread -> Abundance window, spent before Wild Growth.
   active_healing:
     # Self-target fallback (bare health, not cycle.*) so solo content still
     # gets reactive healing. Runs first so it's never starved.
@@ -571,8 +561,6 @@ lists:
 
   # Root cleanse (Bear/Cat shift), Innervate.
   utility:
-    - bear_form,name="Shapeshift Clear",line_cd=8,if=config.root_cleanse&var.druid_shapeshift_root&!player.stunned&!buff.bear_form.up
-    - cat_form,name="Shapeshift Toggle",line_cd=8,if=config.root_cleanse&var.druid_shapeshift_root&!player.stunned&buff.bear_form.up
     - innervate,name="Innervate",off_gcd=true,ignore_queue=true,range_check=none,if=mana.pct<config.raid_innervate_threshold
 
   # Cat Form single-target DPS.
@@ -596,10 +584,8 @@ lists:
   # Entry into physical DPS (Fluid Form auto-shift or manual), then hands off
   # to catweave_st/catweave_aoe.
   catweave:
-    # Sits ABOVE the entry lines below, so it tops the raid up right before you
-    # dive in, and keeps Rejuvenation rolling from inside Cat Form too - the
-    # `buff.cat_form.up` half of the gate is live again now that Rejuvenation is
-    # no longer in spell_overrides.
+    # Sits ABOVE the entry lines, so it tops the raid up right before you dive in
+    # and keeps Rejuvenation rolling from inside Cat Form.
     - 774,name="Cat Rejuvenation",cycle=members,if=cycle.buff.rejuvenation.remains<4&(buff.cat_form.up|talent.fluid_form)&(!target.in_melee|!var.group_healthy)
     - 1822,name="Fluid Rake",if=talent.fluid_form&!buff.cat_form.up&debuff.rake.refreshable
     - shred,name="Fluid Shred",if=talent.fluid_form&!buff.cat_form.up
@@ -642,9 +628,8 @@ lists:
   # Entry point. First matching line wins the GCD: defensives -> cooldowns ->
   # emergency -> active healing outrank DPS weaving.
   main:
-    # `player.channeling`, bare. This is what every.
-    # Emergency FIRST, above the casting guard below. Only reachable while you
-    # are actually casting and actually low, so it costs nothing otherwise.
+    # player.channeling, bare. Emergency comes FIRST, above the casting guard -
+    # only reachable while casting and low, so it is free otherwise.
     - call_action_list,name=emergency,if=player.combat&(player.casting|player.channeling)&health.effective.pct<=config.emergency_hp
 
     - return,if=player.channeling|player.casting|var.protected_channel
@@ -652,8 +637,6 @@ lists:
     # --- Engine plumbing. Must stay at the top. ---
     - call_action_list,name=engine
     - call_action_list,name=out_of_combat
-
-    # NOTE: a `return,if=!player.auto_combat` used .
 
     # Cancels a heal mid-cast if the target got topped off by another source.
     - stop_casting,name="Cancel Overheal",casting_check=any,if=casting_target.health.pct>=config.raid_cancel_overheal_pct
@@ -668,6 +651,9 @@ lists:
     - call_action_list,name=mouseover_healing_emergency,if=config.raid_use_mouseover&var.mo_friendly_valid&mouseover.health.effective.pct<config.raid_mouseover_emergency_hp
     - call_action_list,name=moving,if=player.moving
     - call_action_list,name=active_healing
+
+    # Bottom of the priority: a dropped buff costs a damage global, never a heal.
+    - mark_of_the_wild,name="Mark of the Wild (low prio)",range_check=none,if=config.raid_use_mark_of_the_wild&(buff.mark_of_the_wild.down.any|action.mark_of_the_wild.overlayed)&lastcast.mark_of_the_wild>=10
 
     # --- DPS weaving. Only while the group is topped and healthy. ---
     - call_action_list,name=ranged_dps,if=config.raid_ranged_dps&var.can_catweave&target.exists&target.alive&!target.friendly&((config.raid_melee_dps&!target.in_melee)|!config.raid_melee_dps)
