@@ -10,7 +10,7 @@
 # Why each line is the way it is: .agents/rationale/Feral.md
 # =============================================================================
 
-version: "4.2.0"
+version: "4.4.0"
 author: Ferraz
 patch: "12.1"
 spec: 103
@@ -25,7 +25,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-09-10 | Patch: 12.1 | Version: 4.2.0"
+    text: "Last update: 2026-09-10 | Patch: 12.1 | Version: 4.4.0"
 
   recommended_talents:
     section: "Talents"
@@ -110,6 +110,13 @@ config:
     type: checkbox
     default: true
 
+  require_convoke_ready:
+    label: "Cooldowns - Only Burst With Convoke Ready"
+    section: "Cooldowns"
+    type: checkbox
+    default: true
+    description: "Hold Berserk, the trinkets and the combat potion until Convoke the Spirits is off cooldown, so the whole window opens on Convoke. Ignored when Convoke is not talented. Turn off if you ever cast Convoke by hand outside a burst window and do not want the rest held for it."
+
   cd_standing_time:
     label: "Cooldowns - Min Seconds Standing Still"
     section: "Cooldowns"
@@ -159,6 +166,15 @@ config:
     max: 30
     default: 10
     description: "Minimum fight time remaining to use trinkets. Bosses ignore it."
+
+  potion_min_targets:
+    label: "Potion - Min Targets"
+    section: "Cooldowns"
+    type: slider
+    min: 1
+    max: 8
+    default: 3
+    description: "The combat potion is on 5 minutes against the 2-minute trio, so only about two windows in five can carry one. This keeps it for a window that is worth it. A boss ignores it, and so does any pull that will live 25s or more, so the potion can never sit unused on a real fight. Set to 1 to spend it on the first window available."
 
   ttd_potion:
     label: "Potion TTD (seconds)"
@@ -305,17 +321,26 @@ variables:
   # Berserk, so it is what the trinkets and the potion key off - not Berserk's
   # first GCD.
   #
-  # convoke_worth_waiting: Convoke is talented, not ready yet, but back within
-  # 10s. Berserk lasts long enough to still contain it, so nothing is spent
-  # until it lands. Without this the trinkets dump on the opening GCD of
-  # Berserk and half their buff is gone by the time Convoke goes out.
-  convoke_burst_window: talent.convoke_the_spirits&cooldown.convoke_the_spirits.ready&var.convoke_ttd_ok&var.bs_inc
-  convoke_worth_waiting: talent.convoke_the_spirits&!cooldown.convoke_the_spirits.ready&cooldown.convoke_the_spirits.remains<=10
+  # convoke_ready: the gate everything else in the window hangs off. Nothing
+  # opens unless Convoke is actually off cooldown, so Berserk, the trinkets
+  # and the potion all land on the same window Convoke does.
+  #
+  # It self-disables when Convoke is untalented or the toggle is off, so an
+  # Incarnation build behaves exactly as it did before.
+  #
+  # No deadlock: Convoke's own line needs Berserk up, but this asks only about
+  # Convoke's COOLDOWN, which ticks whether or not Berserk was pressed.
+  convoke_ready: "!config.require_convoke_ready|!talent.convoke_the_spirits|cooldown.convoke_the_spirits.ready"
 
   # Falls back to plain Berserk sync when Convoke is untalented or on a long
   # cooldown. bs_inc_cd_remains<=5 lets a trinket land just BEFORE Berserk so
   # its buff covers the whole window instead of starting one GCD late.
-  burst_now: var.convoke_burst_window|!var.convoke_worth_waiting&(var.bs_inc|var.bs_inc_cd_remains<=5)
+  burst_now: var.convoke_ready&(var.bs_inc|var.bs_inc_cd_remains<=5)
+
+  # A window worth a 5-minute cooldown: enough targets, a boss, or anything
+  # that will still be alive in 25s. The last leg is what stops the potion
+  # sitting in the bag through a whole boss fight.
+  potion_worth_it: target.boss|enemies.combat.8y>=config.potion_min_targets|target.time_to_die>=25
   trinket_sync_ok: "!config.trinkets_burst_only|var.burst_now|fight_remains<25"
 
   rip_preempt: "enemies.combat.8y=1&combo_points>=5&dot.rip.up&(dot.rip.refreshable&(buff.tigers_fury.up|dot.rip.remains<cooldown.tigers_fury.remains)|buff.tigers_fury.up&!var.rip_tf|buff.tigers_fury.up&buff.tigers_fury.remains<2)"
@@ -377,14 +402,31 @@ lists:
     - blood_fury,if=var.bs_inc
     - fireblood,if=var.bs_inc
     - ancestral_call,if=var.bs_inc
-    - combat_potion,if=var.cd_ready_to_stand&config.use_potion&combat_potion.ready&(var.burst_now&var.potion_ttd_ok|fight_remains<32)
-    - berserk,if=var.cd_ready_to_stand&buff.tigers_fury.up&!var.holdBerserk&var.berserk_ttd_ok
+    # var.potion_worth_it: the potion is 5 minutes against everything else's 2,
+    # so firing it on the FIRST available window is not the same as firing it
+    # on the BEST one. Boss or a real pull always qualifies.
+    - combat_potion,if=var.cd_ready_to_stand&config.use_potion&combat_potion.ready&(var.burst_now&var.potion_ttd_ok&var.potion_worth_it|fight_remains<32)
+    # var.convoke_ready: same anchor the trinkets use. holdBerserk already holds
+    # for Convoke, but only in the specific end-of-fight cases where a paired
+    # window would be lost; this is the plain "do not open without Convoke".
+    - berserk,if=var.cd_ready_to_stand&buff.tigers_fury.up&!var.holdBerserk&var.convoke_ready&var.berserk_ttd_ok
     - feral_frenzy,if=!talent.frantic_frenzy&combo_points<=2+(2*var.bs_inc)
     - frantic_frenzy,if=buff.tigers_fury.up|combo_points<=2+(2*var.bs_inc)
     # Inside Berserk, on Tiger's Fury, on the GCD right after a finisher so the
     # channel snapshots a full window. Also fires when Tiger's Fury is about to
     # drop, since the channel outlives the buff otherwise.
-    - convoke_the_spirits,if=var.cd_ready_to_stand&talent.convoke_the_spirits&var.bs_inc&var.convoke_ttd_ok&buff.tigers_fury.up&(prev_gcd.1.rip|prev_gcd.1.ferocious_bite|prev_gcd.1.primal_wrath|buff.tigers_fury.remains<=1+action.convoke_the_spirits.execute_time)
+    #
+    # prev_gcd.1.ravage is NOT optional on this build. Druid of the Claw
+    # replaces Ferocious Bite with Ravage, so on the SimC list this was copied
+    # from the finisher that actually casts is Ravage - every finisher line in
+    # this file ships as a ferocious_bite/ravage pair. Without it the whole
+    # finisher clause almost never matched and Convoke only ever fired off the
+    # Tiger's Fury escape hatch, which is a ~1s window once every 30s.
+    #
+    # combo_points<=1 is a backstop for the same failure: a finisher was just
+    # spent even if the previous GCD was something else (an Apex Predator's
+    # Craving proc, a queued spell landing in between).
+    - convoke_the_spirits,if=var.cd_ready_to_stand&talent.convoke_the_spirits&var.bs_inc&var.convoke_ttd_ok&buff.tigers_fury.up&(prev_gcd.1.rip|prev_gcd.1.ferocious_bite|prev_gcd.1.ravage|prev_gcd.1.primal_wrath|combo_points<=1|buff.tigers_fury.remains<=1+action.convoke_the_spirits.execute_time)
 
   finisher:
     - rip,if=combo_points>=5&(dot.rip.refreshable&(buff.tigers_fury.up|dot.rip.remains<cooldown.tigers_fury.remains)|buff.tigers_fury.up&!var.rip_tf&dot.rip.up|buff.tigers_fury.up&buff.tigers_fury.remains<2&dot.rip.up)
@@ -478,7 +520,12 @@ lists:
     - rake,range_check=none,if=buff.prowl.up&target.in_melee
     - return,if=buff.prowl.up
 
-    - tigers_fury,name="Tigers Fury (Refresh)",off_gcd=true,ignore_queue=true,if=var.cd_ready_to_stand&(var.bs_inc_cd_remains<=1|var.bs_inc_cd_remains>10)&(cooldown.frantic_frenzy.remains<buff.tigers_fury.duration-1.5|cooldown.frantic_frenzy.remains>22|!talent.frantic_frenzy|enemies.combat.8y=1)
+    # NOT gated on var.cd_ready_to_stand. Tiger's Fury is off-GCD, instant, on a
+    # 30s cooldown, and only ~49% uptime - and Berserk, Convoke and the whole
+    # burst window all require it to be UP. Holding it for a second of movement
+    # can push the entire 2-minute window into the next Tiger's Fury cycle.
+    # Pressing it while moving costs nothing. Regression from 4.1.0.
+    - tigers_fury,name="Tigers Fury (Refresh)",off_gcd=true,ignore_queue=true,if=(var.bs_inc_cd_remains<=1|var.bs_inc_cd_remains>10)&(cooldown.frantic_frenzy.remains<buff.tigers_fury.duration-1.5|cooldown.frantic_frenzy.remains>22|!talent.frantic_frenzy|enemies.combat.8y=1)
 
     - chomp,if=buff.chomp_enabler.up
 
@@ -492,4 +539,4 @@ lists:
     - call_action_list,name=builder,if=enemies.combat.8y=1&combo_points<=4
     - call_action_list,name=aoe_builder,if=enemies.combat.8y>1&combo_points<=4
     - regrowth,range_check=none,if=buff.predatory_swiftness.up&var.regrowth
-    - tigers_fury,name="Tigers Fury (Fallback)",off_gcd=true,ignore_queue=true,if=var.cd_ready_to_stand
+    - tigers_fury,name="Tigers Fury (Fallback)",off_gcd=true,ignore_queue=true
