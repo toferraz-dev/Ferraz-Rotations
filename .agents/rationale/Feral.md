@@ -796,3 +796,90 @@ sustained Patchwerk. Swap it anyway, but as a M+ upgrade, not a raid one.
 Full tables in `sim/FERAL_RAID_AB_RESULTS.md`.
 
 Version 1.14.0 -> 2.0.0.
+
+## 2026-09-10 (later) — Convoke never fired, and the cooldown window rebuilt around it
+
+### The bug: `prev_gcd.1.ravage` was missing
+
+Convoke was restored earlier today with SimC's own condition, which fires it on
+the GCD right after a finisher:
+
+```
+prev_gcd.1.rip|prev_gcd.1.ferocious_bite|prev_gcd.1.primal_wrath
+```
+
+In game it never went out. The reason is that this condition was copied from a
+list written for builds without Druid of the Claw. **DotC replaces Ferocious
+Bite with Ravage**, which is why every finisher in this file ships as a
+`ferocious_bite`/`ravage` pair. The finisher clause therefore almost never
+matched, and Convoke could only escape through
+`buff.tigers_fury.remains<=1+execute_time` — a ~1s window once every 30s that
+also had to coincide with Berserk.
+
+Fixed by adding `prev_gcd.1.ravage`, plus `combo_points<=1` as a backstop for
+the same class of failure: a finisher was just spent even if the previous GCD
+was something else (an Apex Predator's Craving proc, a queued spell landing in
+between).
+
+### Measured cooldown structure
+
+DungeonSlice, 359s fight, the user's own gear:
+
+| cooldown | casts | buff duration | uptime |
+| --- | ---: | ---: | ---: |
+| Berserk | 3.40 | 24.3s | 23.0% |
+| Convoke the Spirits | 3.43 | — | — |
+| Tiger's Fury | 11.87 | 14.8s | **48.9%** |
+
+Berserk and Convoke are both 120s and come out 3.40 vs 3.43 times — **they lock
+1:1 on their own**. No logic is needed to keep them together, only logic that
+avoids breaking them apart. Trinkets are 120s too and join the same phase.
+
+Tiger's Fury is the one that matters: 14.8s of buff on a 30s cooldown is 49%
+uptime, and Berserk and Convoke both require it to be **up**. Half of all wall
+clock time is simply not eligible for a burst window.
+
+### Tiger's Fury taken back off the standing-still gate
+
+4.1.0 put `var.cd_ready_to_stand` on every cooldown including both Tiger's Fury
+lines. That was wrong and is reverted here.
+
+Tiger's Fury is off-GCD, instant, and the prerequisite for the entire window.
+Holding it for one second of movement can push the whole 2-minute window into
+the *next* Tiger's Fury cycle — up to 30s of alignment lost to 1s of walking.
+Pressing it while moving costs nothing, because it has no cast time and no
+positional requirement.
+
+The other four keep the gate. Those are windows that are genuinely wasted by
+running out of them.
+
+### The potion picks a window instead of the first one
+
+At 300s against the trio's 120s, only about two windows in five can carry a
+potion, so "first available" and "best available" are different things.
+
+```yaml
+potion_worth_it: target.boss|enemies.combat.8y>=config.potion_min_targets|target.time_to_die>=25
+```
+
+New `potion_min_targets` slider, default 3. The `time_to_die>=25` leg is what
+stops the potion sitting unused through a whole boss fight where the pull is a
+single target.
+
+### No target-count gate on the trio, deliberately
+
+Considered and rejected. The maintained SimC APL, which is tuned against
+DungeonRoute — a real M+ pull structure with real downtime — presses Berserk on
+cooldown inside Tiger's Fury with no target check at all.
+
+Overall damage across a key is casts times damage per cast, and holding costs
+casts. A 30-minute key has ~15 windows; holding an average of 20s each time
+gives up 2 of them, so every remaining window would have to be ~15% better just
+to break even. The TTD gates already cover the case the hold was meant to fix —
+spending a window on something that is about to die.
+
+### Not measurable here
+
+SimC runs its own APL, not this YAML. The cooldown durations, cast counts and
+uptimes above are measured; the burst policy is reasoning plus what the
+maintained list does. Nothing in this section is tested in game.
