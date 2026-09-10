@@ -725,3 +725,74 @@ count-the-remaining-windows formula is restored, plus a
 `talent.convoke_the_spirits&` guard so it collapses to false — instead of
 evaluating `cooldown.convoke_the_spirits` on an untalented spell — if the
 player ever swaps back to Incarnation.
+
+## 2026-09-10 — Raid build swapped to Wildstalker, same cooldown-sync fixes
+
+New raid string. This is not a tweak: the raid build changes **hero tree**.
+
+| | M+ build | raid build |
+| --- | --- | --- |
+| hero tree | Druid of the Claw | **Wildstalker** |
+| finisher | Ravage | Ferocious Bite + Primal Wrath |
+| big cooldown | Frantic Frenzy | Feral Frenzy |
+| self-heal | Heart of the Wild | none |
+| auto cat shift | Fluid Form | none |
+
+Against the previous raid recommendation it gains Apex Predator's Craving,
+Primal Wrath, Rampant Ferocity, Rip and Tear, Bond with Nature, Flower Walk,
+Twin Sprouts, Perfectly-Honed Instincts; it loses Coiled to Spring, Implant,
+Saber Jaws, Heart of the Wild, Entangling Vortex, Harmonious Constitution,
+Ursine Vigor.
+
+Talent lists came from the HTML report's Talent Tables, not from the execution
+probe. The probe only sees talents that produce an action or a buff, so it
+missed every passive — it reported a three-talent difference where the real
+one is fifteen.
+
+Measured, Patchwerk, `target_error=0.05`, `sim/Tassiana_feral_raid_gear.simc`:
+
+| build | DPS |
+| --- | ---: |
+| previous raid recommendation | 182 985 |
+| raid loadout saved in the export | 182 928 |
+| **new raid build (live)** | **177 389** |
+| M+ build, run in raid | 155 959 |
+
+The new build sims **3.06% behind** the one it replaces. Same call as the M+
+file: it is the live build, the file follows it, the number is recorded rather
+than argued with. The last row is the useful one — the M+ build in a raid is
+12.6% down, so the two files are genuinely not interchangeable.
+
+### Fixes carried over from the M+ file
+
+Trinkets used bare `trinket_N.ready` here too, with **no gate at all** — not
+even the TTD one the M+ file had. Now on `var.trinket_sync_ok`, and the potion
+on `var.burst_now`, so both land in the five seconds before Berserk instead of
+one GCD after it. New `trinkets_burst_only` checkbox, default on.
+
+`holdBerserk` picked up the same `talent.convoke_the_spirits&` guard.
+
+### Heart of the Wild is gone from this build, so both its lines are guarded
+
+`Panic Bear Form` fired on `cooldown.heart_of_the_wild.ready` with no talent
+check. On a build without the talent that leg is asking about a spell the
+player does not have; the bear shift now only counts the HotW payoff when it
+is actually talented, and falls through to the Frenzied Regeneration leg
+otherwise. The cast line got the same guard.
+
+The Ravage lines are left alone. They were already dead on the previous raid
+build — Ravage is a Druid of the Claw talent and no raid build has had it.
+
+### Gear, measured on Patchwerk
+
+Trinkets: **no change** — the equipped Lightspire Core + Vile Vial pair wins
+outright here, unlike M+ where Golden Plumage edged 0.11% ahead.
+
+Armour: Pendant of Malefic Fury is worth +0.33% and is the only real gain.
+Signet of Snarling Servitude is +0.51% in M+ and **exactly zero** in raid — its
+64 wasted Speed points cost less than the equipped ring's Haste is worth on a
+sustained Patchwerk. Swap it anyway, but as a M+ upgrade, not a raid one.
+
+Full tables in `sim/FERAL_RAID_AB_RESULTS.md`.
+
+Version 1.14.0 -> 2.0.0.
