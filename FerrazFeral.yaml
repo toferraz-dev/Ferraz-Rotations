@@ -10,7 +10,7 @@
 # Why each line is the way it is: .agents/rationale/Feral.md
 # =============================================================================
 
-version: "4.4.0"
+version: "4.5.0"
 author: Ferraz
 patch: "12.1"
 spec: 103
@@ -25,7 +25,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-09-10 | Patch: 12.1 | Version: 4.4.0"
+    text: "Last update: 2026-09-10 | Patch: 12.1 | Version: 4.5.0"
 
   recommended_talents:
     section: "Talents"
@@ -140,13 +140,31 @@ config:
     default: true
 
   # Stop a long cooldown being spent on trash that is about to die.
+  #
+  # Defaults raised on 2026-09-10 after measuring where Feral's damage lands:
+  # 51.6% of it is bleed ticks, over 13-27s tails (Primal Wrath 26.7s of
+  # ticking per cast, Frantic Frenzy 26.0s, Rip 15.1s, Rake 13.0s). Half the
+  # window arrives AFTER the button, so a target that dies early takes half
+  # the window with it. Capture is roughly 25% at TTD 8, 50% at 15, 62% at 20.
+  #
+  # 20 and not 25: holding delays the next use, because the cooldown only
+  # starts when you press. Over a 30-minute key, pressing on cooldown is 15
+  # windows; holding 20s each time is 13. Worse, DungeonRoute's pulls come out
+  # 9-14s for trash and 64-84s for a boss with nothing in between, so a 25s
+  # gate skips every trash pack and saves the window for the next boss.
+  #
+  # Berserk and the trinkets MUST match. They fire in the same window, so a
+  # split threshold spends one and holds the other - the worst of both.
+  #
+  # Convoke sits lower on purpose: its own line requires Berserk to be up, so
+  # anything at or below ttd_berserk is inert and never becomes a second gate.
   ttd_berserk:
     label: "Berserk / Incarnation TTD (seconds)"
     section: "Time To Die"
     type: slider
     min: 5
     max: 30
-    default: 15
+    default: 20
     description: "Minimum fight time remaining to use Berserk or Incarnation: Avatar of Ashamane. Bosses ignore it."
 
   ttd_convoke:
@@ -155,7 +173,7 @@ config:
     type: slider
     min: 3
     max: 20
-    default: 8
+    default: 15
     description: "Minimum fight time remaining to use Convoke the Spirits. Lower than Berserk's: Convoke pays out over ~4s, so it is worth firing on a shorter pull. Bosses ignore it."
 
   ttd_trinkets:
@@ -164,7 +182,7 @@ config:
     type: slider
     min: 5
     max: 30
-    default: 10
+    default: 20
     description: "Minimum fight time remaining to use trinkets. Bosses ignore it."
 
   potion_min_targets:
@@ -182,7 +200,7 @@ config:
     type: slider
     min: 5
     max: 30
-    default: 15
+    default: 20
     description: "Minimum fight time remaining to use the combat potion. The end-of-fight clause on the potion line ignores this, so a potion that would be wasted anyway still goes out."
 
   # Inlined from _shared.yaml so every piece has its own toggle.
