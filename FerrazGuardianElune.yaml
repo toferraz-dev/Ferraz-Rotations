@@ -9,7 +9,7 @@
 # Build drops Raze: the two Raze lines in bear are dead weight, the Maul
 # lines beside them are live.
 
-version: "1.19.0"
+version: "2.0.0"
 patch: "12.1"
 spec: 104
 name: Guardian Druid Ferraz M+
@@ -45,7 +45,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-09-04 | Patch: 12.1 | Version: 1.19.0"
+    text: "Last update: 2026-09-10 | Patch: 12.1 | Version: 2.0.0"
 
   # Exact string every number here was measured against (sim/Tassiana_guardian.simc).
   recommended_talents:
@@ -386,6 +386,27 @@ lists:
     - barkskin,name="Barkskin (HP)",range_check=none,if=health.pct<=config.barkskin_hp_pct
 
   cooldowns:
+    # FORCED BURST. While Incarnation or Berserk is up, a ready trinket and a
+    # ready potion go out, full stop - no melee check, no sync toggle.
+    #
+    # They sit at the TOP of this list and are off_gcd + ignore_queue for two
+    # separate reasons, both of which were delaying them:
+    #
+    #   - The Incarnation line further down is in THIS list, above where the
+    #     potion used to be. On the pass that casts Incarnation the buff is not
+    #     up yet, so var.burst_active was still false and the potion could only
+    #     fire a pass later.
+    #   - Neither was off_gcd, so both had to win a global against Mangle,
+    #     Ironfur and Thrash. A trinket and a potion cost no global, so there
+    #     is no reason for either to queue behind one.
+    #
+    # The conditional copies further down are still the path outside the
+    # window: on-cooldown use when the sync toggles are off, and the
+    # end-of-fight potion dump.
+    - trinket_1,name="Trinket 1 (Burst Forced)",off_gcd=true,ignore_queue=true,if=trinket_1.ready&player.combat&var.burst_active
+    - trinket_2,name="Trinket 2 (Burst Forced)",off_gcd=true,ignore_queue=true,if=trinket_2.ready&player.combat&var.burst_active
+    - combat_potion,name="Combat Potion (Burst Forced)",off_gcd=true,ignore_queue=true,if=config.use_potion&combat_potion.ready&player.combat&var.burst_active
+
     - barkskin,if=buff.bear_form.up
     # Deliberately unsynced from Incarnation/Berserk — forcing sync measured
     # +0.17% (noise). Moving check: it's a ground effect, running out wastes it.
@@ -397,7 +418,7 @@ lists:
     - incarnation_guardian_of_ursoc,if=target.valid&var.melee_engaged&(!config.auto_hotw|!talent.heart_of_the_wild|!cooldown_bypass.heart_of_the_wild.ready)
 
     # Combat potion.
-    - combat_potion,name="Combat Potion",if=config.use_potion&combat_potion.ready&player.combat&var.melee_engaged&(!config.potion_sync_burst|var.burst_active|fight_remains<=30)
+    - combat_potion,name="Combat Potion",off_gcd=true,ignore_queue=true,if=config.use_potion&combat_potion.ready&player.combat&var.melee_engaged&(!config.potion_sync_burst|var.burst_active|fight_remains<=30)
 
     - wild_guardian,if=buff.lunar_beam.up
 
@@ -513,8 +534,8 @@ lists:
 
     # player.combat is redundant with the combat wall above, kept so the guard
     # travels with these lines if they move.
-    - trinket_1,name="Trinket 1",if=trinket_1.ready&player.combat&var.melee_engaged&(!config.trinket_sync_burst|var.burst_active)
-    - trinket_2,name="Trinket 2",if=trinket_2.ready&player.combat&var.melee_engaged&(!config.trinket_sync_burst|var.burst_active)
+    - trinket_1,name="Trinket 1",off_gcd=true,ignore_queue=true,if=trinket_1.ready&player.combat&var.melee_engaged&(!config.trinket_sync_burst|var.burst_active)
+    - trinket_2,name="Trinket 2",off_gcd=true,ignore_queue=true,if=trinket_2.ready&player.combat&var.melee_engaged&(!config.trinket_sync_burst|var.burst_active)
 
     # Second Ironfur trigger outside `bear`, so armour tops up on GCDs the
     # damage lists own. Overlaps the bear-list lines on purpose.
