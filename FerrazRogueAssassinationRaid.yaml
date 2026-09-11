@@ -14,7 +14,7 @@
 # Why each line is the way it is: .agents/rationale/RogueAssassination.md
 # =============================================================================
 
-version: "2.0.0"
+version: "2.0.1"
 author: Ferraz
 patch: "12.1"
 spec: 259
@@ -29,7 +29,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-09-10 | Patch: 12.1 | Version: 2.0.0"
+    text: "Last update: 2026-09-10 | Patch: 12.1 | Version: 2.0.1"
 
   recommended_talents:
     section: "Talents"
@@ -350,7 +350,13 @@ lists:
     # Terminal. At the combo point cap there is nothing left to build, so
     # pooling any longer is just standing still - and a Seal Fate proc on top
     # of a capped bar is thrown away outright.
-    - envenom,name="Envenom (Combo Points Capped)",if=combo_points>=combo_points.max
+    #
+    # The literal 7 is a belt-and-braces ceiling, not a duplicate. If
+    # combo_points.max ever resolved high or unset, this leg would never fire
+    # while the anti-stall generate below kept building - the rotation would
+    # generate forever and never spend. 7 is the true game maximum for a rogue
+    # with Deeper Stratagem and Sanguine Stratagem, so it can only help.
+    - envenom,name="Envenom (Combo Points Capped)",if=combo_points>=combo_points.max|combo_points>=7
 
   vanish:
     # Vanish is a damage cooldown here, not an escape: it opens an Improved
@@ -397,4 +403,4 @@ lists:
     # Building toward the cap is the right thing to do with that time: this
     # build has Deeper Stratagem and Sanguine Stratagem, so the cap is 7 and
     # combo points 6 and 7 are free damage on the Envenom that follows.
-    - call_action_list,name=generate,if=combo_points>=config.finisher_cp&combo_points<combo_points.max
+    - call_action_list,name=generate,if=combo_points>=config.finisher_cp&combo_points<combo_points.max&combo_points<7
