@@ -14,7 +14,7 @@
 # Why each line is the way it is: .agents/rationale/RogueAssassination.md
 # =============================================================================
 
-version: "2.0.1"
+version: "3.0.0"
 author: Ferraz
 patch: "12.1"
 spec: 259
@@ -29,7 +29,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-09-10 | Patch: 12.1 | Version: 2.0.1"
+    text: "Last update: 2026-09-10 | Patch: 12.1 | Version: 3.0.0"
 
   recommended_talents:
     section: "Talents"
@@ -168,6 +168,20 @@ config:
     description: "Feint on predicted incoming damage rather than on health already lost. It is a 6s window on a 20s cooldown, so it wants to be up BEFORE the hit."
 
   # --- Utility ---
+  stealth_mode:
+    label: "Auto Stealth"
+    section: "Utility"
+    type: dropdown
+    options:
+      - label: "Enemy Around"
+        value: 0
+      - label: "Always"
+        value: 1
+      - label: "Never"
+        value: 2
+    default: 0
+    description: "Re-apply Stealth out of combat. Enemy Around only stealths with something within 40 yards, which is what you want in a raid - it keeps you unstealthed while standing around between pulls. Always stealths the moment it is off cooldown."
+
   auto_poisons:
     label: "Auto Apply Poisons"
     section: "Utility"
@@ -292,7 +306,9 @@ lists:
     # left of Deathmark once Kingsbane's own cooldown has run.
     - kingsbane,name="Kingsbane",if=var.dots_ready&(dot.deathmark.ticking|cooldown.deathmark.remains>52)&buff.envenom.up&var.kingsbane_ttd_ok
 
-    - combat_potion,name="Combat Potion",if=config.use_potion&combat_potion.ready&dot.rupture.ticking&(var.burst_now|buff.bloodlust.up|fight_remains<30)
+    # Deathmark only. At 5 minutes the potion is the rarest cooldown in the kit,
+    # so it never rides a lone Kingsbane.
+    - combat_potion,name="Combat Potion",if=config.use_potion&combat_potion.ready&dot.rupture.ticking&(debuff.deathmark.up|buff.bloodlust.up|fight_remains<30)
 
     # Racials on the same window as everything else.
     - blood_fury,name="Blood Fury",if=var.burst_now
@@ -302,20 +318,32 @@ lists:
 
     - thistle_tea,name="Thistle Tea",off_gcd=true,ignore_queue=true,if=energy.pct<30|fight_remains<10
 
-  # Burst window only. Deathmark and Kingsbane are both roughly 2 minutes, so
-  # a 2-minute trinket locks to them and never needs an off-window escape. The
-  # only exception is the end of a fight, where holding it wastes it outright.
+  # Deathmark specifically, NOT var.burst_now.
+  #
+  # burst_now also counts a lone Kingsbane, and Kingsbane comes back roughly
+  # twice per Deathmark - so a trinket keyed on it fired alongside a Kingsbane
+  # that had no Deathmark behind it, and was then on cooldown when the real
+  # window opened. Reported in play with the 90s Ula'tek trinket.
+  #
+  # cooldown.deathmark.remains>20 is SimC's own escape and it matters here for
+  # the same reason: a 90s trinket against a 120s Deathmark cannot pair every
+  # time, so when Deathmark is far away the trinket is spent rather than idled.
   items:
-    - trinket_1,name="Trinket 1 (Burst Window)",if=config.use_trinket_1&trinket_1.ready&(var.burst_now|fight_remains<=20)
-    - trinket_2,name="Trinket 2 (Burst Window)",if=config.use_trinket_2&trinket_2.ready&(var.burst_now|fight_remains<=20)
+    - trinket_1,name="Trinket 1 (Deathmark)",if=config.use_trinket_1&trinket_1.ready&(debuff.deathmark.up|cooldown.deathmark.remains>20|fight_remains<=20)
+    - trinket_2,name="Trinket 2 (Deathmark)",if=config.use_trinket_2&trinket_2.ready&(debuff.deathmark.up|cooldown.deathmark.remains>20|fight_remains<=20)
 
   # Garrote and Rupture are 29% of this build's damage in the reference log and
   # every point of it is ticks, which is why they outrank everything else.
   core_dot:
     # Improved Garrote window: re-apply at the buffed multiplier before it ends.
     - garrote,name="Garrote (Improved Window)",if=buff.improved_garrote.up&(dot.garrote.refreshable|dot.garrote.remains<=14+6*talent.razor_wire+4*!var.single_target)
-    - garrote,name="Garrote",if=combo_points.deficit>=1&dot.garrote.refreshable&target.time_to_die-dot.garrote.remains>config.ttd_dots
-    - rupture,name="Rupture",if=combo_points>=config.finisher_cp&dot.rupture.refreshable&target.time_to_die-dot.rupture.remains>config.ttd_dots
+    # var.dots_ttd_ok, NOT the raw `target.time_to_die-remains>ttd_dots` this
+    # used to carry. That form has no boss bypass, so any moment Simia's
+    # time-to-die estimate dipped - a shield, an immunity, a phase transition -
+    # the bleed refresh was blocked outright and the DoT was allowed to fall
+    # off a boss. Reported in play as "slow to refresh Garrote and Rupture".
+    - garrote,name="Garrote",if=combo_points.deficit>=1&dot.garrote.refreshable&var.dots_ttd_ok
+    - rupture,name="Rupture",if=combo_points>=config.finisher_cp&dot.rupture.refreshable&var.dots_ttd_ok
 
   # Simia cannot cycle enemy targets - the documentation is explicit about it -
   # so multi-dotting is driven by what you hover. The reference AoE log has
@@ -369,6 +397,12 @@ lists:
     - call_action_list,name=engine
 
     - call_action_list,name=poisons
+
+    # Out of combat only. Stealth in combat is Vanish's job, and Vanish has its
+    # own list. Poisons come first: a poison application breaks nothing, but
+    # stealthing first and then applying a poison would waste the Stealth.
+    - stealth,name="Stealth (Enemy Around)",range_check=mob_count_40y,if=config.stealth_mode=0&!player.combat&!buff.stealth.up&!buff.vanish.up
+    - stealth,name="Stealth (Always)",range_check=none,if=config.stealth_mode=1&!player.combat&!buff.stealth.up&!buff.vanish.up
 
     # Slice and Dice is maintained by Envenom on this build, so it only ever
     # needs casting once - when it is genuinely down.

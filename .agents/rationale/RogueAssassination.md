@@ -248,3 +248,44 @@ than on anything the sim can settle.
 only between that number and the combo point cap is dead air unless something
 explicitly fills it. Adding a conditional-only finisher list above a gated
 generator is a dead-end pattern, not a pooling pattern.
+
+## 2026-09-10 — three more from play (v2.0.1 → 3.0.0)
+
+**Auto Stealth was missing entirely.** Added out of combat only, in the stock
+Simia shape: `stealth_mode` dropdown with Enemy Around / Always / Never,
+default Enemy Around, which uses `range_check=mob_count_40y` so you do not
+re-stealth while standing around between pulls. Placed after the poison lines
+— a poison application breaks nothing, but stealthing first and then applying
+a poison would waste the Stealth. Guarded on `!buff.vanish.up` so it cannot
+step on a Vanish window.
+
+**Garrote and Rupture were slow to refresh.** `var.dots_ttd_ok` was defined in
+`variables:` and then never used — the two bleed lines carried the raw form
+instead:
+
+```yaml
+target.time_to_die-dot.garrote.remains>config.ttd_dots
+```
+
+That has no `target.boss|` bypass, unlike every other TTD gate in the file. So
+any moment Simia's time-to-die estimate dipped — a shield, an immunity, a
+phase transition, all of which Ula'tek has — the refresh was blocked outright
+and the bleed was allowed to fall off a boss. Now both lines use
+`var.dots_ttd_ok`, so a boss can never gate its own bleeds.
+
+**The trinket fired with a lone Kingsbane.** `items` was keyed on
+`var.burst_now`, which is `debuff.deathmark.up|dot.kingsbane.ticking`.
+Kingsbane comes back roughly twice per Deathmark, so the trinket rode a
+Kingsbane with no Deathmark behind it and was then on cooldown when the real
+window opened. Observed with the 90s Ula'tek trinket.
+
+Trinkets and the potion now key on **Deathmark specifically**. The trinkets
+also get SimC's `cooldown.deathmark.remains>20` escape back, which was removed
+on 2026-09-10 when the ask was "trinkets in the burst window" — that tightening
+was right for a 120s trinket and wrong for a 90s one, because 90 against 120
+cannot pair every cycle and the alternative to spending is idling it. The
+potion keeps no such escape: at 5 minutes it is the rarest cooldown in the kit
+and should only ever ride Deathmark.
+
+`var.burst_now` still drives Shiv and the racials, which are cheap enough that
+a lone Kingsbane is a fine home for them.
