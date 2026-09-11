@@ -289,3 +289,149 @@ and should only ever ride Deathmark.
 
 `var.burst_now` still drives Shiv and the racials, which are cheap enough that
 a lone Kingsbane is a fine home for them.
+
+---
+
+## Three bugs found against the Maxroll Fatebound guide, and two false alarms (2026-09-11)
+
+Ferraz reported two symptoms in play: Garrote slow to reapply, and the trinket
+firing the instant it comes off cooldown instead of syncing to Deathmark.
+Cross-checked the file against maxroll.gg's Assassination Rogue guide
+(Fatebound single-target and multi-target sections) and SimC's own bundled
+`profiles/MID2/MID2_Rogue_Assassination_Fatebound.simc`.
+
+### Garrote (Improved Window) was cutting its own snapshot short
+
+`buff.improved_garrote` (spell id 392401) is a **player** buff, 6 seconds,
+active after breaking Stealth/Vanish - not a flag carried by the DoT. A
+Garrote cast inside that window snapshots +50% damage for the DoT's entire
+duration, which the guide calls out explicitly: with Shadow Dance gone from
+Assassination, Garrote-via-Improved-Garrote is the *only* bleed left that can
+still snapshot. Its own rule: "If your current Garrote is buffed with Improved
+Garrote, do not overwrite it and instead apply Garrote as soon as the buffed
+one expires."
+
+The line here did the opposite - `dot.garrote.remains<=14+6*talent.razor_wire
++4*!var.single_target` cut a freshly-snapshotted DoT short on almost every
+Vanish, since that threshold sits close to the DoT's own base duration. The
+recast is equally snapshotted, so nothing is lost in damage - the cost is a
+GCD spent refreshing a bleed that had 10+ good seconds left, instead of on
+Mutilate/Envenom/whatever else was next in line. Fixed: the line now only
+fires on `buff.improved_garrote.up&dot.garrote.refreshable` - spend the window
+on a refresh only when one was coming anyway.
+
+### Garrote's plain refresh line was gated on the wrong resource
+
+`combo_points.deficit>=1` sat on the non-Improved-Window Garrote line. Garrote
+is a combo point *generator* - it needs no combo points to cast, and gating
+its DoT-refresh on "not already capped" meant the refresh was skipped
+whenever the player sat at the CP cap, which is most of the time energy is
+being pooled for Envenom (`envenom_pool_pct`, 70% by default - a real wait).
+Garrote is 13.84% of the reference log's damage, all ticks. Losing one
+overcapped combo point costs nothing; losing the whole bleed for however long
+CP sits capped is the "slow to reapply" Ferraz reported. Gate removed - the
+line is now just `dot.garrote.refreshable&var.dots_ttd_ok`.
+
+### Trinket sync: two bugs in one condition
+
+Old line: `if=...&(debuff.deathmark.up|cooldown.deathmark.remains>20|
+fight_remains<=20)`, same on both trinket slots.
+
+1. **The opener was structurally impossible.** `cooldown.SPELL.remains` reads
+   the literal "seconds until cooldown expires" - 0 for a spell that is simply
+   ready but has never been cast. Early in a pull, Deathmark sits at
+   `remains=0` because it hasn't been cast yet (blocked on its own
+   `var.dots_ready`, not on cooldown), and `0>20` is false, and
+   `debuff.deathmark.up` is false too. Every reference opener - both
+   single-target and multi-target, confirmed against maxroll - has a trinket
+   use several GCDs before the first Deathmark. The old condition could never
+   satisfy that.
+2. **The 20s window is "close" for about a sixth of a 120s Deathmark cycle.**
+   The other five-sixths, the escape just waves the trinket through
+   immediately - which is exactly "fires the instant it's off cooldown."
+
+Root cause of both: the file tried to make ONE symmetric condition do the job
+of syncing, when SimC's own default APL for this build does something
+smarter - `profiles/MID2/MID2_Rogue_Assassination_Fatebound.simc:95-96` picks
+whichever on-use trinket has the LONGER base cooldown (`trinket.
+1.cooldown.duration>=trinket.2.cooldown.duration` in precombat) and makes
+*only that one* wait strictly for `debuff.deathmark.up`. The other trinket
+fires on cooldown, unheld - its shorter cooldown resyncs with Deathmark on its
+own, so holding it too just doubles the wasted-window risk for no reason.
+
+Simia has no `trinket_1.cooldown.duration` equivalent in the expression
+catalog - only `.cd` (seconds *remaining*), which cannot tell two on-use
+trinkets' base cooldowns apart the way SimC does. It CAN read
+`trinket_X.has_onuse` - whether a slot holds a button at all versus a passive
+stat stick or proc - and that alone resolves the common case: Ferraz's own
+gear has exactly one on-use trinket (Ula'tek), so `config.trinket_sync_slot`
+defaults to Auto (0) and `var.trinket_1_syncs` / `var.trinket_2_syncs` pick
+it out with no config needed:
+`config.trinket_sync_slot=1|(config.trinket_sync_slot=0&trinket_1.has_onuse&!trinket_2.has_onuse)`.
+Manual 1/2 selection is still there for the day a second on-use trinket shows
+up and Auto can't tell them apart; "Neither" fires both on cooldown, same as
+before this pass entirely.
+
+**Not measurable in SimC**, same reason as the Guardian gates: this is a
+config choice about which physical trinket the player equips, not something a
+profileset resolves. Confirm in game by checking which of the two trinkets in
+the log actually shows up paired with `debuff.deathmark.up` every time.
+
+### Two things checked and found NOT broken
+
+**Crimson Tempest in `generate`.** Looked wrong on sight - Crimson Tempest is
+a combo point *finisher* in most people's memory of the spec. It is not, in
+this talent kit: `spell_query=spell.name=crimson_tempest` shows `Resource: 60
+Energy`, `Energize Power: +1 combo point`, and "Copy the longest Garrote and
+Rupture on the enemies you hit onto up to 2 other enemies." It is a generator
+that also multi-dots bleeds as a side effect, on-list, in the right place.
+
+**Caustic Spatter has no action line, and needs none.** `spell_query` shows it
+is a passive: "Envenom or Kingsbane apply Caustic Spatter for 10s. Limit 1." -
+automatically refreshed by casting Envenom, which the rotation already does
+on a tight cadence. The guide's "keep track of it, refresh before it runs
+out" is really just "don't let your Envenom cadence lapse for 10+ seconds,"
+already covered by the existing pooling logic. Nothing to add.
+
+### Left open: Rupture's flexible pandemic table
+
+The guide gives an exact table for Rupture refresh timing, scaled by the
+combo points of the *new* cast rather than a flat 30%: 1 CP -> 2.4s, 2 -> 3.6s,
+up through 7 CP -> 9.6s (linear, 1.2s per CP). `dot.rupture.refreshable` here
+uses Simia's generic 30%-of-current-duration pandemic check instead, which is
+based on whatever CP the *currently ticking* Rupture was cast with, not the
+CP available for the next cast. These may already coincide in practice since
+Rupture is gated at `combo_points>=config.finisher_cp` (5) either way, giving
+7.2s under the guide's own table - close to a 30% pandemic window on typical
+Rupture durations. Not verified precisely, and not changed this pass -
+flagged for whoever looks at Rupture refresh timing next.
+
+### Deathmark/Kingsbane could open on a bleed about to fall off
+
+Maxroll, verbatim: "Always refresh your bleeds before using Deathmark if they
+have 18 seconds or less at the moment that you press it." `var.dots_ready`
+only checked `.ticking` - true the instant a bleed exists, with no floor on
+how much of it is left. Since `cds` is called before `core_dot` in `main`,
+Deathmark or Kingsbane could win the GCD on a Garrote or Rupture with, say, 3
+seconds left, opening a 120s-cooldown window on ticks that stop almost
+immediately - exactly the case both abilities exist to amplify.
+
+Added `config.deathmark_bleed_fresh` (slider, default 18, matches the guide's
+number exactly) to `var.dots_ready`:
+`dot.garrote.remains>config.deathmark_bleed_fresh&dot.rupture.remains>
+config.deathmark_bleed_fresh`. When a bleed is stale at the moment Deathmark
+would otherwise fire, `dots_ready` now reads false, `cds` falls through with
+nothing to say, and `core_dot` picks up the refresh on the same or a
+following GCD - Simia's own pandemic window (`dot.garrote.refreshable`, ~30%
+of duration) is narrower than 18s on a typical Garrote/Rupture duration, so
+the refresh happens a beat later on its own schedule, remains jumps back up,
+and `dots_ready` passes on the very next pass. No deadlock: a Deathmark that
+comes off cooldown while bleeds are already fresh still fires immediately,
+same as before - the gate only holds the moment bleeds are genuinely about
+to expire.
+
+Not measurable in SimC for the same reason as every other TTD-shaped gate
+here: `dots_ready` is a real quantity there, but nothing in the harness
+reproduces "Deathmark came off cooldown mid-bleed" often enough to compare
+variants on it. Judge in game - the tell is the Deathmark cast landing right
+after a Garrote/Rupture refresh instead of on a stale one.
