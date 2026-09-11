@@ -139,25 +139,8 @@ config:
     type: checkbox
     default: true
 
-  # Stop a long cooldown being spent on trash that is about to die.
-  #
-  # Defaults raised on 2026-09-10 after measuring where Feral's damage lands:
-  # 51.6% of it is bleed ticks, over 13-27s tails (Primal Wrath 26.7s of
-  # ticking per cast, Frantic Frenzy 26.0s, Rip 15.1s, Rake 13.0s). Half the
-  # window arrives AFTER the button, so a target that dies early takes half
-  # the window with it. Capture is roughly 25% at TTD 8, 50% at 15, 62% at 20.
-  #
-  # 20 and not 25: holding delays the next use, because the cooldown only
-  # starts when you press. Over a 30-minute key, pressing on cooldown is 15
-  # windows; holding 20s each time is 13. Worse, DungeonRoute's pulls come out
-  # 9-14s for trash and 64-84s for a boss with nothing in between, so a 25s
-  # gate skips every trash pack and saves the window for the next boss.
-  #
-  # Berserk and the trinkets MUST match. They fire in the same window, so a
-  # split threshold spends one and holds the other - the worst of both.
-  #
-  # Convoke sits lower on purpose: its own line requires Berserk to be up, so
-  # anything at or below ttd_berserk is inert and never becomes a second gate.
+  # Skip long cooldowns on trash about to die (bosses ignore). Half of Feral's
+  # damage is bleed ticks. Keep Berserk = Trinkets; Convoke at or below Berserk.
   ttd_berserk:
     label: "Berserk / Incarnation TTD (seconds)"
     section: "Time To Die"
@@ -308,10 +291,7 @@ variables:
   bs_inc_cd_duration: cooldown.berserk.duration>?cooldown.incarnation_avatar_of_ashamane.duration
   regrowth: 0
   dotc_rake_threshold: 99-94*(talent.wild_slashes&talent.merciless_claws)-91*(talent.wild_slashes&!talent.merciless_claws)
-  # Convoke is back on the recommended string, so Berserk is held to line the
-  # two windows up. Formula is SimC's: count how many more casts of each fits
-  # in the remaining fight, hold Berserk when spending it now would cost a
-  # paired window later.
+  # SimC's hold: keep Berserk back when spending it now costs a paired Convoke.
   bs_inc_cd: var.bs_inc_cd_remains+10
   convoke_cd: cooldown.convoke_the_spirits.remains+10
   convokeCountRemaining: floor(((fight_remains-var.convoke_cd)%cooldown.convoke_the_spirits.duration)+(fight_remains>cooldown.convoke_the_spirits.remains))
@@ -333,31 +313,14 @@ variables:
   # everything wasted by running out of the window it just opened.
   cd_ready_to_stand: player.combat&player.standing.time>=config.cd_standing_time
 
-  # Burst sync, anchored on Convoke.
-  #
-  # Convoke is the biggest single payoff in the window and it only fires inside
-  # Berserk, so it is what the trinkets and the potion key off - not Berserk's
-  # first GCD.
-  #
-  # convoke_ready: the gate everything else in the window hangs off. Nothing
-  # opens unless Convoke is actually off cooldown, so Berserk, the trinkets
-  # and the potion all land on the same window Convoke does.
-  #
-  # It self-disables when Convoke is untalented or the toggle is off, so an
-  # Incarnation build behaves exactly as it did before.
-  #
-  # No deadlock: Convoke's own line needs Berserk up, but this asks only about
-  # Convoke's COOLDOWN, which ticks whether or not Berserk was pressed.
+  # Burst anchored on Convoke: Berserk, trinkets and potion wait for it to be ready.
+  # Off when Convoke is untalented. Reads Convoke's cooldown, so no deadlock.
   convoke_ready: "!config.require_convoke_ready|!talent.convoke_the_spirits|cooldown.convoke_the_spirits.ready"
 
-  # Falls back to plain Berserk sync when Convoke is untalented or on a long
-  # cooldown. bs_inc_cd_remains<=5 lets a trinket land just BEFORE Berserk so
-  # its buff covers the whole window instead of starting one GCD late.
+  # Fallback to Berserk sync; <=5 lets a trinket land just before Berserk opens.
   burst_now: var.convoke_ready&(var.bs_inc|var.bs_inc_cd_remains<=5)
 
-  # A window worth a 5-minute cooldown: enough targets, a boss, or anything
-  # that will still be alive in 25s. The last leg is what stops the potion
-  # sitting in the bag through a whole boss fight.
+  # Potion only on a worthwhile window: boss, enough targets, or 25s+ to live.
   potion_worth_it: target.boss|enemies.combat.8y>=config.potion_min_targets|target.time_to_die>=25
   trinket_sync_ok: "!config.trinkets_burst_only|var.burst_now|fight_remains<25"
 
@@ -420,30 +383,14 @@ lists:
     - blood_fury,if=var.bs_inc
     - fireblood,if=var.bs_inc
     - ancestral_call,if=var.bs_inc
-    # var.potion_worth_it: the potion is 5 minutes against everything else's 2,
-    # so firing it on the FIRST available window is not the same as firing it
-    # on the BEST one. Boss or a real pull always qualifies.
+    # 5-minute potion: best window, not first.
     - combat_potion,if=var.cd_ready_to_stand&config.use_potion&combat_potion.ready&(var.burst_now&var.potion_ttd_ok&var.potion_worth_it|fight_remains<32)
-    # var.convoke_ready: same anchor the trinkets use. holdBerserk already holds
-    # for Convoke, but only in the specific end-of-fight cases where a paired
-    # window would be lost; this is the plain "do not open without Convoke".
+    # Don't open Berserk without Convoke ready.
     - berserk,if=var.cd_ready_to_stand&buff.tigers_fury.up&!var.holdBerserk&var.convoke_ready&var.berserk_ttd_ok
     - feral_frenzy,if=!talent.frantic_frenzy&combo_points<=2+(2*var.bs_inc)
     - frantic_frenzy,if=buff.tigers_fury.up|combo_points<=2+(2*var.bs_inc)
-    # Inside Berserk, on Tiger's Fury, on the GCD right after a finisher so the
-    # channel snapshots a full window. Also fires when Tiger's Fury is about to
-    # drop, since the channel outlives the buff otherwise.
-    #
-    # prev_gcd.1.ravage is NOT optional on this build. Druid of the Claw
-    # replaces Ferocious Bite with Ravage, so on the SimC list this was copied
-    # from the finisher that actually casts is Ravage - every finisher line in
-    # this file ships as a ferocious_bite/ravage pair. Without it the whole
-    # finisher clause almost never matched and Convoke only ever fired off the
-    # Tiger's Fury escape hatch, which is a ~1s window once every 30s.
-    #
-    # combo_points<=1 is a backstop for the same failure: a finisher was just
-    # spent even if the previous GCD was something else (an Apex Predator's
-    # Craving proc, a queued spell landing in between).
+    # Inside Berserk + Tiger's Fury, on the GCD after a finisher. ravage is required:
+    # Druid of the Claw replaces Ferocious Bite with it. combo_points<=1 is a backstop.
     - convoke_the_spirits,if=var.cd_ready_to_stand&talent.convoke_the_spirits&var.bs_inc&var.convoke_ttd_ok&buff.tigers_fury.up&(prev_gcd.1.rip|prev_gcd.1.ferocious_bite|prev_gcd.1.ravage|prev_gcd.1.primal_wrath|combo_points<=1|buff.tigers_fury.remains<=1+action.convoke_the_spirits.execute_time)
 
   finisher:
@@ -538,11 +485,7 @@ lists:
     - rake,range_check=none,if=buff.prowl.up&target.in_melee
     - return,if=buff.prowl.up
 
-    # NOT gated on var.cd_ready_to_stand. Tiger's Fury is off-GCD, instant, on a
-    # 30s cooldown, and only ~49% uptime - and Berserk, Convoke and the whole
-    # burst window all require it to be UP. Holding it for a second of movement
-    # can push the entire 2-minute window into the next Tiger's Fury cycle.
-    # Pressing it while moving costs nothing. Regression from 4.1.0.
+    # No standing gate: Berserk/Convoke need TF up, and TF costs nothing while moving.
     - tigers_fury,name="Tigers Fury (Refresh)",off_gcd=true,ignore_queue=true,if=(var.bs_inc_cd_remains<=1|var.bs_inc_cd_remains>10)&(cooldown.frantic_frenzy.remains<buff.tigers_fury.duration-1.5|cooldown.frantic_frenzy.remains>22|!talent.frantic_frenzy|enemies.combat.8y=1)
 
     - chomp,if=buff.chomp_enabler.up

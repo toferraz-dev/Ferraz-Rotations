@@ -627,11 +627,7 @@ lists:
 
   # Catweaving Transition and Entry (Physical DPS)
   catweave:
-    # Fluid Form does the shifting, so the entry is a DAMAGE cast, not a form
-    # cast — Rake enters Cat AND applies the bleed in one global.
-    #
-    # An explicit cat_form entry was tried and reverted: it costs a global on
-    # every entry, which is what this Fluid Form entry exists to save.
+    # Rake enters Cat via Fluid Form and applies the bleed in one GCD - no cat_form cast.
     - 1822,name="Fluid Rake",if=!buff.cat_form.up
     - cat_form,name="Manual Cat Shift",if=!talent.fluid_form&!buff.cat_form.up
     - return,if=!buff.cat_form.up
