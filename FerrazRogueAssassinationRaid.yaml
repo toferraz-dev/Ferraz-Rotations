@@ -130,9 +130,7 @@ config:
     default: true
     description: "Vanish to re-apply Garrote inside an Improved Garrote window. This is a damage cooldown for this build, not an escape. Turn it off if you need Vanish saved for a mechanic."
 
-  # --- Time To Die ---
-  # A long cooldown spent on something about to die is a cooldown thrown away.
-  # A boss always ignores these.
+  # --- Time To Die --- (bosses always ignore these)
   ttd_deathmark:
     label: "Deathmark TTD (seconds)"
     section: "Time To Die"
@@ -261,26 +259,18 @@ variables:
   kingsbane_ttd_ok: (target.boss|target.time_to_die>=config.ttd_kingsbane|fight_remains>=config.ttd_kingsbane)
   dots_ttd_ok: (target.boss|target.time_to_die>=config.ttd_dots|fight_remains>=config.ttd_dots)
 
-  # The burst window. Everything that can be aligned is aligned on Deathmark,
-  # because Deathmark is the only real multiplier in the kit and Kingsbane is
-  # deliberately cast inside it.
+  # Burst window: everything aligns on Deathmark; Kingsbane is cast inside it.
   burst_now: debuff.deathmark.up|dot.kingsbane.ticking
 
-  # Deathmark wants Garrote and Rupture already ticking AND fresh, so the
-  # window opens on a fully dressed target instead of spending its first
-  # seconds building one or riding out a bleed that falls off partway through.
-  # config.deathmark_bleed_fresh=0 drops the freshness half and goes back to
-  # "ticking" alone.
+  # Deathmark wants Garrote and Rupture ticking and fresh.
+  # deathmark_bleed_fresh=0 checks "ticking" only.
   dots_ready: dot.garrote.ticking&dot.rupture.ticking&(!config.deathmark_bleed_fresh|(dot.garrote.remains>config.deathmark_bleed_fresh&dot.rupture.remains>config.deathmark_bleed_fresh))
 
   # A hovered enemy worth spending a global on. Hovering a friendly unit, a
   # dead mob or the target you are already hitting must not divert the list.
   mo_enemy_valid: config.multidot_mouseover&mouseover.exists&mouseover.enemy&mouseover.attackable&!mouseover.dead&mouseover.combat
 
-  # Which physical trinket slot, if any, waits strictly for debuff.deathmark.up.
-  # Auto (0) resolves itself from has_onuse when exactly one slot is a real
-  # on-use trinket - the common case, and the whole reason this is a variable
-  # instead of just reading config.trinket_sync_slot inline twice below.
+  # Which trinket slot waits for Deathmark. Auto picks the only on-use slot.
   trinket_1_syncs: "config.trinket_sync_slot=1|(config.trinket_sync_slot=0&trinket_1.has_onuse&!trinket_2.has_onuse)"
   trinket_2_syncs: "config.trinket_sync_slot=2|(config.trinket_sync_slot=0&trinket_2.has_onuse&!trinket_1.has_onuse)"
 
@@ -336,9 +326,7 @@ lists:
     - call_action_list,name=items
     - call_action_list,name=vanish,if=config.vanish_enabled&!buff.stealth.up
 
-    # Kingsbane goes inside Deathmark, or waits out most of Deathmark's
-    # cooldown so the next pairing is not broken. 52 is SimC's number: what is
-    # left of Deathmark once Kingsbane's own cooldown has run.
+    # Kingsbane inside Deathmark, or when Deathmark is far enough not to break the pair.
     - kingsbane,name="Kingsbane",if=var.dots_ready&(dot.deathmark.ticking|cooldown.deathmark.remains>52)&buff.envenom.up&var.kingsbane_ttd_ok
 
     # Deathmark only. At 5 minutes the potion is the rarest cooldown in the kit,
@@ -353,29 +341,8 @@ lists:
 
     - thistle_tea,name="Thistle Tea",off_gcd=true,ignore_queue=true,if=energy.pct<30|fight_remains<10
 
-  # Deathmark specifically, NOT var.burst_now.
-  #
-  # burst_now also counts a lone Kingsbane, and Kingsbane comes back roughly
-  # twice per Deathmark - so a trinket keyed on it fired alongside a Kingsbane
-  # that had no Deathmark behind it, and was then on cooldown when the real
-  # window opened. Reported in play with the 90s Ula'tek trinket.
-  #
-  # A version of this pair used to hold BOTH trinkets on
-  # `cooldown.deathmark.remains>20` alone. Two things wrong with that: first,
-  # `remains` reads 0 - not >20 - for a Deathmark that is simply ready but not
-  # yet cast (var.dots_ready still false, early in a pull), so neither trinket
-  # could ever fire during the opener, which every reference opener has a
-  # trinket use in before the first Deathmark. Second, a fixed 20s window is
-  # "close" for maybe a sixth of a 120s Deathmark cycle - the rest of the time
-  # the gate just waved the trinket through immediately, reported in play as
-  # "it fires the moment it's off cooldown" instead of syncing.
-  #
-  # Mirrors SimC's own default APL instead: only ONE trinket waits strictly
-  # for debuff.deathmark.up - var.trinket_1_syncs / var.trinket_2_syncs,
-  # config.trinket_sync_slot=Auto resolves it from has_onuse when only one
-  # slot holds a real on-use trinket. The other fires on cooldown, unheld,
-  # because its shorter cooldown (or its lack of a use effect at all)
-  # resyncs with Deathmark on its own without help.
+  # SimC's rule: one trinket waits for Deathmark, the other fires on cooldown.
+  # Keyed on Deathmark, not burst_now, so a lone Kingsbane can't pull it early.
   items:
     - trinket_1,name="Trinket 1 (Deathmark)",if=config.use_trinket_1&trinket_1.ready&(!var.trinket_1_syncs|debuff.deathmark.up|fight_remains<=20)
     - trinket_2,name="Trinket 2 (Deathmark)",if=config.use_trinket_2&trinket_2.ready&(!var.trinket_2_syncs|debuff.deathmark.up|fight_remains<=20)
@@ -383,37 +350,15 @@ lists:
   # Garrote and Rupture are 29% of this build's damage in the reference log and
   # every point of it is ticks, which is why they outrank everything else.
   core_dot:
-    # buff.improved_garrote is the PLAYER's 6s post-Stealth/Vanish window (id
-    # 392401), not a flag on the DoT. A Garrote cast inside it snapshots +50%
-    # damage for the DoT's whole duration - the one bleed this build can still
-    # snapshot. Maxroll: "If your current Garrote is buffed with Improved
-    # Garrote, do not overwrite it - leave it to expire before applying it
-    # again." So this line only wants to spend the window when the current
-    # Garrote is ALREADY due a refresh (dot.garrote.refreshable, the normal
-    # pandemic check) - never early just because the window happens to be open.
-    # A `remains<=14+...` branch used to sit here and cut a freshly-snapshotted
-    # DoT short on almost every Vanish, for zero gain: a wasted GCD, not a
-    # wasted refresh, since the recast is equally snapshotted either way.
+    # Improved Garrote (player buff, +50% snapshot): spend it only when Garrote is
+    # already refreshable - never overwrite a buffed Garrote early.
     - garrote,name="Garrote (Improved Window)",if=buff.improved_garrote.up&dot.garrote.refreshable
-    # var.dots_ttd_ok, NOT the raw `target.time_to_die-remains>ttd_dots` this
-    # used to carry. That form has no boss bypass, so any moment Simia's
-    # time-to-die estimate dipped - a shield, an immunity, a phase transition -
-    # the bleed refresh was blocked outright and the DoT was allowed to fall
-    # off a boss. Reported in play as "slow to refresh Garrote and Rupture".
-    #
-    # No combo_points.deficit gate. Garrote is a generator, not a spender - it
-    # needs no combo points to cast, and gating its DoT-refresh on "not capped"
-    # let 13.84% of this build's damage (the reference log's Garrote share)
-    # fall off the target whenever CP sat at the cap, which is most of the time
-    # energy is being pooled for Envenom. Losing one wasted point at the cap
-    # costs nothing; losing the whole bleed costs a lot.
+    # var.dots_ttd_ok has the boss bypass, so a bad TTD read can't drop a bleed.
+    # No CP gate on Garrote: it's a generator, and losing the bleed costs far more.
     - garrote,name="Garrote",if=dot.garrote.refreshable&var.dots_ttd_ok
     - rupture,name="Rupture",if=combo_points>=config.finisher_cp&dot.rupture.refreshable&var.dots_ttd_ok
 
-  # Simia cannot cycle enemy targets - the documentation is explicit about it -
-  # so multi-dotting is driven by what you hover. The reference AoE log has
-  # Garrote and Rupture on NINE distinct enemies, which is most of the gap
-  # between it and a single-target parse.
+  # Simia can't cycle enemy targets, so multi-dotting follows your mouseover.
   multidot:
     - garrote.mouseover,name="Garrote (Mouseover)",range_check=mouseover,if=var.mo_enemy_valid&combo_points.deficit>=1&mouseover.debuff.garrote.refreshable&mouseover.time_to_die>config.ttd_dots
     - rupture.mouseover,name="Rupture (Mouseover)",range_check=mouseover,if=var.mo_enemy_valid&combo_points>=config.finisher_cp&mouseover.debuff.rupture.refreshable&mouseover.time_to_die>config.ttd_dots
@@ -421,9 +366,7 @@ lists:
   generate:
     - crimson_tempest,name="Crimson Tempest (AoE)",if=talent.crimson_tempest&!var.single_target&(active_dot.garrote<spell_targets.fan_of_knives|active_dot.rupture<spell_targets.fan_of_knives)&(dot.rupture.remains>5|energy.regen>40)
     - shiv,name="Shiv (Toxic Stiletto)",if=var.single_target&talent.toxic_stiletto&talent.darkest_night
-    # Not a SimC line. See the rationale: the reference AoE log casts Shiv
-    # without Darkest Night, at roughly one per 40s, so it is gated to the
-    # window rather than put on cooldown where it would displace a builder.
+    # Not a SimC line: Shiv gated to the burst window, not on cooldown.
     - shiv,name="Shiv (Burst Window)",if=config.use_shiv&var.burst_now&energy.pct>40
     - fan_of_knives,name="Fan of Knives (Darkest Night)",if=buff.darkest_night.up&combo_points.deficit=1&var.single_target
     - fan_of_knives,name="Fan of Knives (AoE)",if=!var.single_target
@@ -434,28 +377,15 @@ lists:
     - fan_of_knives,name="Fan of Knives (Fallback)"
 
   spend:
-    # Envenom is the single biggest damage source in the log at 16.3%, and it
-    # is what keeps Slice and Dice alive on this build - there is no Slice and
-    # Dice maintenance line anywhere below, because Envenom refreshes it.
+    # Envenom also refreshes Slice and Dice, so SnD has no maintenance line.
     - envenom,name="Envenom (Refresh Buff)",if=buff.envenom.remains<=1|debuff.deathmark.up
     - envenom,name="Envenom (Energy Dump)",if=energy.pct>config.envenom_pool_pct|fight_remains<15
     - envenom,name="Envenom (Dying Target / AoE)",if=energy.pct>30&(target.time_to_die<12|spell_targets.fan_of_knives>=4)
-    # Terminal. At the combo point cap there is nothing left to build, so
-    # pooling any longer is just standing still - and a Seal Fate proc on top
-    # of a capped bar is thrown away outright.
-    #
-    # The literal 7 is a belt-and-braces ceiling, not a duplicate. If
-    # combo_points.max ever resolved high or unset, this leg would never fire
-    # while the anti-stall generate below kept building - the rotation would
-    # generate forever and never spend. 7 is the true game maximum for a rogue
-    # with Deeper Stratagem and Sanguine Stratagem, so it can only help.
+    # At the CP cap, spend - nothing left to build. Literal 7 guards a bad .max read.
     - envenom,name="Envenom (Combo Points Capped)",if=combo_points>=combo_points.max|combo_points>=7
 
   vanish:
-    # Vanish is a damage cooldown here, not an escape: it opens an Improved
-    # Garrote window so Garrote can be re-applied at the buffed multiplier.
-    # Held for Deathmark unless Deathmark will not come back before the target
-    # dies anyway.
+    # Vanish is a damage cooldown here (Improved Garrote), held for Deathmark.
     - vanish,name="Vanish (Improved Garrote)",if=talent.improved_garrote&(dot.deathmark.ticking|cooldown.deathmark.remains>target.time_to_die-10)
 
   main:
@@ -463,9 +393,7 @@ lists:
 
     - call_action_list,name=poisons
 
-    # Out of combat only. Stealth in combat is Vanish's job, and Vanish has its
-    # own list. Poisons come first: a poison application breaks nothing, but
-    # stealthing first and then applying a poison would waste the Stealth.
+    # Out of combat only. After poisons, so applying one can't waste the Stealth.
     - stealth,name="Stealth (Enemy Around)",range_check=mob_count_40y,if=config.stealth_mode=0&!player.combat&!buff.stealth.up&!buff.vanish.up
     - stealth,name="Stealth (Always)",range_check=none,if=config.stealth_mode=1&!player.combat&!buff.stealth.up&!buff.vanish.up
 
@@ -491,15 +419,5 @@ lists:
     - call_action_list,name=multidot,if=config.multidot_mouseover
     - call_action_list,name=generate,if=combo_points<config.finisher_cp
     - call_action_list,name=spend,if=combo_points>=config.finisher_cp
-    # Anti-stall, and the reason the pooling above is never dead air.
-    #
-    # Every Envenom in `spend` is conditional, so at the finisher threshold the
-    # list can legitimately decide to pool and return nothing. Without this
-    # line the rotation then had NOTHING to suggest - generate is gated off
-    # above the threshold - and it visibly froze at 5 combo points with half a
-    # bar of energy until energy crossed the pool threshold.
-    #
-    # Building toward the cap is the right thing to do with that time: this
-    # build has Deeper Stratagem and Sanguine Stratagem, so the cap is 7 and
-    # combo points 6 and 7 are free damage on the Envenom that follows.
+    # Anti-stall: when spend pools, keep building toward the 7 CP cap instead of idling.
     - call_action_list,name=generate,if=combo_points>=config.finisher_cp&combo_points<combo_points.max&combo_points<7

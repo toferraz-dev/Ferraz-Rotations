@@ -32,16 +32,13 @@ entry: main
 
 # SPELL OVERRIDES — AND-ed into every occurrence of that spell in the file.
 spell_overrides:
-  # Solar and Lunar share one cooldown with mutually exclusive ready(), and
-  # Celestial Alignment/Incarnation puts both buffs up - without these guards
-  # the lines stay suggestible while the game refuses the cast.
+  # Solar/Lunar share one cooldown and CA/Incarnation raises both buffs;
+  # these guards stop the lines staying suggestible while the game refuses them.
   solar_eclipse: "buff.eclipse_solar.down"
   lunar_eclipse: "buff.eclipse_lunar.down"
 
 config:
-  # ==========================================================================
-  # BUILD STAMP — display only. Keep in sync with version:/patch: above.
-  # ==========================================================================
+  # Build stamp - display only. Keep in sync with version:/patch: above.
   about:
     section: "Info"
     type: note
@@ -341,11 +338,7 @@ config:
     max: 4
     default: 2
 
-  # ==========================================================================
-  # HELP
-  # ==========================================================================
-  # Emergency. The casting guard at the top of main returns before anything
-  # else, so a hardcast used to cost you the defensive entirely.
+  # Emergency: runs above the casting guard so a hardcast cannot cost the defensive.
   emergency_hp:
     label: "Emergency HP% (mid-cast)"
     section: "Defensives"
@@ -385,10 +378,8 @@ variables:
   # A pull is actually underway: in combat, standing still, pull dotted.
   pull_engaged: player.combat&player.standing.time>=config.inc_min_standing_time&var.dots_spread
 
-  # Incarnation ready, only waiting for you to stop moving. Holds Fury of Elune
-  # so it does not go out alone. !var.pull_engaged releases it the instant
-  # standing-still is satisfied - without that it deadlocks against the
-  # buff.fury_of_elune.up requirement below.
+  # Incarnation ready, waiting only for you to stand still. Holds Fury of Elune;
+  # !var.pull_engaged releases it the moment you stand, avoiding a deadlock.
   inc_waiting_to_stand: var.burst_ok&talent.incarnation_chosen_of_elune&cooldown.incarnation_chosen_of_elune.charges>0&var.inc_ttd_ok&!var.cd_active&!var.pull_engaged&player.combat&(debuff.moonfire.up|debuff.sunfire.up)
 
   # Incarnation ready and Fury of Elune ALREADY up, not just close: top-player
@@ -592,10 +583,7 @@ lists:
     # cooldown and only one is ever castable.
     - solar_eclipse,if=var.eclipse_down&cooldown.solar_eclipse.ready&!var.inc_ready_to_cast
     - lunar_eclipse,if=var.eclipse_down&cooldown.lunar_eclipse.ready&!var.inc_ready_to_cast
-    # Fury of Elune before Incarnation, not after: 98 Incarnation casts across
-    # 6 top-player M+ logs (2026-09-08) land Fury of Elune one GCD earlier in
-    # the large majority of pulls, never later. inc_ready_to_cast now requires
-    # buff.fury_of_elune.up, so this line firing first is what makes that true.
+    # Fury of Elune before Incarnation: inc_ready_to_cast needs buff.fury_of_elune.up.
     - fury_of_elune,if=var.foe_ttd_ok
     - incarnation_chosen_of_elune,if=var.inc_ready_to_cast
 

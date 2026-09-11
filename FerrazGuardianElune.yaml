@@ -9,7 +9,7 @@
 # Build drops Raze: the two Raze lines in bear are dead weight, the Maul
 # lines beside them are live.
 
-version: "2.0.0"
+version: "2.1.0"
 patch: "12.1"
 spec: 104
 name: Guardian Druid Ferraz M+
@@ -45,7 +45,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-09-10 | Patch: 12.1 | Version: 2.0.0"
+    text: "Last update: 2026-09-11 | Patch: 12.1 | Version: 2.1.0"
 
   # Exact string every number here was measured against (sim/Tassiana_guardian.simc).
   recommended_talents:
@@ -149,11 +149,8 @@ config:
     max: 10
     default: 2
     description: "Seconds standing still before the weave may fire. The morph is Feral Frenzy, a 5 yard melee hit that channels five ticks over roughly a second - start it while still repositioning and you either leave range mid-channel or spend the window walking. Standing still also means the pull is parked and the pack is on you. 0 disables the check."
-  # The two below hold the weave when the NEXT few seconds look bad, not just
-  # the current HP. Set either to 0 to disable that check.
-  #
-  # No Ironfur gate: the weave is ONE GCD (~1.15s measured), not the 3-4 GCDs
-  # an old gate was sized for.
+  # These two hold the weave when the next few seconds look bad. 0 disables.
+  # No Ironfur gate: the weave is a single GCD.
   hotw_buster_window:
     section: "Cooldowns"
     label: "Heart of the Wild (tank buster window)"
@@ -170,9 +167,7 @@ config:
     max: 60
     default: 10
     description: "Skip the weave when the target dies sooner than this. Heart of the Wild is a 120s cooldown that fires an off-role ability for the current form - Feral Frenzy in Cat - so spending it on a pack that is about to die throws the cooldown away."
-  # === TRINKETS === the Incarnation window is the whole gate. No TTD slider:
-  # No TTD check here: Incarnation has none either, and a second one only
-  # desynced the pair on short pulls.
+  # Trinkets: the Incarnation window is the only gate. No TTD - it desyncs the pair.
 
   trinket_sync_burst:
     section: "Cooldowns"
@@ -213,6 +208,12 @@ config:
     label: "Pull with MO"
     type: checkbox
     default: true
+
+  use_growl:
+    label: "Auto Taunt (Growl)"
+    type: checkbox
+    default: true
+    description: "Growl your target and your mouseover when they are not on you. Never fires in a raid, where it would rip a boss off the other tank."
 
   engine_loot_nearby:
     label: "Loot Nearby Corpses"
@@ -317,14 +318,10 @@ variables:
   # talents, so this covers whichever one the build has.
   burst_active: buff.incarnation_guardian_of_ursoc.up|buff.berserk.up
 
-  # Is there anything in melee to spend a cooldown on. Gates trinkets, potion
-  # and Berserk/Incarnation, which used to fire while running between packs.
-  # Combat-filtered on purpose - must not arm on an unpulled pack.
+  # Something in melee to spend a cooldown on. Combat-filtered: ignores unpulled packs.
   melee_engaged: "!config.cds_require_melee|enemies.combat.8y>=1"
 
-  # Gate for the HotW weave. target.in_melee matters - the morph is Feral
-  # Frenzy, which has a 5 yard range. Health alone is not enough, so the last
-  # three checks look at the next few seconds instead.
+  # HotW weave gate. in_melee matters: the morph is Feral Frenzy (5y range).
   hotw_weave: config.auto_hotw&talent.heart_of_the_wild&cooldown_bypass.heart_of_the_wild.ready&target.valid&target.attackable&target.in_melee&player.combat&combat.time>=config.hotw_delay&player.standing.time>=config.hotw_min_standing_time&health.pct>=config.hotw_hp_pct&!var.heavy_incoming&variable.tank_buster_remains>config.hotw_buster_window&target.time_to_die>=config.hotw_min_ttd&!buff.incarnation_guardian_of_ursoc.up&!buff.berserk.up
 
 lists:
@@ -386,23 +383,8 @@ lists:
     - barkskin,name="Barkskin (HP)",range_check=none,if=health.pct<=config.barkskin_hp_pct
 
   cooldowns:
-    # FORCED BURST. While Incarnation or Berserk is up, a ready trinket and a
-    # ready potion go out, full stop - no melee check, no sync toggle.
-    #
-    # They sit at the TOP of this list and are off_gcd + ignore_queue for two
-    # separate reasons, both of which were delaying them:
-    #
-    #   - The Incarnation line further down is in THIS list, above where the
-    #     potion used to be. On the pass that casts Incarnation the buff is not
-    #     up yet, so var.burst_active was still false and the potion could only
-    #     fire a pass later.
-    #   - Neither was off_gcd, so both had to win a global against Mangle,
-    #     Ironfur and Thrash. A trinket and a potion cost no global, so there
-    #     is no reason for either to queue behind one.
-    #
-    # The conditional copies further down are still the path outside the
-    # window: on-cooldown use when the sync toggles are off, and the
-    # end-of-fight potion dump.
+    # Forced burst: inside Incarnation/Berserk a ready trinket or potion always fires.
+    # Top of list + off_gcd, so they beat the Incarnation line and never wait on a GCD.
     - trinket_1,name="Trinket 1 (Burst Forced)",off_gcd=true,ignore_queue=true,if=trinket_1.ready&player.combat&var.burst_active
     - trinket_2,name="Trinket 2 (Burst Forced)",off_gcd=true,ignore_queue=true,if=trinket_2.ready&player.combat&var.burst_active
     - combat_potion,name="Combat Potion (Burst Forced)",off_gcd=true,ignore_queue=true,if=config.use_potion&combat_potion.ready&player.combat&var.burst_active
@@ -528,8 +510,8 @@ lists:
     - tail_swipe,if=interrupt.stun.aoe.check
 
     # Taunt (dungeon/M+ only). !player.inraid stops it ripping a boss off the other tank.
-    - growl,name="Taunt",if=target.threat<2&target.valid&target.threat!=-1&!player.inraid
-    - growl.mouseover,name="Taunt MO",if=mouseover.threat<2&mouseover.combat&mouseover.threat!=-1&mouseover.exists&!player.inraid
+    - growl,name="Taunt",if=config.use_growl&target.threat<2&target.valid&target.threat!=-1&!player.inraid
+    - growl.mouseover,name="Taunt MO",if=config.use_growl&mouseover.threat<2&mouseover.combat&mouseover.threat!=-1&mouseover.exists&!player.inraid
 
 
     # player.combat is redundant with the combat wall above, kept so the guard

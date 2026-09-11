@@ -219,9 +219,7 @@ config:
     default: false
     description: "Purge a magic buff off the current target. OFF by default: it costs a global and most trash buffs are not worth one."
 
-  # === INTERRUPTS === layered ON TOP of Simia's shared interrupt system, which
-  # already enforces casting.elapsed>=0.2 and the Interrupt After Cast % sliders.
-  # These only ever make it stricter, never looser.
+  # Interrupts on top of Simia's shared system - these only ever make it stricter.
   interrupt_timing:
     section: "Interrupts"
     label: "Extra Interrupt Timing"
@@ -359,16 +357,10 @@ variables:
   trinkets_ttd_ok: (target.boss|target.time_to_die>=config.ttd_trinkets|fight_remains>=config.ttd_trinkets)
   potion_ttd_ok: (target.boss|target.time_to_die>=config.ttd_potion|fight_remains>=config.ttd_potion)
 
-  # TTD is not trustworthy on the first GCD of a pack - with no damage dealt
-  # it reads huge and the burst flies into a pack that dies in 8s. Flame Shock
-  # ticking proves damage landed; standing time proves the pull is parked.
-  # Flame Shock is reachable in both lists, so this costs at most one global.
+  # TTD lies on a pack's first GCD. Flame Shock ticking + standing time prove the pull.
   pull_engaged: player.combat&player.standing.time>=config.burst_min_standing_time&dot.flame_shock.up
 
-  # STORMKEEPER FIRST, THEN ASCENDANCE. Both halves were wrong before 1.4.0.
-  #
-  # Checks the BUFF, not the cooldown: with Ascendance up its cooldown reads
-  # ~180, so a remains>10 test fired Stormkeeper mid-Ascendance.
+  # Stormkeeper, then Ascendance. Check the buff, not the cooldown (~180 in Ascendance).
   sk_ready: var.burst_ok&var.cd_ttd_ok&var.pull_engaged&!buff.ascendance.up
   # Ascendance only follows Stormkeeper - while its buff is up, or within
   # sk_asc_gap of the cast. It holds for the third Stormkeeper, never goes alone.
