@@ -188,3 +188,63 @@ defaults are reasoning. `sim/Lassitude_rogue_assa.simc` holds the gear read
 out of the log's `combatantinfo` event if a baseline is ever wanted — it sims
 187 497 DPS on Patchwerk, which is not comparable to the log's 224 759 because
 the log fight has adds.
+
+## 2026-09-10 — the rotation froze at 5 combo points (v1.0.0 → 2.0.0)
+
+Reported from play: at 5 combo points with plenty of energy the rotation
+would stall for a second or two and not spend Envenom.
+
+Real bug, and mine. `spend` was copied from SimC verbatim and **every Envenom
+in it is conditional**:
+
+```yaml
+- envenom,if=buff.envenom.remains<=1|debuff.deathmark.up
+- envenom,if=energy.pct>70|fight_remains<15
+- envenom,if=energy.pct>30&(target.time_to_die<12|spell_targets.fan_of_knives>=4)
+```
+
+Meanwhile `main` gates the generator off above the threshold:
+
+```yaml
+- call_action_list,name=generate,if=combo_points<config.finisher_cp
+- call_action_list,name=spend,if=combo_points>=config.finisher_cp
+```
+
+So on a boss at 5 combo points, with the Envenom buff still above 1s,
+Deathmark down, energy between 30% and 70% and fewer than 4 targets, **every
+line in the file evaluates false**. Garrote and Rupture were fresh, generate
+was gated off, and all three Envenoms failed. Nothing to suggest.
+
+In SimC that state is deliberate pooling and the actor simply waits. In a live
+assistant it reads as a freeze, and at low energy it is genuinely bad — from
+25% energy the wait is around six seconds of doing nothing at all.
+
+### Fix, in three parts
+
+**The wait is no longer idle.** A second `generate` call runs when the spend
+list declined to act and the bar is not capped:
+
+```yaml
+- call_action_list,name=generate,if=combo_points>=config.finisher_cp&combo_points<combo_points.max
+```
+
+This is the right use of that time rather than a workaround: the build has
+Deeper Stratagem and Sanguine Stratagem, so the cap is 7, and combo points 6
+and 7 are free damage on the Envenom that follows.
+
+**A terminal Envenom at the cap.** At `combo_points>=combo_points.max` there is
+nothing left to build, so pooling is pure standing still, and a Seal Fate proc
+onto a capped bar is thrown away. This is what guarantees the list can never
+dead-end again.
+
+**The pool threshold is a slider now**, `envenom_pool_pct`, default 70 to match
+SimC. Dropping it to 40–50 spends on sight; the comment in the config says so,
+because the correct value here depends on how the pause feels in play rather
+than on anything the sim can settle.
+
+### Worth remembering
+
+`finisher_cp` and the generate gate are the same number, so any list reachable
+only between that number and the combo point cap is dead air unless something
+explicitly fills it. Adding a conditional-only finisher list above a gated
+generator is a dead-end pattern, not a pooling pattern.

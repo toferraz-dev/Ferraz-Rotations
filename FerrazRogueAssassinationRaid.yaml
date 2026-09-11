@@ -14,7 +14,7 @@
 # Why each line is the way it is: .agents/rationale/RogueAssassination.md
 # =============================================================================
 
-version: "1.0.0"
+version: "2.0.0"
 author: Ferraz
 patch: "12.1"
 spec: 259
@@ -29,7 +29,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-09-10 | Patch: 12.1 | Version: 1.0.0"
+    text: "Last update: 2026-09-10 | Patch: 12.1 | Version: 2.0.0"
 
   recommended_talents:
     section: "Talents"
@@ -55,6 +55,15 @@ config:
     max: 7
     default: 5
     description: "Combo points before Envenom and Rupture are allowed. Deeper Stratagem and Sanguine Stratagem raise the cap to 7, but SimC's maintained list still spends at 5 - holding for 6 or 7 costs more energy throughput than the bigger finisher returns. Raise it only if you know why."
+
+  envenom_pool_pct:
+    label: "Envenom - Pool Below Energy %"
+    section: "Rotation"
+    type: slider
+    min: 0
+    max: 100
+    default: 70
+    description: "Below this energy, Envenom waits rather than spending, so the finisher is followed straight away by two Mutilates instead of by an empty bar. 70 is SimC's number. The wait is never idle - the rotation keeps building combo points up to the cap while it waits - but drop this to 40-50 if you would rather spend on sight."
 
   multidot_mouseover:
     label: "Mouseover Multi-DoT"
@@ -336,8 +345,12 @@ lists:
     # is what keeps Slice and Dice alive on this build - there is no Slice and
     # Dice maintenance line anywhere below, because Envenom refreshes it.
     - envenom,name="Envenom (Refresh Buff)",if=buff.envenom.remains<=1|debuff.deathmark.up
-    - envenom,name="Envenom (Energy Dump)",if=energy.pct>70|fight_remains<15
+    - envenom,name="Envenom (Energy Dump)",if=energy.pct>config.envenom_pool_pct|fight_remains<15
     - envenom,name="Envenom (Dying Target / AoE)",if=energy.pct>30&(target.time_to_die<12|spell_targets.fan_of_knives>=4)
+    # Terminal. At the combo point cap there is nothing left to build, so
+    # pooling any longer is just standing still - and a Seal Fate proc on top
+    # of a capped bar is thrown away outright.
+    - envenom,name="Envenom (Combo Points Capped)",if=combo_points>=combo_points.max
 
   vanish:
     # Vanish is a damage cooldown here, not an escape: it opens an Improved
@@ -373,3 +386,15 @@ lists:
     - call_action_list,name=multidot,if=config.multidot_mouseover
     - call_action_list,name=generate,if=combo_points<config.finisher_cp
     - call_action_list,name=spend,if=combo_points>=config.finisher_cp
+    # Anti-stall, and the reason the pooling above is never dead air.
+    #
+    # Every Envenom in `spend` is conditional, so at the finisher threshold the
+    # list can legitimately decide to pool and return nothing. Without this
+    # line the rotation then had NOTHING to suggest - generate is gated off
+    # above the threshold - and it visibly froze at 5 combo points with half a
+    # bar of energy until energy crossed the pool threshold.
+    #
+    # Building toward the cap is the right thing to do with that time: this
+    # build has Deeper Stratagem and Sanguine Stratagem, so the cap is 7 and
+    # combo points 6 and 7 are free damage on the Envenom that follows.
+    - call_action_list,name=generate,if=combo_points>=config.finisher_cp&combo_points<combo_points.max
