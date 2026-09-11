@@ -435,3 +435,65 @@ here: `dots_ready` is a real quantity there, but nothing in the harness
 reproduces "Deathmark came off cooldown mid-bleed" often enough to compare
 variants on it. Judge in game - the tell is the Deathmark cast landing right
 after a Garrote/Rupture refresh instead of on a stale one.
+
+---
+
+## Deathmark holding for Kingsbane's exact phase, and a borrowed constant (2026-09-11)
+
+Ferraz reported the whole burst kit slow to fire on a fresh pull and slow to
+come back mid-fight - not one cooldown, "todos os cds volta ele esta demorando
+para usar." Two gates, both about keeping Deathmark and Kingsbane paired,
+both fragile to real-play timing drift in ways a clean 60s/120s cooldown
+assumption hides.
+
+### Deathmark was blocked on Kingsbane's cooldown, not just its own
+
+`deathmark,if=var.dots_ready&cooldown.kingsbane.remains<=2&buff.envenom.remains>2&var.deathmark_ttd_ok`
+made Deathmark - fully off cooldown, bleeds fresh, Envenom up - wait anyway
+if Kingsbane's own cooldown had more than 2 seconds left. In a perfectly
+clean 60/120 cycle the two line up on their own every other Deathmark, so
+this rarely bit in theory. In practice any drift - a GCD lost to movement, an
+interrupt eating a global, a slightly late Kingsbane in the previous cycle -
+leaves Kingsbane a few seconds out of phase, and Deathmark sits on a ready
+cooldown doing nothing until Kingsbane catches up.
+
+Deathmark's own debuff (`spell_query=spell.name=deathmark`) lasts 16 seconds.
+That is the actual reason the two don't need to be gated together at all:
+Kingsbane's own line already has a `dot.deathmark.ticking` branch, so once
+Deathmark is up, Kingsbane fires the moment IT is off cooldown, landing
+inside the 16s window even a few seconds late. Gate removed from Deathmark
+entirely - it now fires on its own schedule the instant it is ready, exactly
+what "be ready to use Deathmark and Kingsbane as soon as they come off
+cooldown" (Maxroll) asks for.
+
+### The "outside Deathmark" Kingsbane check used a fixed 52, not the real cooldown
+
+`kingsbane,if=...&(dot.deathmark.ticking|cooldown.deathmark.remains>52)&...`.
+Kingsbane's actual cooldown is 60s (`spell_query=spell.name=kingsbane`,
+id 385627), Deathmark's is 120s - a clean 2:1 the "52" was presumably reverse
+-engineered from at some specific haste level in SimC's own reference gear.
+The logic it approximates is sound: don't fire Kingsbane on its own unless it
+will be ready again before Deathmark's next window, or the pairing breaks for
+a full cycle. But the number is haste-dependent, and Simia can read the real
+thing - `cooldown.kingsbane.duration` (the "Cooldowns" category exposes
+`.duration`, not just `.remains`) returns Kingsbane's actual current cooldown
+length, haste included. Swapped the literal `52` for
+`cooldown.deathmark.remains>cooldown.kingsbane.duration`: Kingsbane fires
+solo whenever Deathmark is farther away than one full Kingsbane cycle,
+whatever that cycle actually is on Ferraz's gear, instead of a number tuned
+for someone else's.
+
+This is why Kingsbane "outside Deathmark" was reported as basically never
+firing: at any haste level where Kingsbane's real cooldown differs from the
+implied ~68s the constant 52 assumes (120-52), the comparison stops matching
+reality and the solo-cast branch either fires too early (risking a broken
+pair) or - what Ferraz saw - effectively never, because the fixed threshold
+no longer lines up with when Kingsbane can actually recover in time.
+
+**Not measurable in SimC.** Both gates are about pairing two cooldowns across
+real-play timing drift that a profileset does not reproduce - Patchwerk and
+DungeonRoute both run the APL without movement loss, interrupt collisions, or
+GCD contention from defensives. Judge in game: Kingsbane should now show
+roughly two casts per Deathmark cycle instead of one, and Deathmark should
+fire the instant `dots_ready` and `buff.envenom` allow it rather than
+visibly waiting.

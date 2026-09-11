@@ -14,7 +14,7 @@
 # Why each line is the way it is: .agents/rationale/RogueAssassination.md
 # =============================================================================
 
-version: "4.0.0"
+version: "5.0.0"
 author: Ferraz
 patch: "12.1"
 spec: 259
@@ -29,7 +29,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-09-11 | Patch: 12.1 | Version: 4.0.0"
+    text: "Last update: 2026-09-11 | Patch: 12.1 | Version: 5.0.0"
 
   recommended_talents:
     section: "Talents"
@@ -319,15 +319,29 @@ lists:
     - cheap_shot,if=interrupt.cc.check
 
   cds:
-    # Deathmark is the window. It wants both bleeds ticking, Envenom already
-    # up, and Kingsbane about to follow it in - the two are cast as a pair.
-    - deathmark,name="Deathmark",if=var.dots_ready&cooldown.kingsbane.remains<=2&buff.envenom.remains>2&var.deathmark_ttd_ok
+    # Deathmark is the window. It wants both bleeds ticking and Envenom
+    # already up - and nothing about Kingsbane's own cooldown. A
+    # cooldown.kingsbane.remains<=2 gate used to sit here, holding Deathmark
+    # hostage to Kingsbane's exact phase: any real-play drift (a GCD lost to
+    # movement, an interrupt, a late Kingsbane in a previous cycle) left
+    # Kingsbane a few seconds out of alignment, and Deathmark - fully ready
+    # itself - sat blocked waiting for it. Reported in play as every cooldown
+    # being slow to fire. Deathmark's own debuff lasts 16s, plenty for
+    # Kingsbane to land inside it a beat late via its own dot.deathmark.ticking
+    # branch below - no reason for Deathmark to wait on it at all.
+    - deathmark,name="Deathmark",if=var.dots_ready&buff.envenom.remains>2&var.deathmark_ttd_ok
 
     - call_action_list,name=items
     - call_action_list,name=vanish,if=config.vanish_enabled&!buff.stealth.up
 
-    # Kingsbane inside Deathmark, or when Deathmark is far enough not to break the pair.
-    - kingsbane,name="Kingsbane",if=var.dots_ready&(dot.deathmark.ticking|cooldown.deathmark.remains>52)&buff.envenom.up&var.kingsbane_ttd_ok
+    # Kingsbane inside Deathmark, or on its own when it will recover before
+    # Deathmark's next window - cooldown.kingsbane.duration reads the REAL,
+    # hasted cooldown, so this stays correct at any haste level instead of
+    # assuming the 60/120 base ratio (a fixed 52 borrowed from SimC's own
+    # reference gear used to sit here; it drifted out of sync at a different
+    # haste and cost a whole extra Deathmark cycle - reported in play as
+    # Kingsbane not firing outside the Deathmark window at all).
+    - kingsbane,name="Kingsbane",if=var.dots_ready&(dot.deathmark.ticking|cooldown.deathmark.remains>cooldown.kingsbane.duration)&buff.envenom.up&var.kingsbane_ttd_ok
 
     # Deathmark only. At 5 minutes the potion is the rarest cooldown in the kit,
     # so it never rides a lone Kingsbane.
