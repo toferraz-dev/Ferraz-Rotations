@@ -14,7 +14,7 @@
 # Why each line is the way it is: .agents/rationale/RogueAssassination.md
 # =============================================================================
 
-version: "3.0.0"
+version: "4.0.0"
 author: Ferraz
 patch: "12.1"
 spec: 259
@@ -29,7 +29,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-09-10 | Patch: 12.1 | Version: 3.0.0"
+    text: "Last update: 2026-09-11 | Patch: 12.1 | Version: 4.0.0"
 
   recommended_talents:
     section: "Talents"
@@ -65,6 +65,15 @@ config:
     default: 70
     description: "Below this energy, Envenom waits rather than spending, so the finisher is followed straight away by two Mutilates instead of by an empty bar. 70 is SimC's number. The wait is never idle - the rotation keeps building combo points up to the cap while it waits - but drop this to 40-50 if you would rather spend on sight."
 
+  deathmark_bleed_fresh:
+    label: "Deathmark/Kingsbane - Min Bleed Duration Remaining (s)"
+    section: "Rotation"
+    type: slider
+    min: 0
+    max: 30
+    default: 18
+    description: "Deathmark and Kingsbane both amplify Garrote/Rupture tick damage, so the window is wasted on a bleed that falls off partway through it. Maxroll's exact rule: refresh Garrote and Rupture first if either has 18s or less remaining at the moment you would press Deathmark. Below this, the two hold and let core_dot refresh the bleeds first. 0 disables the check and goes back to firing on 'ticking' alone."
+
   multidot_mouseover:
     label: "Mouseover Multi-DoT"
     section: "Rotation"
@@ -91,6 +100,22 @@ config:
     section: "Cooldowns"
     type: checkbox
     default: true
+
+  trinket_sync_slot:
+    label: "Trinket That Waits For Deathmark"
+    section: "Cooldowns"
+    type: dropdown
+    options:
+      - label: "Auto (whichever slot has an on-use effect)"
+        value: 0
+      - label: "Trinket 1"
+        value: 1
+      - label: "Trinket 2"
+        value: 2
+      - label: "Neither - fire both on cooldown"
+        value: 3
+    default: 0
+    description: "SimC's own default APL picks whichever on-use trinket has the LONGER base cooldown and makes only that one wait strictly for debuff.deathmark.up - the other fires on cooldown without waiting, because a short cooldown resyncs with Deathmark on its own. Simia has no expression for a trinket's base cooldown length (only .cd, what's left on it), so it cannot compare two on-use trinkets automatically. What it CAN read is trinket_X.has_onuse - whether the slot holds a button at all versus a passive stat stick or proc. Auto uses that: if only one of your two trinkets has a use effect, that one waits for Deathmark and the passive one is left alone, with no config needed. Pick a slot by hand only if you equip two on-use trinkets at once."
 
   use_potion:
     label: "Auto Combat Potion"
@@ -241,13 +266,23 @@ variables:
   # deliberately cast inside it.
   burst_now: debuff.deathmark.up|dot.kingsbane.ticking
 
-  # Deathmark wants Garrote and Rupture already ticking, so the window opens on
-  # a fully dressed target instead of spending its first seconds building one.
-  dots_ready: dot.garrote.ticking&dot.rupture.ticking
+  # Deathmark wants Garrote and Rupture already ticking AND fresh, so the
+  # window opens on a fully dressed target instead of spending its first
+  # seconds building one or riding out a bleed that falls off partway through.
+  # config.deathmark_bleed_fresh=0 drops the freshness half and goes back to
+  # "ticking" alone.
+  dots_ready: dot.garrote.ticking&dot.rupture.ticking&(!config.deathmark_bleed_fresh|(dot.garrote.remains>config.deathmark_bleed_fresh&dot.rupture.remains>config.deathmark_bleed_fresh))
 
   # A hovered enemy worth spending a global on. Hovering a friendly unit, a
   # dead mob or the target you are already hitting must not divert the list.
   mo_enemy_valid: config.multidot_mouseover&mouseover.exists&mouseover.enemy&mouseover.attackable&!mouseover.dead&mouseover.combat
+
+  # Which physical trinket slot, if any, waits strictly for debuff.deathmark.up.
+  # Auto (0) resolves itself from has_onuse when exactly one slot is a real
+  # on-use trinket - the common case, and the whole reason this is a variable
+  # instead of just reading config.trinket_sync_slot inline twice below.
+  trinket_1_syncs: "config.trinket_sync_slot=1|(config.trinket_sync_slot=0&trinket_1.has_onuse&!trinket_2.has_onuse)"
+  trinket_2_syncs: "config.trinket_sync_slot=2|(config.trinket_sync_slot=0&trinket_2.has_onuse&!trinket_1.has_onuse)"
 
 lists:
   engine:
@@ -325,24 +360,54 @@ lists:
   # that had no Deathmark behind it, and was then on cooldown when the real
   # window opened. Reported in play with the 90s Ula'tek trinket.
   #
-  # cooldown.deathmark.remains>20 is SimC's own escape and it matters here for
-  # the same reason: a 90s trinket against a 120s Deathmark cannot pair every
-  # time, so when Deathmark is far away the trinket is spent rather than idled.
+  # A version of this pair used to hold BOTH trinkets on
+  # `cooldown.deathmark.remains>20` alone. Two things wrong with that: first,
+  # `remains` reads 0 - not >20 - for a Deathmark that is simply ready but not
+  # yet cast (var.dots_ready still false, early in a pull), so neither trinket
+  # could ever fire during the opener, which every reference opener has a
+  # trinket use in before the first Deathmark. Second, a fixed 20s window is
+  # "close" for maybe a sixth of a 120s Deathmark cycle - the rest of the time
+  # the gate just waved the trinket through immediately, reported in play as
+  # "it fires the moment it's off cooldown" instead of syncing.
+  #
+  # Mirrors SimC's own default APL instead: only ONE trinket waits strictly
+  # for debuff.deathmark.up - var.trinket_1_syncs / var.trinket_2_syncs,
+  # config.trinket_sync_slot=Auto resolves it from has_onuse when only one
+  # slot holds a real on-use trinket. The other fires on cooldown, unheld,
+  # because its shorter cooldown (or its lack of a use effect at all)
+  # resyncs with Deathmark on its own without help.
   items:
-    - trinket_1,name="Trinket 1 (Deathmark)",if=config.use_trinket_1&trinket_1.ready&(debuff.deathmark.up|cooldown.deathmark.remains>20|fight_remains<=20)
-    - trinket_2,name="Trinket 2 (Deathmark)",if=config.use_trinket_2&trinket_2.ready&(debuff.deathmark.up|cooldown.deathmark.remains>20|fight_remains<=20)
+    - trinket_1,name="Trinket 1 (Deathmark)",if=config.use_trinket_1&trinket_1.ready&(!var.trinket_1_syncs|debuff.deathmark.up|fight_remains<=20)
+    - trinket_2,name="Trinket 2 (Deathmark)",if=config.use_trinket_2&trinket_2.ready&(!var.trinket_2_syncs|debuff.deathmark.up|fight_remains<=20)
 
   # Garrote and Rupture are 29% of this build's damage in the reference log and
   # every point of it is ticks, which is why they outrank everything else.
   core_dot:
-    # Improved Garrote window: re-apply at the buffed multiplier before it ends.
-    - garrote,name="Garrote (Improved Window)",if=buff.improved_garrote.up&(dot.garrote.refreshable|dot.garrote.remains<=14+6*talent.razor_wire+4*!var.single_target)
+    # buff.improved_garrote is the PLAYER's 6s post-Stealth/Vanish window (id
+    # 392401), not a flag on the DoT. A Garrote cast inside it snapshots +50%
+    # damage for the DoT's whole duration - the one bleed this build can still
+    # snapshot. Maxroll: "If your current Garrote is buffed with Improved
+    # Garrote, do not overwrite it - leave it to expire before applying it
+    # again." So this line only wants to spend the window when the current
+    # Garrote is ALREADY due a refresh (dot.garrote.refreshable, the normal
+    # pandemic check) - never early just because the window happens to be open.
+    # A `remains<=14+...` branch used to sit here and cut a freshly-snapshotted
+    # DoT short on almost every Vanish, for zero gain: a wasted GCD, not a
+    # wasted refresh, since the recast is equally snapshotted either way.
+    - garrote,name="Garrote (Improved Window)",if=buff.improved_garrote.up&dot.garrote.refreshable
     # var.dots_ttd_ok, NOT the raw `target.time_to_die-remains>ttd_dots` this
     # used to carry. That form has no boss bypass, so any moment Simia's
     # time-to-die estimate dipped - a shield, an immunity, a phase transition -
     # the bleed refresh was blocked outright and the DoT was allowed to fall
     # off a boss. Reported in play as "slow to refresh Garrote and Rupture".
-    - garrote,name="Garrote",if=combo_points.deficit>=1&dot.garrote.refreshable&var.dots_ttd_ok
+    #
+    # No combo_points.deficit gate. Garrote is a generator, not a spender - it
+    # needs no combo points to cast, and gating its DoT-refresh on "not capped"
+    # let 13.84% of this build's damage (the reference log's Garrote share)
+    # fall off the target whenever CP sat at the cap, which is most of the time
+    # energy is being pooled for Envenom. Losing one wasted point at the cap
+    # costs nothing; losing the whole bleed costs a lot.
+    - garrote,name="Garrote",if=dot.garrote.refreshable&var.dots_ttd_ok
     - rupture,name="Rupture",if=combo_points>=config.finisher_cp&dot.rupture.refreshable&var.dots_ttd_ok
 
   # Simia cannot cycle enemy targets - the documentation is explicit about it -
