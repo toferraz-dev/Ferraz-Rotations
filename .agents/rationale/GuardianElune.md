@@ -7,6 +7,30 @@ points.
 Read this before changing the matching line — most of it records something
 that was already tried and failed.
 
+## Standing priority: survival first, damage second
+
+Ferraz's own framing (2026-09-13). This is a **tank** rotation. When a choice
+here trades DPS against staying alive - or against not throwing a cooldown
+away on bad timing - survival wins, even against a measured sim number.
+
+This already explains decisions elsewhere in this file that look like they
+leave DPS on the table:
+- `potion_sync_burst` locked to always-sync despite measuring +1.89% worse
+  unsynced in DungeonSlice (see the entry below) - consistency with the
+  Incarnation window mattered more than the isolated potion number.
+- Every defensive gate (Barkskin, Survival Instincts, Frenzied Regeneration)
+  is predictive-first, reactive second, and explicitly **unvalidated by
+  simulation** - SimC cannot model incoming raid damage, so none of it can be
+  tuned against a profileset at all. It is tuned against staying up.
+- The HotW weave's forward-looking gates (`hotw_buster_window`,
+  `hotw_hp_pct`, `hotw_min_ttd`) exist to stop the weave from dropping Bear
+  Form's armour and stamina right as a hit lands - a DPS cooldown that is
+  allowed to cost survivability if timed wrong is not a DPS win.
+
+When a future change is tempting because a sim shows more DPS, check first
+whether it costs anything on the survival side before taking it. A number
+that only improves damage is not automatically the right call here.
+
 ---
 
 ## version: "1.8.0"
