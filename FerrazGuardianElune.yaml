@@ -9,7 +9,7 @@
 # Build drops Raze: the two Raze lines in bear are dead weight, the Maul
 # lines beside them are live.
 
-version: "2.1.0"
+version: "2.2.0"
 patch: "12.1"
 spec: 104
 name: Guardian Druid Ferraz M+
@@ -45,7 +45,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-09-11 | Patch: 12.1 | Version: 2.1.0"
+    text: "Last update: 2026-09-13 | Patch: 12.1 | Version: 2.2.0"
 
   # Exact string every number here was measured against (sim/Tassiana_guardian.simc).
   recommended_talents:
@@ -111,13 +111,6 @@ config:
     default: 20
     description: "Maul fires once rage is within this much of the cap. Lower = more aggressive."
 
-  cds_require_melee:
-    section: "Cooldowns"
-    label: "Cooldowns require a mob in melee"
-    type: checkbox
-    default: true
-    description: "Hold the trinkets, the combat potion and Berserk/Incarnation until at least one enemy in combat is within 8 yards. Without it all three fire on cooldown while you are running between packs, and the window is spent on empty air. Turn OFF to go back to firing them the moment they are ready."
-
   # HotW weave is the single most valuable thing in the file.
   auto_hotw:
     section: "Cooldowns"
@@ -174,7 +167,7 @@ config:
     label: "Trinkets: sync with Incarnation"
     type: checkbox
     default: true
-    description: "Hold the trinkets for the Incarnation/Berserk window. Turn OFF to fire them on cooldown under the TTD gate alone, which is what this file did before 1.14.0. Read the note on potion_sync_burst below before deciding - the same hold measured WORSE for the potion, because the burst itself is held for the Heart of the Wild weave."
+    description: "Hold the trinkets for the Incarnation/Berserk window. Turn OFF to fire them on cooldown under the TTD gate alone, which is what this file did before 1.14.0. The combat potion syncs the same way unconditionally - the same hold measured WORSE for the potion in DungeonSlice, kept anyway because the Burst Forced potion line already covers the common case."
 
   # Combat potion. The file carried NO potion line at all before 1.1, which is
   # why every variant below beats the old baseline by so much.
@@ -184,14 +177,6 @@ config:
     type: checkbox
     default: true
     description: "Fire the combat potion automatically. Measured +3.45% DungeonSlice synced to the burst."
-
-  # Measured on DungeonSlice against this file's own baseline.
-  potion_sync_burst:
-    section: "Cooldowns"
-    label: "Potion: sync with Incarnation"
-    type: checkbox
-    default: true
-    description: "Hold the potion for the Incarnation/Berserk window. Turn OFF to fire it the moment it is ready, which measured 1.89% more — the burst is held for the Heart of the Wild weave, so syncing makes the potion wait too."
 
   # Lunar Beam plants a ground effect; casting it while running wastes it.
   lunar_beam_moving_check:
@@ -319,7 +304,8 @@ variables:
   burst_active: buff.incarnation_guardian_of_ursoc.up|buff.berserk.up
 
   # Something in melee to spend a cooldown on. Combat-filtered: ignores unpulled packs.
-  melee_engaged: "!config.cds_require_melee|enemies.combat.8y>=1"
+  # Always on - a cooldown spent while running between packs is a cooldown wasted.
+  melee_engaged: enemies.combat.8y>=1
 
   # HotW weave gate. in_melee matters: the morph is Feral Frenzy (5y range).
   hotw_weave: config.auto_hotw&talent.heart_of_the_wild&cooldown_bypass.heart_of_the_wild.ready&target.valid&target.attackable&target.in_melee&player.combat&combat.time>=config.hotw_delay&player.standing.time>=config.hotw_min_standing_time&health.pct>=config.hotw_hp_pct&!var.heavy_incoming&variable.tank_buster_remains>config.hotw_buster_window&target.time_to_die>=config.hotw_min_ttd&!buff.incarnation_guardian_of_ursoc.up&!buff.berserk.up
@@ -399,8 +385,13 @@ lists:
     - berserk,if=target.valid&var.melee_engaged&(!config.auto_hotw|!talent.heart_of_the_wild|!cooldown_bypass.heart_of_the_wild.ready)
     - incarnation_guardian_of_ursoc,if=target.valid&var.melee_engaged&(!config.auto_hotw|!talent.heart_of_the_wild|!cooldown_bypass.heart_of_the_wild.ready)
 
-    # Combat potion.
-    - combat_potion,name="Combat Potion",off_gcd=true,ignore_queue=true,if=config.use_potion&combat_potion.ready&player.combat&var.melee_engaged&(!config.potion_sync_burst|var.burst_active|fight_remains<=30)
+    # Combat potion. Always synced to the Incarnation/Berserk window - measured
+    # worse in DungeonSlice than firing on cooldown (+1.89% unsynced), kept
+    # anyway: the "Burst Forced" line above already fires it the instant burst
+    # opens if it was ready, so this line only decides what happens to a
+    # potion that comes off cooldown mid-fight outside a window, and holding
+    # it for the next Incarnation is the wanted behaviour, sim number or not.
+    - combat_potion,name="Combat Potion",off_gcd=true,ignore_queue=true,if=config.use_potion&combat_potion.ready&player.combat&var.melee_engaged&(var.burst_active|fight_remains<=30)
 
     - wild_guardian,if=buff.lunar_beam.up
 
