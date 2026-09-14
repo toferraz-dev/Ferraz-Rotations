@@ -11,7 +11,7 @@
 #
 # Why each line is the way it is: .agents/rationale/RestoDruid.md
 # =============================================================================
-version: "12.0.0"
+version: "12.2.0"
 author: Ferraz
 patch: "12.1"
 spec: 105
@@ -30,7 +30,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-09-14 | Patch: 12.1 | Version: 12.0.0"
+    text: "Last update: 2026-09-14 | Patch: 12.1 | Version: 12.2.0"
 
   # RECOMMENDED BUILD — the string the talent.X gates below assume.
   recommended_talents:
@@ -191,7 +191,16 @@ config:
     min: 10
     max: 100
     default: 40
-    description: "Use Ironbark when the target's biggest predicted incoming hit is at least this much of their effective health, even at full HP."
+    description: "Use Ironbark when the target's biggest predicted incoming hit is at least this much of their effective health, even at full HP. cycle.incoming.pct has no confirmed support in Simia for a unit other than the player - unlike Barkskin, do not rely on this alone. See ironbark_threshold below."
+
+  ironbark_threshold:
+    label: "Ironbark HP % (effective)"
+    section: "Defensives"
+    type: slider
+    min: 25
+    max: 99
+    default: 75
+    description: "Fallback for the incoming-damage check above. Simia's damage prediction (incoming.pct) is documented and confirmed working for the player only - the cycle.incoming.pct form used for Ironbark's target has no confirmed support anywhere outside this file's own published copies, which is not independent evidence. Without this HP% branch, Ironbark stopped firing entirely once the pure-incoming version shipped. Keep this on until cycle.incoming.pct is confirmed with a real snapshot."
 
   frenzied_regen_threshold:
     label: "Frenzied Regen HP % (effective)"
@@ -257,6 +266,13 @@ config:
     section: "Damage"
     type: checkbox
     default: true
+
+  convoke_dps:
+    label: "Convoke as DPS Cooldown"
+    section: "Damage"
+    type: checkbox
+    default: true
+    description: "Cast Convoke the Spirits offensively in Cat Form when it is off cooldown, instead of holding it strictly for the healing version (Convoke (Heal) below, in Cooldowns). Turn OFF to only ever use Convoke to heal."
 
   ranged_dps:
     label: "Ranged DPS (Sun/Moon/Wrath)"
@@ -497,15 +513,25 @@ lists:
   # Mitigations and Emergency Defensives: Ironbark on Tanks/Members ->
   # Barkskin -> Bear Form + Frenzied Regen.
   defensives:
-    # Incoming-damage only, no HP% branch: the point is catching the hit
-    # BEFORE it lands, not reacting to health already lost. incoming.pct is
-    # already "predicted hit as % of CURRENT effective health" - the raw
-    # (unmitigated) form, so it does not suppress itself once Barkskin/
-    # Ironbark are up. Use the .mitigated form for any follow-up suppression.
+    # Barkskin: incoming-damage only, no HP% branch. It targets the PLAYER,
+    # and incoming.pct - "predicted hit as % of CURRENT effective health" - is
+    # documented and confirmed for that case: catches the hit BEFORE it lands
+    # instead of reacting to health already lost. Raw (unmitigated) form on
+    # purpose, so it does not suppress itself once Barkskin is up - use
+    # .mitigated for any follow-up suppression.
     - barkskin,name="Barkskin",off_gcd=true,ignore_queue=true,if=incoming.pct>=config.barkskin_incoming_pct
-    - 102342,name="Ironbark (Tank)",off_gcd=true,ignore_queue=true,cycle=tanks,if=config.ironbark_target=1&cycle.incoming.pct>=config.ironbark_incoming_pct&cycle.buff.ironbark.down
+    # Ironbark: cycle.incoming.pct restored alongside HP%, not instead of it.
+    # Ironbark targets a TANK or MEMBER, not the player, and the Incoming
+    # Damage Prediction category's own docs describe everything in first
+    # person ("my active defensives") - nothing confirms damage prediction
+    # works for a unit other than self. The only dump hits for cycle.incoming
+    # are this file's own two published copies, which is the repo citing
+    # itself, not independent evidence (see .agents/rationale/RestoDruid.md).
+    # Dropping the HP% branch here silently killed Ironbark entirely - it was
+    # the branch actually doing the work the whole time.
+    - 102342,name="Ironbark (Tank)",off_gcd=true,ignore_queue=true,cycle=tanks,if=config.ironbark_target=1&(cycle.health.effective.pct<config.ironbark_threshold|cycle.incoming.pct>=config.ironbark_incoming_pct)&cycle.buff.ironbark.down
     # 102342 on BOTH lines. This one said 102343, an id that does not exist.
-    - 102342,name="Ironbark (Members)",off_gcd=true,ignore_queue=true,cycle=members,if=config.ironbark_target=2&cycle.incoming.pct>=config.ironbark_incoming_pct&cycle.buff.ironbark.down
+    - 102342,name="Ironbark (Members)",off_gcd=true,ignore_queue=true,cycle=members,if=config.ironbark_target=2&(cycle.health.effective.pct<config.ironbark_threshold|cycle.incoming.pct>=config.ironbark_incoming_pct)&cycle.buff.ironbark.down
     - bear_form,name="Panic Bear",if= health.effective.pct<config.frenzied_regen_threshold&!buff.bear_form.up&cooldown.frenzied_regeneration.ready
     - frenzied_regeneration,name="Frenzied Regen",if= health.effective.pct<config.frenzied_regen_threshold&buff.bear_form.up
 
@@ -623,7 +649,7 @@ lists:
     # Heart of the Wild is cast BY NAME ONLY.
     - heart_of_the_wild,name="HotW Cat",if=config.use_heart_of_the_wild&talent.heart_of_the_wild&buff.cat_form.up
     # global_delay, and NOT 500.
-    - convoke_the_spirits,global_delay=750,name="Convoke (Offensive)",if=buff.cat_form.up&cooldown.convoke_the_spirits.ready&target.time_to_die>10
+    - convoke_the_spirits,global_delay=750,name="Convoke (Offensive)",if=config.convoke_dps&buff.cat_form.up&cooldown.convoke_the_spirits.ready&target.time_to_die>10
     - call_action_list,name=catweave_aoe,if=enemies.combat.8y>=config.aoe_threshold
     - call_action_list,name=catweave_st,if=enemies.combat.8y<config.aoe_threshold
 
