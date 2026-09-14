@@ -631,6 +631,7 @@ lists:
   ranged_dps:
     - sunfire,name="Sunfire Refresh",if=talent.sunfire&debuff.sunfire.refreshable
     - moonfire,name="Moonfire Refresh",if=debuff.moonfire.refreshable
+    - wrath, name="Wrath Filler"
 
   # Healing on the Move: Instant spells only (HoTs and Lifebloom)
   moving:
