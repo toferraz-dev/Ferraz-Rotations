@@ -1495,3 +1495,151 @@ UNVERIFIED IN GAME. If these do not resolve the variable is simply false and
 the cleanse stops firing - no loop, just a lost utility. Confirm with
 /simia snapshot while rooted: the trace should show the gate PASS.
 ```
+
+---
+
+## "Wild Growth doesn't use much" — not a bug, effective health working as designed (2026-09-14)
+
+Ferraz's report: watching the screen, 2+ party members visibly hurt, Wild
+Growth doesn't suggest anything. Investigated against two reference logs
+(`WarcraftLogs/Druid/Restoration/Altar of Fangs/`, Bubasaur and Zinney) before
+concluding this is not a bug.
+
+### What was ruled out
+
+- `cycle.tank` inside the `group.count()` call looked suspicious - it is not
+  in `expression-catalog.json` at all. Grepped the full dump: 63 real uses,
+  including in official `rotation_*.yaml` files and in
+  `community_Restoration_Druid_Ferraz_M_.yaml` (Ferraz's own published M+
+  build), in the identical `group.count(cycle.tank&...)` shape. Valid,
+  just uncatalogued - section 12 territory, not a bug.
+- `catweave_group_hp` (gates whether `active_healing` even runs) and
+  `wild_growth_threshold` (gates Wild Growth itself) both default to 85 and
+  point the same direction - if 2+ people are under 85%, the lowest of them
+  is certainly under 85% too, so `active_healing` is already reachable by the
+  time Wild Growth's own condition could be true. No gap between the two
+  gates.
+- No syntax issue: `group.count(cycle.health.effective.pct<config.
+  wild_growth_threshold&!cycle.tank)>=config.wild_growth_members` matches the
+  catalog's own example shape exactly, and git history shows this line has
+  been structurally stable since it was first written (only a `target_check`
+  -> `range_check` typo fix and the `!cycle.tank` addition, both intentional).
+
+### What the reference logs show
+
+86 and 79 Wild Growth casts across two logs, real cooldown confirmed at 10s
+(`spell_query=spell.name=wild_growth`). Median gap between casts: 15-20s, well
+above the 10s floor - not spammed on cooldown. **97% of casts (163 of 168)
+hit 4 or more of the 5-target smart-heal cap**, the overwhelming majority
+hitting all 5-7 (talents extend the cap past 5). Good play here waits for a
+genuine multi-person damage spike, not a marginal 2-person dip.
+
+### The actual explanation
+
+`cycle.health.effective.pct` is documented as `healthPct - healAbsorbPct +
+incomingHealsPct`. `incomingHealsPct` is the Blizzard API's aggregate of
+**all** incoming heals on a unit, from every healer in the group, not just
+this character's own casts. In a raid with more than one healer, a target
+can read low on the raw health bar - visibly "hurt" - while another healer's
+heal is already in flight, pushing effective% back above the 85% Wild Growth
+threshold before this character's own gate ever sees it as low.
+
+This is not a malfunction - it is the same "don't spend a heal on someone
+who is about to be topped by something already inbound" principle the
+Guardian file uses on purpose for Frenzied Regeneration
+(`.agents/rationale/GuardianElune.md`). Applied to Wild Growth it means the
+gate is mana-conscious: it holds the charge when the group is already being
+covered, rather than reacting to every visible dip and risking overheal on
+targets someone else is about to top off.
+
+**Decision (2026-09-14): keep effective health.** Asked directly whether to
+switch Wild Growth's trigger to raw `cycle.health.pct` - more reactive to
+what is visible on screen, more casts, more overheal risk and mana spent -
+or keep the current effective-health gate. Ferraz chose to keep effective.
+If this comes up again, the question to ask first is whether other healers
+were actively covering the same targets at that moment, not whether the
+gate is broken.
+
+### The real cause: three Regrowth casts outranked it, on a looser threshold
+
+Ferraz pushed back correctly: it wasn't (only) effective health dampening the
+signal, it was priority order. `active_healing` had three single-target
+Regrowth casts ahead of Wild Growth - Clearcasting Regrowth, SotF Regrowth,
+Abundance Regrowth - all three gated by `config.regrowth_threshold`, which
+defaults to **90%**. Wild Growth's own gate is **85%**. Since 85 < 90, anyone
+under Wild Growth's bar is automatically under Regrowth's bar too, so any of
+those three procs being up (Clearcasting, Soul of the Forest, Abundance -
+none of which are rare) preempted Wild Growth on the GCD even during a
+genuine multi-person spike. A raid-wide burst heal losing to a single-target
+proc-spend on a looser number, every time, is backwards.
+
+Fix: moved `wild_growth` to the very top of `active_healing`, ahead of all
+three Regrowth variants (and everything else in the list). When its own
+condition is met - 2+ non-tank members under 85% effective - it now wins the
+GCD outright. When it isn't, execution falls through to the list exactly as
+before, so nothing about Clearcasting/SotF/Abundance Regrowth's own logic
+changed - only their relative priority against Wild Growth did.
+
+Version 10.12.0 -> 11.0.0.
+
+### Nature's Swiftness and Regrowth Emergency switched to effective (2026-09-14, 11.1.0)
+
+Both used to be deliberately raw: the old comment above Regrowth Emergency
+said "effective adds incomingHealsPct, so with your HoTs rolling '50%
+effective' is roughly 30% real" - the reasoning being that an emergency line
+should react to the real bar, not a number inflated by heals not yet landed.
+Ferraz's call: switch both to effective anyway, same reasoning as every other
+threshold in the file - don't spend the cooldown (or the emergency global) on
+someone another heal already has covered. `natures_swiftness_threshold` and
+`regrowth_emergency_threshold` now read `cycle.health.effective.pct` in all
+three lines that use them (Nature's Swiftness itself, Nature Swift Regrowth,
+Regrowth Emergency).
+
+### Barkskin and Ironbark: incoming damage only, no HP% branch (12.0.0)
+
+Ferraz's framing: these two exist to leave the target at an acceptable HP
+*after* a predicted hit lands, cast *before* it lands - HP% (real or
+effective) answers a different question ("how hurt are they right now") than
+what these two are for. Both used to OR an HP% branch with an incoming-damage
+branch:
+
+```
+if=health.pct<config.barkskin_threshold|incoming.pct>=config.barkskin_incoming_pct
+```
+
+Dropped the HP% half entirely. `incoming.pct` (`Incoming Damage Prediction`
+category) is already "biggest predicted hit as % of CURRENT effective
+health" - which is the predictive form of exactly the question Ferraz asked
+for, expressed as damage-taken rather than health-remaining. It is the raw
+(unmitigated) form on purpose, per the catalog's own guidance: gate the
+initial suggestion on raw `incoming.pct`, and only use `.mitigated` for
+suppressing a follow-up once a defensive is already up - using `.mitigated`
+here would let Barkskin's own reduction suppress the very read that decides
+whether to cast it.
+
+`barkskin_threshold` and `ironbark_threshold` (the two HP% configs) are
+removed - nothing reads them anymore. `barkskin_incoming_pct` (default 30) and
+`ironbark_incoming_pct` (default 40) already existed and now do the whole
+job alone.
+
+### Frenzied Regen and MO Emergency switched to effective (12.0.0)
+
+Same reasoning as Nature's Swiftness/Regrowth Emergency above - don't spend
+the cooldown or the emergency global on a target another heal already has
+covered. `frenzied_regen_threshold` (gates both Panic Bear and Frenzied
+Regeneration) and `mouseover_emergency_hp` now read `.health.effective.pct`
+instead of raw `.health.pct`.
+
+Still raw, and deliberately unchanged: `healthstone_pct`, `health_potion_pct`
+(both self, both about not being caught OOM/out-of-charges by a heal that
+was already coming) and `emergency_hp` (the mid-cast interrupt-to-save-self
+line, which already reads effective and was correct as-is).
+
+### `ooc_abundance` toggle removed - always on
+
+Ferraz's call: padding Abundance during downtime never needed to be optional,
+so the `type: toggle` config (bindable icon, `spell: 207640`) is gone. All
+three callers of `abundance_maintenance` (`out_of_combat`, `moving`, `main`'s
+in-combat call) now run unconditionally instead of checking
+`config.ooc_abundance`. The in-combat call was already unconditional before
+this - only the out-of-combat/moving callers had the toggle.
