@@ -11,7 +11,7 @@
 #
 # Why each line is the way it is: .agents/rationale/RestoDruid.md
 # =============================================================================
-version: "12.2.1"
+version: "12.3.0"
 author: Ferraz
 patch: "12.1"
 spec: 105
@@ -30,7 +30,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-09-14 | Patch: 12.1 | Version: 12.2.1"
+    text: "Last update: 2026-09-14 | Patch: 12.1 | Version: 12.3.0"
 
   # RECOMMENDED BUILD — the string the talent.X gates below assume.
   recommended_talents:
@@ -184,15 +184,6 @@ config:
     default: 40
     description: "Use Barkskin when the biggest predicted incoming hit is at least this much of your effective health, even at full HP."
 
-  ironbark_incoming_pct:
-    label: "Ironbark Incoming Damage %"
-    section: "Defensives"
-    type: slider
-    min: 10
-    max: 100
-    default: 40
-    description: "Use Ironbark when the target's biggest predicted incoming hit is at least this much of their effective health, even at full HP. cycle.incoming.pct has no confirmed support in Simia for a unit other than the player - unlike Barkskin, do not rely on this alone. See ironbark_threshold below."
-
   ironbark_threshold:
     label: "Ironbark HP % (effective)"
     section: "Defensives"
@@ -200,7 +191,7 @@ config:
     min: 25
     max: 99
     default: 75
-    description: "Fallback for the incoming-damage check above. Simia's damage prediction (incoming.pct) is documented and confirmed working for the player only - the cycle.incoming.pct form used for Ironbark's target has no confirmed support anywhere outside this file's own published copies, which is not independent evidence. Without this HP% branch, Ironbark stopped firing entirely once the pure-incoming version shipped. Keep this on until cycle.incoming.pct is confirmed with a real snapshot."
+    description: "Use Ironbark when the target is below this health. HP% only - no incoming-damage form exists for a unit other than the player, so unlike Barkskin, Ironbark cannot react before the hit lands."
 
   frenzied_regen_threshold:
     label: "Frenzied Regen HP % (effective)"
@@ -520,18 +511,18 @@ lists:
     # purpose, so it does not suppress itself once Barkskin is up - use
     # .mitigated for any follow-up suppression.
     - barkskin,name="Barkskin",off_gcd=true,ignore_queue=true,if=incoming.pct>=config.barkskin_incoming_pct
-    # Ironbark: cycle.incoming.pct restored alongside HP%, not instead of it.
-    # Ironbark targets a TANK or MEMBER, not the player, and the Incoming
-    # Damage Prediction category's own docs describe everything in first
-    # person ("my active defensives") - nothing confirms damage prediction
-    # works for a unit other than self. The only dump hits for cycle.incoming
-    # are this file's own two published copies, which is the repo citing
-    # itself, not independent evidence (see .agents/rationale/RestoDruid.md).
-    # Dropping the HP% branch here silently killed Ironbark entirely - it was
-    # the branch actually doing the work the whole time.
-    - 102342,name="Ironbark (Tank)",off_gcd=true,ignore_queue=true,cycle=tanks,if=config.ironbark_target=1&(cycle.health.effective.pct<config.ironbark_threshold|cycle.incoming.pct>=config.ironbark_incoming_pct)&cycle.buff.ironbark.down
+    # Ironbark: HP% only, no cycle.incoming.pct. Ironbark targets a TANK or
+    # MEMBER, not the player, and section 11.35 of SIMIA_DOCUMENTATION.md
+    # (Previsão de Dano Recebido) is the one category in the entire doc with
+    # no per-unit form at all - every other predictive/health expression has
+    # a player/target/focus/mouseover/cycle variant, incoming.* has only the
+    # bare player form. The only dump hits for cycle.incoming.pct were this
+    # file's own two published copies - the repo citing itself, not
+    # independent evidence (see .agents/rationale/RestoDruid.md). Removed
+    # rather than left in as dead weight.
+    - 102342,name="Ironbark (Tank)",off_gcd=true,ignore_queue=true,cycle=tanks,if=config.ironbark_target=1&cycle.health.effective.pct<config.ironbark_threshold&cycle.buff.ironbark.down
     # 102342 on BOTH lines. This one said 102343, an id that does not exist.
-    - 102342,name="Ironbark (Members)",off_gcd=true,ignore_queue=true,cycle=members,if=config.ironbark_target=2&(cycle.health.effective.pct<config.ironbark_threshold|cycle.incoming.pct>=config.ironbark_incoming_pct)&cycle.buff.ironbark.down
+    - 102342,name="Ironbark (Members)",off_gcd=true,ignore_queue=true,cycle=members,if=config.ironbark_target=2&cycle.health.effective.pct<config.ironbark_threshold&cycle.buff.ironbark.down
     - bear_form,name="Panic Bear",if= health.effective.pct<config.frenzied_regen_threshold&!buff.bear_form.up&cooldown.frenzied_regeneration.ready
     - frenzied_regeneration,name="Frenzied Regen",if= health.effective.pct<config.frenzied_regen_threshold&buff.bear_form.up
 
