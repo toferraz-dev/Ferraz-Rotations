@@ -11,7 +11,7 @@
 #
 # Why each line is the way it is: .agents/rationale/RestoDruid.md
 # =============================================================================
-version: "12.2.0"
+version: "12.2.1"
 author: Ferraz
 patch: "12.1"
 spec: 105
@@ -30,7 +30,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-09-14 | Patch: 12.1 | Version: 12.2.0"
+    text: "Last update: 2026-09-14 | Patch: 12.1 | Version: 12.2.1"
 
   # RECOMMENDED BUILD — the string the talent.X gates below assume.
   recommended_talents:
@@ -271,8 +271,8 @@ config:
     label: "Convoke as DPS Cooldown"
     section: "Damage"
     type: checkbox
-    default: true
-    description: "Cast Convoke the Spirits offensively in Cat Form when it is off cooldown, instead of holding it strictly for the healing version (Convoke (Heal) below, in Cooldowns). Turn OFF to only ever use Convoke to heal."
+    default: false
+    description: "Cast Convoke the Spirits offensively in Cat Form when it is off cooldown, instead of holding it strictly for the healing version (Convoke (Heal) below, in Cooldowns). Turn ON to also spend it on DPS - default OFF, Convoke stays a heal-only cooldown."
 
   ranged_dps:
     label: "Ranged DPS (Sun/Moon/Wrath)"
