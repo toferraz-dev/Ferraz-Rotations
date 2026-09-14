@@ -1635,6 +1635,40 @@ Still raw, and deliberately unchanged: `healthstone_pct`, `health_potion_pct`
 was already coming) and `emergency_hp` (the mid-cast interrupt-to-save-self
 line, which already reads effective and was correct as-is).
 
+### Regression: dropping Ironbark's HP% branch silently killed it (12.2.0)
+
+Ferraz reported Ironbark stopped firing after the incoming-only change above.
+Root cause: `incoming.pct` (no `cycle.` prefix) is confirmed for Barkskin
+because Barkskin targets the PLAYER, and the whole "Incoming Damage
+Prediction" catalog category is written in first person ("my active
+defensives", "the player's") - nothing in it describes a per-unit form.
+Ironbark targets a TANK or MEMBER, a different unit than self, and the
+`cycle.incoming.pct` form used for it has **zero independent evidence**:
+grepped the full `simia_data_dump/`, and the only two hits are this file's
+own published copies (`community_Restoration_Druid_Ferraz_M_.yaml`,
+`community_Ferraz_Restoration_Druid_M___Wildstalker_.yaml`) - the repo
+citing itself, the exact trap the Rogue rationale already warned about with
+`player.debuff.snare.up`. The documentation does confirm a cycle-scoped
+incoming metric, but only for **heals** (`cycle.incoming_heals.pct`), never
+for damage.
+
+Before this session's incoming-only change, `cycle.health.pct<
+ironbark_threshold` sat in an OR alongside `cycle.incoming.pct`, and was
+doing 100% of the real work the whole time - `cycle.incoming.pct` was very
+likely always false, silently masked by the HP% branch never being touched
+or reported broken. Removing the mask exposed it.
+
+Fix: restored `ironbark_threshold` (deleted in the incoming-only change,
+default 75, matching Ferraz's live settings.yaml value) as an OR alongside
+`cycle.incoming.pct` - not a full revert, since `cycle.incoming.pct` might
+still be doing something and costs nothing to leave in. Barkskin is
+untouched; the player-scoped form stays confirmed and incoming-only.
+
+**Open question, not resolved:** does `cycle.incoming.pct` do anything at
+all for a non-player unit. Only a `/simia snapshot` on an Ironbark target
+mid-fight can answer that - until then, treat it as decorative on the
+Ironbark lines and the HP% branch as the one actually carrying the ability.
+
 ### `ooc_abundance` toggle removed - always on
 
 Ferraz's call: padding Abundance during downtime never needed to be optional,
