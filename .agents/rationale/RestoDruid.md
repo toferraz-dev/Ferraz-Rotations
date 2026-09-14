@@ -1669,6 +1669,18 @@ all for a non-player unit. Only a `/simia snapshot` on an Ironbark target
 mid-fight can answer that - until then, treat it as decorative on the
 Ironbark lines and the HP% branch as the one actually carrying the ability.
 
+**Update (still 2026-09-14): removed instead of left decorative.** Checked
+section 11.35 of `SIMIA_DOCUMENTATION.md` (Previsão de Dano Recebido) against
+every other predictive/health category in the doc: `incoming.*` is the only
+one with no per-unit form at all - `health`, `incoming_heals`, `incoming_cast`
+all have player/target/focus/mouseover/cycle variants, `incoming.*` has only
+the bare player form. That is a structural gap, not an oversight - Ferraz's
+call was to pull `cycle.incoming.pct` out rather than keep carrying dead
+weight on the "might still be doing something" chance. `ironbark_incoming_pct`
+removed with it, since nothing reads it anymore. Ironbark is HP% only now -
+same shape as before the whole incoming-damage detour started, minus the
+config that never did anything.
+
 ### `ooc_abundance` toggle removed - always on
 
 Ferraz's call: padding Abundance during downtime never needed to be optional,
