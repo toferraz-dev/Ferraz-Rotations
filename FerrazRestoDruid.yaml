@@ -11,7 +11,7 @@
 #
 # Why each line is the way it is: .agents/rationale/RestoDruid.md
 # =============================================================================
-version: "14.0.0"
+version: "14.1.0"
 author: Ferraz
 patch: "12.1"
 spec: 105
@@ -31,7 +31,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-09-15 | Patch: 12.1 | Version: 14.0.0"
+    text: "Last update: 2026-09-15 | Patch: 12.1 | Version: 14.1.0"
 
 
   # RECOMMENDED BUILD — the string the talent.X gates below assume.
@@ -663,7 +663,8 @@ lists:
   ranged_dps:
     - sunfire,name="Sunfire Refresh",if=talent.sunfire&debuff.sunfire.refreshable
     - moonfire,name="Moonfire Refresh",if=debuff.moonfire.refreshable
-    - starfire,name="Starfire Filler"
+    - starfire,name="Starfire Cleave",if=enemies.combat.8y>=config.aoe_threshold
+    - wrath, name="Wrath Filler"
 
   # Healing on the Move: Instant spells only (HoTs and Lifebloom)
   moving:
