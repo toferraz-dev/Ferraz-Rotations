@@ -11,7 +11,7 @@
 #
 # Why each line is the way it is: .agents/rationale/RestoDruid.md
 # =============================================================================
-version: "12.3.0"
+version: "12.3.1"
 author: Ferraz
 patch: "12.1"
 spec: 105
@@ -25,12 +25,14 @@ predictions:
   48438: { name: "Wild Growth", buff: 48438 }
 
 config:
+
   # BUILD STAMP — display only. Keep in sync with version:/patch: above.
   about:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-09-14 | Patch: 12.1 | Version: 12.3.0"
+    text: "Last update: 2026-09-14 | Patch: 12.1 | Version: 12.3.1"
+
 
   # RECOMMENDED BUILD — the string the talent.X gates below assume.
   recommended_talents:
@@ -38,6 +40,7 @@ config:
     type: copy_text
     label: "Recommended Talent String"
     text: "CkGADBD3hSPCL9Y9gz68WcKvMMMmZZMjZmxsNMYmNjNbzAAAAAAAAAAglBNbGmmZM8AmFzMzMLzwDYAAAAAAAwAAQAAAzyMbNbzsYjZmZwMzCoZAAmZAYA"
+
 
   # HEALING — the core thresholds.
   use_mouseover:
@@ -125,6 +128,7 @@ config:
     min: 25
     max: 99
     default: 90
+
   # REVERTED to 100 on 5.1.0, one version after lowering it.
   rejuvenation_threshold:
     label: "Rejuvenation HP % (effective)"
@@ -133,6 +137,7 @@ config:
     min: 25
     max: 100
     default: 100
+
 
   # HEALING COOLDOWNS — Convoke, Tranquility and their gates.
   convoke_threshold:
@@ -174,6 +179,7 @@ config:
     default: false
     description: "Toggle to disable automatic Tranquility usage."
 
+
   # DEFENSIVES — personal and Ironbark.
   barkskin_incoming_pct:
     label: "Barkskin Incoming Damage %"
@@ -212,7 +218,34 @@ config:
         value: 2
     default: 1
 
-  # DISPELS — Nature's Cure removes MAGIC, curse .
+  # Emergency. The casting guard at the top of main returns before anything
+  # else, so a hardcast used to cost you the defensive entirely.
+  emergency_hp:
+    label: "Emergency HP% (mid-cast, effective)"
+    section: "Defensives"
+    type: slider
+    min: 0
+    max: 100
+    default: 30
+    description: "Health below which defensives and consumables are allowed to fire while you are casting. The rotation normally does nothing at all mid-cast, so without this a hardcast swallows Barkskin, the healthstone and the health potion until it finishes. Set to 0 to go back to that."
+
+  emergency_stop_casting:
+    label: "Cut the Cast in an Emergency"
+    section: "Defensives"
+    type: checkbox
+    default: true
+    description: "Below the emergency HP, end the current cast so the next global can go to a real defensive. Barkskin and the consumables above do not need this - they are off-GCD and fire without touching the cast - so this only matters for the ones that cost a global, like Bear Form into Frenzied Regeneration. Tranquility and Convoke are never cut."
+
+  # Shapeshifting breaks roots, but only the ones the game lets it break.
+  root_cleanse:
+    label: "Break Roots by Shapeshifting"
+    section: "Defensives"
+    type: checkbox
+    default: true
+    description: "Shift form to break a root. Gated on an explicit list of the M+ 12.1 debuffs whose Mechanic is Root or Snare, so it never fires on something a shift cannot clear. line_cd caps it at one attempt every 8 seconds."
+
+
+  # DISPELS — Nature's Cure removes MAGIC, curse.
   auto_dispel:
     label: "Nature's Cure (Group)"
     section: "Dispels"
@@ -232,6 +265,8 @@ config:
     default: true
     description: "Soothe whatever you are hovering, checked just before the current-target Soothe below. Simia cannot pick an enraged enemy by criteria — target_enemy is 'nearest enemy' with no filter and there is no .any(EXPR) for enemies — so hovering is the only way to Soothe a mob you are not targeting. This is an independent switch: turning Soothe Enrage off does not disable it. Guarded on mouseover.combat, so hovering an unpulled mob never pulls it."
 
+
+  # DAMAGE — DPS weaving toggles and the cat-weave HP dial.
   # Lowered 95 -> 85 off a reference +15 log (Kireya, Murder Row, 26.9 min).
   catweave_group_hp:
     label: "Exit Cat - Group HP % (effective)"
@@ -277,6 +312,7 @@ config:
     type: checkbox
     default: true
 
+
   # MOVEMENT — Stampeding Roar.
   stampeding_roar_usage:
     label: "Stampeding Roar Usage"
@@ -301,6 +337,7 @@ config:
     max: 4
     default: 2
 
+
   # UTILITY — Innervate, Symbiotic Relationship, HoT spread toggle.
   auto_prowl:
     label: "Auto Prowl (Stealth)"
@@ -315,6 +352,7 @@ config:
     min: 25
     max: 99
     default: 75
+
 
   # RACIALS — Thorn Bloom is a heal, not damage.
   thorn_bloom_threshold:
@@ -333,7 +371,8 @@ config:
     max: 4
     default: 2
 
-  # TRINKETS & CONSUMABLES — tied to the Convoke .
+
+  # TRINKETS & CONSUMABLES — tied to the Convoke window.
   use_trinket_1:
     label: "Auto Trinket 1 (Before Convoke)"
     section: "Trinkets"
@@ -351,6 +390,7 @@ config:
     section: "Trinkets"
     type: checkbox
     default: true
+
 
   # ENGINE — plumbing this file owns instead of inheriting.
   loot_nearby:
@@ -414,23 +454,6 @@ config:
     max: 100
     default: 30
 
-  # Emergency. The casting guard at the top of main returns before anything
-  # else, so a hardcast used to cost you the defensive entirely.
-  emergency_hp:
-    label: "Emergency HP% (mid-cast, effective)"
-    section: "Defensives"
-    type: slider
-    min: 0
-    max: 100
-    default: 30
-    description: "Health below which defensives and consumables are allowed to fire while you are casting. The rotation normally does nothing at all mid-cast, so without this a hardcast swallows Barkskin, the healthstone and the health potion until it finishes. Set to 0 to go back to that."
-
-  emergency_stop_casting:
-    label: "Cut the Cast in an Emergency"
-    section: "Defensives"
-    type: checkbox
-    default: true
-    description: "Below the emergency HP, end the current cast so the next global can go to a real defensive. Barkskin and the consumables above do not need this - they are off-GCD and fire without touching the cast - so this only matters for the ones that cost a global, like Bear Form into Frenzied Regeneration. Tranquility and Convoke are never cut."
 
   discord_button:
     section: "Help"
@@ -438,14 +461,6 @@ config:
     label: "Discord - Ferraz"
     text: "Join Discord - Ferraz"
     url: "https://discord.com/channels/857767821093634068/1467268534420766854"
-
-  # Shapeshifting breaks roots, but only the ones the game lets it break.
-  root_cleanse:
-    label: "Break Roots by Shapeshifting"
-    section: "Defensives"
-    type: checkbox
-    default: true
-    description: "Shift form to break a root. Gated on an explicit list of the M+ 12.1 debuffs whose Mechanic is Root or Snare, so it never fires on something a shift cannot clear. line_cd caps it at one attempt every 8 seconds."
 
 variables:
   # The channelled ids this spec can actually produce, confirmed against
