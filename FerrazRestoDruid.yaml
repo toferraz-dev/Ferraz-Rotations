@@ -11,7 +11,7 @@
 #
 # Why each line is the way it is: .agents/rationale/RestoDruid.md
 # =============================================================================
-version: "12.3.1"
+version: "14.0.0"
 author: Ferraz
 patch: "12.1"
 spec: 105
@@ -31,7 +31,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-09-14 | Patch: 12.1 | Version: 12.3.1"
+    text: "Last update: 2026-09-15 | Patch: 12.1 | Version: 14.0.0"
 
 
   # RECOMMENDED BUILD — the string the talent.X gates below assume.
@@ -39,7 +39,7 @@ config:
     section: "Talents"
     type: copy_text
     label: "Recommended Talent String"
-    text: "CkGADBD3hSPCL9Y9gz68WcKvMMMmZZMjZmxsNMYmNjNbzAAAAAAAAAAglBNbGmmZM8AmFzMzMLzwDYAAAAAAAwAAQAAAzyMbNbzsYjZmZwMzCoZAAmZAYA"
+    text: "CkGADBD3hSPCL9Y9gz68WcKvMMMmZZMjZmxsNMDmNjNbzAAAAAAAAAAglBNbzw0MjBmFzMzYxwDMAAAAAMAAzAAQAAAz2MbNbzsYjZmZwMzCoZAAmZAYA"
 
 
   # HEALING — the core thresholds.
@@ -538,7 +538,7 @@ lists:
     - 102342,name="Ironbark (Tank)",off_gcd=true,ignore_queue=true,cycle=tanks,if=config.ironbark_target=1&cycle.health.effective.pct<config.ironbark_threshold&cycle.buff.ironbark.down
     # 102342 on BOTH lines. This one said 102343, an id that does not exist.
     - 102342,name="Ironbark (Members)",off_gcd=true,ignore_queue=true,cycle=members,if=config.ironbark_target=2&cycle.health.effective.pct<config.ironbark_threshold&cycle.buff.ironbark.down
-    - bear_form,name="Panic Bear",if= health.effective.pct<config.frenzied_regen_threshold&!buff.bear_form.up&cooldown.frenzied_regeneration.ready
+    - bear_form,name="Panic Bear",if= health.effective.pct<config.frenzied_regen_threshold&!buff.bear_form.up&cooldown.frenzied_regeneration.ready&!buff.incarnation_tree_of_life.up
     - frenzied_regeneration,name="Frenzied Regen",if= health.effective.pct<config.frenzied_regen_threshold&buff.bear_form.up
 
   # Racial Abilities and Specific Mobility
@@ -648,8 +648,8 @@ lists:
   # Catweaving Transition and Entry (Physical DPS)
   catweave:
     # Rake enters Cat via Fluid Form and applies the bleed in one GCD - no cat_form cast.
-    - 1822,name="Fluid Rake",if=!buff.cat_form.up
-    - cat_form,name="Manual Cat Shift",if=!talent.fluid_form&!buff.cat_form.up
+    - 1822,name="Fluid Rake",if=!buff.cat_form.up&!buff.incarnation_tree_of_life.up
+    - cat_form,name="Manual Cat Shift",if=!talent.fluid_form&!buff.cat_form.up&!buff.incarnation_tree_of_life.up
     - return,if=!buff.cat_form.up
 
     # Heart of the Wild is cast BY NAME ONLY.
@@ -663,7 +663,7 @@ lists:
   ranged_dps:
     - sunfire,name="Sunfire Refresh",if=talent.sunfire&debuff.sunfire.refreshable
     - moonfire,name="Moonfire Refresh",if=debuff.moonfire.refreshable
-    - wrath, name="Wrath Filler"
+    - starfire,name="Starfire Filler"
 
   # Healing on the Move: Instant spells only (HoTs and Lifebloom)
   moving:
@@ -704,8 +704,8 @@ lists:
     - interact_target,delay=350,if=config.loot_nearby&loot_nearby&!player.combat
     - interact_mouseover,delay=350,if=config.loot_nearby&mouseover.lootable&mouseover.range<=5&!player.combat
 
-    - bear_form,name="Root Cleanse (to Bear)",line_cd=8,if=config.root_cleanse&var.druid_shapeshift_root&!player.stunned&!buff.bear_form.up
-    - cat_form,name="Root Cleanse (from Bear)",line_cd=8,if=config.root_cleanse&var.druid_shapeshift_root&!player.stunned&buff.bear_form.up
+    - bear_form,name="Root Cleanse (to Bear)",line_cd=8,if=config.root_cleanse&var.druid_shapeshift_root&!player.stunned&!buff.bear_form.up&!buff.incarnation_tree_of_life.up
+    - cat_form,name="Root Cleanse (from Bear)",line_cd=8,if=config.root_cleanse&var.druid_shapeshift_root&!player.stunned&buff.bear_form.up&!buff.incarnation_tree_of_life.up
 
     # Nature's Cure removes MAGIC, curse and poison — the healer dispel. It had
     # no toggle before; dispelling is your job, so it defaults ON.
@@ -763,4 +763,4 @@ lists:
     - call_action_list,name=ranged_dps,if=config.ranged_dps&var.can_catweave&target.exists&target.alive&!target.friendly&!target.in_melee
     # Cat only. Bear is defensive-only here - see defensives for Panic Bear and
     # the root cleanse.
-    - call_action_list,name=catweave,if=config.melee_dps&var.can_catweave&target.exists&target.alive&!target.friendly&target.in_melee
+    - call_action_list,name=catweave,if=config.melee_dps&var.can_catweave&target.exists&target.alive&!target.friendly&target.in_melee&!buff.incarnation_tree_of_life.up
