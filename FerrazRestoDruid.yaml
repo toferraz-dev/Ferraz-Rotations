@@ -11,7 +11,7 @@
 #
 # Why each line is the way it is: .agents/rationale/RestoDruid.md
 # =============================================================================
-version: "14.1.0"
+version: "14.3.0"
 author: Ferraz
 patch: "12.1"
 spec: 105
@@ -31,7 +31,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-09-15 | Patch: 12.1 | Version: 14.1.0"
+    text: "Last update: 2026-09-15 | Patch: 12.1 | Version: 14.3.0"
 
 
   # RECOMMENDED BUILD — the string the talent.X gates below assume.
@@ -514,7 +514,7 @@ lists:
     # pulls with Rejuvenation topped up is worth having the window ready.
     - call_action_list,name=abundance_maintenance
     # Auto Stealth when all healing is done
-    - prowl,name="Auto Stealth",if=config.auto_prowl&!buff.prowl.up&!buff.travel_form.up&!buff.bear_form.up
+    - prowl,name="Auto Stealth",if=config.auto_prowl&!buff.prowl.up&!buff.travel_form.up&!buff.bear_form.up&!buff.incarnation_tree_of_life.up
 
   # Mitigations and Emergency Defensives: Ironbark on Tanks/Members ->
   # Barkskin -> Bear Form + Frenzied Regen.
@@ -761,7 +761,7 @@ lists:
 
 
     # DPS weaving when the group is healthy
-    - call_action_list,name=ranged_dps,if=config.ranged_dps&var.can_catweave&target.exists&target.alive&!target.friendly&!target.in_melee
+    - call_action_list,name=ranged_dps,if=config.ranged_dps&var.can_catweave&target.exists&target.alive&!target.friendly&(!target.in_melee|buff.incarnation_tree_of_life.up)
     # Cat only. Bear is defensive-only here - see defensives for Panic Bear and
     # the root cleanse.
     - call_action_list,name=catweave,if=config.melee_dps&var.can_catweave&target.exists&target.alive&!target.friendly&target.in_melee&!buff.incarnation_tree_of_life.up
