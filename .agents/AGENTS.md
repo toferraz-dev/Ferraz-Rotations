@@ -1,5 +1,18 @@
 # Simia Pro YAML Rotations Rule
 
+## Codebase Overview
+
+Ten hand-tuned Simia Pro rotation YAMLs (repo root, `Ferraz*.yaml`), one per
+class/spec, mostly in M+/Raid pairs. Everything else exists to make editing
+them safely repeatable: `.agents/` is the documentation system (read
+`AGENTS.md` first, always), `lint_rotations.py` + `sim/rotation_sim.py`
+validate format and logic, `sim/ab_test*.py` measures damage changes against
+SimulationCraft. `simia_data_dump/` (fetched community catalog) and
+`sim/tools/` (vendored SimC binary) are third-party data, not authored code.
+
+For the full architecture, module guide, data flows, conventions and
+navigation paths, see [docs/CODEBASE_MAP.md](../docs/CODEBASE_MAP.md).
+
 Whenever you are tasked with creating, reviewing, or modifying a YAML rotation file in this workspace, you MUST adhere to the following workflow BEFORE taking any action:
 
 1. **Review Official Documentation:** Read `.agents/SIMIA_DOCUMENTATION.md` to refresh your understanding of the structural requirements, config widgets, modifiers, and syntax of Simia Pro rotations.
