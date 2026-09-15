@@ -11,7 +11,7 @@
 # Why each line is the way it is: .agents/rationale/RestoDruidRaid.md
 # =============================================================================
 
-version: "4.2.0"
+version: "5.0.0"
 author: Ferraz
 patch: "12.1"
 spec: 105
@@ -23,12 +23,14 @@ entry: main
 # CONFIG — thresholds below are untested defaults, tune to your team.
 
 config:
+
   # Display-only build stamp — keep in sync with version:/patch: above.
   about:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-09-09 | Patch: 12.1 | Version: 4.2.0"
+    text: "Last update: 2026-09-14 | Patch: 12.1 | Version: 5.0.0"
+
 
   # String the talent.X checks below assume.
   recommended_talents:
@@ -37,45 +39,83 @@ config:
     label: "Recommended Talent String"
     text: "CkGADBD3hSPCL9Y9gz68WcKvMMjxMLzMjZmxsNMYmNjNmBAAAAAAAAAALDa2YMNzY4BMLzMzMDDzAAAAAAAAAAIAAgZbmlmtZ2sxYmZYmBGNDAwMDADA"
 
-  # === DEFENSIVE CONFIGURATIONS ===
-  raid_barkskin_threshold:
-    label: "Barkskin HP %"
-    section: "Defensives"
+
+  # HEALING — AoE/group thresholds, then single-target.
+  raid_use_mouseover:
+    label: "MO Healing (Emergency)"
+    section: "Healing"
+    type: checkbox
+    default: true
+
+  raid_mouseover_emergency_hp:
+    label: "MO Emergency HP % (effective)"
+    section: "Healing"
+    type: slider
+    min: 10
+    max: 99
+    default: 80
+
+  # Cancels a heal mid-cast if the target got topped off by someone else.
+  raid_cancel_overheal_pct:
+    label: "Cancel Cast If Target HP % >= (real HP)"
+    section: "Healing"
+    type: slider
+    min: 90
+    max: 100
+    default: 98
+
+  raid_wild_growth_threshold:
+    label: "Wild Growth HP % (effective)"
+    section: "Healing"
     type: slider
     min: 25
     max: 99
-    default: 65
+    default: 85
 
-  raid_frenzied_regen_threshold:
-    label: "Frenzied Regen HP %"
-    section: "Defensives"
+  raid_wild_growth_members:
+    label: "Wild Growth - Min Members"
+    section: "Healing"
+    type: slider
+    min: 1
+    max: 20
+    default: 4
+
+  raid_lifebloom_threshold:
+    label: "Lifebloom HP % (effective)"
+    section: "Healing"
     type: slider
     min: 25
     max: 99
-    default: 40
+    default: 70
 
-  raid_ironbark_threshold:
-    label: "Ironbark HP %"
-    section: "Defensives"
+  raid_swiftmend_threshold:
+    label: "Swiftmend HP % (effective)"
+    section: "Healing"
     type: slider
     min: 25
     max: 99
-    default: 60
+    default: 55
 
-  raid_ironbark_target:
-    label: "Ironbark Target"
-    section: "Defensives"
-    type: dropdown
-    options:
-      - label: "Tanks Only"
-        value: 1
-      - label: "All Members"
-        value: 2
-    default: 1
+  raid_regrowth_threshold:
+    label: "Regrowth HP % (effective)"
+    section: "Healing"
+    type: slider
+    min: 25
+    max: 99
+    default: 85
 
-  # === COOLDOWN CONFIGURATIONS ===
+  raid_rejuvenation_threshold:
+    label: "Rejuvenation HP % (effective)"
+    section: "Healing"
+    type: slider
+    min: 25
+    max: 99
+    default: 95
+
+
+  # COOLDOWNS — Convoke, Tranquility and their gates.
   raid_convoke_threshold:
-    label: "Convoke HP %"
+    label: "Convoke HP % (effective)"
     section: "Cooldowns"
     type: slider
     min: 25
@@ -91,7 +131,7 @@ config:
     default: 6
 
   raid_tranquility_threshold:
-    label: "Tranquility HP %"
+    label: "Tranquility HP % (effective)"
     section: "Cooldowns"
     type: slider
     min: 25
@@ -112,82 +152,89 @@ config:
     type: checkbox
     default: false
 
-  # === AOE / GROUP HEALING CONFIGURATIONS ===
-  raid_use_mouseover:
-    label: "MO Healing (Emergency)"
-    section: "Healing"
+
+  # DEFENSIVES — personal and Ironbark.
+  raid_barkskin_threshold:
+    label: "Barkskin Incoming Damage %"
+    section: "Defensives"
+    type: slider
+    min: 25
+    max: 99
+    default: 65
+    description: "Use Barkskin when the biggest predicted incoming hit is at least this much of your effective health, even at full HP. The label used to say HP% - the action line has always compared this against incoming.pct (predicted damage), never against your actual health."
+
+  raid_frenzied_regen_threshold:
+    label: "Frenzied Regen HP % (effective)"
+    section: "Defensives"
+    type: slider
+    min: 25
+    max: 99
+    default: 40
+
+  raid_ironbark_threshold:
+    label: "Ironbark HP % (effective)"
+    section: "Defensives"
+    type: slider
+    min: 25
+    max: 99
+    default: 60
+
+  raid_ironbark_target:
+    label: "Ironbark Target"
+    section: "Defensives"
+    type: dropdown
+    options:
+      - label: "Tanks Only"
+        value: 1
+      - label: "All Members"
+        value: 2
+    default: 1
+
+  # Emergency. The casting guard at the top of main returns before anything
+  # else, so a hardcast used to cost you the defensive entirely.
+  emergency_hp:
+    label: "Emergency HP% (mid-cast, effective)"
+    section: "Defensives"
+    type: slider
+    min: 0
+    max: 100
+    default: 35
+    description: "Health below which defensives and consumables are allowed to fire while you are casting. The rotation normally does nothing at all mid-cast, so without this a hardcast swallows Barkskin, the healthstone and the health potion until it finishes. Set to 0 to go back to that."
+
+  emergency_stop_casting:
+    label: "Cut the Cast in an Emergency"
+    section: "Defensives"
+    type: checkbox
+    default: true
+    description: "Below the emergency HP, end the current cast so the next global can go to a real defensive. Barkskin and the consumables above do not need this - they are off-GCD and fire without touching the cast - so this only matters for the ones that cost a global, like Bear Form into Frenzied Regeneration. Tranquility and Convoke are never cut."
+
+  # Shapeshifting breaks roots, but only the ones the game lets it break.
+  root_cleanse:
+    label: "Break Roots by Shapeshifting"
+    section: "Defensives"
+    type: checkbox
+    default: true
+    description: "Shift form to break a root. Gated on an explicit list of the M+ 12.1 debuffs whose Mechanic is Root or Snare, so it never fires on something a shift cannot clear. line_cd caps it at one attempt every 8 seconds."
+
+
+  # DISPELS — Nature's Cure removes MAGIC, curse and poison.
+  auto_dispel_group:
+    label: "Nature's Cure (Group)"
+    section: "Dispels"
     type: checkbox
     default: true
 
-  raid_mouseover_emergency_hp:
-    label: "MO Emergency HP %"
-    section: "Healing"
-    type: slider
-    min: 10
-    max: 99
-    default: 80
+  soothe_mouseover:
+    label: "Soothe Mouseover"
+    section: "Dispels"
+    type: checkbox
+    default: true
+    description: "Soothe whatever you are hovering, checked just before the current-target Soothe below. Simia cannot pick an enraged enemy by criteria — target_enemy is 'nearest enemy' with no filter and there is no .any(EXPR) for enemies — so hovering is the only way to Soothe a mob you are not targeting. This is an independent switch: turning Soothe Enrage off does not disable it. Guarded on mouseover.combat, so hovering an unpulled mob never pulls it."
 
-  # Cancels a heal mid-cast if the target got topped off by someone else.
-  raid_cancel_overheal_pct:
-    label: "Cancel Cast If Target HP % >="
-    section: "Healing"
-    type: slider
-    min: 90
-    max: 100
-    default: 98
 
-  raid_wild_growth_threshold:
-    label: "Wild Growth HP %"
-    section: "Healing"
-    type: slider
-    min: 25
-    max: 99
-    default: 85
-
-  raid_wild_growth_members:
-    label: "Wild Growth - Min Members"
-    section: "Healing"
-    type: slider
-    min: 1
-    max: 20
-    default: 4
-
-  # === SINGLE TARGET (ST) HEALING CONFIGURATIONS ===
-  raid_lifebloom_threshold:
-    label: "Lifebloom HP %"
-    section: "Healing"
-    type: slider
-    min: 25
-    max: 99
-    default: 70
-
-  raid_swiftmend_threshold:
-    label: "Swiftmend HP %"
-    section: "Healing"
-    type: slider
-    min: 25
-    max: 99
-    default: 55
-
-  raid_regrowth_threshold:
-    label: "Regrowth HP %"
-    section: "Healing"
-    type: slider
-    min: 25
-    max: 99
-    default: 85
-
-  raid_rejuvenation_threshold:
-    label: "Rejuvenation HP %"
-    section: "Healing"
-    type: slider
-    min: 25
-    max: 99
-    default: 95
-
-  # === DAMAGE & CATWEAVING CONFIGURATIONS ===
+  # DAMAGE — DPS weaving toggles and the cat-weave HP dial.
   raid_catweave_group_hp:
-    label: "Exit Cat - Group HP %"
+    label: "Exit Cat - Group HP % (effective)"
     section: "Damage"
     type: slider
     min: 25
@@ -228,7 +275,8 @@ config:
     type: checkbox
     default: true
 
-  # === UTILITY CONFIGURATIONS ===
+
+  # UTILITY — Innervate, Mark of the Wild, HoT spread toggle.
   # Season 2: flat 25% mana restore, so use early and often (guide: ~75%).
   raid_innervate_threshold:
     label: "Innervate Mana %"
@@ -238,9 +286,23 @@ config:
     max: 99
     default: 75
 
-  # === RACIAL CONFIGURATIONS ===
+  raid_use_mark_of_the_wild:
+    label: "Auto Mark of the Wild"
+    section: "Utility"
+    type: checkbox
+    default: true
+
+  raid_force_spread:
+    label: "Force HoT Spread"
+    section: "Utility"
+    type: toggle
+    spell: 774
+    description: "Forces Rejuvenation / Wild Growth spread regardless of HP"
+
+
+  # RACIALS — Thorn Bloom is a heal, not damage.
   raid_thorn_bloom_threshold:
-    label: "Thorn Bloom HP %"
+    label: "Thorn Bloom HP % (effective)"
     section: "Racials"
     type: slider
     min: 25
@@ -255,7 +317,8 @@ config:
     max: 20
     default: 3
 
-  # === TRINKET & CONSUMABLE CONFIGURATIONS ===
+
+  # TRINKETS & CONSUMABLES — tied to the Convoke window.
   raid_use_trinket_1:
     label: "Auto Trinket 1 (Before Convoke)"
     section: "Trinkets"
@@ -274,19 +337,8 @@ config:
     type: checkbox
     default: false
 
-  raid_use_mark_of_the_wild:
-    label: "Auto Mark of the Wild"
-    section: "Utility"
-    type: checkbox
-    default: true
 
-  raid_force_spread:
-    label: "Force HoT Spread"
-    section: "Utility"
-    type: toggle
-    spell: 774
-    description: "Forces Rejuvenation / Wild Growth spread regardless of HP"
-
+  # ENGINE — plumbing this file owns instead of inheriting.
   # Inlined from Simia's _shared.yaml instead of inherited.
   engine_loot_nearby:
     label: "Loot Nearby Corpses"
@@ -317,7 +369,7 @@ config:
     default: [0, 1]
 
   engine_healthstone:
-    label: "Healthstone HP%"
+    label: "Healthstone HP% (real HP)"
     section: "Engine"
     type: slider
     min: 0
@@ -325,7 +377,7 @@ config:
     default: 40
 
   engine_health_potion:
-    label: "Health Potion HP%"
+    label: "Health Potion HP% (real HP)"
     section: "Engine"
     type: slider
     min: 0
@@ -353,43 +405,12 @@ config:
     type: checkbox
     default: true
 
-  # Nature's Cure removes MAGIC, curse and poison.
-  auto_dispel_group:
-    label: "Nature's Cure (Group)"
-    section: "Dispels"
-    type: checkbox
-    default: true
-
-  soothe_mouseover:
-    label: "Soothe Mouseover"
-    section: "Dispels"
-    type: checkbox
-    default: true
-    description: "Soothe whatever you are hovering, checked just before the current-target Soothe below. Simia cannot pick an enraged enemy by criteria — target_enemy is 'nearest enemy' with no filter and there is no .any(EXPR) for enemies — so hovering is the only way to Soothe a mob you are not targeting. This is an independent switch: turning Soothe Enrage off does not disable it. Guarded on mouseover.combat, so hovering an unpulled mob never pulls it."
-
   engine_affix_devour:
     label: "Dispel Devouring Rift (Affix)"
     section: "Engine"
     type: checkbox
     default: true
 
-  # Emergency. The casting guard at the top of main returns before anything
-  # else, so a hardcast used to cost you the defensive entirely.
-  emergency_hp:
-    label: "Emergency HP% (mid-cast)"
-    section: "Defensives"
-    type: slider
-    min: 0
-    max: 100
-    default: 35
-    description: "Health below which defensives and consumables are allowed to fire while you are casting. The rotation normally does nothing at all mid-cast, so without this a hardcast swallows Barkskin, the healthstone and the health potion until it finishes. Set to 0 to go back to that."
-
-  emergency_stop_casting:
-    label: "Cut the Cast in an Emergency"
-    section: "Defensives"
-    type: checkbox
-    default: true
-    description: "Below the emergency HP, end the current cast so the next global can go to a real defensive. Barkskin and the consumables above do not need this - they are off-GCD and fire without touching the cast - so this only matters for the ones that cost a global, like Bear Form into Frenzied Regeneration. Tranquility and Convoke are never cut."
 
   discord_button:
     section: "Help"
@@ -397,16 +418,6 @@ config:
     label: "Discord - Ferraz"
     text: "Join Discord - Ferraz"
     url: "https://discord.com/channels/857767821093634068/1467268534420766854"
-
-# VARIABLES.
-
-  # Shapeshifting breaks roots, but only the ones the game lets it break.
-  root_cleanse:
-    label: "Break Roots by Shapeshifting"
-    section: "Defensives"
-    type: checkbox
-    default: true
-    description: "Shift form to break a root. Gated on an explicit list of the M+ 12.1 debuffs whose Mechanic is Root or Snare, so it never fires on something a shift cannot clear. line_cd caps it at one attempt every 8 seconds."
 
 variables:
   # The channelled ids this spec can actually produce, confirmed against
@@ -498,11 +509,11 @@ lists:
 
   # Ironbark -> Barkskin -> Bear Form + Frenzied Regen.
   defensives:
-    - 102342,name="Ironbark (Tank)",cycle=tanks,if=(config.raid_ironbark_target=1&cycle.health.pct<config.raid_ironbark_threshold&cycle.buff.ironbark.down)&cycle.range<=40
-    - 102342,name="Ironbark (Members)",cycle=members,if=(config.raid_ironbark_target=2&cycle.health.pct<config.raid_ironbark_threshold&cycle.buff.ironbark.down)&cycle.range<=40
+    - 102342,name="Ironbark (Tank)",cycle=tanks,if=(config.raid_ironbark_target=1&cycle.health.effective.pct<config.raid_ironbark_threshold&cycle.buff.ironbark.down)&cycle.range<=40
+    - 102342,name="Ironbark (Members)",cycle=members,if=(config.raid_ironbark_target=2&cycle.health.effective.pct<config.raid_ironbark_threshold&cycle.buff.ironbark.down)&cycle.range<=40
     - barkskin,name="Barkskin",if=incoming.pct>=config.raid_barkskin_threshold
-    - bear_form,name="Panic Bear",if=health.pct<config.raid_frenzied_regen_threshold&!buff.bear_form.up&cooldown.frenzied_regeneration.ready
-    - frenzied_regeneration,name="Frenzied Regen",if=health.pct<config.raid_frenzied_regen_threshold&buff.bear_form.up
+    - bear_form,name="Panic Bear",if=health.effective.pct<config.raid_frenzied_regen_threshold&!buff.bear_form.up&cooldown.frenzied_regeneration.ready
+    - frenzied_regeneration,name="Frenzied Regen",if=health.effective.pct<config.raid_frenzied_regen_threshold&buff.bear_form.up
 
   # Shadowmeld aggro drop, Thorn Bloom group heal.
   racials:
@@ -510,7 +521,8 @@ lists:
     - thorn_bloom,name="Thorn Bloom",if=group.count(cycle.health.effective.pct<config.raid_thorn_bloom_threshold&cycle.range<=40)>=config.raid_thorn_bloom_members&target.in_melee
 
   # NS -> trinkets/potion -> Convoke -> NS Regrowth -> Tranquility -> self
-  # Swiftmend -> reactive Swiftmend -> Clearcasting Regrowth.
+  # Swiftmend. Clearcasting Regrowth moved to active_healing - see the note
+  # there.
   cooldowns:
     # CONVOKE IS FORM-DEPENDENT. Casting Rejuvenation breaks the form as a side
     # effect, so the Convoke line below can fire on the next pass.
@@ -524,8 +536,6 @@ lists:
     - tranquility,global_delay=750,name="Tranquility",if=!config.raid_manual_tranquility&group.count(cycle.health.effective.pct<config.raid_tranquility_threshold&cycle.range<=40)>=config.raid_tranquility_members&!player.moving
     # Power of the Archdruid loop: Swiftmend on CD, spreads Rejuv to 3 targets.
     - swiftmend,name="Swiftmend for SotF/Treants",cycle=members,if=(player.combat&cycle.health.effective.pct<config.raid_swiftmend_threshold&(cycle.buff.rejuvenation.up|cycle.buff.regrowth.up|cycle.buff.wild_growth.up))&cycle.range<=40
-    # NO `|pred.cycle.buff.regrowth.down` branch.
-    - regrowth,name="Clearcasting Regrowth",cycle=members,if=(player.combat&buff.clearcasting.up&cycle.health.effective.pct<99)&cycle.range<=40
 
   # SotF consumption -> self Everbloom/Photosynthesis loop -> tank Lifebloom
   # -> forced spread -> Abundance window, spent before Wild Growth.
@@ -558,6 +568,13 @@ lists:
     - regrowth,name="Abundance Regrowth",cycle=members,if=(buff.abundance.up&cycle.health.effective.pct<config.raid_regrowth_threshold)&cycle.range<=40
 
     - wild_growth,name="Wild Growth",range_check=none,if=group.count(cycle.health.effective.pct<config.raid_wild_growth_threshold&cycle.range<=40)>=config.raid_wild_growth_members
+    # Moved here from `cooldowns`, which is called before active_healing in
+    # main - so a threshold of <99% (virtually always true whenever the proc
+    # is up) beat every Wild Growth tier above to the GCD on every pass.
+    # Same bug the M+ file had with Clearcasting/SotF/Abundance Regrowth
+    # outranking Wild Growth. Spend the free cast here instead, after all
+    # three Wild Growth checks have had their shot.
+    - regrowth,name="Clearcasting Regrowth",cycle=members,if=(player.combat&buff.clearcasting.up&cycle.health.effective.pct<99)&cycle.range<=40
     - 774,name="Rejuvenation",cycle=members,if=(cycle.buff.rejuvenation.remains<1.5&cycle.health.effective.pct<config.raid_rejuvenation_threshold)&cycle.range<=40
     - 774,name="Germination",cycle=members,if=(talent.germination&cycle.buff.rejuvenation.up&(cycle.buff.rejuvenation_germination.down|cycle.buff.rejuvenation_germination.remains<1.5)&cycle.health.effective.pct<config.raid_rejuvenation_threshold)&cycle.range<=40
     - regrowth,name="Regrowth",cycle=members,if=(cycle.health.effective.pct<config.raid_regrowth_threshold)&cycle.range<=40

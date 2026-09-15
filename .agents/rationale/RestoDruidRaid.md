@@ -840,3 +840,84 @@ UNVERIFIED IN GAME. If these do not resolve the variable is simply false and
 the cleanse stops firing - no loop, just a lost utility. Confirm with
 /simia snapshot while rooted: the trace should show the gate PASS.
 ```
+
+---
+
+## Wild Growth starved by Clearcasting Regrowth, and effective-HP parity with the M+ file (2026-09-14)
+
+Cross-checked against the fixes already made to `FerrazRestoDruid.yaml` this
+same session, to see whether the M+ file's bugs were also present here.
+
+### Real bug: same starvation mechanism, different shape
+
+M+'s bug was three Regrowth variants sitting ahead of Wild Growth with a
+**looser** threshold (90) than Wild Growth's own (85), so any of those procs
+being up preempted Wild Growth even during a real multi-person spike.
+
+This file's thresholds don't have that asymmetry - `raid_regrowth_threshold`
+and `raid_wild_growth_threshold` are both 85, and the three Wild Growth
+tiers (SotF, Forced, plain) already sit ahead of their same-tier Regrowth
+siblings inside `active_healing`. But `Clearcasting Regrowth` lived in
+`cooldowns`, not `active_healing` - and `cooldowns` is called before
+`active_healing` in `main`. Its own threshold, `cycle.health.effective.pct
+<99`, is true for almost any target almost all the time. Net effect: the
+instant Clearcasting procs, it wins the GCD over all three Wild Growth
+tiers, every time, regardless of how many people are actually hurt.
+
+Moved the line from `cooldowns` into `active_healing`, positioned after the
+plain Wild Growth check (all three tiers get their shot first) and before
+the plain Rejuvenation/Germination/Regrowth follow-ups.
+
+### Label bug: `raid_barkskin_threshold` never meant HP%
+
+The action line (`defensives`) has always read `incoming.pct>=config.
+raid_barkskin_threshold` - predicted incoming damage, never the player's
+actual health. The label said "Barkskin HP %", which would lead anyone
+tuning this slider to the wrong mental model entirely (a lower number does
+NOT mean "cast at lower HP", it means "cast on a smaller predicted hit").
+Relabeled to "Barkskin Incoming Damage %", matching the M+ file's
+`barkskin_incoming_pct` convention, with a description explaining the
+mismatch. Kept the key name (`raid_barkskin_threshold`) unchanged to avoid
+orphaning any saved value.
+
+### Effective-HP parity with the M+ file
+
+`raid_frenzied_regen_threshold` (Panic Bear, Frenzied Regeneration) and
+`raid_ironbark_threshold` were both raw `health.pct` - switched to
+`health.effective.pct`, matching the M+ file's reasoning: don't spend a
+cooldown on a target another heal already has covered. Every other HP%
+config in this file (`raid_convoke_threshold`, `raid_tranquility_threshold`,
+`raid_wild_growth_threshold`, `raid_lifebloom_threshold`,
+`raid_swiftmend_threshold`, `raid_regrowth_threshold`,
+`raid_rejuvenation_threshold`, `raid_thorn_bloom_threshold`,
+`raid_catweave_group_hp`, `raid_mouseover_emergency_hp`, `emergency_hp`) was
+**already** effective - checked each one's actual action-line usage before
+touching anything, only two needed converting.
+
+Two configs confirmed correctly RAW **by design**, unchanged:
+`raid_cancel_overheal_pct` (mid-cast cancel needs the target's real current
+health, not a projection) and `engine_healthstone` / `engine_health_potion`
+(self, anti-OOM - same reasoning as the M+ file). All HP-related labels
+across the file now carry `(effective)` or `(real HP)`, matching the M+
+convention, so which metric a slider reads is visible without opening the
+action lines.
+
+### Ironbark's `cycle.incoming.pct` question does not apply here
+
+Checked whether this file had the same `cycle.incoming.pct` gap the M+ file
+carried and then removed (see `RestoDruid.md`): it never did. Ironbark here
+was always HP%-only (`cycle.health.pct`, now `cycle.health.effective.pct`) -
+nothing to remove.
+
+### Config reorganized
+
+Grouped every `config:` entry by its `section:` tag into one contiguous
+block per section (Info, Talents, Healing, Cooldowns, Defensives, Dispels,
+Damage, Utility, Racials, Trinkets, Engine, Help), same as the M+ file.
+Verified line-by-line before and after: all 317 non-comment config lines
+identical, only reordered - no default, min/max, or label content changed
+by the move itself. Two stray leftover markers (`# VARIABLES.`, `# LISTS.`)
+inside the `config:` block, belonging to neither a real section nor any
+entry, were dropped as noise.
+
+Version 4.2.0 -> 5.0.0. Lint clean across all 10 rotation files.
