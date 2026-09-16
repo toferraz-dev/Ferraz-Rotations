@@ -11,7 +11,7 @@
 #
 # Why each line is the way it is: .agents/rationale/RestoDruid.md
 # =============================================================================
-version: "14.3.0"
+version: "14.4.0"
 author: Ferraz
 patch: "12.1"
 spec: 105
@@ -31,7 +31,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-09-15 | Patch: 12.1 | Version: 14.3.0"
+    text: "Last update: 2026-09-16 | Patch: 12.1 | Version: 14.4.0"
 
 
   # RECOMMENDED BUILD — the string the talent.X gates below assume.
@@ -647,6 +647,10 @@ lists:
 
   # Catweaving Transition and Entry (Physical DPS)
   catweave:
+    # Still caster-form (not shifted yet) — top off the ranged DoTs before
+    # committing the global to the shift. Sunfire over Moonfire.
+    - sunfire,name="Sunfire Refresh (Pre-Shift)",if=talent.sunfire&debuff.sunfire.refreshable&!buff.cat_form.up
+    - moonfire,name="Moonfire Refresh (Pre-Shift)",if=debuff.moonfire.refreshable&!buff.cat_form.up
     # Rake enters Cat via Fluid Form and applies the bleed in one GCD - no cat_form cast.
     - 1822,name="Fluid Rake",if=!buff.cat_form.up&!buff.incarnation_tree_of_life.up
     - cat_form,name="Manual Cat Shift",if=!talent.fluid_form&!buff.cat_form.up&!buff.incarnation_tree_of_life.up
