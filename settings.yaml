@@ -1,5 +1,5 @@
 Key: 32C7D1D29800014-SM
-GameFolder: C:\Games\World of Warcraft
+GameFolder: D:\Games\World of Warcraft
 AddonName: HealBotLite
 Debug: false
 DebugAura: false
@@ -422,13 +422,13 @@ toggle_hotkeys:
       modifier: 0
 selected_rotation:
   103: C:\Games\Python\Rotations\FerrazFeral.yaml
-  102: C:\Games\Python\Rotations\FerrazBalanceRaid.yaml
   262: C:\Games\Python\Rotations\FerrazShamanEle.yaml
-  104: C:\Games\Python\Rotations\FerrazGuardianElune.yaml
-  105: C:\Games\Python\Rotations\FerrazRestoDruid.yaml
+  104: D:\Projetos\Rotations\FerrazGuardianElune.yaml
+  105: D:\Projetos\Rotations\FerrazRestoDruid.yaml
+  102: C:\Games\Python\Rotations\FerrazBalanceRaid.yaml
 selected_community_rotation_name:
   104: "[Community] Khan No Apex Guardian Druid (1.0.7) - Khan"
-  102: "[Community] Balance Druid Ferraz Raid (1.0) - Ferraz"
+  102: "[Community] Balance Druid Ferraz Raid (2.16.1) - Ferraz"
   103: "[Community] Feral Druid Ferraz M+ (5.0) - Ferraz"
   105: "[Community] Restoration Druid Ferraz M+ (5.7.0) - Ferraz"
 queue_sounds_enabled: true
@@ -541,6 +541,19 @@ queue_bindings:
           target: 0
           if: ""
         - spell: 5487
+          target: 0
+          if: ""
+    - name: Dash
+      scancode: 61446
+      modifier: 0
+      admit: cooldown.dash.up
+      expire: ""
+      unqueue_on_cast: true
+      ttl: 0
+      priority_list: false
+      enabled: true
+      steps:
+        - spell: 1850
           target: 0
           if: ""
   102:
@@ -702,7 +715,7 @@ queue_bindings:
           target: 0
           if: ""
     - name: Tiger Dash
-      scancode: 45
+      scancode: 61446
       modifier: 0
       admit: "talent.tiger_dash&cooldown.tiger_dash.up"
       expire: ""
