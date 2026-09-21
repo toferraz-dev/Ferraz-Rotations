@@ -95,6 +95,12 @@ config:
     max: 4
     default: 2
 
+  use_natures_swiftness:
+    label: "Use Nature's Swiftness"
+    section: "Healing"
+    type: checkbox
+    default: true
+
   natures_swiftness_threshold:
     label: "Nature's Swiftness HP % (effective)"
     section: "Healing"
@@ -553,7 +559,7 @@ lists:
   # Main Healing Cooldown Alignment: NS -> Trinkets/Potion -> Convoke -> NS Regrowth -> Tranquility -> Swiftmend
   cooldowns:
     # NO Mark of the Wild here.
-    - natures_swiftness,name="Nature Swiftness",off_gcd=true,ignore_queue=true,delay=150,range_check=none,if=group.count(cycle.health.effective.pct<config.natures_swiftness_threshold)>=1
+    - natures_swiftness,name="Nature Swiftness",off_gcd=true,ignore_queue=true,delay=150,range_check=none,if=config.use_natures_swiftness&group.count(cycle.health.effective.pct<config.natures_swiftness_threshold)>=1
     # Overgrowth rides this for free: with Nature's Swiftness up, this Regrowth
     # also applies Lifebloom, Rejuvenation and Wild Growth to the same target.
     - regrowth,name="Nature Swift Regrowth",cycle=members,if=buff.natures_swiftness.up&cycle.health.effective.pct<config.natures_swiftness_threshold
