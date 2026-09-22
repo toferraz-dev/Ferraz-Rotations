@@ -11,7 +11,7 @@
 #
 # Why each line is the way it is: .agents/rationale/RestoDruid.md
 # =============================================================================
-version: "14.4.0"
+version: "15.0.0"
 author: Ferraz
 patch: "12.1"
 spec: 105
@@ -31,7 +31,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-09-16 | Patch: 12.1 | Version: 14.4.0"
+    text: "Last update: 2026-09-21 | Patch: 12.1 | Version: 15.0.0"
 
 
   # RECOMMENDED BUILD — the string the talent.X gates below assume.

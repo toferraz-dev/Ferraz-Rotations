@@ -21,7 +21,7 @@
 #
 # Why each line is the way it is: .agents/rationale/Balance.md
 
-version: "6.20.0"
+version: "7.0.0"
 author: Ferraz
 patch: "12.1"
 spec: 102
@@ -43,7 +43,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-09-08 | Patch: 12.1 | Version: 6.20.0"
+    text: "Last update: 2026-09-21 | Patch: 12.1 | Version: 7.0.0"
 
   # Reference build, from the 2026-09-02 export. Measured -2.18% against the
   # previous string on DungeonRoute - see the rationale before "fixing" that.
