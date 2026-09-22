@@ -389,6 +389,11 @@ variables:
   # Celestial Alignment/Incarnation active.
   cd_active: buff.celestial_alignment.up|buff.incarnation_chosen_of_elune.up
 
+  # Fury of Elune only during the Incarnation window, or once Incarnation is
+  # fully spent (no charges left) - never mid-recharge with charges banked,
+  # where FoE should wait for the next Incarnation pairing instead.
+  foe_inc_gate: buff.incarnation_chosen_of_elune.up|cooldown.incarnation_chosen_of_elune.charges=0
+
   # What trinkets/potion read. Manual mode fires the instant Incarnation is up;
   # automatic mode rides cd_active.
   burst_window: config.incarnation_manual&buff.incarnation_chosen_of_elune.up|!config.incarnation_manual&var.cd_active
@@ -524,7 +529,7 @@ lists:
     - starsurge,name="Starsurge (Proc or AP Dump)",if=buff.starweavers_warp.up|buff.touch_the_cosmos.react
     - starsurge,name="Starsurge (AP Dump)",if=astral_power>60
     # Held while the burst is only waiting for you to stand still.
-    - fury_of_elune,if=var.foe_ttd_ok&!var.inc_waiting_to_stand
+    - fury_of_elune,if=var.foe_ttd_ok&var.foe_inc_gate&!var.inc_waiting_to_stand
     - moonfire
     - sunfire
 
@@ -537,7 +542,7 @@ lists:
     - starfall,name="Starfall (AP Dump)",if=astral_power>50
     - starsurge,if=buff.starfall.up&(buff.touch_the_cosmos.react|buff.starweavers_warp.up)
     # Held while the burst is only waiting for you to stand still.
-    - fury_of_elune,if=var.foe_ttd_ok&!var.inc_waiting_to_stand
+    - fury_of_elune,if=var.foe_ttd_ok&var.foe_inc_gate&!var.inc_waiting_to_stand
     - sunfire
     - moonfire
 
@@ -554,7 +559,7 @@ lists:
     - lunar_eclipse,if=var.eclipse_down&cooldown.lunar_eclipse.ready&!var.inc_ready_to_cast
     # Fury of Elune before Incarnation, not after - top-player logs land it one
     # GCD earlier. inc_ready_to_cast requires buff.fury_of_elune.up.
-    - fury_of_elune,if=var.foe_ttd_ok
+    - fury_of_elune,if=var.foe_ttd_ok&var.foe_inc_gate
     - incarnation_chosen_of_elune,if=var.inc_ready_to_cast
 
     # Free procs (Starweaver dead on this string, kept for when it returns).
@@ -584,7 +589,7 @@ lists:
     - solar_eclipse,if=var.eclipse_down&cooldown.solar_eclipse.ready&!var.inc_ready_to_cast
     - lunar_eclipse,if=var.eclipse_down&cooldown.lunar_eclipse.ready&!var.inc_ready_to_cast
     # Fury of Elune before Incarnation: inc_ready_to_cast needs buff.fury_of_elune.up.
-    - fury_of_elune,if=var.foe_ttd_ok
+    - fury_of_elune,if=var.foe_ttd_ok&var.foe_inc_gate
     - incarnation_chosen_of_elune,if=var.inc_ready_to_cast
 
     - starfall,if=buff.starweavers_weft.up|buff.touch_the_cosmos.react

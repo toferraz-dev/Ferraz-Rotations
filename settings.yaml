@@ -110,7 +110,7 @@ spec_profiles:
           inc_min_enemies: 3
           barkskin_hp: 45
           enable_hotw: false
-          auto_dispel_party: false
+          auto_dispel_party: true
           enable_mouseover_dots: true
           frenzied_regen_hp: 20
           renewal_hp: 30
@@ -389,6 +389,9 @@ toggle_hotkeys:
     ooc_abundance:
       scancode: 45
       modifier: 0
+    disable_natures_swiftness:
+      scancode: 45
+      modifier: 0
   104:
     use_incarnation:
       scancode: 45
@@ -425,7 +428,7 @@ selected_rotation:
   262: C:\Games\Python\Rotations\FerrazShamanEle.yaml
   104: D:\Projetos\Rotations\FerrazGuardianElune.yaml
   105: D:\Projetos\Rotations\FerrazRestoDruid.yaml
-  102: C:\Games\Python\Rotations\FerrazBalanceRaid.yaml
+  102: D:\Projetos\Rotations\FerrazBalance.yaml
 selected_community_rotation_name:
   104: "[Community] Khan No Apex Guardian Druid (1.0.7) - Khan"
   102: "[Community] Balance Druid Ferraz Raid (2.16.1) - Ferraz"
@@ -621,7 +624,20 @@ queue_bindings:
       steps:
         - spell: 102560
           target: 0
-          if: "cooldown.fury_of_elune.ready&(trinket_1.ready|trinket_2.ready)&!buff.incarnation_chosen_of_elune.up"
+          if: "cooldown.fury_of_elune.ready&!buff.incarnation_chosen_of_elune.up"
+    - name: Dash
+      scancode: 61446
+      modifier: 0
+      admit: cooldown.dash.up
+      expire: ""
+      unqueue_on_cast: true
+      ttl: 0
+      priority_list: false
+      enabled: true
+      steps:
+        - spell: 1850
+          target: 0
+          if: ""
   105:
     - name: Thorn
       scancode: 5
