@@ -11,7 +11,7 @@
 # Why each line is the way it is: .agents/rationale/BalanceRaid.md
 # =============================================================================
 
-version: "3.0.0"
+version: "4.0.0"
 author: Ferraz
 patch: "12.1"
 spec: 102
@@ -26,7 +26,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-09-10 | Patch: 12.1 | Version: 3.0.0"
+    text: "Last update: 2026-09-24 | Patch: 12.1 | Version: 4.0.0"
 
   # Exact string every number here was measured against — Elune's Chosen, not Grove.
   recommended_talents:
@@ -389,7 +389,11 @@ lists:
   moving_st:
     - moonfire,name="Moonfire (Refresh)",if=debuff.moonfire.remains<2|debuff.moonfire.refreshable
     - sunfire,name="Sunfire (Refresh)",if=debuff.sunfire.remains<2|debuff.sunfire.refreshable
-    - starsurge,name="Starsurge (Proc or AP Dump)",if=buff.starweavers_warp.up|buff.touch_the_cosmos.react
+    # Starweaver's Warp makes STARFALL free (not Starsurge - see the
+    # rotation-wide fix note in the `st` list below for the full mechanic and
+    # why this was backwards before).
+    - starfall,name="Starfall (Warp Proc)",if=buff.starweavers_warp.up
+    - starsurge,name="Starsurge (Proc or AP Dump)",if=buff.starweavers_weft.up|buff.touch_the_cosmos.react
     - starsurge,name="Starsurge (AP Dump)",if=astral_power>60
     # Same removal as the stationary ST list. UNMEASURED: SimC never moves,
     # so this follows the `st` result by analogy, not by its own number.
@@ -403,9 +407,9 @@ lists:
   moving_aoe:
     - sunfire,name="Sunfire (Refresh)",if=debuff.sunfire.remains<2|debuff.sunfire.refreshable
     - moonfire,name="Moonfire (Refresh)",if=debuff.moonfire.remains<2|debuff.moonfire.refreshable
-    - starfall,name="Starfall (Proc or AP Dump)",if=buff.starweavers_weft.up|buff.touch_the_cosmos.react
+    - starfall,name="Starfall (Warp Proc)",if=buff.starweavers_warp.up|buff.touch_the_cosmos.react
     - starfall,name="Starfall (AP Dump)",if=astral_power>50
-    - starsurge,name="Starsurge (Proc or AP Dump)",if=buff.starfall.up&(buff.touch_the_cosmos.react|buff.starweavers_warp.up)
+    - starsurge,name="Starsurge (Proc or AP Dump)",if=buff.starfall.up&(buff.touch_the_cosmos.react|buff.starweavers_weft.up)
     - starsurge,name="Starsurge (AP Dump)",if=buff.starfall.up&astral_power>60
     - fury_of_elune,if=!talent.sundered_firmament|debuff.atmospheric_exposure.remains<2
     # DEAD LINES on the recommended build.
@@ -429,8 +433,13 @@ lists:
     - fury_of_elune
     - force_of_nature,if=var.cd_active|cooldown.incarnation_chosen_of_elune.remains>30
 
-    - starfall,if=enemies.combat.40y>=2&(buff.starweavers_weft.up|buff.touch_the_cosmos.react)
-    - starsurge,name="Starsurge (Proc or AP Dump)",if=buff.starweavers_warp.up|buff.touch_the_cosmos.react
+    # STARWEAVER FIX (2026-09-24): Warp and Weft were swapped throughout this
+    # file. Confirmed via in-game tooltip + Wowhead spell data (393942/393944):
+    # Starweaver's WARP makes STARFALL free; Starweaver's WEFT makes STARSURGE
+    # free - the opposite of what every buff check here used to test. Every
+    # occurrence in this file has been corrected the same way.
+    - starfall,if=enemies.combat.40y>=2&(buff.starweavers_warp.up|buff.touch_the_cosmos.react)
+    - starsurge,name="Starsurge (Proc or AP Dump)",if=buff.starweavers_weft.up|buff.touch_the_cosmos.react
 
     # AP floor follows the Eclipse — replaced flat astral_power>60, measured +1.28%.
     - starsurge,name="Starsurge (Eclipse Down)",if=!var.eclipse_down&astral_power>=50&enemies.combat.40y<=1
@@ -457,9 +466,9 @@ lists:
     - fury_of_elune,if=!talent.sundered_firmament|debuff.atmospheric_exposure.remains<2
     - force_of_nature,if=var.cd_active|cooldown.incarnation_chosen_of_elune.remains>30
     - incarnation_chosen_of_elune,global_delay=500,if=!var.cd_active&(var.eclipse_down|fight_remains<20)
-    - starfall,name="Starfall (Proc or AP Dump)",if=buff.starweavers_weft.up|buff.touch_the_cosmos.react
+    - starfall,name="Starfall (Warp Proc)",if=buff.starweavers_warp.up|buff.touch_the_cosmos.react
     - starfall,name="Starfall (AP Dump)",if=(astral_power>50)&target.time_to_die>5
-    - starsurge,name="Starsurge (Proc or AP Dump)",if=buff.starfall.up&(buff.starweavers_warp.up|buff.touch_the_cosmos.react)
+    - starsurge,name="Starsurge (Proc or AP Dump)",if=buff.starfall.up&(buff.starweavers_weft.up|buff.touch_the_cosmos.react)
     - starsurge,name="Starsurge (AP Dump)",if=buff.starfall.up&astral_power>80&buff.starlord.stack<3
     - wild_mushroom,if=buff.eclipse_lunar.up|buff.eclipse_solar.up|cooldown.wild_mushroom.full_recharge_time<cooldown.celestial_alignment.remains
     - starfire

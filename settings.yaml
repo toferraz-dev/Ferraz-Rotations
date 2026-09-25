@@ -154,8 +154,10 @@ spec_profiles:
         auto_enabled: true
         values:
           raid_use_trinket_1: true
-          raid_use_trinket_2: true
           raid_use_potion: true
+          raid_convoke_members: 4
+          raid_use_trinket_2: true
+          raid_tranquility_members: 4
         shared_values:
           interrupt_all: true
           healthstone: 50
@@ -401,8 +403,8 @@ selected_rotation:
   103: C:\Games\Python\Rotations\FerrazFeral.yaml
   262: C:\Games\Python\Rotations\FerrazShamanEle.yaml
   104: D:\Projetos\Rotations\FerrazGuardianElune.yaml
-  105: D:\Projetos\Rotations\FerrazRestoDruidRaid.yaml
-  102: D:\Projetos\Rotations\FerrazBalance.yaml
+  105: D:\Projetos\Rotations\FerrazRestoDruid.yaml
+  102: D:\Projetos\Rotations\FerrazBalanceRaid.yaml
 selected_community_rotation_name:
   104: "[Community] Khan No Apex Guardian Druid (1.0.7) - Khan"
   102: "[Community] Balance Druid Ferraz Raid (2.16.1) - Ferraz"
