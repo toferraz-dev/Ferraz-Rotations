@@ -11,7 +11,7 @@
 #
 # Why each line is the way it is: .agents/rationale/RestoDruid.md
 # =============================================================================
-version: "15.0.0"
+version: "16.0.0"
 author: Ferraz
 patch: "12.1"
 spec: 105
@@ -31,7 +31,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-09-21 | Patch: 12.1 | Version: 15.0.0"
+    text: "Last update: 2026-09-26 | Patch: 12.1 | Version: 16.0.0"
 
 
   # RECOMMENDED BUILD — the string the talent.X gates below assume.
@@ -39,7 +39,7 @@ config:
     section: "Talents"
     type: copy_text
     label: "Recommended Talent String"
-    text: "CkGADBD3hSPCL9Y9gz68WcKvMMMmZZMjZmxsNMDmNjNbzAAAAAAAAAAglBNbzw0MjBmFzMzYxwDMAAAAAMAAzAAQAAAz2MbNbzsYjZmZwMzCoZAAmZAYA"
+    text: "CkGADBD3hSPCL9Y9gz68WcKvMMMmZZMjZmxsNMMmNjNbzAAAAAAAAAAgNDNbDmmZAmFmZmZxwMAAAAAMAAzAAQAAAz2MbNbzsZjZmZGmZgRzAAMzAwA"
 
 
   # HEALING — the core thresholds.
@@ -294,11 +294,16 @@ config:
 
   # The file had NO way to stop weaving. On a fight where you must never leave
   # caster form, or while learning a key, these are the switches.
+  # Default flipped to false 2026-09-26: current build drops every Cat Form
+  # talent (no Rip/Rake/Ferocious Bite/bleed-related nodes at all - confirmed
+  # via SimC talent decode) in favor of Starsurge/Starlight Conduit/Moonkin
+  # Form (Balance Affinity). Catweaving with none of the Cat talents that pay
+  # for it is a straight DPS loss; kept as a toggle for whoever reverts.
   melee_dps:
     label: "Melee DPS (Cat/Bear)"
     section: "Damage"
     type: checkbox
-    default: true
+    default: false
 
   convoke_dps:
     label: "Convoke as DPS Cooldown"
@@ -621,7 +626,12 @@ lists:
     - 774,name="Rejuvenation",cycle=members,if=cycle.buff.rejuvenation.refreshable&cycle.health.effective.pct<config.rejuvenation_threshold
     - 774,name="Germination",cycle=members,if=talent.germination&cycle.buff.rejuvenation.up&(cycle.buff.rejuvenation_germination.down|cycle.buff.rejuvenation_germination.refreshable)&cycle.health.effective.pct<config.rejuvenation_threshold
     - regrowth,name="Regrowth",cycle=members,if=cycle.health.effective.pct<config.regrowth_threshold
-    - thorn_bloom,name="Thorn Bloom",if=group.count(cycle.health.effective.pct<config.thorn_bloom_threshold&!cycle.tank)>=config.thorn_bloom_members&target.in_melee
+    # target.in_melee dropped 2026-09-26: Thorn Bloom is a 40y target, 10y AoE
+    # radius spell (confirmed via spell_query, id 1237885) - it was never
+    # melee-range in the first place, the gate was just a leftover proxy from
+    # when this list only ran during catweaving. No melee talents left on
+    # this build, so nothing should be gated on target.in_melee anymore.
+    - thorn_bloom,name="Thorn Bloom",if=group.count(cycle.health.effective.pct<config.thorn_bloom_threshold&!cycle.tank)>=config.thorn_bloom_members
 
   # Utilities, Mobility, and Mana Recovery
   utility:
@@ -630,9 +640,19 @@ lists:
     - stampeding_roar,name="Stampeding Roar",if=var.use_stampeding_roar&config.stampeding_roar_usage!=0
 
   # ABUNDANCE CHANGED IN 12.1 and this list was still written for the old one.
+  # Abundance (spell 207383) needs 5 Rejuvenations active AT ONCE (confirmed
+  # via spell_query 2026-09-26 - "While you have at least 5 Rejuvenations
+  # active"), not a stack the player builds and keeps.
+  #
+  # Only renews once the buff itself is under 3s from falling off
+  # (buff.abundance.remains<3) - not on every refreshable Rejuvenation, and
+  # not unconditionally. This is a narrower trigger than pandemic-refreshable
+  # on purpose: it only spends a GCD here when Abundance is actually close to
+  # lapsing, instead of topping off Rejuvenations that still have plenty of
+  # time left just because they crossed the normal pandemic window.
   abundance_maintenance:
-    - 774,name="Abundance Filler (Rejuv)",cycle=members,if=!buff.abundance.up&cycle.buff.rejuvenation.refreshable
-    - 774,name="Abundance Filler (Germination)",cycle=members,if=!buff.abundance.up&talent.germination&cycle.buff.rejuvenation.up&(cycle.buff.rejuvenation_germination.down|cycle.buff.rejuvenation_germination.refreshable)
+    - 774,name="Abundance Filler (Rejuv)",cycle=members,if=buff.abundance.up&buff.abundance.remains<3&cycle.buff.rejuvenation.remains<3
+    - 774,name="Abundance Filler (Germination)",cycle=members,if=talent.germination&buff.abundance.up&buff.abundance.remains<3&cycle.buff.rejuvenation.up&cycle.buff.rejuvenation_germination.remains<3
 
   # Cat Form DPS Rotation (Single Target)
   catweave_st:
@@ -672,6 +692,23 @@ lists:
 
   # Caster-form damage. Rebuilt from a reference .
   ranged_dps:
+    # NEW 2026-09-26 build: Starsurge (spell 197626, the Feral/Guardian/
+    # Restoration version - confirmed via spell_query, NOT the Balance one
+    # (78674) that costs Astral Power and requires caster form/Not
+    # Shapeshifted. The Resto version's Attributes are just "Allow Class
+    # Ability Procs" + "Prevent Jumping During Precast" - no Stance Mask, no
+    # Not Shapeshifted flag, no form requirement of any kind. 0.6% mana, 10s
+    # CD, so it is always worth pressing on cooldown ahead of the DoT
+    # refreshes below - it never competes with them for a resource.
+    # CORRECTED 2026-09-26: previously gated on buff.moonkin_form.up,
+    # copying a pattern from older community Ferraz Resto files (which cast
+    # it that way, presumably to also catch Moonkin's own +10% damage
+    # buff) - but that was never a cast requirement, just those files'
+    # choice, and this build has no Fluid Form to auto-shift into Moonkin,
+    # so gating on it meant Starsurge silently never fired without a manual
+    # Moonkin Form cast first. Confirmed via spell_query there is no
+    # shapeshift requirement at all - cast it in whatever form you're in.
+    - starsurge,name="Starsurge",if=cooldown.starsurge.ready
     - sunfire,name="Sunfire Refresh",if=talent.sunfire&debuff.sunfire.refreshable
     - moonfire,name="Moonfire Refresh",if=debuff.moonfire.refreshable
     - starfire,name="Starfire Cleave",if=enemies.combat.8y>=config.aoe_threshold
@@ -771,8 +808,17 @@ lists:
     - mark_of_the_wild,range_check=none,name="Mark of the Wild (low prio)",if=(buff.mark_of_the_wild.down.any|action.mark_of_the_wild.overlayed)&lastcast.mark_of_the_wild>=10
 
 
-    # DPS weaving when the group is healthy
-    - call_action_list,name=ranged_dps,if=config.ranged_dps&var.can_catweave&target.exists&target.alive&!target.friendly&(!target.in_melee|buff.incarnation_tree_of_life.up)
+    # DPS weaving when the group is healthy. No target.in_melee gate on
+    # ranged_dps anymore (2026-09-26): this build has zero melee/Cat Form
+    # talents, so every cast in ranged_dps (Starsurge, Wrath, Starfire,
+    # Sunfire, Moonfire) is a real ranged spell regardless of how close the
+    # target is standing - gating it on "target is NOT in melee" used to
+    # silence ranged_dps entirely on any target that walked up close, which
+    # is most M+ trash. Distance no longer decides which list runs.
+    - call_action_list,name=ranged_dps,if=config.ranged_dps&var.can_catweave&target.exists&target.alive&!target.friendly
     # Cat only. Bear is defensive-only here - see defensives for Panic Bear and
-    # the root cleanse.
+    # the root cleanse. config.melee_dps defaults to false on this build (see
+    # its own config comment) - kept gated on target.in_melee for whoever
+    # re-enables it, since catweaving only makes sense once you are actually
+    # standing in melee range.
     - call_action_list,name=catweave,if=config.melee_dps&var.can_catweave&target.exists&target.alive&!target.friendly&target.in_melee&!buff.incarnation_tree_of_life.up
