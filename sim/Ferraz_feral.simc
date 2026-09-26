@@ -1,7 +1,10 @@
 # Feral (M+) profile for the Ferraz A/B harness. Gear copied from SimC's
 # bundled MID1 Feral preset (profiles/MID1/MID1_Druid_Feral.simc) so the
 # numbers stay comparable to a maintained reference; only the talent string
-# is replaced by the Wildstalker build FerrazFeral.yaml is tuned for.
+# is replaced by the Druid of the Claw + Incarnation build FerrazFeral.yaml
+# is tuned for (2026-09-25: Convoke the Spirits dropped for Incarnation:
+# Avatar of Ashamane, confirmed via SimC talent decode - no Convoke node in
+# this string's talent table).
 
 druid="Ferraz_Feral"
 source=default
@@ -11,7 +14,7 @@ race=night_elf
 timeofday=night
 role=attack
 position=back
-talents=CcGAAAAAAAAAAAAAAAAAAAAAAAAAAAAgZmZ2YmZmxY2MPw2YbGzMmZAAAAYLY2M8AmZUzYWMzMzsMmhBAAAAAwADAAAgmZZWmZmBAsAzMDwCDGAAAzshB
+talents=CcGADBD3hSPCL9Y9gz68WcKvMAAAAAAgZmZ2YmZmxY2M2mZZGzMmZAAAAYLY2M8AmZUzYWMzMzsMmhBAAAAAwADAAAgmZZWmZmBEYBmZGgFGMAAAmZDD
 
 # Default consumables
 potion=lights_potential_2
