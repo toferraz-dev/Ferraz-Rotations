@@ -179,7 +179,14 @@ def build(v):
     add('actions.aoe_builder+=/moonfire_cat,if=talent.lunar_inspiration&dot.moonfire.refreshable')
     add('actions.aoe_builder+=/swipe_cat,if=hero_tree.druid_of_the_claw&buff.bs_inc.up|buff.clearcasting.react&spell_targets>2&(hero_tree.druid_of_the_claw|spell_targets<7)')
     add('actions.aoe_builder+=/swipe_cat,if=buff.sudden_ambush.up&spell_targets>=5+(2*hero_tree.wildstalker)')
-    add('actions.aoe_builder+=/rake,if=dot.rake.refreshable&(hero_tree.wildstalker|spell_targets<=variable.dotc_rake_threshold)')
+    if v.get('force_rake_spread'):
+        # Answers "should I target-swap to keep Rake on every add instead of
+        # letting dotc_rake_threshold cap it": ignore the threshold entirely
+        # and refresh Rake on every target SimC is tracking, same as
+        # Wildstalker's unconditional branch above.
+        add('actions.aoe_builder+=/rake,if=dot.rake.refreshable')
+    else:
+        add('actions.aoe_builder+=/rake,if=dot.rake.refreshable&(hero_tree.wildstalker|spell_targets<=variable.dotc_rake_threshold)')
     add('actions.aoe_builder+=/rake,if=buff.tigers_fury.up&!variable.rake_tf&spell_targets=2')
     add('actions.aoe_builder+=/shred,if=combo_points<=1&spell_targets=2&talent.panthers_guile')
     add('actions.aoe_builder+=/swipe_cat,if=combo_points>1|spell_targets>2|!talent.panthers_guile')
@@ -208,6 +215,8 @@ VARIANTS = {
                       'BASE + linha de Apex Predators Craving no topo do finisher'),
     'dotc_both':     (dict(no_cds=False, sudden_ambush_shred=True, apex_ravage=True),
                       'BASE + as duas'),
+    'dotc_rake_spread': (dict(no_cds=False, force_rake_spread=True),
+                         'BASE + Rake em TODO alvo, ignora dotc_rake_threshold (responde: vale espalhar sangramento em AoE?)'),
 }
 
 
