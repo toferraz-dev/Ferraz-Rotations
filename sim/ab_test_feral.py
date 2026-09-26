@@ -18,7 +18,7 @@ import subprocess
 import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-SIMC = os.path.join(ROOT, 'sim', 'tools', 'simc-1210.01.c1935b9-win64', 'simc.exe')
+SIMC = os.path.join(ROOT, 'sim', 'tools', 'simc-1210.01.c97e14c-win64', 'simc.exe')
 PROFILE = os.path.join(ROOT, 'sim', 'Ferraz_feral.simc')
 APL_DIR = os.path.join(ROOT, 'sim', 'apl_feral')
 OUT_DIR = os.path.join(ROOT, 'sim', 'out_feral')
@@ -93,6 +93,17 @@ def build(v):
     cd = ['call_action_list,name=cd_variable,if=!cooldown.bs_inc.remains|!cooldown.convoke_the_spirits.remains']
     if not v['no_cds']:
         pot = '(buff.bs_inc.up&%s)|fight_remains<32' % ttd_pot if ttd_pot             else 'buff.bs_inc.up|fight_remains<32'
+        # berserk and Incarnation: Avatar of Ashamane are mutually exclusive
+        # talents (same row). SimC's Talent Entry for spell 102543 says
+        # replace="Berserk" (id=106951): the action name `berserk` itself
+        # resolves to whichever of the two is talented, and there is no
+        # separate castable `incarnation_avatar_of_ashamane` action (SimC
+        # errors "Unable to create action" on that name). bs_inc/
+        # cooldown.bs_inc are read-only shorthand for "whichever is up," not
+        # action names either. So a single `berserk` cast line is correct on
+        # BOTH builds here - no second line needed, unlike the Simia YAML
+        # (which exposes the two as separately castable spells - see
+        # FerrazFeral.yaml's own comment on this for the divergence).
         cd += [
             a('use_items', ttd_trk),
             a('berserking'),
