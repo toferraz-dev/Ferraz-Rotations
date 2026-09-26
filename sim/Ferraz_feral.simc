@@ -4,7 +4,9 @@
 # is replaced by the Druid of the Claw + Incarnation build FerrazFeral.yaml
 # is tuned for (2026-09-25: Convoke the Spirits dropped for Incarnation:
 # Avatar of Ashamane, confirmed via SimC talent decode - no Convoke node in
-# this string's talent table).
+# this string's talent table). Trinkets replaced 2026-09-26 with Tassiana's
+# real ones (Gebbo's Bottomless Bag + Freightrunner's Flask, 90.4s real CD)
+# for the Tiger's Fury/trinket/Incarnation cooldown-alignment analysis.
 
 druid="Ferraz_Feral"
 source=default
@@ -35,6 +37,6 @@ legs=phloemwraps_of_the_luminous_bloom,id=250023,bonus_id=13575/13575/13575/1357
 feet=canopy_walkers_footwraps,id=249382,ilevel=289,enchant_id=7993
 finger1=eye_of_midnight,id=249920,bonus_id=40/12806/13335/13534,ilevel=289,gem_id=240892/240892,enchant_id=7967
 finger2=loa_worshipers_band,id=251513,bonus_id=8960/8960/12066/12214/12214/9627,ilevel=285,gem_id=240892,enchant_id=7967
-trinket1=algethar_puzzle_box,id=193701,ilevel=289
-trinket2=gaze_of_the_alnseer,id=249343,ilevel=289
+trinket1=,id=270164,bonus_id=6652/13334/12846,content_tuning=7359
+trinket2=,id=250215,bonus_id=13440/6652/12699/12846,content_tuning=1279
 main_hand=roostwardens_bough,id=251077,ilevel=289,enchant_id=8039
