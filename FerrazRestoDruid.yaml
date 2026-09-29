@@ -651,8 +651,20 @@ lists:
   # lapsing, instead of topping off Rejuvenations that still have plenty of
   # time left just because they crossed the normal pandemic window.
   abundance_maintenance:
-    - 774,name="Abundance Filler (Rejuv)",cycle=members,if=buff.abundance.up&buff.abundance.remains<3&cycle.buff.rejuvenation.remains<3
-    - 774,name="Abundance Filler (Germination)",cycle=members,if=talent.germination&buff.abundance.up&buff.abundance.remains<3&cycle.buff.rejuvenation.up&cycle.buff.rejuvenation_germination.remains<3
+    # Build phase: buff.abundance.up is false until 5 Rejuvenations are
+    # active at once, so without this branch the list stayed silent forever
+    # whenever Abundance had not gone up yet - out of combat before a pull,
+    # or any time it dropped and needed rebuilding from zero. This puts
+    # Rejuvenation on anyone missing it, unconditionally, so OOC prep (and
+    # any other Abundance-down moment) actually builds toward 5 instead of
+    # waiting for a buff that will never turn on by itself.
+    - 774,name="Abundance Filler (Rejuv)",cycle=members,if=!buff.abundance.up&cycle.buff.rejuvenation.refreshable
+    - 774,name="Abundance Filler (Germination)",cycle=members,if=!buff.abundance.up&talent.germination&cycle.buff.rejuvenation.up&(cycle.buff.rejuvenation_germination.down|cycle.buff.rejuvenation_germination.refreshable)
+    # Maintenance phase: once up, only refresh when the buff itself is
+    # actually close to lapsing (buff.abundance.remains<3), not on every
+    # normal pandemic window - see the standing rule the user set 2026-09-26.
+    - 774,name="Abundance Filler (Rejuv Maintenance)",cycle=members,if=buff.abundance.up&buff.abundance.remains<3&cycle.buff.rejuvenation.remains<3
+    - 774,name="Abundance Filler (Germination Maintenance)",cycle=members,if=talent.germination&buff.abundance.up&buff.abundance.remains<3&cycle.buff.rejuvenation.up&cycle.buff.rejuvenation_germination.remains<3
 
   # Cat Form DPS Rotation (Single Target)
   catweave_st:
@@ -711,8 +723,9 @@ lists:
     - starsurge,name="Starsurge",if=cooldown.starsurge.ready
     - sunfire,name="Sunfire Refresh",if=talent.sunfire&debuff.sunfire.refreshable
     - moonfire,name="Moonfire Refresh",if=debuff.moonfire.refreshable
-    - starfire,name="Starfire Cleave",if=enemies.combat.8y>=config.aoe_threshold
-    - wrath, name="Wrath Filler"
+    # Wrath dropped 2026-09-29: Starfire covers both AoE and filler now, no
+    # Wrath cast anywhere in this list.
+    - starfire,name="Starfire Filler"
 
   # Healing on the Move: Instant spells only (HoTs and Lifebloom)
   moving:

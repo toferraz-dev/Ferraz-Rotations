@@ -153,7 +153,8 @@ spec_profiles:
         scenarios: 0
         auto_enabled: true
         values:
-          {}
+          swiftmend_threshold: 80
+          mouseover_emergency_hp: 80
         shared_values:
           healthstone: 50
           interrupt_all: true
@@ -399,7 +400,7 @@ selected_rotation:
   262: C:\Games\Python\Rotations\FerrazShamanEle.yaml
   104: D:\Projetos\Rotations\FerrazGuardianElune.yaml
   105: D:\Projetos\Rotations\FerrazRestoDruid.yaml
-  102: D:\Projetos\Rotations\FerrazBalanceRaid.yaml
+  102: D:\Projetos\Rotations\FerrazBalance.yaml
   103: D:\Projetos\Rotations\FerrazFeral.yaml
 selected_community_rotation_name:
   104: "[Community] Khan No Apex Guardian Druid (1.0.7) - Khan"
@@ -781,16 +782,16 @@ queue_bindings:
         - spell: 132469
           target: 0
           if: ""
-    - name: Tiger Dash
+    - name: Dash
       scancode: 61446
       modifier: 0
-      admit: "talent.tiger_dash&cooldown.tiger_dash.up"
+      admit: cooldown.dash.up
       expire: ""
       unqueue_on_cast: true
       ttl: 0
       priority_list: false
       enabled: true
       steps:
-        - spell: 252216
+        - spell: 1850
           target: 0
           if: ""
