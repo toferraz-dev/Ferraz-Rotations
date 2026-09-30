@@ -10,7 +10,7 @@
 # Why each line is the way it is: .agents/rationale/Feral.md
 # =============================================================================
 
-version: "5.0.1"
+version: "5.1.0"
 author: Ferraz
 patch: "12.1"
 spec: 103
@@ -25,13 +25,13 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-09-25 | Patch: 12.1 | Version: 5.0.1"
+    text: "Last update: 2026-09-30 | Patch: 12.1 | Version: 5.1.0"
 
   recommended_talents:
     section: "Talents"
     type: copy_text
     label: "Recommended Talent String"
-    text: "CcGADBD3hSPCL9Y9gz68WcKvMAAAAAAgZmZ2YmZmxY2M2mZZGzMmZAAAAYLY2M8AmZUzYWMzMzsMmhBAAAAAwADAAAgmZZWmZmBEYBmZGgFGMAAAmZDD"
+    text: "CcGADBD3hSPCL9Y9gz68WcKvMAAAAAAgZmZ2MzMzMGzmx2YbGzMmZAAAAYJY2M8AmZUzYWMzMzsMmhBAAAAAwADAAAgmZZWmZmBEYBMzAswMMAAAmZDD"
 
   panic_bear_hp_pct:
     label: "Panic Bear Form HP %"

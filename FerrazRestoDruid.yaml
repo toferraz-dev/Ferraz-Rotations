@@ -39,7 +39,7 @@ config:
     section: "Talents"
     type: copy_text
     label: "Recommended Talent String"
-    text: "CkGADBD3hSPCL9Y9gz68WcKvMMMmZZMjZmxsNMMmNjNbzAAAAAAAAAAgNDNbDmmZAmFmZmZxwMAAAAAMAAzAAQAAAz2MbNbzsZjZmZGmZgRzAAMzAwA"
+    text: "CkGADBD3hSPCL9Y9gz68WcKvMMMmZZMjZmxsNmBmNmNbzAAAAAAAAAAgNDNbzw0MDwsYmZGLGeADAAAAgBAYGw22YBTzMLDAgZbmtmtZ2sxMzMDzMbgmBAzMzMAMA"
 
 
   # HEALING — the core thresholds.
@@ -491,9 +491,22 @@ variables:
   # Stampeding Roar conditions based on the interface
   use_stampeding_roar: moving.time>=config.stampeding_roar_movement_time&buff.stampeding_roar.down&((config.stampeding_roar_usage=1&player.combat)|(config.stampeding_roar_usage=2&!player.combat)|(config.stampeding_roar_usage=3))
 
-  # Roots and snares only - what a shift actually breaks. NOT
-  # debuff_list.freedom.
-  druid_shapeshift_root: player.debuff.root.up|player.debuff.snare.up
+  # FIXED 2026-09-29: player.debuff.root.up/.snare.up NEVER resolved - both
+  # are documented in .agents/SIMIA_DOCUMENTATION.md as unverified in live
+  # play (every dump occurrence traces back to this repo's own files citing
+  # itself, not independent confirmation), which is exactly the "never goes
+  # false because it never goes true either" bug class. Switched to
+  # debuff_list.freedom.up, the one real tag confirmed in
+  # simia_data_dump/_aura.yaml and used by _shared.yaml/other class
+  # rotations. Tradeoff accepted deliberately: freedom also covers stuns (a
+  # shift wastes a GCD trying to break something it can't), which is a minor
+  # cost against root_cleanse's own line_cd=8 throttle, versus the previous
+  # line silently never firing at all. A full per-dungeon (boss AND trash)
+  # root/snare spell ID audit was attempted 2026-09-29 and abandoned as
+  # infeasible by manual web search - too many undocumented trash mobs across
+  # 8 dungeons. Revisit with real ids only if/when specific ones are reported
+  # not breaking in play.
+  druid_shapeshift_root: debuff_list.freedom.up
 
 lists:
   # Called ABOVE the casting guard. All off-GCD or items, so nothing here

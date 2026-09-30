@@ -4,14 +4,15 @@
 #
 # Lists (entry point: main):
 #   engine                  interrupts              out_of_combat           defensives
-#   racials                 cooldowns               active_healing          utility
-#   catweave_st             catweave_aoe            catweave                ranged_dps
-#   bearweave               moving                  mouseover_healing_emergency  main
+#   racials                 cooldowns               abundance_maintenance   active_healing
+#   utility                 catweave_st             catweave_aoe            catweave
+#   ranged_dps              bearweave               moving
+#   mouseover_healing_emergency  main
 #
 # Why each line is the way it is: .agents/rationale/RestoDruidRaid.md
 # =============================================================================
 
-version: "6.0.0"
+version: "7.0.0"
 author: Ferraz
 patch: "12.1"
 spec: 105
@@ -29,7 +30,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-09-22 | Patch: 12.1 | Version: 6.0.0"
+    text: "Last update: 2026-09-30 | Patch: 12.1 | Version: 7.0.0"
 
 
   # String the talent.X checks below assume.
@@ -506,6 +507,8 @@ lists:
     - lifebloom,name="OOC Lifebloom (Tank)",cycle=tanks,cycle_order=health.pct,if=((player.inraid|player.indungeon)&!talent.everbloom&(cycle.buff.lifebloom.down|cycle.buff.lifebloom.remains<4.5)&(cycle.buff.lifebloom.up|group.count(cycle.buff.lifebloom.up)=0)&!player.combat)&cycle.range<=40
     - 774,name="OOC Rejuvenation",cycle=members,cycle_order=health.pct,if=((player.inraid|player.indungeon)&cycle.health.effective.pct<config.raid_rejuvenation_threshold&cycle.buff.rejuvenation.remains<1.5&!player.combat)&cycle.range<=40
     - regrowth,name="OOC Regrowth",cycle=members,cycle_order=health.pct,if=(cycle.health.effective.pct<config.raid_regrowth_threshold&cycle.buff.regrowth.remains<1.5&!player.combat)&cycle.range<=40
+    # Build/maintain Abundance while parked between pulls, same as in combat.
+    - call_action_list,name=abundance_maintenance
 
   # Ironbark -> Barkskin -> Bear Form + Frenzied Regen.
   defensives:
@@ -543,6 +546,20 @@ lists:
     # than everyone else's. See .agents/SIMIA_DOCUMENTATION.md's cycle_order
     # note and the WCL logs under WarcraftLogs/Druid/Restoration/.
     - swiftmend,name="Swiftmend for SotF/Treants",cycle=members,cycle_order=health.pct,if=(player.combat&cycle.health.effective.pct<config.raid_swiftmend_threshold&(cycle.buff.rejuvenation.up|cycle.buff.regrowth.up|cycle.buff.wild_growth.up))&cycle.range<=40
+
+  # Abundance (spell 207383) needs 5 Rejuvenations active AT ONCE ("While you
+  # have at least 5 Rejuvenations active"), not a stack the player builds and
+  # keeps. Two phases, same shape as FerrazRestoDruid.yaml's fix
+  # (2026-09-26/29): build phase has no buff.abundance.up gate at all, so it
+  # actually refreshes Rejuvenation toward 5 instead of waiting for a buff
+  # that will never turn on by itself; maintenance phase only fires once the
+  # buff is up AND close to lapsing (remains<3), not on every normal pandemic
+  # window - see the user's standing rule on this.
+  abundance_maintenance:
+    - 774,name="Abundance Filler (Rejuv)",cycle=members,cycle_order=health.pct,if=!buff.abundance.up&cycle.buff.rejuvenation.refreshable&cycle.range<=40
+    - 774,name="Abundance Filler (Germination)",cycle=members,cycle_order=health.pct,if=!buff.abundance.up&talent.germination&cycle.buff.rejuvenation.up&(cycle.buff.rejuvenation_germination.down|cycle.buff.rejuvenation_germination.refreshable)&cycle.range<=40
+    - 774,name="Abundance Filler (Rejuv Maintenance)",cycle=members,cycle_order=health.pct,if=buff.abundance.up&buff.abundance.remains<3&cycle.buff.rejuvenation.remains<3&cycle.range<=40
+    - 774,name="Abundance Filler (Germination Maintenance)",cycle=members,cycle_order=health.pct,if=talent.germination&buff.abundance.up&buff.abundance.remains<3&cycle.buff.rejuvenation.up&cycle.buff.rejuvenation_germination.remains<3&cycle.range<=40
 
   # SotF consumption -> self Everbloom/Photosynthesis loop -> tank Lifebloom
   # -> forced spread -> Abundance window, spent before Wild Growth.
@@ -678,6 +695,8 @@ lists:
     - call_action_list,name=mouseover_healing_emergency,if=config.raid_use_mouseover&var.mo_friendly_valid&mouseover.health.effective.pct<config.raid_mouseover_emergency_hp
     - call_action_list,name=moving,if=player.moving
     - call_action_list,name=active_healing
+    # Pad Abundance in combat. Always on, same as out_of_combat's call.
+    - call_action_list,name=abundance_maintenance,if=player.combat
 
     # Bottom of the priority: a dropped buff costs a damage global, never a heal.
     - mark_of_the_wild,name="Mark of the Wild (low prio)",range_check=none,if=config.raid_use_mark_of_the_wild&(buff.mark_of_the_wild.down.any|action.mark_of_the_wild.overlayed)&lastcast.mark_of_the_wild>=10
