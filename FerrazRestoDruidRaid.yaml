@@ -12,7 +12,7 @@
 # Why each line is the way it is: .agents/rationale/RestoDruidRaid.md
 # =============================================================================
 
-version: "8.1.0"
+version: "9.0.0"
 author: Ferraz
 patch: "12.1"
 spec: 105
@@ -30,7 +30,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-10-01 | Patch: 12.1 | Version: 8.1.0"
+    text: "Last update: 2026-10-01 | Patch: 12.1 | Version: 9.0.0"
 
 
   # String the talent.X checks below assume.
@@ -479,8 +479,12 @@ lists:
     - interact_target,delay=350,if=config.engine_loot_nearby&loot_nearby
     - interact_mouseover,delay=350,if=config.engine_loot_nearby&mouseover.lootable&mouseover.range<=5
 
-    - bear_form,name="Root Cleanse (to Bear)",line_cd=8,if=config.root_cleanse&var.druid_shapeshift_root&!player.stunned&!buff.bear_form.up
-    - cat_form,name="Root Cleanse (from Bear)",line_cd=8,if=config.root_cleanse&var.druid_shapeshift_root&!player.stunned&buff.bear_form.up
+    # FIXED 2026-10-01: missing !buff.incarnation_tree_of_life.up - shifting
+    # to Bear while in Tree of Life form drops the Incarnation buff entirely.
+    # The M+ file already guards every shapeshift line on this; this file
+    # never did.
+    - bear_form,name="Root Cleanse (to Bear)",line_cd=8,if=config.root_cleanse&var.druid_shapeshift_root&!player.stunned&!buff.bear_form.up&!buff.incarnation_tree_of_life.up
+    - cat_form,name="Root Cleanse (from Bear)",line_cd=8,if=config.root_cleanse&var.druid_shapeshift_root&!player.stunned&buff.bear_form.up&!buff.incarnation_tree_of_life.up
 
     # Nature's Cure: cycle=members (the healer form), not cycle=party.
     - natures_cure,delay=500,cycle=members,name="Nature's Cure",if=(config.auto_dispel_group&cycle.dispelable.list)&cycle.range<=40
@@ -541,7 +545,7 @@ lists:
     - 102342,name="Ironbark (Tank)",cycle=tanks,cycle_order=health.pct,if=(config.raid_ironbark_target=1&cycle.health.effective.pct<config.raid_ironbark_threshold&cycle.buff.ironbark.down)&cycle.range<=40
     - 102342,name="Ironbark (Members)",cycle=members,cycle_order=health.pct,if=(config.raid_ironbark_target=2&cycle.health.effective.pct<config.raid_ironbark_threshold&cycle.buff.ironbark.down)&cycle.range<=40
     - barkskin,name="Barkskin",if=incoming.pct>=config.raid_barkskin_threshold
-    - bear_form,name="Panic Bear",if=health.effective.pct<config.raid_frenzied_regen_threshold&!buff.bear_form.up&cooldown.frenzied_regeneration.ready
+    - bear_form,name="Panic Bear",if=health.effective.pct<config.raid_frenzied_regen_threshold&!buff.bear_form.up&cooldown.frenzied_regeneration.ready&!buff.incarnation_tree_of_life.up
     - frenzied_regeneration,name="Frenzied Regen",if=health.effective.pct<config.raid_frenzied_regen_threshold&buff.bear_form.up
 
   # Shadowmeld aggro drop, Thorn Bloom group heal.
@@ -678,9 +682,9 @@ lists:
     # Sits ABOVE the entry lines, so it tops the raid up right before you dive in
     # and keeps Rejuvenation rolling from inside Cat Form.
     - 774,name="Cat Rejuvenation",cycle=members,cycle_order=buff.rejuvenation.remains,if=(cycle.buff.rejuvenation.remains<4&(buff.cat_form.up|talent.fluid_form)&(!target.in_melee|!var.group_healthy))&cycle.range<=40
-    - 1822,name="Fluid Rake",if=talent.fluid_form&!buff.cat_form.up&debuff.rake.refreshable
-    - shred,name="Fluid Shred",if=talent.fluid_form&!buff.cat_form.up
-    - cat_form,name="Manual Cat Shift",if=!buff.cat_form.up
+    - 1822,name="Fluid Rake",if=talent.fluid_form&!buff.cat_form.up&debuff.rake.refreshable&!buff.incarnation_tree_of_life.up
+    - shred,name="Fluid Shred",if=talent.fluid_form&!buff.cat_form.up&!buff.incarnation_tree_of_life.up
+    - cat_form,name="Manual Cat Shift",if=!buff.cat_form.up&!buff.incarnation_tree_of_life.up
     - return,if=!buff.cat_form.up
     - call_action_list,name=catweave_aoe,if=enemies.combat.8y>=config.raid_aoe_threshold
     - call_action_list,name=catweave_st,if=enemies.combat.8y<config.raid_aoe_threshold
@@ -753,6 +757,9 @@ lists:
     - mark_of_the_wild,name="Mark of the Wild (low prio)",range_check=none,if=config.raid_use_mark_of_the_wild&(buff.mark_of_the_wild.down.any|action.mark_of_the_wild.overlayed)&lastcast.mark_of_the_wild>=10
 
     # --- DPS weaving. Only while the group is topped and healthy. ---
+    # !buff.incarnation_tree_of_life.up on bearweave/catweave: entering
+    # Cat/Bear drops Incarnation: Tree of Life entirely. ranged_dps needs no
+    # such guard - it never shapeshifts.
     - call_action_list,name=ranged_dps,if=config.raid_ranged_dps&var.can_catweave&target.exists&target.alive&!target.friendly&((config.raid_melee_dps&!target.in_melee)|!config.raid_melee_dps)
-    - call_action_list,name=bearweave,if=config.raid_melee_dps&var.can_catweave&target.exists&target.alive&!target.friendly&target.in_melee&enemies.combat.8y>=2
-    - call_action_list,name=catweave,if=config.raid_melee_dps&var.can_catweave&target.exists&target.alive&!target.friendly&target.in_melee
+    - call_action_list,name=bearweave,if=config.raid_melee_dps&var.can_catweave&target.exists&target.alive&!target.friendly&target.in_melee&enemies.combat.8y>=2&!buff.incarnation_tree_of_life.up
+    - call_action_list,name=catweave,if=config.raid_melee_dps&var.can_catweave&target.exists&target.alive&!target.friendly&target.in_melee&!buff.incarnation_tree_of_life.up
