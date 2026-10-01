@@ -12,7 +12,7 @@
 # Why each line is the way it is: .agents/rationale/RestoDruidRaid.md
 # =============================================================================
 
-version: "7.1.0"
+version: "8.0.0"
 author: Ferraz
 patch: "12.1"
 spec: 105
@@ -30,7 +30,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-09-30 | Patch: 12.1 | Version: 7.1.0"
+    text: "Last update: 2026-10-01 | Patch: 12.1 | Version: 8.0.0"
 
 
   # String the talent.X checks below assume.
@@ -88,6 +88,23 @@ config:
     min: 25
     max: 99
     default: 70
+
+  # Everbloom 4/4 + Lifetreading decide this. Default is Self (1), not Tank
+  # like the M+ file - confirmed via a reference raid log (Sellene_f73,
+  # 2026-10-01): all 21 Lifebloom casts landed on the caster, Everbloom was
+  # the single largest healing source in the log (81.2% efficiency, ahead of
+  # Rejuvenation and Wild Growth). The M+ file's Tank default was never
+  # re-validated against this pattern.
+  raid_lifebloom_target:
+    label: "Lifebloom Target"
+    section: "Healing"
+    type: dropdown
+    options:
+      - label: "Tank"
+        value: 2
+      - label: "Self"
+        value: 1
+    default: 1
 
   raid_swiftmend_threshold:
     label: "Swiftmend HP % (effective)"
@@ -503,6 +520,10 @@ lists:
     # NO Symbiotic Relationship. Added in 4.1.0, pulled back out in 4.2.0 - it
     # did not work in game. The M+ file keeps its own copy of the line.
 
+    # Same Everbloom fix as active_healing - arm Lifebloom before the pull
+    # starts instead of waiting for combat to begin.
+    - lifebloom.player,name="OOC Self Lifebloom (Everbloom)",range_check=none,if=config.raid_lifebloom_target=1&talent.everbloom&!player.combat&(buff.lifebloom.down|buff.lifebloom.remains<4.5)
+    - lifebloom,name="OOC Lifebloom (Tank, Everbloom)",cycle=tanks,cycle_order=health.pct,if=config.raid_lifebloom_target=2&talent.everbloom&!player.combat&(cycle.buff.lifebloom.down|cycle.buff.lifebloom.refreshable)&cycle.range<=40
     - lifebloom,name="OOC Lifebloom",cycle=members,cycle_order=health.pct,if=((player.inraid|player.indungeon)&!talent.everbloom&cycle.health.effective.pct<config.raid_lifebloom_threshold&cycle.buff.lifebloom.down&(group.count(cycle.buff.lifebloom.up)=0|tank1.buff.lifebloom.up|tank2.buff.lifebloom.up)&!player.combat)&cycle.range<=40
     - lifebloom,name="OOC Lifebloom (Tank)",cycle=tanks,cycle_order=health.pct,if=((player.inraid|player.indungeon)&!talent.everbloom&(cycle.buff.lifebloom.down|cycle.buff.lifebloom.remains<4.5)&(cycle.buff.lifebloom.up|group.count(cycle.buff.lifebloom.up)=0)&!player.combat)&cycle.range<=40
     - 774,name="OOC Rejuvenation",cycle=members,cycle_order=health.pct,if=((player.inraid|player.indungeon)&cycle.health.effective.pct<config.raid_rejuvenation_threshold&cycle.buff.rejuvenation.remains<1.5&!player.combat)&cycle.range<=40
@@ -537,7 +558,19 @@ lists:
     - convoke_the_spirits,global_delay=750,name="Convoke (Heal)",if=buff.natures_swiftness.up&!buff.cat_form.up&!buff.bear_form.up&!buff.moonkin_form.up&buff.abundance.up
     - regrowth,name="Nature Swift Regrowth",cycle=members,cycle_order=health.pct,if=(buff.natures_swiftness.up)&cycle.range<=40
     - tranquility,global_delay=750,name="Tranquility",if=!config.raid_manual_tranquility&group.count(cycle.health.effective.pct<config.raid_tranquility_threshold&cycle.range<=40)>=config.raid_tranquility_members&!player.moving
-    # Power of the Archdruid loop: Swiftmend on CD, spreads Rejuv to 3 targets.
+    # FIXED 2026-10-01: this file never had the self-cast Power of the
+    # Archdruid line the comment above promised - "Swiftmend on CD" was
+    # supposed to mean an unconditional self-cast (Swiftmend consumed on
+    # yourself procs Soul of the Forest, which Power of the Archdruid then
+    # spreads as 3 Rejuvenations), but the only Swiftmend line in this file
+    # was the HP%-gated cycle=members one below, which the cycle_order fix
+    # correctly stops from landing on the caster by accident. Confirmed via a
+    # reference raid log (Sellene_f73): 33 of 36 Swiftmend casts (91.7%) went
+    # to the caster with no preceding damage - that is Power of the Archdruid
+    # played as intended, not the targeting bug the M+ file's cycle_order fix
+    # was written for. Mirrors FerrazRestoDruid.yaml's "Self Swiftmend
+    # (Archdruid)" line.
+    - swiftmend.player,name="Self Swiftmend (Archdruid)",range_check=none,if=talent.power_of_the_archdruid&player.combat&cooldown.swiftmend.ready&(buff.rejuvenation.up|buff.regrowth.up|buff.wild_growth.up)
     # cycle_order=health.pct is the fix for a bug a live log caught: default
     # cycle_order (raw HP ascending) means the druid's own lower max-HP pool
     # (leather) always wins the cycle over tanks/plate, so this cast landed on
@@ -574,14 +607,22 @@ lists:
 
     - thorn_bloom,name="Thorn Bloom",if=group.count(cycle.health.effective.pct<config.raid_thorn_bloom_threshold&cycle.range<=40)>=config.raid_thorn_bloom_members&target.in_melee
 
-    # Everbloom self loop: auto-stacks to 3, cleaves 40% to 6 allies. Falls
-    # through to tank Lifebloom below if untalented.
     - efflorescence,name="Efflorescence (Self)",range_check=none,if=talent.efflorescence&cooldown.efflorescence.ready
-    # after=300 debounces Everbloom's own restack tick; remains<4.5 refreshes
-    # before falling off so it keeps its built-up stacks.
 
-    # Tank Lifebloom only when untalented — with Everbloom, the self line
-    # above owns the single charge; fighting it over it ping-pongs forever.
+    # FIXED 2026-10-01: the "Everbloom self loop" this comment block
+    # described was never actually written - only the comment existed, so
+    # with Everbloom talented NO Lifebloom line fired at all (both lines
+    # below are gated !talent.everbloom, which is false). Confirmed via a
+    # reference raid log (Sellene_f73): Everbloom was the single largest
+    # healing source (81.2% efficiency), all 21 Lifebloom casts on self.
+    # after=300 debounces Everbloom's own restack tick; remains<4.5 refreshes
+    # before falling off so it keeps its built-up stacks. Mirrors
+    # FerrazRestoDruid.yaml's "Self Lifebloom (Everbloom)" line.
+    - lifebloom.player,name="Self Lifebloom (Everbloom)",range_check=none,after=300,if=config.raid_lifebloom_target=1&talent.everbloom&(buff.lifebloom.down|buff.lifebloom.remains<4.5)
+    - lifebloom,name="Lifebloom (Tank, Everbloom)",cycle=tanks,cycle_order=health.pct,if=config.raid_lifebloom_target=2&talent.everbloom&(cycle.buff.lifebloom.down|cycle.buff.lifebloom.refreshable)&cycle.range<=40
+
+    # Tank Lifebloom only when untalented — with Everbloom, the self/tank
+    # lines above own the single charge; fighting it over it ping-pongs forever.
     - lifebloom,name="Lifebloom",cycle=members,cycle_order=health.pct,if=(!talent.everbloom&cycle.health.effective.pct<config.raid_lifebloom_threshold&cycle.buff.lifebloom.down&(group.count(cycle.buff.lifebloom.up)=0|tank1.buff.lifebloom.up|tank2.buff.lifebloom.up))&cycle.range<=40
     - lifebloom,name="Lifebloom (Tank)",cycle=tanks,cycle_order=health.pct,if=(!talent.everbloom&(cycle.buff.lifebloom.down|cycle.buff.lifebloom.remains<4.5)&(cycle.buff.lifebloom.up|group.count(cycle.buff.lifebloom.up)=0))&cycle.range<=40
 
@@ -657,6 +698,10 @@ lists:
   moving:
     - natures_swiftness,name="NS (Pre-Convoke Moving)",if=cooldown.convoke_the_spirits.ready&group.count(cycle.health.effective.pct<config.raid_convoke_threshold&cycle.range<=40)>=config.raid_convoke_members&!buff.cat_form.up&!buff.bear_form.up&!buff.moonkin_form.up&buff.abundance.up
     - convoke_the_spirits,global_delay=750,name="Convoke (Moving)",if=group.count(cycle.health.effective.pct<config.raid_convoke_threshold&cycle.range<=40)>=config.raid_convoke_members&!buff.cat_form.up&!buff.bear_form.up&!buff.moonkin_form.up&buff.abundance.up
+    # Same Everbloom fix as active_healing - Lifebloom is instant-cast, so it
+    # works fine while moving.
+    - lifebloom.player,name="Self Lifebloom (Everbloom, Moving)",range_check=none,if=config.raid_lifebloom_target=1&talent.everbloom&(buff.lifebloom.down|buff.lifebloom.remains<4.5)
+    - lifebloom,name="Lifebloom (Tank, Everbloom, Moving)",cycle=tanks,cycle_order=health.pct,if=config.raid_lifebloom_target=2&talent.everbloom&(cycle.buff.lifebloom.down|cycle.buff.lifebloom.refreshable)&cycle.range<=40
     - lifebloom,name="Lifebloom (Moving)",cycle=members,cycle_order=health.pct,if=(!talent.everbloom&cycle.health.effective.pct<config.raid_lifebloom_threshold&cycle.buff.lifebloom.down&(group.count(cycle.buff.lifebloom.up)=0|tank1.buff.lifebloom.up|tank2.buff.lifebloom.up))&cycle.range<=40
     - lifebloom,name="Lifebloom Tank (Moving)",cycle=tanks,cycle_order=health.pct,if=(!talent.everbloom&(cycle.buff.lifebloom.down|cycle.buff.lifebloom.remains<4.5)&(cycle.buff.lifebloom.up|group.count(cycle.buff.lifebloom.up)=0))&cycle.range<=40
     # config.raid_rejuvenation_threshold, not a literal 95.
