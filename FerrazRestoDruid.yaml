@@ -11,7 +11,7 @@
 #
 # Why each line is the way it is: .agents/rationale/RestoDruid.md
 # =============================================================================
-version: "16.1.0"
+version: "16.2.0"
 author: Ferraz
 patch: "12.1"
 spec: 105
@@ -31,7 +31,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-09-30 | Patch: 12.1 | Version: 16.1.0"
+    text: "Last update: 2026-10-01 | Patch: 12.1 | Version: 16.2.0"
 
 
   # RECOMMENDED BUILD — the string the talent.X gates below assume.
@@ -761,7 +761,12 @@ lists:
     - regrowth.mouseover,name="Regrowth (MO) Cast",if=!player.moving
 
   auto_rez:
-    - revive.mouseover,if=mouseover.dead&mouseover.friendly&mouseover.unitframe&!player.combat
+    # FIXED 2026-10-01: was `revive`, which this repo never confirmed as a
+    # real Resto Druid spell name in the current patch - `_shared.yaml`
+    # citing itself is not independent evidence (same trap as the
+    # player.debuff.root.up bug). User confirmed Revitalize is the real OOC
+    # rez spell on live today.
+    - revitalize.mouseover,if=mouseover.dead&mouseover.friendly&mouseover.unitframe&!player.combat
     - rebirth.mouseover,if=mouseover.dead&mouseover.friendly&mouseover.unitframe&player.combat
 
   # ENGINE.
