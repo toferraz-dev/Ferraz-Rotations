@@ -12,7 +12,7 @@
 # Why each line is the way it is: .agents/rationale/RestoDruidRaid.md
 # =============================================================================
 
-version: "9.1.0"
+version: "9.2.0"
 author: Ferraz
 patch: "12.1"
 spec: 105
@@ -30,7 +30,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-10-01 | Patch: 12.1 | Version: 9.1.0"
+    text: "Last update: 2026-10-01 | Patch: 12.1 | Version: 9.2.0"
 
 
   # String the talent.X checks below assume.
@@ -112,7 +112,7 @@ config:
     type: slider
     min: 25
     max: 99
-    default: 55
+    default: 80
 
   raid_regrowth_threshold:
     label: "Regrowth HP % (effective)"
@@ -146,7 +146,7 @@ config:
     type: slider
     min: 1
     max: 20
-    default: 6
+    default: 4
 
   raid_tranquility_threshold:
     label: "Tranquility HP % (effective)"
@@ -162,7 +162,7 @@ config:
     type: slider
     min: 1
     max: 20
-    default: 6
+    default: 4
 
   raid_manual_tranquility:
     label: "Manual Tranquility"
@@ -257,7 +257,7 @@ config:
     type: slider
     min: 25
     max: 99
-    default: 85
+    default: 70
 
   raid_catweave_injured_max:
     label: "Exit Cat - Max Injured"
@@ -265,7 +265,7 @@ config:
     type: slider
     min: 0
     max: 5
-    default: 1
+    default: 2
 
   raid_aoe_threshold:
     label: "AoE - Min Enemies"
