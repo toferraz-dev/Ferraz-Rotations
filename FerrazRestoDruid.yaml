@@ -766,7 +766,7 @@ lists:
     # citing itself is not independent evidence (same trap as the
     # player.debuff.root.up bug). User confirmed Revitalize is the real OOC
     # rez spell on live today.
-    - revitalize.mouseover,if=mouseover.dead&mouseover.friendly&mouseover.unitframe&!player.combat
+    - revitalize,if=mouseover.dead&mouseover.friendly&mouseover.unitframe&!player.combat
     - rebirth.mouseover,if=mouseover.dead&mouseover.friendly&mouseover.unitframe&player.combat
 
   # ENGINE.

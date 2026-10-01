@@ -492,7 +492,7 @@ lists:
     # citing itself is not independent evidence (same trap as the
     # player.debuff.root.up bug). User confirmed Revitalize is the real OOC
     # rez spell on live today.
-    - revitalize.mouseover,name="Revitalize (Mouseover)",if=config.engine_auto_rez&mouseover.dead&mouseover.friendly&mouseover.unitframe&!player.combat
+    - revitalize,name="Revitalize (Mouseover)",if=config.engine_auto_rez&mouseover.dead&mouseover.friendly&mouseover.unitframe&!player.combat
 
     - healthstone,delay=250,if=healthstone.ready&health.pct<=config.engine_healthstone
     - health_potion,delay=250,if=health_potion.ready&health.pct<=config.engine_health_potion
