@@ -11,7 +11,7 @@
 #
 # Why each line is the way it is: .agents/rationale/RestoDruid.md
 # =============================================================================
-version: "16.2.0"
+version: "16.3.0"
 author: Ferraz
 patch: "12.1"
 spec: 105
@@ -31,7 +31,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-10-01 | Patch: 12.1 | Version: 16.2.0"
+    text: "Last update: 2026-10-02 | Patch: 12.1 | Version: 16.3.0"
 
 
   # RECOMMENDED BUILD — the string the talent.X gates below assume.
@@ -434,11 +434,11 @@ config:
     default: [0, 1]
 
   auto_rez:
-    label: "Auto Rez / Rebirth (Mouseover)"
+    label: "Auto Revitalize / Rebirth (Mouseover)"
     section: "Engine"
     type: checkbox
     default: true
-    description: "Revive out of combat, Rebirth in combat, on the ally under your mouse."
+    description: "Revitalize out of combat, Rebirth in combat, on the ally under your mouse."
 
   healthstone_pct:
     label: "Healthstone HP% (real HP)"

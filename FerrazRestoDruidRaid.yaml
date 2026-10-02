@@ -12,7 +12,7 @@
 # Why each line is the way it is: .agents/rationale/RestoDruidRaid.md
 # =============================================================================
 
-version: "9.2.0"
+version: "10.0.0"
 author: Ferraz
 patch: "12.1"
 spec: 105
@@ -30,7 +30,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-10-01 | Patch: 12.1 | Version: 9.2.0"
+    text: "Last update: 2026-10-02 | Patch: 12.1 | Version: 10.0.0"
 
 
   # String the talent.X checks below assume.
@@ -105,6 +105,21 @@ config:
       - label: "Self"
         value: 1
     default: 1
+
+  disable_natures_swiftness:
+    label: "Disable Nature's Swiftness"
+    section: "Healing"
+    type: toggle
+    spell: 132158
+    description: "Ephemeral, hotkeyable toggle. OFF (default) = Nature's Swiftness stays on. Hit the bound key to suppress it for the rest of the session/pull; state resets to OFF (enabled) on reload."
+
+  raid_natures_swiftness_threshold:
+    label: "Nature's Swiftness HP % (effective)"
+    section: "Healing"
+    type: slider
+    min: 10
+    max: 99
+    default: 70
 
   raid_swiftmend_threshold:
     label: "Swiftmend HP % (effective)"
@@ -411,7 +426,7 @@ config:
     default: true
 
   engine_auto_rez:
-    label: "Revive on Mouseover (OOC)"
+    label: "Revitalize on Mouseover (OOC)"
     section: "Engine"
     type: checkbox
     default: true
@@ -550,6 +565,12 @@ lists:
   # Swiftmend. Clearcasting Regrowth moved to active_healing - see the note
   # there.
   cooldowns:
+    # Reactive NS, independent of Convoke - ported from the M+ file
+    # 2026-10-02. Without this, NS only ever fired as part of the
+    # Pre-Convoke combo below, so a single member in real HP trouble got no
+    # NS response unless the whole group also happened to meet Convoke's
+    # member-count threshold.
+    - natures_swiftness,name="Nature Swiftness",off_gcd=true,ignore_queue=true,delay=150,range_check=none,if=!config.disable_natures_swiftness&group.count(cycle.health.effective.pct<config.raid_natures_swiftness_threshold&cycle.range<=40)>=1
     # CONVOKE IS FORM-DEPENDENT. Casting Rejuvenation breaks the form as a side
     # effect, so the Convoke line below can fire on the next pass.
     - 774,name="Shift Out For Convoke",cycle=members,cycle_order=health.pct,if=cooldown.convoke_the_spirits.ready&group.count(cycle.health.effective.pct<config.raid_convoke_threshold&cycle.range<=40)>=config.raid_convoke_members&(buff.cat_form.up|buff.bear_form.up)
