@@ -344,7 +344,7 @@ toggle_hotkeys:
       scancode: 45
       modifier: 0
     force_dps:
-      scancode: 44
+      scancode: 45
       modifier: 0
     manual_tranquility:
       scancode: 44
@@ -362,7 +362,7 @@ toggle_hotkeys:
       scancode: 45
       modifier: 0
     disable_natures_swiftness:
-      scancode: 45
+      scancode: 44
       modifier: 0
   104:
     use_incarnation:
