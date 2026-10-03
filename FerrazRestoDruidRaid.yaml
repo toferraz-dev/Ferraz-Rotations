@@ -12,7 +12,7 @@
 # Why each line is the way it is: .agents/rationale/RestoDruidRaid.md
 # =============================================================================
 
-version: "10.0.0"
+version: "12.0.0"
 author: Ferraz
 patch: "12.1"
 spec: 105
@@ -30,15 +30,27 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-10-02 | Patch: 12.1 | Version: 10.0.0"
+    text: "Last update: 2026-10-03 | Patch: 12.1 | Version: 12.0.0"
 
 
-  # String the talent.X checks below assume.
+  # String the talent.X checks below assume. REPLACED 2026-10-03 with a
+  # reference raid player's build (Seized_f12_log, 20-man raid, 421k average
+  # HPS / 485k peak vs this file's prior ~280k on the same gear). Key talent
+  # difference found via a side-by-side SimC decode diff against the
+  # previous string: the reference build takes Flourish (spell 197721,
+  # Restoration row 6) - a passive that extends every active HoT by up to
+  # ~14s whenever Tranquility is channeled. The previous string did not have
+  # it. Several other nodes also differ (Innervate, Reforestation, Improved
+  # Wild Growth vs this file's Grove Guardians, Moonkin Form, Call of the
+  # Elder Druid, etc.) - swapped as a whole build rather than single-point
+  # edits, since multiple differences are paired choice nodes (e.g. the
+  # reference takes Wild Charge where the old string took Tiger Dash) and
+  # editing them individually risked an invalid string.
   recommended_talents:
     section: "Talents"
     type: copy_text
     label: "Recommended Talent String"
-    text: "CkGADBD3hSPCL9Y9gz68WcKvMMjxMLzMjZmxsNMYmNjNmBAAAAAAAAAALDa2YMNzY4BMLzMzMDDzAAAAAAAAAAIAAgZbmlmtZ2sxYmZYmBGNDAwMDADA"
+    text: "CkGAAAAAAAAAAAAAAAAAAAAAAYMmZZmZMzMmthZwsZsNmBAAAAAAAAAALGa2MjpZGgZZmZmZYYGAAAAAGAAAAAAAwsNzSz2Mb2YMzMYGY0MAAzMAMA"
 
 
   # HEALING — AoE/group thresholds, then single-target.
@@ -296,11 +308,19 @@ config:
     type: checkbox
     default: true
 
+  # Default flipped to false 2026-10-03: the new reference talent build
+  # (Seized_f12 log) has zero Cat Form talents (no Rip/Rake/Ferocious
+  # Bite/Fluid Form nodes at all - confirmed via SimC talent decode) and zero
+  # Cat Form uptime in the whole pull (0 Cat Form applybuff events, despite
+  # 30 Rake damage ticks from a pre-pull DoT and 29 incidental melee auto-
+  # attacks from standing in range - neither is catweaving). DPS is Wrath/
+  # Starsurge/Moonfire only. Same reasoning as FerrazRestoDruid.yaml's
+  # melee_dps default flip on 2026-09-26.
   raid_melee_dps:
     label: "Melee DPS (Cat/Bear)"
     section: "Damage"
     type: checkbox
-    default: true
+    default: false
 
   raid_ranged_dps:
     label: "Ranged DPS (Sun/Moon/Wrath)"
@@ -630,7 +650,12 @@ lists:
 
     - thorn_bloom,name="Thorn Bloom",if=group.count(cycle.health.effective.pct<config.raid_thorn_bloom_threshold&cycle.range<=40)>=config.raid_thorn_bloom_members&target.in_melee
 
-    - efflorescence,name="Efflorescence (Self)",range_check=none,if=talent.efflorescence&cooldown.efflorescence.ready
+    # FIXED 2026-10-03: no !talent.lifetreading gate - with Lifetreading
+    # talented (the new reference build has it), Efflorescence auto-relocates
+    # to the Lifebloom target and gets +25% healing, so a manual recast here
+    # wastes a GCD recreating something that already follows you. Mirrors
+    # FerrazRestoDruid.yaml's "Efflorescence (no Lifetreading)" line.
+    - efflorescence,name="Efflorescence (Self, no Lifetreading)",range_check=none,if=talent.efflorescence&!talent.lifetreading&!totem.efflorescence.up
 
     # FIXED 2026-10-01: the "Everbloom self loop" this comment block
     # described was never actually written - only the comment existed, so
@@ -653,6 +678,16 @@ lists:
     - regrowth,name="Abundance Regrowth",cycle=members,cycle_order=health.pct,if=(buff.abundance.up&cycle.health.effective.pct<config.raid_regrowth_threshold)&cycle.range<=40
 
     - wild_growth,name="Wild Growth",range_check=none,if=group.count(cycle.health.effective.pct<config.raid_wild_growth_threshold&cycle.range<=40)>=config.raid_wild_growth_members
+    # Incarnation: Tree of Life (whether manually cast or procced for free by
+    # Reforestation every 4th Swiftmend - confirmed via a reference raid log,
+    # Seized_f12, 9 procs in a 6-minute pull) adds +2 Wild Growth targets and
+    # +10% healing on top. Fixed low bar (2, not config.raid_wild_growth_members)
+    # while it's up: the cast is cheaper and hits more people than normal, so
+    # it is worth spending on a smaller injury spike than you'd otherwise
+    # wait for - this is deliberately NOT derived from the configured
+    # threshold (no confirmed ceil()/floor()-style divide-by-2 in Simia was
+    # worth risking here).
+    - wild_growth,name="Wild Growth (Tree of Life)",range_check=none,if=buff.incarnation_tree_of_life.up&group.count(cycle.health.effective.pct<config.raid_wild_growth_threshold&cycle.range<=40)>=2
     # Moved here from `cooldowns`, which is called before active_healing in
     # main - so a threshold of <99% (virtually always true whenever the proc
     # is up) beat every Wild Growth tier above to the GCD on every pass.
@@ -701,7 +736,15 @@ lists:
 
   # Ranged DoT maintenance in caster form while group is healthy.
   ranged_dps:
-    - starsurge,name="Starsurge",if=buff.moonkin_form.up
+    # FIXED 2026-10-03: was gated on buff.moonkin_form.up, same bug already
+    # fixed in FerrazRestoDruid.yaml (M+) on 2026-09-26 - Starsurge's
+    # Restoration/Feral/Guardian version (spell 197626) has no form
+    # requirement at all (confirmed via spell_query: no "Not Shapeshifted"
+    # attribute, no Stance Mask). The Raid file never got the same fix.
+    # Confirmed via a reference raid log (Seized_f12): Starsurge cast 12
+    # times with zero Cat Form uptime in the whole pull (0 Cat Form
+    # applybuff events) - it was never gated on a form the player wasn't in.
+    - starsurge,name="Starsurge",if=cooldown.starsurge.ready
     - sunfire,name="Sunfire Aoe Dot",if=debuff.sunfire.refreshable
     - moonfire,name="Moonfire ST Refresh",if=debuff.moonfire.refreshable
     - starfire,name="Starfire AoE",if=enemies.combat.40y>=3
