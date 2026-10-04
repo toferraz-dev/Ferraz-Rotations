@@ -387,6 +387,25 @@ lists:
     - feign_death,delay=500,if=incoming_cast.player.meld.up
 
   # ============================================================================
+  # Auto Pet - Hunter. config.pet_slot dropdown: 0 No Pet, 1-5 Call Pet slot.
+  # Dead -> Revive Pet (982 pinned, 13 name rows). Missing -> call the slot.
+  # ============================================================================
+  auto_pet:
+    # A pet dead long enough for its body to despawn leaves NO pet unit at all, and the
+    # API cannot tell dead from dismissed either (CLAUDE.md §2.13), so Call Pet loops
+    # forever on "Your pet is dead". pet.dead folds a latch the addon sets from that very
+    # error, which is why it can be true here with no pet unit -- and why it stays true
+    # across the 2.5s Revive cast, where a time window could not.
+    # !pet.dead on each Call Pet line is the loop fix; !pet.unavailable is the same fix
+    # for a stable slot with no pet in it.
+    - 982,range_check=none,if=config.pet_slot>0&pet.dead
+    - 883,range_check=none,if=config.pet_slot=1&!pet.exists&!pet.dead&!pet.unavailable
+    - 83242,range_check=none,if=config.pet_slot=2&!pet.exists&!pet.dead&!pet.unavailable
+    - 83243,range_check=none,if=config.pet_slot=3&!pet.exists&!pet.dead&!pet.unavailable
+    - 83244,range_check=none,if=config.pet_slot=4&!pet.exists&!pet.dead&!pet.unavailable
+    - 83245,range_check=none,if=config.pet_slot=5&!pet.exists&!pet.dead&!pet.unavailable
+
+  # ============================================================================
   # Auto Death Grip - DK fallback interrupt when Mind Freeze can't take the cast
   # Charges>=1.85 keeps a charge in reserve. Fires when an enemy is casting:
   #   - stunnable-flagged (_casts.yaml) — anywhere, and the ONLY leg inside

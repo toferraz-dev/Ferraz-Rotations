@@ -90,7 +90,7 @@ lists:
     - call_action_list,name=sanity_checks
     - call_action_list,name=auto_target_ranged
 
-    - blessing_of_the_bronze,range_check=none,if=buff.blessing_of_the_bronze.down
+    - blessing_of_the_bronze,range_check=none,if=group.count(cycle.buff.blessing_of_the_bronze.down.any)>0&lastcast.blessing_of_the_bronze>=10
 
     # Combat Check
     - return,if=auto_combat.player
@@ -119,6 +119,9 @@ lists:
 
     # invoke_external_buff,name=power_infusion,if=...
 
+    # use_item,name=font_of_venomous_rage,if=!buff.dragonrage.up
+    - use_item,name=font_of_venomous_rage,if=!buff.dragonrage.up
+
     - trinket_1,if=trinket_1.sync
     - trinket_2,if=trinket_2.sync
 
@@ -139,19 +142,19 @@ lists:
   # Eternity Surge - empower level selection
   # ===========================================================================
   es:
-    # eternity_surge,empower_to=1,target_if=max:target.health.pct,if=active_enemies<=3-talent.star_salvo
-    - eternity_surge,empower_to=1,if=enemies_around_target<=3-talent.star_salvo
-    # eternity_surge,empower_to=2,target_if=max:target.health.pct,if=(active_enemies>=2+2*talent.eternitys_span)-talent.star_salvo
-    - eternity_surge,empower_to=2,if=(enemies_around_target>=2+2*talent.eternitys_span)-talent.star_salvo
-    # eternity_surge,empower_to=3,target_if=max:target.health.pct,if=(active_enemies>=3+3*talent.eternitys_span)-talent.star_salvo
-    - eternity_surge,empower_to=3,if=(enemies_around_target>=3+3*talent.eternitys_span)-talent.star_salvo
-    # eternity_surge,empower_to=4,target_if=max:target.health.pct
-    - eternity_surge,empower_to=4
+    # eternity_surge,empower_to=4,target_if=max:target.health.pct,if=(active_enemies=4+4*talent.eternitys_span)&!talent.star_salvo|(active_enemies>=4+4*talent.eternitys_span-talent.star_salvo)&talent.star_salvo
+    - eternity_surge,empower_to=4,if=(enemies_around_target=4+4*talent.eternitys_span)&!talent.star_salvo|(enemies_around_target>=4+4*talent.eternitys_span-talent.star_salvo)&talent.star_salvo
+    # eternity_surge,empower_to=3,target_if=max:target.health.pct,if=(active_enemies=3+3*talent.eternitys_span)&!talent.star_salvo|(active_enemies>=3+3*talent.eternitys_span-talent.star_salvo)&talent.star_salvo
+    - eternity_surge,empower_to=3,if=(enemies_around_target=3+3*talent.eternitys_span)&!talent.star_salvo|(enemies_around_target>=3+3*talent.eternitys_span-talent.star_salvo)&talent.star_salvo
+    # eternity_surge,empower_to=2,target_if=max:target.health.pct,if=(active_enemies=2+2*talent.eternitys_span)&!talent.star_salvo|(active_enemies>=2+2*talent.eternitys_span-talent.star_salvo)&talent.star_salvo
+    - eternity_surge,empower_to=2,if=(enemies_around_target=2+2*talent.eternitys_span)&!talent.star_salvo|(enemies_around_target>=2+2*talent.eternitys_span-talent.star_salvo)&talent.star_salvo
+    # eternity_surge,empower_to=1,target_if=max:target.health.pct
+    - eternity_surge,empower_to=1
 
   # ===========================================================================
   # Fire Breath - empower level selection
   # ===========================================================================
-  fb:
+  fb_fs:
     # fire_breath,empower_to=1,target_if=max:target.health.pct,if=active_enemies=1|variable.use_pyre_fs
     - fire_breath,empower_to=1,if=enemies_around_target=1|var.use_pyre_fs
     # fire_breath,empower_to=2,target_if=max:target.health.pct,if=active_enemies=2|buff.dragonrage.up|buff.rising_fury.up
@@ -159,6 +162,17 @@ lists:
     - fire_breath,empower_to=2,if=enemies_around_target=2|buff.dragonrage.up|buff.1271783.up
     # fire_breath,empower_to=3,target_if=max:target.health.pct,if=active_enemies>=3
     - fire_breath,empower_to=3,if=enemies_around_target>=3
+
+  # Fire Breath Upranking
+  fb_sc:
+    # fire_breath,empower_to=1,target_if=max:target.health.pct,if=active_enemies=1|active_enemies>4
+    - fire_breath,empower_to=1,if=enemies_around_target=1|enemies_around_target>4
+    # fire_breath,empower_to=2,target_if=max:target.health.pct,if=active_enemies=2
+    - fire_breath,empower_to=2,if=enemies_around_target=2
+    # fire_breath,empower_to=3,target_if=max:target.health.pct,if=active_enemies=3
+    - fire_breath,empower_to=3,if=enemies_around_target=3
+    # fire_breath,empower_to=4,target_if=max:target.health.pct,if=active_enemies=4
+    - fire_breath,empower_to=4,if=enemies_around_target=4
 
   # ===========================================================================
   # Green - Ancient Flame maintenance
@@ -186,8 +200,8 @@ lists:
     # call_action_list,name=es,if=variable.can_use_empower|buff.tip_the_scales.up
     - call_action_list,name=es,if=var.can_use_empower|buff.tip_the_scales.up
 
-    # call_action_list,name=fb,if=variable.can_use_empower&dot.fire_breath_damage.refreshable&!buff.tip_the_scales.up
-    - call_action_list,name=fb,if=var.can_use_empower&dot.fire_breath.refreshable&!buff.tip_the_scales.up
+    # call_action_list,name=fb_fs,if=variable.can_use_empower&dot.fire_breath_damage.refreshable&!buff.tip_the_scales.up
+    - call_action_list,name=fb_fs,if=var.can_use_empower&dot.fire_breath.refreshable&!buff.tip_the_scales.up
 
     # pyre,target_if=max:target.health.pct,if=variable.use_pyre_fs
     - pyre,if=var.use_pyre_fs
@@ -240,8 +254,8 @@ lists:
     # tip_the_scales,use_off_gcd=1,if=action.fire_breath.ready
     - tip_the_scales,if=action.fire_breath.ready
 
-    # fire_breath,empower_to=1
-    - fire_breath,empower_to=1
+    # call_action_list,name=fb_sc
+    - call_action_list,name=fb_sc
 
     # deep_breath,if=active_enemies>=2,cancel_if=gcd.remains=0
     - deep_breath,if=enemies_around_target>=2

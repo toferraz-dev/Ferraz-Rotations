@@ -2,10 +2,15 @@
 # Per-NPC flags for target validation and crowd control decisions
 #
 # Flags:
-#   BypassCombat: true - NPC always bypasses combat checks (treated as valid target)
+#   BypassCombat: true - NPC always bypasses combat checks (treated as valid target); also never a
+#                  taunt (!<unit>.bypass_combat) or nameplates.threat.* (threat-drop BoP) trigger
 #   ShouldStun: true - NPC should be stunned when possible
 #   ShouldSlow: true - NPC should be slowed when possible
 #   IgnoreCount: true - NPC excluded from AOE/mob count; target.valid returns false (blocks damage), interrupt/stun still work
+#   NoStun: true - CC-immune: its cast never reports incoming_cast.stunnable, so every
+#                  class stun alias and auto_death_grip skip it. Use when a spell id is
+#                  shared by mobs that differ on immunity, which _casts.yaml tags cannot
+#                  express. Kicks are unaffected.
 #
 # SimC conditions:
 #   target.npcid - NPC ID from GUID (0 if player/pet)
@@ -90,6 +95,15 @@ npcs:
   135971: { BypassCombat: true} # SEARCH ON WOWHEAD
   269227: { BypassCombat: true} # SEARCH ON WOWHEAD
   139110: { BypassCombat: true} # SEARCH ON WOWHEAD
+  # Snakes that stun their target -- stun on sight, AoE stun when several are up.
+  134388: { ShouldStun: true }
+
+  # Kings' Rest
+  # Hunting Leap (270502 channel / 270500 leap) is cast by two raptors. WCL zone 55,
+  # 6 key-21 runs: Honored Raptor (135192) took 96 CC applications, 14 of them from
+  # single-target casts aimed at it; Skeletal Hunting Raptor took 0 of any kind across
+  # 1508 debuff events, and the 2 CCs aimed at it (Storm Bolt, Paralysis) never landed.
+  137487: { NoStun: true }  # Skeletal Hunting Raptor
 
   # PvP
   243211: { BypassCombat: true }  # Training Dummy
@@ -116,3 +130,12 @@ npcs:
     ShouldSlow: true
 
   260906: { IgnoreCount: true }  # Termination Matrix
+
+  # Aggro-less: attackable, never meleed and never cast in WCL S2 top keys (zone 55, 19 runs, 2026-10-01)
+  272930: { BypassCombat: true }  # Orb of Disruption, Voidscar Arena (Raj'kess). Not in WCL actors - user-reported
+  267550: { BypassCombat: true }  # Champion's Spear, Voidscar Arena
+  135406: { BypassCombat: true }  # Animated Gold, Kings' Rest
+  135765: { BypassCombat: true }  # Torrent Totem, Kings' Rest
+  235520: { BypassCombat: true }  # Legion Axe, Murder Row
+  253571: { BypassCombat: true }  # Bloodthorn Roots, The Blinding Vale
+  272074: { BypassCombat: true }  # Volatile Totem, Den of Nalorakk

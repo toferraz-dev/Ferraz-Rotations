@@ -102,19 +102,18 @@ config:
     max: 100
     default: 50
 
-# Hold Wake of Ashes / Divine Toll to align with ES (60s) and AW (60s).
-# Allow if the long CD is ready now (=0, we'll cast it this GCD) OR is >=10s away.
-# Hold if it's coming in <10s (so the 30s WoA/Toll drift to sync).
-# Skip AW gate if radiant_glory (AW comes free from WoA/Toll).
-# Two leading OR escapes that always permit the cast (bypassing the ES gate):
-#  1. Dungeon sync window: AW is ~one of the spell's own CDs away (dungeon-only).
-#     WoA CD = 30s. Divine Toll CD = 30s with Light's Guidance, 60s with Dawnlight.
-#  2. Execution Sentence ticking on any mob — dump into the ES window.
-# Divine Toll also holds while a normal (5-HP) Hammer of Light window is up so HoL is taken first
-# (top-5 Templar logs: WoA->HoL->Toll every cycle). A free HoL (cost 0) does not gate Toll.
+# local addition: Divine Toll goes out once the bar has been spent — holy_power<=2 — or, failing that,
+# 2 GCDs after Wake of Ashes, so the two never land back to back; and never while a FREE spender is
+# banked (user 2026-09-11). CLAUDE.md §8.3.
+#   408458 Divine Purpose (Ret's id; 223819 is the other row) — next spender costs 0.
+#   433732 Light's Deliverance — free Hammer of Light (Templar).
+# Deliberately NOT in the list: the MID2 4pc Divine Arbiter buffs (1306161/1306162) and Empyrean
+# Legacy (387178) are damage riders on a spender that still costs 3 HP, so at holy_power<=2 they are
+# unusable and gating on them would hold Toll for the whole window. Divine Power (1305230, MID2 2pc)
+# is a Holy damage multiplier (sc_paladin.cpp:4429), not a free cast.
+# lastcast.X reads 9999 when never cast, so this is open on the first press of a session.
 spell_overrides:
-  wake_of_ashes: "(player.indungeon&cooldown_bypass.avenging_wrath.remains<=30&cooldown_bypass.avenging_wrath.remains>27)|active_dot.execution_sentence>0|((!talent.execution_sentence|cooldown_bypass.execution_sentence.remains=0|cooldown_bypass.execution_sentence.remains>=10)&(talent.radiant_glory|cooldown_bypass.avenging_wrath.remains=0|cooldown_bypass.avenging_wrath.remains>=10))"
-  divine_toll: "((player.indungeon&((talent.lights_guidance&cooldown_bypass.avenging_wrath.remains<=30&cooldown_bypass.avenging_wrath.remains>27)|(!talent.lights_guidance&cooldown_bypass.avenging_wrath.remains<=60&cooldown_bypass.avenging_wrath.remains>57)))|active_dot.execution_sentence>0|((!talent.execution_sentence|cooldown_bypass.execution_sentence.remains=0|cooldown_bypass.execution_sentence.remains>=10)&(talent.radiant_glory|cooldown_bypass.avenging_wrath.remains=0|cooldown_bypass.avenging_wrath.remains>=10)))&(!buff.hammer_of_light.up|buff.433732.up)"
+  divine_toll: "(holy_power<=2|lastcast.wake_of_ashes>=gcd.max*2)&buff.408458.down&buff.433732.down"
 
 variables:
   # variable,name=ds_castable,value=(active_enemies>=2|buff.divine_arbiter_verdict.up)&!buff.empyrean_legacy.up&!buff.divine_arbiter_divine_storm.up
@@ -149,26 +148,21 @@ lists:
     - blessing_of_sacrifice,delay=500,cycle=party,if=config.blessing_of_sacrifice_party_target.has(0)&cycle.tank&cycle.health.effective.pct<=config.blessing_of_sacrifice_party_hp&health.pct>=config.blessing_of_sacrifice_self_hp
     - blessing_of_sacrifice,delay=500,cycle=party,if=config.blessing_of_sacrifice_party_target.has(1)&cycle.healer&cycle.health.effective.pct<=config.blessing_of_sacrifice_party_hp&health.pct>=config.blessing_of_sacrifice_self_hp
     - blessing_of_sacrifice,delay=500,cycle=party,if=config.blessing_of_sacrifice_party_target.has(2)&cycle.dps&cycle.health.effective.pct<=config.blessing_of_sacrifice_party_hp&health.pct>=config.blessing_of_sacrifice_self_hp
-    - blessing_of_protection,if=player.debuff.forbearance.down&health.pct<=config.bop_usage
-    # M+ threat drop: an enemy is tanking-on us (nameplates.threat.max>=2) while in combat in a key with a tank present
+    # local addition: never BoP into Drain Fluids (267618, magic channel - BoP does nothing)
+    - blessing_of_protection,if=player.debuff.forbearance.down&health.pct<=config.bop_usage&player.debuff.267618.down
+    # M+ threat drop: an enemy is meleeing us (nameplates.threat.max>=2 counts only mobs targeting us and not casting) in a key with a tank present
     - blessing_of_protection,if=combat>=1&nameplates.threat.max>=2&player.inmythicplus&group.tanks.count>=1&player.debuff.forbearance.down
     - divine_shield,if=player.debuff.forbearance.down&health.pct<=config.ds_usage
 
   cooldowns:
-    # custom: force Wake of Ashes / Divine Toll in two cases:
-    #  1. Dungeon CD-hold desync fix (dungeon-only) — press when AW is ~one of the spell's
-    #     own CDs away so it recharges right as AW comes up. Window = (CD-3, CD].
-    #     WoA = 30s. Divine Toll = 30s with Light's Guidance, 60s with Dawnlight.
-    #  2. Execution Sentence ticking on any mob — always dump these into the ES window.
-    # ES-after-wings must come FIRST: right after AW cast, cooldown.avenging_wrath.remains=60,
-    # which lands inside the no-Light's-Guidance Divine Toll window (57,60] and would otherwise
-    # fire Toll before ES. With ES first, AW > ES > Toll/WoA; the WoA/Toll lines then fire next
-    # GCD via active_dot.execution_sentence>0 (AW still ~58.5s out, still inside the window).
-    # custom: execution sentece should be used imeditially after wings
+    # local addition: Execution Sentence immediately after wings (user 2026-09-11). First in
+    # cooldowns, so it beats the WoA line at the foot of this list and all of generators.
+    # CLAUDE.md §8.3.
     - execution_sentence,if=lastcast.avenging_wrath<=5
-    - wake_of_ashes,if=(player.indungeon&cooldown.avenging_wrath.remains<=30&cooldown.avenging_wrath.remains>27)|active_dot.execution_sentence>0
-    - divine_toll,if=(player.indungeon&((talent.lights_guidance&cooldown.avenging_wrath.remains<=30&cooldown.avenging_wrath.remains>27)|(!talent.lights_guidance&cooldown.avenging_wrath.remains<=60&cooldown.avenging_wrath.remains>57)))|active_dot.execution_sentence>0
-    # - potion,if=buff.avenging_wrath.up|debuff.execution_sentence.up|fight_remains<30
+    # use_item,name=algethar_puzzle_box / use_item,slot=trinket1|2 live in main, just above the
+    # call_action_list,name=cooldowns that runs this list — same position as upstream.
+    # potion,if=buff.avenging_wrath.up|fight_remains<30|talent.radiant_glory&cooldown.wake_of_ashes.remains=0&(!talent.holy_flames|dot.expurgation.ticking)
+    # invoke_external_buff,name=power_infusion,if=buff.avenging_wrath.up|talent.radiant_glory&cooldown.wake_of_ashes.remains=0&(!talent.holy_flames|dot.expurgation.ticking)
     # lights_judgment,if=!raid_event.adds.exists|raid_event.adds.in>75|raid_event.adds.up
     - lights_judgment
     # fireblood,if=buff.avenging_wrath.up|talent.radiant_glory&cooldown.wake_of_ashes.remains=0&(!talent.holy_flames|dot.expurgation.ticking)
@@ -177,6 +171,10 @@ lists:
     - execution_sentence,if=(cooldown.avenging_wrath.remains>15|talent.radiant_glory)&(target.time_to_die>10)&(cooldown.wake_of_ashes.remains<gcd|var.pre_es_wake=1)&(!talent.holy_flames|dot.expurgation.ticking)&(!talent.crusade|buff.avenging_wrath.stack>=7|var.pre_es_wake=0)
     # avenging_wrath,if=(!raid_event.adds.up|target.time_to_die>10)&(!talent.holy_flames|dot.expurgation.ticking)&(!equipped.algethar_puzzle_box|trinket.1.is.algethar_puzzle_box&trinket.1.cooldown.remains>5|trinket.2.is.algethar_puzzle_box&trinket.2.cooldown.remains>5)
     - avenging_wrath,if=(!talent.holy_flames|dot.expurgation.ticking)
+    # local addition: Execution Sentence is ticking — Wake of Ashes goes into that window no matter
+    # what the bar reads. Last in cooldowns so AW and ES still outrank it; ahead of every generators
+    # line, including the holy_power=5 finishers call. CLAUDE.md §8.3.
+    - wake_of_ashes,if=active_dot.execution_sentence>0
 
   finishers:
     # hammer_of_light,if=!buff.hammer_of_light_free.up|buff.hammer_of_light_free.up&(buff.undisputed_ruling.remains<gcd*1.5&(talent.radiant_glory|cooldown.avenging_wrath.remains>4)|buff.avenging_wrath.up&(buff.avenging_wrath.remains<gcd*2|cooldown.wake_of_ashes.remains=0)|buff.hammer_of_light_free.remains<gcd*2|target.time_to_die<gcd*2)
@@ -184,7 +182,6 @@ lists:
     # NOT action.427453.cost=0: cost also reads 0 under Divine Purpose, which frees every Holy Power
     # spender, so it would fire this hold-for-a-window branch in a case SimC treats as "not free".
     - hammer_of_light,if=!buff.433732.up|buff.433732.up&(buff.undisputed_ruling.remains<gcd*1.5&(talent.radiant_glory|cooldown.avenging_wrath.remains>4)|buff.avenging_wrath.up&(buff.avenging_wrath.remains<gcd*2|cooldown.wake_of_ashes.remains=0)|buff.433732.remains<gcd*2|target.time_to_die<gcd*2)
-    # - hammer_of_light,ignore_cooldown=1,if=!buff.hammer_of_light_free.up|buff.hammer_of_light_free.up&(buff.undisputed_ruling.remains<gcd*1.5&(talent.radiant_glory|cooldown.avenging_wrath.remains>4)|buff.avenging_wrath.up&(buff.avenging_wrath.remains<gcd*2|cooldown.wake_of_ashes.remains=0)|buff.hammer_of_light_free.remains<gcd*2|target.time_to_die<gcd*2)
     # divine_storm,if=variable.ds_castable
     - divine_storm,if=var.ds_castable
     # templars_verdict
@@ -201,7 +198,6 @@ lists:
     - wake_of_ashes,if=(cooldown.avenging_wrath.remains>6|talent.radiant_glory)&(!talent.execution_sentence|cooldown.execution_sentence.remains>4|target.time_to_die<10|var.pre_es_wake=1)
     # divine_toll,if=(!raid_event.adds.exists|raid_event.adds.in>10|raid_event.adds.up)&(cooldown.avenging_wrath.remains>15|talent.radiant_glory|fight_remains<8)
     - divine_toll,if=(cooldown.avenging_wrath.remains>15|talent.radiant_glory|fight_remains<8)
-    # - divine_toll,ignore_cooldown=1,if=(cooldown.avenging_wrath.remains>15|talent.radiant_glory|fight_remains<8)
     # blade_of_justice,if=(buff.art_of_war.stack=2|buff.righteous_cause.stack=2)&(!talent.walk_into_light|!buff.avenging_wrath.up)
     - blade_of_justice,if=(buff.art_of_war.stack=2|buff.righteous_cause.stack=2)&(!talent.walk_into_light|!buff.avenging_wrath.up)
     # hammer_of_wrath,if=talent.walk_into_light&cooldown.hammer_of_wrath.charges=2

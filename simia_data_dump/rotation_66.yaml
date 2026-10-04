@@ -103,6 +103,8 @@ config:
 
 variables:
   hammer_of_light_ready: (20-lastcast.divine_toll)*(lastcast.divine_toll<20)
+  # variable,use_off_gcd=1,name=wants_to_hammer,value=buff.hammer_of_light_ready.up&debuff.judgment.up&(buff.undisputed_ruling.remains<=1.8|buff.hammer_of_light_ready.remains<5)
+  wants_to_hammer: "buff.hammer_of_light.up&debuff.judgment.up&(buff.undisputed_ruling.remains<=1.8|buff.hammer_of_light.remains<5)"
 
 lists:
   main:
@@ -119,9 +121,9 @@ lists:
     # Combat Check
     - return,if=auto_combat.player
 
-    # divine_toll,if=buff.avenging_wrath.up|(!talent.righteous_protector.enabled&cooldown.avenging_wrath.remains>30)
-    # local addition: |buff.sentinel.up
-    - divine_toll,range_check=none,if=buff.avenging_wrath.up|(!talent.righteous_protector.enabled&cooldown.avenging_wrath.remains>30)|buff.sentinel.up
+    # divine_toll,if=buff.avenging_wrath.up|!apex.3
+    # local addition: |buff.sentinel.up; apex.3 -> talent.glory_of_the_vanguard.rank>=4
+    - divine_toll,range_check=none,if=buff.avenging_wrath.up|talent.glory_of_the_vanguard.rank<4|buff.sentinel.up
 
     # Defensives
     - guardian_of_ancient_kings,delay=300,range_check=none,if=health.pct<=config.guardian_of_ancient_kings_hp_pct
@@ -157,8 +159,8 @@ lists:
     - tail_swipe,if=interrupt.stun.aoe.check
 
     # Taunt — grab aggro when not tanking (dungeon/M+ only, never raid)
-    - hand_of_reckoning,name="Taunt",if=target.threat<2&target.combat&target.threat!=-1&!player.inraid
-    - hand_of_reckoning.mouseover,name="Taunt MO",if=mouseover.threat<2&mouseover.combat&mouseover.threat!=-1&mouseover.exists&!player.inraid
+    - hand_of_reckoning,name="Taunt",if=target.threat<2&target.combat&target.threat!=-1&target.targeting_party&!target.ignore_count&!target.bypass_combat&!player.inraid
+    - hand_of_reckoning.mouseover,name="Taunt MO",if=mouseover.threat<2&mouseover.combat&mouseover.threat!=-1&mouseover.targeting_party&!mouseover.ignore_count&!mouseover.bypass_combat&mouseover.exists&!player.inraid
 
     - call_action_list,name=auto_heal
 
@@ -171,78 +173,54 @@ lists:
     # Target Check
     - return,if=auto_combat.target
 
-    # Trinkets
-    # use_item,name=algethar_puzzle_box
-    - use_item,name=algethar_puzzle_box
-    # use_items
-    - trinket_1,if=trinket_1.sync
-    - trinket_2,if=trinket_2.sync
+    # call_action_list,name=trinkets
+    - call_action_list,name=trinkets
 
-    # potion,if=buff.avenging_wrath.up — potion not supported, deleted
+    # ardent_defender,if=talent.eye_for_an_eye
+    - ardent_defender,range_check=none,if=talent.eye_for_an_eye
 
-    # avenging_wrath,if=cooldown.divine_toll.remains<=10
-    - avenging_wrath
-    - sentinel
+    # holy_armaments,if=cooldown.avenging_wrath.remains<=gcd|time_to_die<30|charges=2
+    # holy_bulwark is the Holy Armaments button; sacred_weapon is not named as an action, so the
+    # base redirects to whichever armament is live. Charges = MAX of both rows (cooldown reads
+    # don't follow the live morph).
+    - holy_bulwark,if=cooldown.avenging_wrath.remains<=gcd|time_to_die<30|(cooldown.holy_bulwark.charges<?cooldown.sacred_weapon.charges)>=2
 
     # fireblood,if=buff.avenging_wrath.up
     - fireblood,if=buff.avenging_wrath.up|buff.sentinel.up
 
-    # hammer_of_light,if=(!buff.undisputed_ruling.up|buff.hammer_of_light_ready.remains<5)&debuff.judgment.up
-    - hammer_of_light,if=(!buff.undisputed_ruling.up|buff.hammer_of_light.remains<5)&debuff.judgment.up
+    # avenging_wrath
+    - avenging_wrath
+    - sentinel
 
-    # shield_of_the_righteous,if=!buff.hammer_of_light_ready.up|(!buff.hammer_of_light_ready.remains<5&buff.undisputed_ruling.up)|buff.hammer_of_light_free.up|prev_gcd.1.divine_toll
-    # buff.hammer_of_light_free -> 433732 ("Light's Deliverance"); the SimC label is not a WoW name.
-    - shield_of_the_righteous,if=!buff.hammer_of_light.up|(!buff.hammer_of_light.remains<5&buff.undisputed_ruling.up)|buff.433732.up|prev_gcd.1.divine_toll
+    # divine_toll,if=buff.avenging_wrath.up|!apex.3  (hoisted above the defensives)
 
-    # holy_armaments,if=next_armament=sacred_weapon&(buff.sacred_weapon.remains<6|!buff.sacred_weapon.up)
-    # next_armament not supported — split into separate sacred_weapon / holy_bulwark entries
-    - sacred_weapon,if=buff.sacred_weapon.remains<6|!buff.sacred_weapon.up
+    # hammer_of_light,if=variable.wants_to_hammer
+    - hammer_of_light,if=var.wants_to_hammer
 
-    # hammer_of_wrath,if=buff.hammer_of_light_ready.up&!debuff.judgment.up
-    - hammer_of_wrath,if=buff.hammer_of_light.up&!debuff.judgment.up
+    # shield_of_the_righteous,if=(!talent.instrument_of_the_divine&buff.divine_guidance.stack<5|holy_power=5|!buff.valor.up&!buff.divine_purpose.up)&(!variable.wants_to_hammer|prev_gcd.1.divine_toll)
+    - shield_of_the_righteous,if=(!talent.instrument_of_the_divine&buff.divine_guidance.stack<5|holy_power=5|!buff.valor.up&!buff.divine_purpose.up)&(!var.wants_to_hammer|prev_gcd.1.divine_toll)
 
-    # hammer_of_wrath,if=hero_tree.lightsmith
-    - hammer_of_wrath,if=hero_tree.lightsmith
+    # hammer_of_wrath,if=full_recharge_time<=gcd|buff.hammer_of_light_ready.up&!debuff.judgment.up
+    - hammer_of_wrath,if=cooldown.hammer_of_wrath.full_recharge_time<=gcd|buff.hammer_of_light.up&!debuff.judgment.up
 
-    # judgment,if=buff.hammer_of_light_ready.up&!debuff.judgment.up
-    - judgment,if=buff.hammer_of_light.up&!debuff.judgment.up
+    # judgment,if=full_recharge_time<=gcd|buff.hammer_of_light_ready.up&!debuff.judgment.up
+    - judgment,if=cooldown.judgment.full_recharge_time<=gcd|buff.hammer_of_light.up&!debuff.judgment.up
 
     # avengers_shield,if=buff.vanguard.up|(buff.avenging_wrath.up&apex.3)
-    # apex.3 → talent.glory_of_the_vanguard.rank>=4
+    # apex.3 -> talent.glory_of_the_vanguard.rank>=4
     - avengers_shield,if=buff.vanguard.up|((buff.avenging_wrath.up|buff.sentinel.up)&talent.glory_of_the_vanguard.rank>=4)
 
-    # holy_armaments,if=next_armament=holy_bulwark&cooldown.avenging_wrath.remains<5
-    # next_armament not supported — use holy_bulwark directly
-    - holy_bulwark,if=cooldown.avenging_wrath.remains<5
-
-    # consecration,if=buff.divine_guidance.stack>=5
-    - consecration,if=buff.divine_guidance.stack>=5
+    # consecration,if=buff.divine_guidance.stack>=5|!consecration.up
+    - consecration,if=buff.divine_guidance.stack>=5|!buff.consecration.up
 
     # hammer_of_wrath
     - hammer_of_wrath
 
-    # judgment,if=full_recharge_time<=gcd*2
-    # full_recharge_time expanded to cooldown.judgment.full_recharge_time
-    - judgment,if=cooldown.judgment.full_recharge_time<=gcd*2
-
-    # avengers_shield
-    - avengers_shield
-
-    # hammer_of_the_righteous,if=buff.blessed_assurance.up
-    - hammer_of_the_righteous,if=buff.blessed_assurance.up
-
-    # blessed_hammer,if=buff.blessed_assurance.up
-    - blessed_hammer,if=buff.blessed_assurance.up
-
     # judgment
     - judgment
 
-    # holy_armaments,if=next_armament=holy_bulwark&charges=2
-    # next_armament not supported — use holy_bulwark directly; charges=2 → cooldown.holy_bulwark.charges>=2
-    - holy_bulwark,if=cooldown.holy_bulwark.charges>=2
-
-    # consecration,if=!consecration.up
-    - consecration,if=!buff.consecration.up
+    # avengers_shield
+    - avengers_shield
 
     # blessed_hammer
     - blessed_hammer
@@ -253,9 +231,19 @@ lists:
     # arcane_torrent
     - arcane_torrent
 
-    # word_of_glory,if=buff.shining_light_free.up
-    # buff.shining_light_free → 327510; six spells share the name "Shining Light"
-    - word_of_glory,if=buff.327510.up
+    # word_of_glory,if=buff.shining_light_free.up&!buff.divine_purpose.up
+    # buff.shining_light_free -> 327510; six spells share the name "Shining Light"
+    - word_of_glory,if=buff.327510.up&!buff.divine_purpose.up
 
     # consecration
     - consecration
+
+  trinkets:
+    # variable,name=cds_active,value=buff.avenging_wrath.up&buff.avenging_wrath.remains>5
+    # use_item,slot=trinket1,if=variable.trinket_1_buffs&(variable.trinket_priority=1|!variable.trinket_2_buffs|!trinket.2.has_cooldown|variable.trinket_2_buffs&trinket.2.cooldown.remains)&(trinket.1.cast_time>0&trinket.1.cast_time>cooldown.avenging_wrath.remains|trinket.1.cast_time=0&variable.cds_active)
+    # use_item,slot=trinket2,if=variable.trinket_2_buffs&(variable.trinket_priority=2|!variable.trinket_1_buffs|!trinket.1.has_cooldown|variable.trinket_1_buffs&trinket.1.cooldown.remains)&(trinket.2.cast_time>0&trinket.2.cast_time>cooldown.avenging_wrath.remains|trinket.2.cast_time=0&variable.cds_active)
+    # use_item,slot=trinket1,if=!variable.trinket_1_buffs&(!trinket.2.has_cooldown|trinket.2.cooldown.remains|!variable.trinket_2_buffs)&(variable.damage_trinket_priority=1|trinket.2.cooldown.remains)
+    # use_item,slot=trinket2,if=!variable.trinket_2_buffs&(!trinket.1.has_cooldown|trinket.1.cooldown.remains|!variable.trinket_1_buffs)&(variable.damage_trinket_priority=2|trinket.1.cooldown.remains)
+    # trinket_N_buffs / priority variables are trinket properties (stripped, CLAUDE.md 1.5) -> generic fallback.
+    - trinket_1,if=trinket_1.sync
+    - trinket_2,if=trinket_2.sync

@@ -47,12 +47,17 @@ config:
     max: 100
     default: 80
 
-  call_pet_number:
+  pet_slot:
     section: "Pet Management"
-    label: "Call Pet Number"
-    type: slider
-    min: 1
-    max: 5
+    label: "Pet"
+    type: dropdown
+    options:
+      - "No Pet"
+      - "Pet 1"
+      - "Pet 2"
+      - "Pet 3"
+      - "Pet 4"
+      - "Pet 5"
     default: 1
 
 variables:
@@ -62,12 +67,13 @@ lists:
   # TRINKETS
   # ==========================================================================
   trinkets:
-    # use_items,check_existing=0,slots=trinket1:trinket2,if=this_trinket.has_use_damage
-    # use_items,check_existing=0,slots=trinket1:trinket2,if=this_trinket.has_use_buff
+    # use_items,check_existing=0,slots=trinket1:trinket2,if=this_trinket.has_use_buff&(cooldown.bestial_wrath.ready|cooldown.bestial_wrath.remains<this_trinket.proc.any_dps.duration-15)|fight_remains<21
+    # use_items,check_existing=0,slots=trinket1:trinket2,if=this_trinket.has_use_damage&!potion.liquid_luster|!equipped.font_of_venomous_rage|((buff.liquid_luster.up&buff.liquid_luster.remains<6)|(fight_remains<cooldown.potion.remains&!buff.liquid_luster.up))|fight_remains<10
     # local retention: upstream DELETED all ten named use_item lines below on the 2026-08-20
     # refresh and now emits only the two generic use_items lines above (trinket property math,
-    # unsupported here). The named lines are kept deliberately -- they express the same
-    # Bestial-Wrath sync intent that the generic lines cannot. Expect these to keep showing up
+    # unsupported here). The named lines are kept deliberately -- upstream's generic lines carry
+    # the same Bestial-Wrath sync intent but express it through this_trinket.* / potion.* terms
+    # the engine cannot evaluate. Expect these to keep showing up
     # in a reverse-parity (stale) sweep; that is correct, not drift.
     # use_item,name=light_company_guidon,if=cooldown.bestial_wrath.ready|fight_remains<21
     - use_item,name=light_company_guidon,if=cooldown.bestial_wrath.ready|fight_remains<21
@@ -108,7 +114,7 @@ lists:
     # fireblood,if=cooldown.bestial_wrath.ready|fight_remains<9
     - fireblood,if=cooldown.bestial_wrath.ready|fight_remains<9
 
-    # potion,if=cooldown.bestial_wrath.ready|fight_remains<31
+    # potion,if=cooldown.bestial_wrath.ready&!potion.liquid_luster|cooldown.bestial_wrath.remains<6&potion.liquid_luster|fight_remains<31
     # Potions not supported — removed
 
   # ==========================================================================
@@ -140,18 +146,18 @@ lists:
     - wild_thrash,if=talent.beast_cleave&(prev_gcd.1.bestial_wrath|!buff.beast_cleave.up)
     # barbed_shot,target_if=min:dot.barbed_shot.remains|max_prio_damage,if=full_recharge_time<gcd
     - barbed_shot,if=cooldown.barbed_shot.full_recharge_time<gcd
-    # bestial_wrath,if=buff.beast_cleave.remains|!talent.beast_cleave|!talent.wild_thrash
-    - bestial_wrath,if=buff.beast_cleave.remains|!talent.beast_cleave|!talent.wild_thrash
-    # wild_thrash,if=talent.beast_cleave&cooldown.bestial_wrath.remains>buff.beast_cleave.remains|!talent.beast_cleave
-    - wild_thrash,if=talent.beast_cleave&cooldown.bestial_wrath.remains>buff.beast_cleave.remains|!talent.beast_cleave
-    # kill_command,if=buff.natures_ally.react|talent.master_handler&(active_enemies>3|howl_summon.ready)|!apex.3
-    - kill_command,if=buff.natures_ally.react|talent.master_handler&(enemies_around_target>3|howl_summon.ready)|talent.pack_leader.rank<4
-    # cobra_shot,if=buff.cobra_fang.up&buff.beast_cleave.remains
-    - cobra_shot,if=buff.cobra_fang.up&buff.beast_cleave.remains
-    # barbed_shot,target_if=min:dot.barbed_shot.remains|max_prio_damage
-    - barbed_shot
-    # cobra_shot,if=talent.beast_cleave&cooldown.wild_thrash.remains>gcd|!talent.beast_cleave
-    - cobra_shot,if=talent.beast_cleave&cooldown.wild_thrash.remains>gcd|!talent.beast_cleave
+    # bestial_wrath,if=buff.beast_cleave.remains&cooldown.wild_thrash.remains<gcd|!talent.beast_cleave|!talent.wild_thrash
+    - bestial_wrath,if=buff.beast_cleave.remains&cooldown.wild_thrash.remains<gcd|!talent.beast_cleave|!talent.wild_thrash
+    # wild_thrash,if=!talent.beast_cleave
+    - wild_thrash,if=!talent.beast_cleave
+    # kill_command,if=(buff.natures_ally.react|talent.master_handler&(active_enemies>3|howl_summon.ready)|!apex.3)&(buff.beast_cleave.remains>gcd*0.25|!talent.beast_cleave)
+    - kill_command,if=(buff.natures_ally.react|talent.master_handler&(enemies_around_target>3|howl_summon.ready)|talent.pack_leader.rank<4)&(buff.beast_cleave.remains>gcd*0.25|!talent.beast_cleave)
+    # cobra_shot,if=buff.cobra_fang.up&buff.beast_cleave.remains>gcd*0.25
+    - cobra_shot,if=buff.cobra_fang.up&buff.beast_cleave.remains>gcd*0.25
+    # barbed_shot,target_if=min:dot.barbed_shot.remains|max_prio_damage,if=(buff.beast_cleave.remains>gcd*0.25|!talent.beast_cleave)
+    - barbed_shot,if=(buff.beast_cleave.remains>gcd*0.25|!talent.beast_cleave)
+    # cobra_shot,if=buff.beast_cleave.remains>gcd*0.25|!talent.beast_cleave
+    - cobra_shot,if=buff.beast_cleave.remains>gcd*0.25|!talent.beast_cleave
 
   # ==========================================================================
   # DRST (Dark Ranger ST)
@@ -216,13 +222,7 @@ lists:
 
 
     # Pet Management
-    - revive_pet,range_check=none,if=!pet.alive&pet.exists
-
-    - 883,range_check=none,if=!pet.exists&config.call_pet_number=1
-    - 83242,range_check=none,if=!pet.exists&config.call_pet_number=2
-    - 83243,range_check=none,if=!pet.exists&config.call_pet_number=3
-    - 83244,range_check=none,if=!pet.exists&config.call_pet_number=4
-    - 83245,range_check=none,if=!pet.exists&config.call_pet_number=5
+    - call_action_list,name=auto_pet
 
     # Combat Check
     - return,if=auto_combat.player

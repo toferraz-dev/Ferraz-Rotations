@@ -119,7 +119,8 @@ lists:
     # death_strike
     - death_strike,if=config.ds_deficit>=runic_power.deficit
     # blood_boil,if=buff.boiling_point.up
-    - blood_boil,range_check=mob_count_8y,if=buff.boiling_point.up
+    # local addition: hold while the echo (1265982) is pending — in-game a second consume refreshes it (one auto Blood Boil lost); SimC fires it early. 1265968 = proc, both named "Boiling Point".
+    - blood_boil,range_check=mob_count_8y,if=buff.1265968.up&buff.1265982.down
     # heart_strike
     - heart_strike
     # blood_boil
@@ -139,13 +140,14 @@ lists:
     # any_dnd,if=buff.crimson_scourge.remains
     - death_and_decay.player,range_check=mob_count_8y,if=buff.crimson_scourge.up
     # blood_boil,if=buff.boiling_point.up
-    - blood_boil,range_check=mob_count_8y,if=buff.boiling_point.up
+    # local addition: hold while the echo (1265982) is pending — in-game a second consume refreshes it (one auto Blood Boil lost); SimC fires it early. 1265968 = proc, both named "Boiling Point".
+    - blood_boil,range_check=mob_count_8y,if=buff.1265968.up&buff.1265982.down
     # marrowrend,if=buff.blood_debt.stack=10
     - marrowrend,if=buff.blood_debt.stack=10
     # heart_strike,if=buff.vampiric_strike.up
     - heart_strike,if=buff.vampiric_strike.up
     # death_strike,if=runic_power.deficit<40|fight_remains<10|(buff.essence_of_the_blood_queen.remains&buff.essence_of_the_blood_queen.remains<8)
-    - death_strike,if=(runic_power.deficit<40|fight_remains<10|(buff.essence_of_the_blood_queen.remains&buff.essence_of_the_blood_queen.remains<8))&config.ds_deficit>=runic_power.deficit
+    - death_strike,if=runic_power.deficit<40&config.ds_deficit>=runic_power.deficit|fight_remains<10|(buff.essence_of_the_blood_queen.remains&buff.essence_of_the_blood_queen.remains<8)
     # consumption,empower_to=1
     - consumption,empower_to=1
     # heart_strike,if=rune>=2
@@ -193,8 +195,8 @@ lists:
     - tail_swipe,if=interrupt.stun.aoe.check
 
     # Taunt — grab aggro when not tanking (dungeon/M+ only, never raid)
-    - dark_command,name="Taunt",if=target.threat<2&target.combat&target.threat!=-1&!player.inraid
-    - dark_command.mouseover,name="Taunt MO",if=mouseover.threat<2&mouseover.combat&mouseover.threat!=-1&mouseover.exists&!player.inraid
+    - dark_command,name="Taunt",if=target.threat<2&target.combat&target.threat!=-1&target.targeting_party&!target.ignore_count&!target.bypass_combat&!player.inraid
+    - dark_command.mouseover,name="Taunt MO",if=mouseover.threat<2&mouseover.combat&mouseover.threat!=-1&mouseover.targeting_party&!mouseover.ignore_count&!mouseover.bypass_combat&mouseover.exists&!player.inraid
 
     - call_action_list,name=auto_heal
 

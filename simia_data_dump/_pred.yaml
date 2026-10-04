@@ -2,10 +2,10 @@ version: 1
 
 # Cast-based buff/debuff predictions
 #
-# When the player casts a spell listed here and the cast reaches >= 1% completion,
-# pred.buff.X.up (or pred.debuff.X.up) returns true immediately — before the aura
-# actually appears. The prediction holds for 0.1s after the cast completes, then
-# falls back to the real aura state.
+# While the player is casting a spell listed here, pred.buff.X.up (or
+# pred.debuff.X.up) returns true — before the aura actually appears. The hold is
+# armed every tick (UpdatePredTracking) and lasts until cast end + ping + 0.25s,
+# then falls back to the real aura state. A cancelled cast drops it immediately.
 #
 # Format:  cast_id: { name: "SpellName", buff: buff_id }
 #       or cast_id: { name: "SpellName", debuff: debuff_id }
@@ -24,6 +24,7 @@ predictions:
   124682: { name: "Enveloping Mist", buff: 124682 }
   395160: { name: "Bombardments", debuff: 434473 }
   395152: { name: "Ebon Might", buff: 395296 }
+  19434:  { name: "Aimed Shot", buff: 260242 }   # Precise Shots (4 rows share the name)
 
 # ----------------------------------------------------------------------------
 # Cast-based resource predictions

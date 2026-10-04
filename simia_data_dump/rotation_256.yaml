@@ -7,6 +7,13 @@ description: This is a basic rotation for Discipline Priest
 entry: main
 
 config:
+  pi_target:
+    type: unit_select
+    label: "PI Target (Party)"
+    spell: 10060         # Party tab badge icon (Power Infusion)
+    max: 1
+    filter: all
+    show_override: true
   auto_targeting:
     label: "Auto-target if no target"
     type: checkbox
@@ -151,7 +158,7 @@ config:
 variables:
   use_af: player.moving.time>=config.angelic_feather_movement_time&buff.angelic_feather.down&((!player.combat&config.angelic_feather_usage=3|4)|(player.combat&config.angelic_feather_usage=2|4))
   missing_atonement: group.count(cycle.buff.atonement.down&cycle.range<=40)
-  missing_pwf: group.count(cycle.buff.power_word_fortitude.down&cycle.range>0)>0
+  missing_pwf: group.count(cycle.buff.power_word_fortitude.down.any)>0
   friendly_and_valid_mo: mouseover.exists&mouseover.alive&mouseover.friendly&mouseover.range>0&mouseover.range<=40
   trinket1_living_silk: trinket_1.id=242393
   trinket2_living_silk: trinket_2.id=242393
@@ -166,7 +173,7 @@ lists:
     - trinket_1,if=var.trinket1_living_silk&trinket_1.cd=0&config.living_silk_usage!=3&((config.living_silk_usage=1)|var.living_silk_threshold_trigger)
     - trinket_2,if=var.trinket2_living_silk&trinket_2.cd=0&config.living_silk_usage!=3&((config.living_silk_usage=1)|var.living_silk_threshold_trigger)
   out_of_combat:
-    - power_word_fortitude,range_check=none,if=(var.missing_pwf|action.power_word_fortitude.overlayed)&lastcast.power_word_fortitude>=10
+    - power_word_fortitude,range_check=none,if=var.missing_pwf&lastcast.power_word_fortitude>=10
     - penance,cycle=members,if=cycle.health.effective.pct<config.OOC_penance_threshold&!player.combat
     - flash_heal,cycle=members,if=cycle.health.effective.pct<config.OOC_flash_heal_threshold&!player.combat
   offensive:
@@ -230,6 +237,8 @@ lists:
     - call_action_list,name=auto_heal
 
     - call_action_list,name=pain_suppression_logic
+    # local addition: Power Infusion on the Party tab / overlay pick, on cooldown in combat
+    - power_infusion,cycle=config.pi_target,if=player.combat&!cycle.buff.power_infusion.up
     - call_action_list,name=moving,if=player.moving
     - call_action_list,name=high_prio
     - call_action_list,name=mouseover_friendly,if=config.MO_enabled&mouseover.exists&mouseover.alive&!player.casting&!player.channeling&mouseover.friendly

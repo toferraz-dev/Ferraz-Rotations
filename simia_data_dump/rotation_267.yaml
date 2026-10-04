@@ -71,14 +71,18 @@ lists:
   aoe_dia:
     # summon_infernal
     - summon_infernal
-    # chaos_bolt,if=talent.diabolic_ritual&(demonic_art|(variable.ritual_length<action.chaos_bolt.execute_time))&(active_enemies<=(10-2*talent.destructive_rapidity))
-    - chaos_bolt,if=talent.diabolic_ritual&(demonic_art|(var.ritual_length<action.chaos_bolt.execute_time))&(enemies_around_target<=(10-2*talent.destructive_rapidity))
+    # shadowburn,if=demonic_art
+    - shadowburn,if=demonic_art
+    # chaos_bolt,if=demonic_art
+    - chaos_bolt,if=demonic_art
+    # chaos_bolt,if=(demonic_art|(variable.ritual_length<action.chaos_bolt.execute_time))&(active_enemies<=(4-talent.destructive_rapidity))
+    - chaos_bolt,if=(demonic_art|(var.ritual_length<action.chaos_bolt.execute_time))&(enemies_around_target<=(4-talent.destructive_rapidity))
     # rain_of_fire,if=((soul_shard>=(3.5-0.1*(active_dot.immolate)))|buff.alythesss_ire.up)&active_enemies>=3
     - rain_of_fire,if=((soul_shard>=(3.5-0.1*(active_dot.immolate)))|buff.alythesss_ire.up)&enemies_around_target>=3
     # conflagrate,target_if=max:(dot.immolate.remains-99*debuff.havoc.remains),if=dot_refreshable_count.immolate>0&!dot.immolate.refreshable
     - conflagrate,if=dot_refreshable_count.immolate>0&!dot.immolate.refreshable
-    # shadowburn,target_if=min:(time_to_die+999*debuff.havoc.remains),if=(active_enemies<=(4-talent.destructive_rapidity+2*buff.fiendish_cruelty.up))|(talent.conflagration_of_chaos&active_enemies<=(6+2*buff.fiendish_cruelty.up))
-    - shadowburn,if=(enemies_around_target<=(4-talent.destructive_rapidity+2*buff.fiendish_cruelty.up))|(talent.conflagration_of_chaos&enemies_around_target<=(6+2*buff.fiendish_cruelty.up))
+    # shadowburn,target_if=min:(time_to_die+999*debuff.havoc.remains),if=(!talent.destructive_rapidity&active_enemies<=(2+2*buff.fiendish_cruelty.up))|(talent.conflagration_of_chaos&active_enemies<=(6-talent.destructive_rapidity+2*buff.fiendish_cruelty.up))
+    - shadowburn,if=(!talent.destructive_rapidity&enemies_around_target<=(2+2*buff.fiendish_cruelty.up))|(talent.conflagration_of_chaos&enemies_around_target<=(6-talent.destructive_rapidity+2*buff.fiendish_cruelty.up))
     # ruination
     - ruination
     # cataclysm,if=raid_event.adds.in>15|talent.lake_of_fire
@@ -111,8 +115,8 @@ lists:
     - rain_of_fire,if=(soul_shard>=(4.0-0.1*(active_dot.wither)))&enemies_around_target>=4
     # conflagrate,target_if=max:(dot.wither.remains-99*debuff.havoc.remains),if=dot_refreshable_count.wither>0&!dot.wither.refreshable
     - conflagrate,if=dot_refreshable_count.wither>0&!dot.wither.refreshable
-    # shadowburn,target_if=min:(time_to_die+999*debuff.havoc.remains),if=buff.fiendish_cruelty.up|(talent.conflagration_of_chaos&(active_enemies<=(5-talent.destructive_rapidity)))
-    - shadowburn,if=buff.fiendish_cruelty.up|(talent.conflagration_of_chaos&(enemies_around_target<=(5-talent.destructive_rapidity)))
+    # shadowburn,target_if=min:(time_to_die+999*debuff.havoc.remains),if=(buff.fiendish_cruelty.up&active_enemies<=4)|(talent.conflagration_of_chaos&(active_enemies<=(5+buff.fiendish_cruelty.up)))
+    - shadowburn,if=(buff.fiendish_cruelty.up&enemies_around_target<=4)|(talent.conflagration_of_chaos&(enemies_around_target<=(5+buff.fiendish_cruelty.up)))
     # cataclysm,if=raid_event.adds.in>15
     - cataclysm
     # havoc,target_if=min:((-target.time_to_die)<?-15)+dot.wither.remains+99*(self.target=target),if=(!cooldown.summon_infernal.up|!talent.summon_infernal)&target.time_to_die>8&(cooldown.malevolence.remains>15|!talent.malevolence)|time<5

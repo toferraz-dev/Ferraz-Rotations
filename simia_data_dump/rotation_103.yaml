@@ -23,6 +23,14 @@ version: 3
 spec: 103
 entry: main
 
+spell_overrides:
+  # local addition: CDs OFF with Berserk/Incarnation ready within 10s -> hold the minors so they line up with
+  # the major once CDs go back on (same idea as rotation_252's D&D hold). usable.X ignores the CDs
+  # toggle and reads 0 for an untalented spell, so each half fails safe.
+  tigers_fury: "state.cds|!(usable.berserk&cooldown_bypass.berserk.remains<10|usable.incarnation&cooldown_bypass.incarnation.remains<10)"
+  feral_frenzy: "state.cds|!(usable.berserk&cooldown_bypass.berserk.remains<10|usable.incarnation&cooldown_bypass.incarnation.remains<10)"
+  frantic_frenzy: "state.cds|!(usable.berserk&cooldown_bypass.berserk.remains<10|usable.incarnation&cooldown_bypass.incarnation.remains<10)"
+
 config:
   survival_instincts_hp_pct:
     section: "Defensive HP Percentage"
@@ -266,11 +274,20 @@ lists:
   # aoe_builder list
   # =========================================================================
   aoe_builder:
+    # prowl,target_if=dot.rake.refreshable,if=!buff.shadowmeld.up
+    - prowl,if=!buff.shadowmeld.up&dot.rake.refreshable
+
+    # shadowmeld,target_if=dot.rake.refreshable,if=!buff.prowl.up
+    - shadowmeld,if=var.shadowmeld_allowed&!buff.prowl.up&dot.rake.refreshable
+
     # rake,target_if=refreshable,if=(talent.doubleclawed_rake&(!talent.lunar_inspiration|!talent.panthers_guile|active_dot.rake<5))|hero_tree.wildstalker&(active_dot.rake<2+!talent.panthers_guile+talent.lunar_inspiration)
     - rake,if=dot.rake.refreshable&((talent.doubleclawed_rake&(!talent.lunar_inspiration|!talent.panthers_guile|active_dot.rake<5))|hero_tree.wildstalker&(active_dot.rake<2+!talent.panthers_guile+talent.lunar_inspiration))
 
     # moonfire_cat,target_if=refreshable
     - moonfire,if=talent.lunar_inspiration&dot.moonfire.refreshable
+
+    # shred,if=spell_targets=2&talent.panthers_guile&buff.clearcasting.react
+    - shred,if=active_enemies=2&talent.panthers_guile&buff.clearcasting.react
 
     # swipe_cat,if=hero_tree.druid_of_the_claw&buff.bs_inc.up|buff.clearcasting.react&(hero_tree.druid_of_the_claw|spell_targets<7)
     - 106785,if=hero_tree.druid_of_the_claw&var.bs_inc|buff.clearcasting.react&(hero_tree.druid_of_the_claw|active_enemies<7)
@@ -284,11 +301,11 @@ lists:
     # rake,target_if=min:pmultiplier,if=persistent_multiplier>pmultiplier&spell_targets=2
     - rake,if=buff.tigers_fury.up&!var.rake_tf&active_enemies=2
 
-    # shred,if=combo_points<=1&spell_targets=2&talent.panthers_guile
-    - shred,if=combo_points<=1&active_enemies=2&talent.panthers_guile
+    # shred,if=spell_targets=2&talent.panthers_guile
+    - shred,if=active_enemies=2&talent.panthers_guile
 
-    # swipe_cat,if=combo_points>1|spell_targets>2|!talent.panthers_guile
-    - 106785,if=combo_points>1|active_enemies>2|!talent.panthers_guile
+    # swipe_cat,if=spell_targets>2|!talent.panthers_guile
+    - 106785,if=active_enemies>2|!talent.panthers_guile
 
   # =========================================================================
   # main list
@@ -298,7 +315,7 @@ lists:
     - call_action_list,name=sanity_checks
     - call_action_list,name=auto_target
 
-    - mark_of_the_wild,range_check=none,if=(buff.mark_of_the_wild.down.any|action.mark_of_the_wild.overlayed)&lastcast.mark_of_the_wild>=10
+    - mark_of_the_wild,range_check=none,if=group.count(cycle.buff.mark_of_the_wild.down.any)>0&lastcast.mark_of_the_wild>=10
     - regrowth,range_check=none,if=health.pct<=config.regrowth_ooc_hp_pct&!player.combat
 
     # Auto Travel Form

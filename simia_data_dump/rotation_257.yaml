@@ -1,20 +1,178 @@
+# =============================================================================
+# Priest - Holy - Spec ID 257 (Midnight 12.1, S2) - hand-authored healer rotation
+#
+# Sources: method.gg (Grafe, 12.1), maxroll M+/raid, WCL top parses
+#   (12 M+ +20/+21 runs zone 55, 8 Mythic kills zone 53 Venomous Abyss).
+#   Oracle was 19/19 of logged players; Archon from 11 separate parses (3 M+, 8 raid).
+#
+# Hero tree switch: talent.power_surge = Archon (Halo + Prayer of Healing),
+#   otherwise Oracle (Prayer of Mending spam). Archon casts/min M+ | raid:
+#   PoH 5.2 | 11.4 · Serenity 5.4 | 11.2 · Benediction 4.5 | 9.4 · Flash Heal 6.9 | 2.7
+#   PoM 3.7 | 2.5 · Halo 0.8 | 0.9 (on cooldown).
+#   PoH at >=1 Lightweaver stack: M+ 95%, raid 55% (rest = Spiritwell Surge of Light PoH).
+#
+# Thresholds measured from pre-heal target HP (WCL includeResources), Oracle M+ | raid:
+#   Serenity median 59 | 68, p75 72 | 82 · Flash Heal median 76 | 79, p75 92 | 93
+#   Benediction median 73 | 75, p75 87 | 92 · Archon PoH median 95 | 90
+#
+# Logged core (casts/min M+ | raid):
+#   Benediction 8.5 | 13.8 · Flash Heal 5.1 | 10.9 · Prayer of Mending 8.1 | 7.2
+#   Serenity 5.1 | 8.4 · Holy Fire 6.7 | 0.6 · Chastise 2.5 | 0.4 · Holy Nova 1.3 | 0.5
+#   Never cast by anyone: Heal, Prayer of Healing, Circle of Healing, Renew,
+#   Sanctify (Ultimate Serenity moves it onto Serenity), Halo, SW:Pain, Symbol of Hope.
+#   Damage share of GCDs: M+ 30% (Chastise -> 2x Empyreal Holy Fire -> Holy Fire -> Smite), raid 5%.
+#
+# Ids (WCL applybuff / cast events):
+#   1262766 Benediction proc - next Flash Heal becomes Benediction (cast 1262763), 2 stacks.
+#           Flash Heal step redirects to the live morph (CLAUDE.md §5.8) - never name 1262763.
+#   114255  Surge of Light - instant Flash Heal, 2 stacks
+#   372617  Empyreal Blaze - next 2 Holy Fire instant, free, no cooldown
+#   414556  Epiphany - next Prayer of Mending ignores its cooldown
+#   41635   Prayer of Mending bouncing buff on the target
+#   390993  Lightweaver - Flash Heal buffs next Prayer of Healing, 4 stacks (Archon builds)
+# =============================================================================
+
 version: 3
 spec: 257
-
-# =============================================================================
-# Priest - Holy
-# =============================================================================
-
 entry: main
 
 config:
+  pi_target:
+    section: "Major Cooldowns"
+    type: unit_select
+    label: "PI Target (Party)"
+    spell: 10060         # Party tab badge icon (Power Infusion)
+    max: 1
+    filter: all
+    show_override: true
+
+  apotheosis_hp_pct:
+    section: "Major Cooldowns"
+    label: "Apotheosis HP%"
+    type: slider
+    min: 25
+    max: 99
+    default: 85
+
+  divine_hymn_hp_pct:
+    section: "Major Cooldowns"
+    label: "Divine Hymn HP%"
+    type: slider
+    min: 25
+    max: 99
+    default: 75
+
+  guardian_spirit_hp_pct:
+    section: "Major Cooldowns"
+    label: "Guardian Spirit HP%"
+    type: slider
+    min: 5
+    max: 60
+    default: 30
+
+  serenity_hp_pct:
+    section: "Healing"
+    label: "Holy Word: Serenity HP%"
+    type: slider
+    min: 25
+    max: 99
+    default: 75
+
+  benediction_hp_pct:
+    section: "Healing"
+    label: "Benediction (Flash Heal proc) HP%"
+    type: slider
+    min: 25
+    max: 99
+    default: 90
+
+  flash_heal_hp_pct:
+    section: "Healing"
+    label: "Flash Heal HP%"
+    type: slider
+    min: 25
+    max: 99
+    default: 85
+
+  poh_hp_pct:
+    section: "Healing"
+    label: "Prayer of Healing HP% (Archon)"
+    type: slider
+    min: 25
+    max: 99
+    default: 90
+
+  holy_nova_hp_pct:
+    section: "Healing"
+    label: "Holy Nova (Lightburst) HP%"
+    type: slider
+    min: 25
+    max: 99
+    default: 85
+
+  ooc_heal_hp_pct:
+    section: "Healing"
+    label: "Out of Combat Heal HP%"
+    type: slider
+    min: 25
+    max: 99
+    default: 80
+
+  desperate_prayer_hp_pct:
+    section: "Defensive HP Percentage"
+    label: "Desperate Prayer HP%"
+    type: slider
+    min: 0
+    max: 100
+    default: 40
+
+  fade_hp_pct:
+    section: "Defensive HP Percentage"
+    label: "Fade (Translucent Image) HP%"
+    type: slider
+    min: 0
+    max: 100
+    default: 50
+
+  fade_dmg_pct:
+    section: "Defensives Prediction Damage"
+    label: "Fade (Incoming Dmg%)"
+    type: slider
+    min: 0
+    max: 100
+    default: 40
+
+  angelic_feather_movement_time:
+    section: "Utility"
+    label: "Angelic Feather after moving (s)"
+    type: slider
+    min: 0
+    max: 4
+    default: 2
+
+  dps_enabled:
+    section: "DPS"
+    label: "DPS Filler"
+    type: checkbox
+    default: true
 
 variables:
+  is_dungeon: "!player.inraid"
+  # Group-damage count: 2 of 5 in a dungeon, 4 in a raid
+  aoe_count: "var.is_dungeon*2+!var.is_dungeon*4"
+  is_archon: "talent.power_surge"
+  poh_targets: "group.count(cycle.health.effective.pct<config.poh_hp_pct&cycle.range<=40)"
+  use_af: "talent.angelic_feather&player.moving.time>=config.angelic_feather_movement_time&buff.angelic_feather.down"
 
 lists:
-  main:
-    - power_word_fortitude,range_check=none,if=(buff.power_word_fortitude.down|action.power_word_fortitude.overlayed)&lastcast.power_word_fortitude>=10
+  defensives:
+    # --- Prediction Damage: pre-fire on a predicted incoming hit (% of effective HP) ---
+    - fade,range_check=none,if=talent.translucent_image&incoming.mitigated.pct>=config.fade_dmg_pct
+    # --- HP Percentage: react when already low ---
+    - desperate_prayer,range_check=none,if=health.pct<=config.desperate_prayer_hp_pct
+    - fade,range_check=none,if=talent.translucent_image&health.pct<=config.fade_hp_pct
 
+  interrupts:
     # CC Interrupt
     - holy_word_chastise,if=interrupt.cc.check
     # AoE Interrupt
@@ -26,7 +184,100 @@ lists:
     - bull_rush,if=interrupt.stun.aoe.check
     - tail_swipe,if=interrupt.stun.aoe.check
 
-    - call_action_list,name=auto_heal
+  trinkets:
+    - trinket_1,if=trinket_1.sync
+    - trinket_2,if=trinket_2.sync
 
-    - smite,if=lastcast.flash_heal
-    - flash_heal
+  # Logs: Apotheosis ~every 2 min on real damage, never while Serenity sits on charges.
+  # Hymn is held for damage events (only 3/102 M+ casts within 10s of Apotheosis).
+  # Guardian Spirit goes to whoever is dying, not only the tank (M+ 28% tank).
+  cooldowns:
+    - guardian_spirit,cycle=members,if=cycle.health.effective.pct<config.guardian_spirit_hp_pct
+    - divine_hymn,range_check=none,if=!player.moving&group.count(cycle.health.effective.pct<config.divine_hymn_hp_pct&cycle.range<=40)>=var.aoe_count+1
+    - apotheosis,range_check=none,if=cooldown.holy_word_serenity.charges<1&group.count(cycle.health.effective.pct<config.apotheosis_hp_pct&cycle.range<=40)>=var.aoe_count
+    # local addition: Power Infusion on the Party tab / overlay pick, on cooldown in combat
+    - power_infusion,cycle=config.pi_target,if=player.combat&!cycle.buff.power_infusion.up
+    # No pick: self-PI with Apotheosis (logs: 50% self-cast, Twins of the Sun Priestess)
+    - power_infusion.player,if=!config.pi_target&buff.apotheosis.up&buff.power_infusion.down
+    - call_action_list,name=trinkets,if=buff.apotheosis.up|buff.power_infusion.up
+
+  # method.gg Oracle priority, confirmed by logs (PoM median gap 6.6s = on cooldown).
+  healing:
+    # 1. Never sit on 2 PoM charges; Epiphany makes the next one free of cooldown
+    - prayer_of_mending,cycle=members,if=(cooldown.prayer_of_mending.charges>=2|buff.414556.up)&cycle.buff.41635.down
+    - prayer_of_mending,cycle=members,if=cooldown.prayer_of_mending.charges>=2|buff.414556.up
+    # 2. Serenity about to cap (capping wastes Epiphany / Lasting Words)
+    - holy_word_serenity,cycle=members,if=cooldown.holy_word_serenity.charges_fractional>=1.8&cycle.health.effective.pct<95
+    # 3. Benediction - spend at 2 stacks on anyone injured, else on the threshold
+    - flash_heal,cycle=members,if=buff.1262766.stack>=2&cycle.health.effective.pct<98&(!player.moving|buff.114255.up)
+    - flash_heal,cycle=members,if=buff.1262766.up&cycle.health.effective.pct<config.benediction_hp_pct&(!player.moving|buff.114255.up)
+    # 4. PoM on cooldown - main heal, cast even when the group is full (Prompt Prognosis heals on cast)
+    - prayer_of_mending,cycle=members,if=cycle.buff.41635.down
+    - prayer_of_mending,cycle=members
+    # 5. Holy Nova with Lightburst (12y around the player)
+    - holy_nova,range_check=none,if=talent.lightburst&group.count(cycle.health.effective.pct<config.holy_nova_hp_pct&cycle.range<=12)>=3
+    # 6. Serenity - free during Apotheosis, else on the threshold
+    - holy_word_serenity,cycle=members,if=buff.apotheosis.up&cycle.health.effective.pct<95
+    - holy_word_serenity,cycle=members,if=cycle.health.effective.pct<config.serenity_hp_pct
+    # Builds without Ultimate Serenity (0 logged) press Sanctify at its own feet
+    - holy_word_sanctify.player,if=!talent.ultimate_serenity&group.count(cycle.health.effective.pct<config.serenity_hp_pct&cycle.range<=10)>=3
+    # Archon: Halo + Prayer of Healing ahead of Flash Heal
+    - call_action_list,name=archon,if=var.is_archon
+    # 7. Flash Heal - Surge of Light first (instant), then hard-cast (refills Serenity via Serendipity)
+    - flash_heal,cycle=members,if=buff.114255.up&cycle.health.effective.pct<config.flash_heal_hp_pct
+    - flash_heal,cycle=members,if=!player.moving&cycle.health.effective.pct<config.flash_heal_hp_pct
+    # Apotheosis: keep feeding Flash Heal to refill Serenity (maxroll M+)
+    - flash_heal,cycle=members,if=buff.apotheosis.up&!player.moving&cycle.health.effective.pct<95
+
+  # Archon: Halo on cooldown (logs ~1/min both modes, Power Surge repeats it)
+  archon:
+    - halo,range_check=none
+    # Spiritwell: Surge of Light makes PoH instant - raid spends it here (292 PoH vs 19 Flash Heal)
+    - prayer_of_healing,cycle=members,if=talent.spiritwell&buff.114255.up&var.poh_targets>=3
+    # Lightweaver-buffed PoH (M+ 95% of PoH casts)
+    - prayer_of_healing,cycle=members,if=buff.390993.up&!player.moving&var.poh_targets>=var.aoe_count
+    # Raid: PoH is the spammable even without Lightweaver
+    - prayer_of_healing,cycle=members,if=!var.is_dungeon&!player.moving&var.poh_targets>=var.aoe_count
+
+  # M+: Chastise -> 2x Empyreal Blaze Holy Fire (71% of Holy Fires instant), Nova at 4+
+  dps:
+    - holy_fire,if=buff.372617.up
+    - holy_word_chastise,if=target.time_to_die>4
+    - holy_nova,range_check=none,if=spell_targets.holy_nova>=4
+    - holy_fire,if=!player.moving
+    - shadow_word_death,if=target.health.pct<20
+    - smite,if=!player.moving
+    - holy_nova,range_check=none,if=player.moving&spell_targets.holy_nova>=1
+
+  out_of_combat:
+    - power_word_fortitude,range_check=none,if=group.count(cycle.buff.power_word_fortitude.down.any)>0&lastcast.power_word_fortitude>=10
+    - prayer_of_mending,cycle=members,if=cycle.health.effective.pct<config.ooc_heal_hp_pct
+    - flash_heal,cycle=members,if=!player.moving&cycle.health.effective.pct<config.ooc_heal_hp_pct
+
+  main:
+    # Divine Hymn is a channel
+    - return,if=player.channeling
+
+    - call_action_list,name=spell_queue
+    - call_action_list,name=sanity_checks
+    - call_action_list,name=auto_target_ranged
+
+    - angelic_feather.player,if=var.use_af
+
+    - call_action_list,name=out_of_combat,if=!player.combat
+    - return,if=!player.combat
+
+    - power_word_fortitude,range_check=none,if=group.count(cycle.buff.power_word_fortitude.down.any)>0&lastcast.power_word_fortitude>=10
+
+    - call_action_list,name=interrupts
+    - call_action_list,name=auto_heal
+    - call_action_list,name=defensives
+
+    - return,if=auto_combat.player
+
+    - call_action_list,name=cooldowns
+    - call_action_list,name=healing
+
+    - return,if=auto_combat.target
+
+    - call_action_list,name=dps,if=config.dps_enabled

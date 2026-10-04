@@ -4,8 +4,9 @@
 # Local conventions in this file:
 # - `feline_potential_counter` is actually `ursine_potential` in WoW data.
 # - Thrash (bear) = 77758, Swipe (bear) = 213764 — both names collide, so numeric.
-# - Heart of the Wild = 1261867, and 1261868 when in cat form. Name-based lookup
-#   is ambiguous, so cooldown/override references use 1261867.
+# - Heart of the Wild = 1261867 (base button); the form variants 1261868 cat /
+#   1261870 moonkin / 1261872 bear are what it casts. Only the base is named, so
+#   the engine redirects to the live variant — never name a variant.
 # - Gory Fur = 1307881 (`gory_fur_maul`) and 201671 (`gory_fur_ironfur`) — three
 #   spells share the display name, so both are numeric.
 # - Gorestained Claws (MID2 2pc buff) = 1301286.
@@ -13,10 +14,11 @@
 #   Ravage on its own when the button morphs, so there are NO explicit `ravage`
 #   lines here. Adding one would make `ravage` an APL action in its own right and
 #   suppress every `maul` line for the duration of the buff.
-# - `raze` and `incarnation_guardian_of_ursoc` are talent-gated parse-time
-#   redirects in SimC (`create_action`: maul+talent.raze → raze_t,
-#   berserk+talent.incarnation_bear → incarnation_bear_t). They are NOT in
-#   `_morphs.yaml`, so each needs its own explicit line alongside the base.
+# - Raze replaces the Maul button (SimC `maul` → `raze_t`, and `maul` is not ready
+#   with talent.raze). NO explicit `raze` line: naming it makes Raze exclusive to
+#   that one step and every other `maul` line stops redirecting to it (§5.8).
+# - `incarnation_guardian_of_ursoc` is SimC's parse-time redirect of `berserk`
+#   (talent.incarnation_bear); it keeps its own line beside the berserk one.
 # - `target.combat` is ANDed onto Moonfire so it never pulls.
 # - `range_check=none` on form/utility casts, `range_check=mob_count_8y` on Thrash.
 
@@ -31,13 +33,6 @@ spell_overrides:
   # local addition: Barkskin is held for tank busters off the encounter timeline
   # (see the set_tank_var list) instead of being pressed on cooldown.
   barkskin: "(!player.inmythicplus|fight_remains>=20|player.on_last_boss)&(variable.tank_buster_remains<=1|variable.tank_buster_casting|variable.tank_buster_remains>34)"
-
-  # local addition: with Lunar Calling the Thrash button becomes Moonfire, so
-  # Moonfire must not steal the button while Thrash itself is available.
-  moonfire: "!talent.lunar_calling.enabled|cooldown.77758.down|enemies.8y=0"
-
-  # local addition: Heart of the Wild (1261867 — 1261868 is the cat-form variant).
-  1261867: "enemies.40y>=1&enemies.40y<=3&!buff.incarnation_guardian_of_ursoc.up"
 
   # local addition: Sundering Roar is saved for a 5-stack Thrash inside Incarnation,
   # or pressed to bank cooldown reduction when Incarnation is far out.
@@ -103,6 +98,9 @@ config:
     default: true
 
 variables:
+  # SimC buff.bs_inc / cooldown.bs_inc = Berserk OR Incarnation (only one is talented).
+  bs_inc: "buff.incarnation_guardian_of_ursoc.up|buff.berserk.up"
+  bs_inc_remains: "buff.incarnation_guardian_of_ursoc.remains+buff.berserk.remains"
 
 lists:
   set_tank_var:
@@ -141,13 +139,11 @@ lists:
     # barkskin,if=buff.bear_form.up
     - barkskin,if=buff.bear_form.up
 
-    # lunar_beam,if=(cooldown.incarnation_guardian_of_ursoc.up|cooldown.berserk.up)
-    - lunar_beam,if=target.combat&(!config.lunar_beam_moving_check|player.moving.time<=1)&(cooldown.incarnation_guardian_of_ursoc.up|cooldown.berserk.up)
+    # lunar_beam
+    - lunar_beam,if=target.combat&(!config.lunar_beam_moving_check|player.moving.time<=1)
 
     # heart_of_the_wild,if=(active_enemies<=5&talent.moonkin_form.enabled&buff.cat_form.up|!talent.moonkin_form.enabled&buff.cat_form.up)|buff.moonkin_form.up&active_enemies>=6&talent.moonkin_form.enabled
-    # local: disabled — Heart of the Wild is driven by the bear-list form swaps and
-    # the 1261867 spell_override instead of an unconditional cooldowns press.
-    # - heart_of_the_wild,if=(active_enemies<=5&talent.moonkin_form.enabled&buff.cat_form.up|!talent.moonkin_form.enabled&buff.cat_form.up)|buff.moonkin_form.up&active_enemies>=6&talent.moonkin_form.enabled
+    - 1261867,if=(active_enemies<=5&talent.moonkin_form.enabled&buff.cat_form.up|!talent.moonkin_form.enabled&buff.cat_form.up)|buff.moonkin_form.up&active_enemies>=6&talent.moonkin_form.enabled
 
     # convoke_the_spirits,if=buff.bear_form.up
     - convoke_the_spirits,if=buff.bear_form.up
@@ -155,7 +151,7 @@ lists:
     # sundering_roar,if=(dot.thrash.stack>4&talent.flashing_claws.rank=2|dot.thrash.stack>3&talent.flashing_claws.rank=1|dot.thrash.stack>2&!talent.flashing_claws.enabled)&!cooldown.thrash.up
     - sundering_roar,if=(dot.thrash.stack>4&talent.flashing_claws.rank=2|dot.thrash.stack>3&talent.flashing_claws.rank=1|dot.thrash.stack>2&!talent.flashing_claws.enabled)&!cooldown.77758.up
 
-    # berserk,if=(!cooldown.heart_of_the_wild.up&(talent.heart_of_the_wild.enabled)|!talent.ravage.enabled|!talent.heart_of_the_wild.enabled)&(!cooldown.thrash.up|(buff.cat_form.up&!talent.convoke_the_spirits.enabled))
+    # berserk,if=(!cooldown.heart_of_the_wild.up&(talent.heart_of_the_wild.enabled)|!talent.ravage.enabled|!talent.heart_of_the_wild.enabled)&(!cooldown.thrash.up|(buff.cat_form.up&!talent.convoke_the_spirits.enabled))&(!raid_event.adds.up|raid_event.adds.remains>=15)
     - berserk,if=(!cooldown.1261867.up&(talent.heart_of_the_wild.enabled)|!talent.ravage.enabled|!talent.heart_of_the_wild.enabled)&(!cooldown.77758.up|(buff.cat_form.up&!talent.convoke_the_spirits.enabled))
     # local: SimC's `berserk` is rewritten to Incarnation at parse time when
     # talent.incarnation_bear is taken (sc_druid.cpp:10119). No morph entry exists,
@@ -181,23 +177,19 @@ lists:
     - ironfur,use_off_gcd=1,if=rage>=40&!talent.killing_blow.enabled&!buff.1308647.up&!buff.dream_conduit.up
     # ironfur,use_off_gcd=1,if=rage>=80&!talent.killing_blow.enabled&buff.answered_calling.up
     - ironfur,use_off_gcd=1,if=rage>=80&!talent.killing_blow.enabled&buff.1308647.up
-    # ironfur,use_off_gcd=1,if=(!buff.ironfur.up|(buff.incarnation_guardian_of_ursoc.up|buff.berserk.up))&!buff.answered_calling.up&talent.killing_blow.enabled&!buff.ravage.up&!buff.dream_conduit.up
-    - ironfur,use_off_gcd=1,if=(!buff.ironfur.up|(buff.incarnation_guardian_of_ursoc.up|buff.berserk.up))&!buff.1308647.up&talent.killing_blow.enabled&!buff.ravage.up&!buff.dream_conduit.up
-    # ironfur,use_off_gcd=1,if=(!buff.ironfur.up|(buff.incarnation_guardian_of_ursoc.up|buff.berserk.up))&rage>=80&buff.answered_calling.up&talent.killing_blow.enabled&!buff.ravage.up&!buff.dream_conduit.up
-    - ironfur,use_off_gcd=1,if=(!buff.ironfur.up|(buff.incarnation_guardian_of_ursoc.up|buff.berserk.up))&rage>=80&buff.1308647.up&talent.killing_blow.enabled&!buff.ravage.up&!buff.dream_conduit.up
+    # ironfur,use_off_gcd=1,if=(!buff.ironfur.up|buff.bs_inc.up)&!buff.answered_calling.up&talent.killing_blow.enabled&!buff.ravage.up&!buff.dream_conduit.up
+    - ironfur,use_off_gcd=1,if=(!buff.ironfur.up|var.bs_inc)&!buff.1308647.up&talent.killing_blow.enabled&!buff.ravage.up&!buff.dream_conduit.up
+    # ironfur,use_off_gcd=1,if=(!buff.ironfur.up|buff.bs_inc.up)&rage>=80&buff.answered_calling.up&talent.killing_blow.enabled&!buff.ravage.up&!buff.dream_conduit.up
+    - ironfur,use_off_gcd=1,if=(!buff.ironfur.up|var.bs_inc)&rage>=80&buff.1308647.up&talent.killing_blow.enabled&!buff.ravage.up&!buff.dream_conduit.up
 
     # thrash,target_if=refreshable|(dot.thrash.stack<5&talent.flashing_claws.rank=2|dot.thrash.stack<4&talent.flashing_claws.rank=1|dot.thrash.stack<3&!talent.flashing_claws.enabled)
     - 77758,range_check=mob_count_8y,if=dot.thrash.refreshable|(dot.thrash.stack<5&talent.flashing_claws.rank=2|dot.thrash.stack<4&talent.flashing_claws.rank=1|dot.thrash.stack<3&!talent.flashing_claws.enabled)
 
-    # mangle,if=buff.answered_calling.up&active_enemies=1&talent.fount_of_strength.enabled
-    - mangle,if=buff.1308647.up&active_enemies=1&talent.fount_of_strength.enabled
+    # mangle,if=buff.answered_calling.up&(active_enemies=1|(buff.bs_inc.up&active_enemies=3))&talent.fount_of_strength.enabled
+    - mangle,if=buff.1308647.up&(active_enemies=1|(var.bs_inc&active_enemies=3))&talent.fount_of_strength.enabled
 
     # thrash,if=talent.lunar_calling.enabled|set_bonus.midnight_season_2_4pc&(active_enemies>1|buff.answered_calling.up)
-    # set_bonus.* reads 0 (no tier_sets: section exists), so the 4pc leg is inert — CLAUDE.md 6.4.
     - 77758,range_check=mob_count_8y,if=talent.lunar_calling.enabled|set_bonus.midnight_season_2_4pc&(active_enemies>1|buff.1308647.up)
-    # local addition: with Lunar Calling the Thrash button casts Moonfire, and there
-    # is no thrash→moonfire entry in _morphs.yaml to express that.
-    - moonfire,if=talent.lunar_calling.enabled&buff.bear_form.up&target.combat
 
     # maul,if=buff.dream_conduit.up&!talent.fount_of_strength.enabled&!buff.answered_calling.up
     - maul,if=buff.dream_conduit.up&!talent.fount_of_strength.enabled&!buff.1308647.up
@@ -208,7 +200,7 @@ lists:
     - maul,if=rage>=80&talent.killing_blow.enabled&buff.1308647.up
 
     # maul,if=buff.gory_fur_maul.up&talent.raze.enabled
-    - raze,if=buff.1307881.up&talent.raze.enabled
+    - maul,if=buff.1307881.up&talent.raze.enabled
     # maul,if=buff.gory_fur_maul.up&!talent.raze.enabled&active_enemies<3
     - maul,if=buff.1307881.up&!talent.raze.enabled&active_enemies<3
 
@@ -218,42 +210,19 @@ lists:
     # mangle,if=dot.red_moon.ticking|(buff.gorestained_claws.up|buff.answered_calling.up)&talent.fount_of_strength.enabled
     - mangle,if=dot.red_moon.ticking|(buff.1301286.up|buff.1308647.up)&talent.fount_of_strength.enabled
 
-    # rake,if=!buff.cat_form.up&talent.fluid_form.enabled&cooldown.heart_of_the_wild.up&talent.heart_of_the_wild.enabled&(active_enemies<=5&talent.moonkin_form.enabled|!talent.moonkin_form.enabled)
-    - rake,if=!buff.cat_form.up&talent.fluid_form.enabled&cooldown.1261867.up&talent.heart_of_the_wild.enabled&(active_enemies<=5&talent.moonkin_form.enabled|!talent.moonkin_form.enabled)
-    # cat_form,if=!buff.cat_form.up&!talent.fluid_form.enabled&cooldown.heart_of_the_wild.up&talent.heart_of_the_wild.enabled&(active_enemies<=5&talent.moonkin_form.enabled|!talent.moonkin_form.enabled)&(rage<30&!talent.fount_of_strength.enabled|talent.fount_of_strength.enabled)
-    - cat_form,range_check=none,if=!buff.cat_form.up&!talent.fluid_form.enabled&cooldown.1261867.up&talent.heart_of_the_wild.enabled&(active_enemies<=5&talent.moonkin_form.enabled|!talent.moonkin_form.enabled)&(rage<30&!talent.fount_of_strength.enabled|talent.fount_of_strength.enabled)
-    # moonkin_form,if=!buff.moonkin_form.up&cooldown.heart_of_the_wild.up&active_enemies>=6&talent.moonkin_form.enabled
-    - moonkin_form,range_check=none,if=!buff.moonkin_form.up&cooldown.1261867.up&active_enemies>=6&talent.moonkin_form.enabled
-
-    # thrash,target_if=refreshable|(dot.thrash.stack<5&talent.flashing_claws.rank=2|dot.thrash.stack<4&talent.flashing_claws.rank=1|dot.thrash.stack<3&!talent.flashing_claws.enabled)
-    - 77758,range_check=mob_count_8y,if=dot.thrash.refreshable|(dot.thrash.stack<5&talent.flashing_claws.rank=2|dot.thrash.stack<4&talent.flashing_claws.rank=1|dot.thrash.stack<3&!talent.flashing_claws.enabled)
-
-    # ferocious_bite,if=(buff.cat_form.up&buff.feline_potential.up&(buff.incarnation_guardian_of_ursoc.up|buff.berserk.up)&!dot.rip.refreshable)
-    - ferocious_bite,if=(buff.cat_form.up&buff.feline_potential.up&(buff.incarnation_guardian_of_ursoc.up|buff.berserk.up)&!dot.rip.refreshable)
-
-    # rake,if=!buff.cat_form.up&talent.fluid_form.enabled&buff.feline_potential_counter.stack=6&talent.wildpower_surge.enabled&active_enemies<=2
-    - rake,if=!buff.cat_form.up&talent.fluid_form.enabled&buff.ursine_potential.stack=6&talent.wildpower_surge.enabled&active_enemies<=2
-
-    # rip,if=(buff.cat_form.up&buff.feline_potential.up)&active_enemies<=2
-    - rip,if=(buff.cat_form.up&buff.feline_potential.up)&active_enemies<=2
+    # call_action_list,name=heart_of_the_wild
+    - call_action_list,name=heart_of_the_wild
+    # call_action_list,name=feline_potential
+    - call_action_list,name=feline_potential
 
     # red_moon,if=cooldown.mangle.up&!dot.red_moon.ticking&(!talent.convoke_the_spirits.enabled|talent.convoke_the_spirits.enabled&cooldown.convoke_the_spirits.remains>=5)
     - red_moon,if=cooldown.mangle.up&!dot.red_moon.ticking&(!talent.convoke_the_spirits.enabled|talent.convoke_the_spirits.enabled&cooldown.convoke_the_spirits.remains>=5)
 
-    # mangle,if=(((buff.incarnation_guardian_of_ursoc.up|buff.berserk.up)&buff.feline_potential_counter.stack<6&talent.wildpower_surge.enabled))
-    - mangle,if=((buff.incarnation_guardian_of_ursoc.up|buff.berserk.up)&buff.ursine_potential.stack<6&talent.wildpower_surge.enabled)
-
-    # shred,if=(buff.feline_potential_counter.stack=6&!buff.cat_form.up&!dot.rake.refreshable&talent.fluid_form.enabled)
-    - shred,if=(buff.ursine_potential.stack=6&!buff.cat_form.up&!dot.rake.refreshable&talent.fluid_form.enabled)
-
-    # rake,if=(buff.feline_potential_counter.stack=6&!buff.cat_form.up&talent.fluid_form.enabled)
-    - rake,if=(buff.ursine_potential.stack=6&!buff.cat_form.up&talent.fluid_form.enabled)
-
     # maul,if=!buff.ravage.up&rage>=90&talent.fount_of_strength.enabled&!talent.raze.enabled
     - maul,if=!buff.ravage.up&rage>=90&talent.fount_of_strength.enabled&!talent.raze.enabled
 
-    # mangle,if=(buff.incarnation_guardian_of_ursoc.up|buff.berserk.up)|talent.red_moon.enabled&(cooldown.red_moon.remains>3&(((rage<88)&!talent.fount_of_strength.enabled)|((rage<83)&!talent.fount_of_strength.enabled&talent.soul_of_the_forest.enabled)|((rage<108)&talent.fount_of_strength.enabled)|((rage<103)&talent.fount_of_strength.enabled&talent.soul_of_the_forest.enabled)))
-    - mangle,if=(buff.incarnation_guardian_of_ursoc.up|buff.berserk.up)|talent.red_moon.enabled&(cooldown.red_moon.remains>3&(((rage<88)&!talent.fount_of_strength.enabled)|((rage<83)&!talent.fount_of_strength.enabled&talent.soul_of_the_forest.enabled)|((rage<108)&talent.fount_of_strength.enabled)|((rage<103)&talent.fount_of_strength.enabled&talent.soul_of_the_forest.enabled)))
+    # mangle,if=buff.bs_inc.up|talent.red_moon.enabled&(cooldown.red_moon.remains>3&(((rage<88)&!talent.fount_of_strength.enabled)|((rage<83)&!talent.fount_of_strength.enabled&talent.soul_of_the_forest.enabled)|((rage<108)&talent.fount_of_strength.enabled)|((rage<103)&talent.fount_of_strength.enabled&talent.soul_of_the_forest.enabled)))
+    - mangle,if=var.bs_inc|talent.red_moon.enabled&(cooldown.red_moon.remains>3&(((rage<88)&!talent.fount_of_strength.enabled)|((rage<83)&!talent.fount_of_strength.enabled&talent.soul_of_the_forest.enabled)|((rage<108)&talent.fount_of_strength.enabled)|((rage<103)&talent.fount_of_strength.enabled&talent.soul_of_the_forest.enabled)))
 
     # mangle,if=!talent.red_moon.enabled&(((rage<88)&!talent.fount_of_strength.enabled)|((rage<83)&!talent.fount_of_strength.enabled&talent.soul_of_the_forest.enabled)|((rage<108)&talent.fount_of_strength.enabled)|((rage<103)&talent.fount_of_strength.enabled&talent.soul_of_the_forest.enabled))
     - mangle,if=!talent.red_moon.enabled&(((rage<88)&!talent.fount_of_strength.enabled)|((rage<83)&!talent.fount_of_strength.enabled&talent.soul_of_the_forest.enabled)|((rage<108)&talent.fount_of_strength.enabled)|((rage<103)&talent.fount_of_strength.enabled&talent.soul_of_the_forest.enabled))
@@ -268,6 +237,41 @@ lists:
     # swipe_bear,if=!talent.lunation.enabled|(talent.lunation.enabled&talent.red_moon.enabled)|talent.lunation.enabled&active_enemies>3
     - 213764,if=!talent.lunation.enabled|(talent.lunation.enabled&talent.red_moon.enabled)|talent.lunation.enabled&active_enemies>3
 
+  heart_of_the_wild:
+    # cat_form,if=!buff.cat_form.up&!talent.fluid_form.enabled&cooldown.heart_of_the_wild.up&talent.heart_of_the_wild.enabled&(active_enemies<=5&talent.moonkin_form.enabled|!talent.moonkin_form.enabled)&(rage<30&!talent.fount_of_strength.enabled|talent.fount_of_strength.enabled)
+    - cat_form,range_check=none,if=!buff.cat_form.up&!talent.fluid_form.enabled&cooldown.1261867.up&talent.heart_of_the_wild.enabled&(active_enemies<=5&talent.moonkin_form.enabled|!talent.moonkin_form.enabled)&(rage<30&!talent.fount_of_strength.enabled|talent.fount_of_strength.enabled)
+    # rake,if=!buff.cat_form.up&talent.fluid_form.enabled&cooldown.heart_of_the_wild.up&talent.heart_of_the_wild.enabled&(active_enemies<=5&talent.moonkin_form.enabled|!talent.moonkin_form.enabled)
+    - rake,if=!buff.cat_form.up&talent.fluid_form.enabled&cooldown.1261867.up&talent.heart_of_the_wild.enabled&(active_enemies<=5&talent.moonkin_form.enabled|!talent.moonkin_form.enabled)
+    # moonkin_form,if=!buff.moonkin_form.up&cooldown.heart_of_the_wild.up&active_enemies>=6&talent.moonkin_form.enabled
+    - moonkin_form,range_check=none,if=!buff.moonkin_form.up&cooldown.1261867.up&active_enemies>=6&talent.moonkin_form.enabled
+
+  feline_potential:
+    # ferocious_bite,if=(buff.cat_form.up&buff.feline_potential.up&buff.bs_inc.up&!dot.rip.refreshable)
+    - ferocious_bite,if=(buff.cat_form.up&buff.feline_potential.up&var.bs_inc&!dot.rip.refreshable)
+    # rake,if=!buff.cat_form.up&talent.fluid_form.enabled&buff.feline_potential_counter.stack=6&talent.wildpower_surge.enabled&active_enemies<=2
+    - rake,if=!buff.cat_form.up&talent.fluid_form.enabled&buff.ursine_potential.stack=6&talent.wildpower_surge.enabled&active_enemies<=2
+    # rip,if=(buff.cat_form.up&buff.feline_potential.up)&active_enemies<=2
+    - rip,if=(buff.cat_form.up&buff.feline_potential.up)&active_enemies<=2
+    # mangle,if=((buff.bs_inc.up&buff.feline_potential_counter.stack<6&talent.wildpower_surge.enabled))
+    - mangle,if=(var.bs_inc&buff.ursine_potential.stack<6&talent.wildpower_surge.enabled)
+    # shred,if=(buff.feline_potential_counter.stack=6&!buff.cat_form.up&!dot.rake.refreshable&talent.fluid_form.enabled)
+    - shred,if=(buff.ursine_potential.stack=6&!buff.cat_form.up&!dot.rake.refreshable&talent.fluid_form.enabled)
+    # rake,if=(buff.feline_potential_counter.stack=6&!buff.cat_form.up&talent.fluid_form.enabled)
+    - rake,if=(buff.ursine_potential.stack=6&!buff.cat_form.up&talent.fluid_form.enabled)
+
+  items:
+    # use_item,name=voracious_heart_of_ulatek,use_off_gcd=1,if=buff.bs_inc.remains>=20
+    - use_item,name=voracious_heart_of_ulatek,use_off_gcd=1,if=var.bs_inc_remains>=20
+    # use_item,name=vile_vial_of_volatile_venom,use_off_gcd=1,if=buff.bs_inc.remains>=15
+    - use_item,name=vile_vial_of_volatile_venom,use_off_gcd=1,if=var.bs_inc_remains>=15
+    # use_item,name=freightrunners_flask,use_off_gcd=1,if=buff.bs_inc.remains>=15
+    - use_item,name=freightrunners_flask,use_off_gcd=1,if=var.bs_inc_remains>=15
+    # use_items,slots=trinket1,if=(variable.trinket_sync_slot=1&(buff.bs_inc.up|(!talent.ursocs_guidance.enabled&!cooldown.bs_inc.up))|(variable.trinket_sync_slot=2&(!trinket.2.cooldown.ready|(!buff.bs_inc.up&!cooldown.bs_inc.ready)))|!variable.trinket_sync_slot)
+    # trinket_sync_slot is built from trinket properties (stripped, CLAUDE.md 1.5) -> generic fallback.
+    - trinket_1,if=trinket_1.sync
+    # use_items,slots=trinket2,if=(variable.trinket_sync_slot=2&(buff.bs_inc.up|(!talent.ursocs_guidance.enabled&!cooldown.bs_inc.up))|(variable.trinket_sync_slot=1&(!trinket.1.cooldown.ready|(!buff.bs_inc.up&!cooldown.bs_inc.ready)))|!variable.trinket_sync_slot)
+    - trinket_2,if=trinket_2.sync
+
   # ==========================================================================
   # MAIN
   # ==========================================================================
@@ -277,17 +281,14 @@ lists:
     - call_action_list,name=sanity_checks
     - call_action_list,name=auto_target
 
-    - mark_of_the_wild,range_check=none,if=(buff.mark_of_the_wild.down.any|action.mark_of_the_wild.overlayed)&lastcast.mark_of_the_wild>=10
+    - mark_of_the_wild,range_check=none,if=group.count(cycle.buff.mark_of_the_wild.down.any)>0&lastcast.mark_of_the_wild>=10
     - travel_form,after=200,range_check=none,if=config.travel_form_mode&!player.combat&player.inopenworld&mount_usable&buff.travel_form.down&!target.quest_mob
 
-    - bear_form,range_check=none,if=buff.bear_form.down&!talent.fluid_form&(target.attackable|enemies.40y)
+    - bear_form,range_check=none,if=!player.combat&buff.bear_form.down&!talent.fluid_form&(target.attackable|enemies.40y)
 
-    # heart of the wild (cat-form variant) out of combat
-    - 1261868,if=!auto_combat.player&buff.cat_form.up
+    - mangle,if=!player.combat&talent.fluid_form.enabled&buff.bear_form.down&(target.attackable|target.quest_mob)
 
-    - mangle,if=talent.fluid_form.enabled&buff.bear_form.down&(target.attackable|target.quest_mob)
-
-    - moonfire.mouseover,if=config.MO_moonfire&config.allow_pull_with_mo&mouseover.enemy&mouseover.alive&mouseover.debuff.moonfire.down
+    - moonfire.mouseover,if=config.MO_moonfire&config.allow_pull_with_mo&mouseover.enemy&mouseover.alive&!mouseover.combat&mouseover.debuff.moonfire.down
 
     - return,if=auto_combat.player
     - call_action_list,name=defensives
@@ -304,18 +305,19 @@ lists:
     - tail_swipe,if=interrupt.stun.aoe.check
 
     # Taunt — grab aggro when not tanking (dungeon/M+ only, never raid)
-    - growl,name="Taunt",if=target.threat<2&target.combat&target.threat!=-1&!player.inraid
-    - growl.mouseover,name="Taunt MO",if=mouseover.threat<2&mouseover.combat&mouseover.threat!=-1&mouseover.exists&!player.inraid
+    - growl,name="Taunt",if=target.threat<2&target.combat&target.threat!=-1&target.targeting_party&!target.ignore_count&!target.bypass_combat&!player.inraid
+    - growl.mouseover,name="Taunt MO",if=mouseover.threat<2&mouseover.combat&mouseover.threat!=-1&mouseover.targeting_party&!mouseover.ignore_count&!mouseover.bypass_combat&mouseover.exists&!player.inraid
 
     - call_action_list,name=auto_heal
-
-    # use_items (cooldowns list) — generic slot fallbacks
-    - trinket_1,if=trinket_1.sync
-    - trinket_2,if=trinket_2.sync
 
     - ironfur,delay=300,if=buff.ironfur.remains<2|rage>=80
     - moonfire,if=target.range>8&buff.bear_form.up&target.combat
     - moonfire.mouseover,if=config.MO_moonfire&mouseover.enemy&mouseover.alive&mouseover.debuff.moonfire.down&mouseover.combat
 
+    # retarget,target_if=max:target.health,line_cd=5,if=fight_style.dungeonroute
+    # call_action_list,name=cooldowns
     - call_action_list,name=cooldowns
-    - call_action_list,name=bear,if=buff.bear_form.up
+    # call_action_list,name=items
+    - call_action_list,name=items
+    # call_action_list,name=bear
+    - call_action_list,name=bear

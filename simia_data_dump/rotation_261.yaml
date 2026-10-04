@@ -135,7 +135,7 @@ lists:
     - shuriken_storm,if=buff.shadow_dance.up&buff.premeditation.up&(debuff.deathstalkers_mark.up|buff.darkest_night.up|!talent.deathstalkers_mark)
     # shadowstrike,if=!debuff.deathstalkers_mark.up&talent.deathstalkers_mark&!buff.darkest_night.up|variable.targets<=2-set_bonus.midnight_season_2_2pc|variable.priority_rotation
     # priority_rotation is a SimC sim option — dropped
-    - shadowstrike,if=!debuff.deathstalkers_mark.up&talent.deathstalkers_mark&!buff.darkest_night.up|var.targets<=2
+    - shadowstrike,if=!debuff.deathstalkers_mark.up&talent.deathstalkers_mark&!buff.darkest_night.up|var.targets<=2-set_bonus.midnight_season_2_2pc
     # shuriken_storm,if=variable.targets>1
     - shuriken_storm,if=var.targets>1
     # gloomblade,if=variable.targets<2&!variable.stealth

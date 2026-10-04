@@ -27,10 +27,22 @@ spell_overrides:
   # are already applied; the live rotation cannot).
   epidemic: "nameplates.debuff.virulent_plague.count>0"
   # local addition: D&D placement policy, not in SimC.
+  # Placement: >=75% of the mobs in 8yd are still inside 8yd of this spot 2s from now,
+  # projected along their smoothed velocity (enemies.staying.8y). D&D stays where it lands:
+  # jitter/small steps stay in, a pack dragged by the tank (or running with us) projects out.
+  # WCL top keys: 88% of casts land on a still pack; a moving-pack cast keeps 75% of mobs in
+  # the circle at +3s vs 91% (tools/wcl_dnd_timing.py, CLAUDE.md 8.11).
+  # Running into a parked pack passes the rule above (its edge mobs "stay"), so also require:
+  #  - the patch holds >=60% of the target's pack (enemies.around_target.range.10; no target = 0)
+  #  - we stand within 10yd of the tank, who holds the pack (no tank = 0 passes; raid, dead tank or
+  #    no tank position (reads 1e9) fail open)
+  # tools/wcl_dnd_runin.py, 48 keys: early drops 8.4% -> 4.6%, <1 mob covered 19.0% -> 15.1%,
+  # good moments held 8.4% -> 14.8%. tank<=8 doubles the holds for ~0.6pt more.
   # Always cast during DT or Army windows.
   # CDs ON: only when charges_fractional>=1.8.
   # CDs OFF: charges_fractional>=1.9, or >=1.5 with fight_remains>=20.
-  death_and_decay: "player.moving.time<0.5&enemies.8y>=enemies_around_target&(buff.dark_transformation.up|pet.army_ghoul.active|var.cds_active&cooldown.death_and_decay.charges_fractional>=1.8|!var.cds_active&(cooldown.death_and_decay.charges_fractional>=1.9|cooldown.death_and_decay.charges_fractional>=1.5&fight_remains>=20))"
+  death_and_decay: "enemies.8y>0&enemies.staying.8y*4>=enemies.8y*3&enemies.8y*5>=enemies.around_target.range.10*3&(player.inraid|tank1.dead|tank1.distance<=10|tank1.distance>40)&(buff.dark_transformation.up|pet.army_ghoul.active|var.cds_active&cooldown.death_and_decay.charges_fractional>=1.8|!var.cds_active&(cooldown.death_and_decay.charges_fractional>=1.9|cooldown.death_and_decay.charges_fractional>=1.5&fight_remains>=20))"
+  outbreak: "lastcast.putrefy>=2"
 
 config:
   darksuccor_solo_hp_pct:
@@ -92,8 +104,6 @@ config:
 variables:
   # Use active_enemies (8y around player) when in melee, enemies_around_target when ranged
   enemies_count: "(target.melee_gap<=0)*active_enemies+(target.melee_gap>0)*enemies_around_target"
-  # variable,name=spending_rp,value=rune<2|buff.forbidden_knowledge.up&(rune<3|pet.gargoyle.active|buff.essence_of_the_blood_queen.stack>=2)|buff.sudden_doom.react
-  spending_rp: rune<2|buff.forbidden_knowledge.up&(rune<3|totem.summon_gargoyle.up|buff.essence_of_the_blood_queen.stack>=2)|buff.sudden_doom.react
   # variable,name=st_planning,op=setif,value=1,value_else=0,condition=active_enemies=1&(!raid_event.adds.exists|!raid_event.adds.in|raid_event.adds.in>15|!raid_event.pull.exists|raid_event.pull.exists&raid_event.pull.in>15)
   st_planning: var.enemies_count=1
   # variable,name=adds_remain,value=active_enemies>=2&((!raid_event.adds.exists|!raid_event.pull.exists)|raid_event.adds.remains>5|raid_event.pull.remains>5)
@@ -128,34 +138,49 @@ lists:
     # lights_judgment,if=runic_power<20&rune<2
     - lights_judgment,if=runic_power<20&rune<2
 
+  high_priority:
+    # actions.high_priority=/potion,if=(variable.st_planning|variable.adds_remain)&variable.cds_active
+    # actions.high_priority+=/invoke_external_buff,name=power_infusion,if=pet.army_ghoul.active|buff.forbidden_knowledge.up|buff.dark_transformation.up
+    # actions.high_priority+=/scourge_strike,if=buff.vampiric_strike.up&buff.essence_of_the_blood_queen.up&buff.essence_of_the_blood_queen.remains<gcd*3
+    - scourge_strike,if=buff.vampiric_strike.up&buff.essence_of_the_blood_queen.up&buff.essence_of_the_blood_queen.remains<gcd.max*3
+
   trinkets:
-    # use_item,slot=trinket1,if=variable.trinket_1_buffs&(variable.trinket_priority=1|!variable.trinket_2_buffs|!trinket.2.has_cooldown)&(trinket.1.cast_time>0&trinket.1.cast_time>cooldown.army_of_the_dead.remains&(!talent.festering_scythe|buff.festering_scythe_tt.up)|trinket.1.cast_time=0&variable.cds_active)
+    # use_item,slot=trinket1,if=variable.trinket_1_buffs&(variable.trinket_priority=1|!variable.trinket_2_buffs|!trinket.2.has_cooldown|trinket.2.cooldown.remains)&(trinket.1.cast_time>0&trinket.1.cast_time>cooldown.army_of_the_dead.remains&(!talent.festering_scythe|buff.festering_scythe_tt.up)|trinket.1.cast_time=0&variable.cds_active)
     - trinket_1,if=trinket_1.sync
-    # use_item,slot=trinket2,if=variable.trinket_2_buffs&(variable.trinket_priority=2|!variable.trinket_1_buffs|!trinket.1.has_cooldown)&(trinket.2.cast_time>0&trinket.2.cast_time>cooldown.army_of_the_dead.remains&(!talent.festering_scythe|buff.festering_scythe_tt.up)|trinket.2.cast_time=0&variable.cds_active)
+    # use_item,slot=trinket2,if=variable.trinket_2_buffs&(variable.trinket_priority=2|!variable.trinket_1_buffs|!trinket.1.has_cooldown|trinket.1.cooldown.remains)&(trinket.2.cast_time>0&trinket.2.cast_time>cooldown.army_of_the_dead.remains&(!talent.festering_scythe|buff.festering_scythe_tt.up)|trinket.2.cast_time=0&variable.cds_active)
     - trinket_2,if=trinket_2.sync
-    # use_item,slot=trinket1,if=!variable.trinket_1_buffs&(variable.damage_trinket_priority=1|!variable.trinket_2_buffs|!trinket.2.has_cooldown)
+    # use_item,slot=trinket1,if=!variable.trinket_1_buffs&(!trinket.2.has_cooldown|trinket.2.cooldown.remains|!variable.trinket_2_buffs)&(variable.damage_trinket_priority=1|trinket.2.cooldown.remains)
     # (covered by trinket_1.sync above)
-    # use_item,slot=trinket2,if=!variable.trinket_2_buffs&(variable.damage_trinket_priority=2|!variable.trinket_1_buffs|!trinket.1.has_cooldown)
+    # use_item,slot=trinket2,if=!variable.trinket_2_buffs&(!trinket.1.has_cooldown|trinket.1.cooldown.remains|!variable.trinket_1_buffs)&(variable.damage_trinket_priority=2|trinket.1.cooldown.remains)
     # (covered by trinket_2.sync above)
 
   cooldowns:
-    # potion,if=(variable.st_planning|variable.adds_remain)&variable.cds_active
-    # invoke_external_buff,name=power_infusion,if=pet.army_ghoul.active|buff.forbidden_knowledge.up|buff.dark_transformation.up
-    # outbreak,if=(!talent.blightburst|talent.blightburst&(cooldown.putrefy.remains>gcd.max*2|time<5))&(dot.dread_plague.active_dots=0|dot.virulent_plague.active_dots=0)&(fight_remains>gcd.max*2&!raid_event.adds.exists|raid_event.adds.exists&raid_event.adds.remains>gcd.max*2)
-    - outbreak,if=(!talent.blightburst|talent.blightburst&(cooldown.putrefy.remains>gcd.max*2|combat.time<5))&(active_dot.dread_plague=0|active_dot.virulent_plague=0)&fight_remains>gcd.max*2
+    # outbreak,if=(!talent.blightburst|talent.blightburst&(cooldown.putrefy.remains>gcd.max*2|time<5))&dot.dread_plague.active_dots=0&(fight_remains>gcd.max*2&!raid_event.adds.exists|raid_event.adds.exists&raid_event.adds.remains>gcd.max*2)
+    - outbreak,if=(!talent.blightburst|talent.blightburst&(cooldown.putrefy.remains>gcd.max*2|combat.time<5))&active_dot.dread_plague=0&fight_remains>gcd.max*2
+    # death_and_decay,if=active_enemies>=3&talent.cycle_of_death&(buff.festering_scythe_tt.up|!talent.festering_scythe)&(cooldown.putrefy.charges<cooldown.putrefy.max_charges&(raid_event.adds.exists&raid_event.adds.remains>=duration*0.75|!raid_event.adds.exists&fight_remains>=duration*0.75)&(raid_event.adds.exists&raid_event.adds.count<active_enemies|!raid_event.adds.exists|charges=max_charges))
+    - death_and_decay.player,if=var.enemies_count>=3&talent.cycle_of_death&(buff.1241077.up|!talent.festering_scythe)&cooldown.putrefy.charges<cooldown.putrefy.max_charges&fight_remains>=action.death_and_decay.duration*0.75
     # army_of_the_dead,if=(variable.st_planning|variable.adds_remain)&(buff.festering_scythe_tt.up|!talent.festering_scythe)
     # (variable.st_planning|variable.adds_remain) dropped: once raid_event is stripped they are
     # enemies=1 and enemies>=2, so the OR is a tautology in combat. buff.festering_scythe_tt → 1241077.
     - army_of_the_dead,if=buff.1241077.up|!talent.festering_scythe
-    # dark_transformation,if=(variable.st_planning|variable.adds_remain)&!buff.blightfall.up&(pet.army_ghoul.active|cooldown.army_of_the_dead.remains>30|!talent.army_of_the_dead)|buff.blightfall.up&(talent.reaping&talent.soul_reaper&debuff.soul_reaper_debuff.up&debuff.soul_reaper_debuff.remains<gcd*2|!talent.soul_reaper&buff.dark_transformation.remains<gcd*2|!talent.reaping&buff.dark_transformation.remains<gcd*2|raid_event.adds.exists&raid_event.adds.remains<3|fight_remains<3)
-    # (variable.st_planning|variable.adds_remain) dropped: tautology, see army_of_the_dead above.
+    # dark_transformation,if=(variable.st_planning|variable.adds_remain)&!buff.blightfall.up&(pet.army_ghoul.active|cooldown.army_of_the_dead.remains>30|!talent.army_of_the_dead)|buff.blightfall.up&((active_enemies<=3|raid_event.pull.has_boss)&(talent.reaping&talent.soul_reaper&debuff.soul_reaper_debuff.up&debuff.soul_reaper_debuff.remains<gcd*2)|fight_remains<3|raid_event.adds.exists&raid_event.adds.remains<3|buff.dark_transformation.up&buff.dark_transformation.remains<gcd*2|trinket.1.proc.any_dps.up&trinket.1.proc.any_dps.remains<gcd*2|trinket.2.proc.any_dps.up&trinket.2.proc.any_dps.remains<gcd*2|cooldown.dark_transformation.remains<3)
+    # trinket.N.proc.any_dps -> trinket_N.buff (the _trinkets.yaml trinket_buff; 0 when undeclared, §1.6).
     # gcd -> gcd.max, _debuff suffix stripped. Ids pinned: talent.reaping 377514, soul_reaper debuff
     # 1241521, lastcast 343294 Soul Reaper / 1233448 Dark Transformation.
     # local addition: upstream's debuff.soul_reaper.remains is target-scoped and dies with its host,
     # so it strands Blightfall on a target swap or an early death (and a held Blightfall also blocks
     # the next DT). nameplates.debuff.1241521.lowest is target-swap proof; the lastcast gates anchor
-    # the window to THIS DT and >=20 is the release valve. Rationale and WCL data: CLAUDE.md 8.11.
-    - dark_transformation,if=!buff.blightfall.up&(pet.army_ghoul.active|cooldown.army_of_the_dead.remains>30|!talent.army_of_the_dead)|buff.blightfall.up&(talent.377514&talent.soul_reaper&(lastcast.343294>=0.5&lastcast.343294<lastcast.1233448&nameplates.debuff.1241521.lowest<gcd.max*2|lastcast.1233448>=20)|!talent.soul_reaper&buff.dark_transformation.remains<gcd.max*2|!talent.377514&buff.dark_transformation.remains<gcd.max*2|fight_remains<3)
+    # the window to THIS DT and >=17 is the release valve (top parses 2026-09-25: no-SR dumps at median 17s), gated on plagues out so a Blightfall carried into the next pack waits for Outbreak. Rationale and WCL data: CLAUDE.md 8.11.
+    # local addition: split into the two mutually exclusive top-level branches so only the second
+    # one carries ignore_cds_toggle. Branch 1 is the real Dark Transformation cooldown and keeps
+    # respecting the user's CDs toggle. Branch 2 fires the button while it is MORPHED to Blightfall
+    # (_morphs.yaml), which is not a cooldown press at all — it is the held Blightfall that must be
+    # dumped inside the Soul Reaper window or it is wasted, and a held Blightfall also blocks the
+    # next DT (8.11). With CDs off the old single line stranded it for the whole pull.
+    # ignore_cds_toggle only skips the "marked as CD + CDs toggle off" block reason; a user-disabled
+    # or TTD-gated spell still blocks.
+    - dark_transformation,if=(var.st_planning|var.adds_remain)&!buff.blightfall.up&(pet.army_ghoul.active|cooldown.army_of_the_dead.remains>30|!talent.army_of_the_dead)
+    - dark_transformation,ignore_cds_toggle=true,if=buff.blightfall.up&(active_enemies<=3&talent.377514&talent.soul_reaper&(lastcast.343294>=0.5&lastcast.343294<lastcast.1233448&nameplates.debuff.1241521.lowest<gcd.max*2|lastcast.1233448>=17&nameplates.debuff.virulent_plague.count>0)|fight_remains<3|buff.dark_transformation.up&buff.dark_transformation.remains<gcd.max*2|trinket_1.buff.up&trinket_1.buff.remains<gcd.max*2|trinket_2.buff.up&trinket_2.buff.remains<gcd.max*2|cooldown.dark_transformation.remains<3)
 
   defensives:
     # --- Prediction Damage: pre-fire on a predicted incoming hit (% of effective HP) ---
@@ -170,48 +195,40 @@ lists:
     - icebound_fortitude,range_check=none,if=health.pct<=config.icebound_fortitude_hp_pct
 
   aoe:
-    # death_and_decay,if=talent.cycle_of_death&cooldown.putrefy.charges<cooldown.putrefy.max_charges&(raid_event.adds.exists&raid_event.adds.remains>duration%2|!raid_event.adds.exists&fight_remains>duration%2)&(raid_event.adds.exists&raid_event.adds.count<active_enemies|!raid_event.adds.exists|charges=max_charges|raid_event.adds.remains>cooldown.any_dnd.duration)
-    # SimC 2026-08-09 ("[Unholy] Remove desecrate condition from apl") dropped the leading
-    # `!death_and_decay.ticking&talent.desecrate|` branch. Previous line:
-    # - death_and_decay.player,if=buff.death_and_decay.down&talent.desecrate|talent.cycle_of_death&cooldown.putrefy.charges<cooldown.putrefy.max_charges&fight_remains>5
-    - death_and_decay.player,if=talent.cycle_of_death&cooldown.putrefy.charges<cooldown.putrefy.max_charges&fight_remains>5
-    # festering_strike,target_if=min:health.pct,if=talent.festering_scythe&(fight_remains>3|raid_event.adds.exists&raid_event.adds.remains>3)&(buff.festering_scythe.up&(buff.festering_scythe.remains<=3|buff.festering_scythe_tt.remains<3)|!buff.festering_scythe.up&buff.festering_scythe_tt.remains<3)
-    - festering_strike,if=talent.festering_scythe&fight_remains>3&(buff.458123.up&(buff.458123.remains<=3|buff.1241077.remains<3)|!buff.458123.up&buff.1241077.remains<3)
-    # putrefy,if=buff.dark_transformation.up
-    - putrefy,if=buff.dark_transformation.up
-    # soul_reaper,target_if=min:health.pct
-    - soul_reaper
-    # epidemic,if=variable.spending_rp&variable.epidemic_prio
-    - epidemic,range_check=none,if=var.spending_rp&var.epidemic_prio
-    # death_coil,target_if=min:health.pct,if=variable.spending_rp&!variable.epidemic_prio
-    - death_coil,if=var.spending_rp&!var.epidemic_prio
-    # festering_strike,target_if=min:health.pct,if=buff.lesser_ghoul_ready.stack=0
-    - festering_strike,if=player.buff.stacks(1254252)=0
+    # festering_strike,target_if=min:health.pct,if=talent.festering_scythe&(buff.festering_scythe.up&(buff.festering_scythe.remains<=3*gcd|buff.festering_scythe_tt.remains<3*gcd)|!buff.festering_scythe.up&buff.festering_scythe_tt.remains<3*gcd)
+    - festering_strike,if=talent.festering_scythe&(buff.458123.up&(buff.458123.remains<=3*gcd.max|buff.1241077.remains<3*gcd.max)|!buff.458123.up&buff.1241077.remains<3*gcd.max)
+    # putrefy,if=buff.dark_transformation.up|charges=max_charges
+    - putrefy,if=buff.dark_transformation.up|cooldown.putrefy.charges=cooldown.putrefy.max_charges
+    # soul_reaper,target_if=is_boss,if=buff.dark_transformation.up&cooldown.dark_transformation.remains<38|target.health.pct<35
+    - soul_reaper,if=buff.dark_transformation.up&cooldown.dark_transformation.remains<38|target.health.pct<35
+    # epidemic,if=variable.epidemic_prio&(buff.sudden_doom.react|runic_power.deficit<15|buff.essence_of_the_blood_queen.stack>=buff.essence_of_the_blood_queen.max_stack-1|buff.essence_of_the_blood_queen.remains<7&!buff.vampiric_strike.react|rune<2)
+    # max_stack -> 5+2*talent.434075 (live cap, CLAUDE.md 2.2).
+    - epidemic,range_check=none,if=var.epidemic_prio&(buff.sudden_doom.react|runic_power.deficit<15|buff.essence_of_the_blood_queen.stack>=5+2*talent.434075-1|buff.essence_of_the_blood_queen.remains<7&!buff.vampiric_strike.react|rune<2)
+    # festering_strike,target_if=min:health.pct,if=buff.lesser_ghoul_ready.stack<3
+    - festering_strike,if=player.buff.stacks(1254252)<3
     # scourge_strike,target_if=min:health.pct,if=buff.lesser_ghoul_ready.stack>=1
     - scourge_strike,if=player.buff.stacks(1254252)>=1
+    # death_coil,target_if=min:health.pct,if=!variable.epidemic_prio&(buff.sudden_doom.react|runic_power.deficit<15|buff.essence_of_the_blood_queen.stack>=buff.essence_of_the_blood_queen.max_stack-1|buff.essence_of_the_blood_queen.remains<7&!buff.vampiric_strike.react|rune<2)
+    - death_coil,if=!var.epidemic_prio&(buff.sudden_doom.react|runic_power.deficit<15|buff.essence_of_the_blood_queen.stack>=5+2*talent.434075-1|buff.essence_of_the_blood_queen.remains<7&!buff.vampiric_strike.react|rune<2)
     # epidemic,if=variable.epidemic_prio
     - epidemic,range_check=none,if=var.epidemic_prio
-    # death_coil,target_if=min:health.pct,if=!variable.epidemic_prio
-    - death_coil,if=!var.epidemic_prio
+    # death_coil,target_if=min:health.pct
+    - death_coil
 
   single_target:
     # festering_strike,if=talent.festering_scythe&fight_remains>10&(buff.festering_scythe.up&(buff.festering_scythe.remains<=3|buff.festering_scythe_tt.remains<3)|!buff.festering_scythe.up&buff.festering_scythe_tt.remains<3)
     - festering_strike,if=talent.festering_scythe&fight_remains>10&(buff.458123.up&(buff.458123.remains<=3|buff.1241077.remains<3)|!buff.458123.up&buff.1241077.remains<3)
-    # scourge_strike,if=buff.vampiric_strike.up&buff.essence_of_the_blood_queen.up&buff.essence_of_the_blood_queen.remains<gcd*3
-    - scourge_strike,if=buff.vampiric_strike.up&buff.essence_of_the_blood_queen.up&buff.essence_of_the_blood_queen.remains<gcd*3
+    # soul_reaper,target_if=min:health.pct,if=buff.dark_transformation.up&cooldown.dark_transformation.remains<38|target.health.pct<35
+    - soul_reaper,if=buff.dark_transformation.up&cooldown.dark_transformation.remains<38|target.health.pct<35
     # putrefy,if=buff.dark_transformation.up&runic_power.deficit>10
     - putrefy,if=buff.dark_transformation.up&runic_power.deficit>10
     # scourge_strike,if=runic_power.deficit<90&buff.essence_of_the_blood_queen.up&buff.essence_of_the_blood_queen.stack<buff.essence_of_the_blood_queen.max_stack
     # max_stack not supported. Game reports 5; talent 434075 Frenzied Bloodthirst adds 2. See CLAUDE.md 2.2.
     - scourge_strike,if=runic_power.deficit<90&buff.essence_of_the_blood_queen.up&buff.essence_of_the_blood_queen.stack<5+2*talent.434075
-    # death_coil,if=buff.sudden_doom.react
-    - death_coil,if=buff.sudden_doom.react
+    # death_coil,if=buff.sudden_doom.react|runic_power.deficit<=10
+    - death_coil,if=buff.sudden_doom.react|runic_power.deficit<=10
     # putrefy,if=buff.dark_transformation.up
     - putrefy,if=buff.dark_transformation.up
-    # soul_reaper,target_if=min:health.pct,if=pet.lord_of_the_dead.active&pet.lord_of_the_dead.remains<9|buff.dark_transformation.up&buff.dark_transformation.remains<12|target.health.pct<35
-    # pet.lord_of_the_dead.* aliased in _common.yaml to the object-manager minion scan
-    # (npc 264321); .remains = 15 - elapsed, 15s from lord_of_the_dead->effectN(2).
-    - soul_reaper,if=pet.lord_of_the_dead.active&pet.lord_of_the_dead.remains<9|buff.dark_transformation.up&buff.dark_transformation.remains<12|target.health.pct<35
     # death_coil,if=buff.dark_transformation.up|buff.forbidden_knowledge.up|buff.essence_of_the_blood_queen.remains<5&!buff.vampiric_strike.react
     - death_coil,if=buff.dark_transformation.up|buff.forbidden_knowledge.up|buff.essence_of_the_blood_queen.remains<5&!buff.vampiric_strike.react
     # scourge_strike,if=buff.lesser_ghoul_ready.stack>=1&buff.blighted.up
@@ -264,12 +281,14 @@ lists:
     # the cooldowns-list outbreak, which only fires on active_dot=0.
     # - outbreak,if=debuff.virulent_plague.remains<3
 
-    # call_action_list,name=racials
-    - call_action_list,name=racials
+    # call_action_list,name=racials,if=variable.st_planning|variable.adds_remain|fight_remains<30
+    - call_action_list,name=racials,if=var.st_planning|var.adds_remain|fight_remains<30
+    # call_action_list,name=high_priority
+    - call_action_list,name=high_priority
 
-    # Trinkets
-    - trinket_1,if=trinket_1.sync
-    - trinket_2,if=trinket_2.sync
+    # call_action_list,name=trinkets,if=variable.st_planning|variable.adds_remain|fight_remains<30
+    - trinket_1,if=(var.st_planning|var.adds_remain|fight_remains<30)&trinket_1.sync
+    - trinket_2,if=(var.st_planning|var.adds_remain|fight_remains<30)&trinket_2.sync
 
     - petattack,delay=200,if=target.distance<=8&!pet.attacking_target
 

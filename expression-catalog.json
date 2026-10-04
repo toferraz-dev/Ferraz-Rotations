@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "lastUpdated": "2026-08-30",
+  "lastUpdated": "2026-09-19",
   "operators": {
     "boolean": [
       {
@@ -96,6 +96,32 @@
         "symbol": "()",
         "description": "Parentheses for grouping and precedence control.",
         "example": "(buff.X.up|buff.Y.up)&cooldown.Z.ready"
+      }
+    ],
+    "math": [
+      {
+        "symbol": "floor(x)",
+        "name": "Floor",
+        "description": "Round down to the nearest integer. The argument is any sub-expression.",
+        "example": "floor(target.time_to_die/gcd)"
+      },
+      {
+        "symbol": "ceil(x)",
+        "name": "Ceiling",
+        "description": "Round up to the nearest integer. The argument is any sub-expression.",
+        "example": "ceil(cooldown.frozen_orb.remains/gcd)"
+      },
+      {
+        "symbol": "abs(x)",
+        "name": "Absolute Value",
+        "description": "Magnitude without sign. The argument is any sub-expression.",
+        "example": "abs(target.closing_speed)>2"
+      },
+      {
+        "symbol": "exp(x)",
+        "name": "Exponential",
+        "description": "e raised to the power x. The argument is any sub-expression.",
+        "example": "exp(buff.bloodlust.stack)"
       }
     ]
   },
@@ -411,7 +437,7 @@
         {
           "name": "charges",
           "returnType": "number",
-          "description": "Current available charges.",
+          "description": "Current available charges. Counts the cast in flight (a cast-time spell spends its charge at cast completion).",
           "example": "cooldown.fire_blast.charges>=1"
         },
         {
@@ -423,13 +449,13 @@
         {
           "name": "charges_fractional",
           "returnType": "number",
-          "description": "Charges as a decimal (includes partial recharge).",
+          "description": "Charges as a decimal (includes partial recharge). Counts the cast in flight.",
           "example": "cooldown.fire_blast.charges_fractional>=1.5"
         },
         {
           "name": "full_recharge_time",
           "returnType": "number",
-          "description": "Seconds until ALL charges are recovered.",
+          "description": "Seconds until ALL charges are recovered. Counts the cast in flight: a cast-time spell only spends its charge at cast completion, so this reads one charge lower while it is being cast.",
           "example": "cooldown.fire_blast.full_recharge_time<10"
         },
         {
@@ -453,7 +479,7 @@
         {
           "name": "is_cooldown",
           "returnType": "bool",
-          "description": "Spell is classified as a cooldown (member of cdSpells — either user-marked as CD or in the spec's default cooldown list). Independent of the effective block state; combine with state.cds to distinguish 'blocked via CDs off' (is_cooldown & !state.cds) from 'user-disabled' (blocked & !is_cooldown).",
+          "description": "Spell is classified as a cooldown (CD spell gate — either user-marked as CD or in the spec's default cooldown list). Independent of the effective block state; combine with state.cds to distinguish 'blocked via CDs off' (is_cooldown & !state.cds) from 'user-disabled' (blocked & !is_cooldown).",
           "example": "cooldown.combustion.is_cooldown & !state.cds"
         }
       ]
@@ -586,7 +612,7 @@
         {
           "name": "charges",
           "returnType": "number",
-          "description": "Current available charges.",
+          "description": "Current available charges. Counts the cast in flight (a cast-time spell spends its charge at cast completion).",
           "example": "action.fire_blast.charges>=1"
         },
         {
@@ -598,7 +624,7 @@
         {
           "name": "is_cooldown",
           "returnType": "bool",
-          "description": "Spell/action is classified as a cooldown (member of cdSpells). Use with state.cds to detect 'blocked via CDs off' specifically: action.X.is_cooldown & !state.cds. Mirrors cooldown.SPELL.is_cooldown.",
+          "description": "Spell/action is classified as a cooldown (CD spell gate). Use with state.cds to detect 'blocked via CDs off' specifically: action.X.is_cooldown & !state.cds. Mirrors cooldown.SPELL.is_cooldown.",
           "example": "action.combustion.is_cooldown"
         },
         {
@@ -627,6 +653,12 @@
           "returnType": "bool",
           "description": "Action-bar proc glow is active for this spell (from IsSpellOverlayed). Checks the override spell too, so it covers SimC's demonsurge_available-style gates.",
           "example": "action.metamorphosis.overlayed"
+        },
+        {
+          "name": "override_id",
+          "returnType": "number",
+          "description": "Spell id the button currently casts (C_Spell.GetOverrideSpell); the spell's own id when not overridden, 0 when not in the spellbook.",
+          "example": "action.432459.override_id=432472"
         }
       ],
       "expressions": [
@@ -685,6 +717,12 @@
           "example": "action.arcane_intellect.overlayed"
         },
         {
+          "syntax": "action.SPELL.override_id",
+          "returnType": "number",
+          "description": "Spell id pressing SPELL casts right now (C_Spell.GetOverrideSpell, refreshed <=250ms). SPELL's own id when not overridden, 0 when SPELL has no spellbook row. Reads SPELL's exact row (no morph fallback); pin SPELL numerically when the name collides. Backs the next_armament=holy_bulwark|sacred_weapon aliases in _common.yaml.",
+          "example": "action.432459.override_id=432472"
+        },
+        {
           "syntax": "action.SPELL.blocked",
           "returnType": "bool",
           "description": "Spell is user-blocked in the UI.",
@@ -693,7 +731,7 @@
         {
           "syntax": "action.SPELL.is_cooldown",
           "returnType": "bool",
-          "description": "Spell is classified as a cooldown (cdSpells membership), morph-symmetric.",
+          "description": "Spell is classified as a cooldown (CD spell gate), morph-symmetric.",
           "example": "action.recklessness.is_cooldown"
         },
         {
@@ -1070,6 +1108,33 @@
               "returnType": "bool",
               "description": "Player is auto-attacking.",
               "example": "auto_attacking"
+            },
+            {
+              "syntax": "swing.mh.remains",
+              "aliases": [
+                "swing.mainhand.remains",
+                "swing.main_hand.remains"
+              ],
+              "returnType": "number",
+              "description": "Seconds until the next main-hand swing (0 = due now); 9999 when not auto-attacking or no swing seen yet. SimC swing.mh.remains. Forever (classic) client only, from PLAYER_SWING; attack speed changes apply from the next swing. Always 9999 on retail.",
+              "example": "swing.mh.remains>1.5"
+            },
+            {
+              "syntax": "swing.oh.remains",
+              "aliases": [
+                "swing.offhand.remains",
+                "swing.off_hand.remains"
+              ],
+              "returnType": "number",
+              "description": "Seconds until the next off-hand swing, as swing.mh.remains. Forever client only.",
+              "example": "swing.oh.remains<0.2"
+            },
+            {
+              "syntax": "swing.ranged.remains",
+              "aliases": [],
+              "returnType": "number",
+              "description": "Seconds until the next Auto Shot / wand shot; 9999 when not shooting. Not a SimC expression (SimC has no ranged swing). Forever client only.",
+              "example": "swing.ranged.remains>action.aimed_shot.cast_time"
             },
             {
               "syntax": "player.mounted",
@@ -1806,6 +1871,24 @@
               "example": "target.melee_gap>=2"
             },
             {
+              "syntax": "target.combat_reach",
+              "returnType": "number",
+              "description": "The unit's combat reach in yards - its hitbox radius. This is one of the two reaches target.range subtracts from center distance, and one of the two the melee test adds.",
+              "example": "target.combat_reach>5"
+            },
+            {
+              "syntax": "target.bounding_radius",
+              "returnType": "number",
+              "description": "The unit's model bounding radius in yards, read straight off the unit. Use combat_reach for range math - this is the raw model size, not the value the server uses.",
+              "example": "target.bounding_radius>3"
+            },
+            {
+              "syntax": "target.has_world_pos",
+              "returnType": "bool",
+              "description": "The unit has a readable world position. When it is missing, X.distance and X.range both return 1e9 rather than 0, so geometry checks fail safe on their own - this expression is how you tell 'position unknown' apart from 'genuinely far away', which otherwise read the same.",
+              "example": "!target.has_world_pos"
+            },
+            {
               "syntax": "target.time_to_die",
               "aliases": [
                 "time_to_die"
@@ -1960,6 +2043,12 @@
               "returnType": "bool",
               "description": "NPC should be slowed (from _npcdata.yaml).",
               "example": "target.should_slow"
+            },
+            {
+              "syntax": "target.ignore_count",
+              "returnType": "bool",
+              "description": "NPC is excluded from AoE and mob counts (IgnoreCount in _npcdata.yaml). It stays a valid interrupt and stun target.",
+              "example": "!target.ignore_count"
             }
           ]
         }
@@ -2531,8 +2620,14 @@
             {
               "syntax": "pet.dead",
               "returnType": "bool",
-              "description": "Pet is dead.",
+              "description": "Pet is dead. With a pet unit this is its own dead flag; with NO pet unit it falls back to a latch the addon sets from the error a failed Call Pet press returns, because a pet dead long enough to despawn leaves nothing to read and the API cannot tell dead from dismissed. So pet.dead can be true while pet.exists is false.",
               "example": "pet.dead"
+            },
+            {
+              "syntax": "pet.unavailable",
+              "returnType": "bool",
+              "description": "The chosen stable slot has no pet to call (ERR_NO_PET). Clears on any pet change or world entry.",
+              "example": "!pet.exists&!pet.unavailable"
             },
             {
               "syntax": "pet.health.pct",
@@ -2741,6 +2836,12 @@
           "returnType": "number",
           "description": "Facing cone N° half-angle AND within Y yards edge-to-edge of player. Optional trailing y (e.g. .20y).",
           "example": "enemies.around.angle.45.20>=3"
+        },
+        {
+          "syntax": "enemies.staying[.S].Ny",
+          "returnType": "number",
+          "description": "Enemies within N yd whose position S seconds ahead (default 2, smoothed velocity) is still within N yd of the player's current spot. For ground-AoE placement: jitter stays in, a dragged pack or one running with you does not.",
+          "example": "enemies.8y>0&enemies.staying.8y*4>=enemies.8y*3"
         },
         {
           "syntax": "enemies.around_target",
@@ -3313,7 +3414,7 @@
       "id": "prev_gcd_lastcast",
       "name": "Prev GCD & Last Cast",
       "description": "Check what was cast recently.",
-      "syntax": "prev_gcd.N.SPELL / lastcast.SPELL",
+      "syntax": "prev_gcd.N.SPELL / prev_off_gcd.SPELL / lastcast.SPELL",
       "expressions": [
         {
           "syntax": "prev_gcd.1.SPELL",
@@ -3332,6 +3433,22 @@
           "returnType": "bool",
           "description": "3 GCDs ago was this spell.",
           "example": "prev_gcd.3.ice_lance"
+        },
+        {
+          "syntax": "prev_off_gcd.SPELL",
+          "returnType": "bool",
+          "description": "Spell was cast off the GCD recently. Off-GCD casts never enter the GCD history, so this is an approximation: true when the spell was cast within roughly the last 2 seconds.",
+          "example": "prev_off_gcd.blood_fury"
+        },
+        {
+          "syntax": "player.prev_gcd_1(SPELL)",
+          "aliases": [
+            "player.prev_gcd_2(SPELL)",
+            "player.prev_gcd_3(SPELL)"
+          ],
+          "returnType": "bool",
+          "description": "Argument form of prev_gcd.N.SPELL - identical result, with the spell passed as a function argument instead of embedded in the name.",
+          "example": "player.prev_gcd_1(fireball)"
         },
         {
           "syntax": "lastcast.SPELL",
@@ -3509,6 +3626,12 @@
               "returnType": "bool",
               "description": "Cycle member role is DPS.",
               "example": "cycle.dps"
+            },
+            {
+              "syntax": "cycle.is_player",
+              "returnType": "bool",
+              "description": "The current cycle member is you.",
+              "example": "cycle.is_player"
             },
             {
               "syntax": "cycle.spec_id",
@@ -3911,7 +4034,8 @@
           "syntax": "active_npc.NPC_ID.ttd",
           "aliases": [
             "active_npc.NPC_ID.max_ttd",
-            "active_npc.NPC_ID.time_to_die"
+            "active_npc.NPC_ID.time_to_die",
+            "active_npc.NPC_ID.max_time_to_die"
           ],
           "returnType": "number",
           "description": "Seconds until NO copy remains — i.e. how long .up stays true. Equals .max_ttd. 0 when none is active; 9999 when the copies are taking no damage.",
@@ -4405,10 +4529,10 @@
           "name": "Set Bonuses & Equipped",
           "expressions": [
             {
-              "syntax": "set_bonus.TIER_Xpc",
+              "syntax": "set_bonus.NAME_Xpc",
               "returnType": "bool",
-              "description": "Set bonus is active (defined in tier_sets).",
-              "example": "set_bonus.tier33_2pc"
+              "description": "Set bonus active. Automatic by item-set ID (catalysed pieces count); NAME is the SimC tier (mid2) or option name (midnight_season_2). Table: _trinkets.yaml set_bonus:, generated by gen_tier_sets.py. A rotation tier_sets: entry overrides.",
+              "example": "set_bonus.mid2_4pc"
             },
             {
               "syntax": "equipped.ITEM_ID",
@@ -4902,13 +5026,13 @@
             {
               "syntax": "incoming.pct",
               "returnType": "number",
-              "description": "Biggest predicted incoming hit as % of effective health (health + absorb).",
+              "description": "Biggest predicted incoming hit as % of effective health (health + absorb), after passive mitigation: damage-taken versatility, avoidance on aoe, armor on direct physical hits.",
               "example": "if=incoming.pct>=config.barkskin_dmg_pct"
             },
             {
               "syntax": "incoming.amount",
               "returnType": "number",
-              "description": "Raw (key-scaled) damage of the biggest predicted hit.",
+              "description": "Key-scaled damage of the biggest predicted hit, after passive mitigation (versatility, avoidance, armor).",
               "example": "if=incoming.amount>500000"
             },
             {
@@ -5120,7 +5244,7 @@
       {
         "name": "tier_sets",
         "type": "map",
-        "description": "Tier set definitions for set_bonus expressions."
+        "description": "Optional item-ID override for set_bonus (slot name -> item ID). Not needed: set_bonus is automatic via _trinkets.yaml set_bonus:."
       },
       {
         "name": "lists",

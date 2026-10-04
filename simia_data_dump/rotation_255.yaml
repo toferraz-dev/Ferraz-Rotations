@@ -51,12 +51,17 @@ config:
     max: 100
     default: 80
 
-  call_pet_number:
+  pet_slot:
     section: "Pet Management"
-    label: "Call Pet Number"
-    type: slider
-    min: 1
-    max: 5
+    label: "Pet"
+    type: dropdown
+    options:
+      - "No Pet"
+      - "Pet 1"
+      - "Pet 2"
+      - "Pet 3"
+      - "Pet 4"
+      - "Pet 5"
     default: 1
 
 lists:
@@ -153,8 +158,8 @@ lists:
     - kill_command,if=buff.tip_of_the_spear.stack=0&(cooldown.takedown.remains|!talent.twin_fangs)
     # boomstick
     - boomstick
-    # wildfire_bomb,if=buff.tip_of_the_spear.up&(debuff.sentinels_mark.remains|full_recharge_time<4)
-    - wildfire_bomb,if=buff.tip_of_the_spear.up&(debuff.sentinels_mark.remains|cooldown.wildfire_bomb.full_recharge_time<4)
+    # wildfire_bomb,if=(debuff.sentinels_mark.remains|full_recharge_time<4)
+    - wildfire_bomb,if=(debuff.sentinels_mark.remains|cooldown.wildfire_bomb.full_recharge_time<4)
     # kill_command,if=cooldown.takedown.remains<gcd&buff.tip_of_the_spear.stack<2&!talent.twin_fangs
     - kill_command,if=cooldown.takedown.remains<gcd&buff.tip_of_the_spear.stack<2&!talent.twin_fangs
     # takedown,if=buff.tip_of_the_spear.stack>0&!talent.twin_fangs|buff.tip_of_the_spear.stack=0&talent.twin_fangs
@@ -178,14 +183,8 @@ lists:
 
 
     # Pet Management
-    - revive_pet,range_check=none,if=!pet.alive&pet.exists
+    - call_action_list,name=auto_pet
 
-    - 883,range_check=none,if=!pet.exists&config.call_pet_number=1
-    - 83242,range_check=none,if=!pet.exists&config.call_pet_number=2
-    - 83243,range_check=none,if=!pet.exists&config.call_pet_number=3
-    - 83244,range_check=none,if=!pet.exists&config.call_pet_number=4
-    - 83245,range_check=none,if=!pet.exists&config.call_pet_number=5
-    
     # Combat Check
     - return,if=auto_combat.player
 

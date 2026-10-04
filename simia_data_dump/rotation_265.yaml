@@ -140,20 +140,20 @@ lists:
     - agony,if=dot.agony.refreshable
     # wither,if=refreshable
     - wither,if=dot.wither.refreshable
+    # dark_harvest,if=execute_time<(dot.agony.remains<?dot.corruption.remains)
+    - dark_harvest,if=action.dark_harvest.execute_time<(dot.agony.remains<?dot.corruption.remains)
     # malevolence
     - malevolence
+    # summon_darkglare,if=cooldown.summon_darkglare.duration<fight_remains|fight_remains<(20+5*talent.eye_contract+action.malefic_grasp.execute_time)
+    - summon_darkglare,if=cooldown.summon_darkglare.duration<fight_remains|fight_remains<(20+5*talent.eye_contract+action.malefic_grasp.execute_time)
     # malefic_grasp,if=buff.nightfall.react>1|pet.darkglare.remains<gcd
     - malefic_grasp,if=buff.nightfall.stack>1|pet.darkglare.remains<gcd
     # drain_soul,if=buff.nightfall.react>1
     - drain_soul,if=buff.nightfall.stack>1
     # shadow_bolt,if=buff.nightfall.react>1
     - shadow_bolt,if=buff.nightfall.stack>1
-    # unstable_affliction,if=pet.darkglare.remains|buff.malevolence.remains|soul_shard>4|buff.shard_instability.react|buff.cascading_calamity.remains<gcd.max
-    - unstable_affliction,if=pet.darkglare.remains|buff.malevolence.remains|soul_shard>4|buff.shard_instability.stack|buff.cascading_calamity.remains<gcd.max
-    # summon_darkglare
-    - summon_darkglare
-    # dark_harvest,if=execute_time<(dot.agony.remains<?dot.corruption.remains)&(!talent.cascading_calamity|buff.cascading_calamity.remains)
-    - dark_harvest,if=action.dark_harvest.execute_time<(dot.agony.remains<?dot.corruption.remains)&(!talent.cascading_calamity|buff.cascading_calamity.remains)
+    # unstable_affliction,if=pet.darkglare.remains|buff.malevolence.remains|soul_shard>4|buff.shard_instability.react>2|buff.cascading_calamity.remains<gcd.max
+    - unstable_affliction,if=pet.darkglare.remains|buff.malevolence.remains|soul_shard>4|buff.shard_instability.stack>2|buff.cascading_calamity.remains<gcd.max
 
   # ==========================================================================
   # SOUL HARVESTER - Cleave
@@ -167,13 +167,17 @@ lists:
     - agony,if=dot.agony.refreshable
     # dark_harvest
     - dark_harvest
-    # unstable_affliction,cycle_targets=1,if=!ticking&prev.dark_harvest
-    # cycle_targets dropped; bare !ticking → !dot.unstable_affliction.ticking; prev → prev_gcd.1
-    - unstable_affliction,if=!dot.unstable_affliction.ticking&prev_gcd.1.dark_harvest
-    # unstable_affliction
-    - unstable_affliction
     # summon_darkglare
     - summon_darkglare
+    # seed_of_corruption,target_if=!dot.unstable_affliction.ticking,if=buff.succulent_soul.remains&talent.sow_the_seeds&!pet.darkglare.active
+    - seed_of_corruption,if=!dot.unstable_affliction.ticking&buff.succulent_soul.remains&talent.sow_the_seeds&!pet.darkglare.active
+    # seed_of_corruption,if=talent.sow_the_seeds&!pet.darkglare.active
+    - seed_of_corruption,if=talent.sow_the_seeds&!pet.darkglare.active
+    # unstable_affliction,cycle_targets=1,if=!ticking&buff.succulent_soul.remains
+    # cycle_targets dropped; bare !ticking → !dot.unstable_affliction.ticking
+    - unstable_affliction,if=!dot.unstable_affliction.ticking&buff.succulent_soul.remains
+    # unstable_affliction
+    - unstable_affliction
     # malefic_grasp,if=buff.nightfall.react>1|pet.darkglare.remains<gcd
     - malefic_grasp,if=buff.nightfall.stack>1|pet.darkglare.remains<gcd
     # drain_soul,if=buff.nightfall.react>1
@@ -196,10 +200,10 @@ lists:
     - agony,if=dot.agony.refreshable
     # dark_harvest
     - dark_harvest
-    # summon_darkglare
-    - summon_darkglare
     # malevolence
     - malevolence
+    # summon_darkglare,if=cooldown.summon_darkglare.duration<fight_remains|fight_remains<(20+5*talent.eye_contract+action.malefic_grasp.execute_time)
+    - summon_darkglare,if=cooldown.summon_darkglare.duration<fight_remains|fight_remains<(20+5*talent.eye_contract+action.malefic_grasp.execute_time)
     # malefic_grasp,if=pet.darkglare.remains<gcd
     - malefic_grasp,if=pet.darkglare.remains<gcd
     # unstable_affliction
@@ -215,8 +219,8 @@ lists:
     - seed_of_corruption,if=(!dot.corruption.ticking|dot.corruption.refreshable)&!dot.seed_of_corruption.ticking&!prev_gcd.1.seed_of_corruption
     # dark_harvest
     - dark_harvest
-    # seed_of_corruption,target_if=!dot.unstable_affliction.ticking&prev.dark_harvest,if=set_bonus.midnight_season_2_4pc&active_enemies<=5
-    - seed_of_corruption,if=set_bonus.midnight_season_2_4pc&enemies_around_target<=5
+    # seed_of_corruption,target_if=!dot.unstable_affliction.ticking&buff.succulent_soul.remains,if=set_bonus.midnight_season_2_4pc&active_enemies<=5
+    - seed_of_corruption,if=!dot.unstable_affliction.ticking&buff.succulent_soul.remains&set_bonus.midnight_season_2_4pc&enemies_around_target<=5
     # agony,target_if=min:remains,if=active_dot.agony<12&remains<5
     - agony,if=active_dot.agony<12&dot.agony.remains<5
     # summon_darkglare
@@ -247,10 +251,10 @@ lists:
     - dark_harvest
     # agony,target_if=min:remains,if=active_dot.agony<14&remains<5
     - agony,if=active_dot.agony<14&dot.agony.remains<5
-    # summon_darkglare
-    - summon_darkglare
     # malevolence
     - malevolence
+    # summon_darkglare
+    - summon_darkglare
     # seed_of_corruption,if=talent.sow_the_seeds|active_enemies>5
     - seed_of_corruption,if=talent.sow_the_seeds|enemies_around_target>5
     # unstable_affliction

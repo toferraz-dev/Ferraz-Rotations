@@ -30,6 +30,11 @@ config:
     max: 100
     default: 50
 
+
+spell_overrides:
+  # local addition: the Whirlwind buff lands after the press, so buff.whirlwind.stack=0 still reads true briefly
+  whirlwind: "lastcast.whirlwind>gcd.max*2"
+
 variables:
   # Original: active_enemies=1&(raid_event.adds.in>15|!raid_event.adds.exists)
   st_planning: active_enemies=1
@@ -114,7 +119,7 @@ lists:
   # ==========================================================================
   slayer_aoe:
     # actions.slayer_aoe=/whirlwind,if=talent.improved_whirlwind&buff.whirlwind.stack=0
-    - whirlwind,if=talent.improved_whirlwind&buff.whirlwind.stack=0&(!prev_gcd.1.whirlwind|lastcast.whirlwind>gcd*1.2)
+    - whirlwind,if=talent.improved_whirlwind&buff.whirlwind.stack=0
     # actions.slayer_aoe+=/recklessness
     - recklessness
     # actions.slayer_aoe+=/avatar
@@ -252,7 +257,7 @@ lists:
     - shattering_throw,if=target.absorb>0
     - wrecking_throw,if=target.absorb>0
 
-    - battle_shout,range_check=none,if=(!buff.battle_shout.up.any|buff.battle_shout.remains.any<60|action.battle_shout.overlayed)&lastcast.battle_shout>=10
+    - battle_shout,range_check=none,if=group.count(cycle.buff.battle_shout.remains.any<60)>0&lastcast.battle_shout>=10
     # actions.precombat+=/berserker_stance,toggle=on
     - berserker_stance,range_check=none,if=!buff.berserker_stance.up
 

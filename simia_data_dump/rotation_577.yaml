@@ -16,6 +16,8 @@
 #   Reaver's Mark (debuff):      442624  (2 rows) — sc_demon_hunter.cpp:11289
 #   Rending Strike:              442442  (4 rows) — sc_demon_hunter.cpp:11291
 #   Glaive Flurry:               442435  — unique by name, left as a name
+#   Burning Wound (debuff):      391191  (13 rows) — talent 391189 effect 0 trigger
+#     (active_dot.X takes one id up front and does not self-correct, so pin it)
 #
 # UNRESOLVED: buff.demonsurge — 25 rows share the name "Demonsurge". SimC builds
 # it as hero_spec.demonsurge_trigger(453323)->effectN(1).trigger()
@@ -67,6 +69,15 @@ spell_overrides:
   felblade: "!config.felblade_range_check|target.range<=20"
   fel_devastation: "!config.felblade_range_check|target.range<=20"
 
+variables:
+  # actions.precombat+=/variable,name=tab_target_burning_wound,op=reset,default=1
+  # local addition: upstream defaults this to 1, which spreads Burning Wound by
+  # retargeting AUTO ATTACKS (the two retarget_auto_attack lines below). We cannot
+  # retarget autos, so that branch does nothing here and would leave Burning Wound
+  # unspread. Set to 0 to take upstream's documented alternative -- the throw_glaive
+  # spreader -- which is the only one we can actually execute.
+  tab_target_burning_wound: "0"
+
 lists:
   defensives:
     # --- Prediction Damage: pre-fire on a predicted incoming hit (% of effective HP) ---
@@ -112,6 +123,9 @@ lists:
 
     # actions=auto_attack — deleted
 
+    # actions+=/retarget_auto_attack,line_cd=1,target_if=min:debuff.burning_wound.remains,if=talent.burning_wound&active_dot.burning_wound<(spell_targets>?3)&variable.tab_target_burning_wound
+    # actions+=/retarget_auto_attack,line_cd=1,target_if=min:!target.is_boss,if=talent.burning_wound&active_dot.burning_wound=(spell_targets>?3)&variable.tab_target_burning_wound
+
     # actions+=/immolation_aura,if=talent.violent_transformation&talent.a_fire_inside&cooldown.metamorphosis.remains<gcd.max*3
     - immolation_aura,if=talent.violent_transformation&talent.a_fire_inside&cooldown.metamorphosis.remains<gcd.max*3
 
@@ -124,11 +138,8 @@ lists:
     # actions+=/vengeful_retreat,use_off_gcd=1,if=gcd.remains<0.3&cooldown.metamorphosis.remains&cooldown.eye_beam.remains<gcd.max*0.3&!buff.initiative.up|cooldown.metamorphosis.up&cooldown.eye_beam.remains&cooldown.blade_dance.remains&!buff.eternal_hunt.up
     - vengeful_retreat,if=gcd.remains<0.3&cooldown.metamorphosis.remains>0&cooldown.eye_beam.remains<gcd.max*0.3&!buff.391215.up|cooldown.metamorphosis.up&cooldown.eye_beam.remains>0&cooldown.blade_dance.remains>0&!buff.1271092.up
 
-    # actions+=/potion,if=cooldown.metamorphosis.up&(cooldown.eye_beam.up|!talent.chaotic_transformation)|fight_remains<=30
-
-    # actions+=/use_items,if=cooldown.metamorphosis.up|cooldown.eye_beam.up|fight_remains<=20
-    - trinket_1,if=trinket_1.sync
-    - trinket_2,if=trinket_2.sync
+    # actions+=/call_action_list,name=items
+    - call_action_list,name=items
 
     # actions+=/pick_up_fragment,type=all,use_off_gcd=1,if=fury<=40
 
@@ -146,6 +157,9 @@ lists:
 
     # actions+=/annihilation,if=debuff.essence_break.up|action.annihilation.demonsurge_available
     - annihilation,if=debuff.essence_break.up|action.annihilation.demonsurge_available
+
+    # actions+=/throw_glaive,if=active_enemies>1&talent.burning_wound&!talent.screaming_brutality&active_dot.burning_wound<(spell_targets>?3)&!variable.tab_target_burning_wound
+    - throw_glaive,if=active_enemies>1&talent.burning_wound&!talent.screaming_brutality&active_dot.391191<(spell_targets>?3)&!var.tab_target_burning_wound
 
     # actions+=/immolation_aura,if=talent.a_fire_inside&talent.burning_wound&(charges=2|full_recharge_time<gcd.max*2)
     - immolation_aura,if=talent.a_fire_inside&talent.burning_wound&(cooldown.immolation_aura.charges=2|cooldown.immolation_aura.full_recharge_time<gcd.max*2)
@@ -186,3 +200,20 @@ lists:
 
     # actions+=/immolation_aura
     - immolation_aura
+
+    # actions+=/arcane_torrent
+    - arcane_torrent
+
+  items:
+    # actions.items=/potion,use_off_gcd=1,if=cooldown.metamorphosis.up&(cooldown.eye_beam.up|!talent.chaotic_transformation)|fight_remains<=30
+
+    # actions.items+=/use_item,slot=trinket1,use_off_gcd=1,if=variable.trinket1_steroids&(!variable.trinket2_special|trinket.2.cooldown.remains>20)|fight_remains<15
+    # actions.items+=/use_item,slot=trinket1,use_off_gcd=1,if=variable.trinket1_crit&(buff.initiative.up|!talent.initiative)&(!variable.trinket2_special|trinket.2.cooldown.remains>20)|fight_remains<15
+    - trinket_1,if=trinket_1.sync
+
+    # actions.items+=/use_item,name=font_of_venomous_rage,if=buff.initiative.up&buff.initiative.remains>2&(!buff.metamorphosis.up|fight_remains<buff.metamorphosis.remains)&!debuff.essence_break.up|fight_remains<19
+    - use_item,name=font_of_venomous_rage,if=buff.391215.up&buff.391215.remains>2&(!buff.metamorphosis.up|fight_remains<buff.metamorphosis.remains)&!debuff.essence_break.up|fight_remains<19
+
+    # actions.items+=/use_item,slot=trinket2,use_off_gcd=1,if=variable.trinket2_steroids&(!variable.trinket1_special|trinket.1.cooldown.remains>20)|fight_remains<15
+    # actions.items+=/use_item,slot=trinket2,use_off_gcd=1,if=variable.trinket2_crit&(buff.initiative.up|!talent.initiative)&(!variable.trinket1_special|trinket.1.cooldown.remains>20)|fight_remains<15
+    - trinket_2,if=trinket_2.sync
