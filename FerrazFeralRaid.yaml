@@ -10,7 +10,7 @@
 # Why each line is the way it is: .agents/rationale/FeralRaid.md
 # =============================================================================
 
-version: "2.0.0"
+version: "3.0.0"
 author: Ferraz
 patch: "12.1"
 spec: 103
@@ -25,7 +25,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-09-10 | Patch: 12.1 | Version: 2.0.0"
+    text: "Last update: 2026-10-04 | Patch: 12.1 | Version: 3.0.0"
 
   recommended_talents:
     section: "Talents"
@@ -251,9 +251,13 @@ variables:
   burst_now: var.bs_inc|var.bs_inc_cd_remains<=5
   trinket_sync_ok: "!config.trinkets_burst_only|var.burst_now|fight_remains<25"
 
-  # Roots and snares only - what a shift actually breaks. NOT
-  # debuff_list.freedom.
-  druid_shapeshift_root: player.debuff.root.up|player.debuff.snare.up
+  # FIXED 2026-10-04: player.debuff.root.up/.snare.up never resolves - both
+  # are unverified expressions (see FerrazRestoDruid.yaml, same fix applied
+  # 2026-09-29). Switched to debuff_list.freedom.up, the real tag confirmed
+  # in simia_data_dump/_aura.yaml: every "freedom"-tagged aura is a root or
+  # snare/slow, stuns are tagged separately - so this does NOT cover stuns,
+  # and the !player.stunned guard on the shapeshift lines is correct.
+  druid_shapeshift_root: debuff_list.freedom.up
 
 lists:
   # Everything spell_queue / sanity_checks / auto.
@@ -299,7 +303,6 @@ lists:
   defensives:
     - barkskin,name="Barkskin (Predicted Damage)",off_gcd=true,ignore_queue=true,range_check=none,if=incoming.pct>=config.barkskin_dmg_pct
     - survival_instincts,name="Survival Instincts (Predicted Damage)",off_gcd=true,ignore_queue=true,range_check=none,if=incoming.pct>=config.survival_instincts_dmg_pct&incoming.mitigated.pct>=config.survival_instincts_dmg_pct
-    - bear_form,name="Shapeshift Clear",line_cd=8,if=config.root_cleanse&var.druid_shapeshift_root&!player.stunned&!buff.bear_form.up
     - survival_instincts,name="Survival Instincts (HP)",off_gcd=true,ignore_queue=true,range_check=none,if=health.pct<=config.survival_instincts_hp_pct
     - barkskin,name="Barkskin (HP)",off_gcd=true,ignore_queue=true,range_check=none,if=health.pct<=config.barkskin_hp_pct
 
@@ -403,6 +406,13 @@ lists:
     - regrowth,delay=500,range_check=none,if=buff.predatory_swiftness.up&health.pct<=config.predatory_swiftness_heal_hp_pct&lastcast.regrowth>=2
 
   main:
+    # Root/Snare Cleanse: absolute top priority, above the casting guard.
+    # Shapeshift strips root/snare/slow (debuff_list.freedom) but NOT stuns -
+    # !player.stunned guards against wasting the shift on something it can't
+    # break. Cat -> Bear -> Cat.
+    - bear_form,name="Root Cleanse (to Bear)",line_cd=8,if=config.root_cleanse&var.druid_shapeshift_root&!player.stunned&!buff.bear_form.up
+    - cat_form,name="Root Cleanse (from Bear)",line_cd=8,if=config.root_cleanse&var.druid_shapeshift_root&!player.stunned&buff.bear_form.up
+
     # Convoke is a channel and nothing here ever wants to break it.
     - return,if=player.channeling|player.casting|var.protected_channel
 

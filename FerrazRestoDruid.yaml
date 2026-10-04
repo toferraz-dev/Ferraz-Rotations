@@ -11,7 +11,7 @@
 #
 # Why each line is the way it is: .agents/rationale/RestoDruid.md
 # =============================================================================
-version: "17.0.0"
+version: "18.0.0"
 author: Ferraz
 patch: "12.1"
 spec: 105
@@ -31,7 +31,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-10-03 | Patch: 12.1 | Version: 17.0.0"
+    text: "Last update: 2026-10-04 | Patch: 12.1 | Version: 18.0.0"
 
 
   # RECOMMENDED BUILD — the string the talent.X gates below assume.
@@ -507,14 +507,11 @@ variables:
   # false because it never goes true either" bug class. Switched to
   # debuff_list.freedom.up, the one real tag confirmed in
   # simia_data_dump/_aura.yaml and used by _shared.yaml/other class
-  # rotations. Tradeoff accepted deliberately: freedom also covers stuns (a
-  # shift wastes a GCD trying to break something it can't), which is a minor
-  # cost against root_cleanse's own line_cd=8 throttle, versus the previous
-  # line silently never firing at all. A full per-dungeon (boss AND trash)
-  # root/snare spell ID audit was attempted 2026-09-29 and abandoned as
-  # infeasible by manual web search - too many undocumented trash mobs across
-  # 8 dungeons. Revisit with real ids only if/when specific ones are reported
-  # not breaking in play.
+  # rotations. Confirmed 2026-10-04 against _aura.yaml: every "freedom"-tagged
+  # aura is a root or snare/slow, stuns are tagged separately (non_phys-only
+  # or explicitly commented "not freedom-able") - so this does NOT cover
+  # stuns, and the separate !player.stunned guard on the shapeshift lines
+  # below is still correct (belt-and-suspenders, not covering a real gap).
   druid_shapeshift_root: debuff_list.freedom.up
 
 lists:
@@ -811,9 +808,6 @@ lists:
     - interact_target,delay=350,if=config.loot_nearby&loot_nearby&!player.combat
     - interact_mouseover,delay=350,if=config.loot_nearby&mouseover.lootable&mouseover.range<=5&!player.combat
 
-    - bear_form,name="Root Cleanse (to Bear)",line_cd=8,if=config.root_cleanse&var.druid_shapeshift_root&!player.stunned&!buff.bear_form.up&!buff.incarnation_tree_of_life.up
-    - cat_form,name="Root Cleanse (from Bear)",line_cd=8,if=config.root_cleanse&var.druid_shapeshift_root&!player.stunned&buff.bear_form.up&!buff.incarnation_tree_of_life.up
-
     # Nature's Cure removes MAGIC, curse and poison — the healer dispel. It had
     # no toggle before; dispelling is your job, so it defaults ON.
     - natures_cure,delay=500,cycle=members,name="Nature's Cure",if=config.auto_dispel&cycle.dispelable.list
@@ -839,6 +833,14 @@ lists:
 
   # Main Rotation (main) with combat priorities
   main:
+    # Root/Snare Cleanse: absolute top priority, above even the emergency
+    # heal call. Shapeshift strips root/snare/slow (debuff_list.freedom) but
+    # NOT stuns - !player.stunned guards against wasting the shift on
+    # something it can't break. Human -> Bear -> Human (no Tree of Life
+    # shift, which would drop the form).
+    - bear_form,name="Root Cleanse (to Bear)",line_cd=8,if=config.root_cleanse&var.druid_shapeshift_root&!player.stunned&!buff.bear_form.up&!buff.incarnation_tree_of_life.up
+    - cancel_form,name="Root Cleanse (from Bear)",line_cd=8,if=config.root_cleanse&var.druid_shapeshift_root&!player.stunned&buff.bear_form.up&!buff.incarnation_tree_of_life.up
+
     # Aborts while channeling Tranquility/Convoke. Emergency comes FIRST, above
     # the casting guard - only reachable while casting and low, so it is free.
     - call_action_list,name=emergency,if=player.combat&(player.casting|player.channeling)&health.effective.pct<=config.emergency_hp
