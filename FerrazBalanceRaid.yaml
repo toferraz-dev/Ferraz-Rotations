@@ -11,7 +11,7 @@
 # Why each line is the way it is: .agents/rationale/BalanceRaid.md
 # =============================================================================
 
-version: "5.0.0"
+version: "5.1.0"
 author: Ferraz
 patch: "12.1"
 spec: 102
@@ -26,7 +26,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-10-04 | Patch: 12.1 | Version: 5.0.0"
+    text: "Last update: 2026-10-04 | Patch: 12.1 | Version: 5.1.0"
 
   # Exact string every number here was measured against — Elune's Chosen, not Grove.
   recommended_talents:
@@ -261,7 +261,7 @@ config:
     section: "Defensives"
     type: checkbox
     default: true
-    description: "Shift form to break a root. Gated on an explicit list of the M+ 12.1 debuffs whose Mechanic is Root or Snare, so it never fires on something a shift cannot clear. line_cd caps it at one attempt every 8 seconds."
+    description: "Shift form to break a root, using the real player.rooted self-state (not stun, not fear - there is no equivalent snare check). line_cd caps it at one attempt every 8 seconds."
 
   discord_button:
     section: "Help"
@@ -281,13 +281,12 @@ variables:
   # Panic Bear Form line, so the exit gate below can never contradict it.
   bear_defensive_active: health.pct<=config.frenzied_regen_hp|(config.hotw_bear_defensive&health.effective.pct<=config.hotw_bear_hp&(cooldown.heart_of_the_wild.ready|buff.heart_of_the_wild.up))
 
-  # FIXED 2026-10-04: player.debuff.root.up/.snare.up never resolves - both
-  # are unverified expressions (see FerrazRestoDruid.yaml, same fix applied
-  # 2026-09-29). Switched to debuff_list.freedom.up, the real tag confirmed
-  # in simia_data_dump/_aura.yaml: every "freedom"-tagged aura is a root or
-  # snare/slow, stuns are tagged separately - so this does NOT cover stuns,
-  # and the !player.stunned guard on the shapeshift lines is correct.
-  druid_shapeshift_root: debuff_list.freedom.up
+  # FIXED 2026-10-04: user confirmed player.rooted is the real, working
+  # self-state expression (alongside player.stunned/player.feared) - no
+  # equivalent player.snared exists, so root is the only self-state this
+  # build reacts to. debuff_list.freedom.up also matches snare/slow and was
+  # dropped (see FerrazRestoDruid.yaml for the full fix history).
+  druid_shapeshift_root: player.rooted
 
 lists:
   # Called ABOVE the casting guard. All off-GCD or items, so nothing here
@@ -500,13 +499,13 @@ lists:
 
   # Entry point: first matching line wins the GCD.
   main:
-    # Root/Snare Cleanse: absolute top priority, above even the emergency
-    # call. Shapeshift strips root/snare/slow (debuff_list.freedom) but NOT
-    # stuns - !player.stunned guards against wasting the shift on something
-    # it can't break. Moonkin -> Bear -> Moonkin (not Cat - ranged spec, no
-    # reason to catweave out of a root cleanse).
-    - bear_form,name="Root Cleanse (to Bear)",line_cd=8,if=config.root_cleanse&var.druid_shapeshift_root&!player.stunned&!buff.bear_form.up
-    - moonkin_form,name="Root Cleanse (from Bear)",line_cd=8,if=config.root_cleanse&var.druid_shapeshift_root&!player.stunned&buff.bear_form.up
+    # Root Cleanse: absolute top priority, above even the emergency call.
+    # var.druid_shapeshift_root is player.rooted - the real, confirmed
+    # self-state (unlike stun or fear, there is no equivalent snare check).
+    # Moonkin -> Bear -> Moonkin (not Cat - ranged spec, no reason to
+    # catweave out of a root cleanse).
+    - bear_form,name="Root Cleanse (to Bear)",line_cd=8,if=config.root_cleanse&var.druid_shapeshift_root&!buff.bear_form.up
+    - moonkin_form,name="Root Cleanse (from Bear)",line_cd=8,if=config.root_cleanse&var.druid_shapeshift_root&buff.bear_form.up
 
     # IDENTICAL to FerrazBalance.yaml on purpose - the two files diverge in
     # damage priorities, never in plumbing.
