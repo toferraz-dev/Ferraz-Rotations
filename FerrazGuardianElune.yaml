@@ -9,7 +9,7 @@
 # Build drops Raze: the two Raze lines in bear are dead weight, the Maul
 # lines beside them are live.
 
-version: "3.0.0"
+version: "3.1.0"
 patch: "12.1"
 spec: 104
 name: Guardian Druid Ferraz M+
@@ -45,7 +45,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-10-04 | Patch: 12.1 | Version: 3.0.0"
+    text: "Last update: 2026-10-04 | Patch: 12.1 | Version: 3.1.0"
 
   # Exact string every number here was measured against (sim/Tassiana_guardian.simc).
   recommended_talents:
@@ -110,7 +110,7 @@ config:
     section: "Defensives Prediction Damage"
     type: checkbox
     default: true
-    description: "Shift form to break a root/snare. Only fires with at least 3 Ironfur charges, above 90% HP, and a defensive (Barkskin or Survival Instincts) already up - otherwise the GCD stays in Bear Form and the root is accepted. line_cd caps attempts at one every 8 seconds."
+    description: "Shift form to break a root, using the real player.rooted self-state (not stun, not fear - there is no equivalent snare check). Only fires with at least 3 Ironfur charges, above 90% HP, and a defensive (Barkskin or Survival Instincts) already up - otherwise the GCD stays in Bear Form and the root is accepted. line_cd caps attempts at one every 8 seconds."
 
   # === RAGE SPENDING === (100 cap on this build — default 20 fires at 80+ rage)
   rage_deficit_maul:
@@ -309,12 +309,12 @@ variables:
   # SimC has no equivalent prediction, treats this as permanently false.
   heavy_incoming: incoming.mitigated.pct>=config.ironfur_dmg_pct
 
-  # debuff_list.freedom.up is the real root/snare tag confirmed in
-  # simia_data_dump/_aura.yaml (every "freedom"-tagged aura is a root or
-  # snare/slow; stuns are tagged separately) - NOT player.debuff.root.up/
-  # .snare.up, which never resolves (see FerrazRestoDruid.yaml for the fix
-  # history). !player.stunned still guards the shapeshift lines in main.
-  druid_shapeshift_root: debuff_list.freedom.up
+  # FIXED 2026-10-04: user confirmed player.rooted is the real, working
+  # self-state expression (alongside player.stunned/player.feared) - no
+  # equivalent player.snared exists, so root is the only self-state this
+  # build reacts to. debuff_list.freedom.up also matches snare/slow and was
+  # dropped (see FerrazRestoDruid.yaml for the full fix history).
+  druid_shapeshift_root: player.rooted
   # Guardian-specific affordability gate: shifting out of Bear costs armor
   # and stamina for a GCD, so only do it when the tank can eat that - plenty
   # of Ironfur stacked, HP comfortably high, and a defensive already running
@@ -481,15 +481,15 @@ lists:
 
   # Entry point: first matching line wins the GCD.
   main:
-    # Root/Snare Cleanse: absolute top priority, above even the channel
-    # guard. Shapeshift strips root/snare/slow (debuff_list.freedom) but NOT
-    # stuns - !player.stunned guards against wasting the shift on something
-    # it can't break. Gated on var.druid_shapeshift_safe (3+ Ironfur stacks,
-    # >90% HP, a defensive already up) because leaving Bear costs armor and
-    # stamina - if it's not safe, the root is accepted and Bear is kept.
+    # Root Cleanse: absolute top priority, above even the channel guard.
+    # var.druid_shapeshift_root is player.rooted - the real, confirmed
+    # self-state (unlike stun or fear, there is no equivalent snare check).
+    # Gated on var.druid_shapeshift_safe (3+ Ironfur stacks, >90% HP, a
+    # defensive already up) because leaving Bear costs armor and stamina -
+    # if it's not safe, the root is accepted and Bear is kept.
     # Bear -> Cat -> Bear (the tank's own weave form, not Moonkin/Human).
-    - cat_form,name="Root Cleanse (to Cat)",line_cd=8,if=config.root_cleanse&var.druid_shapeshift_root&var.druid_shapeshift_safe&!player.stunned&!buff.cat_form.up
-    - bear_form,name="Root Cleanse (from Cat)",line_cd=8,if=config.root_cleanse&var.druid_shapeshift_root&var.druid_shapeshift_safe&!player.stunned&buff.cat_form.up
+    - cat_form,name="Root Cleanse (to Cat)",line_cd=8,if=config.root_cleanse&var.druid_shapeshift_root&var.druid_shapeshift_safe&!buff.cat_form.up
+    - bear_form,name="Root Cleanse (from Cat)",line_cd=8,if=config.root_cleanse&var.druid_shapeshift_root&var.druid_shapeshift_safe&buff.cat_form.up
 
     # Convoke is a channel and nothing here ever wants to break it.
     - return,if=player.channeling
