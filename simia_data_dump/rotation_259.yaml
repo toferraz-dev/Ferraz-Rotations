@@ -1,10 +1,6 @@
 # =============================================================================
 # Rogue Assassination - Spec ID 259
 # =============================================================================
-
-# Conversion notes - apply throughout this file:
-#   pmultiplier not supported — removed
-
 version: 3
 spec: 259
 entry: main
@@ -38,7 +34,7 @@ config:
       - "Crippling"
       - "None"
       - "Atrophic"
-    default: 0
+    default: 1
 
   poison_oh:
     label: "Poison OH"
@@ -47,7 +43,31 @@ config:
       - "Instant"
       - "Wound"
       - "None"
-    default: 0
+      - "Deadly"
+      - "Amplifying"
+    default: 3
+
+  # Dragon-Tempered Blades: second non-lethal / lethal slot
+  poison_mh_2:
+    label: "Poison MH 2 (Dragon-Tempered Blades)"
+    type: dropdown
+    options:
+      - "Numbing"
+      - "Crippling"
+      - "None"
+      - "Atrophic"
+    default: 3
+
+  poison_oh_2:
+    label: "Poison OH 2 (Dragon-Tempered Blades)"
+    type: dropdown
+    options:
+      - "Instant"
+      - "Wound"
+      - "None"
+      - "Deadly"
+      - "Amplifying"
+    default: 4
 
   vanish_enabled:
     label: "Auto Vanish"
@@ -94,6 +114,10 @@ lists:
     # garrote,if=(buff.improved_garrote.up|stealthed.rogue)&(pmultiplier<=1|remains<=14+6*talent.razor_wire+4*!variable.single_target)
     # stealthed.rogue and pmultiplier not supported — simplified
     - garrote,if=buff.improved_garrote.up&(dot.garrote.refreshable|dot.garrote.remains<=14+6*talent.razor_wire+4*!var.single_target)
+    # local addition: fresh target in AoE (Ula'tek Venomous Heart) - Crimson Tempest clones the longest Garrote/Rupture
+    # (crimson_tempest_t::clone_dot, sc_rogue.cpp:4063) in one GCD instead of hardcasting both; top parses do this every spawn.
+    # lastcast guard: if the clone did not land (target outside CT's 10y, or bleed-immune) fall back to the hardcasts below
+    - crimson_tempest,if=!var.single_target&(!dot.rupture.ticking&nameplates.debuff.1943.highest>5|!dot.garrote.ticking&nameplates.debuff.703.highest>5)&lastcast.1247227>=gcd.max*2
     # garrote,if=combo_points.deficit>=1&(pmultiplier<=1|!variable.single_target)&refreshable&target.time_to_die-remains>12
     - garrote,if=combo_points.deficit>=1&dot.garrote.refreshable&target.time_to_die-dot.garrote.remains>12
     # garrote,cycle_targets=1,if=!talent.crimson_tempest&combo_points.deficit>=1&(pmultiplier<=1|!variable.single_target)&refreshable&target.time_to_die-remains>12
@@ -108,7 +132,8 @@ lists:
   # Generators
   generate:
     # crimson_tempest,target_if=max:dot.rupture.remains,if=!variable.single_target&(active_dot.garrote<spell_targets.fan_of_knives|active_dot.rupture<spell_targets.fan_of_knives)&(dot.rupture.remains>5|energy.regen_combined>40)
-    - crimson_tempest,if=!var.single_target&(active_dot.garrote<spell_targets.fan_of_knives|active_dot.rupture<spell_targets.fan_of_knives)&(dot.rupture.remains>5|energy.regen>40)
+    # target_if=max:dot.rupture.remains -> the if= reads the longest Rupture, not the current target's
+    - crimson_tempest,if=!var.single_target&(active_dot.garrote<spell_targets.fan_of_knives|active_dot.rupture<spell_targets.fan_of_knives)&(nameplates.debuff.1943.highest>5|energy.regen>40)
     # shiv,if=spell_targets.fan_of_knives<=1&talent.toxic_stiletto&talent.darkest_night
     - shiv,if=spell_targets.fan_of_knives<=1&talent.toxic_stiletto&talent.darkest_night
     # fan_of_knives,if=buff.darkest_night.up&combo_points.deficit=1&spell_targets.fan_of_knives<=1
@@ -119,8 +144,8 @@ lists:
     - ambush,if=spell_targets.fan_of_knives<=1+(talent.blindside&!talent.clear_the_witnesses)
     # mutilate,if=spell_targets.fan_of_knives<=1+(talent.blindside&!talent.clear_the_witnesses)
     - mutilate,if=spell_targets.fan_of_knives<=1+(talent.blindside&!talent.clear_the_witnesses)
-    # fan_of_knives,if=main_hand.1h|off_hand.1h
-    # main_hand.1h / off_hand.1h not supported (weapon subclass is not exposed) - condition dropped.
+    # fan_of_knives,if=!(main_hand.dagger&off_hand.dagger)
+    # main_hand.dagger / off_hand.dagger not supported (weapon subclass is not exposed) - condition dropped.
     # Harmless: for a dagger build the ambush/mutilate/fan_of_knives lines above always cover every
     # target count, so this terminal fallback is only reached by the non-dagger builds it is meant for.
     - fan_of_knives
@@ -133,7 +158,9 @@ lists:
     - use_item,name=algethar_puzzle_box,if=var.base_trinket_condition&buff.envenom.up&(target.time_to_die>10|fight_remains<20)
     # use_item,name=font_of_venomous_rage,use_off_gcd=1,if=buff.lingering_darkness.up|!dot.deathmark.ticking&!cooldown.deathmark.ready&cooldown.deathmark.remains>20
     - use_item,name=font_of_venomous_rage,if=buff.lingering_darkness.up|!dot.deathmark.ticking&!cooldown.deathmark.ready&cooldown.deathmark.remains>20
+    # use_items,slots=trinket1,if=(variable.trinket_sync_slot=1&(debuff.deathmark.up)|(variable.trinket_sync_slot=2&!trinket.2.cooldown.ready&cooldown.deathmark.remains>20))|!variable.trinket_sync_slot|fight_remains<=20
     - trinket_1,if=trinket_1.sync
+    # use_items,slots=trinket2,if=(variable.trinket_sync_slot=2&(debuff.deathmark.up)|(variable.trinket_sync_slot=1&!trinket.1.cooldown.ready&cooldown.deathmark.remains>20))|!variable.trinket_sync_slot|fight_remains<=20
     - trinket_2,if=trinket_2.sync
 
   # Misc cooldowns
@@ -177,11 +204,13 @@ lists:
     - stealth,range_check=none,if=config.stealth_mode=1&!buff.stealth.up
 
     # Poisons
-    - numbing_poison,range_check=none,if=config.poison_mh=0&pred.buff.numbing_poison.remains<120&!player.combat
-    - instant_poison,range_check=none,if=config.poison_oh=0&pred.buff.instant_poison.remains<120&!player.combat
-    - wound_poison,range_check=none,if=config.poison_oh=1&pred.buff.wound_poison.remains<120&!player.combat
-    - crippling_poison,range_check=none,if=config.poison_mh=1&pred.buff.crippling_poison.remains<120&!player.combat
-    - atrophic_poison,range_check=none,if=config.poison_mh=3&pred.buff.atrophic_poison.remains<120&!player.combat
+    - deadly_poison,range_check=none,if=(config.poison_oh=3|talent.381801&config.poison_oh_2=3)&pred.buff.deadly_poison.remains<120&!player.combat
+    - amplifying_poison,range_check=none,if=(config.poison_oh=4|talent.381801&config.poison_oh_2=4)&pred.buff.amplifying_poison.remains<120&!player.combat
+    - instant_poison,range_check=none,if=(config.poison_oh=0|talent.381801&config.poison_oh_2=0)&pred.buff.instant_poison.remains<120&!player.combat
+    - wound_poison,range_check=none,if=(config.poison_oh=1|talent.381801&config.poison_oh_2=1)&pred.buff.wound_poison.remains<120&!player.combat
+    - numbing_poison,range_check=none,if=(config.poison_mh=0|talent.381801&config.poison_mh_2=0)&pred.buff.numbing_poison.remains<120&!player.combat
+    - crippling_poison,range_check=none,if=(config.poison_mh=1|talent.381801&config.poison_mh_2=1)&pred.buff.crippling_poison.remains<120&!player.combat
+    - atrophic_poison,range_check=none,if=(config.poison_mh=3|talent.381801&config.poison_mh_2=3)&pred.buff.atrophic_poison.remains<120&!player.combat
 
     # Combat Check
     - return,if=auto_combat.player

@@ -275,7 +275,7 @@ lists:
     - shattering_throw,if=target.absorb>0
     - wrecking_throw,if=target.absorb>0
 
-    - battle_shout,range_check=none,if=(!buff.battle_shout.up.any|buff.battle_shout.remains.any<60|action.battle_shout.overlayed)&lastcast.battle_shout>=10
+    - battle_shout,range_check=none,if=group.count(cycle.buff.battle_shout.remains.any<60)>0&lastcast.battle_shout>=10
     - battle_stance,range_check=none,if=!buff.battle_stance.up
 
     # Defensives

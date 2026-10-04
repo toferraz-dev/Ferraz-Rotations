@@ -230,7 +230,7 @@ lists:
     - call_action_list,name=auto_target
 
     # arcane_intellect
-    - arcane_intellect,range_check=none,if=(buff.arcane_intellect.down|action.arcane_intellect.overlayed)&lastcast.arcane_intellect>=10
+    - arcane_intellect,range_check=none,if=group.count(cycle.buff.arcane_intellect.down.any)>0&lastcast.arcane_intellect>=10
     # summon_water_elemental
     - summon_water_elemental,range_check=none,if=!pet.alive
 

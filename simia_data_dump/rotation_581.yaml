@@ -265,8 +265,8 @@ lists:
     - tail_swipe,if=interrupt.stun.aoe.check
 
     # Taunt — grab aggro when not tanking (dungeon/M+ only, never raid)
-    - torment,name="Taunt",if=target.threat<2&target.combat&target.threat!=-1&!player.inraid
-    - torment.mouseover,name="Taunt MO",if=mouseover.threat<2&mouseover.combat&mouseover.threat!=-1&mouseover.exists&!player.inraid
+    - torment,name="Taunt",if=target.threat<2&target.combat&target.threat!=-1&target.targeting_party&!target.ignore_count&!target.bypass_combat&!player.inraid
+    - torment.mouseover,name="Taunt MO",if=mouseover.threat<2&mouseover.combat&mouseover.threat!=-1&mouseover.targeting_party&!mouseover.ignore_count&!mouseover.bypass_combat&mouseover.exists&!player.inraid
 
     - call_action_list,name=auto_heal
 

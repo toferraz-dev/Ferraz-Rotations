@@ -114,6 +114,7 @@ config:
   lifebloom_target:
     label: "Lifebloom Target"
     type: unit_select
+    spell: 33763         # Party tab badge icon
     max: 1
     filter: all
     show_override: true
@@ -242,7 +243,7 @@ lists:
     - soothe,if=target.purgeable.enrage
   
   out_of_combat:
-    - mark_of_the_wild,if=(group.count(cycle.buff.mark_of_the_wild.down.any)>0|action.mark_of_the_wild.overlayed)&lastcast.mark_of_the_wild>=10
+    - mark_of_the_wild,if=group.count(cycle.buff.mark_of_the_wild.down.any)>0&lastcast.mark_of_the_wild>=10
     - symbiotic_relationship,cycle=tanks,if=cycle.buff.symbiotic_relationship.down.any
     - rejuvenation,cycle=members,if=cycle.health.effective.pct<config.rejuvenation_threshold&cycle.buff.rejuvenation.remains<1.5&!player.combat
     - regrowth,cycle=members,if=cycle.health.effective.pct<config.regrowth_threshold&cycle.buff.regrowth.remains<1.5&!player.combat

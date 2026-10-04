@@ -2,8 +2,6 @@
 # Hunter Marksmanship - Spec ID 254
 # =============================================================================
 
-# Conversion notes - apply throughout this file:
-#   Dead: set_bonus.* always evaluates 0 (no tier_sets: section exists anywhere), so this whole
 
 version: 3
 spec: 254
@@ -31,6 +29,18 @@ config:
     min: 0
     max: 100
     default: 50
+  pet_slot:
+    section: "Pet Management"
+    label: "Pet (needs Unbreakable Bond)"
+    type: dropdown
+    options:
+      - "No Pet"
+      - "Pet 1"
+      - "Pet 2"
+      - "Pet 3"
+      - "Pet 4"
+      - "Pet 5"
+    default: 1
 
 variables:
   # variable,name=trueshot_ready,value=!talent.bullseye|(fight_remains>cooldown.trueshot.duration+10|buff.bullseye.stack=buff.bullseye.max_stack)&(cooldown.explosive_shot.remains>=15|cooldown.explosive_shot.ready)|fight_remains<25|time<10
@@ -39,8 +49,10 @@ variables:
   # No-op for us: the setif condition is fight_style.dungeonroute (=0), so it always takes
   # value_else, which is trueshot_ready itself. The definition above therefore stands unchanged.
   trueshot_ready: "!talent.bullseye|(fight_remains>cooldown.trueshot.duration+10|buff.bullseye.stack>=30)&(cooldown.explosive_shot.remains>=15|cooldown.explosive_shot.ready)|fight_remains<25|combat.time<10"
-  # Predict precise_shots: already up, OR aimed_shot just cast and no arcane_shot sent since
-  precise_shots_predicted: "buff.precise_shots.up|(lastcast.aimed_shot<0.5&lastcast.arcane_shot>lastcast.aimed_shot)"
+  # Precise Shots lands on Aimed Shot COMPLETION, but the next spell is picked up to 0.2s
+  # before that -- a bare buff.precise_shots.down still reads true then and queues a second
+  # Aimed Shot. pred.buff covers the queue window (_pred.yaml 19434 -> 260242).
+  precise_shots_predicted: "pred.buff.260242.up"
 
 lists:
   defensives:
@@ -83,15 +95,15 @@ lists:
     # actions.drst=black_arrow,target_if=max:debuff.spotters_mark.down|action.aimed_shot.in_flight_to_target|max_prio_damage,if=buff.precise_shots.up
     - black_arrow,if=var.precise_shots_predicted
     # actions.drst+=/explosive_shot,target_if=min:dot.explosive_shot.remains,if=set_bonus.mid2_4pc&active_enemies>1&(!max_prio_damage|!fight_style.dungeonroute)&(!talent.tactical_reload|!buff.lock_and_load.up)
-    # line is unreachable. Its (!max_prio_damage|!fight_style.dungeonroute) group is TRUE for us
-    # (max_prio_damage=1, fight_style.*=0). The unconditional explosive_shot below covers it.
+    # Covered by the explosive_shot below: with the always-true (!max_prio_damage|!fight_style.dungeonroute)
+    # group dropped, this line is that one plus set_bonus/target terms (CLAUDE.md 2.3).
     # In DRoute, prioritize Rapid Fire over Explosive Shot to maximize the RF CDR from Explo, but never let the 2nd free Explo from Unstable Trigger lapse.
     # actions.drst+=/explosive_shot,if=(!talent.tactical_reload|!buff.lock_and_load.up)&(!cooldown.rapid_fire.ready|buff.unstable_trigger.up|!fight_style.dungeonroute)
     - explosive_shot,if=!talent.tactical_reload|!buff.lock_and_load.up
     # actions.drst+=/volley
     - volley
     # actions.drst+=/aimed_shot,if=buff.trueshot.up&buff.precise_shots.down&cooldown.black_arrow.ready|full_recharge_time<gcd+cast_time
-    - aimed_shot,if=buff.trueshot.up&buff.precise_shots.down&cooldown.black_arrow.ready|cooldown.aimed_shot.full_recharge_time<gcd+action.aimed_shot.cast_time
+    - aimed_shot,if=buff.trueshot.up&!var.precise_shots_predicted&cooldown.black_arrow.ready|cooldown.aimed_shot.full_recharge_time<gcd+action.aimed_shot.cast_time
     # actions.drst+=/trueshot,if=variable.trueshot_ready
     - trueshot,if=var.trueshot_ready
     # actions.drst+=/rapid_fire
@@ -117,8 +129,8 @@ lists:
   # ==========================================================================
   draoe:
     # actions.draoe+=/explosive_shot,target_if=min:dot.explosive_shot.remains,if=set_bonus.mid2_4pc&(!max_prio_damage|!fight_style.dungeonroute)&(!talent.tactical_reload|!buff.lock_and_load.up)
-    # line is unreachable. Its (!max_prio_damage|!fight_style.dungeonroute) group is TRUE for us
-    # (max_prio_damage=1, fight_style.*=0). The unconditional explosive_shot below covers it.
+    # Covered by the explosive_shot below: with the always-true (!max_prio_damage|!fight_style.dungeonroute)
+    # group dropped, this line is that one plus set_bonus/target terms (CLAUDE.md 2.3).
     # actions.draoe+=/explosive_shot,if=(!talent.tactical_reload|!buff.lock_and_load.up)&(!cooldown.rapid_fire.ready|buff.unstable_trigger.up|!fight_style.dungeonroute)
     - explosive_shot,if=!talent.tactical_reload|!buff.lock_and_load.up
     # actions.draoe+=/volley
@@ -152,8 +164,8 @@ lists:
   # ==========================================================================
   sentaoe:
     # actions.sentaoe+=/explosive_shot,target_if=min:dot.explosive_shot.remains,if=set_bonus.mid2_4pc&(!max_prio_damage|!fight_style.dungeonroute)&(!talent.tactical_reload|!buff.lock_and_load.up)
-    # line is unreachable. Its (!max_prio_damage|!fight_style.dungeonroute) group is TRUE for us
-    # (max_prio_damage=1, fight_style.*=0). The unconditional explosive_shot below covers it.
+    # Covered by the explosive_shot below: with the always-true (!max_prio_damage|!fight_style.dungeonroute)
+    # group dropped, this line is that one plus set_bonus/target terms (CLAUDE.md 2.3).
     # actions.sentaoe+=/explosive_shot,if=(!talent.tactical_reload|!buff.lock_and_load.up)&(!cooldown.rapid_fire.ready|buff.unstable_trigger.up|!fight_style.dungeonroute)
     - explosive_shot,if=!talent.tactical_reload|!buff.lock_and_load.up
     # actions.sentaoe+=/volley
@@ -185,8 +197,8 @@ lists:
   # ==========================================================================
   sentst:
     # actions.sentst+=/explosive_shot,target_if=min:dot.explosive_shot.remains,if=set_bonus.mid2_4pc&active_enemies>1&(!max_prio_damage|!fight_style.dungeonroute)&(!talent.tactical_reload|!buff.lock_and_load.up)
-    # line is unreachable. Its (!max_prio_damage|!fight_style.dungeonroute) group is TRUE for us
-    # (max_prio_damage=1, fight_style.*=0). The unconditional explosive_shot below covers it.
+    # Covered by the explosive_shot below: with the always-true (!max_prio_damage|!fight_style.dungeonroute)
+    # group dropped, this line is that one plus set_bonus/target terms (CLAUDE.md 2.3).
     # actions.sentst+=/explosive_shot,if=(!talent.tactical_reload|!buff.lock_and_load.up)&(!cooldown.rapid_fire.ready|buff.unstable_trigger.up|!fight_style.dungeonroute)
     - explosive_shot,if=!talent.tactical_reload|!buff.lock_and_load.up
     # actions.sentst+=/volley
@@ -228,8 +240,8 @@ lists:
     - call_action_list,name=sanity_checks
     - call_action_list,name=auto_target
 
-    # Summon Pet
-    - call_pet_1,range_check=none,if=!pet.exists
+    # actions.precombat+=/summon_pet,if=talent.unbreakable_bond
+    - call_action_list,name=auto_pet,if=talent.1223323
 
     # Combat Check
     - return,if=auto_combat.player

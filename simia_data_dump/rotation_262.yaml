@@ -54,27 +54,29 @@ lists:
 
   aoe:
     # --- 3+ TARGET ROTATION ---
-    # stormkeeper,if=cooldown.ascendance.remains>10|cooldown.ascendance.remains<gcd|fight_remains<20
-    - stormkeeper,if=cooldown.ascendance.remains>10|cooldown.ascendance.remains<gcd|fight_remains<20
+    # stormkeeper,if=set_bonus.mid2_4pc|cooldown.ascendance.remains>10|cooldown.ascendance.remains<gcd|fight_remains<20
+    - stormkeeper,if=set_bonus.mid2_4pc|cooldown.ascendance.remains>10|cooldown.ascendance.remains<gcd|fight_remains<20
     # ancestral_swiftness
     - ancestral_swiftness
     # flame_shock,if=!buff.master_of_the_elements.up&((dot.flame_shock.refreshable&cooldown.ascendance.remains>5)|(buff.fire_elemental.up&buff.fire_elemental.remains<2))&talent.master_of_the_elements&talent.inferno_arc&spell_targets.chain_lightning=3
     - flame_shock,if=!buff.master_of_the_elements.up&((dot.flame_shock.refreshable&cooldown.ascendance.remains>5)|(buff.fire_elemental.up&buff.fire_elemental.remains<2))&talent.master_of_the_elements&talent.inferno_arc&enemies_around_target=3
     # voltaic_blaze,if=!buff.master_of_the_elements.up&((dot.flame_shock.refreshable&cooldown.ascendance.remains>5)|(buff.fire_elemental.up&buff.fire_elemental.remains<2)|talent.purging_flames)
     - voltaic_blaze,if=!buff.master_of_the_elements.up&((dot.flame_shock.refreshable&cooldown.ascendance.remains>5)|(buff.fire_elemental.up&buff.fire_elemental.remains<2)|talent.purging_flames)
-    # ascendance,if=cooldown.stormkeeper.remains>15|fight_remains<20
-    - ascendance,if=cooldown.stormkeeper.remains>15|fight_remains<20
+    # chain_lightning,if=buff.stormkeeper.up&maelstrom.deficit>(spell_targets.chain_lightning>?5)*(2+(spell_targets.chain_lightning>?5)+2)&talent.call_of_the_ancestors&set_bonus.mid2_4pc
+    - chain_lightning,if=buff.stormkeeper.up&maelstrom.deficit>(enemies_around_target>?5)*(2+(enemies_around_target>?5)+2)&talent.call_of_the_ancestors&set_bonus.mid2_4pc
+    # ascendance,if=set_bonus.mid2_4pc|cooldown.stormkeeper.remains>15|fight_remains<20
+    - ascendance,if=set_bonus.mid2_4pc|cooldown.stormkeeper.remains>15|fight_remains<20
     # elemental_blast,target_if=min:debuff.lightning_rod.remains,if=buff.tempest.stack<2&(buff.elemental_blast_critical_strike.up+buff.elemental_blast_haste.up+buff.elemental_blast_mastery.up=0)&talent.tempest
     - elemental_blast,if=buff.tempest.stack<2&(buff.elemental_blast_critical_strike.up+buff.elemental_blast_haste.up+buff.elemental_blast_mastery.up=0)&talent.tempest
     # earthquake,if=buff.tempest.stack<2&lightning_rod<active_enemies&(spell_targets.chain_lightning>=3+talent.elemental_blast)&(buff.elemental_blast_critical_strike.up+buff.elemental_blast_haste.up+buff.elemental_blast_mastery.up>0|!talent.elemental_blast)&talent.tempest
     - earthquake,if=buff.tempest.stack<2&active_dot.lightning_rod<enemies_around_target&(enemies_around_target>=3+talent.elemental_blast)&(buff.elemental_blast_critical_strike.up+buff.elemental_blast_haste.up+buff.elemental_blast_mastery.up>0|!talent.elemental_blast)&talent.tempest
-    # earthquake,if=buff.call_of_the_ancestors.up|(spell_targets.chain_lightning>=3+3*talent.elemental_blast)&talent.call_of_the_ancestors
+    # earthquake,if=buff.call_of_the_ancestors.up|(spell_targets.chain_lightning>=3+2*talent.elemental_blast)&talent.call_of_the_ancestors
     # call_of_the_ancestors buff = spell 447244 (sc_shaman.cpp:12649); 10 rows share the display name
-    - earthquake,if=buff.447244.up|(enemies_around_target>=3+3*talent.elemental_blast)&talent.call_of_the_ancestors
-    # elemental_blast,target_if=min:debuff.lightning_rod.remains,if=buff.tempest.stack<2&(spell_targets.chain_lightning<=3+2*talent.call_of_the_ancestors)&!buff.call_of_the_ancestors.up
-    - elemental_blast,if=buff.tempest.stack<2&(enemies_around_target<=3+2*talent.call_of_the_ancestors)&!buff.447244.up
-    # lava_burst,if=buff.purging_flames.up&(buff.lava_surge.up&buff.flowing_elements.stack<2|cooldown.voltaic_blaze.remains<2)
-    - lava_burst,if=buff.purging_flames.up&(buff.lava_surge.up&buff.flowing_elements.stack<2|cooldown.voltaic_blaze.remains<2)
+    - earthquake,if=buff.447244.up|(enemies_around_target>=3+2*talent.elemental_blast)&talent.call_of_the_ancestors
+    # elemental_blast,target_if=min:debuff.lightning_rod.remains,if=buff.tempest.stack<2&(spell_targets.chain_lightning<=3+talent.call_of_the_ancestors)&!buff.call_of_the_ancestors.up
+    - elemental_blast,if=buff.tempest.stack<2&(enemies_around_target<=3+talent.call_of_the_ancestors)&!buff.447244.up
+    # lava_burst,if=buff.purging_flames.up&(buff.lava_surge.up|cooldown.voltaic_blaze.remains<2)
+    - lava_burst,if=buff.purging_flames.up&(buff.lava_surge.up|cooldown.voltaic_blaze.remains<2)
     # lava_burst,if=(buff.tempest.up|!talent.purging_flames&talent.call_of_the_ancestors)&buff.lava_surge.up&talent.master_of_the_elements&spell_targets.chain_lightning=3
     - lava_burst,if=(buff.tempest.up|!talent.purging_flames&talent.call_of_the_ancestors)&buff.lava_surge.up&talent.master_of_the_elements&enemies_around_target=3
     # tempest,target_if=min:debuff.lightning_rod.remains,if=buff.master_of_the_elements.up
@@ -100,18 +102,20 @@ lists:
 
   single_target:
     # --- 1 and 2 TARGET ROTATION ---
-    # stormkeeper,if=cooldown.ascendance.remains>10|cooldown.ascendance.remains<gcd|fight_remains<20
-    - stormkeeper,if=cooldown.ascendance.remains>10|cooldown.ascendance.remains<gcd|fight_remains<20
+    # stormkeeper,if=!buff.stormkeeper.up&!buff.tempest.up&set_bonus.mid2_4pc|!set_bonus.mid2_4pc&(cooldown.ascendance.remains>10|cooldown.ascendance.remains<gcd|fight_remains<20)
+    - stormkeeper,if=!buff.stormkeeper.up&!buff.tempest.up&set_bonus.mid2_4pc|!set_bonus.mid2_4pc&(cooldown.ascendance.remains>10|cooldown.ascendance.remains<gcd|fight_remains<20)
     # ancestral_swiftness
     - ancestral_swiftness
+    # lightning_bolt,if=set_bonus.mid2_4pc&buff.stormkeeper.up&cooldown.ascendance.remains<2*gcd&(spell_targets.chain_lightning=1|talent.tempest)
+    - lightning_bolt,if=set_bonus.mid2_4pc&buff.stormkeeper.up&cooldown.ascendance.remains<2*gcd&(enemies_around_target=1|talent.tempest)
     # flame_shock,if=!buff.master_of_the_elements.up&dot.flame_shock.refreshable&cooldown.ascendance.remains>5
     - flame_shock,if=!buff.master_of_the_elements.up&dot.flame_shock.refreshable&cooldown.ascendance.remains>5
     # flame_shock,target_if=min:dot.flame_shock.remains,if=!buff.master_of_the_elements.up&!buff.ascendance.up&buff.fire_elemental.up&buff.fire_elemental.remains<6*active_enemies-4
     - flame_shock,if=!buff.master_of_the_elements.up&!buff.ascendance.up&buff.fire_elemental.up&buff.fire_elemental.remains<6*enemies_around_target-4
     # voltaic_blaze,if=!buff.master_of_the_elements.up&(dot.flame_shock.refreshable&cooldown.ascendance.remains>5|talent.purging_flames&spell_targets.chain_lightning=2)
     - voltaic_blaze,if=!buff.master_of_the_elements.up&(dot.flame_shock.refreshable&cooldown.ascendance.remains>5|talent.purging_flames&enemies_around_target=2)
-    # ascendance,if=cooldown.stormkeeper.remains>15|fight_remains<20
-    - ascendance,if=cooldown.stormkeeper.remains>15|fight_remains<20
+    # ascendance,if=set_bonus.mid2_4pc|cooldown.stormkeeper.remains>15|fight_remains<20
+    - ascendance,if=set_bonus.mid2_4pc|cooldown.stormkeeper.remains>15|fight_remains<20
     # earthquake,if=buff.flowing_elements.up&buff.overcharge_tier.up&buff.call_of_the_ancestors.stack>=3&spell_targets.chain_lightning=2
     - earthquake,if=buff.flowing_elements.up&buff.1300222.up&buff.447244.stack>=3&enemies_around_target=2
     # elemental_blast,if=buff.flowing_elements.up&buff.overcharge_tier.up
@@ -131,8 +135,6 @@ lists:
     - lava_burst,if=!talent.master_of_the_elements&maelstrom.deficit>15&(!buff.storm_elemental.up|buff.wind_gust.stack=4)&((cooldown.lava_burst.charges_fractional>1.8|!buff.447244.up)&(talent.molten_wrath|talent.purging_flames)|buff.lava_surge.up)
     # lava_burst,if=!buff.master_of_the_elements.up&maelstrom.deficit>15&buff.flowing_elements.up
     - lava_burst,if=!buff.master_of_the_elements.up&maelstrom.deficit>15&buff.flowing_elements.up
-    # lava_burst,if=!buff.master_of_the_elements.up&maelstrom.deficit>15&buff.power_of_the_maelstrom.stack=2
-    - lava_burst,if=!buff.master_of_the_elements.up&maelstrom.deficit>15&buff.power_of_the_maelstrom.stack=2
     # lava_burst,if=!buff.master_of_the_elements.up&maelstrom.deficit>15&buff.purging_flames.up&cooldown.voltaic_blaze.remains<2&active_dot.flame_shock=2
     - lava_burst,if=!buff.master_of_the_elements.up&maelstrom.deficit>15&buff.purging_flames.up&cooldown.voltaic_blaze.remains<2&active_dot.flame_shock=2
     # tempest,if=buff.master_of_the_elements.up|!talent.master_of_the_elements
@@ -170,7 +172,7 @@ lists:
     - call_action_list,name=sanity_checks
     - call_action_list,name=auto_target
 
-    - skyfury,range_check=none,if=(buff.skyfury.down.any|action.skyfury.overlayed)&lastcast.skyfury>=10
+    - skyfury,range_check=none,if=group.count(cycle.buff.skyfury.down.any)>0&lastcast.skyfury>=10
     - lightning_shield,range_check=none,if=buff.lightning_shield.down
     - flametongue_weapon,range_check=none,if=mainhand.enchant.remains<600
     - thunderstrike_ward,range_check=none,if=buff.thunderstrike_ward.down
@@ -220,11 +222,14 @@ lists:
 
     # use_item,name=stormbound_emblem_of_dazar,if=cooldown.ascendance.ready&(cooldown.stormkeeper.remains>15|cooldown.stormkeeper.remains<2)|fight_remains<23
     - use_item,name=stormbound_emblem_of_dazar,if=cooldown.ascendance.ready&(cooldown.stormkeeper.remains>15|cooldown.stormkeeper.remains<2)|fight_remains<23
-    # use_item,name=hex_lords_dooming_idol,if=cooldown.ascendance.ready&cooldown.stormkeeper.remains>15|fight_remains<23
-    - use_item,name=hex_lords_dooming_idol,if=cooldown.ascendance.ready&cooldown.stormkeeper.remains>15|fight_remains<23
-    # use_item,slot=trinket1,use_off_gcd=1,if=!variable.trinket_1_special&variable.trinket_1_buffs&(cooldown.ascendance.remains>trinket.1.cooldown.duration-5|cooldown.ascendance.ready&cooldown.stormkeeper.remains>15|fight_remains<21)
-    # use_item,slot=trinket2,use_off_gcd=1,if=!variable.trinket_2_special&variable.trinket_2_buffs&(cooldown.ascendance.remains>trinket.2.cooldown.duration-5|cooldown.ascendance.ready&cooldown.stormkeeper.remains>15|fight_remains<21)
+    # use_item,name=hex_lords_dooming_idol,use_off_gcd=1,if=cooldown.ascendance.ready&cooldown.stormkeeper.remains>15|fight_remains<23
+    - use_item,name=hex_lords_dooming_idol,use_off_gcd=1,if=cooldown.ascendance.ready&cooldown.stormkeeper.remains>15|fight_remains<23
+    # use_item,slot=trinket1,use_off_gcd=1,if=!variable.trinket_1_special&variable.trinket_1_buffs&(cooldown.ascendance.remains>trinket.1.cooldown.duration-5|cooldown.ascendance.ready&(!buff.stormkeeper.up|spell_targets.chain_lightning>=2)|fight_remains<21)
+    # use_item,slot=trinket2,use_off_gcd=1,if=!variable.trinket_2_special&variable.trinket_2_buffs&(cooldown.ascendance.remains>trinket.2.cooldown.duration-5|cooldown.ascendance.ready&(!buff.stormkeeper.up|spell_targets.chain_lightning>=2)|fight_remains<21)
     # use_item,slot=main_hand,use_off_gcd=1
+    # use_item,name=font_of_venomous_rage,if=!variable.trinket_1_buffs&!variable.trinket_2_buffs&!buff.ascendance.up|!buff.ascendance.up&!cooldown.ascendance.ready|fight_remains<23
+    # trinket_N_buffs are trinket properties (stripped, CLAUDE.md 1.5): the first AND-term is dropped.
+    - use_item,name=font_of_venomous_rage,if=!buff.ascendance.up&!cooldown.ascendance.ready|fight_remains<23
     # use_item,slot=trinket1,use_off_gcd=1,if=!variable.trinket_1_special&!variable.trinket_1_buffs&(cooldown.ascendance.remains>20|trinket.2.cooldown.remains>20)
     # use_item,slot=trinket2,use_off_gcd=1,if=!variable.trinket_2_special&!variable.trinket_2_buffs&(cooldown.ascendance.remains>20|trinket.1.cooldown.remains>20)
     # trinket property math NOT supported; using generic sync

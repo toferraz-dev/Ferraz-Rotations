@@ -121,15 +121,25 @@ expressions:
   # so a spec with no kick (or one whose kick is blocked/on CD) keeps the fallback.
   # In instance: stunnable-tagged spells only; never boss
   # Outside: any non-boss cast (classification<6); never boss
-  interrupt.cc.check: "!focus.enemy&config.interrupt_target&target.enemy&!target.boss&!target.buff_list.spell_reflect.up&(!player.ininstancedpve&target.classification<6&(target.casting|target.channeling)|player.ininstancedpve&target.incoming_cast.stunnable.up)&target.casting.elapsed>=0.75&!(interrupt.kick.soon&(target.incoming_cast.kickable.up|(!player.ininstancedpve|config.interrupt_all)&target.casting.interruptible))"
+  interrupt.cc.check: "!focus.enemy&config.interrupt_target&target.enemy&!target.boss&!target.buff_list.spell_reflect.up&(!player.ininstancedpve&target.classification<6&(target.casting|target.channeling)|player.ininstancedpve&target.incoming_cast.stunnable.up)&(target.channeling&target.casting.elapsed>=0.2|target.casting.elapsed>=0.75)&!(interrupt.kick.soon&(target.incoming_cast.kickable.up|(!player.ininstancedpve|config.interrupt_all)&target.casting.interruptible))|!focus.enemy&config.interrupt_target&target.enemy&!target.boss&!target.buff_list.spell_reflect.up&target.should_stun"
+  # _npcdata.yaml `ShouldStun: true` mobs are stunned on sight, no cast required --
+  # some mobs (e.g. 134388) stun their target with no cast bar to catch.
   # Stun-based primary interrupts (e.g., Warlock Axe Toss):
   # In instance: stunnable-tagged spells only; never boss
   # Outside: any non-boss cast; never boss
-  interrupt.stun.target.check: "!focus.enemy&config.interrupt_target&target.enemy&!target.boss&!target.buff_list.spell_reflect.up&(!player.ininstancedpve&target.classification<6&(target.casting|target.channeling)|player.ininstancedpve&target.incoming_cast.stunnable.up)&target.casting.elapsed>=0.75&!(interrupt.kick.soon&(target.incoming_cast.kickable.up|(!player.ininstancedpve|config.interrupt_all)&target.casting.interruptible))"
-  interrupt.stun.mouseover.check: "!focus.enemy&config.interrupt_mouseover&mouseover.enemy&!mouseover.boss&!mouseover.buff_list.spell_reflect.up&(!player.ininstancedpve&mouseover.classification<6&(mouseover.casting|mouseover.channeling)|player.ininstancedpve&mouseover.incoming_cast.stunnable.up)&mouseover.casting.elapsed>=0.75&!(interrupt.kick.soon&(mouseover.incoming_cast.kickable.up|(!player.ininstancedpve|config.interrupt_all)&mouseover.casting.interruptible))"
-  interrupt.stun.focus.check: "config.interrupt_focus&focus.enemy&!focus.boss&!focus.buff_list.spell_reflect.up&(!player.ininstancedpve&focus.classification<6&(focus.casting|focus.channeling)|player.ininstancedpve&focus.incoming_cast.stunnable.up)&focus.casting.elapsed>=0.75&!(interrupt.kick.soon&(focus.incoming_cast.kickable.up|(!player.ininstancedpve|config.interrupt_all)&focus.casting.interruptible))"
-  # AoE stun: any stunnable-tagged cast within 8y; never boss; respects config.interrupt_target
-  interrupt.stun.aoe.check: "config.interrupt_target&target.enemy&!target.boss&incoming_cast.8y.stunnable.count>=1&(incoming_cast.8y.stunnable.count>=2|!interrupt.kick.soon|!target.incoming_cast.kickable.up)"
+  interrupt.stun.target.check: "!focus.enemy&config.interrupt_target&target.enemy&!target.boss&!target.buff_list.spell_reflect.up&(!player.ininstancedpve&target.classification<6&(target.casting|target.channeling)|player.ininstancedpve&target.incoming_cast.stunnable.up)&(target.channeling&target.casting.elapsed>=0.2|target.casting.elapsed>=0.75)&!(interrupt.kick.soon&(target.incoming_cast.kickable.up|(!player.ininstancedpve|config.interrupt_all)&target.casting.interruptible))|!focus.enemy&config.interrupt_target&target.enemy&!target.boss&!target.buff_list.spell_reflect.up&target.should_stun"
+  interrupt.stun.mouseover.check: "!focus.enemy&config.interrupt_mouseover&mouseover.enemy&!mouseover.boss&!mouseover.buff_list.spell_reflect.up&(!player.ininstancedpve&mouseover.classification<6&(mouseover.casting|mouseover.channeling)|player.ininstancedpve&mouseover.incoming_cast.stunnable.up)&(mouseover.channeling&mouseover.casting.elapsed>=0.2|mouseover.casting.elapsed>=0.75)&!(interrupt.kick.soon&(mouseover.incoming_cast.kickable.up|(!player.ininstancedpve|config.interrupt_all)&mouseover.casting.interruptible))|!focus.enemy&config.interrupt_mouseover&mouseover.enemy&!mouseover.boss&!mouseover.buff_list.spell_reflect.up&mouseover.should_stun"
+  interrupt.stun.focus.check: "config.interrupt_focus&focus.enemy&!focus.boss&!focus.buff_list.spell_reflect.up&(!player.ininstancedpve&focus.classification<6&(focus.casting|focus.channeling)|player.ininstancedpve&focus.incoming_cast.stunnable.up)&(focus.channeling&focus.casting.elapsed>=0.2|focus.casting.elapsed>=0.75)&!(interrupt.kick.soon&(focus.incoming_cast.kickable.up|(!player.ininstancedpve|config.interrupt_all)&focus.casting.interruptible))|config.interrupt_focus&focus.enemy&!focus.boss&!focus.buff_list.spell_reflect.up&focus.should_stun"
+  # AoE stun: any stunnable-tagged cast within 8y; never boss; respects config.interrupt_target.
+  # Fires on 2+ casters, on a channel (every tick lands until stopped), or when the earliest
+  # single cast has less than one GCD + 0.5s left. Until then it HOLDS so a second caster can
+  # join: in top S2 keys 60-100% of player stuns on stunnable casts were an AoE CC catching
+  # 2+ mobs (Uni/tools/wcl_stun_timing.py, 30 keys). A single cast our ready kick covers is
+  # left to the kick.
+  # gcd.max+0.5 assumes our next press is one GCD. stun.force covers longer presses: the
+  # engine re-picks with it raised when the normal pick's execute_time+0.5 would outlast
+  # the soonest stunnable cast in 8y (rotation_manager.cpp, after pickNextSpell).
+  interrupt.stun.aoe.check: "config.interrupt_target&target.enemy&!target.boss&incoming_cast.8y.stunnable.count>=1&(incoming_cast.8y.stunnable.count>=2|(incoming_cast.8y.stunnable.channel.count>=1|incoming_cast.8y.stunnable.remains<gcd.max+0.5|stun.force)&(!interrupt.kick.soon|!target.incoming_cast.kickable.up))|config.interrupt_target&active_npc.134388.count>=2&active_npc.134388.range<=8"
 
   # ============================================================================
   # Death Knight - Hero Trees
@@ -356,7 +366,16 @@ expressions:
   # Paladin - Hero Trees
   # Gateway talent of each tree in sc_paladin.hpp's talents struct (:690/:716/:740).
   # ============================================================================
-  hero_tree.lightsmith: talent.holy_armaments
+  # "Holy Armaments" is SimC's node name only: RegisterTalent names a talent from
+  # SpellName of the live node id, and the client's gateway node is 432459
+  # ("Holy Bulwark"), so holy_armaments.talent never registers -> 0 forever.
+  hero_tree.lightsmith: talent.432459
   hero_tree.templar: talent.lights_guidance
   hero_tree.herald_of_the_sun: talent.dawnlight
+
+  # Lightsmith next_armament: the Holy Armaments button (432459 Holy Bulwark) overrides to
+  # 432472 Sacred Weapon when that is next. Live GetOverrideSpell, so no prediction.
+  # Non-Lightsmith: no 432459 row -> 0 -> both false, like SimC's -1.
+  "next_armament=sacred_weapon": action.432459.override_id=432472
+  "next_armament=holy_bulwark": action.432459.override_id=432459
   pet.demonic_tyrant.remains: totem.summon_demonic_tyrant.remains

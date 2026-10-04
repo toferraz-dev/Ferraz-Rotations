@@ -174,11 +174,11 @@ lists:
     - lava_lash,if=!debuff.lashing_flames.up&combat.time<5
     # stormstrike,if=time<1
     - stormstrike,if=combat.time<1
-    # call_action_list,name=cooldowns
+    # call_action_list,name=cooldowns,if=raid_event.adds.in>=60|fight_remains<=20
     - call_action_list,name=cooldowns
-    # sundering,if=talent.surging_elements.enabled|talent.feral_spirit.enabled
+    # sundering,if=(talent.surging_elements.enabled|talent.feral_spirit.enabled)&(raid_event.adds.in>=30|fight_remains<=12)
     - sundering,if=talent.surging_elements.enabled|talent.feral_spirit.enabled
-    # doom_winds
+    # doom_winds,if=raid_event.adds.in>=30|fight_remains<=10
     - doom_winds
     # voltaic_blaze,if=set_bonus.midnight_season_2_2pc
     - voltaic_blaze,if=set_bonus.midnight_season_2_2pc
@@ -188,7 +188,7 @@ lists:
     - voltaic_blaze,if=(buff.doom_winds.up&buff.maelstrom_weapon.stack>=10-(1+2*talent.fire_nova.enabled)&buff.maelstrom_weapon.stack!=10)&talent.thorims_invocation.enabled
     # windstrike,if=buff.maelstrom_weapon.stack>0&talent.thorims_invocation.enabled
     - windstrike,if=buff.maelstrom_weapon.stack>0&talent.thorims_invocation.enabled
-    # ascendance
+    # ascendance,if=raid_event.adds.in>=60|fight_remains<=20
     - ascendance
     # stormstrike,if=buff.doom_winds.up&talent.thorims_invocation.enabled
     - stormstrike,if=buff.doom_winds.up&talent.thorims_invocation.enabled
@@ -224,15 +224,15 @@ lists:
     - voltaic_blaze,if=dot.flame_shock.remains=0
     # flame_shock,if=!ticking
     - flame_shock,if=dot.flame_shock.remains=0
-    # surging_totem
+    # surging_totem,if=raid_event.adds.in>=30|fight_remains<=30
     - surging_totem.player
     # call_action_list,name=cooldowns
     - call_action_list,name=cooldowns
-    # sundering,if=talent.surging_elements.enabled|buff.whirling_earth.up|talent.feral_spirit.enabled
+    # sundering,if=(talent.surging_elements.enabled|buff.whirling_earth.up|talent.feral_spirit.enabled)&(raid_event.adds.in>=30|fight_remains<=12)
     - sundering,if=talent.surging_elements.enabled|buff.whirling_earth.up|talent.feral_spirit.enabled
     # lava_lash,if=buff.whirling_fire.up|buff.hot_hand.up
     - lava_lash,if=buff.whirling_fire.up|buff.hot_hand.up
-    # doom_winds
+    # doom_winds,if=raid_event.adds.in>=30|fight_remains<=10
     - doom_winds
     # voltaic_blaze,if=set_bonus.midnight_season_2_2pc
     - voltaic_blaze,if=set_bonus.midnight_season_2_2pc
@@ -273,7 +273,7 @@ lists:
     - call_action_list,name=sanity_checks
     - call_action_list,name=auto_target
 
-    - skyfury,range_check=none,if=(buff.skyfury.down.any|action.skyfury.overlayed)&lastcast.skyfury>=10
+    - skyfury,range_check=none,if=group.count(cycle.buff.skyfury.down.any)>0&lastcast.skyfury>=10
     - lightning_shield,range_check=none,if=buff.lightning_shield.down
     - windfury_weapon,range_check=none,if=mainhand.enchant.remains<600
     - flametongue_weapon,range_check=none,if=offhand.enchant.remains<600

@@ -25,6 +25,9 @@ version: 1
 #   dr_type: magic | physical  (omit = all schools). Scopes which incoming hits
 #            the dr applies to. An untagged (unknown-school) hit only receives
 #            all-school dr — school-specific dr is skipped (never overstates).
+#   aoe_dr:  TAG, not a field. The dr applies only to `aoe`-tagged hits (Zephyr, Feint).
+#   Group cooldowns are keyed by the BUFF that lands on each player, which is often not
+#   the cast id (Anti-Magic Zone: cast 51052, buff 145629). Verify on WCL Buffs+Friendlies.
 #   Values sourced from not_even_close (acornellier/not_even_close) + retail.
 #   Pure-absorb shields (PW:S, Ice Barrier, Celestial Brew, Shield of Vengeance,
 #   Dark Pact, ...) and pure health/heal CDs (Last Stand, Rallying Cry, Guardian
@@ -48,7 +51,7 @@ buffs:
   # 49028:  { name: "Dancing Rune Weapon", tags: [defensive, major, parry] }        # Also offensive
   49039:  { name: "Lichborne", tags: [defensive, major] }                         # CC immunity, no DR
   194679: { name: "Rune Tap", tags: [defensive, minor], dr: 0.2 }
-  51052:  { name: "Anti-Magic Zone", tags: [defensive, major, magic], dr: 0.2, dr_type: magic }
+  145629: { name: "Anti-Magic Zone", tags: [defensive, major, magic], dr: 0.2, dr_type: magic }   # was 51052 (the cast id, never on a player) - buff 145629 seen on 20-29 players in zone 55 WCL 2026-09-13
 
   # ========== Warrior ==========
   871:    { name: "Shield Wall", tags: [defensive, major], dr: 0.4 }
@@ -68,7 +71,8 @@ buffs:
   6940:   { name: "Blessing of Sacrifice", tags: [defensive, minor], dr: 0.3 }
   1022:   { name: "Blessing of Protection", tags: [defensive, major, physical], dr: 1.0, dr_type: physical }
   184662: { name: "Shield of Vengeance", tags: [defensive, major] }              # absorb shield — value in player.absorb
-  31821:  { name: "Aura Mastery", tags: [defensive, major] }                      # effect varies by active aura — no fixed DR
+  465:    { name: "Devotion Aura", tags: [defensive, minor], dr: 0.03 }            # group aura (nec groupBuffs); on 24-25 players in WCL 2026-09-13
+  31821:  { name: "Aura Mastery", tags: [defensive, major], dr: 0.09 }           # nec: +9% on top of Devotion Aura; the buff is on the paladin only (WCL: self=8/8)
   204018: { name: "Blessing of Spellwarding", tags: [defensive, major, magic], dr: 1.0, dr_type: magic }
 
   # ========== Druid ==========
@@ -99,7 +103,7 @@ buffs:
   # ========== Rogue ==========
   5277:   { name: "Evasion", tags: [defensive, major, parry], dr: 0.1, dr_type: physical }   # dodge vs attacks
   31224:  { name: "Cloak of Shadows", tags: [defensive, major, magic], dr: 1.0, dr_type: magic }  # magic immunity
-  1966:   { name: "Feint", tags: [defensive, minor], dr: 0.1 }                   # mainly AoE reduction
+  1966:   { name: "Feint", tags: [defensive, minor, aoe_dr], dr: 0.4 }           # AoE-only 40% (nec aoeDr); was dr 0.1 on every hit
 
   # ========== Hunter ==========
   264735: { name: "Survival of the Fittest", tags: [defensive, major], dr: 0.3 }
@@ -132,7 +136,8 @@ buffs:
   974:    { name: "Earth Shield", tags: [defensive, minor, healing] }            # heal-on-hit — not flat DR
 
   # ========== Evoker ==========
-  374227: { name: "Zephyr", tags: [defensive, major], dr: 0.2 }
+  374227: { name: "Zephyr", tags: [defensive, major, aoe_dr], dr: 0.2 }          # AoE-only (nec aoeDr); on 11 players in WCL 2026-09-13
+  357170: { name: "Time Dilation", tags: [defensive, major], dr: 0.5 }           # external (nec externals); on 6 players in WCL 2026-09-13
   363916: { name: "Obsidian Scales", tags: [defensive, major], dr: 0.3 }
   374348: { name: "Renewing Blaze", tags: [defensive, major, healing] }          # heal over time — not DR
   378441: { name: "Time Stop", tags: [immunity], dr: 1.0 }
@@ -364,6 +369,7 @@ debuffs:
   1303039: { name: "Hunting Leap", tags: [physical], damage: 223060 }
 
   # ========== Blinding Vale (Boss) ==========
+  1236747: { name: "Verdant Stomp", tags: [freedom]}
   1234753: { name: "Bedrock Slam", tags: [non_phys] }   # TODO verify aura id (server-applied)
   1261276: { name: "Thornblade", tags: [bleed, dwarf] }   # was 1235640; WCL: this id is what lands on players
   1259365: { name: "Bloodthorn Roots", tags: [freedom, magic] }   # was 1236658; WCL: this id is what lands on players
@@ -504,7 +510,8 @@ debuffs:
   1288457: { name: "Gust", tags: [non_phys], damage: 155173 }
   1289062: { name: "Gale Force", tags: [non_phys] }   # TODO verify aura id (server-applied)
   1289588: { name: "Thunder Spit", tags: [non_phys] }   # was 1289602; WCL: this id is what lands on players
-  1290030: { name: "A Knot of Snakes", tags: [physical] }   # was 1290031; WCL: this id is what lands on players
+  263958: { name: "A Knot of Snakes", tags: [physical] }   # -freedom 2026-09-30: 0.2-0.9s lead-in to 1290030; WCL 14 top keys, 0 Freedoms cast on a knotted player
+  1290030: { name: "A Knot of Snakes", tags: [physical] }   # was 1290031; WCL: this id is what lands on players. -freedom 2026-09-30: fixed 4.0s in 79/79 applies, Freedom never used on it
   1308838: { name: "Lightning Bite", tags: [non_phys] }   # was 1290797; WCL: this id is what lands on players
   1293048: { name: "Serpentstorm", tags: [non_phys], damage: 349139 }
   1300871: { name: "Corrupted Lifeforce", tags: [non_phys] }

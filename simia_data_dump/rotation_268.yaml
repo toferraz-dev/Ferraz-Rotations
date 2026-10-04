@@ -14,6 +14,11 @@ version: 3
 spec: 268
 entry: main
 
+spell_overrides:
+  # local addition: game reports Touch of Death usable at any HP (snapshot 2026-09-17).
+  # SimC touch_of_death_t::target_ready — target HP <= our max HP, or <15% with Improved Touch of Death.
+  322109: "target.health.current<=player.health.max|talent.improved_touch_of_death&target.health.pct<15"
+
 config:
   fortifying_brew_hp_pct:
     section: "Defensive HP Percentage"
@@ -242,9 +247,9 @@ lists:
     - bull_rush,if=interrupt.stun.aoe.check
     - tail_swipe,if=interrupt.stun.aoe.check
 
-    # Taunt — grab aggro when not tanking (dungeon/M+ only, never raid)
-    - provoke,name="Taunt",if=target.threat<2&target.combat&target.threat!=-1&!player.inraid
-    - provoke.mouseover,name="Taunt MO",if=mouseover.threat<2&mouseover.combat&mouseover.threat!=-1&mouseover.exists&!player.inraid
+    # Taunt â€” grab aggro when not tanking (dungeon/M+ only, never raid)
+    - provoke,name="Taunt",if=target.threat<2&target.combat&target.threat!=-1&target.targeting_party&!target.ignore_count&!target.bypass_combat&!player.inraid
+    - provoke.mouseover,name="Taunt MO",if=mouseover.threat<2&mouseover.combat&mouseover.threat!=-1&mouseover.targeting_party&!mouseover.ignore_count&!mouseover.bypass_combat&mouseover.exists&!player.inraid
 
     - call_action_list,name=auto_heal
 

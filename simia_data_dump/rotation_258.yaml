@@ -25,6 +25,7 @@ config:
   pi_target:
     type: unit_select
     label: "PI Target (Party)"
+    spell: 10060         # Party tab badge icon (Power Infusion)
     max: 1               # Max selections (0 = unlimited)
     filter: all           # Role filter: all (default), tanks, healers, dps
     show_override: true   # Show in overlay right-click menu
@@ -105,6 +106,10 @@ lists:
     - power_infusion,interrupt=true,casting_check=mind_flay,range_check=none,if=!config.pi_target&(buff.voidform.up|!talent.voidform)&!buff.power_infusion.up
     # shadow_word_death,target_if=max:(target.health.pct<=20)*100+dot.shadow_word_madness.ticking,if=(priest.force_devour_matter|target.has_absorb)&talent.devour_matter
     - shadow_word_death,interrupt=true,casting_check=mind_flay,if=target.absorb>0&talent.devour_matter
+    # tentacle_slam,target_if=min:dot.vampiric_touch.remains,if=!dot.vampiric_touch.ticking&target.time_to_die>=10&active_dot.vampiric_touch<5
+    - tentacle_slam,delay=200,interrupt=true,casting_check=mind_flay,if=!dot.vampiric_touch.ticking&target.time_to_die>=10&active_dot.vampiric_touch<5&lastcast.tentacle_slam>=3
+    # vampiric_touch,target_if=min:dot.vampiric_touch.remains,if=!dot.vampiric_touch.ticking&target.time_to_die>=10&active_dot.vampiric_touch<5
+    - vampiric_touch,interrupt=true,casting_check=mind_flay,if=!dot.vampiric_touch.ticking&target.time_to_die>=10&active_dot.vampiric_touch<5&lastcast.tentacle_slam>=3
     # shadow_word_madness,target_if=max:target.time_to_die*(dot.shadow_word_madness.remains<=gcd.max*2|variable.dr_force_prio|!talent.distorted_reality&variable.me_force_prio),if=active_dot.shadow_word_madness<=1&dot.shadow_word_madness.remains<=gcd.max|insanity.deficit<=35&(cooldown.voidform.remains>25|target.time_to_die<25|active_enemies>1|insanity.deficit<=5)|buff.mind_devourer.react|!raid_event.adds.exists&target.time_to_die<=10|buff.entropic_rift.up&(cooldown.voidform.remains>=75|!talent.ancient_madness)|buff.voidform.up
     - shadow_word_madness,interrupt=true,casting_check=mind_flay,if=active_dot.shadow_word_madness<=1&dot.shadow_word_madness.remains<=gcd.max|insanity.deficit<=35&(cooldown.voidform.remains>25|target.time_to_die<25|enemies_around_target>1|insanity.deficit<=5)|buff.mind_devourer.react|target.time_to_die<=10|buff.entropic_rift.up&(cooldown.voidform.remains>=75|!talent.ancient_madness)|buff.voidform.up
     # void_volley,if=cooldown.voidform.up
@@ -140,6 +145,10 @@ lists:
     - power_infusion,range_check=none,if=!config.pi_target&(buff.voidform.up|!talent.voidform)&!buff.power_infusion.up
     # shadow_word_death,target_if=max:(target.health.pct<=20)*100+dot.shadow_word_madness.ticking,if=(priest.force_devour_matter|target.has_absorb)&talent.devour_matter
     - shadow_word_death,if=target.absorb>0&talent.devour_matter
+    # tentacle_slam,target_if=min:dot.vampiric_touch.remains,if=!dot.vampiric_touch.ticking&target.time_to_die>=10&active_dot.vampiric_touch<5
+    - tentacle_slam,delay=200,if=!dot.vampiric_touch.ticking&target.time_to_die>=10&active_dot.vampiric_touch<5&lastcast.tentacle_slam>=3
+    # vampiric_touch,target_if=min:dot.vampiric_touch.remains,if=!dot.vampiric_touch.ticking&target.time_to_die>=10&active_dot.vampiric_touch<5
+    - vampiric_touch,if=!dot.vampiric_touch.ticking&target.time_to_die>=10&active_dot.vampiric_touch<5&lastcast.tentacle_slam>=3
     # shadow_word_madness,target_if=max:target.time_to_die*(dot.shadow_word_madness.remains<=gcd.max*2|variable.dr_force_prio|!talent.distorted_reality&variable.me_force_prio),if=active_dot.shadow_word_madness<=1&dot.shadow_word_madness.remains<=gcd.max|insanity.deficit<=35&(cooldown.voidform.remains>25|target.time_to_die<25|active_enemies>1|insanity.deficit<=5)|buff.mind_devourer.react|!raid_event.adds.exists&target.time_to_die<=10|buff.entropic_rift.up&(cooldown.voidform.remains>=75|!talent.ancient_madness)|buff.voidform.up
     - shadow_word_madness,if=active_dot.shadow_word_madness<=1&dot.shadow_word_madness.remains<=gcd.max|insanity.deficit<=35&(cooldown.voidform.remains>25|target.time_to_die<25|enemies_around_target>1|insanity.deficit<=5)|buff.mind_devourer.react|target.time_to_die<=10|buff.entropic_rift.up&(cooldown.voidform.remains>=75|!talent.ancient_madness)|buff.voidform.up
     # void_volley,if=cooldown.voidform.up
@@ -196,6 +205,10 @@ lists:
     - power_infusion,interrupt=true,casting_check=mind_flay,range_check=none,if=!config.pi_target&(buff.voidform.up|!talent.voidform)&!buff.power_infusion.up
     # shadow_word_death,target_if=max:(target.health.pct<=20)*100+dot.shadow_word_madness.ticking,if=(priest.force_devour_matter|target.has_absorb)&talent.devour_matter
     - shadow_word_death,interrupt=true,casting_check=mind_flay,if=target.absorb>0&talent.devour_matter
+    # tentacle_slam,target_if=min:dot.vampiric_touch.remains,if=!dot.vampiric_touch.ticking&target.time_to_die>=10&active_dot.vampiric_touch<5
+    - tentacle_slam,delay=200,interrupt=true,casting_check=mind_flay,if=!dot.vampiric_touch.ticking&target.time_to_die>=10&active_dot.vampiric_touch<5&lastcast.tentacle_slam>=3
+    # vampiric_touch,target_if=min:dot.vampiric_touch.remains,if=!dot.vampiric_touch.ticking&target.time_to_die>=10&active_dot.vampiric_touch<5
+    - vampiric_touch,interrupt=true,casting_check=mind_flay,if=!dot.vampiric_touch.ticking&target.time_to_die>=10&active_dot.vampiric_touch<5&lastcast.tentacle_slam>=3
     # shadow_word_madness,target_if=max:target.time_to_die*(dot.shadow_word_madness.remains<=gcd.max*2|variable.dr_force_prio|!talent.distorted_reality&variable.me_force_prio),if=active_dot.shadow_word_madness<=1&dot.shadow_word_madness.remains<=gcd.max|insanity.deficit<=35&(cooldown.voidform.remains>25|target.time_to_die<25|active_enemies>1|insanity.deficit<=5)|buff.mind_devourer.react|!raid_event.adds.exists&target.time_to_die<=10|buff.entropic_rift.up&(cooldown.voidform.remains>=75|!talent.ancient_madness)|buff.voidform.up
     - shadow_word_madness,interrupt=true,casting_check=mind_flay,if=active_dot.shadow_word_madness<=1&dot.shadow_word_madness.remains<=gcd.max|insanity.deficit<=35&(cooldown.voidform.remains>25|target.time_to_die<25|enemies_around_target>1|insanity.deficit<=5)|buff.mind_devourer.react|target.time_to_die<=10|buff.entropic_rift.up&(cooldown.voidform.remains>=75|!talent.ancient_madness)|buff.voidform.up|buff.entropic_rift.up
     # void_volley,if=cooldown.voidform.up
@@ -235,6 +248,10 @@ lists:
     - power_infusion,range_check=none,if=!config.pi_target&(buff.voidform.up|!talent.voidform)&!buff.power_infusion.up
     # shadow_word_death,target_if=max:(target.health.pct<=20)*100+dot.shadow_word_madness.ticking,if=(priest.force_devour_matter|target.has_absorb)&talent.devour_matter
     - shadow_word_death,if=target.absorb>0&talent.devour_matter
+    # tentacle_slam,target_if=min:dot.vampiric_touch.remains,if=!dot.vampiric_touch.ticking&target.time_to_die>=10&active_dot.vampiric_touch<5
+    - tentacle_slam,delay=200,if=!dot.vampiric_touch.ticking&target.time_to_die>=10&active_dot.vampiric_touch<5&lastcast.tentacle_slam>=3
+    # vampiric_touch,target_if=min:dot.vampiric_touch.remains,if=!dot.vampiric_touch.ticking&target.time_to_die>=10&active_dot.vampiric_touch<5
+    - vampiric_touch,if=!dot.vampiric_touch.ticking&target.time_to_die>=10&active_dot.vampiric_touch<5&lastcast.tentacle_slam>=3
     # shadow_word_madness,target_if=max:target.time_to_die*(dot.shadow_word_madness.remains<=gcd.max*2|variable.dr_force_prio|!talent.distorted_reality&variable.me_force_prio),if=active_dot.shadow_word_madness<=1&dot.shadow_word_madness.remains<=gcd.max|insanity.deficit<=35&(cooldown.voidform.remains>25|target.time_to_die<25|active_enemies>1|insanity.deficit<=5)|buff.mind_devourer.react|!raid_event.adds.exists&target.time_to_die<=10|buff.entropic_rift.up&(cooldown.voidform.remains>=75|!talent.ancient_madness)|buff.voidform.up
     - shadow_word_madness,if=active_dot.shadow_word_madness<=1&dot.shadow_word_madness.remains<=gcd.max|insanity.deficit<=35&(cooldown.voidform.remains>25|target.time_to_die<25|enemies_around_target>1|insanity.deficit<=5)|buff.mind_devourer.react|target.time_to_die<=10|buff.entropic_rift.up&(cooldown.voidform.remains>=75|!talent.ancient_madness)|buff.voidform.up|buff.entropic_rift.up
     # void_volley,if=cooldown.voidform.up
@@ -308,7 +325,7 @@ lists:
     - call_action_list,name=sanity_checks
     - call_action_list,name=auto_target
 
-    - power_word_fortitude,range_check=none,if=(buff.power_word_fortitude.down|action.power_word_fortitude.overlayed)&lastcast.power_word_fortitude>=10
+    - power_word_fortitude,range_check=none,if=group.count(cycle.buff.power_word_fortitude.down.any)>0&lastcast.power_word_fortitude>=10
 
     - shadowform,range_check=none,if=!buff.shadowform.up
 

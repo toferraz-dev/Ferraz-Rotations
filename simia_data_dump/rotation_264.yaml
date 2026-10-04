@@ -100,6 +100,7 @@ config:
     section: "Healing"
     label: "Earth Shield Target"
     type: unit_select
+    spell: 974           # Party tab badge icon
     max: 1
     filter: tanks
     show_override: true
@@ -412,7 +413,7 @@ lists:
   # Out-of-combat healing (no Healing Surge in Midnight - HW is the only direct heal)
   # ==========================================================================
   out_of_combat:
-    - skyfury,range_check=none,if=(buff.skyfury.down.any|action.skyfury.overlayed)&lastcast.skyfury>=10
+    - skyfury,range_check=none,if=group.count(cycle.buff.skyfury.down.any)>0&lastcast.skyfury>=10
     # Water Shield first — Instinctive Imbuements (1270350) makes this also apply
     # weapon imbues and (with Elemental Orbit) self-Earth Shield. Always pre-pull.
     - water_shield,range_check=none,if=buff.water_shield.down
@@ -468,7 +469,7 @@ lists:
     - call_action_list,name=auto_target
 
     # Skyfury raid buff
-    - skyfury,range_check=none,if=(buff.skyfury.down.any|action.skyfury.overlayed)&lastcast.skyfury>=10
+    - skyfury,range_check=none,if=group.count(cycle.buff.skyfury.down.any)>0&lastcast.skyfury>=10
 
     # Out of combat
     - call_action_list,name=out_of_combat,if=!player.combat

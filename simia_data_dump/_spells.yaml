@@ -30,6 +30,7 @@ burst_buffs:
   # Rogue
   - buff.adrenaline_rush.remains>=5
   - buff.shadow_blades.up&buff.shadow_dance.up
+  - lastcast.deathmark<=10
 
   # Hunter
   - buff.bestial_wrath.remains>=5

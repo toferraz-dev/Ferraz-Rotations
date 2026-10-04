@@ -160,7 +160,7 @@ lists:
     - shattering_throw,if=target.absorb>0
     - wrecking_throw,if=target.absorb>0
 
-    - battle_shout,range_check=none,if=(!buff.battle_shout.up.any|buff.battle_shout.remains.any<60|action.battle_shout.overlayed)&lastcast.battle_shout>=10
+    - battle_shout,range_check=none,if=group.count(cycle.buff.battle_shout.remains.any<60)>0&lastcast.battle_shout>=10
     - defensive_stance,range_check=none,if=!buff.defensive_stance.up
     
     # Combat Check
@@ -175,7 +175,7 @@ lists:
 
     # incoming_cast.player.reflectable.up = targeted reflectable spell aimed at player
     # incoming_cast.aoe.reflectable.up = AoE reflectable spell (no targeting requirement)
-    - spell_reflection,range_check=none,if=incoming_cast.player.reflectable.up|incoming_cast.aoe.reflectable.up
+    - spell_reflection,range_check=none,if=incoming_cast.player.reflectable.up|incoming_cast.aoe.reflectable.up|target.incoming_cast.tank.reflectable.up
     # Interrupts
     - pummel,if=interrupt.target.check
     - pummel.mouseover,if=interrupt.mouseover.check
@@ -193,8 +193,8 @@ lists:
     - tail_swipe,if=interrupt.stun.aoe.check
 
     # Taunt — grab aggro when not tanking (dungeon/M+ only, never raid)
-    - taunt,name="Taunt",if=target.threat<2&target.combat&target.threat!=-1&!player.inraid
-    - taunt.mouseover,name="Taunt MO",if=mouseover.threat<2&mouseover.combat&mouseover.threat!=-1&mouseover.exists&!player.inraid
+    - taunt,name="Taunt",if=target.threat<2&target.combat&target.threat!=-1&target.targeting_party&!target.ignore_count&!target.bypass_combat&!player.inraid
+    - taunt.mouseover,name="Taunt MO",if=mouseover.threat<2&mouseover.combat&mouseover.threat!=-1&mouseover.targeting_party&!mouseover.ignore_count&!mouseover.bypass_combat&mouseover.exists&!player.inraid
 
     - call_action_list,name=auto_heal
 
