@@ -2051,6 +2051,72 @@
               "example": "!target.ignore_count"
             }
           ]
+        },
+        {
+          "name": "Buffs & Debuffs (Named)",
+          "expressions": [
+            {
+              "syntax": "target.buff.SPELL.up",
+              "returnType": "bool",
+              "description": "Target has buff (player-applied by default). Confirmed in rotation-yaml-intellisense extension source, missing from this catalog as of 2026-09-19.",
+              "example": "target.buff.1289229.up"
+            },
+            {
+              "syntax": "target.buff.SPELL.up.any",
+              "returnType": "bool",
+              "description": "Target has buff from any source."
+            },
+            {
+              "syntax": "target.buff.SPELL.down",
+              "returnType": "bool",
+              "description": "Target does not have buff."
+            },
+            {
+              "syntax": "target.buff.SPELL.remains",
+              "returnType": "number",
+              "description": "Target buff time remaining."
+            },
+            {
+              "syntax": "target.buff.SPELL.elapsed",
+              "returnType": "number",
+              "description": "Time since buff applied on target."
+            },
+            {
+              "syntax": "target.buff.SPELL.stack",
+              "returnType": "number",
+              "description": "Target buff stack count."
+            },
+            {
+              "syntax": "target.debuff.SPELL.up",
+              "returnType": "bool",
+              "description": "Target has debuff."
+            },
+            {
+              "syntax": "target.debuff.SPELL.up.any",
+              "returnType": "bool",
+              "description": "Target has debuff from any source."
+            },
+            {
+              "syntax": "target.debuff.SPELL.down",
+              "returnType": "bool",
+              "description": "Target does not have debuff."
+            },
+            {
+              "syntax": "target.debuff.SPELL.remains",
+              "returnType": "number",
+              "description": "Target debuff time remaining."
+            },
+            {
+              "syntax": "target.debuff.SPELL.elapsed",
+              "returnType": "number",
+              "description": "Time since debuff applied on target."
+            },
+            {
+              "syntax": "target.debuff.SPELL.stack",
+              "returnType": "number",
+              "description": "Target debuff stack count."
+            }
+          ]
         }
       ]
     },
@@ -2320,6 +2386,86 @@
               "example": "focus.casting.death_bolt"
             }
           ]
+        },
+        {
+          "name": "Buffs & Debuffs (Named)",
+          "expressions": [
+            {
+              "syntax": "focus.buff.SPELL.up",
+              "returnType": "bool",
+              "description": "Focus has buff (player-applied by default). Confirmed in rotation-yaml-intellisense extension source, missing from this catalog as of 2026-09-19."
+            },
+            {
+              "syntax": "focus.buff.SPELL.up.any",
+              "returnType": "bool",
+              "description": "Focus has buff from any source."
+            },
+            {
+              "syntax": "focus.buff.SPELL.down",
+              "returnType": "bool",
+              "description": "Focus does not have buff."
+            },
+            {
+              "syntax": "focus.buff.SPELL.remains",
+              "returnType": "number",
+              "description": "Focus buff time remaining."
+            },
+            {
+              "syntax": "focus.buff.SPELL.elapsed",
+              "returnType": "number",
+              "description": "Time since buff applied on focus."
+            },
+            {
+              "syntax": "focus.buff.SPELL.stack",
+              "returnType": "number",
+              "description": "Focus buff stack count."
+            },
+            {
+              "syntax": "focus.debuff.SPELL.up",
+              "returnType": "bool",
+              "description": "Focus has debuff."
+            },
+            {
+              "syntax": "focus.debuff.SPELL.down",
+              "returnType": "bool",
+              "description": "Focus does not have debuff."
+            },
+            {
+              "syntax": "focus.debuff.SPELL.remains",
+              "returnType": "number",
+              "description": "Focus debuff time remaining."
+            },
+            {
+              "syntax": "focus.debuff.SPELL.elapsed",
+              "returnType": "number",
+              "description": "Time since debuff applied on focus."
+            },
+            {
+              "syntax": "focus.debuff.SPELL.stack",
+              "returnType": "number",
+              "description": "Focus debuff stack count."
+            },
+            {
+              "syntax": "focus.purgeable",
+              "returnType": "bool",
+              "description": "Focus has purgeable buff (auto-detect types from spec)."
+            },
+            {
+              "syntax": "focus.purgeable.list",
+              "returnType": "bool",
+              "description": "Focus has purgeable buff with dispel_list filtering."
+            },
+            {
+              "syntax": "focus.purgeable.magic",
+              "returnType": "bool",
+              "description": "Focus has magic buff."
+            },
+            {
+              "syntax": "focus.purgeable.enrage",
+              "returnType": "bool",
+              "description": "Focus has enrage buff."
+            }
+          ]
         }
       ],
       "expressions": [
@@ -2583,6 +2729,101 @@
               "returnType": "bool",
               "description": "Cast targets the player.",
               "example": "mouseover.casting.targeting_me"
+            }
+          ]
+        },
+        {
+          "name": "Buffs, Debuffs & Purgeable",
+          "expressions": [
+            {
+              "syntax": "mouseover.buff.SPELL.up",
+              "returnType": "bool",
+              "description": "Mouseover has buff (player-applied by default). Use .up.any for any source. Confirmed in rotation-yaml-intellisense extension source, missing from this catalog as of 2026-09-19.",
+              "example": "mouseover.buff.rejuvenation.up"
+            },
+            {
+              "syntax": "mouseover.buff.SPELL.up.any",
+              "returnType": "bool",
+              "description": "Mouseover has buff from any source."
+            },
+            {
+              "syntax": "mouseover.buff.SPELL.down",
+              "returnType": "bool",
+              "description": "Mouseover does not have buff."
+            },
+            {
+              "syntax": "mouseover.buff.SPELL.remains",
+              "returnType": "number",
+              "description": "Mouseover buff time remaining.",
+              "example": "mouseover.buff.rejuvenation.remains>1"
+            },
+            {
+              "syntax": "mouseover.buff.SPELL.elapsed",
+              "returnType": "number",
+              "description": "Time since buff applied on mouseover."
+            },
+            {
+              "syntax": "mouseover.buff.SPELL.stack",
+              "returnType": "number",
+              "description": "Mouseover buff stack count."
+            },
+            {
+              "syntax": "mouseover.debuff.SPELL.up",
+              "returnType": "bool",
+              "description": "Mouseover has debuff.",
+              "example": "mouseover.debuff.moonfire.down"
+            },
+            {
+              "syntax": "mouseover.debuff.SPELL.down",
+              "returnType": "bool",
+              "description": "Mouseover does not have debuff."
+            },
+            {
+              "syntax": "mouseover.debuff.SPELL.remains",
+              "returnType": "number",
+              "description": "Mouseover debuff time remaining."
+            },
+            {
+              "syntax": "mouseover.debuff.SPELL.elapsed",
+              "returnType": "number",
+              "description": "Time since debuff applied on mouseover."
+            },
+            {
+              "syntax": "mouseover.debuff.SPELL.stack",
+              "returnType": "number",
+              "description": "Mouseover debuff stack count."
+            },
+            {
+              "syntax": "mouseover.purgeable",
+              "returnType": "bool",
+              "description": "Mouseover has purgeable buff (auto-detect types from spec)."
+            },
+            {
+              "syntax": "mouseover.purgeable.list",
+              "returnType": "bool",
+              "description": "Mouseover has purgeable buff with dispel_list filtering."
+            },
+            {
+              "syntax": "mouseover.purgeable.magic",
+              "returnType": "bool",
+              "description": "Mouseover has magic buff."
+            },
+            {
+              "syntax": "mouseover.purgeable.enrage",
+              "returnType": "bool",
+              "description": "Mouseover has enrage buff.",
+              "example": "mouseover.purgeable.enrage"
+            },
+            {
+              "syntax": "mouseover.lootable",
+              "returnType": "bool",
+              "description": "Mouseover is lootable.",
+              "example": "mouseover.lootable"
+            },
+            {
+              "syntax": "mouseover.threat",
+              "returnType": "number",
+              "description": "Threat level on mouseover (0-3, -1 if N/A)."
             }
           ]
         }
@@ -3079,6 +3320,162 @@
               "returnType": "number",
               "description": "Debuff stacks on tank1.",
               "example": "tank1.debuff.mystic_venom.stack>=3"
+            }
+          ]
+        },
+        {
+          "name": "Tank 2 & Tank 3",
+          "expressions": [
+            {
+              "syntax": "tank2.exists",
+              "returnType": "bool",
+              "description": "1 if tank2 is assigned, 0 otherwise. Confirmed in rotation-yaml-intellisense extension source, missing from this catalog as of 2026-09-19."
+            },
+            {
+              "syntax": "tank2.health.pct",
+              "returnType": "number",
+              "description": "Tank2 health percentage."
+            },
+            {
+              "syntax": "tank2.health.current",
+              "returnType": "number",
+              "description": "Tank2 current health."
+            },
+            {
+              "syntax": "tank2.health.max",
+              "returnType": "number",
+              "description": "Tank2 max health."
+            },
+            {
+              "syntax": "tank2.health.deficit",
+              "returnType": "number",
+              "description": "Tank2 missing health (max - current)."
+            },
+            {
+              "syntax": "tank2.dead",
+              "returnType": "bool",
+              "description": "Tank2 is dead."
+            },
+            {
+              "syntax": "tank2.range",
+              "returnType": "number",
+              "description": "Distance to tank2 in yards."
+            },
+            {
+              "syntax": "tank2.time_to_die",
+              "returnType": "number",
+              "description": "Estimated seconds until tank2 dies."
+            },
+            {
+              "syntax": "tank2.tank",
+              "returnType": "bool",
+              "description": "Always 1 (tank2 is a tank)."
+            },
+            {
+              "syntax": "tank2.buff.SPELL.up",
+              "returnType": "bool",
+              "description": "Tank2 has buff.",
+              "example": "tank2.buff.lifebloom.up"
+            },
+            {
+              "syntax": "tank2.buff.SPELL.remains",
+              "returnType": "number",
+              "description": "Buff remaining time on tank2."
+            },
+            {
+              "syntax": "tank2.buff.SPELL.stack",
+              "returnType": "number",
+              "description": "Buff stacks on tank2."
+            },
+            {
+              "syntax": "tank2.debuff.SPELL.up",
+              "returnType": "bool",
+              "description": "Tank2 has debuff."
+            },
+            {
+              "syntax": "tank2.debuff.SPELL.remains",
+              "returnType": "number",
+              "description": "Debuff remaining time on tank2."
+            },
+            {
+              "syntax": "tank2.debuff.SPELL.stack",
+              "returnType": "number",
+              "description": "Debuff stacks on tank2."
+            },
+            {
+              "syntax": "tank3.exists",
+              "returnType": "bool",
+              "description": "1 if tank3 is assigned, 0 otherwise."
+            },
+            {
+              "syntax": "tank3.health.pct",
+              "returnType": "number",
+              "description": "Tank3 health percentage."
+            },
+            {
+              "syntax": "tank3.health.current",
+              "returnType": "number",
+              "description": "Tank3 current health."
+            },
+            {
+              "syntax": "tank3.health.max",
+              "returnType": "number",
+              "description": "Tank3 max health."
+            },
+            {
+              "syntax": "tank3.health.deficit",
+              "returnType": "number",
+              "description": "Tank3 missing health (max - current)."
+            },
+            {
+              "syntax": "tank3.dead",
+              "returnType": "bool",
+              "description": "Tank3 is dead."
+            },
+            {
+              "syntax": "tank3.range",
+              "returnType": "number",
+              "description": "Distance to tank3 in yards."
+            },
+            {
+              "syntax": "tank3.time_to_die",
+              "returnType": "number",
+              "description": "Estimated seconds until tank3 dies."
+            },
+            {
+              "syntax": "tank3.tank",
+              "returnType": "bool",
+              "description": "Always 1 (tank3 is a tank)."
+            },
+            {
+              "syntax": "tank3.buff.SPELL.up",
+              "returnType": "bool",
+              "description": "Tank3 has buff."
+            },
+            {
+              "syntax": "tank3.buff.SPELL.remains",
+              "returnType": "number",
+              "description": "Buff remaining time on tank3."
+            },
+            {
+              "syntax": "tank3.buff.SPELL.stack",
+              "returnType": "number",
+              "description": "Buff stacks on tank3."
+            },
+            {
+              "syntax": "tank3.debuff.SPELL.up",
+              "returnType": "bool",
+              "description": "Tank3 has debuff."
+            },
+            {
+              "syntax": "tank3.debuff.SPELL.remains",
+              "returnType": "number",
+              "description": "Debuff remaining time on tank3."
+            },
+            {
+              "syntax": "tank3.debuff.SPELL.stack",
+              "returnType": "number",
+              "description": "Debuff stacks on tank3."
             }
           ]
         }
