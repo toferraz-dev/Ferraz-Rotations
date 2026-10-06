@@ -1,17 +1,4 @@
-# =============================================================================
-# Restoration Druid Ferraz M+ - spec 105 - patch 12.1.
-# =============================================================================
-#
-# Lists (entry point: main):
-#   interrupts              out_of_combat           defensives              racials
-#   cooldowns               active_healing          utility                 abundance_maintenance
-#   catweave_st             catweave_aoe            catweave                ranged_dps
-#   moving                  avatar_sethraliss       mouseover_healing_emergency
-#   auto_rez                engine                  main
-#
-# Why each line is the way it is: .agents/rationale/RestoDruid.md
-# =============================================================================
-version: "20.0.0"
+version: "21.0.0"
 author: Ferraz
 patch: "12.1"
 spec: 105
@@ -26,15 +13,13 @@ predictions:
 
 config:
 
-  # BUILD STAMP — display only. Keep in sync with version:/patch: above.
   about:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-10-06 | Patch: 12.1 | Version: 20.0.0"
+    text: "Last update: 2026-10-06 | Patch: 12.1 | Version: 21.0.0"
 
 
-  # RECOMMENDED BUILD — the string the talent.X gates below assume.
   recommended_talents:
     section: "Talents"
     type: copy_text
@@ -42,7 +27,6 @@ config:
     text: "CkGADBD3hSPCL9Y9gz68WcKvMMMmZZMjZmxsNmBmNmNbzAAAAAAAAAAgNDNbzw0MDwsYmZGLGeADAAAAgBAYGw22YBTzMLDAgZbmtmtZ2sxMzMDzMbgmBAzMzMAMA"
 
 
-  # HEALING — the core thresholds.
   use_mouseover:
     label: "MO Healing (Emergency)"
     section: "Healing"
@@ -57,7 +41,6 @@ config:
     max: 99
     default: 75
 
-  # Everbloom 4/4 + Lifetreading decide this. Defaults to the tank.
   lifebloom_target:
     label: "Lifebloom Target"
     section: "Healing"
@@ -69,7 +52,6 @@ config:
         value: 1
     default: 2
 
-  # Out-of-combat healing floor.
   ooc_heal_hp_pct:
     label: "OOC Heal Below HP% (effective)"
     section: "Healing"
@@ -117,7 +99,6 @@ config:
     max: 99
     default: 70
 
-  # Raised 50 -> 60 alongside restoring the Rejuvenation blanket to 100.
   regrowth_emergency_threshold:
     label: "Regrowth Emergency HP % (effective)"
     section: "Healing"
@@ -143,7 +124,6 @@ config:
     max: 99
     default: 90
 
-  # REVERTED to 100 on 5.1.0, one version after lowering it.
   rejuvenation_threshold:
     label: "Rejuvenation HP % (effective)"
     section: "Healing"
@@ -152,12 +132,6 @@ config:
     max: 100
     default: 100
 
-  # Tank-specific thresholds, ported from the Rollfacedk Holy Paladin pattern
-  # (community_Battle_Nurse_Paladin.yaml): every main heal there branches
-  # cycle.tank&X|!cycle.tank&Y instead of one threshold for the whole group.
-  # A tank in M+19+ eats periodic burst (tank busters) on a totally different
-  # timing than the rest of the group's chip damage - one shared threshold
-  # either over-heals the tank early or under-heals it late.
   rejuvenation_threshold_tank:
     label: "Rejuvenation HP % Tank (effective)"
     section: "Healing"
@@ -183,7 +157,6 @@ config:
     default: 90
 
 
-  # HEALING COOLDOWNS — Convoke, Tranquility and their gates.
   convoke_threshold:
     label: "Convoke HP % (effective)"
     section: "Cooldowns"
@@ -224,7 +197,6 @@ config:
     description: "Toggle to disable automatic Tranquility usage."
 
 
-  # DEFENSIVES — personal and Ironbark.
   barkskin_incoming_pct:
     label: "Barkskin Incoming Damage %"
     section: "Defensives"
@@ -251,6 +223,15 @@ config:
     max: 99
     default: 35
 
+  frenzied_regen_incoming_pct:
+    label: "Panic Bear - Incoming Dmg %"
+    section: "Defensives"
+    type: slider
+    min: 25
+    max: 100
+    default: 50
+    description: "Shift to Bear for Frenzied Regen/Heart of the Wild BEFORE the hit lands, not just after HP already dropped. incoming.mitigated.pct is self-only (player), already accounts for active defensives like Barkskin, and catches damage one GCD earlier than waiting on health.effective.pct."
+
   ironbark_target:
     label: "Ironbark Target"
     section: "Defensives"
@@ -262,8 +243,6 @@ config:
         value: 2
     default: 1
 
-  # Emergency. The casting guard at the top of main returns before anything
-  # else, so a hardcast used to cost you the defensive entirely.
   emergency_hp:
     label: "Emergency HP% (mid-cast, effective)"
     section: "Defensives"
@@ -280,7 +259,6 @@ config:
     default: true
     description: "Below the emergency HP, end the current cast so the next global can go to a real defensive. Barkskin and the consumables above do not need this - they are off-GCD and fire without touching the cast - so this only matters for the ones that cost a global, like Bear Form into Frenzied Regeneration. Tranquility and Convoke are never cut."
 
-  # Shapeshifting breaks roots, but only the ones the game lets it break.
   root_cleanse:
     label: "Break Roots by Shapeshifting"
     section: "Defensives"
@@ -289,7 +267,6 @@ config:
     description: "Shift form to break a root, using the real player.rooted self-state (not stun, not fear - there is no equivalent snare check). line_cd caps it at one attempt every 8 seconds."
 
 
-  # DISPELS — Nature's Cure removes MAGIC, curse.
   auto_dispel:
     label: "Nature's Cure (Group)"
     section: "Dispels"
@@ -310,8 +287,6 @@ config:
     description: "Soothe whatever you are hovering, checked just before the current-target Soothe below. Simia cannot pick an enraged enemy by criteria — target_enemy is 'nearest enemy' with no filter and there is no .any(EXPR) for enemies — so hovering is the only way to Soothe a mob you are not targeting. This is an independent switch: turning Soothe Enrage off does not disable it. Guarded on mouseover.combat, so hovering an unpulled mob never pulls it."
 
 
-  # DAMAGE — DPS weaving toggles and the cat-weave HP dial.
-  # Lowered 95 -> 85 off a reference +15 log (Kireya, Murder Row, 26.9 min).
   catweave_group_hp:
     label: "Exit Cat - Group HP % (effective)"
     section: "Damage"
@@ -329,13 +304,6 @@ config:
     max: 5
     default: 2
 
-  # The file had NO way to stop weaving. On a fight where you must never leave
-  # caster form, or while learning a key, these are the switches.
-  # Default flipped to false 2026-09-26: current build drops every Cat Form
-  # talent (no Rip/Rake/Ferocious Bite/bleed-related nodes at all - confirmed
-  # via SimC talent decode) in favor of Starsurge/Starlight Conduit/Moonkin
-  # Form (Balance Affinity). Catweaving with none of the Cat talents that pay
-  # for it is a straight DPS loss; kept as a toggle for whoever reverts.
   melee_dps:
     label: "Melee DPS (Cat/Bear)"
     section: "Damage"
@@ -362,7 +330,6 @@ config:
     default: true
 
 
-  # MOVEMENT — Stampeding Roar.
   stampeding_roar_usage:
     label: "Stampeding Roar Usage"
     section: "Movement"
@@ -387,7 +354,6 @@ config:
     default: 2
 
 
-  # UTILITY — Innervate, Symbiotic Relationship, HoT spread toggle.
   auto_prowl:
     label: "Auto Prowl (Stealth)"
     section: "Utility"
@@ -403,7 +369,6 @@ config:
     default: 75
 
 
-  # RACIALS — Thorn Bloom is a heal, not damage.
   thorn_bloom_threshold:
     label: "Thorn Bloom HP % (effective)"
     section: "Racials"
@@ -421,7 +386,6 @@ config:
     default: 2
 
 
-  # TRINKETS & CONSUMABLES — tied to the Convoke window.
   use_trinket_1:
     label: "Auto Trinket 1 (Before Convoke)"
     section: "Trinkets"
@@ -441,15 +405,12 @@ config:
     default: true
 
 
-  # ENGINE — plumbing this file owns instead of inheriting.
   loot_nearby:
     label: "Loot Nearby Corpses"
     section: "Engine"
     type: checkbox
     default: true
 
-  # Travel Form. Every suggestion the rotation makes shifts you out of it, so
-  # pausing keeps the form until you drop it yourself.
   pause_travel_form:
     label: "Pause in Travel Form"
     section: "Engine"
@@ -493,8 +454,6 @@ config:
     max: 100
     default: 25
 
-  # A healer is the one spec that actually runs dry. The shared auto_heal list
-  # has no mana potion line at all.
   mana_potion_pct:
     label: "Mana Potion Mana%"
     section: "Engine"
@@ -512,104 +471,45 @@ config:
     url: "https://discord.com/channels/857767821093634068/1467268534420766854"
 
 variables:
-  # The channelled ids this spec can actually produce, confirmed against
-  # client 69404:
   protected_channel: player.casting.spell_id=740|player.casting.spell_id=323764|player.casting.spell_id=391528
-  # True if the lowest health group member is healthy enough for Catweaving
   group_healthy: group.lowest.health.effective.pct>=config.catweave_group_hp
-  # Safe to enter Cat Form for DPS (group healthy and in combat). Force DPS
-  # toggle bypasses the health check on purpose - that's the whole point of
-  # the panic button.
   can_catweave: (var.group_healthy|config.force_dps)&player.combat
-  # Player is currently in a DPS form (Cat or Bear)
   in_dps_form: buff.cat_form.up|buff.bear_form.up
-  # Friendly and valid mouseover target
   mo_friendly_valid: mouseover.exists&mouseover.alive&mouseover.friendly&mouseover.unitframe
-  # Soul of the Forest proc is active
   has_soul: buff.soul_of_the_forest.up
-  # Stampeding Roar conditions based on the interface
   use_stampeding_roar: moving.time>=config.stampeding_roar_movement_time&buff.stampeding_roar.down&((config.stampeding_roar_usage=1&player.combat)|(config.stampeding_roar_usage=2&!player.combat)|(config.stampeding_roar_usage=3))
 
-  # FIXED 2026-10-04: user confirmed player.rooted is a real, working
-  # self-state expression (alongside player.stunned/player.feared) - there is
-  # no equivalent player.snared, so root is the only self-state this build
-  # reacts to with a shapeshift. debuff_list.freedom.up (tried 2026-09-29 to
-  # 2026-10-04) is dropped: it also matches snare/slow auras this rotation
-  # has no way to act on cleanly, and only ever worked for the caster's own
-  # debuffs anyway.
   druid_shapeshift_root: player.rooted
 
 lists:
-  # Called ABOVE the casting guard. All off-GCD or items, so nothing here
-  # touches the cast - only the last line ends it, never on a protected channel.
   emergency:
     - barkskin,name="Barkskin (Emergency)",range_check=none,off_gcd=true,ignore_queue=true,if=health.effective.pct<=config.emergency_hp
     - healthstone,name="Healthstone (Emergency)",off_gcd=true,ignore_queue=true,delay=250,if=healthstone.ready&health.pct<=config.healthstone_pct
     - health_potion,name="Health Potion (Emergency)",off_gcd=true,ignore_queue=true,delay=250,if=health_potion.ready&health.pct<=config.health_potion_pct
-    # Last, so the off-GCD options above get their chance first.
     - stop_casting,name="Cut Cast (Emergency)",if=config.emergency_stop_casting&!var.protected_channel
 
-  # Interrupts and Dispel: Automatic Soothe and AoE CCs
   interrupts:
     - incapacitating_roar,name="Roar (AoE CC)",if=interrupt.stun.aoe.check
-    # REMOVED: a target_enemy "Search Soothe" line .
     - soothe.mouseover,name="Soothe Enrage (Mouseover)",range_check=mouseover,if=config.soothe_mouseover&mouseover.exists&mouseover.enemy&mouseover.attackable&!mouseover.dead&mouseover.combat&mouseover.purgeable.enrage
     - soothe,name="Soothe Enrage",if=target.purgeable.enrage
 
-  # Out of Combat: Mark of the Wild, Symbiotic Relationship, and healing prep.
   out_of_combat:
     - mark_of_the_wild,range_check=none,if=(buff.mark_of_the_wild.down.any|action.mark_of_the_wild.overlayed)&lastcast.mark_of_the_wild>=10
-    # Out of combat only — the spell refuses to cast in combat. The bond
-    # produces NO trackable aura, so the gate reads the two partner auras.
     - symbiotic_relationship,cycle=tanks,if=cycle.buff.symbiotic_relationship.down.any
-    # NO "cast Rejuvenation to leave the form" line.
     - lifebloom,name="OOC Lifebloom (Tank)",cycle=tanks,if=(player.inraid|player.indungeon)&(cycle.buff.lifebloom.down|cycle.buff.lifebloom.refreshable)
     - 774,name="OOC Rejuvenation",cycle=members,if=(player.inraid|player.indungeon)&cycle.health.effective.pct<config.ooc_heal_hp_pct&cycle.buff.rejuvenation.refreshable
     - regrowth,name="OOC Regrowth",cycle=members,if=(player.inraid|player.indungeon)&cycle.health.effective.pct<config.ooc_heal_hp_pct&pred.cycle.buff.regrowth.refreshable
-    # Abundance padding. Always on - the mana cost of standing around between
-    # pulls with Rejuvenation topped up is worth having the window ready.
     - call_action_list,name=abundance_maintenance
-    # Auto Stealth when all healing is done
     - prowl,name="Auto Stealth",if=config.auto_prowl&!buff.prowl.up&!buff.travel_form.up&!buff.bear_form.up&!buff.incarnation_tree_of_life.up
 
-  # Mitigations and Emergency Defensives: Ironbark on Tanks/Members ->
-  # Barkskin -> Bear Form + Frenzied Regen.
   defensives:
-    # Barkskin: incoming-damage only, no HP% branch. It targets the PLAYER,
-    # and incoming.pct - "predicted hit as % of CURRENT effective health" - is
-    # documented and confirmed for that case: catches the hit BEFORE it lands
-    # instead of reacting to health already lost. Raw (unmitigated) form on
-    # purpose, so it does not suppress itself once Barkskin is up - use
-    # .mitigated for any follow-up suppression.
     - barkskin,name="Barkskin",off_gcd=true,ignore_queue=true,if=incoming.pct>=config.barkskin_incoming_pct
-    # Ironbark: HP% only, no cycle.incoming.pct. Ironbark targets a TANK or
-    # MEMBER, not the player, and section 11.35 of SIMIA_DOCUMENTATION.md
-    # (Previsão de Dano Recebido) is the one category in the entire doc with
-    # no per-unit form at all - every other predictive/health expression has
-    # a player/target/focus/mouseover/cycle variant, incoming.* has only the
-    # bare player form. The only dump hits for cycle.incoming.pct were this
-    # file's own two published copies - the repo citing itself, not
-    # independent evidence (see .agents/rationale/RestoDruid.md). Removed
-    # rather than left in as dead weight.
     - 102342,name="Ironbark (Tank)",off_gcd=true,ignore_queue=true,cycle=tanks,if=config.ironbark_target=1&cycle.health.effective.pct<config.ironbark_threshold&cycle.buff.ironbark.down
-    # 102342 on BOTH lines. This one said 102343, an id that does not exist.
     - 102342,name="Ironbark (Members)",off_gcd=true,ignore_queue=true,cycle=members,if=config.ironbark_target=2&cycle.health.effective.pct<config.ironbark_threshold&cycle.buff.ironbark.down
-    # FIXED 2026-10-03: added cooldown.heart_of_the_wild.ready as an
-    # alternative to Frenzied Regen - Heart of the Wild in Bear Form gives
-    # +30% max HP for 20s (a real survival tool, not just the Cat-form DPS
-    # cooldown this file already uses it as), so entering Bear to use it is
-    # worth it even when Frenzied Regen itself is on cooldown. Without this,
-    # Panic Bear only fired when Frenzied Regen specifically was up, so a
-    # Bear shift that could have been justified by Heart of the Wild alone
-    # never happened.
-    - bear_form,name="Panic Bear",if= health.effective.pct<config.frenzied_regen_threshold&!buff.bear_form.up&(cooldown.frenzied_regeneration.ready|cooldown.heart_of_the_wild.ready)&!buff.incarnation_tree_of_life.up
-    # Gated on the panic threshold, same as Frenzied Regen below - if the
-    # shift was justified by HotW's +30% max HP, actually cast it once in
-    # Bear Form instead of just sitting on the cooldown.
-    - heart_of_the_wild,name="HotW Bear (Panic)",if=buff.bear_form.up&health.effective.pct<config.frenzied_regen_threshold&cooldown.heart_of_the_wild.ready
-    - frenzied_regeneration,name="Frenzied Regen",if= health.effective.pct<config.frenzied_regen_threshold&buff.bear_form.up
+    - bear_form,name="Panic Bear",if=(health.effective.pct<config.frenzied_regen_threshold|incoming.mitigated.pct>=config.frenzied_regen_incoming_pct)&!buff.bear_form.up&(cooldown.frenzied_regeneration.ready|cooldown.heart_of_the_wild.ready)&!buff.incarnation_tree_of_life.up
+    - heart_of_the_wild,name="HotW Bear (Panic)",if=buff.bear_form.up&(health.effective.pct<config.frenzied_regen_threshold|incoming.mitigated.pct>=config.frenzied_regen_incoming_pct)&cooldown.heart_of_the_wild.ready
+    - frenzied_regeneration,name="Frenzied Regen",if=buff.bear_form.up&(health.effective.pct<config.frenzied_regen_threshold|incoming.mitigated.pct>=config.frenzied_regen_incoming_pct)
 
-  # Racial Abilities and Specific Mobility
   racials:
     - shadowmeld,name="Shadowmeld (Aggro Drop)",if=target.threat>=3&!player.casting
     - berserking,name="Berserking (Haste CD)",if=(group.count(cycle.health.effective.pct<config.convoke_threshold&!cycle.tank)>=config.convoke_members)&!buff.cat_form.up&!buff.bear_form.up
@@ -618,199 +518,92 @@ lists:
     - haymaker,name="Haymaker (Interrupt/Knockback)",if=interrupt.target.check
     - darkflight,name="Darkflight (Movement)",if=player.moving&!buff.dash.up&!buff.stampeding_roar.up
 
-  # Main Healing Cooldown Alignment: NS -> Trinkets/Potion -> Convoke -> NS Regrowth -> Tranquility -> Swiftmend
   cooldowns:
-    # NO Mark of the Wild here.
     - natures_swiftness,name="Nature Swiftness",off_gcd=true,delay=150,range_check=none,if=!config.disable_natures_swiftness&group.count(cycle.health.effective.pct<config.natures_swiftness_threshold)>=1
-    # Overgrowth rides this for free: with Nature's Swiftness up, this Regrowth
-    # also applies Lifebloom, Rejuvenation and Wild Growth to the same target.
     - regrowth,name="Nature Swift Regrowth",cycle=members,if=buff.natures_swiftness.up&cycle.health.effective.pct<config.natures_swiftness_threshold
-    # Casting Rejuvenation breaks the form as a side effect, which is the point:
-    # the Convoke/trinket/potion lines below are all gated on being out of form.
     - 774,name="Reju Out Cat For Convoke",if=(group.count(cycle.health.effective.pct<config.convoke_threshold&!cycle.tank)>=config.convoke_members)&(buff.cat_form.up|buff.bear_form.up)
     - trinket_1,delay=150,name="Trinket 1",if=config.use_trinket_1&trinket_1.ready&(group.count(cycle.health.effective.pct<config.convoke_threshold&!cycle.tank)>=config.convoke_members)&!buff.cat_form.up&!buff.bear_form.up
     - trinket_2,delay=150,name="Trinket 2",if=config.use_trinket_2&trinket_2.ready&(group.count(cycle.health.effective.pct<config.convoke_threshold&!cycle.tank)>=config.convoke_members)&!buff.cat_form.up&!buff.bear_form.up
     - combat_potion,delay=150,name="Combat Potion",if=combat_potion.ready&config.use_potion&(group.count(cycle.health.effective.pct<config.convoke_threshold&!cycle.tank)>=config.convoke_members)&!buff.cat_form.up&!buff.bear_form.up
-    # Can't gate on incoming damage per group member - incoming.pct/
-    # incoming.mitigated.pct (predicted hit % of effective health) only exist
-    # for the player (self), not for cycle=/group members. These two stay
-    # purely HP%-reactive (group.count below threshold), not damage-predictive.
     - convoke_the_spirits,global_delay=1000,name="Convoke (Heal)",if=(group.count(cycle.health.effective.pct<config.convoke_threshold&!cycle.tank)>=config.convoke_members)&!buff.cat_form.up&!buff.bear_form.up&!buff.moonkin_form.up
     - tranquility,global_delay=1000,name="Tranquility",if=!config.manual_tranquility&group.count(cycle.health.effective.pct<config.tranquility_threshold&!cycle.tank)>=config.tranquility_members&!player.moving
-    # Power of the Archdruid: Swiftmend spreads three Rejuvenations, which is
-    # what gets Abundance to 5 stacks fast. FIXED 2026-10-03: added
-    # !buff.abundance.up - this build has no Reforestation/Tree of Life, so
-    # the self-cast has exactly one job (bootstrap Abundance), not two. It
-    # used to fire every time Swiftmend was off cooldown regardless of
-    # Abundance already being stable at 5 stacks, burning a real Swiftmend
-    # on yourself instead of someone actually hurt for no further benefit.
     - swiftmend.player,name="Self Swiftmend (Archdruid)",range_check=none,if=talent.power_of_the_archdruid&player.combat&cooldown.swiftmend.ready&!buff.abundance.up&(buff.rejuvenation.up|buff.regrowth.up|buff.wild_growth.up)
-    # Swiftmend for Soul of the Forest (needs an active HoT on the target).
     - swiftmend,name="Swiftmend for SotF/Treants",cycle=members,if=cycle.health.effective.pct<config.swiftmend_threshold&(cycle.buff.rejuvenation.up|pred.cycle.buff.regrowth.up|pred.cycle.buff.wild_growth.up)
 
-  # Sequential Active Healing: Wild Growth -> SotF consumption -> Lifebloom maintenance -> AoE and ST heals
   active_healing:
-    # Wild Growth goes FIRST. It used to sit near the bottom of this list,
-    # behind three single-target Regrowth casts (Clearcasting, SotF, Abundance)
-    # whose own health gate is config.regrowth_threshold - 90% by default,
-    # looser than Wild Growth's own 85%. Since anyone under 85 is also under
-    # 90, any of those three procs being up almost always beat Wild Growth to
-    # the GCD, even in a real multi-person damage spike: reported in play as
-    # "2+ people hurt, Wild Growth never suggested". A raid-wide burst heal
-    # losing every time to a proc-spend single target was backwards.
     - wild_growth,name="Wild Growth",range_check=none,if=group.count(cycle.health.effective.pct<config.wild_growth_threshold&!cycle.tank)>=config.wild_growth_members
-    # Tank-specific trigger, ported from the Rollfacedk Holy Paladin pattern:
-    # a tank taking a burst hit shouldn't have to wait for enough OTHER
-    # people to also be hurt before Wild Growth fires - its own tighter
-    # threshold (default 90) can trigger the cast on the tank's damage alone.
     - wild_growth,name="Wild Growth (Tank)",range_check=none,if=group.count(cycle.tank&cycle.health.effective.pct<config.wild_growth_threshold_tank)>=1
 
-    # Treant usage and Clearcasting synergized with Wild Synthesis. Every
-    # branch carries its own health gate.
     - regrowth,name="Clearcasting Regrowth",cycle=members,if=player.combat&buff.clearcasting.up&cycle.health.effective.pct<99
 
-    # Switched to effective 2026-09-14, matching Nature's Swiftness: don't
-    # spend an emergency global on someone another heal is already covering.
     - regrowth,name="Regrowth Emergency",cycle=members,if=cycle.health.effective.pct<config.regrowth_emergency_threshold
 
-    # Soul of the Forest is spent on REJUVENATION first.
     - 774,name="SotF Rejuvenation",cycle=members,if=var.has_soul&cycle.buff.rejuvenation.refreshable
     - 774,name="SotF Germination",cycle=members,if=var.has_soul&talent.germination&cycle.buff.rejuvenation.up&(cycle.buff.rejuvenation_germination.down|cycle.buff.rejuvenation_germination.refreshable)
     - regrowth,name="SotF Regrowth",cycle=members,if=var.has_soul&cycle.health.effective.pct<config.regrowth_threshold
 
-    # Efflorescence is NOT CAST on this build.
     - efflorescence,name="Efflorescence (no Lifetreading)",range_check=none,if=talent.efflorescence&!talent.lifetreading&!totem.efflorescence.up
 
-    # NEW in 5.0 — Everbloom self loop. after=300 debounces Everbloom's own
-    # Everbloom self loop. after=300 debounces Everbloom's own restack tick.
     - lifebloom.player,name="Self Lifebloom (Everbloom)",range_check=none,after=300,if=config.lifebloom_target=1&talent.everbloom&(buff.lifebloom.down|buff.lifebloom.remains<4.5)
     - lifebloom,name="Lifebloom (Tank)",cycle=tanks,if=config.lifebloom_target=2&(cycle.buff.lifebloom.down|cycle.buff.lifebloom.refreshable)
 
-    # Photosynthesis wants a Rejuvenation on yourself.
     - 774.player,name="Self Rejuvenation (Photosynthesis)",range_check=none,if=talent.photosynthesis&player.combat&buff.rejuvenation.down
 
-    # Spend the Abundance window. Regrowth at -60% .
     - regrowth,name="Abundance Regrowth",cycle=members,if=buff.abundance.up&cycle.health.effective.pct<config.regrowth_threshold
 
-    # Core periodic and direct healing logic. Tank/non-tank thresholds
-    # ported from the Rollfacedk Holy Paladin pattern (every main heal there
-    # branches cycle.tank&X|!cycle.tank&Y) - a tank in M+19+ eats periodic
-    # burst on different timing than the group's chip damage, so one shared
-    # threshold either over-heals the tank early or under-heals it late.
     - 774,name="Rejuvenation",cycle=members,if=cycle.buff.rejuvenation.refreshable&(cycle.tank&cycle.health.effective.pct<config.rejuvenation_threshold_tank|!cycle.tank&cycle.health.effective.pct<config.rejuvenation_threshold)
     - 774,name="Germination",cycle=members,if=talent.germination&cycle.buff.rejuvenation.up&(cycle.buff.rejuvenation_germination.down|cycle.buff.rejuvenation_germination.refreshable)&(cycle.tank&cycle.health.effective.pct<config.rejuvenation_threshold_tank|!cycle.tank&cycle.health.effective.pct<config.rejuvenation_threshold)
     - regrowth,name="Regrowth",cycle=members,if=(cycle.tank&cycle.health.effective.pct<config.regrowth_threshold_tank|!cycle.tank&cycle.health.effective.pct<config.regrowth_threshold)
-    # target.in_melee dropped 2026-09-26: Thorn Bloom is a 40y target, 10y AoE
-    # radius spell (confirmed via spell_query, id 1237885) - it was never
-    # melee-range in the first place, the gate was just a leftover proxy from
-    # when this list only ran during catweaving. No melee talents left on
-    # this build, so nothing should be gated on target.in_melee anymore.
     - thorn_bloom,name="Thorn Bloom",if=group.count(cycle.health.effective.pct<config.thorn_bloom_threshold&!cycle.tank)>=config.thorn_bloom_members
 
-  # Utilities, Mobility, and Mana Recovery
   utility:
-    # innervate.player, not bare innervate: bare would go to the current target.
     - innervate.player,name="Innervate",off_gcd=true,delay=150,range_check=none,if=talent.innervate&mana.pct<config.innervate_threshold&fight_remains>15
     - stampeding_roar,name="Stampeding Roar",if=var.use_stampeding_roar&config.stampeding_roar_usage!=0
 
-  # ABUNDANCE CHANGED IN 12.1 and this list was still written for the old one.
-  # Abundance (spell 207383) needs 5 Rejuvenations active AT ONCE (confirmed
-  # via spell_query 2026-09-26 - "While you have at least 5 Rejuvenations
-  # active"), not a stack the player builds and keeps.
-  #
-  # Only renews once the buff itself is under 5s from falling off
-  # (buff.abundance.remains<5) - not on every refreshable Rejuvenation, and
-  # not unconditionally. This is a narrower trigger than pandemic-refreshable
-  # on purpose: it only spends a GCD here when Abundance is actually close to
-  # lapsing, instead of topping off Rejuvenations that still have plenty of
-  # time left just because they crossed the normal pandemic window.
   abundance_maintenance:
-    # Build phase: buff.abundance.up is false until 5 Rejuvenations are
-    # active at once, so without this branch the list stayed silent forever
-    # whenever Abundance had not gone up yet - out of combat before a pull,
-    # or any time it dropped and needed rebuilding from zero. This puts
-    # Rejuvenation on anyone missing it, unconditionally, so OOC prep (and
-    # any other Abundance-down moment) actually builds toward 5 instead of
-    # waiting for a buff that will never turn on by itself.
     - 774,name="Abundance Filler (Rejuv)",cycle=members,if=!buff.abundance.up&cycle.buff.rejuvenation.refreshable
     - 774,name="Abundance Filler (Germination)",cycle=members,if=!buff.abundance.up&talent.germination&cycle.buff.rejuvenation.up&(cycle.buff.rejuvenation_germination.down|cycle.buff.rejuvenation_germination.refreshable)
-    # Maintenance phase: once up, only refresh when the buff itself is
-    # actually close to lapsing (buff.abundance.remains<5), not on every
-    # normal pandemic window - see the standing rule the user set 2026-09-26.
-    # Widened 3->5 on 2026-09-30.
     - 774,name="Abundance Filler (Rejuv Maintenance)",cycle=members,if=buff.abundance.up&buff.abundance.remains<5&cycle.buff.rejuvenation.remains<5
     - 774,name="Abundance Filler (Germination Maintenance)",cycle=members,if=talent.germination&buff.abundance.up&buff.abundance.remains<5&cycle.buff.rejuvenation.up&cycle.buff.rejuvenation_germination.remains<5
 
-  # Cat Form DPS Rotation (Single Target)
   catweave_st:
     - rip,name="Rip ST",if=combo_points>=5&debuff.rip.refreshable
     - ferocious_bite,name="Bite ST",if=combo_points>=5
     - 1822,name="Rake ST",if=debuff.rake.refreshable
     - shred,name="Shred ST"
 
-  # Cat Form DPS Rotation (AoE).
   catweave_aoe:
     - target_enemy,name="Search Bleed Target",if=combo_points>=5&!debuff.rip.refreshable&active_dot.rip<enemies.combat.8y
     - rip,name="Rip AoE",if=combo_points>=5&debuff.rip.refreshable
     - ferocious_bite,name="Bite AoE",if=combo_points>=5
     - 1822,name="Rake AoE",if=debuff.rake.refreshable
-    # talent.swipe: the reference build does not take it and never casts it (0
-    # Swipe casts in 26.9 min).
     - 106785,name="Swipe AoE",if=talent.swipe
     - shred,name="Shred AoE"
 
-  # Catweaving Transition and Entry (Physical DPS)
   catweave:
-    # Still caster-form (not shifted yet) — top off the ranged DoTs before
-    # committing the global to the shift. Sunfire over Moonfire.
     - sunfire,name="Sunfire Refresh (Pre-Shift)",if=talent.sunfire&debuff.sunfire.refreshable&!buff.cat_form.up
     - moonfire,name="Moonfire Refresh (Pre-Shift)",if=debuff.moonfire.refreshable&!buff.cat_form.up
-    # Rake enters Cat via Fluid Form and applies the bleed in one GCD - no cat_form cast.
     - 1822,name="Fluid Rake",if=!buff.cat_form.up&!buff.incarnation_tree_of_life.up
     - cat_form,name="Manual Cat Shift",if=!talent.fluid_form&!buff.cat_form.up&!buff.incarnation_tree_of_life.up
     - return,if=!buff.cat_form.up
 
-    # Heart of the Wild is cast BY NAME ONLY.
     - heart_of_the_wild,name="HotW Cat",if=config.use_heart_of_the_wild&talent.heart_of_the_wild&buff.cat_form.up
-    # global_delay, and NOT 500.
     - convoke_the_spirits,global_delay=150,name="Convoke (Offensive)",if=config.convoke_dps&buff.cat_form.up&cooldown.convoke_the_spirits.ready&target.time_to_die>10
     - call_action_list,name=catweave_aoe,if=enemies.combat.8y>=config.aoe_threshold
     - call_action_list,name=catweave_st,if=enemies.combat.8y<config.aoe_threshold
 
-  # Caster-form damage. Rebuilt from a reference .
   ranged_dps:
-    # NEW 2026-09-26 build: Starsurge (spell 197626, the Feral/Guardian/
-    # Restoration version - confirmed via spell_query, NOT the Balance one
-    # (78674) that costs Astral Power and requires caster form/Not
-    # Shapeshifted. The Resto version's Attributes are just "Allow Class
-    # Ability Procs" + "Prevent Jumping During Precast" - no Stance Mask, no
-    # Not Shapeshifted flag, no form requirement of any kind. 0.6% mana, 10s
-    # CD, so it is always worth pressing on cooldown ahead of the DoT
-    # refreshes below - it never competes with them for a resource.
-    # CORRECTED 2026-09-26: previously gated on buff.moonkin_form.up,
-    # copying a pattern from older community Ferraz Resto files (which cast
-    # it that way, presumably to also catch Moonkin's own +10% damage
-    # buff) - but that was never a cast requirement, just those files'
-    # choice, and this build has no Fluid Form to auto-shift into Moonkin,
-    # so gating on it meant Starsurge silently never fired without a manual
-    # Moonkin Form cast first. Confirmed via spell_query there is no
-    # shapeshift requirement at all - cast it in whatever form you're in.
     - starsurge,name="Starsurge",if=cooldown.starsurge.ready
     - sunfire,name="Sunfire Refresh",if=talent.sunfire&debuff.sunfire.refreshable
     - moonfire,name="Moonfire Refresh",if=debuff.moonfire.refreshable
-    # Wrath dropped 2026-09-29: Starfire covers both AoE and filler now, no
-    # Wrath cast anywhere in this list.
     - starfire,name="Starfire Filler"
 
-  # Healing on the Move: Instant spells only (HoTs and Lifebloom)
   moving:
     - lifebloom,name="Lifebloom Tank (Moving)",cycle=tanks,if=cycle.buff.lifebloom.down|cycle.buff.lifebloom.refreshable
     - 774,name="Rejuvenation (Moving)",cycle=members,if=cycle.buff.rejuvenation.refreshable&cycle.health.effective.pct<config.rejuvenation_threshold
     - 774,name="Germination (Moving)",cycle=members,if=talent.germination&cycle.buff.rejuvenation.up&(cycle.buff.rejuvenation_germination.down|cycle.buff.rejuvenation_germination.refreshable)&cycle.health.effective.pct<config.rejuvenation_threshold
-    # Third caller. Always on, same as the other two.
     - call_action_list,name=abundance_maintenance,if=!var.can_catweave
 
-  # Emergency Mouseover Healing on unit frames.
   avatar_sethraliss:
     - 774.mouseover,name="Avatar Rejuvenation",range_check=mouseover,if=mouseover.buff.rejuvenation.refreshable
     - swiftmend.mouseover,name="Avatar Swiftmend",range_check=mouseover,if=mouseover.buff.rejuvenation.up|mouseover.buff.regrowth.up
@@ -822,20 +615,12 @@ lists:
     - regrowth.mouseover,name="Regrowth (MO) Cast",if=!player.moving
 
   auto_rez:
-    # FIXED 2026-10-01: was `revive`, which this repo never confirmed as a
-    # real Resto Druid spell name in the current patch - `_shared.yaml`
-    # citing itself is not independent evidence (same trap as the
-    # player.debuff.root.up bug). User confirmed Revitalize is the real OOC
-    # rez spell on live today.
     - revitalize,if=mouseover.dead&mouseover.friendly&mouseover.unitframe&!player.combat
     - rebirth.mouseover,if=mouseover.dead&mouseover.friendly&mouseover.unitframe&player.combat
 
-  # ENGINE.
   engine:
     - queue_spell,if=!player.casting&!player.channeling
 
-    # The five guards. `mounted` and `travel_form` were both missing from this
-    # local copy; without them the rotation fires while mounted or flying.
     - return,if=!state.rotation
     - return,if=player.dead
     - return,if=state.blocked_inputs
@@ -846,40 +631,25 @@ lists:
     - interact_target,delay=350,if=config.loot_nearby&loot_nearby&!player.combat
     - interact_mouseover,delay=350,if=config.loot_nearby&mouseover.lootable&mouseover.range<=5&!player.combat
 
-    # Nature's Cure removes MAGIC, curse and poison — the healer dispel. It had
-    # no toggle before; dispelling is your job, so it defaults ON.
     - natures_cure,delay=500,cycle=members,name="Nature's Cure",if=config.auto_dispel&cycle.dispelable.list
-    # Devouring Rift (Devour affix) bypasses dispel-type matching, so it needs
-    # its own line keyed on the debuff id. player_first: clear yourself first.
     - natures_cure,delay=500,cycle=members,cycle_order=player_first,name="Devouring Rift (Affix)",if=config.affix_devour&cycle.debuff.440313.up.any
 
     - call_action_list,name=auto_rez,if=config.auto_rez&mouseover.dead&mouseover.friendly&mouseover.unitframe
 
-    # Inlined from _shared.yaml auto_heal. The shared list has no mana potion
-    # line; a healer is the one spec that actually runs dry, so it is added.
     - healthstone,delay=250,if=healthstone.ready&health.pct<=config.healthstone_pct
     - health_potion,delay=250,if=health_potion.ready&health.pct<=config.health_potion_pct
     - mana_potion,delay=250,if=mana_potion.ready&mana.pct<=config.mana_potion_pct
 
-    # Inlined from _shared.yaml auto_target_ranged .
     - target_enemy,delay=200,off_gcd=true,if=player.combat&config.auto_target.has(0)&!target.exists&enemies.combat.40y>=1
     - target_enemy,delay=200,off_gcd=true,if=player.combat&config.auto_target.has(1)&target.dead&enemies.combat.40y>=1
     - target_enemy,delay=200,off_gcd=true,if=player.combat&config.auto_target.has(2)&target.range>=40&enemies.combat.40y>=1
 
-    # --- Temple of Sethraliss, Adderis and Aspix .
     - target_enemy,name="Swap Off Storm Blessed",delay=500,off_gcd=true,if=target.buff.1289229.up&enemies.combat.40y>=2
 
-  # Main Rotation (main) with combat priorities
   main:
-    # Root Cleanse: absolute top priority, above even the emergency heal
-    # call. var.druid_shapeshift_root is player.rooted - the real, confirmed
-    # self-state (unlike stun or fear, there is no equivalent snare check).
-    # Human -> Bear -> Human (no Tree of Life shift, which would drop the form).
     - bear_form,name="Root Cleanse (to Bear)",line_cd=8,if=config.root_cleanse&var.druid_shapeshift_root&!buff.bear_form.up&!buff.incarnation_tree_of_life.up
     - cancel_form,name="Root Cleanse (from Bear)",line_cd=8,if=config.root_cleanse&var.druid_shapeshift_root&buff.bear_form.up&!buff.incarnation_tree_of_life.up
 
-    # Aborts while channeling Tranquility/Convoke. Emergency comes FIRST, above
-    # the casting guard - only reachable while casting and low, so it is free.
     - call_action_list,name=emergency,if=player.combat&(player.casting|player.channeling)&health.effective.pct<=config.emergency_hp
 
     - return,if=player.channeling|player.casting|var.protected_channel
@@ -891,33 +661,14 @@ lists:
     - call_action_list,name=racials
     - call_action_list,name=cooldowns,if=(!var.in_dps_form|!var.group_healthy)&!config.force_dps
     - call_action_list,name=interrupts
-    # Temple of Sethraliss last boss.
     - call_action_list,name=avatar_sethraliss,if=mouseover.npcid=133392&mouseover.friendly&mouseover.debuff.1301199.down&mouseover.health.pct<100
-    # Emergency Mouseover Healing on unit frames. Stays live under Force DPS -
-    # this is the "someone is about to die" safety net, not proactive healing.
     - call_action_list,name=mouseover_healing_emergency,if=config.use_mouseover&var.mo_friendly_valid&mouseover.health.effective.pct<config.mouseover_emergency_hp&(!var.in_dps_form|!var.group_healthy|config.force_dps)
     - call_action_list,name=moving,if=player.moving&(!var.in_dps_form|!var.group_healthy)&!config.force_dps
-    # Sequential Active Healing: SotF consumption -> Lifebloom maintenance -> AoE and ST heals
     - call_action_list,name=active_healing,if=(!var.in_dps_form|!var.group_healthy)&!config.force_dps
-    # Pad Abundance in combat. Always on, unless Force DPS is up - no point
-    # maintaining Abundance when nothing is actively healing to benefit from it.
     - call_action_list,name=abundance_maintenance,if=player.combat&!config.force_dps
 
-    # Bottom of the priority: a dropped buff costs a damage global, never a heal.
     - mark_of_the_wild,range_check=none,name="Mark of the Wild (low prio)",if=(buff.mark_of_the_wild.down.any|action.mark_of_the_wild.overlayed)&lastcast.mark_of_the_wild>=10
 
 
-    # DPS weaving when the group is healthy. No target.in_melee gate on
-    # ranged_dps anymore (2026-09-26): this build has zero melee/Cat Form
-    # talents, so every cast in ranged_dps (Starsurge, Wrath, Starfire,
-    # Sunfire, Moonfire) is a real ranged spell regardless of how close the
-    # target is standing - gating it on "target is NOT in melee" used to
-    # silence ranged_dps entirely on any target that walked up close, which
-    # is most M+ trash. Distance no longer decides which list runs.
     - call_action_list,name=ranged_dps,if=config.ranged_dps&var.can_catweave&target.exists&target.alive&!target.friendly
-    # Cat only. Bear is defensive-only here - see defensives for Panic Bear and
-    # the root cleanse. config.melee_dps defaults to false on this build (see
-    # its own config comment) - kept gated on target.in_melee for whoever
-    # re-enables it, since catweaving only makes sense once you are actually
-    # standing in melee range.
     - call_action_list,name=catweave,if=config.melee_dps&var.can_catweave&target.exists&target.alive&!target.friendly&target.in_melee&!buff.incarnation_tree_of_life.up

@@ -1,16 +1,5 @@
-# =============================================================================
-# Feral Druid Ferraz Raid - spec 103 - patch 12.1.
-# =============================================================================
-#
-# Lists (entry point: main):
-#   engine                  defensives              cooldown                finisher
-#   aoe_finisher            builder                 aoe_builder             heal_support
-#   form                    interrupts              predatory_swiftness     main
-#
-# Why each line is the way it is: .agents/rationale/FeralRaid.md
-# =============================================================================
 
-version: "3.1.0"
+version: "4.0.0"
 author: Ferraz
 patch: "12.1"
 spec: 103
@@ -20,12 +9,11 @@ description: |
 entry: main
 
 config:
-  # Display-only build stamp — keep in sync with version:/patch: above.
   about:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-10-04 | Patch: 12.1 | Version: 3.1.0"
+    text: "Last update: 2026-10-06 | Patch: 12.1 | Version: 4.0.0"
 
   recommended_talents:
     section: "Talents"
@@ -41,6 +29,15 @@ config:
     max: 99
     default: 25
     description: "Shift to Bear Form for the armour and health when you drop below this. Bear is a big survival gain but costs you the Cat rotation, so it is deliberately the lowest threshold on this panel."
+
+  panic_bear_incoming_pct:
+    label: "Panic Bear - Incoming Dmg %"
+    section: "Defensive HP Percentage"
+    type: slider
+    min: 25
+    max: 100
+    default: 50
+    description: "Shift to Bear BEFORE the hit lands, not just after HP already dropped. incoming.mitigated.pct is self-only (player), already accounts for active defensives, and catches damage one GCD earlier than waiting on health.pct."
 
   survival_instincts_hp_pct:
     section: "Defensive HP Percentage"
@@ -66,8 +63,6 @@ config:
     max: 100
     default: 60
 
-  # Raid default is lower than the M+ file's: in a raid you are rarely the one
-  # who has to top yourself, and a Regrowth is a lost finisher.
   predatory_swiftness_heal_hp_pct:
     section: "Defensive HP Percentage"
     label: "Regrowth (Predatory Swiftness) HP%"
@@ -92,8 +87,6 @@ config:
     max: 100
     default: 40
 
-  # === COOLDOWN CONFIGURATIONS ===
-  # Defaults ON: dropping the whole cooldown block measures -21.47% here.
   use_trinket_1:
     label: "Auto Trinket 1"
     section: "Cooldowns"
@@ -119,16 +112,12 @@ config:
     type: checkbox
     default: true
 
-  # Inlined from Simia's _shared.yaml instead of inherited, so every piece has
-  # a toggle.
   engine_loot_nearby:
     label: "Loot Nearby Corpses"
     section: "Engine"
     type: checkbox
     default: true
 
-  # Travel Form. Every suggestion the rotation makes shifts you out of it, so
-  # pausing keeps the form until you drop it yourself.
   engine_pause_travel_form:
     label: "Pause in Travel Form"
     section: "Engine"
@@ -218,7 +207,6 @@ config:
     text: "Join Discord - Ferraz"
     url: "https://discord.com/channels/857767821093634068/1467268534420766854"
 
-  # Shapeshifting breaks roots, but only the ones the game lets it break.
   root_cleanse:
     label: "Break Roots by Shapeshifting"
     section: "Defensives"
@@ -227,8 +215,6 @@ config:
     description: "Shift form to break a root, using the real player.rooted self-state (not stun, not fear - there is no equivalent snare check). line_cd caps it at one attempt every 8 seconds."
 
 variables:
-  # The channelled ids this spec can actually produce, confirmed against
-  # client 69404:
   protected_channel: player.casting.spell_id=323764|player.casting.spell_id=391528
   bs_inc: buff.berserk.up|buff.incarnation_avatar_of_ashamane.up
   bs_inc_cd_remains: cooldown.berserk.remains>?cooldown.incarnation_avatar_of_ashamane.remains
@@ -246,22 +232,13 @@ variables:
   rip_tf: debuff.rip.visual_id=491158
   moonfire_tf: debuff.moonfire.visual_id=500891
 
-  # Burst sync. bs_inc_cd_remains<=5 lets a trinket land just BEFORE Berserk so
-  # its buff covers the whole window instead of starting one GCD late.
   burst_now: var.bs_inc|var.bs_inc_cd_remains<=5
   trinket_sync_ok: "!config.trinkets_burst_only|var.burst_now|fight_remains<25"
 
-  # FIXED 2026-10-04: user confirmed player.rooted is the real, working
-  # self-state expression (alongside player.stunned/player.feared) - no
-  # equivalent player.snared exists, so root is the only self-state this
-  # build reacts to. debuff_list.freedom.up also matches snare/slow and was
-  # dropped (see FerrazRestoDruid.yaml for the full fix history).
   druid_shapeshift_root: player.rooted
 
 lists:
-  # Everything spell_queue / sanity_checks / auto.
   engine:
-    # `&`, not `|`. With `|` the condition is true .
     - queue_spell,if=!player.casting&!player.channeling
 
     - return,if=!state.rotation
@@ -273,14 +250,11 @@ lists:
     - interact_target,delay=350,if=config.engine_loot_nearby&target.lootable&target.range<=5
     - interact_target,delay=350,if=config.engine_loot_nearby&loot_nearby
     - interact_mouseover,delay=350,if=config.engine_loot_nearby&mouseover.lootable&mouseover.range<=5
-    # Melee-only, and this file IS melee: keeps auto-attack running.
     - attack_target,off_gcd=true,delay=100,if=player.combat&target.exists&target.attackable&target.alive&target.in_melee&!player.auto_attacking
 
     - remove_corruption.player,delay=500,name="Remove Corruption (Self)",if=config.auto_dispel_self&player.dispelable.list
     - remove_corruption,delay=500,cycle=party,name="Remove Corruption (Party)",if=config.auto_dispel_party&cycle.dispelable.list
     - remove_corruption,delay=500,cycle=party,cycle_order=player_first,name="Devouring Rift (Affix)",if=config.engine_affix_devour&cycle.debuff.440313.up.any
-    # Hovering is the only way to Soothe a mob you are not targeting — see
-    # the soothe_mouseover config for why a search line is impossible.
     - soothe.mouseover,name="Soothe Enrage (Mouseover)",range_check=mouseover,if=config.soothe_mouseover&mouseover.exists&mouseover.enemy&mouseover.attackable&!mouseover.dead&mouseover.combat&mouseover.purgeable.enrage
     - soothe,name="Soothe (Enrage)",if=config.auto_purge_enrage&target.purgeable.enrage
 
@@ -291,12 +265,10 @@ lists:
     - healthstone,delay=250,if=healthstone.ready&health.pct<=config.engine_healthstone
     - health_potion,delay=250,if=health_potion.ready&health.pct<=config.engine_health_potion
 
-    # Melee auto target: 8y, matching the shared melee list.
     - target_enemy,delay=200,off_gcd=true,if=config.engine_auto_target.has(0)&!target.exists&enemies.combat.8y>=1
     - target_enemy,delay=200,off_gcd=true,if=config.engine_auto_target.has(1)&target.dead&enemies.combat.8y>=1
     - target_enemy,delay=200,off_gcd=true,if=config.engine_auto_target.has(2)&target.range>=25&enemies.combat.8y>=1
 
-    # --- Temple of Sethraliss, Adderis and Aspix .
     - target_enemy,name="Swap Off Storm Blessed",delay=500,off_gcd=true,if=target.buff.1289229.up&enemies.combat.40y>=2
 
   defensives:
@@ -314,25 +286,17 @@ lists:
     - ancestral_call,if=var.bs_inc
     - combat_potion,if=config.use_potion&combat_potion.ready&(var.burst_now|fight_remains<32)
     - berserk,if=buff.tigers_fury.up&!var.holdBerserk
-    # Frantic Frenzy is NOT on the raid string, so the first line is the live
-    # one here and the second is inert.
     - feral_frenzy,if=!talent.frantic_frenzy&combo_points<=2+(2*var.bs_inc)
     - frantic_frenzy,if=buff.tigers_fury.up|combo_points<=2+(2*var.bs_inc)
-    # The talent.ashamanes_guidance clause fires Convoke OUTSIDE the Berserk
-    # window when Berserk is far away.
     - convoke_the_spirits,if=(var.bs_inc|talent.ashamanes_guidance&(var.bs_inc_cd_remains>45|var.holdBerserk))&buff.tigers_fury.up&(prev_gcd.1.rip|prev_gcd.1.ferocious_bite|prev_gcd.1.primal_wrath|buff.tigers_fury.remains<=1+action.convoke_the_spirits.execute_time)
 
   finisher:
     - rip,if=combo_points>=5&(dot.rip.refreshable&(buff.tigers_fury.up|dot.rip.remains<cooldown.tigers_fury.remains)|buff.tigers_fury.up&!var.rip_tf&dot.rip.up|buff.tigers_fury.up&buff.tigers_fury.remains<2&dot.rip.up)
-    # RAID-SPECIFIC (+2.50% on the Wildstalker string, +2.87% on the old Druid
-    # of the Claw one):
     - return,if=combo_points>=5&energy<50
     - ferocious_bite,name="Ferocious Bite (Fallback)",if=combo_points>=5
     - ravage,name="Ravage (Fallback)",if=combo_points>=5
 
   aoe_finisher:
-    # Primal Wrath and Rampant Ferocity are not on the raid string, so those
-    # lines are inert and Rip/Bite are the live path.
     - primal_wrath,name="Primal Wrath (Refresh)",if=combo_points>=5&enemies.combat.8y>1&(dot.rip.remains<6.5&!var.bs_inc|dot.rip.refreshable)
     - ravage,name="Ravage (No Primal Wrath)",if=combo_points>=5&!talent.primal_wrath&enemies.combat.8y>=2+(3*!talent.rampant_ferocity)
     - rip,if=combo_points>=5&!talent.primal_wrath&(dot.rip.down|dot.rip.refreshable&(buff.tigers_fury.up|!var.rip_tf))
@@ -345,12 +309,8 @@ lists:
 
   builder:
     - prowl,if=!player.combat&!buff.shadowmeld.up&(!var.rake_tf|dot.rake.refreshable)
-    # dreamgrove keeps a Druid-of-the-Claw-only Shred on a Sudden Ambush proc,
-    # ahead of the Rake refresh.
     - shred,name="Shred (Sudden Ambush)",if=buff.sudden_ambush.up&hero_tree.druid_of_the_claw
     - rake,if=(buff.tigers_fury.up|dot.rake.remains<cooldown.tigers_fury.remains)&(dot.rake.refreshable&(buff.tigers_fury.up|!var.rake_tf)|dot.rake.remains<2|buff.tigers_fury.up&!var.rake_tf)
-    # Lunar Inspiration, live for the first time on the Wildstalker string:
-    # worth +1.78% over the plain `refreshable` version below it.
     - moonfire,if=talent.lunar_inspiration&(buff.tigers_fury.up|dot.moonfire.remains<cooldown.tigers_fury.remains)&(dot.moonfire.refreshable&(buff.tigers_fury.up|!var.moonfire_tf)|dot.moonfire.remains<2|buff.tigers_fury.up&!var.moonfire_tf)
     - shred
 
@@ -361,35 +321,22 @@ lists:
     - 106785,name="Swipe (Sudden Ambush)",if=buff.sudden_ambush.up&enemies.combat.8y>=5+(2*hero_tree.wildstalker)
     - rake,name="Rake (Wildstalker)",if=dot.rake.refreshable&(hero_tree.wildstalker|enemies.combat.8y<=var.dotc_rake_threshold)
     - rake,name="Rake (Tigers Fury)",if=buff.tigers_fury.up&!var.rake_tf&enemies.combat.8y=2
-    # Panther's Guile IS on the raid string, so this line is live here.
     - shred,if=combo_points<=1&enemies.combat.8y=2&talent.panthers_guile
     - 106785,name="Swipe (Filler)",if=combo_points>1|enemies.combat.8y>2|!talent.panthers_guile
 
-  # Mark of the Wild, OOC Regrowth top-off.
   heal_support:
     - mark_of_the_wild,range_check=none,if=(buff.mark_of_the_wild.down.any|action.mark_of_the_wild.overlayed)&lastcast.mark_of_the_wild>=10
     - regrowth,range_check=none,if=health.pct<=config.regrowth_ooc_hp_pct&!player.combat
 
-  # Emergency Bear Form, Fluid Form auto-shift, manual Cat Form entry, and the
-  # pre-pull Prowl opener.
   form:
-    # Bear costs the whole Cat rotation, so it has to buy something: Heart of
-    # the Wild, or Frenzied Regeneration, or both.
-    - bear_form,name="Panic Bear Form",range_check=none,if=health.pct<=config.panic_bear_hp_pct&!buff.bear_form.up&player.combat&(talent.heart_of_the_wild&(cooldown.heart_of_the_wild.ready|buff.heart_of_the_wild.up)|cooldown.frenzied_regeneration.ready&buff.frenzied_regeneration.down)
-    # Both gated on the panic threshold: Shapeshift Clear also puts you in Bear,
-    # at any health, and neither of these is worth spending on a root break.
-    - heart_of_the_wild,range_check=none,if=talent.heart_of_the_wild&buff.bear_form.up&player.combat&health.pct<=config.panic_bear_hp_pct
-    # After HotW, so it heals against the bigger pool. .down guard stops it
-    # overwriting its own tick.
-    - frenzied_regeneration,range_check=none,if=buff.bear_form.up&player.combat&health.pct<=config.panic_bear_hp_pct&buff.frenzied_regeneration.down
+    - bear_form,name="Panic Bear Form",range_check=none,if=(health.pct<=config.panic_bear_hp_pct|incoming.mitigated.pct>=config.panic_bear_incoming_pct)&!buff.bear_form.up&player.combat&(talent.heart_of_the_wild&(cooldown.heart_of_the_wild.ready|buff.heart_of_the_wild.up)|cooldown.frenzied_regeneration.ready&buff.frenzied_regeneration.down)
+    - heart_of_the_wild,range_check=none,if=talent.heart_of_the_wild&buff.bear_form.up&player.combat&(health.pct<=config.panic_bear_hp_pct|incoming.mitigated.pct>=config.panic_bear_incoming_pct)
+    - frenzied_regeneration,range_check=none,if=buff.bear_form.up&player.combat&(health.pct<=config.panic_bear_hp_pct|incoming.mitigated.pct>=config.panic_bear_incoming_pct)&buff.frenzied_regeneration.down
 
     - shred,if=player.combat&target.attackable&target.in_melee&buff.cat_form.down&talent.fluid_form.enabled
     - rake,if=player.combat&target.attackable&target.in_melee&buff.cat_form.down&talent.fluid_form.enabled
-    # enemies.40y is BARE on purpose - pre-pull the combat count is 0.
     - cat_form,range_check=none,if=buff.cat_form.down&(target.attackable|enemies.40y)
 
-    # Pre-pull opener only: Prowl cannot be cast in combat, so without
-    # !player.combat this traps every GCD. enemies.40y is BARE on purpose.
     - prowl,range_check=none,if=!player.combat&!var.bs_inc&buff.prowl.down&buff.shadowmeld.down&(target.attackable|enemies.40y)
 
   interrupts:
@@ -399,20 +346,13 @@ lists:
     - mighty_bash,if=interrupt.cc.check
     - incapacitating_roar,if=interrupt.stun.aoe.check
 
-  # Regrowth off a Predatory Swiftness proc. Called after `defensives` so a
-  # real defensive cooldown outranks a proc heal.
   predatory_swiftness:
     - regrowth,delay=500,range_check=none,if=buff.predatory_swiftness.up&health.pct<=config.predatory_swiftness_heal_hp_pct&lastcast.regrowth>=2
 
   main:
-    # Root Cleanse: absolute top priority, above the casting guard.
-    # var.druid_shapeshift_root is player.rooted - the real, confirmed
-    # self-state (unlike stun or fear, there is no equivalent snare check).
-    # Cat -> Bear -> Cat.
     - bear_form,name="Root Cleanse (to Bear)",line_cd=8,if=config.root_cleanse&var.druid_shapeshift_root&!buff.bear_form.up
     - cat_form,name="Root Cleanse (from Bear)",line_cd=8,if=config.root_cleanse&var.druid_shapeshift_root&buff.bear_form.up
 
-    # Convoke is a channel and nothing here ever wants to break it.
     - return,if=player.channeling|player.casting|var.protected_channel
 
     - call_action_list,name=engine
@@ -420,13 +360,10 @@ lists:
     - call_action_list,name=heal_support
     - call_action_list,name=form
 
-    # COMBAT WALL - nothing below runs out of combat. player.combat, NOT
-    # player.auto_combat, which is a config check and not combat state.
     - return,if=!player.combat
     - call_action_list,name=interrupts
 
 
-    # NOTE:
 
     - call_action_list,name=defensives
     - call_action_list,name=predatory_swiftness
@@ -442,8 +379,6 @@ lists:
 
     - call_action_list,name=cooldown
 
-    # Apex Predator's Craving is NOT on the raid string — these two are inert
-    # here, kept so a respec back to the M+ build still works.
     - ferocious_bite,if=buff.apex_predators_craving.up
     - ravage,if=buff.apex_predators_craving.up
 
