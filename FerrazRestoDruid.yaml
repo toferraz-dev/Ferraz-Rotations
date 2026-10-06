@@ -11,7 +11,7 @@
 #
 # Why each line is the way it is: .agents/rationale/RestoDruid.md
 # =============================================================================
-version: "19.0.0"
+version: "20.0.0"
 author: Ferraz
 patch: "12.1"
 spec: 105
@@ -31,7 +31,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-10-05 | Patch: 12.1 | Version: 19.0.0"
+    text: "Last update: 2026-10-06 | Patch: 12.1 | Version: 20.0.0"
 
 
   # RECOMMENDED BUILD — the string the talent.X gates below assume.
@@ -151,6 +151,36 @@ config:
     min: 25
     max: 100
     default: 100
+
+  # Tank-specific thresholds, ported from the Rollfacedk Holy Paladin pattern
+  # (community_Battle_Nurse_Paladin.yaml): every main heal there branches
+  # cycle.tank&X|!cycle.tank&Y instead of one threshold for the whole group.
+  # A tank in M+19+ eats periodic burst (tank busters) on a totally different
+  # timing than the rest of the group's chip damage - one shared threshold
+  # either over-heals the tank early or under-heals it late.
+  rejuvenation_threshold_tank:
+    label: "Rejuvenation HP % Tank (effective)"
+    section: "Healing"
+    type: slider
+    min: 25
+    max: 100
+    default: 100
+
+  regrowth_threshold_tank:
+    label: "Regrowth HP % Tank (effective)"
+    section: "Healing"
+    type: slider
+    min: 25
+    max: 99
+    default: 95
+
+  wild_growth_threshold_tank:
+    label: "Wild Growth HP % Tank (effective)"
+    section: "Healing"
+    type: slider
+    min: 25
+    max: 99
+    default: 90
 
 
   # HEALING COOLDOWNS — Convoke, Tranquility and their gates.
@@ -629,6 +659,11 @@ lists:
     # "2+ people hurt, Wild Growth never suggested". A raid-wide burst heal
     # losing every time to a proc-spend single target was backwards.
     - wild_growth,name="Wild Growth",range_check=none,if=group.count(cycle.health.effective.pct<config.wild_growth_threshold&!cycle.tank)>=config.wild_growth_members
+    # Tank-specific trigger, ported from the Rollfacedk Holy Paladin pattern:
+    # a tank taking a burst hit shouldn't have to wait for enough OTHER
+    # people to also be hurt before Wild Growth fires - its own tighter
+    # threshold (default 90) can trigger the cast on the tank's damage alone.
+    - wild_growth,name="Wild Growth (Tank)",range_check=none,if=group.count(cycle.tank&cycle.health.effective.pct<config.wild_growth_threshold_tank)>=1
 
     # Treant usage and Clearcasting synergized with Wild Synthesis. Every
     # branch carries its own health gate.
@@ -657,10 +692,14 @@ lists:
     # Spend the Abundance window. Regrowth at -60% .
     - regrowth,name="Abundance Regrowth",cycle=members,if=buff.abundance.up&cycle.health.effective.pct<config.regrowth_threshold
 
-    # Core periodic and direct healing logic
-    - 774,name="Rejuvenation",cycle=members,if=cycle.buff.rejuvenation.refreshable&cycle.health.effective.pct<config.rejuvenation_threshold
-    - 774,name="Germination",cycle=members,if=talent.germination&cycle.buff.rejuvenation.up&(cycle.buff.rejuvenation_germination.down|cycle.buff.rejuvenation_germination.refreshable)&cycle.health.effective.pct<config.rejuvenation_threshold
-    - regrowth,name="Regrowth",cycle=members,if=cycle.health.effective.pct<config.regrowth_threshold
+    # Core periodic and direct healing logic. Tank/non-tank thresholds
+    # ported from the Rollfacedk Holy Paladin pattern (every main heal there
+    # branches cycle.tank&X|!cycle.tank&Y) - a tank in M+19+ eats periodic
+    # burst on different timing than the group's chip damage, so one shared
+    # threshold either over-heals the tank early or under-heals it late.
+    - 774,name="Rejuvenation",cycle=members,if=cycle.buff.rejuvenation.refreshable&(cycle.tank&cycle.health.effective.pct<config.rejuvenation_threshold_tank|!cycle.tank&cycle.health.effective.pct<config.rejuvenation_threshold)
+    - 774,name="Germination",cycle=members,if=talent.germination&cycle.buff.rejuvenation.up&(cycle.buff.rejuvenation_germination.down|cycle.buff.rejuvenation_germination.refreshable)&(cycle.tank&cycle.health.effective.pct<config.rejuvenation_threshold_tank|!cycle.tank&cycle.health.effective.pct<config.rejuvenation_threshold)
+    - regrowth,name="Regrowth",cycle=members,if=(cycle.tank&cycle.health.effective.pct<config.regrowth_threshold_tank|!cycle.tank&cycle.health.effective.pct<config.regrowth_threshold)
     # target.in_melee dropped 2026-09-26: Thorn Bloom is a 40y target, 10y AoE
     # radius spell (confirmed via spell_query, id 1237885) - it was never
     # melee-range in the first place, the gate was just a leftover proxy from

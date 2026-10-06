@@ -2087,6 +2087,11 @@
               "description": "Target buff stack count."
             },
             {
+              "syntax": "target.buff.SPELL.refreshable",
+              "returnType": "bool",
+              "description": "Target buff is within pandemic window (refreshable)."
+            },
+            {
               "syntax": "target.debuff.SPELL.up",
               "returnType": "bool",
               "description": "Target has debuff."
@@ -2115,6 +2120,11 @@
               "syntax": "target.debuff.SPELL.stack",
               "returnType": "number",
               "description": "Target debuff stack count."
+            },
+            {
+              "syntax": "target.debuff.SPELL.refreshable",
+              "returnType": "bool",
+              "description": "Target debuff is within pandemic window (refreshable)."
             }
           ]
         }
@@ -2421,6 +2431,11 @@
               "description": "Focus buff stack count."
             },
             {
+              "syntax": "focus.buff.SPELL.refreshable",
+              "returnType": "bool",
+              "description": "Focus buff is within pandemic window (refreshable)."
+            },
+            {
               "syntax": "focus.debuff.SPELL.up",
               "returnType": "bool",
               "description": "Focus has debuff."
@@ -2444,6 +2459,11 @@
               "syntax": "focus.debuff.SPELL.stack",
               "returnType": "number",
               "description": "Focus debuff stack count."
+            },
+            {
+              "syntax": "focus.debuff.SPELL.refreshable",
+              "returnType": "bool",
+              "description": "Focus debuff is within pandemic window (refreshable)."
             },
             {
               "syntax": "focus.purgeable",
@@ -2768,6 +2788,12 @@
               "description": "Mouseover buff stack count."
             },
             {
+              "syntax": "mouseover.buff.SPELL.refreshable",
+              "returnType": "bool",
+              "description": "Mouseover buff is within pandemic window (refreshable).",
+              "example": "mouseover.buff.rejuvenation.refreshable"
+            },
+            {
               "syntax": "mouseover.debuff.SPELL.up",
               "returnType": "bool",
               "description": "Mouseover has debuff.",
@@ -2797,6 +2823,11 @@
               "syntax": "mouseover.purgeable",
               "returnType": "bool",
               "description": "Mouseover has purgeable buff (auto-detect types from spec)."
+            },
+            {
+              "syntax": "mouseover.debuff.SPELL.refreshable",
+              "returnType": "bool",
+              "description": "Mouseover debuff is within pandemic window (refreshable)."
             },
             {
               "syntax": "mouseover.purgeable.list",
