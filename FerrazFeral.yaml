@@ -1,16 +1,5 @@
-# =============================================================================
-# Feral Druid Ferraz M+ - spec 103 - patch 12.1.
-# =============================================================================
-#
-# Lists (entry point: main):
-#   engine                  defensives              cooldown                finisher
-#   aoe_finisher            builder                 aoe_builder             heal_support
-#   form                    interrupts              predatory_swiftness     main
-#
-# Why each line is the way it is: .agents/rationale/Feral.md
-# =============================================================================
 
-version: "6.1.0"
+version: "7.0.0"
 author: Ferraz
 patch: "12.1"
 spec: 103
@@ -20,12 +9,11 @@ description: |
 entry: main
 
 config:
-  # Display-only build stamp — keep in sync with version:/patch: above.
   about:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-10-04 | Patch: 12.1 | Version: 6.1.0"
+    text: "Last update: 2026-10-06 | Patch: 12.1 | Version: 7.0.0"
 
   recommended_talents:
     section: "Talents"
@@ -41,6 +29,15 @@ config:
     max: 99
     default: 25
     description: "Shift to Bear Form for the armour and health when you drop below this. Bear is a big survival gain but costs you the Cat rotation, so it is deliberately the lowest threshold on this panel."
+
+  panic_bear_incoming_pct:
+    label: "Panic Bear - Incoming Dmg %"
+    section: "Defensive HP Percentage"
+    type: slider
+    min: 25
+    max: 100
+    default: 50
+    description: "Shift to Bear BEFORE the hit lands, not just after HP already dropped. incoming.mitigated.pct is self-only (player), already accounts for active defensives, and catches damage one GCD earlier than waiting on health.pct."
 
   survival_instincts_hp_pct:
     section: "Defensive HP Percentage"
@@ -139,8 +136,6 @@ config:
     type: checkbox
     default: true
 
-  # Skip long cooldowns on trash about to die (bosses ignore). Half of Feral's
-  # damage is bleed ticks. Keep Berserk = Trinkets; Convoke at or below Berserk.
   ttd_berserk:
     label: "Berserk / Incarnation TTD (seconds)"
     section: "Time To Die"
@@ -186,7 +181,6 @@ config:
     default: 20
     description: "Minimum fight time remaining to use the combat potion. The end-of-fight clause on the potion line ignores this, so a potion that would be wasted anyway still goes out."
 
-  # Inlined from _shared.yaml so every piece has its own toggle.
   engine_loot_nearby:
     label: "Loot Nearby Corpses"
     section: "Engine"
@@ -275,7 +269,6 @@ config:
     default: true
     description: "Soothe whatever you are hovering, checked just before the current-target Soothe below. Simia cannot pick an enraged enemy by criteria — target_enemy is 'nearest enemy' with no filter and there is no .any(EXPR) for enemies — so hovering is the only way to Soothe a mob you are not targeting. This is an independent switch: turning Soothe Enrage off does not disable it. Guarded on mouseover.combat, so hovering an unpulled mob never pulls it."
 
-  # Shapeshifting breaks roots, but only the ones the game lets it break.
   root_cleanse:
     label: "Break Roots by Shapeshifting"
     section: "Defensives"
@@ -284,70 +277,43 @@ config:
     description: "Shift form to break a root, using the real player.rooted self-state (not stun, not fear - there is no equivalent snare check). line_cd caps it at one attempt every 8 seconds."
 
 variables:
-  # Channelled ids this spec can produce.
   protected_channel: player.casting.spell_id=323764|player.casting.spell_id=391528
   bs_inc: buff.berserk.up|buff.incarnation_avatar_of_ashamane.up
   bs_inc_cd_remains: cooldown.berserk.remains>?cooldown.incarnation_avatar_of_ashamane.remains
   bs_inc_cd_duration: cooldown.berserk.duration>?cooldown.incarnation_avatar_of_ashamane.duration
   regrowth: 0
   dotc_rake_threshold: 99-94*(talent.wild_slashes&talent.merciless_claws)-91*(talent.wild_slashes&!talent.merciless_claws)
-  # SimC's hold: keep Berserk back when spending it now costs a paired Convoke.
   bs_inc_cd: var.bs_inc_cd_remains+10
   convoke_cd: cooldown.convoke_the_spirits.remains+10
   convokeCountRemaining: floor(((fight_remains-var.convoke_cd)%cooldown.convoke_the_spirits.duration)+(fight_remains>cooldown.convoke_the_spirits.remains))
   zerkCountRemaining: floor(((fight_remains-var.bs_inc_cd)%var.bs_inc_cd_duration)+(fight_remains>var.bs_inc_cd_remains))
   firstHoldBerserkCondition: var.zerkCountRemaining=1&var.convokeCountRemaining=1&cooldown.convoke_the_spirits.remains>10
   secondHoldBerserkCondition: cooldown.convoke_the_spirits.remains>20&var.convokeCountRemaining=var.zerkCountRemaining&var.zerkCountRemaining=floor(((fight_remains-var.convoke_cd)%var.bs_inc_cd_duration)+(fight_remains>cooldown.convoke_the_spirits.remains))
-  # Without Convoke talented, holdBerserk's own gate (talent.convoke_the_spirits)
-  # short-circuits it to false - correct here: Incarnation: Avatar of Ashamane
-  # and Berserk are the same talent row (mutually exclusive), so once Convoke
-  # is gone there is no second independent cooldown left to phase-sync
-  # against. var.bs_inc already treats either talent as "the window is open,"
-  # so nothing else needs to change for an Incarnation-only build.
   holdBerserk: talent.convoke_the_spirits&(var.firstHoldBerserkCondition|var.secondHoldBerserkCondition)
   rake_tf: debuff.rake.visual_id=491160
   rip_tf: debuff.rip.visual_id=491158
   moonfire_tf: debuff.moonfire.visual_id=500891
 
-  # TTD gates. A boss always ignores them.
   berserk_ttd_ok: (target.boss|target.time_to_die>=config.ttd_berserk|fight_remains>=config.ttd_berserk)
   convoke_ttd_ok: (target.boss|target.time_to_die>=config.ttd_convoke|fight_remains>=config.ttd_convoke)
   trinkets_ttd_ok: (target.boss|target.time_to_die>=config.ttd_trinkets|fight_remains>=config.ttd_trinkets)
   potion_ttd_ok: (target.boss|target.time_to_die>=config.ttd_potion|fight_remains>=config.ttd_potion)
 
-  # Parked long enough to spend a cooldown, and actually fighting. Guards
-  # everything wasted by running out of the window it just opened.
   cd_ready_to_stand: player.combat&player.standing.time>=config.cd_standing_time
 
-  # Burst anchored on Convoke: Berserk, trinkets and potion wait for it to be ready.
-  # Off when Convoke is untalented. Reads Convoke's cooldown, so no deadlock -
-  # the !talent.convoke_the_spirits branch makes this unconditionally true on
-  # this build, which is exactly what an Incarnation-only build needs: there
-  # is no second cooldown left to sync against, so nothing should hold.
   convoke_ready: "!config.require_convoke_ready|!talent.convoke_the_spirits|cooldown.convoke_the_spirits.ready"
 
-  # Fallback to Berserk/Incarnation sync; <=5 lets a trinket land just before
-  # the window opens. var.bs_inc already reads either talent, so this line is
-  # unchanged between the two builds.
   burst_now: var.convoke_ready&(var.bs_inc|var.bs_inc_cd_remains<=5)
 
-  # Potion only on a worthwhile window: boss, enough targets, or 25s+ to live.
   potion_worth_it: target.boss|enemies.combat.8y>=config.potion_min_targets|target.time_to_die>=25
   trinket_sync_ok: "!config.trinkets_burst_only|var.burst_now|fight_remains<25"
 
   rip_preempt: "enemies.combat.8y=1&combo_points>=5&dot.rip.up&(dot.rip.refreshable&(buff.tigers_fury.up|dot.rip.remains<cooldown.tigers_fury.remains)|buff.tigers_fury.up&!var.rip_tf|buff.tigers_fury.up&buff.tigers_fury.remains<2)"
 
-  # FIXED 2026-10-04: user confirmed player.rooted is the real, working
-  # self-state expression (alongside player.stunned/player.feared) - no
-  # equivalent player.snared exists, so root is the only self-state this
-  # build reacts to. debuff_list.freedom.up also matches snare/slow and was
-  # dropped (see FerrazRestoDruid.yaml for the full fix history).
   druid_shapeshift_root: player.rooted
 
 lists:
-  # spell_queue, sanity_checks and auto_target, inlined.
   engine:
-    # `&`, not `|`: with `|` this is true on almost every pass.
     - queue_spell,if=!player.casting&!player.channeling
 
     - return,if=!state.rotation
@@ -359,13 +325,11 @@ lists:
     - interact_target,delay=350,if=config.engine_loot_nearby&target.lootable&target.range<=5
     - interact_target,delay=350,if=config.engine_loot_nearby&loot_nearby
     - interact_mouseover,delay=350,if=config.engine_loot_nearby&mouseover.lootable&mouseover.range<=5
-    # Keeps auto-attack running.
     - attack_target,off_gcd=true,delay=100,if=player.combat&target.exists&target.attackable&target.alive&target.in_melee&!player.auto_attacking
 
     - remove_corruption.player,delay=500,name="Remove Corruption (Self)",if=config.auto_dispel_self&player.dispelable.list
     - remove_corruption,delay=500,cycle=party,name="Remove Corruption (Party)",if=config.auto_dispel_party&cycle.dispelable.list
     - remove_corruption,delay=500,cycle=party,cycle_order=player_first,name="Devouring Rift (Affix)",if=config.engine_affix_devour&cycle.debuff.440313.up.any
-    # Hovering is the only way to Soothe a mob you are not targeting.
     - soothe.mouseover,name="Soothe Enrage (Mouseover)",range_check=mouseover,if=config.soothe_mouseover&mouseover.exists&mouseover.enemy&mouseover.attackable&!mouseover.dead&mouseover.combat&mouseover.purgeable.enrage
     - soothe,name="Soothe (Enrage)",if=config.auto_purge_enrage&target.purgeable.enrage
 
@@ -376,12 +340,10 @@ lists:
     - healthstone,delay=250,if=healthstone.ready&health.pct<=config.engine_healthstone
     - health_potion,delay=250,if=health_potion.ready&health.pct<=config.engine_health_potion
 
-    # Melee auto target: 8y.
     - target_enemy,delay=200,off_gcd=true,if=config.engine_auto_target.has(0)&!target.exists&enemies.combat.8y>=1
     - target_enemy,delay=200,off_gcd=true,if=config.engine_auto_target.has(1)&target.dead&enemies.combat.8y>=1
     - target_enemy,delay=200,off_gcd=true,if=config.engine_auto_target.has(2)&target.range>=25&enemies.combat.8y>=1
 
-    # Temple of Sethraliss: swap off the boss holding Storm Blessed (immune).
     - target_enemy,name="Swap Off Storm Blessed",delay=500,off_gcd=true,if=target.buff.1289229.up&enemies.combat.40y>=2
 
   defensives:
@@ -397,25 +359,11 @@ lists:
     - blood_fury,if=var.bs_inc
     - fireblood,if=var.bs_inc
     - ancestral_call,if=var.bs_inc
-    # 5-minute potion: best window, not first.
     - combat_potion,if=var.cd_ready_to_stand&config.use_potion&combat_potion.ready&(var.burst_now&var.potion_ttd_ok&var.potion_worth_it|fight_remains<32)
-    # Don't open Berserk without Convoke ready.
     - berserk,if=var.cd_ready_to_stand&buff.tigers_fury.up&!var.holdBerserk&var.convoke_ready&var.berserk_ttd_ok
-    # Same line, Incarnation talent instead of Berserk - same talent row
-    # (mutually exclusive), so exactly one of these two ever has a chance to
-    # fire on a given build. The cast name is `incarnation`, NOT
-    # `incarnation_avatar_of_ashamane` - confirmed against the official
-    # Simia rotation (simia_data_dump/rotation_103.yaml:185), which casts the
-    # two side by side this same way: SimC folds Incarnation into `berserk`
-    # via its internal bs_inc shorthand (Talent Entry: replace="Berserk"),
-    # but Simia exposes them as two separately castable spells. Mirrors every
-    # gate: standing still, Tiger's Fury up, the (always-false-without-
-    # Convoke) hold, and the TTD floor.
     - incarnation,if=var.cd_ready_to_stand&buff.tigers_fury.up&!var.holdBerserk&var.convoke_ready&var.berserk_ttd_ok
     - feral_frenzy,if=!talent.frantic_frenzy&combo_points<=2+(2*var.bs_inc)
     - frantic_frenzy,if=buff.tigers_fury.up|combo_points<=2+(2*var.bs_inc)
-    # Inside Berserk + Tiger's Fury, on the GCD after a finisher. ravage is required:
-    # Druid of the Claw replaces Ferocious Bite with it. combo_points<=1 is a backstop.
     - convoke_the_spirits,if=var.cd_ready_to_stand&talent.convoke_the_spirits&var.bs_inc&var.convoke_ttd_ok&buff.tigers_fury.up&(prev_gcd.1.rip|prev_gcd.1.ferocious_bite|prev_gcd.1.ravage|prev_gcd.1.primal_wrath|combo_points<=1|buff.tigers_fury.remains<=1+action.convoke_the_spirits.execute_time)
 
   finisher:
@@ -436,7 +384,6 @@ lists:
     - thorn_bloom
 
   builder:
-    # Prowl cannot be cast in combat.
     - prowl,if=!player.combat&!buff.shadowmeld.up&(!var.rake_tf|dot.rake.refreshable)
     - rake,if=(buff.tigers_fury.up|dot.rake.remains<cooldown.tigers_fury.remains)&(dot.rake.refreshable&(buff.tigers_fury.up|!var.rake_tf)|dot.rake.remains<2|buff.tigers_fury.up&!var.rake_tf)
     - moonfire,if=talent.lunar_inspiration&(buff.tigers_fury.up|dot.moonfire.remains<cooldown.tigers_fury.remains)&(dot.moonfire.refreshable&(buff.tigers_fury.up|!var.moonfire_tf)|dot.moonfire.remains<2|buff.tigers_fury.up&!var.moonfire_tf)
@@ -452,28 +399,19 @@ lists:
     - shred,if=combo_points<=1&enemies.combat.8y=2&talent.panthers_guile
     - 106785,name="Swipe (Filler)",if=combo_points>1|enemies.combat.8y>2|!talent.panthers_guile
 
-  # Mark of the Wild, OOC Regrowth top-off.
   heal_support:
     - mark_of_the_wild,range_check=none,if=(buff.mark_of_the_wild.down.any|action.mark_of_the_wild.overlayed)&lastcast.mark_of_the_wild>=10
     - regrowth,range_check=none,if=health.pct<=config.regrowth_ooc_hp_pct&!player.combat
 
-  # Emergency Bear, Cat entry, pre-pull Prowl.
   form:
-    # Bear costs the Cat rotation, so it must buy HotW or Frenzied Regen.
-    - bear_form,name="Panic Bear Form",range_check=none,if=health.pct<=config.panic_bear_hp_pct&!buff.bear_form.up&player.combat&(cooldown.heart_of_the_wild.ready|buff.heart_of_the_wild.up|cooldown.frenzied_regeneration.ready&buff.frenzied_regeneration.down)
-    # Gated on the panic threshold: Shapeshift Clear also enters Bear at full HP.
-    - heart_of_the_wild,range_check=none,if=buff.bear_form.up&player.combat&health.pct<=config.panic_bear_hp_pct
-    # After HotW, so it heals against the bigger pool. .down guard stops it
-    # overwriting its own tick.
-    - frenzied_regeneration,range_check=none,if=buff.bear_form.up&player.combat&health.pct<=config.panic_bear_hp_pct&buff.frenzied_regeneration.down
+    - bear_form,name="Panic Bear Form",range_check=none,if=(health.pct<=config.panic_bear_hp_pct|incoming.mitigated.pct>=config.panic_bear_incoming_pct)&!buff.bear_form.up&player.combat&(cooldown.heart_of_the_wild.ready|buff.heart_of_the_wild.up|cooldown.frenzied_regeneration.ready&buff.frenzied_regeneration.down)
+    - heart_of_the_wild,range_check=none,if=buff.bear_form.up&player.combat&(health.pct<=config.panic_bear_hp_pct|incoming.mitigated.pct>=config.panic_bear_incoming_pct)
+    - frenzied_regeneration,range_check=none,if=buff.bear_form.up&player.combat&(health.pct<=config.panic_bear_hp_pct|incoming.mitigated.pct>=config.panic_bear_incoming_pct)&buff.frenzied_regeneration.down
 
     - shred,if=player.combat&target.attackable&target.in_melee&buff.cat_form.down&talent.fluid_form.enabled
     - rake,if=player.combat&target.attackable&target.in_melee&buff.cat_form.down&talent.fluid_form.enabled
-    # enemies.40y is BARE on purpose - pre-pull the combat-filtered count is 0.
     - cat_form,range_check=none,if=buff.cat_form.down&(target.attackable|enemies.40y)
 
-    # Pre-pull opener only. Without !player.combat this traps every GCD, since
-    # Prowl cannot be cast in combat. enemies.40y is BARE on purpose.
     - prowl,range_check=none,if=!player.combat&!var.bs_inc&buff.prowl.down&buff.shadowmeld.down&(target.attackable|enemies.40y)
 
   interrupts:
@@ -483,20 +421,14 @@ lists:
     - mighty_bash,if=interrupt.cc.check
     - incapacitating_roar,if=interrupt.stun.aoe.check
 
-  # Called after `defensives` in main, so a real defensive outranks a proc heal.
   predatory_swiftness:
     - regrowth,name="Regrowth (Solo)",delay=500,range_check=none,if=buff.predatory_swiftness.up&player.solo&health.pct<=config.predatory_swiftness_heal_solo_hp_pct&lastcast.regrowth>=2
     - regrowth,name="Regrowth (Group)",delay=500,range_check=none,if=buff.predatory_swiftness.up&player.group&health.pct<=config.predatory_swiftness_heal_group_hp_pct&lastcast.regrowth>=2
 
   main:
-    # Root Cleanse: absolute top priority, above the casting guard.
-    # var.druid_shapeshift_root is player.rooted - the real, confirmed
-    # self-state (unlike stun or fear, there is no equivalent snare check).
-    # Cat -> Bear -> Cat.
     - bear_form,name="Root Cleanse (to Bear)",line_cd=8,if=config.root_cleanse&var.druid_shapeshift_root&!buff.bear_form.up
     - cat_form,name="Root Cleanse (from Bear)",line_cd=8,if=config.root_cleanse&var.druid_shapeshift_root&buff.bear_form.up
 
-    # Convoke is a channel and nothing here ever wants to break it.
     - return,if=player.channeling|player.casting|var.protected_channel
 
     - call_action_list,name=engine
@@ -504,20 +436,17 @@ lists:
     - call_action_list,name=heal_support
     - call_action_list,name=form
 
-    # COMBAT WALL. player.combat, NOT player.auto_combat (a config check).
     - return,if=!player.combat
     - call_action_list,name=interrupts
 
     - call_action_list,name=defensives
     - call_action_list,name=predatory_swiftness
 
-    # auto_combat.target does not exist - plain target-validity guard instead.
     - return,if=!target.valid|target.dead|!target.attackable
 
     - rake,range_check=none,if=buff.prowl.up&target.in_melee
     - return,if=buff.prowl.up
 
-    # No standing gate: Berserk/Convoke need TF up, and TF costs nothing while moving.
     - tigers_fury,name="Tigers Fury (Refresh)",off_gcd=true,ignore_queue=true,if=(var.bs_inc_cd_remains<=1|var.bs_inc_cd_remains>10)&(cooldown.frantic_frenzy.remains<buff.tigers_fury.duration-1.5|cooldown.frantic_frenzy.remains>22|!talent.frantic_frenzy|enemies.combat.8y=1)
 
     - chomp,if=buff.chomp_enabler.up

@@ -553,11 +553,17 @@
         {
           "name": "blocked",
           "returnType": "bool",
-          "description": "Same as cooldown.SPELL.blocked — spell is user-blocked.",
+          "description": "KNOWN BUG (confirmed by the Simia maintainer, 2026-10-06): always reads 0, regardless of actual block state. Use cooldown.SPELL.blocked instead (unaffected) if you need this on a bypass-context line.",
           "example": "cooldown_bypass.combustion.blocked"
+        },
+        {
+          "name": "is_cooldown",
+          "returnType": "bool",
+          "description": "KNOWN BUG (confirmed by the Simia maintainer, 2026-10-06): always reads 0. Use cooldown.SPELL.is_cooldown or action.SPELL.is_cooldown instead (both unaffected).",
+          "example": "cooldown_bypass.combustion.is_cooldown"
         }
       ],
-      "notes": "Use cooldown_bypass when you need the real CD state of a blocked spell (e.g., pooling resources for a CD that is toggled off but might be re-enabled)."
+      "notes": "Use cooldown_bypass when you need the real CD state of a blocked spell (e.g., pooling resources for a CD that is toggled off but might be re-enabled). blocked and is_cooldown are both known-broken on this prefix as of 2026-10-06 - read block/CD-classification state from cooldown.SPELL.* or action.SPELL.* instead, which share the same spell and are unaffected."
     },
     {
       "id": "talents",
@@ -630,7 +636,7 @@
         {
           "name": "cooldown.remains",
           "returnType": "number",
-          "description": "Cooldown remaining.",
+          "description": "KNOWN BUG (confirmed by the Simia maintainer, 2026-10-06): always reads 0. The C++ pre-parse step treats the 'X.cooldown' segment as the spell name itself, so this handler is never reached. Use cooldown.SPELL.remains instead (unaffected, same data).",
           "example": "action.combustion.cooldown.remains<5"
         },
         {
@@ -639,13 +645,13 @@
             "cooldown.up"
           ],
           "returnType": "bool",
-          "description": "Spell is off cooldown.",
+          "description": "KNOWN BUG (confirmed by the Simia maintainer, 2026-10-06): always reads 0/false. Same pre-parse bug as cooldown.remains above. Use cooldown.SPELL.ready instead (unaffected, same data).",
           "example": "action.combustion.cooldown.ready"
         },
         {
           "name": "cooldown.down",
           "returnType": "bool",
-          "description": "Spell is on cooldown.",
+          "description": "KNOWN BUG (confirmed by the Simia maintainer, 2026-10-06): always reads 0/false. Same pre-parse bug as cooldown.remains above. Use cooldown.SPELL.down instead (unaffected, same data).",
           "example": "action.combustion.cooldown.down"
         },
         {
@@ -1616,8 +1622,20 @@
         {
           "syntax": "player.buff.SPELL.points.N",
           "returnType": "number",
-          "description": "Effect point N (1-6) of the aura's point vector - SimC's buff.X.value. .estimated_points.N reads the second vector.",
+          "description": "Effect point N (1-6) of the aura's point vector - SimC's buff.X.value.",
           "example": "player.buff.450521.points.1>0.3*health.max"
+        },
+        {
+          "syntax": "player.buff.SPELL.estimated_points.N",
+          "returnType": "number",
+          "description": "KNOWN BUG (confirmed by the Simia maintainer, 2026-10-06): always reads 0. The C++ pre-parse step only excludes .points. from the spell-name match, not .estimated_points. - the handler for this form is never reached. The target.estimated_points.N form is unaffected and works. Do not use the player./bare form in a rotation until this is fixed upstream.",
+          "example": "player.buff.450521.estimated_points.1"
+        },
+        {
+          "syntax": "target.debuff.SPELL.estimated_points.N",
+          "returnType": "number",
+          "description": "Effect point N (1-6) of the second point vector on a target debuff. Confirmed working by the Simia maintainer (the player./bare form has the pre-parse bug above; this target. form does not).",
+          "example": "target.debuff.450289.estimated_points.1"
         }
       ]
     },
@@ -4329,14 +4347,7 @@
         },
         {
           "name": "Count",
-          "expressions": [
-            {
-              "syntax": "group.count(EXPR)",
-              "returnType": "number",
-              "description": "Count members matching a cycle expression.",
-              "example": "group.count(cycle.health.pct<50)>=2"
-            }
-          ]
+          "expressions": []
         }
       ],
       "expressions": [
