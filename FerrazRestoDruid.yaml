@@ -11,7 +11,7 @@
 #
 # Why each line is the way it is: .agents/rationale/RestoDruid.md
 # =============================================================================
-version: "18.1.0"
+version: "19.0.0"
 author: Ferraz
 patch: "12.1"
 spec: 105
@@ -31,7 +31,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-10-04 | Patch: 12.1 | Version: 18.1.0"
+    text: "Last update: 2026-10-05 | Patch: 12.1 | Version: 19.0.0"
 
 
   # RECOMMENDED BUILD — the string the talent.X gates below assume.
@@ -581,7 +581,7 @@ lists:
 
   # Racial Abilities and Specific Mobility
   racials:
-    - shadowmeld,name="Shadowmeld (Aggro Drop)",if=player.combat&player.aggro&!player.casting
+    - shadowmeld,name="Shadowmeld (Aggro Drop)",if=target.threat>=3&!player.casting
     - berserking,name="Berserking (Haste CD)",if=(group.count(cycle.health.effective.pct<config.convoke_threshold&!cycle.tank)>=config.convoke_members)&!buff.cat_form.up&!buff.bear_form.up
     - war_stomp,name="War Stomp (AoE CC)",if=interrupt.stun.aoe.check
     - bull_rush,name="Bull Rush (AoE CC)",if=interrupt.stun.aoe.check
@@ -591,7 +591,7 @@ lists:
   # Main Healing Cooldown Alignment: NS -> Trinkets/Potion -> Convoke -> NS Regrowth -> Tranquility -> Swiftmend
   cooldowns:
     # NO Mark of the Wild here.
-    - natures_swiftness,name="Nature Swiftness",off_gcd=true,ignore_queue=true,delay=150,range_check=none,if=!config.disable_natures_swiftness&group.count(cycle.health.effective.pct<config.natures_swiftness_threshold)>=1
+    - natures_swiftness,name="Nature Swiftness",off_gcd=true,delay=150,range_check=none,if=!config.disable_natures_swiftness&group.count(cycle.health.effective.pct<config.natures_swiftness_threshold)>=1
     # Overgrowth rides this for free: with Nature's Swiftness up, this Regrowth
     # also applies Lifebloom, Rejuvenation and Wild Growth to the same target.
     - regrowth,name="Nature Swift Regrowth",cycle=members,if=buff.natures_swiftness.up&cycle.health.effective.pct<config.natures_swiftness_threshold
@@ -601,8 +601,12 @@ lists:
     - trinket_1,delay=150,name="Trinket 1",if=config.use_trinket_1&trinket_1.ready&(group.count(cycle.health.effective.pct<config.convoke_threshold&!cycle.tank)>=config.convoke_members)&!buff.cat_form.up&!buff.bear_form.up
     - trinket_2,delay=150,name="Trinket 2",if=config.use_trinket_2&trinket_2.ready&(group.count(cycle.health.effective.pct<config.convoke_threshold&!cycle.tank)>=config.convoke_members)&!buff.cat_form.up&!buff.bear_form.up
     - combat_potion,delay=150,name="Combat Potion",if=combat_potion.ready&config.use_potion&(group.count(cycle.health.effective.pct<config.convoke_threshold&!cycle.tank)>=config.convoke_members)&!buff.cat_form.up&!buff.bear_form.up
-    - convoke_the_spirits,global_delay=750,name="Convoke (Heal)",if=(group.count(cycle.health.effective.pct<config.convoke_threshold&!cycle.tank)>=config.convoke_members)&!buff.cat_form.up&!buff.bear_form.up
-    - tranquility,global_delay=750,name="Tranquility",if=!config.manual_tranquility&group.count(cycle.health.effective.pct<config.tranquility_threshold&!cycle.tank)>=config.tranquility_members&!player.moving
+    # Can't gate on incoming damage per group member - incoming.pct/
+    # incoming.mitigated.pct (predicted hit % of effective health) only exist
+    # for the player (self), not for cycle=/group members. These two stay
+    # purely HP%-reactive (group.count below threshold), not damage-predictive.
+    - convoke_the_spirits,global_delay=1000,name="Convoke (Heal)",if=(group.count(cycle.health.effective.pct<config.convoke_threshold&!cycle.tank)>=config.convoke_members)&!buff.cat_form.up&!buff.bear_form.up&!buff.moonkin_form.up
+    - tranquility,global_delay=1000,name="Tranquility",if=!config.manual_tranquility&group.count(cycle.health.effective.pct<config.tranquility_threshold&!cycle.tank)>=config.tranquility_members&!player.moving
     # Power of the Archdruid: Swiftmend spreads three Rejuvenations, which is
     # what gets Abundance to 5 stacks fast. FIXED 2026-10-03: added
     # !buff.abundance.up - this build has no Reforestation/Tree of Life, so
@@ -667,7 +671,7 @@ lists:
   # Utilities, Mobility, and Mana Recovery
   utility:
     # innervate.player, not bare innervate: bare would go to the current target.
-    - innervate.player,name="Innervate",off_gcd=true,ignore_queue=true,delay=150,range_check=none,if=talent.innervate&mana.pct<config.innervate_threshold&fight_remains>15
+    - innervate.player,name="Innervate",off_gcd=true,delay=150,range_check=none,if=talent.innervate&mana.pct<config.innervate_threshold&fight_remains>15
     - stampeding_roar,name="Stampeding Roar",if=var.use_stampeding_roar&config.stampeding_roar_usage!=0
 
   # ABUNDANCE CHANGED IN 12.1 and this list was still written for the old one.
@@ -730,7 +734,7 @@ lists:
     # Heart of the Wild is cast BY NAME ONLY.
     - heart_of_the_wild,name="HotW Cat",if=config.use_heart_of_the_wild&talent.heart_of_the_wild&buff.cat_form.up
     # global_delay, and NOT 500.
-    - convoke_the_spirits,global_delay=750,name="Convoke (Offensive)",if=config.convoke_dps&buff.cat_form.up&cooldown.convoke_the_spirits.ready&target.time_to_die>10
+    - convoke_the_spirits,global_delay=150,name="Convoke (Offensive)",if=config.convoke_dps&buff.cat_form.up&cooldown.convoke_the_spirits.ready&target.time_to_die>10
     - call_action_list,name=catweave_aoe,if=enemies.combat.8y>=config.aoe_threshold
     - call_action_list,name=catweave_st,if=enemies.combat.8y<config.aoe_threshold
 
@@ -789,7 +793,7 @@ lists:
 
   # ENGINE.
   engine:
-    - queue_spell,delay=500,if=!player.casting&!player.channeling
+    - queue_spell,if=!player.casting&!player.channeling
 
     # The five guards. `mounted` and `travel_form` were both missing from this
     # local copy; without them the rotation fires while mounted or flying.

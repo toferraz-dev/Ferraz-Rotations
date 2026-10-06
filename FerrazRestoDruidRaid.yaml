@@ -12,7 +12,7 @@
 # Why each line is the way it is: .agents/rationale/RestoDruidRaid.md
 # =============================================================================
 
-version: "13.1.0"
+version: "14.0.0"
 author: Ferraz
 patch: "12.1"
 spec: 105
@@ -30,7 +30,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-10-04 | Patch: 12.1 | Version: 13.1.0"
+    text: "Last update: 2026-10-05 | Patch: 12.1 | Version: 14.0.0"
 
 
   # String the talent.X checks below assume. REPLACED 2026-10-03 with a
@@ -575,7 +575,7 @@ lists:
 
   # Shadowmeld aggro drop, Thorn Bloom group heal.
   racials:
-    - shadowmeld,name="Shadowmeld (Aggro Drop)",if=player.combat&player.aggro&!player.casting
+    - shadowmeld,name="Shadowmeld (Aggro Drop)",if=target.threat>=3&!player.casting
     - thorn_bloom,name="Thorn Bloom",if=group.count(cycle.health.effective.pct<config.raid_thorn_bloom_threshold&cycle.range<=40)>=config.raid_thorn_bloom_members&target.in_melee
 
   # NS -> trinkets/potion -> Convoke -> NS Regrowth -> Tranquility -> self

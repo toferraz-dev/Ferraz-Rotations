@@ -16,7 +16,7 @@ name: Guardian Druid Ferraz M+
 author: Ferraz
 description: |
   Guardian Druid 104 engine for 12.1, tuned for Mythic+.
-  Elune's Chosen: Lunar Calling turns Thrash into Moonfire, while Lunation
+  Elunes Chosen: Lunar Calling turns Thrash into Moonfire, while Lunation
   plus Galactic Guardian add further Moonfire slots. Rage splits between
   Ironfur, Raze, Maul on predicted incoming damage. Heart of the Wild weaves
   through Cat Form. ST/AoE split at 2 enemies within 8 yards.
