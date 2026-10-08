@@ -1,4 +1,4 @@
-version: "21.0.0"
+version: "22.0.0"
 author: Ferraz
 patch: "12.1"
 spec: 105
@@ -17,7 +17,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-10-06 | Patch: 12.1 | Version: 21.0.0"
+    text: "Last update: 2026-10-08 | Patch: 12.1 | Version: 22.0.0"
 
 
   recommended_talents:
@@ -656,8 +656,8 @@ lists:
     - call_action_list,name=avatar_sethraliss,if=mouseover.npcid=133392&mouseover.friendly&mouseover.debuff.1301199.down&mouseover.health.pct<100
     - call_action_list,name=mouseover_healing_emergency,if=config.use_mouseover&var.mo_friendly_valid&mouseover.health.effective.pct<config.mouseover_emergency_hp&(!var.in_dps_form|!var.group_healthy|config.force_dps)
     - call_action_list,name=moving,if=player.moving&(!var.in_dps_form|!var.group_healthy)&!config.force_dps
-    - call_action_list,name=active_healing,if=(!var.in_dps_form|!var.group_healthy)&!config.force_dps
     - call_action_list,name=abundance_maintenance,if=player.combat&!config.force_dps
+    - call_action_list,name=active_healing,if=(!var.in_dps_form|!var.group_healthy)&!config.force_dps
 
     - mark_of_the_wild,range_check=none,name="Mark of the Wild (low prio)",if=(buff.mark_of_the_wild.down.any|action.mark_of_the_wild.overlayed)&lastcast.mark_of_the_wild>=10
 
