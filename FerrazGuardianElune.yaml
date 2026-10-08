@@ -48,14 +48,6 @@ config:
     max: 100
     default: 75
     description: "Read against EFFECTIVE health (raw health, minus heal absorbs, plus heals already flying at you) - the only slider in this set that is. Every other druid rotation reads Frenzied Regeneration against raw health; a tank is being actively healed, so waiting on an inbound heal is worth more than reacting to the raw bar."
-  frenzied_regeneration_incoming_pct:
-    section: "Defensive HP Percentage"
-    label: "Frenzied Regeneration - Incoming Dmg %"
-    type: slider
-    min: 25
-    max: 100
-    default: 50
-    description: "Fire Frenzied Regen on predicted damage, not just HP already lost. Mirrors the incoming.mitigated.pct pattern already used by Barkskin/Survival Instincts above, ported to Frenzied Regen 2026-10-06."
   barkskin_hp_pct:
     section: "Defensive HP Percentage"
     label: "Barkskin HP%"
@@ -327,7 +319,7 @@ lists:
     - barkskin,name="Barkskin (Predicted Damage)",range_check=none,if=incoming.mitigated.pct>=config.barkskin_dmg_pct
     - survival_instincts,name="Survival Instincts (Predicted Damage)",range_check=none,if=incoming.mitigated.pct>=config.survival_instincts_dmg_pct
     - survival_instincts,name="Survival Instincts (HP)",range_check=none,if=health.pct<=config.survival_instincts_hp_pct
-    - frenzied_regeneration,range_check=none,if=(health.effective.pct<=config.frenzied_regeneration_hp_pct|incoming.mitigated.pct>=config.frenzied_regeneration_incoming_pct)&buff.frenzied_regeneration.down
+    - frenzied_regeneration,range_check=none,if=health.effective.pct<=config.frenzied_regeneration_hp_pct&buff.frenzied_regeneration.down
     - barkskin,name="Barkskin (HP)",range_check=none,if=health.pct<=config.barkskin_hp_pct
 
   cooldowns:

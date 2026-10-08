@@ -30,14 +30,6 @@ config:
     default: 25
     description: "Shift to Bear Form for the armour and health when you drop below this. Bear is a big survival gain but costs you the Cat rotation, so it is deliberately the lowest threshold on this panel."
 
-  panic_bear_incoming_pct:
-    label: "Panic Bear - Incoming Dmg %"
-    section: "Defensive HP Percentage"
-    type: slider
-    min: 25
-    max: 100
-    default: 50
-    description: "Shift to Bear BEFORE the hit lands, not just after HP already dropped. incoming.mitigated.pct is self-only (player), already accounts for active defensives, and catches damage one GCD earlier than waiting on health.pct."
 
   survival_instincts_hp_pct:
     section: "Defensive HP Percentage"
@@ -404,9 +396,9 @@ lists:
     - regrowth,range_check=none,if=health.pct<=config.regrowth_ooc_hp_pct&!player.combat
 
   form:
-    - bear_form,name="Panic Bear Form",range_check=none,if=(health.pct<=config.panic_bear_hp_pct|incoming.mitigated.pct>=config.panic_bear_incoming_pct)&!buff.bear_form.up&player.combat&(cooldown.heart_of_the_wild.ready|buff.heart_of_the_wild.up|cooldown.frenzied_regeneration.ready&buff.frenzied_regeneration.down)
-    - heart_of_the_wild,range_check=none,if=buff.bear_form.up&player.combat&(health.pct<=config.panic_bear_hp_pct|incoming.mitigated.pct>=config.panic_bear_incoming_pct)
-    - frenzied_regeneration,range_check=none,if=buff.bear_form.up&player.combat&(health.pct<=config.panic_bear_hp_pct|incoming.mitigated.pct>=config.panic_bear_incoming_pct)&buff.frenzied_regeneration.down
+    - bear_form,name="Panic Bear Form",range_check=none,if=health.pct<=config.panic_bear_hp_pct&!buff.bear_form.up&player.combat&(cooldown.heart_of_the_wild.ready|buff.heart_of_the_wild.up|cooldown.frenzied_regeneration.ready&buff.frenzied_regeneration.down)
+    - heart_of_the_wild,range_check=none,if=buff.bear_form.up&player.combat&health.pct<=config.panic_bear_hp_pct
+    - frenzied_regeneration,range_check=none,if=buff.bear_form.up&player.combat&health.pct<=config.panic_bear_hp_pct&buff.frenzied_regeneration.down
 
     - shred,if=player.combat&target.attackable&target.in_melee&buff.cat_form.down&talent.fluid_form.enabled
     - rake,if=player.combat&target.attackable&target.in_melee&buff.cat_form.down&talent.fluid_form.enabled
