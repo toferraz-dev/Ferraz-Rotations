@@ -45,14 +45,6 @@ config:
     max: 100
     default: 30
 
-  frenzied_regen_incoming_pct:
-    label: "Panic Bear - Incoming Dmg %"
-    section: "Defensives"
-    type: slider
-    min: 25
-    max: 100
-    default: 50
-    description: "Shift to Bear for Frenzied Regen BEFORE the hit lands, not just after HP already dropped. incoming.mitigated.pct is self-only (player), already accounts for active defensives like Barkskin, and catches damage one GCD earlier than waiting on health.pct."
 
   hotw_bear_defensive:
     label: "HotW in Bear Form (Defensive)"
@@ -248,7 +240,7 @@ variables:
   opener: (talent.celestial_alignment|talent.incarnation_chosen_of_elune)&cooldown.celestial_alignment.remains=0&!var.cd_active
   cd_active: buff.celestial_alignment.up|buff.incarnation_chosen_of_elune.up
 
-  bear_defensive_active: health.pct<=config.frenzied_regen_hp|incoming.mitigated.pct>=config.frenzied_regen_incoming_pct|(config.hotw_bear_defensive&health.effective.pct<=config.hotw_bear_hp&(cooldown.heart_of_the_wild.ready|buff.heart_of_the_wild.up))
+  bear_defensive_active: health.pct<=config.frenzied_regen_hp|(config.hotw_bear_defensive&health.effective.pct<=config.hotw_bear_hp&(cooldown.heart_of_the_wild.ready|buff.heart_of_the_wild.up))
 
   druid_shapeshift_root: player.rooted
 
@@ -310,12 +302,12 @@ lists:
   defensives:
     - barkskin,range_check=none,name="Barkskin (predicted)",if=incoming.mitigated.pct>=config.barkskin_dmg_pct
 
-    - bear_form,name="Panic Bear Form",if=!buff.bear_form.up&(((health.pct<=config.frenzied_regen_hp|incoming.mitigated.pct>=config.frenzied_regen_incoming_pct)&cooldown.frenzied_regeneration.ready&buff.frenzied_regeneration.down)|(config.hotw_bear_defensive&health.effective.pct<=config.hotw_bear_hp&(cooldown.heart_of_the_wild.ready|buff.heart_of_the_wild.up)))
+    - bear_form,name="Panic Bear Form",if=!buff.bear_form.up&((health.pct<=config.frenzied_regen_hp&cooldown.frenzied_regeneration.ready&buff.frenzied_regeneration.down)|(config.hotw_bear_defensive&health.effective.pct<=config.hotw_bear_hp&(cooldown.heart_of_the_wild.ready|buff.heart_of_the_wild.up)))
 
     - heart_of_the_wild,name="HotW (Bear defensive)",range_check=none,ignore_cds_toggle=true,if=config.hotw_bear_defensive&buff.bear_form.up&health.effective.pct<=config.hotw_bear_hp&!buff.heart_of_the_wild.up
     - 1261872,name="HotW (Bear morph)",range_check=none,ignore_cds_toggle=true,if=config.hotw_bear_defensive&buff.bear_form.up&health.effective.pct<=config.hotw_bear_hp&!buff.heart_of_the_wild.up
 
-    - frenzied_regeneration,if=buff.bear_form.up&(health.pct<=config.frenzied_regen_hp|incoming.mitigated.pct>=config.frenzied_regen_incoming_pct)
+    - frenzied_regeneration,if=buff.bear_form.up&health.pct<=config.frenzied_regen_hp
     - barkskin,range_check=none,name="Barkskin (low HP)",if=health.effective.pct<=config.barkskin_hp
 
   heal_support:

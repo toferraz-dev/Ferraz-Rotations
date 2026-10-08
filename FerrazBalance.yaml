@@ -246,14 +246,6 @@ config:
     max: 100
     default: 30
 
-  frenzied_regen_incoming_pct:
-    label: "Panic Bear - Incoming Dmg %"
-    section: "Defensives"
-    type: slider
-    min: 25
-    max: 100
-    default: 50
-    description: "Shift to Bear for Frenzied Regen BEFORE the hit lands, not just after HP already dropped. incoming.mitigated.pct is self-only (player), already accounts for active defensives like Barkskin, and catches damage one GCD earlier than waiting on health.pct."
 
   hotw_party_heal:
     label: "HotW Party Heal (Moonkin)"
@@ -336,7 +328,7 @@ variables:
 
   burst_window: config.incarnation_manual&buff.incarnation_chosen_of_elune.up|!config.incarnation_manual&var.cd_active
 
-  bear_defensive_active: (health.pct<=config.frenzied_regen_hp|incoming.mitigated.pct>=config.frenzied_regen_incoming_pct)&(cooldown.frenzied_regeneration.ready|buff.frenzied_regeneration.up)
+  bear_defensive_active: health.pct<=config.frenzied_regen_hp&(cooldown.frenzied_regeneration.ready|buff.frenzied_regeneration.up)
 
 
   druid_shapeshift_root: player.rooted
@@ -400,11 +392,11 @@ lists:
     - barkskin,range_check=none,name="Barkskin (predicted)",if=incoming.mitigated.pct>=config.barkskin_dmg_pct
 
 
-    - bear_form,name="Panic Bear Form",if=!buff.bear_form.up&(health.pct<=config.frenzied_regen_hp|incoming.mitigated.pct>=config.frenzied_regen_incoming_pct)&cooldown.frenzied_regeneration.ready&buff.frenzied_regeneration.down
+    - bear_form,name="Panic Bear Form",if=!buff.bear_form.up&health.pct<=config.frenzied_regen_hp&cooldown.frenzied_regeneration.ready&buff.frenzied_regeneration.down
 
     - heart_of_the_wild,name="HotW (Party Heal)",range_check=none,ignore_cds_toggle=true,if=config.hotw_party_heal&buff.moonkin_form.up&group.count(cycle.health.effective.pct<config.hotw_hp)>=1
 
-    - frenzied_regeneration,if=buff.bear_form.up&(health.pct<=config.frenzied_regen_hp|incoming.mitigated.pct>=config.frenzied_regen_incoming_pct)&buff.frenzied_regeneration.down
+    - frenzied_regeneration,if=buff.bear_form.up&health.pct<=config.frenzied_regen_hp&buff.frenzied_regeneration.down
     - barkskin,range_check=none,name="Barkskin (low HP)",if=health.effective.pct<=config.barkskin_hp
 
 

@@ -177,14 +177,6 @@ config:
     max: 99
     default: 40
 
-  raid_frenzied_regen_incoming_pct:
-    label: "Panic Bear - Incoming Dmg %"
-    section: "Defensives"
-    type: slider
-    min: 25
-    max: 100
-    default: 50
-    description: "Shift to Bear for Frenzied Regen BEFORE the hit lands, not just after HP already dropped. incoming.mitigated.pct is self-only (player), already accounts for active defensives like Barkskin, and catches damage one GCD earlier than waiting on health.effective.pct."
 
   raid_ironbark_threshold:
     label: "Ironbark HP % (effective)"
@@ -482,8 +474,8 @@ lists:
     - 102342,name="Ironbark (Tank)",cycle=tanks,cycle_order=health.pct,if=(config.raid_ironbark_target=1&cycle.health.effective.pct<config.raid_ironbark_threshold&cycle.buff.ironbark.down)&cycle.range<=40
     - 102342,name="Ironbark (Members)",cycle=members,cycle_order=health.pct,if=(config.raid_ironbark_target=2&cycle.health.effective.pct<config.raid_ironbark_threshold&cycle.buff.ironbark.down)&cycle.range<=40
     - barkskin,name="Barkskin",if=incoming.pct>=config.raid_barkskin_threshold
-    - bear_form,name="Panic Bear",if=(health.effective.pct<config.raid_frenzied_regen_threshold|incoming.mitigated.pct>=config.raid_frenzied_regen_incoming_pct)&!buff.bear_form.up&cooldown.frenzied_regeneration.ready&!buff.incarnation_tree_of_life.up
-    - frenzied_regeneration,name="Frenzied Regen",if=buff.bear_form.up&(health.effective.pct<config.raid_frenzied_regen_threshold|incoming.mitigated.pct>=config.raid_frenzied_regen_incoming_pct)
+    - bear_form,name="Panic Bear",if=health.effective.pct<config.raid_frenzied_regen_threshold&!buff.bear_form.up&cooldown.frenzied_regeneration.ready&!buff.incarnation_tree_of_life.up
+    - frenzied_regeneration,name="Frenzied Regen",if=buff.bear_form.up&health.effective.pct<config.raid_frenzied_regen_threshold
 
   racials:
     - shadowmeld,name="Shadowmeld (Aggro Drop)",if=target.threat>=3&!player.casting

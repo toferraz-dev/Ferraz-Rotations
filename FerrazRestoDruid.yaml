@@ -223,14 +223,6 @@ config:
     max: 99
     default: 35
 
-  frenzied_regen_incoming_pct:
-    label: "Panic Bear - Incoming Dmg %"
-    section: "Defensives"
-    type: slider
-    min: 25
-    max: 100
-    default: 50
-    description: "Shift to Bear for Frenzied Regen/Heart of the Wild BEFORE the hit lands, not just after HP already dropped. incoming.mitigated.pct is self-only (player), already accounts for active defensives like Barkskin, and catches damage one GCD earlier than waiting on health.effective.pct."
 
   ironbark_target:
     label: "Ironbark Target"
@@ -506,9 +498,9 @@ lists:
     - barkskin,name="Barkskin",off_gcd=true,ignore_queue=true,if=incoming.pct>=config.barkskin_incoming_pct
     - 102342,name="Ironbark (Tank)",off_gcd=true,ignore_queue=true,cycle=tanks,if=config.ironbark_target=1&cycle.health.effective.pct<config.ironbark_threshold&cycle.buff.ironbark.down
     - 102342,name="Ironbark (Members)",off_gcd=true,ignore_queue=true,cycle=members,if=config.ironbark_target=2&cycle.health.effective.pct<config.ironbark_threshold&cycle.buff.ironbark.down
-    - bear_form,name="Panic Bear",if=(health.effective.pct<config.frenzied_regen_threshold|incoming.mitigated.pct>=config.frenzied_regen_incoming_pct)&!buff.bear_form.up&(cooldown.frenzied_regeneration.ready|cooldown.heart_of_the_wild.ready)&!buff.incarnation_tree_of_life.up
-    - heart_of_the_wild,name="HotW Bear (Panic)",if=buff.bear_form.up&(health.effective.pct<config.frenzied_regen_threshold|incoming.mitigated.pct>=config.frenzied_regen_incoming_pct)&cooldown.heart_of_the_wild.ready
-    - frenzied_regeneration,name="Frenzied Regen",if=buff.bear_form.up&(health.effective.pct<config.frenzied_regen_threshold|incoming.mitigated.pct>=config.frenzied_regen_incoming_pct)
+    - bear_form,name="Panic Bear",if=health.effective.pct<config.frenzied_regen_threshold&!buff.bear_form.up&(cooldown.frenzied_regeneration.ready|cooldown.heart_of_the_wild.ready)&!buff.incarnation_tree_of_life.up
+    - heart_of_the_wild,name="HotW Bear (Panic)",if=buff.bear_form.up&health.effective.pct<config.frenzied_regen_threshold&cooldown.heart_of_the_wild.ready
+    - frenzied_regeneration,name="Frenzied Regen",if=buff.bear_form.up&health.effective.pct<config.frenzied_regen_threshold
 
   racials:
     - shadowmeld,name="Shadowmeld (Aggro Drop)",if=target.threat>=3&!player.casting
