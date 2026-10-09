@@ -131,7 +131,7 @@ config:
     min: 25
     max: 99
     default: 95
-    description: "Pre-heal a group member an enemy is actively casting a spell at, before the hit lands. Uses incoming_cast.cycle.<tags>.up (confirmed in expression-catalog.json: 'Enemy casting a matching spell targeting the current cycle member' - resolves the actual cast target, not just a nearby enemy casting something). magic/physical/mixed filters to typed damage casts, !aoe excludes raid-wide casts already covered by Wild Growth."
+    description: "Pre-heal a group member an enemy is actively casting a spell at, before the hit lands. Uses incoming_cast.cycle.<tags>.up (confirmed in expression-catalog.json: 'Enemy casting a matching spell targeting the current cycle member' - resolves the actual cast target, not just a nearby enemy casting something). magical/physical/mixed (the three damage-type tags in _casts.yaml, mutually exclusive) filters to typed damage casts, !aoe excludes raid-wide casts already covered by Wild Growth."
 
   rejuvenation_threshold:
     label: "Rejuvenation HP % (effective)"
@@ -539,7 +539,7 @@ lists:
     - wild_growth,name="Wild Growth",range_check=none,if=group.count(cycle.health.effective.pct<config.wild_growth_threshold&!cycle.tank)>=config.wild_growth_members
     - wild_growth,name="Wild Growth (Tank)",range_check=none,if=group.count(cycle.tank&cycle.health.effective.pct<config.wild_growth_threshold_tank)>=1
 
-    - regrowth,name="Precast (Incoming Cast)",cycle=members,if=(incoming_cast.cycle.magic.up|incoming_cast.cycle.physical.up|incoming_cast.cycle.mixed.up)&!incoming_cast.cycle.aoe.up&cycle.health.effective.pct<config.precast_incoming_threshold
+    - regrowth,name="Precast (Incoming Cast)",cycle=members,if=(incoming_cast.cycle.magical.up|incoming_cast.cycle.physical.up|incoming_cast.cycle.mixed.up)&!incoming_cast.cycle.aoe.up&cycle.health.effective.pct<config.precast_incoming_threshold
 
     - 774,name="SotF Rejuvenation",cycle=members,if=var.has_soul&cycle.buff.rejuvenation.refreshable
     - 774,name="SotF Germination",cycle=members,if=var.has_soul&talent.germination&cycle.buff.rejuvenation.up&(cycle.buff.rejuvenation_germination.down|cycle.buff.rejuvenation_germination.refreshable)
