@@ -165,7 +165,8 @@ lists:
     - immolation_aura,if=talent.a_fire_inside&talent.burning_wound&(cooldown.immolation_aura.charges=2|cooldown.immolation_aura.full_recharge_time<gcd.max*2)
 
     # actions+=/eye_beam
-    - eye_beam
+    # local addition: global_delay holds other presses until the channel registers — a press in that gap clipped Eye Beam and lost Furious Gaze.
+    - eye_beam,global_delay=300
 
     # actions+=/immolation_aura,,if=action.immolation_aura.demonsurge_available&buff.demonsurge.remains<gcd.max
     # double comma is an upstream typo, treated as one

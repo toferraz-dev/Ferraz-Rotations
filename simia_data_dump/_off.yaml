@@ -121,6 +121,10 @@ DESC_FLAGS3:       0x1C40   # u32; & 0x40000000 -> add other's extra reach
 DESC_BOUND_RADIUS: 0x1C70   # float; model radius, display only
 DESC_COMBAT_REACH: 0x1C74   # float; THE field the client's range math sums
 
-# Last field of the shared descriptor window; the window spans DESC_AURA_PTR..here+4
-# (0x1840 today) and must fit kDescWindowMax.
+# Last field of the shared descriptor window; the window spans
+# min(DESC_AURA_PTR, DESC_CAST_*)..here+4 (0x1A44 today) and must fit kDescWindowMax.
 DESC_EXTRA_REACH:  0x1E2C   # float; addend gated by DESC_FLAGS3 (unimplemented)
+
+# Active cast (non-player castTargetingMe). Both inside the window, below the aura ptr.
+# DESC_CAST_SPELL:   0x3EC    # u32 spell id; channel start zeroes it
+# DESC_CAST_TARGET:  0x3F8    # 16B GUID lo,hi; never cleared, trust only while the cast spell matches

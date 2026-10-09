@@ -495,7 +495,7 @@ casts:
   1300876: { name: "Ritual of the Fang", tags: [channel, aoe] }
   1301114: { name: "Axegrinder", tags: [avoid] }
   1301217: { name: "Bloodletting", tags: [avoid] }
-  1301350: { name: "Chop Down", tags: [channel, tank, physical, reflectable], damage: 484912 }
+  1301350: { name: "Chop Down", tags: [channel, tank, physical, reflectable], damage: 968707 } # was 484912 (one hit); whole-channel total per player, WCL key-1 p50 (wcl_dmg_audit.py 2026-10-05)
   1301413: { name: "Boneslicer", tags: [aoe, frontal] }
   1305393: { name: "Undermining", tags: [avoid] }
   1306345: { name: "Messy Eater", tags: [aoe], damage: 116379 }
@@ -521,7 +521,7 @@ casts:
   1250937: { name: "Toxic Spew", tags: [aoe, important, trash] }
   1255205: { name: "Uproot", tags: [aoe, important, trash], damage: 116379 }
   1263636: { name: "Belch Spores", tags: [channel, avoid, trash] }
-  1271385: { name: "Spouting Floret", tags: [aoe, important, trash], damage: 87284 }
+  1271385: { name: "Spouting Floret", tags: [aoe, important, trash], damage: 166192 } # was 87284 (one hit); multi-hit total per player per cast, WCL key-1 p50 (wcl_dmg_audit.py 2026-10-05)
   1301834: { name: "Light Bolt Volley", tags: [kickable, stunnable, aoe, important, trash], damage: 174568 }   # +stunnable: stopped with a stun in high-key logs
   1303039: { name: "Hunting Leap", tags: [frontal, tank, physical] }   # sheet links the visual spell; real cast id unresolved
   1238200: { name: "Frantic Blooming", tags: [kickable, channel, trash] }   # WCL: Radiant Spellsower; absent from sheet
@@ -581,7 +581,7 @@ casts:
 
   # Den of Nalorakk (Boss)
   1234021: { name: "Earthshatter Slam", tags: [avoid, frontal] }
-  1234233: { name: "Spoiled Supplies", tags: [channel, aoe, reflectable], damage: 96982 }
+  1234233: { name: "Spoiled Supplies", tags: [channel, aoe, reflectable], damage: 190991 } # was 96982 (one hit); whole-channel total per player, WCL key-1 p50 (wcl_dmg_audit.py 2026-10-05)
   1234681: { name: "Ravenous Bellow", tags: [aoe] }
   1235548: { name: "Glacial Torment", tags: [aoe, reflectable] }
   1235623: { name: "Raging Squall", tags: [avoid], damage: 339438 }
@@ -593,7 +593,7 @@ casts:
   1255577: { name: "Spectral Slash", tags: [avoid] }
   1262253: { name: "Demoralizing Scream", tags: [aoe], damage: 145473 }
   1263590: { name: "Rimeshatter", tags: [aoe, freedom, reflectable] }
-  1297792: { name: "Overwhelming Onslaught", tags: [channel, aoe], damage: 315193 }
+  1297792: { name: "Overwhelming Onslaught", tags: [channel, aoe], damage: 945600 } # was 315193 (one hit); whole-channel total per player, WCL key-1 p50 (wcl_dmg_audit.py 2026-10-05)
   1297797: { name: "Forceful Slam", tags: [tank, physical, blockable] }
 
   # Kings Rest
@@ -626,7 +626,7 @@ casts:
   1296719: { name: "Forked Lightning", tags: [aoe, trash, reflectable] }
   1297763: { name: "Bestial Berserk", tags: [enrage, trash] }
   1297918: { name: "Mortal Bleed", tags: [tank, trash, blockable] }
-  1297970: { name: "Blood Drain", tags: [aoe, trash], damage: 155172 }
+  1297970: { name: "Blood Drain", tags: [trash], damage: 155172 } # -aoe: WCL 1.09 players hit/cast, never the cast target (tools/wcl_aoe_hitshare.py)
   1298304: { name: "Dark Revelation", tags: [aoe, avoid, trash] }
   1301851: { name: "Bloodthirsty Axe", tags: [aoe, trash] }
   1302028: { name: "Soul Crush", tags: [tank, physical, trash], damage: 727367 }
@@ -646,9 +646,9 @@ casts:
   266951: { name: "Barrel Through", tags: [aoe, meld] }
   267060: { name: "Call of the Elements", tags: [avoid] }
   267273: { name: "Poison Nova", tags: [kickable, aoe] }
-  267618: { name: "Drain Fluids", tags: [aoe, channel, avoid, meld, reflectable] }
+  267618: { name: "Drain Fluids", tags: [channel, avoid, meld, reflectable] }   # -aoe 2026-10-01: WCL Kings' Rest 28/28 casts debuff exactly one player (2s cast + 6s channel by Mchimba)
   267639: { name: "Burn Corruption", tags: [aoe, avoid, reflectable] }
-  268586: { name: "Blade Combo", tags: [channel, tank, physical, blockable], damage: 1105598 }
+  268586: { name: "Blade Combo", tags: [channel, tank, physical, blockable], damage: 1822794 } # was 1105598 (one hit); whole-channel total per player, WCL key-1 p50 (wcl_dmg_audit.py 2026-10-05)
   1303324: { name: "Quaking Leap", tags: [aoe, avoid, meld] }   # was 268932 - never appears in logs; id confirmed from WCL
   269369: { name: "Deathly Roar", tags: [kickable, aoe] }
   1302945: { name: "Impaling Spear", tags: [avoid] }
@@ -677,7 +677,7 @@ casts:
   1256299: { name: "Over-infused", tags: [aoe, avoid, trash] }
   1258420: { name: "Doom Bolt", tags: [kickable, trash], damage: 87284 }
   1294770: { name: "Demonic Frenzy", tags: [aoe, tank, physical, important, trash] }
-  1294824: { name: "Defiled Slam", tags: [channel, aoe, important, trash], damage: 145473 }   # -avoid: WCL zone 55 keys 20-22 sweep 2026-09-13 (CLAUDE.md 2.12)
+  1294824: { name: "Defiled Slam", tags: [channel, aoe, important, trash], damage: 436172 }   # -avoid: WCL zone 55 keys 20-22 sweep 2026-09-13 (CLAUDE.md 2.12)  was 145473 (one hit); whole-channel total per player, WCL key-1 p50 (wcl_dmg_audit.py 2026-10-05)
   1295035: { name: "Glaive Toss", tags: [aoe, tank, physical, trash, blockable] }
   1297676: { name: "Punishing Might", tags: [tank, physical, trash] }
   1297691: { name: "Whirlwind", tags: [avoid, trash] }
@@ -699,9 +699,9 @@ casts:
   1217384: { name: "Malefic Wave", tags: [avoid] }
   1218347: { name: "Murder in a Row", tags: [channel, frontal] }
   1220899: { name: "Summon Infernal", tags: [avoid] }
-  1222795: { name: "Envenom", tags: [tank, mixed, reflectable], damage: 436420 }
+  1222795: { name: "Envenom", tags: [tank, mixed, reflectable], damage: 163225 } # damage was 436420 (nec incl. Heartstop DoT); hit key-1 p50 163k (WCL wcl_dmg_audit.py 2026-10-05)
   1223906: { name: "Fel Nova", tags: [avoid] }
-  1230298: { name: "Chaos Barrage", tags: [aoe, magical, reflectable], damage: 290947 }   # -tank: WCL zone 55 keys 20-22 sweep 2026-09-13 (CLAUDE.md 2.12)
+  1230298: { name: "Chaos Barrage", tags: [magical, reflectable], damage: 290947 }   # -tank: WCL zone 55 keys 20-22 sweep 2026-09-13 (CLAUDE.md 2.12)  -aoe: full hit only on the cast target (key-1 p50 274k); chain jumps p50 20k - aoe made all 5 predict the full hit (WCL wcl_dmg_audit.py 2026-10-05)
   1253811: { name: "Fel Spray", tags: [channel, frontal] }
   1264095: { name: "Mirror Images", tags: [aoe] }   # sheet links the visual spell; real cast id unresolved
   1265412: { name: "Destabilized", tags: [channel, aoe] }
@@ -745,7 +745,7 @@ casts:
   372107: { name: "Molten Boulder", tags: [avoid, frontal] }
   372808: { name: "Frigid Shard", tags: [kickable, tank, physical, blockable], damage: 775859 }
   372851: { name: "Chillstorm", tags: [aoe, avoid] }
-  372858: { name: "Searing Blows", tags: [channel, tank, mixed, blockable], damage: 407326 }
+  372858: { name: "Searing Blows", tags: [channel, tank, mixed, blockable], damage: 916685 } # was 407326 (one hit); whole-channel total per player, WCL key-1 p50 (wcl_dmg_audit.py 2026-10-05)
   372863: { name: "Ritual of Blazebinding", tags: [avoid] }
   373017: { name: "Blaze Volley", tags: [kickable, aoe] }
   373087: { name: "Burnout", tags: [avoid] }
@@ -805,7 +805,7 @@ casts:
   1293048: { name: "Serpentstorm", tags: [aoe, avoid] }
   1300871: { name: "Corrupted Lifeforce", tags: [aoe, avoid] }
   1301253: { name: "Agony of Sethraliss", tags: [avoid] }
-  1300803: { name: "Tainted Strike", tags: [tank, mixed, blockable] }   # was 1303446 (the magic component) - cast id confirmed from WCL
+  1300803: { name: "Tainted Strike", tags: [tank, mixed, blockable], damage: 464172 }   # damage: WCL median key-1 hit, 12 ToS keys. was 1303446 (the magic component) - cast id confirmed from WCL
 
   # Voidscar Arena
   1228126: { name: "Macestorm", tags: [avoid, meld, trash] }
@@ -813,7 +813,7 @@ casts:
   1233264: { name: "Blisterburst", tags: [avoid, trash] }
   1233398: { name: "Mad Shriek", tags: [kickable, stunnable, important, trash] }   # +stunnable: stopped with a stun in high-key logs
   1233535: { name: "Shred Defense", tags: [tank, physical, trash, blockable], damage: 145473 }
-  1234855: { name: "Insidious Aura", tags: [channel, aoe, trash], damage: 87284 }
+  1234855: { name: "Insidious Aura", tags: [channel, aoe, trash], damage: 386787 } # was 87284 (one hit); whole-channel total per player, WCL key-1 p50 (wcl_dmg_audit.py 2026-10-05)
   1234890: { name: "Smashing Charge", tags: [frontal, trash] }
   1239856: { name: "Sky Strike", tags: [aoe, trash, reflectable], damage: 145362 }   # -avoid: WCL zone 55 keys 20-22 sweep 2026-09-13 (CLAUDE.md 2.12)
   1245186: { name: "Head Bash", tags: [tank, magical, trash, reflectable], damage: 339438 }
@@ -834,9 +834,9 @@ casts:
   1299270: { name: "Thundering Storm", tags: [channel, aoe, avoid, trash] }
   1299913: { name: "Null Eruption", tags: [aoe, avoid, trash] }
   1299938: { name: "Shadowbolt Volley", tags: [kickable, aoe, important, trash] }
-  1300243: { name: "Brutalize", tags: [channel, tank, physical, trash, blockable], damage: 678876 }
+  1300243: { name: "Brutalize", tags: [channel, tank, physical, trash, blockable], damage: 1450306 } # was 678876 (one hit); whole-channel total per player, WCL key-1 p50 (wcl_dmg_audit.py 2026-10-05)
   1300249: { name: "Devour", tags: [important, trash] }
-  1308385: { name: "Visceral Burst", tags: [kickable, important, trash] }   # WCL: Broodling of Ithraz; 439 begincast / only 23 completed / 409 interrupts. Absent from the sheet and from method.gg
+  1308385: { name: "Visceral Burst", tags: [kickable, important, trash] }   # WCL: Broodling of Ithraz (The Twin Fangs raid add, enc 3421); 439 begincast / only 23 completed / 409 interrupts; Mythic kills 220 begincast / 0 completed / 220 kicks. Absent from the sheet and from method.gg
   1310319: { name: "Bolster", tags: [tank, physical, enrage, trash] }
   1310324: { name: "Mending Void", tags: [kickable, stunnable, channel, trash] }
   1311747: { name: "Orb of Disruption", tags: [aoe, important, trash] }
@@ -933,17 +933,17 @@ casts:
   377009: { name: "Deafening Screech", tags: [aoe], damage: 61014, dr_type: magic }
   386181: { name: "Mana Bomb (1 tick + hit)", tags: [], damage: 142033, dr_type: magic }
   468221: { name: "Rallying Bellow", tags: [aoe], damage: 101690, dr_type: physical }
-  472672: { name: "Bolt Gale", tags: [aoe], damage: 244056, dr_type: magic }
+  472672: { name: "Bolt Gale", tags: [aoe, frontal], damage: 244056, dr_type: magic } # +frontal: tooltip 'frontal cone' toward a player (2026-10-05)
   473786: { name: "Fetid Spew", tags: [aoe, trash], damage: 183042, dr_type: magic }
-  1225201: { name: "Wave of Silence", tags: [], damage: 76268, dr_type: magic }
+  1225201: { name: "Wave of Silence", tags: [aoe], damage: 76268, dr_type: magic } # +aoe: tooltip 'to all players' (2026-10-05)
   1252691: { name: "Gale Surge", tags: [], damage: 71183, dr_type: magic }
   1259202: { name: "Cryoburst", tags: [aoe], damage: 76268, dr_type: magic }
-  1260648: { name: "Barrage", tags: [aoe], damage: 223718, dr_type: magic }
+  1260648: { name: "Barrage", tags: [aoe, frontal], damage: 223718, dr_type: magic } # +frontal: tooltip 'frontal cone' toward a player (2026-10-05)
   1262900: { name: "Ritual Drums", tags: [aoe, trash], damage: 50845, dr_type: physical }
   1266485: { name: "Flanking Spear", tags: [tank], damage: 305071, dr_type: physical }
   1276632: { name: "Raging Screech", tags: [aoe, trash], damage: 76268, dr_type: physical }
   1280119: { name: "Hulking Fragment", tags: [aoe, tank], damage: 177958, dr_type: magic }
-  1288428: { name: "Overload", tags: [aoe], damage: 145473, dr_type: magic }
+  1288428: { name: "Overload", tags: [aoe, avoid], damage: 145473, dr_type: magic } # +avoid: WCL 0.27 players hit/cast, 73% hit nobody (tools/wcl_aoe_hitshare.py)
 
   # Raid - Sporefall
-  1221714: { name: "Poison Burst", tags: [kickable, important], damage: 61014, dr_type: magic }
+  1221714: { name: "Poison Burst", tags: [aoe, kickable, important], damage: 61014, dr_type: magic } # +aoe: tooltip 'to all players' (2026-10-05)

@@ -346,7 +346,7 @@ debuffs:
   1306550: { name: "Blood Sacrifice", tags: [physical] }   # was 1306641; WCL: this id is what lands on players
   1307567: { name: "Mass Envenom", tags: [dwarf, poison] }   # TODO verify aura id (server-applied)
   1307571: { name: "Envenom", tags: [dwarf, poison], damage: 169722 }
-  1308518: { name: "Laced Edge", tags: [non_phys], damage: 174569 }
+  1308518: { name: "Laced Edge", tags: [non_phys], damage: 116382 } # was 174569 (1.50x, nec incl. impact); WCL per-stack total (wcl_dmg_audit.py 2026-10-05)
   1308865: { name: "Infest", tags: [non_phys] }
 
   # ========== Altar of Fangs (Boss) ==========
@@ -356,17 +356,17 @@ debuffs:
   1299080: { name: "Death Rattle", tags: [physical] }   # was 1299053; WCL: this id is what lands on players
   1299189: { name: "Synchronized Venom", tags: [non_phys], damage: 681304 }   # was 1299154; WCL: this id is what lands on players
   1300894: { name: "Ritual Venom", tags: [non_phys] }   # was 1300901; WCL: this id is what lands on players
-  1301508: { name: "Boneslicer", tags: [physical], damage: 480062 }   # was 1301413; WCL: this id is what lands on players
+  1301508: { name: "Boneslicer", tags: [physical], damage: 305500 }   # was 1301413; WCL: this id is what lands on players  was 480062 (1.57x, nec incl. impact); WCL per-stack total (wcl_dmg_audit.py 2026-10-05)
   1310974: { name: "Toxic Atrophy", tags: [freedom, non_phys] }
 
   # ========== Blinding Vale ==========
-  1238076: { name: "Thornblade", tags: [bleed, dwarf], damage: 290945 }
+  1238076: { name: "Thornblade", tags: [bleed, dwarf], damage: 154149 } # was 290945 (1.89x, nec incl. impact); WCL per-stack total (wcl_dmg_audit.py 2026-10-05)
   1238084: { name: "Spore Spines", tags: [freedom, magic], damage: 77584 }
   1238294: { name: "Disorienting Screech", tags: [non_phys] }
   1238368: { name: "Lightmaw Beams", tags: [non_phys] }
-  1242135: { name: "Grievous Gash", tags: [bleed, dwarf], damage: 1163785 }
+  1242135: { name: "Grievous Gash", tags: [bleed, dwarf], damage: 738630 } # was 1163785 (1.58x, nec incl. impact); WCL per-stack total (wcl_dmg_audit.py 2026-10-05)
   1250937: { name: "Toxic Spew", tags: [dwarf, poison] }
-  1303039: { name: "Hunting Leap", tags: [physical], damage: 223060 }
+  1303039: { name: "Hunting Leap", tags: [physical], damage: 155175 } # was 223060 (1.44x, nec incl. impact); WCL per-stack total (wcl_dmg_audit.py 2026-10-05)
 
   # ========== Blinding Vale (Boss) ==========
   1236747: { name: "Verdant Stomp", tags: [freedom]}
@@ -378,17 +378,17 @@ debuffs:
   1240210: { name: "Pulverizing Strikes", tags: [physical] }
   1241058: { name: "Grievous Thrash", tags: [bleed, dwarf], damage: 921313 }
   1246753: { name: "Lightsap", tags: [non_phys] }   # was 1246858; WCL: Ziekket orb debuff (Lightsap)
-  1247746: { name: "Thornspike", tags: [bleed, dwarf], damage: 2133615 }   # was 1247685; WCL: this id is what lands on players
+  1247746: { name: "Thornspike", tags: [bleed, dwarf], damage: 553970 }   # was 1247685; WCL: this id is what lands on players  was 2133615; 55.4k/tick x 10 (WCL wcl_dmg_audit.py 2026-10-05)
 
   # ========== Den of Nalorakk ==========
-  1235125: { name: "Hearty Bellow", tags: [freedom], damage: 455820 }   # WCL key-14/15: removed by Blessing of Freedom / Tiger's Lust (school unverified)
+  1235125: { name: "Hearty Bellow", tags: [freedom], damage: 290955 }   # WCL key-14/15: removed by Blessing of Freedom / Tiger's Lust (school unverified)  was 455820 (1.57x, nec incl. impact); WCL per-stack total (wcl_dmg_audit.py 2026-10-05)
   1238439: { name: "Razor Dive", tags: [bleed, dwarf], damage: 373384 }
   1238687: { name: "Feast of Misery", tags: [non_phys] }
   1238801: { name: "Insatiable Hunger", tags: [curse] }   # was 1238760; WCL: Starvation Effigy's curse; DB2 DispelType=curse confirms
   1239860: { name: "Cryo Surge", tags: [magic] }
   1238247: { name: "Shredding Claws", tags: [physical] }   # was 1241217; WCL: this id is what lands on players
-  1241464: { name: "Glacial Tomb", tags: [freedom, non_phys], damage: 193965 }
-  1246957: { name: "Primal Echo", tags: [physical], damage: 184267 }
+  1241464: { name: "Glacial Tomb", tags: [freedom, non_phys], damage: 77588 } # was 193965; 38.8k/tick x 2 (until tomb broken) (WCL wcl_dmg_audit.py 2026-10-05)
+  1246957: { name: "Primal Echo", tags: [physical], damage: 87287 } # was 184267 (incl. impact); 29.1k/tick x 3 = nec periodicDamage (WCL wcl_dmg_audit.py 2026-10-05)
   1247367: { name: "Earthquake", tags: [non_phys] }   # was 1296722; WCL: this id is what lands on players
   1309919: { name: "Frigid Roar", tags: [freedom, non_phys] }
   1309964: { name: "Harsh Winter", tags: [non_phys] }
@@ -396,7 +396,7 @@ debuffs:
 
   # ========== Den of Nalorakk (Boss) ==========
   1234233: { name: "Spoiled Supplies", tags: [dwarf, poison] }
-  1234681: { name: "Ravenous Bellow", tags: [physical], damage: 455820 }
+  1234681: { name: "Ravenous Bellow", tags: [physical], damage: 290171 } # was 455820 (1.57x, nec incl. impact); WCL per-stack total (wcl_dmg_audit.py 2026-10-05)
   1235549: { name: "Glacial Torment", tags: [dwarf, magic], damage: 610992 }   # was 1235548; WCL: this id is what lands on players
   1235829: { name: "Winter's Shroud", tags: [non_phys] }
   1255577: { name: "Spectral Slash", tags: [non_phys] }
@@ -413,12 +413,12 @@ debuffs:
   271555: { name: "Entomb", tags: [physical] }
   1298104: { name: "Putrid Seekers", tags: [freedom, poison], damage: 649782 }   # was 271563; WCL: applied by the Embalming Fluid pool; DB2 DispelType=poison confirms
   271564:  { name: "Lingering Fluid", tags: [poison] }   # wowhead+WCL: lingering pool poison, absent from the sheet
-  272388: { name: "Shadow Barrage", tags: [non_phys], damage: 155171 }
+  272388: { name: "Shadow Barrage", tags: [non_phys], damage: 96984 } # was 155171 (1.60x, nec incl. impact); WCL per-stack total (wcl_dmg_audit.py 2026-10-05)
   1309385: { name: "Pool of Darkness", tags: [non_phys] }   # was 273361 - never appears in logs; id confirmed from WCL
   276031: { name: "Pit of Despair", tags: [magic] }   # was 273434 - never appears in logs; id confirmed from WCL
   1294815: { name: "Shadowfrost Bolt", tags: [freedom, magic] }
   1297781: { name: "Sudden Rupture", tags: [bleed], damage: 460674 }
-  1297918: { name: "Mortal Bleed", tags: [bleed, dwarf], damage: 1309258 }
+  1297918: { name: "Mortal Bleed", tags: [bleed, dwarf], damage: 872856 } # was 1309258 (1.50x, nec incl. impact); WCL per-stack total (wcl_dmg_audit.py 2026-10-05)
   1298304: { name: "Dark Revelation", tags: [non_phys] }
   1301851: { name: "Bloodthirsty Axe", tags: [bleed, dwarf], damage: 417028 }
   1302028: { name: "Soul Crush", tags: [physical] }
@@ -426,7 +426,7 @@ debuffs:
 
   # ========== Kings Rest (Boss) ==========
   266206: { name: "Whirling Axes", tags: [bleed, dwarf] }   # TODO verify aura id (server-applied)
-  266231: { name: "Severing Axe", tags: [bleed, dwarf], damage: 426724 }
+  266231: { name: "Severing Axe", tags: [bleed, dwarf], damage: 260243 } # was 426724 (1.64x, nec incl. impact); WCL per-stack total (wcl_dmg_audit.py 2026-10-05)
   266238: { name: "Shattered Defenses", tags: [physical] }
   267494: { name: "Barrel Through", tags: [physical] }   # was 266951; WCL: this id is what lands on players
   267273: { name: "Poison Nova", tags: [dwarf, poison] }
@@ -435,7 +435,7 @@ debuffs:
   1303324: { name: "Quaking Leap", tags: [physical] }   # was 268932 - never appears in logs; id confirmed from WCL
   269369: { name: "Deathly Roar", tags: [non_phys] }
   1302945: { name: "Impaling Spear", tags: [bleed, dwarf], damage: 387928 }
-  1303267: { name: "Gilded Destruction", tags: [non_phys], damage: 518862 }
+  1303267: { name: "Gilded Destruction", tags: [non_phys], damage: 363697 } # was 518862 (1.43x, nec incl. impact); WCL per-stack total (wcl_dmg_audit.py 2026-10-05)
   1303490: { name: "Savage Maul", tags: [bleed, dwarf], damage: 678875 }
 
   # ========== Murder Row ==========
@@ -446,11 +446,11 @@ debuffs:
   1217633: { name: "Corroding Spittle", tags: [dwarf, magic], damage: 518855 }
   1217973: { name: "Curse of Doom", tags: [curse, dwarf] }
   1218187: { name: "Fel Beam", tags: [freedom] }   # WCL key-14/15: removed by Blessing of Freedom / Tiger's Lust (school unverified)
-  1295035: { name: "Glaive Toss", tags: [bleed, dwarf], damage: 203664 }
+  1295035: { name: "Glaive Toss", tags: [bleed, dwarf], damage: 108818 } # was 203664 (1.87x, nec incl. impact); WCL per-stack total (wcl_dmg_audit.py 2026-10-05)
   1295427: { name: "Flay", tags: [bleed, dwarf] }
   1297682: { name: "Drain Life", tags: [non_phys] }
   1302010: { name: "Blade Dance", tags: [non_phys] }   # was 1302007; WCL: this id is what lands on players
-  1311136: { name: "Sharp Nail", tags: [bleed, dwarf], damage: 96981 }
+  1311136: { name: "Sharp Nail", tags: [bleed, dwarf], damage: 58189 } # was 96981 (1.67x, nec incl. impact); WCL per-stack total (wcl_dmg_audit.py 2026-10-05)
 
   # ========== Murder Row (Boss) ==========
   473898: { name: "Legion Strike", tags: [physical] }
@@ -460,17 +460,17 @@ debuffs:
   1217384: { name: "Malefic Wave", tags: [non_phys] }
   474545: { name: "Murder in a Row", tags: [bleed, dwarf] }   # was 1218347; WCL: this id is what lands on players
   474515: { name: "Heartstop Poison", tags: [dwarf, poison], damage: 872835 }
-  1228198: { name: "Corroding Spittle", tags: [dwarf, magic], damage: 1124999 }
-  1295455: { name: "Infernal Crush", tags: [non_phys], damage: 329742 }
+  1228198: { name: "Corroding Spittle", tags: [dwarf, magic], damage: 764741 } # was 1124999 (1.47x, nec incl. impact); WCL per-stack total (wcl_dmg_audit.py 2026-10-05)
+  1295455: { name: "Infernal Crush", tags: [non_phys], damage: 232764 } # was 329742 (1.42x, nec incl. impact); WCL per-stack total (wcl_dmg_audit.py 2026-10-05)
 
   # ========== Ruby Life Pools ==========
   372796: { name: "Blazing Rush", tags: [bleed, dwarf] }   # was 372087; WCL: this id lands on players
-  373692: { name: "Inferno", tags: [non_phys], damage: 290947 }
+  373692: { name: "Inferno", tags: [non_phys], damage: 184658 } # was 290947 (1.58x, nec incl. impact); WCL per-stack total (wcl_dmg_audit.py 2026-10-05)
   373693: { name: "Living Bomb", tags: [non_phys], damage: 349134 }
   385313: { name: "Lightning Rod", tags: [non_phys] }
-  395292: { name: "Fire Maw", tags: [non_phys], damage: 562498 }
+  395292: { name: "Fire Maw", tags: [non_phys], damage: 331499 } # was 562498 (1.70x, nec incl. impact); WCL per-stack total (wcl_dmg_audit.py 2026-10-05)
   392641: { name: "Rolling Thunder", tags: [dwarf, magic] }
-  1305201: { name: "Excavating Blast", tags: [non_phys], damage: 378233 }
+  1305201: { name: "Excavating Blast", tags: [non_phys], damage: 271239 } # was 378233 (1.39x, nec incl. impact); WCL per-stack total (wcl_dmg_audit.py 2026-10-05)
   1305225: { name: "Tectonic Strike", tags: [physical] }
   1305234: { name: "Cold Claws", tags: [freedom, magic] }
   1306366: { name: "Lightning Torrent", tags: [non_phys] }
@@ -482,7 +482,7 @@ debuffs:
   381515: { name: "Stormslam", tags: [dwarf, magic] }   # was 381512; WCL: this id is what lands on players
   381518: { name: "Winds of Change", tags: [non_phys], damage: 87282 }   # was 381517; WCL: this id is what lands on players
   381862: { name: "Inferno Spit", tags: [non_phys], damage: 261852 }   # was 381602; WCL: this id is what lands on players
-  384823: { name: "Inferno", tags: [non_phys], damage: 378233 }
+  384823: { name: "Inferno", tags: [non_phys], damage: 247751 } # was 378233 (1.53x, nec incl. impact); WCL per-stack total (wcl_dmg_audit.py 2026-10-05)
   384024: { name: "Hailbombs", tags: [non_phys] }   # was 396044; WCL: Melidrussa hailbomb debuff
 
   # ========== Temple ==========
@@ -507,17 +507,17 @@ debuffs:
   266512: { name: "Consume Charge", tags: [non_phys] }
   267027: { name: "Poison Spit", tags: [dwarf, poison], damage: 349139 }
   1288235: { name: "Thunder and Lightning", tags: [non_phys] }   # TODO verify aura id (server-applied)
-  1288457: { name: "Gust", tags: [non_phys], damage: 155173 }
+  1288457: { name: "Gust", tags: [non_phys], damage: 96986 } # was 155173 (1.60x, nec incl. impact); WCL per-stack total (wcl_dmg_audit.py 2026-10-05)
   1289062: { name: "Gale Force", tags: [non_phys] }   # TODO verify aura id (server-applied)
   1289588: { name: "Thunder Spit", tags: [non_phys] }   # was 1289602; WCL: this id is what lands on players
   263958: { name: "A Knot of Snakes", tags: [physical] }   # -freedom 2026-09-30: 0.2-0.9s lead-in to 1290030; WCL 14 top keys, 0 Freedoms cast on a knotted player
   1290030: { name: "A Knot of Snakes", tags: [physical] }   # was 1290031; WCL: this id is what lands on players. -freedom 2026-09-30: fixed 4.0s in 79/79 applies, Freedom never used on it
   1308838: { name: "Lightning Bite", tags: [non_phys] }   # was 1290797; WCL: this id is what lands on players
-  1293048: { name: "Serpentstorm", tags: [non_phys], damage: 349139 }
+  1293048: { name: "Serpentstorm", tags: [non_phys], damage: 232491 } # was 349139 (1.50x, nec incl. impact); WCL per-stack total (wcl_dmg_audit.py 2026-10-05)
   1300871: { name: "Corrupted Lifeforce", tags: [non_phys] }
   1300877: { name: "Corruption", tags: [non_phys] }
-  1302618: { name: "Vile Charge", tags: [non_phys], damage: 378232 }
-  1303446: { name: "Tainted Strike", tags: [non_phys], damage: 5334032 }
+  1302618: { name: "Vile Charge", tags: [non_phys], damage: 297069 } # was 378232 (1.27x, nec incl. impact); WCL per-stack total (wcl_dmg_audit.py 2026-10-05)
+  1303446: { name: "Tainted Strike", tags: [non_phys], damage: 278500 } # was 5334032 (nec). WCL 12 ToS keys 19-22: 27.85k/stack/tick key-1 x 10 ticks; one stack (stacks to 2)
 
   # ========== Voidscar Arena ==========
   1233398: { name: "Mad Shriek", tags: [physical] }
@@ -525,7 +525,7 @@ debuffs:
   1249238: { name: "Fire Spit", tags: [non_phys] }
   1249621: { name: "Violent Sand", tags: [freedom, non_phys] }
   1250043: { name: "Melt Armor", tags: [dwarf, magic] }
-  1267894: { name: "Savage Leap", tags: [bleed, dwarf], damage: 271551 }
+  1267894: { name: "Savage Leap", tags: [bleed, dwarf], damage: 193969 } # was 271551 (1.40x, nec incl. impact); WCL per-stack total (wcl_dmg_audit.py 2026-10-05)
   1287450: { name: "Condensed Mass", tags: [freedom, non_phys] }   # WCL key-14/15: removed by Blessing of Freedom / Tiger's Lust
   1289258: { name: "Corrosive Essence", tags: [dwarf, poison], damage: 610988 }   # was 1289265; WCL: this id is what lands on players
   1298899: { name: "Demoralizing Shout", tags: [physical] }
@@ -537,12 +537,12 @@ debuffs:
   1311778: { name: "Rip and Slice", tags: [bleed, dwarf], damage: 1066804 }
 
   # ========== Voidscar Arena (Boss) ==========
-  1222103: { name: "Nether Dash", tags: [non_phys], damage: 581899 }   # was 1222100; WCL: this id is what lands on players
-  1222642: { name: "Hulking Claw", tags: [non_phys], damage: 775856 }
+  1222103: { name: "Nether Dash", tags: [non_phys], damage: 418248 }   # was 1222100; WCL: this id is what lands on players  was 581899 (1.39x, nec incl. impact); WCL per-stack total (wcl_dmg_audit.py 2026-10-05)
+  1222642: { name: "Hulking Claw", tags: [non_phys], damage: 533411 } # was 775856 (1.45x, nec incl. impact); WCL per-stack total (wcl_dmg_audit.py 2026-10-05)
   1223298: { name: "Gravitic Orbs", tags: [freedom, non_phys] }   # TODO verify aura id (server-applied)
   1226031: { name: "Poison Splash", tags: [dwarf, poison] }   # was 1226120; WCL: this id is what lands on players
-  1300372: { name: "Cosmic Crash", tags: [non_phys], damage: 407319 }   # was 1227197; WCL: this id is what lands on players
-  1264188: { name: "Unstable Singularity", tags: [non_phys], damage: 596468 }   # was 1248112; WCL: this id is what lands on players
+  1300372: { name: "Cosmic Crash", tags: [non_phys], damage: 290945 }   # was 1227197; WCL: this id is what lands on players  was 407319 (1.40x, nec incl. impact); WCL per-stack total (wcl_dmg_audit.py 2026-10-05)
+  1264188: { name: "Unstable Singularity", tags: [non_phys], damage: 460085 }   # was 1248112; WCL: this id is what lands on players  was 596468 (1.30x, nec incl. impact); WCL per-stack total (wcl_dmg_audit.py 2026-10-05)
   1282892: { name: "Sickening Bite", tags: [non_phys] }
 
   # ===== Midnight Season 2 (Raid) =====
@@ -570,12 +570,12 @@ debuffs:
   1282051: { name: "Arcane Beam", tags: [trash], damage: 152538, dr_type: magic }
   266191: { name: "Whirling Axe", tags: [avoid, trash], damage: 387928, dr_type: physical }
   372820: { name: "Scorched Earth", tags: [aoe, avoid], damage: 193964, dr_type: magic }
-  372860: { name: "Searing Wounds", tags: [tank], damage: 232752, dr_type: magic }
+  372860: { name: "Searing Wounds", tags: [tank], damage: 165745, dr_type: magic } # was 232752 (1.40x, nec incl. impact); WCL per-stack total (wcl_dmg_audit.py 2026-10-05)
   384773: { name: "Flaming Embers", tags: [avoid], damage: 387928, dr_type: magic }
-  397077: { name: "Chillstorm", tags: [aoe], damage: 224028, dr_type: magic }
+  397077: { name: "Chillstorm", tags: [aoe], damage: 156957, dr_type: magic } # was 224028 (1.43x, nec incl. impact); WCL per-stack total (wcl_dmg_audit.py 2026-10-05)
   474234: { name: "Burning Steps", tags: [avoid], damage: 213362, dr_type: magic }
-  1214650: { name: "Fel Lightning", tags: [trash], damage: 58188, dr_type: magic }
-  1222692: { name: "Toxic Aura", tags: [trash], damage: 654630, dr_type: magic }
+  1214650: { name: "Fel Lightning", tags: [trash], damage: 44975, dr_type: magic } # was 58188 (1.29x, nec incl. impact); WCL per-stack total (wcl_dmg_audit.py 2026-10-05)
+  1222692: { name: "Toxic Aura", tags: [trash], damage: 376420, dr_type: magic } # was 654630 (1.74x, nec incl. impact); WCL per-stack total (wcl_dmg_audit.py 2026-10-05)
   1234802: { name: "Fertile Loam", tags: [avoid], damage: 232758, dr_type: magic }
   1234846: { name: "Toxic Spores", tags: [avoid], damage: 135772, dr_type: magic }
   1235405: { name: "Bonespiked", tags: [avoid], damage: 116376, dr_type: physical }
@@ -584,14 +584,14 @@ debuffs:
   1237858: { name: "Ruptured Earth", tags: [avoid, trash], damage: 96982, dr_type: magic }
   1239919: { name: "Lightfire Beams", tags: [aoe, avoid], damage: 407323, dr_type: magic }
   1246751: { name: "Concentrated Lightbeam", tags: [avoid], damage: 145473, dr_type: magic }
-  1263971: { name: "Mind-Numbing Poison", tags: [], damage: 387929, dr_type: magic }
+  1263971: { name: "Mind-Numbing Poison", tags: [], dr_type: magic } # -damage: haste debuff, no damage effect (tooltip, 0 ticks in logs) (WCL wcl_dmg_audit.py 2026-10-05)
   1276586: { name: "Bedrock Surge", tags: [aoe], damage: 310344, dr_type: magic }
   1291815: { name: "Induction Field", tags: [avoid], damage: 193964, dr_type: magic }
   1293133: { name: "Lingering Storm", tags: [avoid], damage: 193964, dr_type: magic }
   1294958: { name: "Noxious Spray", tags: [trash], damage: 407328, dr_type: magic }
   1300684: { name: "Hex Muck", tags: [avoid], damage: 96982, dr_type: magic }
-  1303596: { name: "Siphon Energy", tags: [trash], damage: 581895, dr_type: magic }
+  1303596: { name: "Siphon Energy", tags: [trash], damage: 96984, dr_type: magic } # was 581895 (whole channel, duration 0 -> always full); 38.8k/tick x 2.5 per application (WCL wcl_dmg_audit.py 2026-10-05)
   1306669: { name: "Toxic Breath", tags: [avoid, trash], damage: 339440, dr_type: magic }
-  1307700: { name: "Carrion Burst", tags: [aoe], damage: 116380, dr_type: magic }
+  1307700: { name: "Carrion Burst", tags: [aoe], damage: 87313, dr_type: magic } # was 116380 (1.33x, nec incl. impact); WCL per-stack total (wcl_dmg_audit.py 2026-10-05)
   1311981: { name: "Latent Hex", tags: [], damage: 157595, dr_type: magic }
   1312569: { name: "Embalm", tags: [trash], damage: 678874, dr_type: magic }

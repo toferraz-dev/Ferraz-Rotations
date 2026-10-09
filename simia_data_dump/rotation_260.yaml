@@ -151,7 +151,7 @@ lists:
     - pool_resource,for_next=1,if=cooldown.killing_spree.ready
 
     # killing_spree,if=buff.supercharge_1.up|cooldown.adrenaline_rush.remains>120|!talent.supercharger
-    - killing_spree,if=buff.470398.up|cooldown.adrenaline_rush.remains>120|!talent.supercharger
+    - killing_spree,global_delay=300,if=buff.470398.up|cooldown.adrenaline_rush.remains>120|!talent.supercharger
 
     # coup_de_grace
     - coup_de_grace
