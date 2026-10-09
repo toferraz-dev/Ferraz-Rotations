@@ -1,4 +1,4 @@
-version: "22.0.0"
+version: "24.0.0"
 author: Ferraz
 patch: "12.1"
 spec: 105
@@ -17,7 +17,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-10-08 | Patch: 12.1 | Version: 22.0.0"
+    text: "Last update: 2026-10-09 | Patch: 12.1 | Version: 24.0.0"
 
 
   recommended_talents:
@@ -123,6 +123,15 @@ config:
     min: 25
     max: 99
     default: 90
+
+  precast_incoming_threshold:
+    label: "Precast HP % (Incoming Cast)"
+    section: "Healing"
+    type: slider
+    min: 25
+    max: 99
+    default: 95
+    description: "Pre-heal a group member flagged by incoming_cast.cycle.avoid - an enemy is actively casting a dangerous single-target hit at them - before the hit lands, instead of reacting to HP already lost. Set high (close to 100) since this fires on a cast starting, not on damage taken."
 
   rejuvenation_threshold:
     label: "Rejuvenation HP % (effective)"
@@ -526,6 +535,8 @@ lists:
     - wild_growth,name="Wild Growth",range_check=none,if=group.count(cycle.health.effective.pct<config.wild_growth_threshold&!cycle.tank)>=config.wild_growth_members
     - wild_growth,name="Wild Growth (Tank)",range_check=none,if=group.count(cycle.tank&cycle.health.effective.pct<config.wild_growth_threshold_tank)>=1
 
+    - regrowth,name="Precast (Incoming Cast)",cycle=members,if=incoming_cast.cycle.avoid.up&cycle.health.effective.pct<config.precast_incoming_threshold
+
     - regrowth,name="Clearcasting Regrowth",cycle=members,if=player.combat&buff.clearcasting.up&cycle.health.effective.pct<99
 
     - regrowth,name="Regrowth Emergency",cycle=members,if=cycle.health.effective.pct<config.regrowth_emergency_threshold
@@ -553,7 +564,8 @@ lists:
     - stampeding_roar,name="Stampeding Roar",if=var.use_stampeding_roar&config.stampeding_roar_usage!=0
 
   abundance_maintenance:
-    - 774,name="Abundance Filler (Rejuv)",cycle=members,if=!buff.abundance.up&cycle.buff.rejuvenation.refreshable
+    - 774,name="Abundance Filler (Rejuv - Missing)",cycle=members,if=!buff.abundance.up&cycle.buff.rejuvenation.down
+    - 774,name="Abundance Filler (Rejuv - Lowest Remains)",cycle=members,cycle_order=buff.rejuvenation.remains,if=!buff.abundance.up&cycle.buff.rejuvenation.refreshable
     - 774,name="Abundance Filler (Germination)",cycle=members,if=!buff.abundance.up&talent.germination&cycle.buff.rejuvenation.up&(cycle.buff.rejuvenation_germination.down|cycle.buff.rejuvenation_germination.refreshable)
     - 774,name="Abundance Filler (Rejuv Maintenance)",cycle=members,if=buff.abundance.up&buff.abundance.remains<5&cycle.buff.rejuvenation.remains<5
     - 774,name="Abundance Filler (Germination Maintenance)",cycle=members,if=talent.germination&buff.abundance.up&buff.abundance.remains<5&cycle.buff.rejuvenation.up&cycle.buff.rejuvenation_germination.remains<5
