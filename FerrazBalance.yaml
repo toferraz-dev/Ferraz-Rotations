@@ -1,5 +1,5 @@
 
-version: "10.0.0"
+version: "11.0.0"
 author: Ferraz
 patch: "12.1"
 spec: 102
@@ -17,7 +17,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-10-06 | Patch: 12.1 | Version: 10.0.0"
+    text: "Last update: 2026-10-11 | Patch: 12.1 | Version: 11.0.0"
 
   recommended_talents:
     section: "Talents"
@@ -39,14 +39,7 @@ config:
     section: "Cooldowns"
     type: checkbox
     default: true
-    description: "Fires Incarnation, trinkets and potion by itself. The TTD sliders still hold them back on trash that is about to die. Turn OFF to press Incarnation yourself through Simia's own queue - pair that with Incarnation Manual below so trinkets/potion still ride your manual cast."
-
-  incarnation_manual:
-    label: "Incarnation Manual"
-    section: "Cooldowns"
-    type: checkbox
-    default: false
-    description: "Trinkets and potion fire the instant Incarnation is up, however it was cast - queued manually or by Auto Burst. Turn ON if you queue Incarnation yourself with Auto Burst OFF."
+    description: "Fires Incarnation, trinkets and potion by itself. The TTD sliders still hold them back on trash that is about to die. Turn OFF to press Incarnation yourself through Simia's own queue - trinkets/potion still ride whichever cooldown goes up (Celestial Alignment or Incarnation), manual or automatic."
 
   use_trinket_1:
     label: "Auto Trinket 1 (Before Incarnation)"
@@ -314,7 +307,7 @@ variables:
 
   burst_ok: config.auto_burst
 
-  dots_spread: active_dot.moonfire>=enemies.combat.40y|active_dot.moonfire>=10
+  dots_spread: active_dot.moonfire>=enemies.combat.40y&active_dot.sunfire>=enemies.combat.40y
 
   pull_engaged: player.combat&player.standing.time>=config.inc_min_standing_time&var.dots_spread
 
@@ -324,9 +317,9 @@ variables:
 
   cd_active: buff.celestial_alignment.up|buff.incarnation_chosen_of_elune.up
 
-  foe_inc_gate: buff.incarnation_chosen_of_elune.up|cooldown.incarnation_chosen_of_elune.charges=0
+  foe_inc_gate: "!var.burst_ok|var.pull_engaged|buff.incarnation_chosen_of_elune.up|cooldown.incarnation_chosen_of_elune.charges=0"
 
-  burst_window: config.incarnation_manual&buff.incarnation_chosen_of_elune.up|!config.incarnation_manual&var.cd_active
+  burst_window: var.cd_active
 
   bear_defensive_active: health.pct<=config.frenzied_regen_hp&(cooldown.frenzied_regeneration.ready|buff.frenzied_regeneration.up)
 
