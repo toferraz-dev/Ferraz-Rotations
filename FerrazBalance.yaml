@@ -307,7 +307,7 @@ variables:
 
   burst_ok: config.auto_burst
 
-  dots_spread: active_dot.moonfire>=enemies.combat.40y&active_dot.sunfire>=enemies.combat.40y
+  dots_spread: debuff.moonfire.up&debuff.sunfire.up
 
   pull_engaged: player.combat&player.standing.time>=config.inc_min_standing_time&var.dots_spread
 
