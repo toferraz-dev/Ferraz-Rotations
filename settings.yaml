@@ -112,21 +112,21 @@ spec_profiles:
           enable_hotw: false
           auto_dispel_party: true
           enable_mouseover_dots: true
-          frenzied_regen_hp: 20
+          frenzied_regen_hp: 31
           renewal_hp: 30
           hotw_hp: 25
           swap_off_dying: false
           hotw_hp_threshold: 50
           use_potion: true
           ttd_fury_of_elune: 15
-          auto_burst: true
+          auto_burst: false
           inc_min_combat_time: 6
           inc_min_standing_time: 2
           ttd_incarnation: 25
           ttd_trinkets: 25
           ttd_potion: 25
           auto_purge_enrage: true
-          thorn_bloom_threshold: 25
+          thorn_bloom_threshold: 50
           hotw_bear_hp: 35
           hotw_bear_defensive: false
           engine_auto_combat:
@@ -328,6 +328,128 @@ spec_profiles:
             - 15
             - 16
           combat_potion_timing: 0
+  581:
+    auto_switch: false
+    active_index: 0
+    profiles:
+      - name: Default
+        scenarios: 0
+        auto_enabled: true
+        values:
+          use_potion: true
+          wrath_filler: false
+          ttd_incarnation: 25
+          engine_loot_nearby: true
+          inc_min_standing_time: 2
+          auto_burst: false
+          use_trinket_1: true
+          use_trinket_2: true
+          thorn_bloom_members: 2
+          ttd_fury_of_elune: 15
+          ttd_starfall: 5
+          frenzied_regen_hp: 31
+          auto_dispel_party: true
+          enable_mouseover_dots: true
+          hotw_hp: 25
+          swap_off_dying: false
+          engine_auto_combat:
+            - 1
+            - 2
+            - 3
+          engine_pause_travel_form: false
+          engine_auto_target:
+            - 0
+            - 1
+          emergency_hp: 35
+          engine_healthstone: 40
+          engine_health_potion: 30
+          barkskin_hp: 45
+          engine_auto_brez: true
+          auto_purge_enrage: true
+          engine_auto_rez: true
+          engine_affix_devour: true
+          soothe_mouseover: true
+          auto_dispel_self: true
+          barkskin_dmg_pct: 45
+          hotw_party_heal: true
+          root_cleanse: true
+          thorn_bloom_threshold: 50
+          emergency_stop_casting: true
+        shared_values:
+          auto_rez: true
+          healthpotion: 40
+          interrupt_pct: 25
+          lootnearby: true
+          auto_target_ranged:
+            - 0
+            - 1
+          healthstone: 50
+          manapotion: 60
+          combat_potion_mplus_min: 10
+          interrupt_mouseover: true
+          auto_target:
+            - 0
+            - 1
+          auto_combat:
+            - 1
+            - 2
+          interrupt_target: true
+          auto_brez: true
+          interrupt_all: true
+          interrupt_focus: true
+          interrupt_important_pct: 20
+          los_block_duration: 3
+          combat_potion_enabled: true
+          combat_potion_difficulty:
+            - 15
+            - 16
+          combat_potion_timing: 0
+  267:
+    auto_switch: false
+    active_index: 0
+    profiles:
+      - name: Default
+        scenarios: 0
+        auto_enabled: true
+        values:
+          meta_dmg_pct: 50
+          darkness_hp_pct: 65
+          fiery_hp_pct: 95
+          meta_hp_pct: 40
+          save_infernal_strike: true
+          fiery_dmg_pct: 55
+          demon_spikes_dmg_pct: 40
+          sigil_melee_check: true
+          felblade_range_check: true
+        shared_values:
+          auto_rez: true
+          healthpotion: 40
+          interrupt_pct: 25
+          lootnearby: true
+          auto_target_ranged:
+            - 0
+            - 1
+          healthstone: 50
+          manapotion: 60
+          combat_potion_mplus_min: 10
+          interrupt_mouseover: true
+          auto_target:
+            - 0
+            - 1
+          auto_combat:
+            - 1
+            - 2
+          interrupt_target: true
+          auto_brez: true
+          interrupt_all: true
+          interrupt_focus: true
+          interrupt_important_pct: 20
+          los_block_duration: 3
+          combat_potion_enabled: true
+          combat_potion_difficulty:
+            - 15
+            - 16
+          combat_potion_timing: 0
 shared_config:
   interrupt_all: true
   healthstone: 50
@@ -404,7 +526,7 @@ selected_rotation:
   262: C:\Games\Python\Rotations\FerrazShamanEle.yaml
   104: D:\Projetos\Rotations\FerrazGuardianElune.yaml
   105: D:\Projetos\Rotations\FerrazRestoDruid.yaml
-  102: D:\Projetos\Rotations\FerrazBalance.yaml
+  102: D:\Projetos\Rotations\FerrazBalanceRaid.yaml
   103: D:\Projetos\Rotations\FerrazFeralRaid.yaml
 selected_community_rotation_name:
   104: "[Community] Khan No Apex Guardian Druid (1.0.7) - Khan"
