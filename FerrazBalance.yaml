@@ -317,7 +317,9 @@ variables:
 
   cd_active: buff.celestial_alignment.up|buff.incarnation_chosen_of_elune.up
 
-  foe_inc_gate: "!var.burst_ok|var.pull_engaged|buff.incarnation_chosen_of_elune.up|cooldown.incarnation_chosen_of_elune.charges=0"
+  hold_foe_for_incarnation: talent.incarnation_chosen_of_elune&cooldown.incarnation_chosen_of_elune.charges=0&cooldown.incarnation_chosen_of_elune.remains<=cooldown.fury_of_elune.duration
+
+  foe_inc_gate: "!var.burst_ok|var.pull_engaged|buff.incarnation_chosen_of_elune.up|(cooldown.incarnation_chosen_of_elune.charges=0&!var.hold_foe_for_incarnation)"
 
   burst_window: var.cd_active
 
