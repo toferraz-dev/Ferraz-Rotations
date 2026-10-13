@@ -216,12 +216,13 @@ config:
     description: "Soothe whatever you are hovering, checked just before the current-target Soothe below. Simia cannot pick an enraged enemy by criteria — target_enemy is 'nearest enemy' with no filter and there is no .any(EXPR) for enemies — so hovering is the only way to Soothe a mob you are not targeting. This is an independent switch: turning Soothe Enrage off does not disable it. Guarded on mouseover.combat, so hovering an unpulled mob never pulls it."
 
   barkskin_dmg_pct:
-    label: "Barkskin (Incoming Dmg%)"
+    label: "Barkskin - Predicted HP % Remaining"
     section: "Defensives"
     type: slider
-    min: 0
+    min: 10
     max: 100
     default: 40
+    description: "Use Barkskin when your current effective health minus the biggest predicted incoming hit (after active defensives) would put you at or below this HP%."
 
   barkskin_hp:
     label: "Barkskin HP%"
@@ -384,7 +385,7 @@ lists:
     - soothe,name="Soothe (Enrage)",if=config.auto_purge_enrage&target.purgeable.enrage
 
   defensives:
-    - barkskin,range_check=none,name="Barkskin (predicted)",if=incoming.mitigated.pct>=config.barkskin_dmg_pct
+    - barkskin,range_check=none,name="Barkskin (predicted)",if=(health.effective.pct-incoming.mitigated.pct)<=config.barkskin_dmg_pct
 
 
     - bear_form,name="Panic Bear Form",if=!buff.bear_form.up&health.pct<=config.frenzied_regen_hp&cooldown.frenzied_regeneration.ready&buff.frenzied_regeneration.down
