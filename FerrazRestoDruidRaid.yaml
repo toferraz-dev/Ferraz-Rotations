@@ -1,5 +1,5 @@
 
-version: "15.0.0"
+version: "16.0.0"
 author: Ferraz
 patch: "12.1"
 spec: 105
@@ -14,7 +14,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-10-06 | Patch: 12.1 | Version: 15.0.0"
+    text: "Last update: 2026-10-14 | Patch: 12.1 | Version: 16.0.0"
 
 
   recommended_talents:
@@ -112,6 +112,15 @@ config:
     max: 99
     default: 85
 
+  raid_precast_incoming_dmg_pct:
+    label: "Precast - Predicted HP % Remaining (cycle)"
+    section: "Healing"
+    type: slider
+    min: 10
+    max: 100
+    default: 40
+    description: "Pre-heal a group member whose current effective health minus the biggest predicted incoming hit (cycle.health.effective.pct-cycle.incoming.pct) would put them at or below this HP%. cycle.incoming.pct is magnitude-only (no .mitigated form - confirmed by the Simia maintainer). Example: at 90% HP with a hit predicted to take 30%, that's 60% projected."
+
   raid_rejuvenation_threshold:
     label: "Rejuvenation HP % (effective)"
     section: "Healing"
@@ -161,13 +170,13 @@ config:
 
 
   raid_barkskin_threshold:
-    label: "Barkskin Incoming Damage %"
+    label: "Barkskin - Predicted HP % Remaining"
     section: "Defensives"
     type: slider
-    min: 25
-    max: 99
-    default: 65
-    description: "Use Barkskin when the biggest predicted incoming hit is at least this much of your effective health, even at full HP. The label used to say HP% - the action line has always compared this against incoming.pct (predicted damage), never against your actual health."
+    min: 10
+    max: 100
+    default: 40
+    description: "Use Barkskin when your current effective health minus the biggest predicted incoming hit (health.effective.pct-incoming.pct) would put you at or below this HP%. Example: at 90% HP with a hit predicted to take 30%, that's 60% projected."
 
   raid_frenzied_regen_threshold:
     label: "Frenzied Regen HP % (effective)"
@@ -473,7 +482,7 @@ lists:
   defensives:
     - 102342,name="Ironbark (Tank)",cycle=tanks,cycle_order=health.pct,if=(config.raid_ironbark_target=1&cycle.health.effective.pct<config.raid_ironbark_threshold&cycle.buff.ironbark.down)&cycle.range<=40
     - 102342,name="Ironbark (Members)",cycle=members,cycle_order=health.pct,if=(config.raid_ironbark_target=2&cycle.health.effective.pct<config.raid_ironbark_threshold&cycle.buff.ironbark.down)&cycle.range<=40
-    - barkskin,name="Barkskin",if=incoming.pct>=config.raid_barkskin_threshold
+    - barkskin,name="Barkskin",if=(health.effective.pct-incoming.pct)<=config.raid_barkskin_threshold
     - bear_form,name="Panic Bear",if=health.effective.pct<config.raid_frenzied_regen_threshold&!buff.bear_form.up&cooldown.frenzied_regeneration.ready&!buff.incarnation_tree_of_life.up
     - frenzied_regeneration,name="Frenzied Regen",if=buff.bear_form.up&health.effective.pct<config.raid_frenzied_regen_threshold
 
@@ -501,6 +510,8 @@ lists:
     - 774,name="Abundance Filler (Germination Maintenance)",cycle=members,cycle_order=health.pct,if=talent.germination&buff.abundance.up&buff.abundance.remains<5&cycle.buff.rejuvenation.up&cycle.buff.rejuvenation_germination.remains<5&cycle.range<=40
 
   active_healing:
+    - regrowth,name="Precast (Incoming Cast)",cycle=members,cycle_order=health.pct,if=(cycle.health.effective.pct-cycle.incoming.pct)<=config.raid_precast_incoming_dmg_pct&cycle.range<=40
+
     - wild_growth,name="SotF Wild Growth",range_check=none,if=var.has_soul&group.count(cycle.health.effective.pct<config.raid_wild_growth_threshold&cycle.range<=40)>=config.raid_wild_growth_members
     - regrowth,name="SotF Regrowth",cycle=members,cycle_order=health.pct,if=(var.has_soul&cycle.health.effective.pct<config.raid_regrowth_threshold)&cycle.range<=40
     - 774,name="SotF Germination",cycle=members,cycle_order=buff.rejuvenation.remains,if=(var.has_soul&talent.germination&cycle.buff.rejuvenation.up&(cycle.buff.rejuvenation_germination.down|cycle.buff.rejuvenation_germination.remains<1.5))&cycle.range<=40
