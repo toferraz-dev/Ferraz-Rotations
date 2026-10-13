@@ -881,6 +881,26 @@
           "returnType": "number",
           "description": "Spell id the button currently casts (C_Spell.GetOverrideSpell); the spell's own id when not overridden, 0 when not in the spellbook.",
           "example": "action.432459.override_id=432472"
+        },
+        {
+          "name": "demonsurge_available",
+          "returnType": "bool",
+          "description": "Alias of action.SPELL.overlayed (action-bar proc glow active)."
+        },
+        {
+          "name": "cooldown.remains",
+          "returnType": "number",
+          "description": "KNOWN BUG (confirmed by the Simia maintainer, 2026-10-06): always reads 0. The C++ pre-parse step treats the 'X.cooldown' segment as the spell name itself, so this handler is never reached. Use cooldown.SPELL.remains instead (unaffected, same data)."
+        },
+        {
+          "name": "cooldown.ready",
+          "returnType": "bool",
+          "description": "KNOWN BUG (confirmed by the Simia maintainer, 2026-10-06): always reads 0/false. Same pre-parse bug as cooldown.remains above. Use cooldown.SPELL.ready instead (unaffected, same data)."
+        },
+        {
+          "name": "cooldown.down",
+          "returnType": "bool",
+          "description": "KNOWN BUG (confirmed by the Simia maintainer, 2026-10-06): always reads 0/false. Same pre-parse bug as cooldown.remains above. Use cooldown.SPELL.down instead (unaffected, same data)."
         }
       ],
       "expressions": [
@@ -1191,6 +1211,26 @@
               "returnType": "number",
               "description": "Effective healable health % (healthPct - healAbsorbPct + incomingHealsPct). Healer triage metric.",
               "example": "player.health.effective.pct<50"
+            },
+            {
+              "syntax": "boss2.time_to_die",
+              "returnType": "number",
+              "description": "Estimated seconds until boss2 dies."
+            },
+            {
+              "syntax": "boss3.time_to_die",
+              "returnType": "number",
+              "description": "Estimated seconds until boss3 dies."
+            },
+            {
+              "syntax": "boss4.time_to_die",
+              "returnType": "number",
+              "description": "Estimated seconds until boss4 dies."
+            },
+            {
+              "syntax": "boss5.time_to_die",
+              "returnType": "number",
+              "description": "Estimated seconds until boss5 dies."
             }
           ]
         },
@@ -1870,6 +1910,31 @@
               "returnType": "bool",
               "description": "Player has a Poison debuff.",
               "example": "player.has_poison"
+            },
+            {
+              "syntax": "player.dispelable.list",
+              "returnType": "bool",
+              "description": "Player has dispelable debuff with dispel_list filtering."
+            },
+            {
+              "syntax": "player.dispelable.magic",
+              "returnType": "bool",
+              "description": "Player has magic debuff."
+            },
+            {
+              "syntax": "player.dispelable.disease",
+              "returnType": "bool",
+              "description": "Player has disease debuff."
+            },
+            {
+              "syntax": "player.dispelable.poison",
+              "returnType": "bool",
+              "description": "Player has poison debuff."
+            },
+            {
+              "syntax": "player.dispelable.curse",
+              "returnType": "bool",
+              "description": "Player has curse debuff."
             }
           ]
         },
@@ -1899,6 +1964,38 @@
               "returnType": "bool",
               "description": "1 when the player has a GUID (existence check). Does not return the GUID value.",
               "example": "player.guid"
+            },
+            {
+              "syntax": "player.power",
+              "returnType": "number",
+              "description": "Current primary resource (generic, auto-detected from spec).",
+              "example": "player.power>=80"
+            },
+            {
+              "syntax": "player.power.max",
+              "returnType": "number",
+              "description": "Maximum primary resource."
+            },
+            {
+              "syntax": "player.power.deficit",
+              "returnType": "number",
+              "description": "Primary resource deficit."
+            },
+            {
+              "syntax": "player.gcd",
+              "returnType": "number",
+              "description": "Current GCD duration."
+            },
+            {
+              "syntax": "player.gcd.remains",
+              "returnType": "number",
+              "description": "Time until GCD expires."
+            },
+            {
+              "syntax": "player.talent(SPELL)",
+              "returnType": "bool",
+              "description": "Check if talent is selected (function syntax).",
+              "example": "player.talent(combustion)"
             }
           ]
         },
@@ -1920,6 +2017,135 @@
               "syntax": "player.bounding_radius",
               "returnType": "number",
               "description": "The player's model bounding radius in yards. Display only - use combat_reach for range math."
+            }
+          ]
+        },
+        {
+          "name": "Buffs & Debuffs (Named)",
+          "expressions": [
+            {
+              "syntax": "player.buff.SPELL.up",
+              "returnType": "bool",
+              "description": "Player has buff."
+            },
+            {
+              "syntax": "player.buff.SPELL.up.any",
+              "returnType": "bool",
+              "description": "Player has buff from any source."
+            },
+            {
+              "syntax": "player.buff.SPELL.down",
+              "returnType": "bool",
+              "description": "Player does not have buff."
+            },
+            {
+              "syntax": "player.buff.SPELL.remains",
+              "returnType": "number",
+              "description": "Player buff time remaining."
+            },
+            {
+              "syntax": "player.buff.SPELL.elapsed",
+              "returnType": "number",
+              "description": "Time since buff applied on player."
+            },
+            {
+              "syntax": "player.buff.SPELL.stack",
+              "returnType": "number",
+              "description": "Player buff stack count."
+            },
+            {
+              "syntax": "player.buff.remains(SPELL)",
+              "returnType": "number",
+              "description": "Player buff remaining duration (function syntax).",
+              "example": "player.buff.remains(bloodlust)>10"
+            },
+            {
+              "syntax": "player.buff.stacks(SPELL)",
+              "returnType": "number",
+              "description": "Player buff stack count (function syntax)."
+            },
+            {
+              "syntax": "player.buff.up(SPELL)",
+              "returnType": "bool",
+              "description": "Player has buff (function syntax).",
+              "example": "player.buff.up(bloodlust)"
+            },
+            {
+              "syntax": "player.buff.down(SPELL)",
+              "returnType": "bool",
+              "description": "Player lacks buff (function syntax, any source)."
+            },
+            {
+              "syntax": "player.debuff.SPELL.up",
+              "returnType": "bool",
+              "description": "Player has debuff."
+            },
+            {
+              "syntax": "player.debuff.SPELL.up.any",
+              "returnType": "bool",
+              "description": "Player has debuff from any source."
+            },
+            {
+              "syntax": "player.debuff.SPELL.down",
+              "returnType": "bool",
+              "description": "Player does not have debuff."
+            },
+            {
+              "syntax": "player.debuff.SPELL.remains",
+              "returnType": "number",
+              "description": "Player debuff time remaining."
+            },
+            {
+              "syntax": "player.debuff.SPELL.elapsed",
+              "returnType": "number",
+              "description": "Time since debuff applied on player."
+            },
+            {
+              "syntax": "player.debuff.SPELL.stack",
+              "returnType": "number",
+              "description": "Player debuff stack count."
+            },
+            {
+              "syntax": "player.debuff.SPELL.points.1",
+              "returnType": "number",
+              "description": "Player debuff effect point 1 value."
+            },
+            {
+              "syntax": "player.debuff.SPELL.points.2",
+              "returnType": "number",
+              "description": "Player debuff effect point 2 value."
+            },
+            {
+              "syntax": "player.buff.SPELL.points.1",
+              "returnType": "number",
+              "description": "Buff effect point 1 value."
+            },
+            {
+              "syntax": "player.buff.SPELL.points.2",
+              "returnType": "number",
+              "description": "Buff effect point 2 value."
+            },
+            {
+              "syntax": "player.buff.SPELL.points.3",
+              "returnType": "number",
+              "description": "Buff effect point 3 value."
+            },
+            {
+              "syntax": "player.buff.SPELL.points.4",
+              "returnType": "number",
+              "description": "Buff effect point 4 value."
+            },
+            {
+              "syntax": "player.casting.spell_id(SPELL)",
+              "returnType": "bool",
+              "description": "Check if casting specific spell (function syntax).",
+              "example": "player.casting.spell_id(fireball)"
+            },
+            {
+              "syntax": "player.talent(SPELL)",
+              "returnType": "bool",
+              "description": "Check if talent is selected (function syntax).",
+              "example": "player.talent(combustion)"
             }
           ]
         }
@@ -2423,6 +2649,196 @@
               "example": "!target.ignore_count"
             }
           ]
+        },
+        {
+          "name": "Buffs & Debuffs (Named)",
+          "expressions": [
+            {
+              "syntax": "target.buff.SPELL.up",
+              "returnType": "bool",
+              "description": "Target has buff."
+            },
+            {
+              "syntax": "target.buff.SPELL.up.any",
+              "returnType": "bool",
+              "description": "Target has buff from any source."
+            },
+            {
+              "syntax": "target.buff.SPELL.down",
+              "returnType": "bool",
+              "description": "Target does not have buff."
+            },
+            {
+              "syntax": "target.buff.SPELL.remains",
+              "returnType": "number",
+              "description": "Target buff time remaining."
+            },
+            {
+              "syntax": "target.buff.SPELL.elapsed",
+              "returnType": "number",
+              "description": "Time since buff applied on target."
+            },
+            {
+              "syntax": "target.buff.SPELL.stack",
+              "returnType": "number",
+              "description": "Target buff stack count."
+            },
+            {
+              "syntax": "target.buff.remains(SPELL)",
+              "returnType": "number",
+              "description": "Target buff remaining duration (function syntax)."
+            },
+            {
+              "syntax": "target.buff.stacks(SPELL)",
+              "returnType": "number",
+              "description": "Target buff stack count (function syntax)."
+            },
+            {
+              "syntax": "target.buff.up(SPELL)",
+              "returnType": "bool",
+              "description": "Target has buff (function syntax)."
+            },
+            {
+              "syntax": "target.debuff.SPELL.up",
+              "returnType": "bool",
+              "description": "Target has debuff."
+            },
+            {
+              "syntax": "target.debuff.SPELL.up.any",
+              "returnType": "bool",
+              "description": "Target has debuff from any source."
+            },
+            {
+              "syntax": "target.debuff.SPELL.down",
+              "returnType": "bool",
+              "description": "Target does not have debuff."
+            },
+            {
+              "syntax": "target.debuff.SPELL.remains",
+              "returnType": "number",
+              "description": "Target debuff time remaining."
+            },
+            {
+              "syntax": "target.debuff.SPELL.elapsed",
+              "returnType": "number",
+              "description": "Time since debuff applied on target."
+            },
+            {
+              "syntax": "target.debuff.SPELL.stack",
+              "returnType": "number",
+              "description": "Target debuff stack count."
+            },
+            {
+              "syntax": "target.debuff.remains(SPELL)",
+              "returnType": "number",
+              "description": "Target debuff remaining duration (function syntax).",
+              "example": "target.debuff.remains(corruption)>3"
+            },
+            {
+              "syntax": "target.debuff.stacks(SPELL)",
+              "returnType": "number",
+              "description": "Target debuff stack count (function syntax)."
+            },
+            {
+              "syntax": "target.debuff.up(SPELL)",
+              "returnType": "bool",
+              "description": "Target has debuff (function syntax).",
+              "example": "target.debuff.up(corruption)"
+            },
+            {
+              "syntax": "target.debuff.SPELL.points.1",
+              "returnType": "number",
+              "description": "Target debuff effect point 1 value."
+            },
+            {
+              "syntax": "target.debuff.SPELL.points.2",
+              "returnType": "number",
+              "description": "Target debuff effect point 2 value."
+            },
+            {
+              "syntax": "target.buff.SPELL.points.1",
+              "returnType": "number",
+              "description": "Target buff effect point 1 value."
+            },
+            {
+              "syntax": "target.buff.SPELL.points.2",
+              "returnType": "number",
+              "description": "Target buff effect point 2 value."
+            },
+            {
+              "syntax": "target.casting.SPELL_NAME",
+              "returnType": "bool",
+              "description": "Target is casting or channeling a specific spell by name or ID.",
+              "example": "target.casting.shadow_bolt"
+            },
+            {
+              "syntax": "target.casting_target.buff.SPELL.up",
+              "returnType": "bool",
+              "description": "Target's cast target has buff."
+            },
+            {
+              "syntax": "target.casting_target.buff.SPELL.down",
+              "returnType": "bool",
+              "description": "Target's cast target missing buff."
+            },
+            {
+              "syntax": "target.casting_target.buff.SPELL.remains",
+              "returnType": "number",
+              "description": "Buff remaining on target's cast target."
+            },
+            {
+              "syntax": "target.casting_target.buff.SPELL.stack",
+              "returnType": "number",
+              "description": "Buff stacks on target's cast target."
+            },
+            {
+              "syntax": "target.casting_target.health.pct",
+              "returnType": "number",
+              "description": "Target's cast target health %."
+            },
+            {
+              "syntax": "target.casting_target.health.current",
+              "returnType": "number",
+              "description": "Target's cast target current HP."
+            },
+            {
+              "syntax": "target.casting_target.health.deficit",
+              "returnType": "number",
+              "description": "Target's cast target missing HP."
+            },
+            {
+              "syntax": "target.facing.player",
+              "returnType": "bool",
+              "description": "Target faces player (default +-90 deg; supports .N).",
+              "example": "target.facing.player.60"
+            },
+            {
+              "syntax": "target.incoming_cast.<tags>.up",
+              "returnType": "bool",
+              "description": "Target is casting a spell matching all tags.",
+              "example": "target.incoming_cast.kickable.up"
+            },
+            {
+              "syntax": "target.incoming_cast.<tags>.ready",
+              "returnType": "bool",
+              "description": "Target has a matching cast (alias for .up)."
+            },
+            {
+              "syntax": "target.incoming_cast.<tags>.down",
+              "returnType": "bool",
+              "description": "Target is NOT casting a matching spell."
+            },
+            {
+              "syntax": "target.incoming_cast.<tags>.remains",
+              "returnType": "number",
+              "description": "Seconds until target's matching cast finishes."
+            },
+            {
+              "syntax": "target.incoming_cast.player.<tags>.up",
+              "returnType": "bool",
+              "description": "Target is casting a matching spell at the player."
+            }
+          ]
         }
       ]
     },
@@ -2787,6 +3203,199 @@
               "returnType": "bool",
               "description": "Focus is casting or channeling SPELL (name or ID).",
               "example": "focus.casting.death_bolt"
+            }
+          ]
+        },
+        {
+          "name": "Buffs & Debuffs (Named)",
+          "expressions": [
+            {
+              "syntax": "focus.buff.SPELL.up",
+              "returnType": "bool",
+              "description": "Focus has buff."
+            },
+            {
+              "syntax": "focus.buff.SPELL.up.any",
+              "returnType": "bool",
+              "description": "Focus has buff from any source."
+            },
+            {
+              "syntax": "focus.buff.SPELL.down",
+              "returnType": "bool",
+              "description": "Focus does not have buff."
+            },
+            {
+              "syntax": "focus.buff.SPELL.remains",
+              "returnType": "number",
+              "description": "Focus buff time remaining."
+            },
+            {
+              "syntax": "focus.buff.SPELL.elapsed",
+              "returnType": "number",
+              "description": "Time since buff applied on focus."
+            },
+            {
+              "syntax": "focus.buff.SPELL.stack",
+              "returnType": "number",
+              "description": "Focus buff stack count."
+            },
+            {
+              "syntax": "focus.buff.remains(SPELL)",
+              "returnType": "number",
+              "description": "Focus buff remaining duration (function syntax).",
+              "example": "focus.buff.remains(renew)>0"
+            },
+            {
+              "syntax": "focus.buff.stacks(SPELL)",
+              "returnType": "number",
+              "description": "Focus buff stack count (function syntax)."
+            },
+            {
+              "syntax": "focus.buff.up(SPELL)",
+              "returnType": "bool",
+              "description": "Focus has buff (function syntax)."
+            },
+            {
+              "syntax": "focus.debuff.SPELL.up",
+              "returnType": "bool",
+              "description": "Focus has debuff."
+            },
+            {
+              "syntax": "focus.debuff.SPELL.down",
+              "returnType": "bool",
+              "description": "Focus does not have debuff."
+            },
+            {
+              "syntax": "focus.debuff.SPELL.remains",
+              "returnType": "number",
+              "description": "Focus debuff time remaining."
+            },
+            {
+              "syntax": "focus.debuff.SPELL.elapsed",
+              "returnType": "number",
+              "description": "Time since debuff applied on focus."
+            },
+            {
+              "syntax": "focus.debuff.SPELL.stack",
+              "returnType": "number",
+              "description": "Focus debuff stack count."
+            },
+            {
+              "syntax": "focus.debuff.remains(SPELL)",
+              "returnType": "number",
+              "description": "Focus debuff remaining duration (function syntax)."
+            },
+            {
+              "syntax": "focus.debuff.stacks(SPELL)",
+              "returnType": "number",
+              "description": "Focus debuff stack count (function syntax)."
+            },
+            {
+              "syntax": "focus.debuff.up(SPELL)",
+              "returnType": "bool",
+              "description": "Focus has debuff (function syntax)."
+            },
+            {
+              "syntax": "focus.purgeable.list",
+              "returnType": "bool",
+              "description": "Focus has purgeable buff with dispel_list filtering."
+            },
+            {
+              "syntax": "focus.purgeable.magic",
+              "returnType": "bool",
+              "description": "Focus has magic buff."
+            },
+            {
+              "syntax": "focus.purgeable.enrage",
+              "returnType": "bool",
+              "description": "Focus has enrage buff."
+            },
+            {
+              "syntax": "focus.casting.SPELL_NAME",
+              "returnType": "bool",
+              "description": "Focus is casting or channeling a specific spell by name or ID.",
+              "example": "focus.casting.shadow_bolt"
+            },
+            {
+              "syntax": "focus.facing.player",
+              "returnType": "bool",
+              "description": "Focus faces player (default +-90 deg; supports .N)."
+            },
+            {
+              "syntax": "focus.facing",
+              "returnType": "number",
+              "description": "Focus absolute yaw in radians (OM)."
+            },
+            {
+              "syntax": "focus.has_world_pos",
+              "returnType": "bool",
+              "description": "Focus has a readable world position."
+            },
+            {
+              "syntax": "focus.combat_reach",
+              "returnType": "number",
+              "description": "Combat reach in yards."
+            },
+            {
+              "syntax": "focus.in_melee",
+              "returnType": "bool",
+              "description": "Focus is in melee range (client melee test, size-invariant)."
+            },
+            {
+              "syntax": "focus.melee_gap",
+              "returnType": "number",
+              "description": "Yards still to close before focus is in melee; 0 once in melee."
+            },
+            {
+              "syntax": "focus.distance",
+              "returnType": "number",
+              "description": "Center-to-center distance to focus in yards."
+            },
+            {
+              "syntax": "focus.incoming_cast.<tags>.up",
+              "returnType": "bool",
+              "description": "Focus is casting a spell matching all tags.",
+              "example": "focus.incoming_cast.kickable.up"
+            },
+            {
+              "syntax": "focus.incoming_cast.<tags>.ready",
+              "returnType": "bool",
+              "description": "Focus has a matching cast."
+            },
+            {
+              "syntax": "focus.casting_target.buff.SPELL.up",
+              "returnType": "bool",
+              "description": "Focus's cast target has buff."
+            },
+            {
+              "syntax": "focus.casting_target.buff.SPELL.down",
+              "returnType": "bool",
+              "description": "Focus's cast target missing buff."
+            },
+            {
+              "syntax": "focus.casting_target.buff.SPELL.remains",
+              "returnType": "number",
+              "description": "Buff remaining on focus's cast target."
+            },
+            {
+              "syntax": "focus.casting_target.buff.SPELL.stack",
+              "returnType": "number",
+              "description": "Buff stacks on focus's cast target."
+            },
+            {
+              "syntax": "focus.casting_target.health.pct",
+              "returnType": "number",
+              "description": "Focus's cast target health %."
+            },
+            {
+              "syntax": "focus.casting_target.health.current",
+              "returnType": "number",
+              "description": "Focus's cast target current HP."
+            },
+            {
+              "syntax": "focus.casting_target.health.deficit",
+              "returnType": "number",
+              "description": "Focus's cast target missing HP."
             }
           ]
         }
@@ -3166,6 +3775,195 @@
               "description": "Mouseover is casting or channeling SPELL (name or ID)."
             }
           ]
+        },
+        {
+          "name": "Buffs & Debuffs (Named)",
+          "expressions": [
+            {
+              "syntax": "mouseover.buff.SPELL.up",
+              "returnType": "bool",
+              "description": "Mouseover has buff."
+            },
+            {
+              "syntax": "mouseover.buff.SPELL.up.any",
+              "returnType": "bool",
+              "description": "Mouseover has buff from any source."
+            },
+            {
+              "syntax": "mouseover.buff.SPELL.down",
+              "returnType": "bool",
+              "description": "Mouseover does not have buff."
+            },
+            {
+              "syntax": "mouseover.buff.SPELL.remains",
+              "returnType": "number",
+              "description": "Mouseover buff time remaining."
+            },
+            {
+              "syntax": "mouseover.buff.SPELL.elapsed",
+              "returnType": "number",
+              "description": "Time since buff applied on mouseover."
+            },
+            {
+              "syntax": "mouseover.buff.SPELL.stack",
+              "returnType": "number",
+              "description": "Mouseover buff stack count."
+            },
+            {
+              "syntax": "mouseover.buff.remains(SPELL)",
+              "returnType": "number",
+              "description": "Mouseover buff remaining duration (function syntax).",
+              "example": "mouseover.buff.remains(renew)>0"
+            },
+            {
+              "syntax": "mouseover.buff.stacks(SPELL)",
+              "returnType": "number",
+              "description": "Mouseover buff stack count (function syntax)."
+            },
+            {
+              "syntax": "mouseover.buff.up(SPELL)",
+              "returnType": "bool",
+              "description": "Mouseover has buff (function syntax)."
+            },
+            {
+              "syntax": "mouseover.debuff.SPELL.up",
+              "returnType": "bool",
+              "description": "Mouseover has debuff."
+            },
+            {
+              "syntax": "mouseover.debuff.SPELL.down",
+              "returnType": "bool",
+              "description": "Mouseover does not have debuff."
+            },
+            {
+              "syntax": "mouseover.debuff.SPELL.remains",
+              "returnType": "number",
+              "description": "Mouseover debuff time remaining."
+            },
+            {
+              "syntax": "mouseover.debuff.SPELL.elapsed",
+              "returnType": "number",
+              "description": "Time since debuff applied on mouseover."
+            },
+            {
+              "syntax": "mouseover.debuff.SPELL.stack",
+              "returnType": "number",
+              "description": "Mouseover debuff stack count."
+            },
+            {
+              "syntax": "mouseover.debuff.remains(SPELL)",
+              "returnType": "number",
+              "description": "Mouseover debuff remaining duration (function syntax).",
+              "example": "mouseover.debuff.remains(dot)<=0"
+            },
+            {
+              "syntax": "mouseover.debuff.stacks(SPELL)",
+              "returnType": "number",
+              "description": "Mouseover debuff stack count (function syntax)."
+            },
+            {
+              "syntax": "mouseover.debuff.up(SPELL)",
+              "returnType": "bool",
+              "description": "Mouseover has debuff (function syntax)."
+            },
+            {
+              "syntax": "mouseover.purgeable.list",
+              "returnType": "bool",
+              "description": "Mouseover has purgeable buff with dispel_list filtering."
+            },
+            {
+              "syntax": "mouseover.purgeable.magic",
+              "returnType": "bool",
+              "description": "Mouseover has magic buff."
+            },
+            {
+              "syntax": "mouseover.purgeable.enrage",
+              "returnType": "bool",
+              "description": "Mouseover has enrage buff."
+            },
+            {
+              "syntax": "mouseover.casting.SPELL_NAME",
+              "returnType": "bool",
+              "description": "Mouseover is casting or channeling a specific spell by name or ID.",
+              "example": "mouseover.casting.fear"
+            },
+            {
+              "syntax": "mouseover.facing.player",
+              "returnType": "bool",
+              "description": "Mouseover faces player (default +-90 deg; supports .N)."
+            },
+            {
+              "syntax": "mouseover.facing",
+              "returnType": "number",
+              "description": "Mouseover absolute yaw in radians (OM)."
+            },
+            {
+              "syntax": "mouseover.has_world_pos",
+              "returnType": "bool",
+              "description": "Mouseover has a readable world position."
+            },
+            {
+              "syntax": "mouseover.combat_reach",
+              "returnType": "number",
+              "description": "Combat reach in yards."
+            },
+            {
+              "syntax": "mouseover.in_melee",
+              "returnType": "bool",
+              "description": "Mouseover is in melee range (client melee test, size-invariant)."
+            },
+            {
+              "syntax": "mouseover.melee_gap",
+              "returnType": "number",
+              "description": "Yards still to close before mouseover is in melee; 0 once in melee."
+            },
+            {
+              "syntax": "mouseover.distance",
+              "returnType": "number",
+              "description": "Center-to-center distance to mouseover in yards."
+            },
+            {
+              "syntax": "mouseover.incoming_cast.<tags>.up",
+              "returnType": "bool",
+              "description": "Mouseover is casting a spell matching all tags.",
+              "example": "mouseover.incoming_cast.stunnable.up"
+            },
+            {
+              "syntax": "mouseover.casting_target.buff.SPELL.up",
+              "returnType": "bool",
+              "description": "Mouseover's cast target has buff."
+            },
+            {
+              "syntax": "mouseover.casting_target.buff.SPELL.down",
+              "returnType": "bool",
+              "description": "Mouseover's cast target missing buff."
+            },
+            {
+              "syntax": "mouseover.casting_target.buff.SPELL.remains",
+              "returnType": "number",
+              "description": "Buff remaining on mouseover's cast target."
+            },
+            {
+              "syntax": "mouseover.casting_target.buff.SPELL.stack",
+              "returnType": "number",
+              "description": "Buff stacks on mouseover's cast target."
+            },
+            {
+              "syntax": "mouseover.casting_target.health.pct",
+              "returnType": "number",
+              "description": "Mouseover's cast target health %."
+            },
+            {
+              "syntax": "mouseover.casting_target.health.current",
+              "returnType": "number",
+              "description": "Mouseover's cast target current HP."
+            },
+            {
+              "syntax": "mouseover.casting_target.health.deficit",
+              "returnType": "number",
+              "description": "Mouseover's cast target missing HP."
+            }
+          ]
         }
       ],
       "expressions": [
@@ -3407,6 +4205,39 @@
             }
           ]
         }
+      ],
+      "expressions": [
+        {
+          "syntax": "pet.facing.player",
+          "returnType": "bool",
+          "description": "Pet faces player (default +-90 deg; supports .N)."
+        },
+        {
+          "syntax": "pet.buff.remains(SPELL)",
+          "returnType": "number",
+          "description": "Pet buff remaining duration (function syntax).",
+          "example": "pet.buff.remains(frenzy)>0"
+        },
+        {
+          "syntax": "pet.buff.stacks(SPELL)",
+          "returnType": "number",
+          "description": "Pet buff stack count (function syntax)."
+        },
+        {
+          "syntax": "pet.debuff.remains(SPELL)",
+          "returnType": "number",
+          "description": "Pet debuff remaining duration (function syntax)."
+        },
+        {
+          "syntax": "pet.debuff.stacks(SPELL)",
+          "returnType": "number",
+          "description": "Pet debuff stack count (function syntax)."
+        },
+        {
+          "syntax": "pet.debuff.up(SPELL)",
+          "returnType": "bool",
+          "description": "Pet has debuff (function syntax)."
+        }
       ]
     },
     {
@@ -3626,6 +4457,26 @@
           "returnType": "number",
           "description": "TTD for boss1 unit frame (boss1-boss5).",
           "example": "boss1.time_to_die>30"
+        },
+        {
+          "syntax": "enemies.staying.8y",
+          "returnType": "number",
+          "description": "Enemies in 8y whose position 2s ahead is still in 8y of your spot (ground-AoE placement; .S.Ny sets the look-ahead)."
+        },
+        {
+          "syntax": "player.facing.focus",
+          "returnType": "bool",
+          "description": "Player faces focus (default +-90 deg; supports .N)."
+        },
+        {
+          "syntax": "player.facing.mouseover",
+          "returnType": "bool",
+          "description": "Player faces mouseover (default +-90 deg; supports .N)."
+        },
+        {
+          "syntax": "player.facing.pet",
+          "returnType": "bool",
+          "description": "Player faces pet (default +-90 deg; supports .N)."
         }
       ]
     },
@@ -3694,6 +4545,36 @@
               "returnType": "varies",
               "description": "tank1-tank3 accept the full unit property set: health.pct/current/max/deficit/effective.pct, absorb[.pct], heal_absorb[.pct], incoming_heals[.pct], dead, exists, range, distance, facing, facing.PEER[.N], moving, standing, moving.time, standing.time, speed, closing_speed, combat_reach, bounding_radius, has_world_pos, in_melee, melee_gap, tank, time_to_die, buff.SPELL.PROP, debuff.SPELL.PROP.",
               "example": "tank2.in_melee&tank2.health.effective.pct<40"
+            },
+            {
+              "syntax": "tank1.distance",
+              "returnType": "number",
+              "description": "CENTER distance to tank1 in yards."
+            },
+            {
+              "syntax": "tank1.in_melee",
+              "returnType": "bool",
+              "description": "Tank1 is in your melee range (client melee test)."
+            },
+            {
+              "syntax": "tank2.distance",
+              "returnType": "number",
+              "description": "CENTER distance to tank2 in yards."
+            },
+            {
+              "syntax": "tank2.in_melee",
+              "returnType": "bool",
+              "description": "Tank2 is in your melee range (client melee test)."
+            },
+            {
+              "syntax": "tank3.distance",
+              "returnType": "number",
+              "description": "CENTER distance to tank3 in yards."
+            },
+            {
+              "syntax": "tank3.in_melee",
+              "returnType": "bool",
+              "description": "Tank3 is in your melee range (client melee test)."
             }
           ]
         },
@@ -3723,6 +4604,21 @@
               "returnType": "number",
               "description": "Tank1 missing health.",
               "example": "tank1.health.deficit>100000"
+            },
+            {
+              "syntax": "tank1.health.effective.pct",
+              "returnType": "number",
+              "description": "Tank1 effective healable health %."
+            },
+            {
+              "syntax": "tank2.health.effective.pct",
+              "returnType": "number",
+              "description": "Tank2 effective healable health %."
+            },
+            {
+              "syntax": "tank3.health.effective.pct",
+              "returnType": "number",
+              "description": "Tank3 effective healable health %."
             }
           ]
         },
@@ -4376,6 +5272,36 @@
               "returnType": "number",
               "description": "Debuff seconds remaining.",
               "example": "cycle.debuff.shadow_word_pain.remains"
+            },
+            {
+              "syntax": "cycle.buff.SPELL.elapsed",
+              "returnType": "number",
+              "description": "Time since buff applied on cycle member."
+            },
+            {
+              "syntax": "cycle.buff.SPELL.mine",
+              "returnType": "bool",
+              "description": "Cycle member has your buff (player-applied)."
+            },
+            {
+              "syntax": "cycle.debuff.SPELL.down",
+              "returnType": "bool",
+              "description": "Cycle member missing debuff."
+            },
+            {
+              "syntax": "cycle.debuff.SPELL.elapsed",
+              "returnType": "number",
+              "description": "Time since debuff applied on cycle member."
+            },
+            {
+              "syntax": "cycle.debuff.SPELL.elapsed.any",
+              "returnType": "number",
+              "description": "Time since debuff applied (any source)."
+            },
+            {
+              "syntax": "cycle.debuff.SPELL.stack",
+              "returnType": "number",
+              "description": "Debuff stacks on cycle member."
             }
           ]
         },
@@ -4508,6 +5434,46 @@
               "returnType": "number",
               "description": "Lowest HP member TTD.",
               "example": "group.lowest.time_to_die>5"
+            },
+            {
+              "syntax": "group.tanks.lowest.health.current",
+              "returnType": "number",
+              "description": "Lowest tank current HP."
+            },
+            {
+              "syntax": "group.tanks.lowest.health.deficit",
+              "returnType": "number",
+              "description": "Lowest tank missing HP."
+            },
+            {
+              "syntax": "group.healers.lowest.health.current",
+              "returnType": "number",
+              "description": "Lowest healer current HP."
+            },
+            {
+              "syntax": "group.healers.lowest.health.deficit",
+              "returnType": "number",
+              "description": "Lowest healer missing HP."
+            },
+            {
+              "syntax": "group.healers.lowest.range",
+              "returnType": "number",
+              "description": "Range to lowest healer."
+            },
+            {
+              "syntax": "group.dps.lowest.health.current",
+              "returnType": "number",
+              "description": "Lowest DPS current HP."
+            },
+            {
+              "syntax": "group.dps.lowest.health.deficit",
+              "returnType": "number",
+              "description": "Lowest DPS missing HP."
+            },
+            {
+              "syntax": "group.dps.lowest.range",
+              "returnType": "number",
+              "description": "Range to lowest DPS."
             }
           ]
         },
@@ -4820,6 +5786,11 @@
           "returnType": "number",
           "description": "Same property, but also counts enemies that are not engaged with you or your group. Needed for NPCs that never enter combat (shield generators, neutral objective adds).",
           "example": "active_npc.260906.up.any"
+        },
+        {
+          "syntax": "nameplates.npc.NPC_ID.up",
+          "returnType": "bool",
+          "description": "Alias for active_npc.NPC_ID.up - the whole nameplates.npc.* namespace mirrors active_npc.*."
         }
       ],
       "notes": "nameplates.npc.NPC_ID.PROPERTY is an exact alias. 'Active' means valid, alive, enemy, and in combat with you or your group (the same gate active_enemies and fight_remains use), so a patrolling pack or the next room never registers — add .any to drop that gate. The NPC-ignore-count list is NOT applied: naming an exact NPC ID always counts it."
@@ -4960,6 +5931,11 @@
               "returnType": "bool",
               "description": "Like .up while predicting (1); when the real debuff is up, returns its react value (stacks, min 1).",
               "example": "pred.debuff.rip.react"
+            },
+            {
+              "syntax": "pred.debuff.SPELL.ticking",
+              "returnType": "bool",
+              "description": "Alias for pred.debuff.SPELL.up."
             }
           ]
         },
@@ -5007,6 +5983,31 @@
               "returnType": "number",
               "description": "Debuff remaining on cycle member; returns 9999 during prediction.",
               "example": "pred.cycle.debuff.shadow_word_pain.remains>0"
+            },
+            {
+              "syntax": "pred.cycle.buff.SPELL.react",
+              "returnType": "bool",
+              "description": "Alias for pred.cycle.buff.SPELL.up."
+            },
+            {
+              "syntax": "pred.cycle.buff.SPELL.ticking",
+              "returnType": "bool",
+              "description": "Alias for pred.cycle.buff.SPELL.up."
+            },
+            {
+              "syntax": "pred.cycle.debuff.SPELL.refreshable",
+              "returnType": "bool",
+              "description": "Cycle member's debuff within pandemic window; returns false (0) during prediction."
+            },
+            {
+              "syntax": "pred.cycle.debuff.SPELL.react",
+              "returnType": "bool",
+              "description": "Alias for pred.cycle.debuff.SPELL.up."
+            },
+            {
+              "syntax": "pred.cycle.debuff.SPELL.ticking",
+              "returnType": "bool",
+              "description": "Alias for pred.cycle.debuff.SPELL.up."
             }
           ]
         }
@@ -5197,6 +6198,26 @@
               "returnType": "number",
               "description": "Seconds left on that trinket buff, 0 when it is down. Use with a `>0` guard, since 0 also means 'no window'. Same for trinket_2.",
               "example": "trinket_1.buff.remains>0&trinket_1.buff.remains<=3"
+            },
+            {
+              "syntax": "trinket_2.has_buff",
+              "returnType": "bool",
+              "description": "1 while the buff from trinket 2 (trinket_buff: in _trinkets.yaml) is on the player. 0 if unlisted/empty."
+            },
+            {
+              "syntax": "trinket_2.buff.up",
+              "returnType": "bool",
+              "description": "Alias of trinket_2.has_buff."
+            },
+            {
+              "syntax": "trinket_2.buff.remains",
+              "returnType": "number",
+              "description": "Seconds left on trinket 2's trinket_buff (0 when down)."
+            },
+            {
+              "syntax": "trinket_1.buff.up",
+              "returnType": "bool",
+              "description": "Alias of trinket_1.has_buff."
             }
           ]
         },
@@ -5742,6 +6763,150 @@
               "returnType": "number",
               "description": "Seconds until the biggest predicted hit lands (0 for an active DoT).",
               "example": "if=incoming.remains<0.5"
+            },
+            {
+              "syntax": "incoming_cast.up",
+              "returnType": "bool",
+              "description": "Any enemy casting a listed spell from _casts.yaml.",
+              "example": "incoming_cast.up"
+            },
+            {
+              "syntax": "incoming_cast.down",
+              "returnType": "bool",
+              "description": "No enemy casting a listed spell.",
+              "example": "incoming_cast.down"
+            },
+            {
+              "syntax": "incoming_cast.remains",
+              "returnType": "number",
+              "description": "Seconds until soonest incoming cast lands (min).",
+              "example": "incoming_cast.remains>0.5"
+            },
+            {
+              "syntax": "incoming_cast.<tags>.up",
+              "returnType": "bool",
+              "description": "Any enemy casting a spell matching all tags.",
+              "example": "incoming_cast.aoe.up"
+            },
+            {
+              "syntax": "incoming_cast.<tags>.remains",
+              "returnType": "number",
+              "description": "Seconds until soonest tag-filtered incoming cast lands.",
+              "example": "incoming_cast.magic.remains"
+            },
+            {
+              "syntax": "incoming_cast.<tags>.count",
+              "returnType": "number",
+              "description": "Count of enemies casting matching spells (40y).",
+              "example": "incoming_cast.kickable.count>=2"
+            },
+            {
+              "syntax": "incoming_cast.player.<tags>.up",
+              "returnType": "bool",
+              "description": "Any enemy casting a matching spell targeting the player.",
+              "example": "incoming_cast.player.magic.up"
+            },
+            {
+              "syntax": "incoming_cast.player.<tags>.remains",
+              "returnType": "number",
+              "description": "Min remaining seconds of matching casts targeting player.",
+              "example": "incoming_cast.player.reflectable.remains<0.5"
+            },
+            {
+              "syntax": "incoming_cast.Xy.<tags>.up",
+              "returnType": "bool",
+              "description": "Any enemy within X yards casting a matching spell (5y, 8y, 10y, 15y, 20y, 25y, 30y, 40y).",
+              "example": "incoming_cast.10y.kickable.up"
+            },
+            {
+              "syntax": "incoming_cast.Xy.<tags>.count",
+              "returnType": "number",
+              "description": "Count of enemies within X yards casting matching spells.",
+              "example": "incoming_cast.10y.kickable.count"
+            },
+            {
+              "syntax": "incoming_cast.Xy.<tags>.remains",
+              "returnType": "number",
+              "description": "Min remaining seconds of matching casts within X yards.",
+              "example": "incoming_cast.8y.stunnable.remains"
+            },
+            {
+              "syntax": "target.incoming_cast.<tags>.up",
+              "returnType": "bool",
+              "description": "Target is casting a spell matching all tags.",
+              "example": "target.incoming_cast.kickable.up"
+            },
+            {
+              "syntax": "target.incoming_cast.<tags>.ready",
+              "returnType": "bool",
+              "description": "Target has a matching cast (alias for .up).",
+              "example": "target.incoming_cast.kickable.ready"
+            },
+            {
+              "syntax": "target.incoming_cast.<tags>.down",
+              "returnType": "bool",
+              "description": "Target is NOT casting a matching spell.",
+              "example": "target.incoming_cast.kickable.down"
+            },
+            {
+              "syntax": "target.incoming_cast.<tags>.remains",
+              "returnType": "number",
+              "description": "Seconds until target's matching cast finishes.",
+              "example": "target.incoming_cast.kickable.remains>0.5"
+            },
+            {
+              "syntax": "target.incoming_cast.player.<tags>.up",
+              "returnType": "bool",
+              "description": "Target is casting a matching spell at the player.",
+              "example": "target.incoming_cast.player.kickable.up"
+            },
+            {
+              "syntax": "focus.incoming_cast.<tags>.up",
+              "returnType": "bool",
+              "description": "Focus is casting a spell matching all tags.",
+              "example": "focus.incoming_cast.kickable.up"
+            },
+            {
+              "syntax": "focus.incoming_cast.<tags>.ready",
+              "returnType": "bool",
+              "description": "Focus has a matching cast.",
+              "example": "focus.incoming_cast.kickable.ready"
+            },
+            {
+              "syntax": "mouseover.incoming_cast.<tags>.up",
+              "returnType": "bool",
+              "description": "Mouseover is casting a spell matching all tags.",
+              "example": "mouseover.incoming_cast.stunnable.up"
+            },
+            {
+              "syntax": "incoming.<spell_id>.pct",
+              "returnType": "number",
+              "description": "Predicted hit from one spell id as % of effective health (per-spell form also sees avoid-tagged casts).",
+              "example": "incoming.450289.pct>=80"
+            },
+            {
+              "syntax": "incoming.<spell_id>.amount",
+              "returnType": "number",
+              "description": "Key-scaled damage of one spell's predicted hit, after passive mitigation.",
+              "example": "incoming.450289.amount>800000"
+            },
+            {
+              "syntax": "incoming.<spell_id>.remains",
+              "returnType": "number",
+              "description": "Seconds until one spell id's predicted hit lands.",
+              "example": "incoming.450289.remains<1"
+            },
+            {
+              "syntax": "incoming.<spell_id>.mitigated.pct",
+              "returnType": "number",
+              "description": "One spell id's predicted hit as % of effective health after my active defensives.",
+              "example": "incoming.450289.mitigated.pct>=80"
+            },
+            {
+              "syntax": "incoming.<spell_id>.mitigated.amount",
+              "returnType": "number",
+              "description": "One spell's predicted hit damage after my active defensives.",
+              "example": "incoming.450289.mitigated.amount>500000"
             }
           ]
         },
@@ -5830,6 +6995,18 @@
           "returnType": "bool",
           "description": "Dropdown: selected option's value (numeric X) or label equals X. Multiselect: any selected option matches X. Unit select: X (or the token cycle.name / player.name / target.name / focus.name / mouseover.name) is among the selected names. Quotes around X are optional. 0 for other widget types.",
           "example": "config.auto_combat.has(1)"
+        },
+        {
+          "syntax": "config.SETTING.has(VALUE)",
+          "returnType": "number",
+          "description": "For multi_select: returns 1 if VALUE (number or label string) is selected, 0 otherwise.",
+          "example": "config.burst_tools.has(1)"
+        },
+        {
+          "syntax": "config.SETTING.has(LABEL)",
+          "returnType": "number",
+          "description": "For multi_select: returns 1 if option with LABEL is selected, 0 otherwise.",
+          "example": "config.burst_tools.has(Potion)"
         }
       ],
       "notes": "There is no cfg. prefix - cfg.X is an unknown expression and reads 0. Bare names of declared variables are rewritten to var.NAME automatically. settings.NAME.has(X) is not supported; use config.NAME.has(X)."
