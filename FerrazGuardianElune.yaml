@@ -58,18 +58,20 @@ config:
 
   survival_instincts_dmg_pct:
     section: "Defensives Prediction Damage"
-    label: "Survival Instincts (Incoming Dmg%)"
+    label: "Survival Instincts - Predicted HP % Remaining"
     type: slider
-    min: 0
-    max: 100
-    default: 55
-  barkskin_dmg_pct:
-    section: "Defensives Prediction Damage"
-    label: "Barkskin (Incoming Dmg%)"
-    type: slider
-    min: 0
+    min: 10
     max: 100
     default: 40
+    description: "Use Survival Instincts when your current effective health minus the biggest predicted incoming hit (after active defensives) would put you at or below this HP%."
+  barkskin_dmg_pct:
+    section: "Defensives Prediction Damage"
+    label: "Barkskin - Predicted HP % Remaining"
+    type: slider
+    min: 10
+    max: 100
+    default: 40
+    description: "Use Barkskin when your current effective health minus the biggest predicted incoming hit would put you at or below this HP%."
   ironfur_dmg_pct:
     section: "Defensives Prediction Damage"
     label: "Ironfur over Maul (Incoming Dmg%)"
@@ -316,8 +318,8 @@ lists:
     - variable,name=tank_buster_casting,value=encounter.next_tank.up&encounter.next_tank.remains<=1
 
   defensives:
-    - barkskin,name="Barkskin (Predicted Damage)",range_check=none,if=incoming.mitigated.pct>=config.barkskin_dmg_pct
-    - survival_instincts,name="Survival Instincts (Predicted Damage)",range_check=none,if=incoming.mitigated.pct>=config.survival_instincts_dmg_pct
+    - barkskin,name="Barkskin (Predicted Damage)",range_check=none,if=(health.effective.pct-incoming.mitigated.pct)<=config.barkskin_dmg_pct
+    - survival_instincts,name="Survival Instincts (Predicted Damage)",range_check=none,if=(health.effective.pct-incoming.mitigated.pct)<=config.survival_instincts_dmg_pct
     - survival_instincts,name="Survival Instincts (HP)",range_check=none,if=health.pct<=config.survival_instincts_hp_pct
     - frenzied_regeneration,range_check=none,if=health.effective.pct<=config.frenzied_regeneration_hp_pct&buff.frenzied_regeneration.down
     - barkskin,name="Barkskin (HP)",range_check=none,if=health.pct<=config.barkskin_hp_pct

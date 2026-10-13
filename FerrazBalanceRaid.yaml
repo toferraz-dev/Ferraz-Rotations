@@ -22,12 +22,13 @@ config:
     text: "CYGAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWoMbNjxMDwsMzMzMYYGjZWmhxMWYZmlZGjZ2wAgx2yMDGz2IwEAAAgFzMzMD2MMGzAAYmBLDA"
 
   barkskin_dmg_pct:
-    label: "Barkskin (Incoming Dmg%)"
+    label: "Barkskin - Predicted HP % Remaining"
     section: "Defensives"
     type: slider
-    min: 0
+    min: 10
     max: 100
     default: 40
+    description: "Use Barkskin when your current effective health minus the biggest predicted incoming hit (after active defensives) would put you at or below this HP%."
 
   barkskin_hp:
     label: "Barkskin HP%"
@@ -300,7 +301,7 @@ lists:
     - combat_potion,name="Combat Potion",off_gcd=true,ignore_queue=true,delay=150,if=config.use_potion&player.combat&combat_potion.ready&(var.cd_active|fight_remains<=30)
 
   defensives:
-    - barkskin,range_check=none,name="Barkskin (predicted)",if=incoming.mitigated.pct>=config.barkskin_dmg_pct
+    - barkskin,range_check=none,name="Barkskin (predicted)",if=(health.effective.pct-incoming.mitigated.pct)<=config.barkskin_dmg_pct
 
     - bear_form,name="Panic Bear Form",if=!buff.bear_form.up&((health.pct<=config.frenzied_regen_hp&cooldown.frenzied_regeneration.ready&buff.frenzied_regeneration.down)|(config.hotw_bear_defensive&health.effective.pct<=config.hotw_bear_hp&(cooldown.heart_of_the_wild.ready|buff.heart_of_the_wild.up)))
 

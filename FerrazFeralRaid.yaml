@@ -65,19 +65,21 @@ config:
 
   survival_instincts_dmg_pct:
     section: "Defensives Prediction Damage"
-    label: "Survival Instincts (Incoming Dmg%)"
+    label: "Survival Instincts - Predicted HP % Remaining"
     type: slider
-    min: 0
+    min: 10
     max: 100
-    default: 55
+    default: 40
+    description: "Use Survival Instincts when your current effective health minus the biggest predicted incoming hit (after active defensives) would put you at or below this HP%."
 
   barkskin_dmg_pct:
     section: "Defensives Prediction Damage"
-    label: "Barkskin (Incoming Dmg%)"
+    label: "Barkskin - Predicted HP % Remaining"
     type: slider
-    min: 0
+    min: 10
     max: 100
     default: 40
+    description: "Use Barkskin when your current effective health minus the biggest predicted incoming hit would put you at or below this HP%."
 
   use_trinket_1:
     label: "Auto Trinket 1"
@@ -264,8 +266,8 @@ lists:
     - target_enemy,name="Swap Off Storm Blessed",delay=500,off_gcd=true,if=target.buff.1289229.up&enemies.combat.40y>=2
 
   defensives:
-    - barkskin,name="Barkskin (Predicted Damage)",off_gcd=true,ignore_queue=true,range_check=none,if=incoming.pct>=config.barkskin_dmg_pct
-    - survival_instincts,name="Survival Instincts (Predicted Damage)",off_gcd=true,ignore_queue=true,range_check=none,if=incoming.pct>=config.survival_instincts_dmg_pct&incoming.mitigated.pct>=config.survival_instincts_dmg_pct
+    - barkskin,name="Barkskin (Predicted Damage)",off_gcd=true,ignore_queue=true,range_check=none,if=(health.effective.pct-incoming.pct)<=config.barkskin_dmg_pct
+    - survival_instincts,name="Survival Instincts (Predicted Damage)",off_gcd=true,ignore_queue=true,range_check=none,if=(health.effective.pct-incoming.mitigated.pct)<=config.survival_instincts_dmg_pct
     - survival_instincts,name="Survival Instincts (HP)",off_gcd=true,ignore_queue=true,range_check=none,if=health.pct<=config.survival_instincts_hp_pct
     - barkskin,name="Barkskin (HP)",off_gcd=true,ignore_queue=true,range_check=none,if=health.pct<=config.barkskin_hp_pct
 
