@@ -1,5 +1,5 @@
 
-version: "4.0.0"
+version: "4.1.0"
 author: Ferraz
 patch: "12.1"
 spec: 103
@@ -13,7 +13,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-10-06 | Patch: 12.1 | Version: 4.0.0"
+    text: "Last update: 2026-10-15 | Patch: 12.1 | Version: 4.1.0"
 
   recommended_talents:
     section: "Talents"
@@ -229,7 +229,7 @@ variables:
   burst_now: var.bs_inc|var.bs_inc_cd_remains<=5
   trinket_sync_ok: "!config.trinkets_burst_only|var.burst_now|fight_remains<25"
 
-  druid_shapeshift_root: player.rooted
+  druid_shapeshift_root: player.rooted|debuff_list.freedom.up
 
 lists:
   engine:
