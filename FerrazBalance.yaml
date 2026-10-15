@@ -1,5 +1,5 @@
 
-version: "11.1.0"
+version: "11.2.0"
 author: Ferraz
 patch: "12.1"
 spec: 102
@@ -17,7 +17,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-10-15 | Patch: 12.1 | Version: 11.1.0"
+    text: "Last update: 2026-10-15 | Patch: 12.1 | Version: 11.2.0"
 
   recommended_talents:
     section: "Talents"
