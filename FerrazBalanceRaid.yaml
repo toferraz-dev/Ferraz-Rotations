@@ -1,5 +1,5 @@
 
-version: "6.0.0"
+version: "6.1.0"
 author: Ferraz
 patch: "12.1"
 spec: 102
@@ -13,7 +13,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-10-06 | Patch: 12.1 | Version: 6.0.0"
+    text: "Last update: 2026-10-15 | Patch: 12.1 | Version: 6.1.0"
 
   recommended_talents:
     section: "Talents"
@@ -243,7 +243,7 @@ variables:
 
   bear_defensive_active: health.pct<=config.frenzied_regen_hp|(config.hotw_bear_defensive&health.effective.pct<=config.hotw_bear_hp&(cooldown.heart_of_the_wild.ready|buff.heart_of_the_wild.up))
 
-  druid_shapeshift_root: player.rooted
+  druid_shapeshift_root: player.rooted|debuff_list.freedom.up
 
 lists:
   emergency:

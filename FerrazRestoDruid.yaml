@@ -1,4 +1,4 @@
-version: "25.0.0"
+version: "25.1.0"
 author: Ferraz
 patch: "12.1"
 spec: 105
@@ -17,7 +17,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-10-14 | Patch: 12.1 | Version: 25.0.0"
+    text: "Last update: 2026-10-15 | Patch: 12.1 | Version: 25.1.0"
 
 
   recommended_talents:
@@ -480,7 +480,7 @@ variables:
   has_soul: buff.soul_of_the_forest.up
   use_stampeding_roar: moving.time>=config.stampeding_roar_movement_time&buff.stampeding_roar.down&((config.stampeding_roar_usage=1&player.combat)|(config.stampeding_roar_usage=2&!player.combat)|(config.stampeding_roar_usage=3))
 
-  druid_shapeshift_root: player.rooted
+  druid_shapeshift_root: player.rooted|debuff_list.freedom.up
 
 lists:
   emergency:
@@ -497,7 +497,8 @@ lists:
   out_of_combat:
     - mark_of_the_wild,range_check=none,if=(buff.mark_of_the_wild.down.any|action.mark_of_the_wild.overlayed)&lastcast.mark_of_the_wild>=10
     - symbiotic_relationship,cycle=tanks,if=cycle.buff.symbiotic_relationship.down.any
-    - lifebloom,name="OOC Lifebloom (Tank)",cycle=tanks,if=(player.inraid|player.indungeon)&(cycle.buff.lifebloom.down|cycle.buff.lifebloom.refreshable)
+    - lifebloom.player,name="OOC Self Lifebloom (Everbloom)",range_check=none,if=config.lifebloom_target=1&talent.everbloom&(buff.lifebloom.down|buff.lifebloom.refreshable)
+    - lifebloom,name="OOC Lifebloom (Tank)",cycle=tanks,if=config.lifebloom_target=2&(player.inraid|player.indungeon)&(cycle.buff.lifebloom.down|cycle.buff.lifebloom.refreshable)
     - 774,name="OOC Rejuvenation",cycle=members,if=(player.inraid|player.indungeon)&cycle.health.effective.pct<config.ooc_heal_hp_pct&cycle.buff.rejuvenation.refreshable
     - regrowth,name="OOC Regrowth",cycle=members,if=(player.inraid|player.indungeon)&cycle.health.effective.pct<config.ooc_heal_hp_pct&pred.cycle.buff.regrowth.refreshable
     - call_action_list,name=abundance_maintenance
@@ -602,7 +603,8 @@ lists:
     - starfire,name="Starfire Filler"
 
   moving:
-    - lifebloom,name="Lifebloom Tank (Moving)",cycle=tanks,if=cycle.buff.lifebloom.down|cycle.buff.lifebloom.refreshable
+    - lifebloom.player,name="Self Lifebloom (Everbloom, Moving)",range_check=none,if=config.lifebloom_target=1&talent.everbloom&(buff.lifebloom.down|buff.lifebloom.remains<4.5)
+    - lifebloom,name="Lifebloom Tank (Moving)",cycle=tanks,if=config.lifebloom_target=2&(cycle.buff.lifebloom.down|cycle.buff.lifebloom.refreshable)
     - 774,name="Rejuvenation (Moving)",cycle=members,if=cycle.buff.rejuvenation.refreshable&cycle.health.effective.pct<config.rejuvenation_threshold
     - 774,name="Germination (Moving)",cycle=members,if=talent.germination&cycle.buff.rejuvenation.up&(cycle.buff.rejuvenation_germination.down|cycle.buff.rejuvenation_germination.refreshable)&cycle.health.effective.pct<config.rejuvenation_threshold
     - call_action_list,name=abundance_maintenance,if=!var.can_catweave

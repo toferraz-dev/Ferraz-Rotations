@@ -1,5 +1,5 @@
 
-version: "7.0.0"
+version: "7.1.0"
 author: Ferraz
 patch: "12.1"
 spec: 103
@@ -13,7 +13,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-10-06 | Patch: 12.1 | Version: 7.0.0"
+    text: "Last update: 2026-10-15 | Patch: 12.1 | Version: 7.1.0"
 
   recommended_talents:
     section: "Talents"
@@ -304,7 +304,7 @@ variables:
 
   rip_preempt: "enemies.combat.8y=1&combo_points>=5&dot.rip.up&(dot.rip.refreshable&(buff.tigers_fury.up|dot.rip.remains<cooldown.tigers_fury.remains)|buff.tigers_fury.up&!var.rip_tf|buff.tigers_fury.up&buff.tigers_fury.remains<2)"
 
-  druid_shapeshift_root: player.rooted
+  druid_shapeshift_root: player.rooted|debuff_list.freedom.up
 
 lists:
   engine:
