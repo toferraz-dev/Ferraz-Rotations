@@ -1,4 +1,4 @@
-version: "25.1.0"
+version: "25.2.0"
 author: Ferraz
 patch: "12.1"
 spec: 105
@@ -17,7 +17,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-10-15 | Patch: 12.1 | Version: 25.1.0"
+    text: "Last update: 2026-10-15 | Patch: 12.1 | Version: 25.2.0"
 
 
   recommended_talents:
@@ -652,8 +652,8 @@ lists:
     - target_enemy,name="Swap Off Storm Blessed",delay=500,off_gcd=true,if=target.buff.1289229.up&enemies.combat.40y>=2
 
   main:
-    - bear_form,name="Root Cleanse (to Bear)",line_cd=8,if=config.root_cleanse&var.druid_shapeshift_root&!buff.bear_form.up&!buff.incarnation_tree_of_life.up
-    - cancel_form,name="Root Cleanse (from Bear)",line_cd=8,if=config.root_cleanse&var.druid_shapeshift_root&buff.bear_form.up&!buff.incarnation_tree_of_life.up
+    - bear_form,name="Root Cleanse (to Bear)",line_cd=8,if=config.root_cleanse&var.druid_shapeshift_root&!buff.bear_form.up
+    - cancel_form,name="Root Cleanse (from Bear)",line_cd=8,if=config.root_cleanse&var.druid_shapeshift_root&buff.bear_form.up
 
     - call_action_list,name=emergency,if=player.combat&(player.casting|player.channeling)&health.effective.pct<=config.emergency_hp
 
