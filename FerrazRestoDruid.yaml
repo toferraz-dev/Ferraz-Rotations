@@ -1,4 +1,4 @@
-version: "25.2.0"
+version: "25.3.0"
 author: Ferraz
 patch: "12.1"
 spec: 105
@@ -17,7 +17,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-10-15 | Patch: 12.1 | Version: 25.2.0"
+    text: "Last update: 2026-10-15 | Patch: 12.1 | Version: 25.3.0"
 
 
   recommended_talents:
@@ -50,7 +50,7 @@ config:
         value: 2
       - label: "Self"
         value: 1
-    default: 2
+    default: 1
 
   ooc_heal_hp_pct:
     label: "OOC Heal Below HP% (effective)"
@@ -155,7 +155,7 @@ config:
     type: slider
     min: 25
     max: 99
-    default: 95
+    default: 90
 
   wild_growth_threshold_tank:
     label: "Wild Growth HP % Tank (effective)"
@@ -221,7 +221,7 @@ config:
     type: slider
     min: 25
     max: 99
-    default: 75
+    default: 70
     description: "Use Ironbark when the target is below this health. HP% only - no incoming-damage form exists for a unit other than the player, so unlike Barkskin, Ironbark cannot react before the hit lands."
 
   frenzied_regen_threshold:
@@ -230,7 +230,7 @@ config:
     type: slider
     min: 25
     max: 99
-    default: 35
+    default: 25
 
 
   ironbark_target:
@@ -250,7 +250,7 @@ config:
     type: slider
     min: 0
     max: 100
-    default: 30
+    default: 40
     description: "Health below which defensives and consumables are allowed to fire while you are casting. The rotation normally does nothing at all mid-cast, so without this a hardcast swallows Barkskin, the healthstone and the health potion until it finishes. Set to 0 to go back to that."
 
   emergency_stop_casting:
@@ -359,7 +359,7 @@ config:
     label: "Auto Prowl (Stealth)"
     section: "Utility"
     type: checkbox
-    default: true
+    default: false
 
   innervate_threshold:
     label: "Innervate Mana %"
@@ -453,7 +453,7 @@ config:
     type: slider
     min: 0
     max: 100
-    default: 25
+    default: 35
 
   mana_potion_pct:
     label: "Mana Potion Mana%"
