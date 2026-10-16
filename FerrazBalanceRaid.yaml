@@ -1,5 +1,5 @@
 
-version: "6.2.0"
+version: "7.0.0"
 author: Ferraz
 patch: "12.1"
 spec: 102
@@ -13,7 +13,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-10-15 | Patch: 12.1 | Version: 6.2.0"
+    text: "Last update: 2026-10-15 | Patch: 12.1 | Version: 7.0.0"
 
   recommended_talents:
     section: "Talents"
@@ -348,7 +348,7 @@ lists:
     - fury_of_elune
     - force_of_nature,if=var.cd_active|cooldown.incarnation_chosen_of_elune.remains>30
 
-    - starfall,if=enemies.combat.40y>=2&(buff.starweavers_warp.up|buff.touch_the_cosmos.react)
+    - starfall,if=buff.starweavers_warp.up|buff.touch_the_cosmos.react
     - starsurge,name="Starsurge (Proc or AP Dump)",if=buff.starweavers_weft.up|buff.touch_the_cosmos.react
 
     - starsurge,name="Starsurge (Eclipse Down)",if=!var.eclipse_down&astral_power>=50&enemies.combat.40y<=1
