@@ -386,7 +386,7 @@ lists:
     - fury_of_elune
     - force_of_nature
     - incarnation_chosen_of_elune,global_delay=500,if=!var.cd_active
-    - starfall,if=enemies.combat.40y>1&(buff.touch_the_cosmos.react|astral_power>80)
+    - starfall,if=buff.touch_the_cosmos.react|astral_power>80
     - starsurge,name="Starsurge (Proc or AP Dump)",if=buff.touch_the_cosmos.react|astral_power>80
     - starfire
 
