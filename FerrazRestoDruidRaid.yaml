@@ -1,5 +1,5 @@
 
-version: "18.3.0"
+version: "18.5.0"
 author: Ferraz
 patch: "12.1"
 spec: 105
@@ -14,7 +14,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-10-20 | Patch: 12.1 | Version: 18.3.0"
+    text: "Last update: 2026-10-20 | Patch: 12.1 | Version: 18.5.0"
 
 
   recommended_talents:
@@ -127,7 +127,7 @@ config:
     type: slider
     min: 25
     max: 99
-    default: 95
+    default: 80
 
 
   raid_convoke_threshold:
@@ -518,8 +518,8 @@ lists:
 
     - wild_growth,name="Wild Growth",range_check=none,if=group.count(cycle.health.effective.pct<config.raid_wild_growth_threshold&cycle.range<=40)>=config.raid_wild_growth_members
     - regrowth,name="Clearcasting Regrowth",cycle=members,cycle_order=health.pct,if=(player.combat&buff.clearcasting.up&cycle.health.effective.pct<99)&cycle.range<=40
-    - 774,name="Rejuvenation",cycle=members,cycle_order=buff.rejuvenation.remains,if=(cycle.buff.rejuvenation.remains<1.5&cycle.health.effective.pct<config.raid_rejuvenation_threshold)&cycle.range<=40
-    - 774,name="Germination",cycle=members,cycle_order=health.pct,if=(talent.germination&cycle.buff.rejuvenation.up&(cycle.buff.rejuvenation_germination.down|cycle.buff.rejuvenation_germination.remains<1.5)&cycle.health.effective.pct<config.raid_rejuvenation_threshold)&cycle.range<=40
+    - 774,name="Rejuvenation",cycle=members,cycle_order=buff.rejuvenation.remains,if=(cycle.buff.rejuvenation.remains<1.5&cycle.health.effective.pct<config.raid_rejuvenation_threshold&!(buff.abundance.up&buff.abundance.remains>3))&cycle.range<=40
+    - 774,name="Germination",cycle=members,cycle_order=health.pct,if=(talent.germination&cycle.buff.rejuvenation.up&(cycle.buff.rejuvenation_germination.down|cycle.buff.rejuvenation_germination.remains<1.5)&cycle.health.effective.pct<config.raid_rejuvenation_threshold&!(buff.abundance.up&buff.abundance.remains>3))&cycle.range<=40
     - regrowth,name="Regrowth",cycle=members,cycle_order=health.pct,if=(cycle.health.effective.pct<config.raid_regrowth_threshold)&cycle.range<=40
 
   utility:
@@ -539,7 +539,7 @@ lists:
     - lifebloom,name="Lifebloom (Tank, Everbloom, Moving)",cycle=tanks,cycle_order=health.pct,if=config.raid_lifebloom_target=2&talent.everbloom&(cycle.buff.lifebloom.down|cycle.buff.lifebloom.refreshable)&cycle.range<=40
     - lifebloom,name="Lifebloom (Moving)",cycle=members,cycle_order=health.pct,if=(!talent.everbloom&cycle.health.effective.pct<config.raid_lifebloom_threshold&cycle.buff.lifebloom.down&(group.count(cycle.buff.lifebloom.up)=0|tank1.buff.lifebloom.up|tank2.buff.lifebloom.up))&cycle.range<=40
     - lifebloom,name="Lifebloom Tank (Moving)",cycle=tanks,cycle_order=health.pct,if=(!talent.everbloom&(cycle.buff.lifebloom.down|cycle.buff.lifebloom.remains<4.5)&(cycle.buff.lifebloom.up|group.count(cycle.buff.lifebloom.up)=0))&cycle.range<=40
-    - 774,name="Rejuvenation (Moving)",cycle=members,cycle_order=health.pct,if=(cycle.buff.rejuvenation.down&cycle.health.effective.pct<config.raid_rejuvenation_threshold)&cycle.range<=40
+    - 774,name="Rejuvenation (Moving)",cycle=members,cycle_order=health.pct,if=(cycle.buff.rejuvenation.down&cycle.health.effective.pct<config.raid_rejuvenation_threshold&!(buff.abundance.up&buff.abundance.remains>3))&cycle.range<=40
 
   mouseover_healing_emergency:
     - regrowth.mouseover,name="Regrowth (MO) Instant",if=buff.natures_swiftness.up
