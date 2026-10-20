@@ -1,5 +1,5 @@
 
-version: "18.2.0"
+version: "18.3.0"
 author: Ferraz
 patch: "12.1"
 spec: 105
@@ -14,7 +14,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-10-20 | Patch: 12.1 | Version: 18.2.0"
+    text: "Last update: 2026-10-20 | Patch: 12.1 | Version: 18.3.0"
 
 
   recommended_talents:
@@ -267,6 +267,12 @@ config:
     type: checkbox
     default: true
 
+  raid_use_heart_of_the_wild:
+    label: "Auto Heart of the Wild"
+    section: "Damage"
+    type: checkbox
+    default: true
+    description: "Instant-cast burst in Moonkin Form. No melee form left to weave through, so this is the DPS cooldown's only home now."
 
   raid_innervate_threshold:
     label: "Innervate Mana %"
@@ -520,11 +526,11 @@ lists:
     - innervate,name="Innervate",off_gcd=true,ignore_queue=true,range_check=none,if=mana.pct<config.raid_innervate_threshold
 
   ranged_dps:
+    - heart_of_the_wild,name="HotW (Instant Cast)",if=config.raid_use_heart_of_the_wild&talent.heart_of_the_wild&cooldown.heart_of_the_wild.ready
     - starsurge,name="Starsurge",if=cooldown.starsurge.ready
-    - sunfire,name="Sunfire Aoe Dot",if=debuff.sunfire.refreshable
-    - moonfire,name="Moonfire ST Refresh",if=debuff.moonfire.refreshable
-    - starfire,name="Starfire AoE",if=enemies.combat.40y>=3
-    - wrath,name="Wrath"
+    - sunfire,name="Sunfire Refresh",if=talent.sunfire&debuff.sunfire.refreshable
+    - moonfire,name="Moonfire Refresh",if=debuff.moonfire.refreshable
+    - starfire,name="Starfire Filler"
 
   moving:
     - natures_swiftness,name="NS (Pre-Convoke Moving)",if=cooldown.convoke_the_spirits.ready&group.count(cycle.health.effective.pct<config.raid_convoke_threshold&cycle.range<=40)>=config.raid_convoke_members&!buff.bear_form.up&!buff.moonkin_form.up
