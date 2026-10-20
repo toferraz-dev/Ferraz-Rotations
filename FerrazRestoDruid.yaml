@@ -1,4 +1,4 @@
-version: "25.3.0"
+version: "26.0.0"
 author: Ferraz
 patch: "12.1"
 spec: 105
@@ -17,7 +17,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-10-15 | Patch: 12.1 | Version: 25.3.0"
+    text: "Last update: 2026-10-20 | Patch: 12.1 | Version: 26.0.0"
 
 
   recommended_talents:
@@ -288,35 +288,14 @@ config:
     description: "Soothe whatever you are hovering, checked just before the current-target Soothe below. Simia cannot pick an enraged enemy by criteria — target_enemy is 'nearest enemy' with no filter and there is no .any(EXPR) for enemies — so hovering is the only way to Soothe a mob you are not targeting. This is an independent switch: turning Soothe Enrage off does not disable it. Guarded on mouseover.combat, so hovering an unpulled mob never pulls it."
 
 
-  catweave_group_hp:
-    label: "Exit Cat - Group HP % (effective)"
+  dps_group_hp:
+    label: "DPS - Group HP % (effective)"
     section: "Damage"
     type: slider
     min: 25
     max: 99
     default: 85
     description: "The dial between HPS and DPS, and there is no correct value — three reference druids sit at three different points. Reads group.lowest, the MOST hurt member, so it is strict by nature. ~95 plays like Crohot (5% damage casts, 163k HPS, the highest healing of the three). ~85 is the middle. ~75 plays like Kireya (29% damage casts, 19.4k DPS, double the others, at the lowest HPS). Move it after a key, not before one."
-
-  aoe_threshold:
-    label: "AoE - Min Enemies"
-    section: "Damage"
-    type: slider
-    min: 1
-    max: 5
-    default: 2
-
-  melee_dps:
-    label: "Melee DPS (Cat/Bear)"
-    section: "Damage"
-    type: checkbox
-    default: false
-
-  convoke_dps:
-    label: "Convoke as DPS Cooldown"
-    section: "Damage"
-    type: checkbox
-    default: false
-    description: "Cast Convoke the Spirits offensively in Cat Form when it is off cooldown, instead of holding it strictly for the healing version (Convoke (Heal) below, in Cooldowns). Turn ON to also spend it on DPS - default OFF, Convoke stays a heal-only cooldown."
 
   ranged_dps:
     label: "Ranged DPS (Sun/Moon/Wrath)"
@@ -329,6 +308,7 @@ config:
     section: "Damage"
     type: checkbox
     default: true
+    description: "Instant-cast burst in Moonkin Form. No melee form left to weave through, so this is the DPS cooldown's only home now."
 
 
   stampeding_roar_usage:
@@ -473,9 +453,8 @@ config:
 
 variables:
   protected_channel: player.casting.spell_id=740|player.casting.spell_id=323764|player.casting.spell_id=391528
-  group_healthy: group.lowest.health.effective.pct>=config.catweave_group_hp
-  can_catweave: (var.group_healthy|config.force_dps)&player.combat
-  in_dps_form: buff.cat_form.up|buff.bear_form.up
+  group_healthy: group.lowest.health.effective.pct>=config.dps_group_hp
+  can_dps: (var.group_healthy|config.force_dps)&player.combat
   mo_friendly_valid: mouseover.exists&mouseover.alive&mouseover.friendly&mouseover.unitframe
   has_soul: buff.soul_of_the_forest.up
   use_stampeding_roar: moving.time>=config.stampeding_roar_movement_time&buff.stampeding_roar.down&((config.stampeding_roar_usage=1&player.combat)|(config.stampeding_roar_usage=2&!player.combat)|(config.stampeding_roar_usage=3))
@@ -568,33 +547,8 @@ lists:
     - 774,name="Abundance Filler (Rejuv Maintenance)",cycle=members,if=buff.abundance.up&buff.abundance.remains<5&cycle.buff.rejuvenation.remains<5
     - 774,name="Abundance Filler (Germination Maintenance)",cycle=members,if=talent.germination&buff.abundance.up&buff.abundance.remains<5&cycle.buff.rejuvenation.up&cycle.buff.rejuvenation_germination.remains<5
 
-  catweave_st:
-    - rip,name="Rip ST",if=combo_points>=5&debuff.rip.refreshable
-    - ferocious_bite,name="Bite ST",if=combo_points>=5
-    - 1822,name="Rake ST",if=debuff.rake.refreshable
-    - shred,name="Shred ST"
-
-  catweave_aoe:
-    - target_enemy,name="Search Bleed Target",if=combo_points>=5&!debuff.rip.refreshable&active_dot.rip<enemies.combat.8y
-    - rip,name="Rip AoE",if=combo_points>=5&debuff.rip.refreshable
-    - ferocious_bite,name="Bite AoE",if=combo_points>=5
-    - 1822,name="Rake AoE",if=debuff.rake.refreshable
-    - 106785,name="Swipe AoE",if=talent.swipe
-    - shred,name="Shred AoE"
-
-  catweave:
-    - sunfire,name="Sunfire Refresh (Pre-Shift)",if=talent.sunfire&debuff.sunfire.refreshable&!buff.cat_form.up
-    - moonfire,name="Moonfire Refresh (Pre-Shift)",if=debuff.moonfire.refreshable&!buff.cat_form.up
-    - 1822,name="Fluid Rake",if=!buff.cat_form.up&!buff.incarnation_tree_of_life.up
-    - cat_form,name="Manual Cat Shift",if=!talent.fluid_form&!buff.cat_form.up&!buff.incarnation_tree_of_life.up
-    - return,if=!buff.cat_form.up
-
-    - heart_of_the_wild,name="HotW Cat",if=config.use_heart_of_the_wild&talent.heart_of_the_wild&buff.cat_form.up
-    - convoke_the_spirits,global_delay=150,name="Convoke (Offensive)",if=config.convoke_dps&buff.cat_form.up&cooldown.convoke_the_spirits.ready&target.time_to_die>10
-    - call_action_list,name=catweave_aoe,if=enemies.combat.8y>=config.aoe_threshold
-    - call_action_list,name=catweave_st,if=enemies.combat.8y<config.aoe_threshold
-
   ranged_dps:
+    - heart_of_the_wild,name="HotW (Instant Cast)",if=config.use_heart_of_the_wild&talent.heart_of_the_wild&cooldown.heart_of_the_wild.ready
     - starsurge,name="Starsurge",if=cooldown.starsurge.ready
     - sunfire,name="Sunfire Refresh",if=talent.sunfire&debuff.sunfire.refreshable
     - moonfire,name="Moonfire Refresh",if=debuff.moonfire.refreshable
@@ -605,7 +559,7 @@ lists:
     - lifebloom,name="Lifebloom Tank (Moving)",cycle=tanks,if=config.lifebloom_target=2&(cycle.buff.lifebloom.down|cycle.buff.lifebloom.refreshable)
     - 774,name="Rejuvenation (Moving)",cycle=members,if=cycle.buff.rejuvenation.refreshable&cycle.health.effective.pct<config.rejuvenation_threshold
     - 774,name="Germination (Moving)",cycle=members,if=talent.germination&cycle.buff.rejuvenation.up&(cycle.buff.rejuvenation_germination.down|cycle.buff.rejuvenation_germination.refreshable)&cycle.health.effective.pct<config.rejuvenation_threshold
-    - call_action_list,name=abundance_maintenance,if=!var.can_catweave
+    - call_action_list,name=abundance_maintenance,if=!var.can_dps
 
   avatar_sethraliss:
     - 774.mouseover,name="Avatar Rejuvenation",range_check=mouseover,if=mouseover.buff.rejuvenation.refreshable
@@ -659,19 +613,18 @@ lists:
     - call_action_list,name=engine
     - call_action_list,name=out_of_combat,if=!player.combat
 
-    - call_action_list,name=defensives,if=(!var.in_dps_form|!var.group_healthy)&!config.force_dps
+    - call_action_list,name=defensives,if=!var.group_healthy&!config.force_dps
     - call_action_list,name=utility
     - call_action_list,name=racials
-    - call_action_list,name=cooldowns,if=(!var.in_dps_form|!var.group_healthy)&!config.force_dps
+    - call_action_list,name=cooldowns,if=!var.group_healthy&!config.force_dps
     - call_action_list,name=interrupts
     - call_action_list,name=avatar_sethraliss,if=mouseover.npcid=133392&mouseover.friendly&mouseover.debuff.1301199.down&mouseover.health.pct<100
-    - call_action_list,name=mouseover_healing_emergency,if=config.use_mouseover&var.mo_friendly_valid&mouseover.health.effective.pct<config.mouseover_emergency_hp&(!var.in_dps_form|!var.group_healthy|config.force_dps)
-    - call_action_list,name=moving,if=player.moving&(!var.in_dps_form|!var.group_healthy)&!config.force_dps
+    - call_action_list,name=mouseover_healing_emergency,if=config.use_mouseover&var.mo_friendly_valid&mouseover.health.effective.pct<config.mouseover_emergency_hp&(!var.group_healthy|config.force_dps)
+    - call_action_list,name=moving,if=player.moving&!var.group_healthy&!config.force_dps
     - call_action_list,name=abundance_maintenance,if=player.combat&!config.force_dps
-    - call_action_list,name=active_healing,if=(!var.in_dps_form|!var.group_healthy)&!config.force_dps
+    - call_action_list,name=active_healing,if=!var.group_healthy&!config.force_dps
 
     - mark_of_the_wild,range_check=none,name="Mark of the Wild (low prio)",if=(buff.mark_of_the_wild.down.any|action.mark_of_the_wild.overlayed)&lastcast.mark_of_the_wild>=10
 
 
-    - call_action_list,name=ranged_dps,if=config.ranged_dps&var.can_catweave&target.exists&target.alive&!target.friendly
-    - call_action_list,name=catweave,if=config.melee_dps&var.can_catweave&target.exists&target.alive&!target.friendly&target.in_melee&!buff.incarnation_tree_of_life.up
+    - call_action_list,name=ranged_dps,if=config.ranged_dps&var.can_dps&target.exists&target.alive&!target.friendly
