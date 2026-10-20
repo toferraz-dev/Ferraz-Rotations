@@ -1,5 +1,5 @@
 
-version: "18.0.0"
+version: "18.1.0"
 author: Ferraz
 patch: "12.1"
 spec: 105
@@ -14,7 +14,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-10-20 | Patch: 12.1 | Version: 18.0.0"
+    text: "Last update: 2026-10-20 | Patch: 12.1 | Version: 18.1.0"
 
 
   recommended_talents:
@@ -473,11 +473,11 @@ lists:
   cooldowns:
     - natures_swiftness,name="Nature Swiftness",off_gcd=true,ignore_queue=true,delay=150,range_check=none,if=!config.disable_natures_swiftness&group.count(cycle.health.effective.pct<config.raid_natures_swiftness_threshold&cycle.range<=40)>=1
     - 774,name="Shift Out For Convoke",cycle=members,cycle_order=health.pct,if=cooldown.convoke_the_spirits.ready&group.count(cycle.health.effective.pct<config.raid_convoke_threshold&cycle.range<=40)>=config.raid_convoke_members&buff.bear_form.up
-    - natures_swiftness,name="NS (Pre-Convoke)",range_check=none,if=cooldown.convoke_the_spirits.ready&group.count(cycle.health.effective.pct<config.raid_convoke_threshold&cycle.range<=40)>=config.raid_convoke_members&!buff.bear_form.up&!buff.moonkin_form.up&buff.abundance.up
+    - natures_swiftness,name="NS (Pre-Convoke)",range_check=none,if=cooldown.convoke_the_spirits.ready&group.count(cycle.health.effective.pct<config.raid_convoke_threshold&cycle.range<=40)>=config.raid_convoke_members&!buff.bear_form.up&!buff.moonkin_form.up
     - trinket_1,name="Trinket 1",if=config.raid_use_trinket_1&trinket_1.ready&buff.natures_swiftness.up
     - trinket_2,name="Trinket 2",if=config.raid_use_trinket_2&trinket_2.ready&buff.natures_swiftness.up
     - combat_potion,name="Combat Potion",if=combat_potion.ready&config.raid_use_potion&buff.natures_swiftness.up
-    - convoke_the_spirits,global_delay=750,name="Convoke (Heal)",if=buff.natures_swiftness.up&!buff.bear_form.up&!buff.moonkin_form.up&buff.abundance.up
+    - convoke_the_spirits,global_delay=750,name="Convoke (Heal)",if=buff.natures_swiftness.up&!buff.bear_form.up&!buff.moonkin_form.up
     - regrowth,name="Nature Swift Regrowth",cycle=members,cycle_order=health.pct,if=(buff.natures_swiftness.up)&cycle.range<=40
     - tranquility,global_delay=750,name="Tranquility",if=!config.raid_manual_tranquility&group.count(cycle.health.effective.pct<config.raid_tranquility_threshold&cycle.range<=40)>=config.raid_tranquility_members&!player.moving
     - swiftmend.player,name="Self Swiftmend (Archdruid)",range_check=none,if=talent.power_of_the_archdruid&player.combat&cooldown.swiftmend.ready&(buff.rejuvenation.up|buff.regrowth.up|buff.wild_growth.up)
@@ -530,8 +530,8 @@ lists:
     - wrath,name="Wrath"
 
   moving:
-    - natures_swiftness,name="NS (Pre-Convoke Moving)",if=cooldown.convoke_the_spirits.ready&group.count(cycle.health.effective.pct<config.raid_convoke_threshold&cycle.range<=40)>=config.raid_convoke_members&!buff.bear_form.up&!buff.moonkin_form.up&buff.abundance.up
-    - convoke_the_spirits,global_delay=750,name="Convoke (Moving)",if=group.count(cycle.health.effective.pct<config.raid_convoke_threshold&cycle.range<=40)>=config.raid_convoke_members&!buff.bear_form.up&!buff.moonkin_form.up&buff.abundance.up
+    - natures_swiftness,name="NS (Pre-Convoke Moving)",if=cooldown.convoke_the_spirits.ready&group.count(cycle.health.effective.pct<config.raid_convoke_threshold&cycle.range<=40)>=config.raid_convoke_members&!buff.bear_form.up&!buff.moonkin_form.up
+    - convoke_the_spirits,global_delay=750,name="Convoke (Moving)",if=group.count(cycle.health.effective.pct<config.raid_convoke_threshold&cycle.range<=40)>=config.raid_convoke_members&!buff.bear_form.up&!buff.moonkin_form.up
     - lifebloom.player,name="Self Lifebloom (Everbloom, Moving)",range_check=none,if=config.raid_lifebloom_target=1&talent.everbloom&(buff.lifebloom.down|buff.lifebloom.remains<4.5)
     - lifebloom,name="Lifebloom (Tank, Everbloom, Moving)",cycle=tanks,cycle_order=health.pct,if=config.raid_lifebloom_target=2&talent.everbloom&(cycle.buff.lifebloom.down|cycle.buff.lifebloom.refreshable)&cycle.range<=40
     - lifebloom,name="Lifebloom (Moving)",cycle=members,cycle_order=health.pct,if=(!talent.everbloom&cycle.health.effective.pct<config.raid_lifebloom_threshold&cycle.buff.lifebloom.down&(group.count(cycle.buff.lifebloom.up)=0|tank1.buff.lifebloom.up|tank2.buff.lifebloom.up))&cycle.range<=40
