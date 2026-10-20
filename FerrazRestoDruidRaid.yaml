@@ -1,5 +1,5 @@
 
-version: "17.0.0"
+version: "18.0.0"
 author: Ferraz
 patch: "12.1"
 spec: 105
@@ -14,7 +14,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-10-20 | Patch: 12.1 | Version: 17.0.0"
+    text: "Last update: 2026-10-20 | Patch: 12.1 | Version: 18.0.0"
 
 
   recommended_talents:
@@ -244,41 +244,22 @@ config:
     description: "Soothe whatever you are hovering, checked just before the current-target Soothe below. Simia cannot pick an enraged enemy by criteria — target_enemy is 'nearest enemy' with no filter and there is no .any(EXPR) for enemies — so hovering is the only way to Soothe a mob you are not targeting. This is an independent switch: turning Soothe Enrage off does not disable it. Guarded on mouseover.combat, so hovering an unpulled mob never pulls it."
 
 
-  raid_catweave_group_hp:
-    label: "Exit Cat - Group HP % (effective)"
+  raid_dps_group_hp:
+    label: "DPS - Group HP % (effective)"
     section: "Damage"
     type: slider
     min: 25
     max: 99
     default: 70
+    description: "Stop ranged DPS and go back to pure healing when this many group members (below) drop under this health."
 
-  raid_catweave_injured_max:
-    label: "Exit Cat - Max Injured"
+  raid_dps_injured_max:
+    label: "DPS - Max Injured"
     section: "Damage"
     type: slider
     min: 0
     max: 5
     default: 2
-
-  raid_aoe_threshold:
-    label: "AoE - Min Enemies"
-    section: "Damage"
-    type: slider
-    min: 1
-    max: 5
-    default: 3
-
-  raid_use_heart_of_the_wild:
-    label: "Auto Heart of the Wild"
-    section: "Damage"
-    type: checkbox
-    default: true
-
-  raid_melee_dps:
-    label: "Melee DPS (Cat/Bear)"
-    section: "Damage"
-    type: checkbox
-    default: false
 
   raid_ranged_dps:
     label: "Ranged DPS (Sun/Moon/Wrath)"
@@ -417,8 +398,8 @@ config:
 
 variables:
   protected_channel: player.casting.spell_id=740|player.casting.spell_id=323764|player.casting.spell_id=391528
-  group_healthy: group.count(cycle.health.effective.pct<config.raid_catweave_group_hp)<config.raid_catweave_injured_max
-  can_catweave: var.group_healthy&player.combat
+  group_healthy: group.count(cycle.health.effective.pct<config.raid_dps_group_hp)<config.raid_dps_injured_max
+  can_dps: var.group_healthy&player.combat
   mo_friendly_valid: mouseover.exists&mouseover.alive&mouseover.friendly&mouseover.unitframe
   has_soul: buff.soul_of_the_forest.up
 
@@ -444,7 +425,6 @@ lists:
     - interact_target,delay=350,if=config.engine_loot_nearby&target.lootable&target.range<=5
     - interact_target,delay=350,if=config.engine_loot_nearby&loot_nearby
     - interact_mouseover,delay=350,if=config.engine_loot_nearby&mouseover.lootable&mouseover.range<=5
-
 
     - natures_cure,delay=500,cycle=members,name="Nature's Cure",if=(config.auto_dispel_group&cycle.dispelable.list)&cycle.range<=40
 
@@ -488,16 +468,16 @@ lists:
 
   racials:
     - shadowmeld,name="Shadowmeld (Aggro Drop)",if=target.threat>=3&!player.casting
-    - thorn_bloom,name="Thorn Bloom",if=group.count(cycle.health.effective.pct<config.raid_thorn_bloom_threshold&cycle.range<=40)>=config.raid_thorn_bloom_members&target.in_melee
+    - thorn_bloom,name="Thorn Bloom",if=group.count(cycle.health.effective.pct<config.raid_thorn_bloom_threshold&cycle.range<=40)>=config.raid_thorn_bloom_members
 
   cooldowns:
     - natures_swiftness,name="Nature Swiftness",off_gcd=true,ignore_queue=true,delay=150,range_check=none,if=!config.disable_natures_swiftness&group.count(cycle.health.effective.pct<config.raid_natures_swiftness_threshold&cycle.range<=40)>=1
-    - 774,name="Shift Out For Convoke",cycle=members,cycle_order=health.pct,if=cooldown.convoke_the_spirits.ready&group.count(cycle.health.effective.pct<config.raid_convoke_threshold&cycle.range<=40)>=config.raid_convoke_members&(buff.cat_form.up|buff.bear_form.up)
-    - natures_swiftness,name="NS (Pre-Convoke)",range_check=none,if=cooldown.convoke_the_spirits.ready&group.count(cycle.health.effective.pct<config.raid_convoke_threshold&cycle.range<=40)>=config.raid_convoke_members&!buff.cat_form.up&!buff.bear_form.up&!buff.moonkin_form.up&buff.abundance.up
+    - 774,name="Shift Out For Convoke",cycle=members,cycle_order=health.pct,if=cooldown.convoke_the_spirits.ready&group.count(cycle.health.effective.pct<config.raid_convoke_threshold&cycle.range<=40)>=config.raid_convoke_members&buff.bear_form.up
+    - natures_swiftness,name="NS (Pre-Convoke)",range_check=none,if=cooldown.convoke_the_spirits.ready&group.count(cycle.health.effective.pct<config.raid_convoke_threshold&cycle.range<=40)>=config.raid_convoke_members&!buff.bear_form.up&!buff.moonkin_form.up&buff.abundance.up
     - trinket_1,name="Trinket 1",if=config.raid_use_trinket_1&trinket_1.ready&buff.natures_swiftness.up
     - trinket_2,name="Trinket 2",if=config.raid_use_trinket_2&trinket_2.ready&buff.natures_swiftness.up
     - combat_potion,name="Combat Potion",if=combat_potion.ready&config.raid_use_potion&buff.natures_swiftness.up
-    - convoke_the_spirits,global_delay=750,name="Convoke (Heal)",if=buff.natures_swiftness.up&!buff.cat_form.up&!buff.bear_form.up&!buff.moonkin_form.up&buff.abundance.up
+    - convoke_the_spirits,global_delay=750,name="Convoke (Heal)",if=buff.natures_swiftness.up&!buff.bear_form.up&!buff.moonkin_form.up&buff.abundance.up
     - regrowth,name="Nature Swift Regrowth",cycle=members,cycle_order=health.pct,if=(buff.natures_swiftness.up)&cycle.range<=40
     - tranquility,global_delay=750,name="Tranquility",if=!config.raid_manual_tranquility&group.count(cycle.health.effective.pct<config.raid_tranquility_threshold&cycle.range<=40)>=config.raid_tranquility_members&!player.moving
     - swiftmend.player,name="Self Swiftmend (Archdruid)",range_check=none,if=talent.power_of_the_archdruid&player.combat&cooldown.swiftmend.ready&(buff.rejuvenation.up|buff.regrowth.up|buff.wild_growth.up)
@@ -519,8 +499,6 @@ lists:
     - regrowth,name="SotF Regrowth",cycle=members,cycle_order=health.pct,if=(var.has_soul&cycle.health.effective.pct<config.raid_regrowth_threshold)&cycle.range<=40
     - 774,name="SotF Germination",cycle=members,cycle_order=buff.rejuvenation.remains,if=(var.has_soul&talent.germination&cycle.buff.rejuvenation.up&(cycle.buff.rejuvenation_germination.down|cycle.buff.rejuvenation_germination.remains<1.5))&cycle.range<=40
     - 774,name="SotF Rejuvenation",cycle=members,cycle_order=buff.rejuvenation.remains,if=(var.has_soul&cycle.buff.rejuvenation.remains<1.5)&cycle.range<=40
-
-    - thorn_bloom,name="Thorn Bloom",if=group.count(cycle.health.effective.pct<config.raid_thorn_bloom_threshold&cycle.range<=40)>=config.raid_thorn_bloom_members&target.in_melee
 
     - efflorescence,name="Efflorescence (Self, no Lifetreading)",range_check=none,if=talent.efflorescence&!talent.lifetreading&!totem.efflorescence.up
 
@@ -544,31 +522,6 @@ lists:
   utility:
     - innervate,name="Innervate",off_gcd=true,ignore_queue=true,range_check=none,if=mana.pct<config.raid_innervate_threshold
 
-  catweave_st:
-    - heart_of_the_wild,name="HotW Cat ST",if=config.raid_use_heart_of_the_wild&talent.heart_of_the_wild&buff.cat_form.up
-    - rip,name="Rip ST",if=combo_points>=5&debuff.rip.refreshable
-    - ferocious_bite,name="Bite ST",if=combo_points>=5
-    - 1822,name="Rake ST",if=debuff.rake.refreshable
-    - shred,name="Shred ST"
-
-  catweave_aoe:
-    - heart_of_the_wild,name="HotW Cat AoE",if=config.raid_use_heart_of_the_wild&talent.heart_of_the_wild&buff.cat_form.up
-    - target_enemy,name="Search Bleed Target",if=combo_points>=5&!debuff.rip.refreshable&active_dot.rip<enemies.combat.8y
-    - rip,name="Rip AoE",if=combo_points>=5&debuff.rip.refreshable
-    - ferocious_bite,name="Bite AoE",if=combo_points>=5
-    - 1822,name="Rake AoE",if=debuff.rake.refreshable
-    - swipe,name="Swipe AoE",if=talent.swipe
-    - shred,name="Shred AoE",if=!talent.swipe
-
-  catweave:
-    - 774,name="Cat Rejuvenation",cycle=members,cycle_order=buff.rejuvenation.remains,if=(cycle.buff.rejuvenation.remains<4&(buff.cat_form.up|talent.fluid_form)&(!target.in_melee|!var.group_healthy))&cycle.range<=40
-    - 1822,name="Fluid Rake",if=talent.fluid_form&!buff.cat_form.up&debuff.rake.refreshable&!buff.incarnation_tree_of_life.up
-    - shred,name="Fluid Shred",if=talent.fluid_form&!buff.cat_form.up&!buff.incarnation_tree_of_life.up
-    - cat_form,name="Manual Cat Shift",if=!buff.cat_form.up&!buff.incarnation_tree_of_life.up
-    - return,if=!buff.cat_form.up
-    - call_action_list,name=catweave_aoe,if=enemies.combat.8y>=config.raid_aoe_threshold
-    - call_action_list,name=catweave_st,if=enemies.combat.8y<config.raid_aoe_threshold
-
   ranged_dps:
     - starsurge,name="Starsurge",if=cooldown.starsurge.ready
     - sunfire,name="Sunfire Aoe Dot",if=debuff.sunfire.refreshable
@@ -576,14 +529,9 @@ lists:
     - starfire,name="Starfire AoE",if=enemies.combat.40y>=3
     - wrath,name="Wrath"
 
-  bearweave:
-    - thrash,name="Thrash (BearmForm Bleed)",if=debuff.thrash.remains<3&talent.fluid_form
-    - mangle,name="Mangle (BearForm)",if=talent.fluid_form
-    - call_action_list,name=catweave
-
   moving:
-    - natures_swiftness,name="NS (Pre-Convoke Moving)",if=cooldown.convoke_the_spirits.ready&group.count(cycle.health.effective.pct<config.raid_convoke_threshold&cycle.range<=40)>=config.raid_convoke_members&!buff.cat_form.up&!buff.bear_form.up&!buff.moonkin_form.up&buff.abundance.up
-    - convoke_the_spirits,global_delay=750,name="Convoke (Moving)",if=group.count(cycle.health.effective.pct<config.raid_convoke_threshold&cycle.range<=40)>=config.raid_convoke_members&!buff.cat_form.up&!buff.bear_form.up&!buff.moonkin_form.up&buff.abundance.up
+    - natures_swiftness,name="NS (Pre-Convoke Moving)",if=cooldown.convoke_the_spirits.ready&group.count(cycle.health.effective.pct<config.raid_convoke_threshold&cycle.range<=40)>=config.raid_convoke_members&!buff.bear_form.up&!buff.moonkin_form.up&buff.abundance.up
+    - convoke_the_spirits,global_delay=750,name="Convoke (Moving)",if=group.count(cycle.health.effective.pct<config.raid_convoke_threshold&cycle.range<=40)>=config.raid_convoke_members&!buff.bear_form.up&!buff.moonkin_form.up&buff.abundance.up
     - lifebloom.player,name="Self Lifebloom (Everbloom, Moving)",range_check=none,if=config.raid_lifebloom_target=1&talent.everbloom&(buff.lifebloom.down|buff.lifebloom.remains<4.5)
     - lifebloom,name="Lifebloom (Tank, Everbloom, Moving)",cycle=tanks,cycle_order=health.pct,if=config.raid_lifebloom_target=2&talent.everbloom&(cycle.buff.lifebloom.down|cycle.buff.lifebloom.refreshable)&cycle.range<=40
     - lifebloom,name="Lifebloom (Moving)",cycle=members,cycle_order=health.pct,if=(!talent.everbloom&cycle.health.effective.pct<config.raid_lifebloom_threshold&cycle.buff.lifebloom.down&(group.count(cycle.buff.lifebloom.up)=0|tank1.buff.lifebloom.up|tank2.buff.lifebloom.up))&cycle.range<=40
@@ -622,6 +570,4 @@ lists:
 
     - mark_of_the_wild,name="Mark of the Wild (low prio)",range_check=none,if=config.raid_use_mark_of_the_wild&(buff.mark_of_the_wild.down.any|action.mark_of_the_wild.overlayed)&lastcast.mark_of_the_wild>=10
 
-    - call_action_list,name=ranged_dps,if=config.raid_ranged_dps&var.can_catweave&target.exists&target.alive&!target.friendly&((config.raid_melee_dps&!target.in_melee)|!config.raid_melee_dps)
-    - call_action_list,name=bearweave,if=config.raid_melee_dps&var.can_catweave&target.exists&target.alive&!target.friendly&target.in_melee&enemies.combat.8y>=2&!buff.incarnation_tree_of_life.up
-    - call_action_list,name=catweave,if=config.raid_melee_dps&var.can_catweave&target.exists&target.alive&!target.friendly&target.in_melee&!buff.incarnation_tree_of_life.up
+    - call_action_list,name=ranged_dps,if=config.raid_ranged_dps&var.can_dps&target.exists&target.alive&!target.friendly
