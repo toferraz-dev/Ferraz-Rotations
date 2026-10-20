@@ -439,9 +439,13 @@ Shadowmeld aggro drop, Thorn Bloom group heal.
 `FerrazRestoDruidRaid.yaml` line 558
 
 ```
-NS -> trinkets/potion -> Convoke (needs Abundance up, caster form) -> NS
-Regrowth -> Tranquility -> self Swiftmend (Archdruid) -> reactive
-Swiftmend -> Clearcasting Regrowth.
+NS -> trinkets/potion -> Convoke (caster form) -> NS
+Regrowth -> Tranquility -> self Swiftmend (Archdruid) -> proactive
+Swiftmend spread.
+
+The Abundance gate was removed 2026-10-20: Convoke the Spirits does not
+require Abundance to heal, there was no mechanical reason for the gate, and
+no rationale entry ever justified it.
 ```
 
 ---
