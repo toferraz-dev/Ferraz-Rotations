@@ -480,8 +480,6 @@ variables:
   has_soul: buff.soul_of_the_forest.up
   use_stampeding_roar: moving.time>=config.stampeding_roar_movement_time&buff.stampeding_roar.down&((config.stampeding_roar_usage=1&player.combat)|(config.stampeding_roar_usage=2&!player.combat)|(config.stampeding_roar_usage=3))
 
-  druid_shapeshift_root: player.rooted|debuff_list.freedom.up
-
 lists:
   emergency:
     - barkskin,name="Barkskin (Emergency)",range_check=none,off_gcd=true,ignore_queue=true,if=health.effective.pct<=config.emergency_hp
@@ -652,8 +650,8 @@ lists:
     - target_enemy,name="Swap Off Storm Blessed",delay=500,off_gcd=true,if=target.buff.1289229.up&enemies.combat.40y>=2
 
   main:
-    - bear_form,name="Root Cleanse (to Bear)",line_cd=8,if=config.root_cleanse&var.druid_shapeshift_root&!buff.bear_form.up
-    - cancel_form,name="Root Cleanse (from Bear)",line_cd=8,if=config.root_cleanse&var.druid_shapeshift_root&buff.bear_form.up
+    - bear_form,name="Root Cleanse (to Bear)",if=config.root_cleanse&player.rooted&!buff.bear_form.up
+    - cancel_form,name="Root Cleanse (from Bear)",if=config.root_cleanse&player.rooted&buff.bear_form.up
 
     - call_action_list,name=emergency,if=player.combat&(player.casting|player.channeling)&health.effective.pct<=config.emergency_hp
 

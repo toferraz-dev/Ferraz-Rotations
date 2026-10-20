@@ -528,8 +528,8 @@ selected_rotation:
   262: C:\Games\Python\Rotations\FerrazShamanEle.yaml
   104: D:\Projetos\Rotations\FerrazGuardianElune.yaml
   105: D:\Projetos\Rotations\FerrazRestoDruid.yaml
-  102: D:\Projetos\Rotations\FerrazBalanceRaid.yaml
-  103: D:\Projetos\Rotations\FerrazFeralRaid.yaml
+  102: D:\Projetos\Rotations\FerrazBalance.yaml
+  103: D:\Projetos\Rotations\FerrazFeral.yaml
 selected_community_rotation_name:
   104: "[Community] Khan No Apex Guardian Druid (1.0.7) - Khan"
   102: "[Community] Balance Druid Ferraz Raid (2.16.1) - Ferraz"
