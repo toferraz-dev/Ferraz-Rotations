@@ -466,14 +466,15 @@ lists:
     - rejuvenation.mouseover,name="Rejuvenation (MO)"
     - regrowth.mouseover,name="Regrowth (MO) Cast",if=!player.moving
   main:
-    - mark_of_the_wild,name="Mark of the Wild (low prio)",range_check=none,if=config.raid_use_mark_of_the_wild&(buff.mark_of_the_wild.down.any|action.mark_of_the_wild.overlayed)&lastcast.mark_of_the_wild>=10
     - bear_form,name="Root Cleanse (to Bear)",if=config.root_cleanse&player.rooted&!buff.bear_form.up&!buff.incarnation_tree_of_life.up
     - cancel_form,name="Root Cleanse (from Bear)",if=config.root_cleanse&player.rooted&buff.bear_form.up&!buff.incarnation_tree_of_life.up
 
     - call_action_list,name=emergency,if=player.combat&(player.casting|player.channeling)
 
     - return,if=player.channeling|player.casting|var.protected_channel
-
+    
+    - mark_of_the_wild,name="Mark of the Wild (low prio)",range_check=none,if=config.raid_use_mark_of_the_wild&(buff.mark_of_the_wild.down.any|action.mark_of_the_wild.overlayed)&lastcast.mark_of_the_wild>=15
+    
     - call_action_list,name=engine
     - call_action_list,name=out_of_combat
 
