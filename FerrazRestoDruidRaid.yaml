@@ -1,5 +1,5 @@
 
-version: "19.0.0"
+version: "20.0.0"
 author: Ferraz
 patch: "12.1"
 spec: 105
@@ -13,7 +13,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-10-20 | Patch: 12.1 | Version: 19.0.0"
+    text: "Last update: 2026-10-21 | Patch: 12.1 | Version: 20.0.0"
 
   recommended_talents:
     section: "Talents"
@@ -429,7 +429,6 @@ lists:
     - wild_growth,name="Wild Growth (Tree of Life Proc)",range_check=none,if=buff.incarnation_tree_of_life.up&group.count(cycle.health.effective.pct<config.raid_wild_growth_threshold&cycle.range<=40)>=1
     - regrowth,name="Regrowth (Tree of Life, Instant)",cycle=members,cycle_order=health.pct,if=(buff.incarnation_tree_of_life.up&cycle.health.effective.pct<config.raid_regrowth_threshold)&cycle.range<=40
 
-    - wild_growth,name="SotF Wild Growth",range_check=none,if=var.has_soul&group.count(cycle.health.effective.pct<config.raid_wild_growth_threshold&cycle.range<=40)>=config.raid_wild_growth_members
     - regrowth,name="SotF Regrowth",cycle=members,cycle_order=health.pct,if=(var.has_soul&cycle.health.effective.pct<config.raid_regrowth_threshold)&cycle.range<=40
 
     - rejuvenation,name="SotF Germination",cycle=members,cycle_order=buff.rejuvenation.remains,if=(var.has_soul&talent.germination&cycle.buff.rejuvenation.up&(cycle.buff.rejuvenation_germination.down|cycle.buff.rejuvenation_germination.remains<1.5))&cycle.range<=40
@@ -472,9 +471,9 @@ lists:
     - call_action_list,name=emergency,if=player.combat&(player.casting|player.channeling)
 
     - return,if=player.channeling|player.casting|var.protected_channel
-    
+
     - mark_of_the_wild,name="Mark of the Wild (low prio)",range_check=none,if=config.raid_use_mark_of_the_wild&(buff.mark_of_the_wild.down.any|action.mark_of_the_wild.overlayed)&lastcast.mark_of_the_wild>=15
-    
+
     - call_action_list,name=engine
     - call_action_list,name=out_of_combat
 
