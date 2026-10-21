@@ -120,6 +120,7 @@ lists:
 
     # Target Check
     - return,if=auto_combat.target
+    - return,if=player.channeling
 
     # actions=auto_attack — deleted
 
@@ -166,7 +167,7 @@ lists:
 
     # actions+=/eye_beam
     # local addition: global_delay holds other presses until the channel registers — a press in that gap clipped Eye Beam and lost Furious Gaze.
-    - eye_beam,global_delay=300
+    - eye_beam
 
     # actions+=/immolation_aura,,if=action.immolation_aura.demonsurge_available&buff.demonsurge.remains<gcd.max
     # double comma is an upstream typo, treated as one

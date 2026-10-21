@@ -247,7 +247,8 @@ lists:
     - champions_spear
     # thunder_blast,if=spell_targets.thunder_blast>=2&buff.thunder_blast.stack=2
     - thunder_blast,if=active_enemies>=2&buff.thunder_blast.stack=2
-    - demolish,if=buff.colossal_might.stack>=3
+    # actions+=/demolish,if=buff.colossal_might.stack>=5
+    - demolish,if=buff.colossal_might.stack>=5
     - shield_charge,if=target.range<=config.shield_charge_change
     # Reactive block: pop Shield Block when a tagged blockable hit is incoming and not already up
     - shield_block,range_check=none,if=(incoming_cast.player.blockable.up|target.incoming_cast.blockable.up)&buff.shield_block.down&cooldown.shield_block.charges>0

@@ -45,7 +45,7 @@ config:
 variables:
   # variable,name=trueshot_ready,value=!talent.bullseye|(fight_remains>cooldown.trueshot.duration+10|buff.bullseye.stack=buff.bullseye.max_stack)&(cooldown.explosive_shot.remains>=15|cooldown.explosive_shot.ready)|fight_remains<25|time<10
   # buff.bullseye.max_stack NOT supported - hardcoded to 30; bare time -> combat.time
-  # variable,name=trueshot_ready,op=setif,condition=fight_style.dungeonroute,value_else=variable.trueshot_ready,value=raid_event.pull.remains>30|raid_event.pull.in>60|talent.calling_the_shots
+  # variable,name=trueshot_ready,op=setif,condition=fight_style.dungeonroute,value_else=variable.trueshot_ready,value=raid_event.pull.remains>20|raid_event.pull.in>45|talent.calling_the_shots
   # No-op for us: the setif condition is fight_style.dungeonroute (=0), so it always takes
   # value_else, which is trueshot_ready itself. The definition above therefore stands unchanged.
   trueshot_ready: "!talent.bullseye|(fight_remains>cooldown.trueshot.duration+10|buff.bullseye.stack>=30)&(cooldown.explosive_shot.remains>=15|cooldown.explosive_shot.ready)|fight_remains<25|combat.time<10"
@@ -80,25 +80,21 @@ lists:
     # lights_judgment,if=buff.trueshot.down
     - lights_judgment,if=buff.trueshot.down
     # potion,if=buff.trueshot.up&(buff.bloodlust.up|fight_remains<120-30*talent.calling_the_shots)|fight_remains<31
-    # Bullseye's crit devalues Potion of Recklessness in execute. Additionally, a mid-fight pot means that prepotting Luster before Trueshot becomes higher value than pre-potting before combat begins. Therefore, Pot of Recklessness on pull, but during execute, Luster pot around 10s before Trueshot to maximize its benefit.
-    # potion,name=liquid_luster_2,if=potion.potion_of_recklessness&buff.bullseye.up&cooldown.trueshot.remains<10&(fight_style.dungeonroute|cooldown.explosive_shot.remains>=25|cooldown.explosive_shot.remains<10)|fight_remains<31
+    # Potion of Recklessness (Crit) has little to no value for execute Trueshots as we are crit hard-capped, so use Luster instead. Luster 7s before Trueshot allows for Font to be used in the last 3s of Luster (since the on-use trinket popped with Trueshot puts Font on a 20s CD).
+    # potion,name=liquid_luster_2,if=potion.potion_of_recklessness&buff.bullseye.up&cooldown.trueshot.remains<7&(fight_style.dungeonroute|cooldown.explosive_shot.remains>=25|cooldown.explosive_shot.remains<10)|fight_remains<31
 
   # ==========================================================================
   # Dark Ranger ST
   # ==========================================================================
   # var.precise_shots_predicted is a local stand-in for buff.precise_shots.up (see variables:).
-  # max_prio_damage is a hunter sim-profile option (sc_hunter.cpp:1052, default TRUE), not a target
-  # property — converted as the constant 1. fight_style.* is unsupported and reads 0. So
-  # (!max_prio_damage|!fight_style.dungeonroute[|...]) = (0|1) = 1 and a bare &max_prio_damage = &1:
-  # every occurrence collapses to true and is dropped.
+  # fight_style.* is unsupported and reads 0, so every !fight_style.dungeonroute term is true and dropped.
   drst:
-    # actions.drst=black_arrow,target_if=max:debuff.spotters_mark.down|action.aimed_shot.in_flight_to_target|max_prio_damage,if=buff.precise_shots.up
+    # actions.drst=/black_arrow,if=buff.precise_shots.up
     - black_arrow,if=var.precise_shots_predicted
-    # actions.drst+=/explosive_shot,target_if=min:dot.explosive_shot.remains,if=set_bonus.mid2_4pc&active_enemies>1&(!max_prio_damage|!fight_style.dungeonroute)&(!talent.tactical_reload|!buff.lock_and_load.up)
-    # Covered by the explosive_shot below: with the always-true (!max_prio_damage|!fight_style.dungeonroute)
-    # group dropped, this line is that one plus set_bonus/target terms (CLAUDE.md 2.3).
-    # In DRoute, prioritize Rapid Fire over Explosive Shot to maximize the RF CDR from Explo, but never let the 2nd free Explo from Unstable Trigger lapse.
-    # actions.drst+=/explosive_shot,if=(!talent.tactical_reload|!buff.lock_and_load.up)&(!cooldown.rapid_fire.ready|buff.unstable_trigger.up|!fight_style.dungeonroute)
+    # actions.drst+=/explosive_shot,target_if=min:dot.explosive_shot.remains,if=set_bonus.mid2_4pc&active_enemies>1&!fight_style.dungeonroute&(!talent.tactical_reload|!buff.lock_and_load.up)
+    # Covered by the explosive_shot below: with !fight_style.dungeonroute = 1 this line is that one
+    # plus set_bonus/target terms (CLAUDE.md 2.3).
+    # actions.drst+=/explosive_shot,if=(!talent.tactical_reload|!buff.lock_and_load.up)&(!cooldown.rapid_fire.ready|!fight_style.dungeonroute)
     - explosive_shot,if=!talent.tactical_reload|!buff.lock_and_load.up
     # actions.drst+=/volley
     - volley
@@ -115,9 +111,9 @@ lists:
     # and the gate is enemies>1 -- matching upstream's own note above the line: "Multi-Shot as a PS
     # spender on 2T with Hydra talented. In DRoute, do it on 3 or more targets."
     - multishot,if=var.precise_shots_predicted&enemies_around_target>1&talent.aspect_of_the_hydra
-    # actions.drst+=/arcane_shot,target_if=max:debuff.spotters_mark.down|action.aimed_shot.in_flight_to_target|max_prio_damage,if=buff.precise_shots.up
+    # actions.drst+=/arcane_shot,if=buff.precise_shots.up
     - arcane_shot,if=var.precise_shots_predicted
-    # actions.drst+=/aimed_shot,target_if=max:debuff.spotters_mark.up|max_prio_damage
+    # actions.drst+=/aimed_shot
     - aimed_shot
     # actions.drst+=/black_arrow
     - black_arrow
@@ -128,18 +124,18 @@ lists:
   # Dark Ranger AOE (3+ targets)
   # ==========================================================================
   draoe:
-    # actions.draoe+=/explosive_shot,target_if=min:dot.explosive_shot.remains,if=set_bonus.mid2_4pc&(!max_prio_damage|!fight_style.dungeonroute)&(!talent.tactical_reload|!buff.lock_and_load.up)
-    # Covered by the explosive_shot below: with the always-true (!max_prio_damage|!fight_style.dungeonroute)
-    # group dropped, this line is that one plus set_bonus/target terms (CLAUDE.md 2.3).
-    # actions.draoe+=/explosive_shot,if=(!talent.tactical_reload|!buff.lock_and_load.up)&(!cooldown.rapid_fire.ready|buff.unstable_trigger.up|!fight_style.dungeonroute)
+    # actions.draoe=/explosive_shot,target_if=min:dot.explosive_shot.remains,if=set_bonus.mid2_4pc&!fight_style.dungeonroute&(!talent.tactical_reload|!buff.lock_and_load.up)
+    # Covered by the explosive_shot below: with !fight_style.dungeonroute = 1 this line is that one
+    # plus set_bonus/target terms (CLAUDE.md 2.3).
+    # actions.draoe+=/explosive_shot,if=(!talent.tactical_reload|!buff.lock_and_load.up)&(!cooldown.rapid_fire.ready|!fight_style.dungeonroute)
     - explosive_shot,if=!talent.tactical_reload|!buff.lock_and_load.up
     # actions.draoe+=/volley
     - volley
-    # actions.draoe+=/aimed_shot,target_if=max:debuff.spotters_mark.up|max_prio_damage,if=buff.trick_shots.remains>cast_time&full_recharge_time<gcd+cast_time
+    # actions.draoe+=/aimed_shot,if=buff.trick_shots.remains>cast_time&full_recharge_time<gcd+cast_time
     - aimed_shot,if=buff.trick_shots.remains>action.aimed_shot.cast_time&cooldown.aimed_shot.full_recharge_time<gcd+action.aimed_shot.cast_time
-    # actions.draoe+=/black_arrow,target_if=max:debuff.spotters_mark.down|action.aimed_shot.in_flight_to_target|max_prio_damage,if=buff.precise_shots.up
+    # actions.draoe+=/black_arrow,if=buff.precise_shots.up
     - black_arrow,if=var.precise_shots_predicted
-    # actions.draoe+=/multishot,target_if=max:debuff.spotters_mark.down|action.aimed_shot.in_flight_to_target|max_prio_damage,if=buff.trick_shots.down
+    # actions.draoe+=/multishot,if=buff.trick_shots.down
     - multishot,if=buff.trick_shots.down
     # actions.draoe+=/trueshot,if=variable.trueshot_ready
     - trueshot,if=var.trueshot_ready
@@ -147,15 +143,14 @@ lists:
     - rapid_fire,if=buff.trick_shots.remains>action.rapid_fire.execute_time
     # actions.draoe+=/wailing_arrow,if=!cooldown.black_arrow.ready
     - wailing_arrow,if=!cooldown.black_arrow.ready
-    # actions.draoe+=/multishot,target_if=max:debuff.spotters_mark.down|action.aimed_shot.in_flight_to_target|max_prio_damage,if=buff.precise_shots.up
+    # actions.draoe+=/multishot,if=buff.precise_shots.up
     - multishot,if=var.precise_shots_predicted
-    # actions.draoe+=/aimed_shot,target_if=max:debuff.spotters_mark.up|max_prio_damage,if=buff.trick_shots.remains>cast_time
+    # actions.draoe+=/aimed_shot,if=buff.trick_shots.remains>cast_time
     - aimed_shot,if=buff.trick_shots.remains>action.aimed_shot.cast_time
     # actions.draoe+=/black_arrow
     - black_arrow
-    # actions.draoe+=/multishot,if=focus>cost+action.aimed_shot.cost&!max_prio_damage
-    # max_prio_damage is a sim option defaulting TRUE, so !max_prio_damage is always 0 - line is dead.
-    # - multishot,if=focus>action.multishot.cost+action.aimed_shot.cost
+    # actions.draoe+=/multishot,if=focus>cost+action.aimed_shot.cost
+    - multishot,if=focus>action.multishot.cost+action.aimed_shot.cost
     # actions.draoe+=/steady_shot
     - steady_shot
 
@@ -163,10 +158,10 @@ lists:
   # Sentinel AOE (3+ targets)
   # ==========================================================================
   sentaoe:
-    # actions.sentaoe+=/explosive_shot,target_if=min:dot.explosive_shot.remains,if=set_bonus.mid2_4pc&(!max_prio_damage|!fight_style.dungeonroute)&(!talent.tactical_reload|!buff.lock_and_load.up)
-    # Covered by the explosive_shot below: with the always-true (!max_prio_damage|!fight_style.dungeonroute)
-    # group dropped, this line is that one plus set_bonus/target terms (CLAUDE.md 2.3).
-    # actions.sentaoe+=/explosive_shot,if=(!talent.tactical_reload|!buff.lock_and_load.up)&(!cooldown.rapid_fire.ready|buff.unstable_trigger.up|!fight_style.dungeonroute)
+    # actions.sentaoe=/explosive_shot,target_if=min:dot.explosive_shot.remains,if=set_bonus.mid2_4pc&!fight_style.dungeonroute&(!talent.tactical_reload|!buff.lock_and_load.up)
+    # Covered by the explosive_shot below: with !fight_style.dungeonroute = 1 this line is that one
+    # plus set_bonus/target terms (CLAUDE.md 2.3).
+    # actions.sentaoe+=/explosive_shot,if=(!talent.tactical_reload|!buff.lock_and_load.up)&(!cooldown.rapid_fire.ready|!fight_style.dungeonroute)
     - explosive_shot,if=!talent.tactical_reload|!buff.lock_and_load.up
     # actions.sentaoe+=/volley
     - volley
@@ -178,17 +173,14 @@ lists:
     - multishot,if=var.precise_shots_predicted&!talent.aspect_of_the_hydra|buff.trick_shots.down
     # actions.sentaoe+=/aimed_shot,target_if=max:debuff.sentinels_mark.up,if=debuff.sentinels_mark.react&buff.bulletstorm.up
     - aimed_shot,if=debuff.sentinels_mark.react&buff.bulletstorm.up
-    # actions.sentaoe+=/rapid_fire,target_if=max:debuff.sentinels_mark.down,if=talent.unload,interrupt_if=talent.unload&ticks_remain<2&buff.precise_shots.up&!gcd.remains,interrupt_immediate=1,interrupt_global=1
-    - rapid_fire,if=talent.unload
-    # actions.sentaoe+=/rapid_fire,interrupt_if=talent.unload&ticks_remain<2&buff.precise_shots.up&!gcd.remains,interrupt_immediate=1,interrupt_global=1
+    # actions.sentaoe+=/rapid_fire
     - rapid_fire
     # actions.sentaoe+=/aimed_shot,target_if=max:debuff.sentinels_mark.up,if=buff.trick_shots.remains>cast_time
     - aimed_shot,if=buff.trick_shots.remains>action.aimed_shot.cast_time
     # actions.sentaoe+=/moonlight_chakram
     - moonlight_chakram
-    # actions.sentaoe+=/multishot,if=focus>cost+action.aimed_shot.cost&!max_prio_damage
-    # max_prio_damage is a sim option defaulting TRUE, so !max_prio_damage is always 0 - line is dead.
-    # - multishot,if=focus>action.multishot.cost+action.aimed_shot.cost
+    # actions.sentaoe+=/multishot,if=focus>cost+action.aimed_shot.cost
+    - multishot,if=focus>action.multishot.cost+action.aimed_shot.cost
     # actions.sentaoe+=/steady_shot
     - steady_shot
 
@@ -196,10 +188,10 @@ lists:
   # Sentinel ST
   # ==========================================================================
   sentst:
-    # actions.sentst+=/explosive_shot,target_if=min:dot.explosive_shot.remains,if=set_bonus.mid2_4pc&active_enemies>1&(!max_prio_damage|!fight_style.dungeonroute)&(!talent.tactical_reload|!buff.lock_and_load.up)
-    # Covered by the explosive_shot below: with the always-true (!max_prio_damage|!fight_style.dungeonroute)
-    # group dropped, this line is that one plus set_bonus/target terms (CLAUDE.md 2.3).
-    # actions.sentst+=/explosive_shot,if=(!talent.tactical_reload|!buff.lock_and_load.up)&(!cooldown.rapid_fire.ready|buff.unstable_trigger.up|!fight_style.dungeonroute)
+    # actions.sentst=/explosive_shot,target_if=min:dot.explosive_shot.remains,if=set_bonus.mid2_4pc&active_enemies>1&!fight_style.dungeonroute&(!talent.tactical_reload|!buff.lock_and_load.up)
+    # Covered by the explosive_shot below: with !fight_style.dungeonroute = 1 this line is that one
+    # plus set_bonus/target terms (CLAUDE.md 2.3).
+    # actions.sentst+=/explosive_shot,if=(!talent.tactical_reload|!buff.lock_and_load.up)&(!cooldown.rapid_fire.ready|!fight_style.dungeonroute)
     - explosive_shot,if=!talent.tactical_reload|!buff.lock_and_load.up
     # actions.sentst+=/volley
     - volley
@@ -210,19 +202,18 @@ lists:
     # actions.sentst+=/aimed_shot,if=debuff.sentinels_mark.react&buff.bulletstorm.up&active_enemies>1&fight_style.dungeonroute
     # Never fires: fight_style.* evaluates to 0 for us, so the whole condition is false.
     # - aimed_shot,if=debuff.sentinels_mark.react&enemies_around_target>1&buff.bulletstorm.up
-    # actions.sentst+=/rapid_fire,target_if=max:debuff.sentinels_mark.down,if=!fight_style.dungeonroute
-    # !fight_style.dungeonroute is TRUE for us, so the if= is dropped entirely
-    - rapid_fire
-    # actions.sentst+=/rapid_fire
-    # Reduces to the same bare rapid_fire as the line above, which already covers it.
-    # actions.sentst+=/kill_shot,target_if=max:debuff.sentinels_mark.down|max_prio_damage,if=buff.precise_shots.up
+    # actions.sentst+=/aimed_shot,if=buff.trueshot.up&buff.precise_shots.down&active_enemies=1
+    - aimed_shot,if=buff.trueshot.up&!var.precise_shots_predicted&enemies_around_target=1
+    # actions.sentst+=/rapid_fire,if=buff.precise_shots.down|buff.trueshot.up|active_enemies>1&talent.aspect_of_the_hydra|!talent.no_scope
+    - rapid_fire,if=!var.precise_shots_predicted|buff.trueshot.up|enemies_around_target>1&talent.aspect_of_the_hydra|!talent.no_scope
+    # actions.sentst+=/kill_shot,if=buff.precise_shots.up
     - kill_shot,if=var.precise_shots_predicted
-    # actions.sentst+=/multishot,target_if=max:debuff.sentinels_mark.down,if=buff.precise_shots.up&active_enemies>1&talent.aspect_of_the_hydra&(!fight_style.dungeonroute|!max_prio_damage|active_enemies>2)
-    # (!fight_style.dungeonroute|!max_prio_damage|active_enemies>2) is TRUE for us (fight_style.*=0), so the group is dropped
+    # actions.sentst+=/multishot,target_if=max:debuff.sentinels_mark.down,if=buff.precise_shots.up&active_enemies>1&talent.aspect_of_the_hydra&(!fight_style.dungeonroute|active_enemies>2)
+    # (!fight_style.dungeonroute|active_enemies>2) is TRUE for us (fight_style.*=0), so the group is dropped
     # and the gate is enemies>1 -- matching upstream's own note above the line: "Multi-Shot as a PS
     # spender on 2T with Hydra talented. In DRoute, do it on 3 or more targets."
     - multishot,if=var.precise_shots_predicted&enemies_around_target>1&talent.aspect_of_the_hydra
-    # actions.sentst+=/arcane_shot,target_if=max:debuff.sentinels_mark.down|max_prio_damage,if=buff.precise_shots.up
+    # actions.sentst+=/arcane_shot,if=buff.precise_shots.up
     - arcane_shot,if=var.precise_shots_predicted
     # actions.sentst+=/aimed_shot,target_if=max:debuff.sentinels_mark.up
     - aimed_shot

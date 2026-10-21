@@ -8,6 +8,11 @@
 #
 # Format: KEY: 0xHEX      (decimal accepted, `#` starts a comment)
 #
+# VERSION SECTIONS: `<build>:` opens a complete set of keys for that game build.
+# The client uses the highest section <= its build (69933 serves 69933 up to the
+# next section); a build older than every section uses the lowest. On a patch, add
+# a new section (offset_finder find --emit writes one) instead of editing this one.
+#
 # RULES
 #   * EVERY key below is REQUIRED. A missing one is rejected like a malformed file.
 #   * Duplicate keys are rejected — a file that disagrees with itself is a bad re-pin.
@@ -34,97 +39,140 @@
 # Last verified: 2026-08-12.
 # =============================================================================
 
-# --- Registry (g_cliEntityRegistry) ------------------------------------------
-# The header is fetched in ONE 16-byte read, so REG_COUNT must stay REG_OBJECTS+8.
-REG_OBJECTS:       0x08     # objects[] pointer (flat, 16-byte entries)
-REG_COUNT:         0x10     # u64 entry count
-ENTRY_STRIDE:      0x10     # per-entry stride: state u64 @+0x00, CGObject* @+0x08
-ENTRY_PTR:         0x08     # CGObject* within an entry
-                            # entry is live when ptr != 0 && (state & 0x3FFFFFFF) != 0x3FFFFFFF
+69933:  # 12.1.0.69933 and older (values verified 2026-08-12)
+  # --- Registry (g_cliEntityRegistry) ------------------------------------------
+  # The header is fetched in ONE 16-byte read, so REG_COUNT must stay REG_OBJECTS+8.
+  REG_OBJECTS:       0x08     # objects[] pointer (flat, 16-byte entries)
+  REG_COUNT:         0x10     # u64 entry count
+  ENTRY_STRIDE:      0x10     # per-entry stride: state u64 @+0x00, CGObject* @+0x08
+  ENTRY_PTR:         0x08     # CGObject* within an entry
+                              # entry is live when ptr != 0 && (state & 0x3FFFFFFF) != 0x3FFFFFFF
 
-# --- CGObject ----------------------------------------------------------------
-OBJ_GUID_LO:       0x18     # unit GUID low  — the registry join key
-OBJ_GUID_HI:       0x20     # unit GUID high
+  # --- CGObject ----------------------------------------------------------------
+  OBJ_GUID_LO:       0x18     # unit GUID low  — the registry join key
+  OBJ_GUID_HI:       0x20     # unit GUID high
 
-# Authoritative transform. NOT +0x184, which is a render cache and lags.
-OBJ_POS_Y:         0x64
-OBJ_POS_X:         0x68
-OBJ_POS_Z:         0x6C
-OBJ_FACING:        0x78     # radians, LOCAL frame — transport-relative on a boat
-OBJ_L_COS:         0x88     # (cos, sin) of OBJ_FACING, same local frame
-OBJ_L_SIN:         0x8C
+  # Authoritative transform. NOT +0x184, which is a render cache and lags.
+  OBJ_POS_Y:         0x64
+  OBJ_POS_X:         0x68
+  OBJ_POS_Z:         0x6C
+  OBJ_FACING:        0x78     # radians, LOCAL frame — transport-relative on a boat
+  OBJ_L_COS:         0x88     # (cos, sin) of OBJ_FACING, same local frame
+  OBJ_L_SIN:         0x8C
 
-# World-space transform copy. +0x64 is TRANSPORT-RELATIVE for vehicle passengers
-# (aura 46598 "Ride Vehicle Hardcoded") and reads ~(0,0,0) there; +0xAC holds the
-# composed world position and mirrors +0x64 exactly otherwise. Verified by scanning
-# the same creature mounted and dismounted — the residual ~2y delta was the unit
-# genuinely having moved between the two reads.
-OBJ_POS2_Y:        0xAC
-OBJ_POS2_X:        0xB0
-OBJ_POS2_Z:        0xB4
+  # World-space transform copy. +0x64 is TRANSPORT-RELATIVE for vehicle passengers
+  # (aura 46598 "Ride Vehicle Hardcoded") and reads ~(0,0,0) there; +0xAC holds the
+  # composed world position and mirrors +0x64 exactly otherwise. Verified by scanning
+  # the same creature mounted and dismounted — the residual ~2y delta was the unit
+  # genuinely having moved between the two reads.
+  OBJ_POS2_Y:        0xAC
+  OBJ_POS2_X:        0xB0
+  OBJ_POS2_Z:        0xB4
 
-# WORLD orientation as a (cos, sin) PAIR — not an angle — mirroring how +0x88/+0x8C
-# follows the local block. worldFacing = atan2(f32@0xC0, f32@0xBC). Verified on the
-# same player, ground vs boat:
-#     ground: cos=-0.7478 sin=0.6639 -> 2.4161 rad, and +0x78 reads 2.4156
-#     boat:   cos= 0.7943 sin=0.6076 -> 0.6525 rad, while +0x78 reads 3.0672
-# So this is world-space even on a transport, and facing needs no transport lookup.
-# (The transport link IS reachable — ECS fragment via the entity handle at obj+8 —
-# but the client's "get my transport" accessor is obfuscated, and this moots it.)
-OBJ_W_COS:         0xBC
-OBJ_W_SIN:         0xC0
+  # WORLD orientation as a (cos, sin) PAIR — not an angle — mirroring how +0x88/+0x8C
+  # follows the local block. worldFacing = atan2(f32@0xC0, f32@0xBC). Verified on the
+  # same player, ground vs boat:
+  #     ground: cos=-0.7478 sin=0.6639 -> 2.4161 rad, and +0x78 reads 2.4156
+  #     boat:   cos= 0.7943 sin=0.6076 -> 0.6525 rad, while +0x78 reads 3.0672
+  # So this is world-space even on a transport, and facing needs no transport lookup.
+  # (The transport link IS reachable — ECS fragment via the entity handle at obj+8 —
+  # but the client's "get my transport" accessor is obfuscated, and this moots it.)
+  OBJ_W_COS:         0xBC
+  OBJ_W_SIN:         0xC0
 
-OBJ_DESC:          0xE0     # -> unit descriptor
-OBJ_HDR_LEN:       0xE8     # GUID+pos+facing+desc in one RPM; must exceed OBJ_DESC
+  OBJ_DESC:          0xE0     # -> unit descriptor
+  OBJ_HDR_LEN:       0xE8     # GUID+pos+facing+desc in one RPM; must exceed OBJ_DESC
 
-# --- Unit descriptor ---------------------------------------------------------
-DESC_AURA_PTR:     0x5F0    # AuraData*; also the start of the single windowed read
-DESC_AURA_CNT:     0x5F8    # u32; must be DESC_AURA_PTR+8
+  # --- Unit descriptor ---------------------------------------------------------
+  DESC_AURA_PTR:     0x5F0    # AuraData*; also the start of the single windowed read
+  DESC_AURA_CNT:     0x5F8    # u32; must be DESC_AURA_PTR+8
 
-# Summoner GUID. Three consecutive 16-byte GUID slots sit at 0x1B78/0x1B88/0x1B98 —
-# the classic CharmedBy / SummonedBy / CreatedBy run. Pinned live 2026-08-09 by
-# searching each unit's descriptor for the player's OWN GUID (a known needle, not a
-# blind scan — object_manager_reader -ownerscan):
-#     permanent pet (npc 26125, Pet- GUID) : 0x1B78 + 0x1B88
-#     Ebon Gargoyle (npc 27829)            : 0x1B88 + 0x1B98
-#     Army ghoul    (npc 237409)           : 0x1B88 + 0x1B98
-# A controlled pet fills the charm slot, an uncontrolled guardian fills the create
-# slot, and 0x1B88 is the only one common to both — so it is the ownership test.
-# Do NOT use aura casters for ownership: a training dummy carrying our DoTs read back
-# as 7 "ours", and the guardians themselves carry 0 auras.
-DESC_SUMMONED_BY:  0x1B88   # 16 bytes: owner GUID (low, high)
+  # Summoner GUID. Three consecutive 16-byte GUID slots sit at 0x1B78/0x1B88/0x1B98 —
+  # the classic CharmedBy / SummonedBy / CreatedBy run. Pinned live 2026-08-09 by
+  # searching each unit's descriptor for the player's OWN GUID (a known needle, not a
+  # blind scan — object_manager_reader -ownerscan):
+  #     permanent pet (npc 26125, Pet- GUID) : 0x1B78 + 0x1B88
+  #     Ebon Gargoyle (npc 27829)            : 0x1B88 + 0x1B98
+  #     Army ghoul    (npc 237409)           : 0x1B88 + 0x1B98
+  # A controlled pet fills the charm slot, an uncontrolled guardian fills the create
+  # slot, and 0x1B88 is the only one common to both — so it is the ownership test.
+  # Do NOT use aura casters for ownership: a training dummy carrying our DoTs read back
+  # as 7 "ours", and the guardians themselves carry 0 auras.
+  DESC_SUMMONED_BY:  0x1B88   # 16 bytes: owner GUID (low, high)
 
-# UNVERIFIED since the 2026-08-12 shift. These two were derived from a
-# "desc == meleeBase - 0x20" assumption that the reach re-pin proved void, and -scan
-# does not dump them. If the whole descriptor moved they are each +0x20 out. Worst
-# case is a spurious 1.0 yard on the melee gate, so they are left as-is until
-# something actually measures them.
-DESC_FLAGS:        0x1C38   # u8;  & 0x08 on EITHER unit -> melee +1.0
-DESC_FLAGS3:       0x1C40   # u32; & 0x40000000 -> add other's extra reach
+  # UNVERIFIED since the 2026-08-12 shift. These two were derived from a
+  # "desc == meleeBase - 0x20" assumption that the reach re-pin proved void, and -scan
+  # does not dump them. If the whole descriptor moved they are each +0x20 out. Worst
+  # case is a spurious 1.0 yard on the melee gate, so they are left as-is until
+  # something actually measures them.
+  DESC_FLAGS:        0x1C38   # u8;  & 0x08 on EITHER unit -> melee +1.0
+  DESC_FLAGS3:       0x1C40   # u32; & 0x40000000 -> add other's extra reach
 
-# RE-PINNED 2026-08-12 — this pair moved +0x20 since build 66066:
-#     reach @0x1C54: 0.000  bound @0x1C50: 0.000        [SUSPECT]
-#     @0x1C70 : bounding=0.236 combat=1.500             <- live
-# (Prior pinning, build 66066: 0x1C50=0.564 / 0x1C54=1.500, with 0x1C70/0x1C74 reading
-# 0.00 — exactly inverted from today.) This also reconciles the pair with the binary,
-# which reads reach at +0x1C74 in 21 `addss xmm,[reg+0x1C74]` sites: the melee
-# function's base simply IS the descriptor.
-#
-# SYMPTOM WHEN STALE — reach reads 0.00 on every unit, which breaks range twice:
-# `unit.range` degrades from edge to raw centre distance, and InMeleeRange collapses
-# to its bare 5.0 floor. Melee specs then fail hasRange=NO spells with
-# "target out of range (7.3, limit 6.0)" while standing in actual melee and the game's
-# own tgtRange says YES. Seen on Blood DK: Blood Boil rejected 6/6 and the whole
-# rotation returned Selected: (none).
-#
-# Must stay adjacent, bounding first (DESC_COMBAT_REACH == DESC_BOUND_RADIUS + 4).
-DESC_BOUND_RADIUS: 0x1C70   # float; model radius, display only
-DESC_COMBAT_REACH: 0x1C74   # float; THE field the client's range math sums
+  # RE-PINNED 2026-08-12 — this pair moved +0x20 since build 66066:
+  #     reach @0x1C54: 0.000  bound @0x1C50: 0.000        [SUSPECT]
+  #     @0x1C70 : bounding=0.236 combat=1.500             <- live
+  # (Prior pinning, build 66066: 0x1C50=0.564 / 0x1C54=1.500, with 0x1C70/0x1C74 reading
+  # 0.00 — exactly inverted from today.) This also reconciles the pair with the binary,
+  # which reads reach at +0x1C74 in 21 `addss xmm,[reg+0x1C74]` sites: the melee
+  # function's base simply IS the descriptor.
+  #
+  # SYMPTOM WHEN STALE — reach reads 0.00 on every unit, which breaks range twice:
+  # `unit.range` degrades from edge to raw centre distance, and InMeleeRange collapses
+  # to its bare 5.0 floor. Melee specs then fail hasRange=NO spells with
+  # "target out of range (7.3, limit 6.0)" while standing in actual melee and the game's
+  # own tgtRange says YES. Seen on Blood DK: Blood Boil rejected 6/6 and the whole
+  # rotation returned Selected: (none).
+  #
+  # Must stay adjacent, bounding first (DESC_COMBAT_REACH == DESC_BOUND_RADIUS + 4).
+  DESC_BOUND_RADIUS: 0x1C70   # float; model radius, display only
+  DESC_COMBAT_REACH: 0x1C74   # float; THE field the client's range math sums
 
-# Last field of the shared descriptor window; the window spans
-# min(DESC_AURA_PTR, DESC_CAST_*)..here+4 (0x1A44 today) and must fit kDescWindowMax.
-DESC_EXTRA_REACH:  0x1E2C   # float; addend gated by DESC_FLAGS3 (unimplemented)
+  # Last field of the shared descriptor window; the window spans
+  # min(DESC_AURA_PTR, DESC_CAST_*)..here+4 (0x1A44 today) and must fit kDescWindowMax.
+  DESC_EXTRA_REACH:  0x1E2C   # float; addend gated by DESC_FLAGS3 (unimplemented)
 
-# Active cast (non-player castTargetingMe). Both inside the window, below the aura ptr.
-# DESC_CAST_SPELL:   0x3EC    # u32 spell id; channel start zeroes it
-# DESC_CAST_TARGET:  0x3F8    # 16B GUID lo,hi; never cleared, trust only while the cast spell matches
+  # Active cast (non-player castTargetingMe). Both inside the window, below the aura ptr.
+  DESC_CAST_SPELL:   0x3EC    # u32 spell id; channel start zeroes it
+  DESC_CAST_TARGET:  0x3F8    # 16B GUID lo,hi; casts AND channels; never cleared, trust only while the cast/chan spell matches
+  DESC_CHAN_SPELL:   0x424    # u32 channel spell id (offset_finder truth); optional, absent = channels use Lua [19]
+
+70340:  # 12.1.5.70340 PTR (WowT). Live -scan 2026-10-13: [OK] = verified there.
+  # This build moved to the classic-beta ("forever") object + aura layout.
+  # Release (Wow, key 6AC98F21072C3000) is the same layout: offset_finder DESC_* identical to PTR;
+  # IDA shows the movement pos cache at +0x38/+0x7C (delta 0x44 = 0x60/0xA4, not retail's 0x48).
+  REG_OBJECTS:       0x08
+  REG_COUNT:         0x10
+  ENTRY_STRIDE:      0x10
+  ENTRY_PTR:         0x08     # registry walk found the player: [OK]
+
+  OBJ_GUID_LO:       0x18     # [OK]
+  OBJ_GUID_HI:       0x20
+  OBJ_POS_Y:         0x60     # [OK] (live retail 0x64)
+  OBJ_POS_X:         0x64
+  OBJ_POS_Z:         0x68
+  OBJ_FACING:        0x70     # [OK] 4.3015 == atan2 of both pairs below
+  OBJ_L_COS:         0x80
+  OBJ_L_SIN:         0x84
+  OBJ_POS2_Y:        0xA4     # [OK] mirrors 0x60
+  OBJ_POS2_X:        0xA8
+  OBJ_POS2_Z:        0xAC
+  OBJ_W_COS:         0xB4     # [OK]
+  OBJ_W_SIN:         0xB8
+  OBJ_DESC:          0xD8     # [OK] (0xE0 reads 0 on this build)
+  OBJ_HDR_LEN:       0xE8
+
+  # Descriptor: retail +0x200.
+  DESC_AURA_PTR:     0x5F0    # [OK] cnt 163
+  DESC_AURA_CNT:     0x5F8
+  DESC_SUMMONED_BY:  0x1D88   # offset_finder only (retail 0x1B88 +0x200) - verify with -ownerscan
+  DESC_FLAGS:        0x1E58   # offset_finder (fingerprint matches forever's flags) - not live-checked
+  DESC_FLAGS3:       0x1E60   # offset_finder - not live-checked
+  DESC_BOUND_RADIUS: 0x1E70   # [OK] 0.306
+  DESC_COMBAT_REACH: 0x1E74   # [OK] 1.500
+  DESC_EXTRA_REACH:  0x204C   # offset_finder - not live-checked
+  DESC_CAST_SPELL:   0x3EC    # offset_finder, unchanged - confirm with -casttrace
+  DESC_CAST_TARGET:  0x3F8
+  DESC_CHAN_SPELL:   0x424    # offset_finder, unchanged - confirm with -casttrace
+
+  # Aura entries are NativeAuraDataV2 (stride 0x128): -scan aura-field health [OK].
+  AURA_LAYOUT:       1

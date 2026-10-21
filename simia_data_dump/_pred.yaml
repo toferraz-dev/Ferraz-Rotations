@@ -25,6 +25,7 @@ predictions:
   395160: { name: "Bombardments", debuff: 434473 }
   395152: { name: "Ebon Might", buff: 395296 }
   19434:  { name: "Aimed Shot", buff: 260242 }   # Precise Shots (4 rows share the name)
+  257044: { name: "Rapid Fire", buff: 260242 }
 
 # ----------------------------------------------------------------------------
 # Cast-based resource predictions
