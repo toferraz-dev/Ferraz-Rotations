@@ -10,8 +10,8 @@ spell_overrides:
   reapers_mark: "cooldown_bypass.dancing_rune_weapon.remains>=25"
   # Don't cast Blood Boil until all mobs around the target are pulled into my 8y radius
   blood_boil: "enemies.8y>=1&enemies.8y>=enemies_around_target|enemies_around_target>=3"
-  # Dont't cast Death and Decay while moving
-  death_and_decay: "!moving&standing.time>=0.5"
+  # local addition: drop D&D only where the pack will stay in it (same rule as 252, §8.11) — sidesteps / walking out of a puddle are fine, a moving pack is not
+  death_and_decay: "enemies.staying.8y*4>=enemies.8y*3"
 
 config:
   ds_emergency_hp_pct:
@@ -137,6 +137,8 @@ lists:
     - deaths_caress,if=buff.bone_shield.stack<6
     # marrowrend,if=buff.bone_shield.stack<6
     - marrowrend,if=buff.bone_shield.stack<6
+    # local addition: top San'layn keys pay runes for 37% of D&D casts (~70% uptime even 1-target); upstream only casts on Crimson Scourge. tools/wcl_blood_dnd.py
+    - death_and_decay.player,range_check=mob_count_8y,if=!buff.death_and_decay.up
     # any_dnd,if=buff.crimson_scourge.remains
     - death_and_decay.player,range_check=mob_count_8y,if=buff.crimson_scourge.up
     # blood_boil,if=buff.boiling_point.up

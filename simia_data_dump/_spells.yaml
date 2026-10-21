@@ -451,3 +451,28 @@ off_gcd_spells:
   - winged_vengeance  # id=58244 cd=0 cast=1500 ch=0
   - wound_poison  # id=8679 cd=0 cast=1500 ch=0 rows=4
   - zenith  # id=1249625 cd=16000 cast=0 ch=2
+
+# SimC usable_while_casting: spells pressed during a cast/channel instead of waiting
+# for it to end. Key = the cast/channel spell id the game reports; 0 = any cast or
+# channel. Numeric ids only. Sources: sc_monk.cpp CAST_DURING (SPINNING_CRANE_KICK_IDS,
+# CELESTIAL_CONDUIT_IDS); usable_while_casting=true in sc_mage.cpp (combustion,
+# fire_blast, shimmer) and sc_evoker.cpp (hover). A step's use_while_casting=1 does
+# the same for that line only.
+cast_while_channeling:
+  0: [190319, 108853, 212653, 358267]  # Combustion, Fire Blast, Shimmer, Hover
+  # Spinning Crane Kick (WW/MW 101546, Brewmaster 322729): Tiger Palm, Rising Sun Kick,
+  # Blackout Kick (WW, BrM), Rushing Jade Wind, Spinning Crane Kick (both), Whirling
+  # Dragon Punch, Strike of the Windlord, Keg Smash, Touch of Death, Touch of Karma,
+  # Breath of Fire, Fortifying Brew, Exploding Keg, Purifying Brew, Invoke Xuen, Invoke
+  # Niuzao, Zenith Stomp, Expel Harm, Celestial Brew, Celestial Infusion
+  101546: [100780, 107428, 100784, 205523, 116847, 101546, 322729, 152175, 392983, 121253, 322109, 122470, 115181, 115203, 325153, 119582, 123904, 132578, 1272696, 322101, 322507, 1241059]
+  322729: [100780, 107428, 100784, 205523, 116847, 101546, 322729, 152175, 392983, 121253, 322109, 122470, 115181, 115203, 325153, 119582, 123904, 132578, 1272696, 322101, 322507, 1241059]
+  443028: [1272696]  # Celestial Conduit -> Zenith Stomp
+
+# Channel tick periods SimC's class modules hardcode (base_tick_time) instead of reading
+# the spell's periodic effect; wins over SpellTickTime.csv. ms, unhasted. A channel with
+# neither is never checked for cancel_if / interrupt_if / chain (SimC doesn't tick it).
+channel_ticks:
+  357210: 200  # Deep Breath (sc_evoker.cpp deep_breath_t: base_tick_time = 0.2_s)
+  433874: 200  # Deep Breath, Maneuverability (same action)
+  442204: 200  # Breath of Eons, Maneuverability + Command Squadron (effectN( 2 ).period)

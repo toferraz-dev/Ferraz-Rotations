@@ -100,7 +100,7 @@ lists:
     - arcane_barrage,if=buff.arcane_salvo.react>=(20-talent.orb_barrage)&(enemies_around_target<var.aoe_count|arcane_charges=4)|prev_gcd.1.arcane_surge&buff.arcane_salvo.stack>=(10+5*talent.orb_barrage)
 
     # arcane_missiles,if=buff.clearcasting.react&(buff.arcane_salvo.stack<15|active_enemies<variable.aoe_count&buff.clearcasting.react=3),interrupt_if=tick_time>gcd.remains&(buff.overpowered_missiles.react=0|active_enemies>=variable.aoe_count|!talent.high_voltage),interrupt_global=1,interrupt_immediate=1
-    - arcane_missiles,chain=1,if=buff.clearcasting.react&(buff.arcane_salvo.stack<15|enemies_around_target<var.aoe_count&buff.clearcasting.react=3)
+    - arcane_missiles,interrupt_if=tick_time>gcd.remains&(buff.overpowered_missiles.react=0|enemies_around_target>=var.aoe_count|!talent.high_voltage),interrupt_global=1,interrupt_immediate=1,if=buff.clearcasting.react&(buff.arcane_salvo.stack<15|enemies_around_target<var.aoe_count&buff.clearcasting.react=3)
 
     # prismatic_bolt
     - 1295924

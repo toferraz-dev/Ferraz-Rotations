@@ -182,7 +182,7 @@ lists:
     # resonant_energy_damage = 453850 (name collides with the talent 453845); crushing_void buff = 1279437 (name collides with 1279354)
     - void_volley,if=!talent.resonant_energy|cooldown.voidform.remains<60|buff.voidform.up|buff.453850.react|buff.1279437.stack>=4|fight_remains<45
     # mind_flay,target_if=max:dot.shadow_word_madness.remains,chain=1,interrupt_immediate=1,interrupt_if=ticks>=2,interrupt_global=1
-    - mind_flay
+    - mind_flay,chain=1,interrupt_immediate=1,interrupt_if=ticks>=2,interrupt_global=1
     # Use Tentacle Slam while moving as a low-priority action
     # tentacle_slam,if=raid_event.adds.in>20
     - tentacle_slam,delay=200,if=lastcast.tentacle_slam>=3
@@ -284,7 +284,7 @@ lists:
     # resonant_energy_damage = 453850 (name collides with the talent 453845); crushing_void buff = 1279437 (name collides with 1279354)
     - void_volley,if=!talent.resonant_energy|cooldown.voidform.remains<60|buff.voidform.up|buff.453850.react|buff.1279437.stack>=4|fight_remains<45
     # mind_flay,target_if=max:dot.shadow_word_madness.remains,chain=1,interrupt_immediate=1,interrupt_if=ticks>=2,interrupt_global=1
-    - mind_flay
+    - mind_flay,chain=1,interrupt_immediate=1,interrupt_if=ticks>=2,interrupt_global=1
     # Use Tentacle Slam while moving as a low-priority action
     # tentacle_slam,if=raid_event.adds.in>20
     - tentacle_slam,delay=200,if=lastcast.tentacle_slam>=3

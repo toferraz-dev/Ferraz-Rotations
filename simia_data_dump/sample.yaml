@@ -13,12 +13,12 @@ config:
   
 
 variables:
-  test_variable: health.pct<cfg.sample
+  test_variable: health.pct<config.sample
 
 lists:
 
   nested:
-    - sample_action,if=test_variable
+    - death_strike,if=test_variable
 
   main:
     # _shared.yaml lists

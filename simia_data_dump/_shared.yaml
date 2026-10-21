@@ -420,20 +420,28 @@ lists:
 
   # ============================================================================
   # Auto Purge Enrage - Offensive enrage removal for all specs that can soothe
-  # Uses target.purgeable.enrage to confirm target has a purgeable enrage buff
+  # Uses <unit>.purgeable.enrage to confirm the unit has a purgeable enrage buff.
+  # Order target > focus > mouseover; mouseover yields to an enemy focus (same as interrupts).
+  # .focus/.mouseover need B.FocusMouseover in RotationZ Spell/Macros/<Class>.lua.
   # ============================================================================
   auto_purge_enrage:
     # ── Hunter ──
     # Tranquilizing Shot (all specs) — removes 1 Enrage + 1 Magic effect, 10s CD
     - tranquilizing_shot,if=target.purgeable.enrage
+    - tranquilizing_shot.focus,if=focus.enemy&focus.purgeable.enrage
+    - tranquilizing_shot.mouseover,if=!focus.enemy&mouseover.enemy&mouseover.purgeable.enrage
 
     # ── Druid ──
     # Soothe (all specs) — removes all enrage effects, 10s CD
     - soothe,if=target.purgeable.enrage
+    - soothe.focus,if=focus.enemy&focus.purgeable.enrage
+    - soothe.mouseover,if=!focus.enemy&mouseover.enemy&mouseover.purgeable.enrage
 
     # ── Rogue ──
     # Shiv (all specs) — removes all enrage effects, 25s CD
     - shiv,if=target.purgeable.enrage
+    - shiv.focus,if=focus.enemy&focus.purgeable.enrage
+    - shiv.mouseover,if=!focus.enemy&mouseover.enemy&mouseover.purgeable.enrage
 
     # ── Evoker ──
     # Oppressing Roar (all specs, requires Overawe talent) — AoE enrage removal, ~90s CD
@@ -442,6 +450,8 @@ lists:
     # ── Monk ──
     # Paralysis (all specs, requires Pressure Points talent) — removes enrage, 45s CD
     - paralysis,if=talent.pressure_points&target.purgeable.enrage
+    - paralysis.focus,if=talent.pressure_points&focus.enemy&focus.purgeable.enrage
+    - paralysis.mouseover,if=talent.pressure_points&!focus.enemy&mouseover.enemy&mouseover.purgeable.enrage
 
   sanity_checks:
     - return,if=!state.rotation

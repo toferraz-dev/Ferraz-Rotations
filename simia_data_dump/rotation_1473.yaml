@@ -162,11 +162,11 @@ lists:
     - tip_the_scales,if=!cooldown.breath_of_eons.up&(cooldown.fire_breath.up|talent.temporal_burst&cooldown.fire_breath.remains>gcd.max*2)
 
     # deep_breath,cancel_if=gcd.remains<=0
-    - deep_breath
+    - deep_breath,cancel_if=gcd.remains<=0
 
     # breath_of_eons,if=target.time_to_die>=20&(!variable.enforce_timings)|variable.enforce_timings&cooldown.allied_virtual_cd_time.up,cancel_if=gcd.remains<=0
     # this reduces to target.time_to_die>=20 (the old evoker.allied_cds_up branch is gone upstream)
-    - breath_of_eons,if=target.time_to_die>=20
+    - breath_of_eons,cancel_if=gcd.remains<=0,if=target.time_to_die>=20
 
     # eruption,if=talent.afterimage&buff.essence_burst.at_max_stacks
     # max_stack not supported. Game reports 1; talent 375722 Essence Attunement adds 1.

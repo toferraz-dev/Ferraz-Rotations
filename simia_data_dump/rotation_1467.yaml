@@ -207,10 +207,10 @@ lists:
     - pyre,if=var.use_pyre_fs
 
     # disintegrate,target_if=max:dot.fire_breath_damage.remains,chain=1,if=(raid_event.movement.in>2|buff.hover.up),early_chain_if=ticks_remain<=1,interrupt_if=ticks_remain<=1
-    - disintegrate
+    - disintegrate,chain=1,early_chain_if=ticks_remain<=1,interrupt_if=ticks_remain<=1
 
     # deep_breath,if=talent.imminent_destruction&active_dot.fire_breath_damage=0&active_enemies>=4,cancel_if=gcd.remains=0,interrupt_if=gcd.remains=0
-    - deep_breath,if=talent.imminent_destruction&active_dot.fire_breath=0&enemies_around_target>=4
+    - deep_breath,cancel_if=gcd.remains=0,interrupt_if=gcd.remains=0,if=talent.imminent_destruction&active_dot.fire_breath=0&enemies_around_target>=4
 
     # unbound_flame,target_if=max:dot.fire_breath_damage.remains,if=!buff.essence_burst.at_max_stacks&(!talent.scorching_embers|active_dot.fire_breath_damage>0)
     # Castable Unbound Flame is 1292321 if the name ever mis-resolves.
@@ -237,7 +237,7 @@ lists:
   sc:
     # deep_breath,if=buff.strafing_run.remains<=gcd.max*2,cancel_if=gcd.remains<=0
     # buff.strafing_run = 1266165 (sixteen spells share the display name)
-    - deep_breath,if=buff.1266165.remains<=gcd.max*2
+    - deep_breath,cancel_if=gcd.remains<=0,if=buff.1266165.remains<=gcd.max*2
 
     # dragonrage,if=target.time_to_die>=30&raid_event.adds.in>=60|!raid_event.adds.exists|raid_event.adds.in=0
     - dragonrage,if=target.time_to_die>=30
@@ -258,16 +258,16 @@ lists:
     - call_action_list,name=fb_sc
 
     # deep_breath,if=active_enemies>=2,cancel_if=gcd.remains=0
-    - deep_breath,if=enemies_around_target>=2
+    - deep_breath,cancel_if=gcd.remains=0,if=enemies_around_target>=2
 
     # disintegrate,early_chain_if=ticks_remain<=1&buff.mass_disintegrate_stacks.up,if=(raid_event.movement.in>2|buff.hover.up)&buff.mass_disintegrate_stacks.up&buff.charged_blast.stack<15,interrupt_if=talent.volatility&active_enemies>=8
-    - disintegrate,if=buff.mass_disintegrate.up&buff.charged_blast.stack<15
+    - disintegrate,early_chain_if=ticks_remain<=1&buff.mass_disintegrate.up,interrupt_if=talent.volatility&enemies_around_target>=8,if=buff.mass_disintegrate.up&buff.charged_blast.stack<15
 
     # pyre,target_if=max:target.health.pct,if=(active_enemies>=5|active_enemies>=4&talent.volatility.rank=2)&!buff.mass_disintegrate_stacks.up|active_enemies>=3&talent.charged_blast&buff.charged_blast.stack>=15
     - pyre,if=(enemies_around_target>=5|enemies_around_target>=4&talent.volatility.rank=2)&!buff.mass_disintegrate.up|enemies_around_target>=3&talent.charged_blast&buff.charged_blast.stack>=15
 
     # disintegrate,target_if=max:dot.fire_breath_damage.remains,if=(raid_event.movement.in>2|buff.hover.up),early_chain_if=ticks_remain<=1,interrupt_if=ticks_remain<=1&active_enemies>=3
-    - disintegrate
+    - disintegrate,early_chain_if=ticks_remain<=1,interrupt_if=ticks_remain<=1&enemies_around_target>=3
 
     # living_flame,if=buff.burnout.up&buff.leaping_flames.up&active_enemies<=1+buff.leaping_flames.stack
     - living_flame,if=buff.burnout.up&buff.leaping_flames.up&enemies_around_target<=1+buff.leaping_flames.stack
