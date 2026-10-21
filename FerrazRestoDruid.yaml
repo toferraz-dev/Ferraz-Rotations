@@ -1,4 +1,4 @@
-version: "26.0.0"
+version: "27.0.0"
 author: Ferraz
 patch: "12.1"
 spec: 105
@@ -17,7 +17,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-10-20 | Patch: 12.1 | Version: 26.0.0"
+    text: "Last update: 2026-10-21 | Patch: 12.1 | Version: 27.0.0"
 
 
   recommended_talents:
@@ -492,21 +492,17 @@ lists:
 
   active_healing:
     - regrowth,name="Regrowth Emergency",cycle=members,if=cycle.health.effective.pct<50
-    - regrowth,name="Clearcasting Regrowth",cycle=members,cycle_order=health.pct,if=(player.combat&buff.clearcasting.up&cycle.health.effective.pct<99)&cycle.range<=40
-
-    - rejuvenation.player,name="Self Rejuvenation Maintenance",range_check=none,if=player.combat&buff.rejuvenation.remains<1.5
-    - rejuvenation.player,name="Self Germination Maintenance",range_check=none,if=talent.germination&player.combat&buff.rejuvenation.up&(buff.rejuvenation_germination.down|buff.rejuvenation_germination.remains<1.5)
-
+    - regrowth,name="Clearcasting Regrowth",cycle=members,cycle_order=health.pct,if=(buff.clearcasting.up&cycle.health.effective.pct<99)&cycle.range<=40
     - regrowth,name="SotF Regrowth",cycle=members,cycle_order=health.pct,if=(var.has_soul&cycle.health.effective.pct<config.regrowth_threshold)&cycle.range<=40
 
     - rejuvenation,name="SotF Germination",cycle=members,cycle_order=buff.rejuvenation.remains,if=(var.has_soul&talent.germination&cycle.buff.rejuvenation.up&(cycle.buff.rejuvenation_germination.down|cycle.buff.rejuvenation_germination.remains<1.5))&cycle.range<=40
     - rejuvenation,name="SotF Rejuvenation",cycle=members,cycle_order=buff.rejuvenation.remains,if=(var.has_soul&cycle.buff.rejuvenation.remains<1.5)&cycle.range<=40
 
-    - lifebloom.player,name="Self Lifebloom (Everbloom)",range_check=none,after=300,if=config.lifebloom_target&talent.everbloom&(buff.lifebloom.down|buff.lifebloom.remains<4.5)
+    - lifebloom.player,name="Self Lifebloom (Everbloom)",range_check=none,after=300,if=config.lifebloom_target=1&talent.everbloom&(buff.lifebloom.down|buff.lifebloom.remains<4.5)
     - lifebloom,name="Lifebloom (Tank, Everbloom)",cycle=tanks,cycle_order=health.pct,if=config.lifebloom_target=2&talent.everbloom&(cycle.buff.lifebloom.down|cycle.buff.lifebloom.refreshable)&cycle.range<=40
-    
+
     - wild_growth,name="Wild Growth",range_check=none,if=group.count(cycle.health.effective.pct<config.wild_growth_threshold&cycle.range<=40)>=config.wild_growth_members
-    
+
     - regrowth,name="Abundance Regrowth",cycle=members,cycle_order=health.pct,if=(buff.abundance.up&cycle.health.effective.pct<config.regrowth_threshold)&cycle.range<=40
 
     - rejuvenation,name="Rejuvenation",cycle=members,cycle_order=buff.rejuvenation.remains,if=(cycle.buff.rejuvenation.remains<1.5&cycle.health.effective.pct<config.rejuvenation_threshold&!(buff.abundance.up&buff.abundance.remains>3))&cycle.range<=40
@@ -517,11 +513,10 @@ lists:
     - innervate.player,name="Innervate",off_gcd=true,delay=150,range_check=none,if=talent.innervate&mana.pct<config.innervate_threshold&fight_remains>15
 
   abundance_maintenance:
-    - rejuvenation,name="Abundance Filler (Rejuv - Missing)",cycle=members,if=!buff.abundance.up&cycle.buff.rejuvenation.down
-    - rejuvenation,name="Abundance Filler (Rejuv - Lowest Remains)",cycle=members,cycle_order=buff.rejuvenation.remains,if=!buff.abundance.up&cycle.buff.rejuvenation.refreshable
-    - rejuvenation,name="Abundance Filler (Germination)",cycle=members,if=!buff.abundance.up&talent.germination&cycle.buff.rejuvenation.up&(cycle.buff.rejuvenation_germination.down|cycle.buff.rejuvenation_germination.refreshable)
-    - rejuvenation,name="Abundance Filler (Rejuv Maintenance)",cycle=members,if=buff.abundance.up&buff.abundance.remains<5&cycle.buff.rejuvenation.remains<5
-    - rejuvenation,name="Abundance Filler (Germination Maintenance)",cycle=members,if=talent.germination&buff.abundance.up&buff.abundance.remains<5&cycle.buff.rejuvenation.up&cycle.buff.rejuvenation_germination.remains<5
+    - rejuvenation.player,name="Self Rejuvenation Maintenance",range_check=none,if=buff.rejuvenation.remains<3
+    - rejuvenation.player,name="Self Germination Maintenance",range_check=none,if=buff.rejuvenation_germination.remains<3
+    - rejuvenation,name="Abundance Filler (Rejuv Maintenance)",cycle=members,if=buff.abundance.remains<5&cycle.buff.rejuvenation.remains<5
+    - rejuvenation,name="Abundance Filler (Germination Maintenance)",cycle=members,if=buff.abundance.remains<5&cycle.buff.rejuvenation.up&cycle.buff.rejuvenation_germination.remains<5
 
   ranged_dps:
     - heart_of_the_wild,name="HotW (Instant Cast)",if=config.use_heart_of_the_wild&talent.heart_of_the_wild&cooldown.heart_of_the_wild.ready
@@ -597,7 +592,7 @@ lists:
     - call_action_list,name=avatar_sethraliss,if=mouseover.npcid=133392&mouseover.friendly&mouseover.debuff.1301199.down&mouseover.health.pct<100
     - call_action_list,name=mouseover_healing_emergency,if=config.use_mouseover&var.mo_friendly_valid&mouseover.health.effective.pct<config.mouseover_emergency_hp&(!var.group_healthy|config.force_dps)
     - call_action_list,name=moving,if=player.moving&!var.group_healthy&!config.force_dps
-    - call_action_list,name=abundance_maintenance,if=player.combat&!config.force_dps
+    - call_action_list,name=abundance_maintenance,if=!config.force_dps
     - call_action_list,name=active_healing,if=!var.group_healthy&!config.force_dps
 
     - mark_of_the_wild,range_check=none,name="Mark of the Wild (low prio)",if=(buff.mark_of_the_wild.down.any|action.mark_of_the_wild.overlayed)&lastcast.mark_of_the_wild>=15
