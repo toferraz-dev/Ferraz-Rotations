@@ -1,4 +1,4 @@
-version: "27.1.0"
+version: "28.2.0"
 author: Ferraz
 patch: "12.1"
 spec: 105
@@ -17,7 +17,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-10-21 | Patch: 12.1 | Version: 27.1.0"
+    text: "Last update: 2026-10-21 | Patch: 12.1 | Version: 28.2.0"
 
 
   recommended_talents:
@@ -124,15 +124,6 @@ config:
     max: 99
     default: 90
 
-  precast_incoming_dmg_pct:
-    label: "Precast - Predicted HP % Remaining (cycle)"
-    section: "Healing"
-    type: slider
-    min: 10
-    max: 100
-    default: 40
-    description: "Pre-heal a group member whose current effective health minus the biggest predicted incoming hit (cycle.health.effective.pct-cycle.incoming.pct) would put them at or below this HP%. cycle.incoming.pct is magnitude-only (no .mitigated form - confirmed by the Simia maintainer). Example: at 90% HP with a hit predicted to take 30%, that's 60% projected."
-
   rejuvenation_threshold:
     label: "Rejuvenation HP % (effective)"
     section: "Healing"
@@ -140,30 +131,6 @@ config:
     min: 25
     max: 100
     default: 100
-
-  rejuvenation_threshold_tank:
-    label: "Rejuvenation HP % Tank (effective)"
-    section: "Healing"
-    type: slider
-    min: 25
-    max: 100
-    default: 100
-
-  regrowth_threshold_tank:
-    label: "Regrowth HP % Tank (effective)"
-    section: "Healing"
-    type: slider
-    min: 25
-    max: 99
-    default: 90
-
-  wild_growth_threshold_tank:
-    label: "Wild Growth HP % Tank (effective)"
-    section: "Healing"
-    type: slider
-    min: 25
-    max: 99
-    default: 90
 
   convoke_threshold:
     label: "Convoke HP % (effective)"
@@ -461,9 +428,6 @@ lists:
     - rejuvenation,name="SotF Germination",cycle=members,cycle_order=buff.rejuvenation.remains,if=(var.has_soul&talent.germination&cycle.buff.rejuvenation.up&(cycle.buff.rejuvenation_germination.down|cycle.buff.rejuvenation_germination.remains<1.5))&cycle.range<=40
     - rejuvenation,name="SotF Rejuvenation",cycle=members,cycle_order=buff.rejuvenation.remains,if=(var.has_soul&cycle.buff.rejuvenation.remains<1.5)
 
-    - lifebloom.player,name="Self Lifebloom (Everbloom)",range_check=none,after=300,if=config.lifebloom_target=1&talent.everbloom&(buff.lifebloom.down|buff.lifebloom.remains<4.5)
-    - lifebloom,name="Lifebloom (Tank, Everbloom)",cycle=tanks,cycle_order=health.pct,if=config.lifebloom_target=2&talent.everbloom&(cycle.buff.lifebloom.down|cycle.buff.lifebloom.refreshable)
-
     - wild_growth,name="Wild Growth",range_check=none,if=group.count(cycle.health.effective.pct<config.wild_growth_threshold)>=config.wild_growth_members
 
     - regrowth,name="Abundance Regrowth",cycle=members,cycle_order=health.pct,if=(buff.abundance.up&cycle.health.effective.pct<config.regrowth_threshold)
@@ -478,6 +442,8 @@ lists:
   abundance_maintenance:
     - rejuvenation.player,name="Self Rejuvenation Maintenance",range_check=none,if=buff.rejuvenation.remains<2
     - rejuvenation.player,name="Self Germination Maintenance",range_check=none,if=buff.rejuvenation_germination.remains<2
+    - lifebloom.player,name="Self Lifebloom (Everbloom, Top Priority)",range_check=none,after=300,if=player.combat&config.lifebloom_target=1&talent.everbloom&(buff.lifebloom.down|buff.lifebloom.remains<4.5)
+    - lifebloom,name="Lifebloom (Tank, Everbloom, Top Priority)",cycle=tanks,cycle_order=health.pct,if=player.combat&config.lifebloom_target=2&talent.everbloom&(cycle.buff.lifebloom.down|cycle.buff.lifebloom.refreshable)
     - rejuvenation,name="Abundance Filler (Rejuv Maintenance)",cycle=members,cycle_order=buff.rejuvenation.remains,if=buff.abundance.remains<5&cycle.buff.rejuvenation.remains<3
     - rejuvenation,name="Abundance Filler (Germination Maintenance)",cycle=members,cycle_order=buff.rejuvenation.remains,if=buff.abundance.remains<5&cycle.buff.rejuvenation.up&cycle.buff.rejuvenation_germination.remains<3
 
@@ -489,8 +455,6 @@ lists:
     - starfire,name="Starfire Filler"
 
   moving:
-    - lifebloom.player,name="Self Lifebloom (Everbloom, Moving)",range_check=none,if=config.lifebloom_target=1&talent.everbloom&(buff.lifebloom.down|buff.lifebloom.remains<4.5)
-    - lifebloom,name="Lifebloom Tank (Moving)",cycle=tanks,if=config.lifebloom_target=2&(cycle.buff.lifebloom.down|cycle.buff.lifebloom.refreshable)
     - rejuvenation,name="Rejuvenation (Moving)",cycle=members,if=cycle.buff.rejuvenation.refreshable&cycle.health.effective.pct<config.rejuvenation_threshold
     - rejuvenation,name="Germination (Moving)",cycle=members,if=talent.germination&cycle.buff.rejuvenation.up&(cycle.buff.rejuvenation_germination.down|cycle.buff.rejuvenation_germination.refreshable)&cycle.health.effective.pct<config.rejuvenation_threshold
     - call_action_list,name=abundance_maintenance,if=!var.can_dps
@@ -556,7 +520,7 @@ lists:
     - call_action_list,name=mouseover_healing_emergency,if=config.use_mouseover&var.mo_friendly_valid&mouseover.health.effective.pct<config.mouseover_emergency_hp&(!var.group_healthy|config.force_dps)
     - call_action_list,name=moving,if=player.moving&!var.group_healthy&!config.force_dps
     - call_action_list,name=abundance_maintenance,if=!config.force_dps
-    - call_action_list,name=active_healing,if=!var.group_healthy&!config.force_dps
+    - call_action_list,name=active_healing,if=!config.force_dps
 
     - mark_of_the_wild,range_check=none,name="Mark of the Wild (low prio)",if=(buff.mark_of_the_wild.down.any|action.mark_of_the_wild.overlayed)&lastcast.mark_of_the_wild>=15
 
