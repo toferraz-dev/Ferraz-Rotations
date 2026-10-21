@@ -287,7 +287,6 @@ config:
     default: true
     description: "Soothe whatever you are hovering, checked just before the current-target Soothe below. Simia cannot pick an enraged enemy by criteria — target_enemy is 'nearest enemy' with no filter and there is no .any(EXPR) for enemies — so hovering is the only way to Soothe a mob you are not targeting. This is an independent switch: turning Soothe Enrage off does not disable it. Guarded on mouseover.combat, so hovering an unpulled mob never pulls it."
 
-
   dps_group_hp:
     label: "DPS - Group HP % (effective)"
     section: "Damage"
@@ -325,21 +324,6 @@ config:
       - label: "Always when moving"
         value: 3
     default: 0
-
-  stampeding_roar_movement_time:
-    label: "Roar after moving (seconds)"
-    section: "Movement"
-    type: slider
-    min: 0
-    max: 4
-    default: 2
-
-
-  auto_prowl:
-    label: "Auto Prowl (Stealth)"
-    section: "Utility"
-    type: checkbox
-    default: false
 
   innervate_threshold:
     label: "Innervate Mana %"
@@ -457,7 +441,6 @@ variables:
   can_dps: (var.group_healthy|config.force_dps)&player.combat
   mo_friendly_valid: mouseover.exists&mouseover.alive&mouseover.friendly&mouseover.unitframe
   has_soul: buff.soul_of_the_forest.up
-  use_stampeding_roar: moving.time>=config.stampeding_roar_movement_time&buff.stampeding_roar.down&((config.stampeding_roar_usage=1&player.combat)|(config.stampeding_roar_usage=2&!player.combat)|(config.stampeding_roar_usage=3))
 
 lists:
   emergency:
@@ -472,19 +455,18 @@ lists:
     - soothe,name="Soothe Enrage",if=target.purgeable.enrage
 
   out_of_combat:
-    - mark_of_the_wild,range_check=none,if=(buff.mark_of_the_wild.down.any|action.mark_of_the_wild.overlayed)&lastcast.mark_of_the_wild>=10
+    - mark_of_the_wild,range_check=none,if=(buff.mark_of_the_wild.down.any|action.mark_of_the_wild.overlayed)&lastcast.mark_of_the_wild>=15
     - symbiotic_relationship,cycle=tanks,if=cycle.buff.symbiotic_relationship.down.any
     - lifebloom.player,name="OOC Self Lifebloom (Everbloom)",range_check=none,if=config.lifebloom_target=1&talent.everbloom&(buff.lifebloom.down|buff.lifebloom.refreshable)
-    - lifebloom,name="OOC Lifebloom (Tank)",cycle=tanks,if=config.lifebloom_target=2&(player.inraid|player.indungeon)&(cycle.buff.lifebloom.down|cycle.buff.lifebloom.refreshable)
-    - 774,name="OOC Rejuvenation",cycle=members,if=(player.inraid|player.indungeon)&cycle.health.effective.pct<config.ooc_heal_hp_pct&cycle.buff.rejuvenation.refreshable
-    - regrowth,name="OOC Regrowth",cycle=members,if=(player.inraid|player.indungeon)&cycle.health.effective.pct<config.ooc_heal_hp_pct&pred.cycle.buff.regrowth.refreshable
+    - lifebloom,name="OOC Lifebloom (Tank)",cycle=tanks,if=config.lifebloom_target=2&(cycle.buff.lifebloom.down|cycle.buff.lifebloom.refreshable)
+    - rejuvenation,name="OOC Rejuvenation",cycle=members,if=cycle.health.effective.pct<config.ooc_heal_hp_pct&cycle.buff.rejuvenation.refreshable
+    - regrowth,name="OOC Regrowth",cycle=members,if=cycle.health.effective.pct<config.ooc_heal_hp_pct&pred.cycle.buff.regrowth.refreshable
     - call_action_list,name=abundance_maintenance
-    - prowl,name="Auto Stealth",if=config.auto_prowl&!buff.prowl.up&!buff.travel_form.up&!buff.bear_form.up&!buff.incarnation_tree_of_life.up
 
   defensives:
     - barkskin,name="Barkskin",off_gcd=true,ignore_queue=true,if=(health.effective.pct-incoming.pct)<=config.barkskin_incoming_pct
-    - 102342,name="Ironbark (Tank)",off_gcd=true,ignore_queue=true,cycle=tanks,if=config.ironbark_target=1&cycle.health.effective.pct<config.ironbark_threshold&cycle.buff.ironbark.down
-    - 102342,name="Ironbark (Members)",off_gcd=true,ignore_queue=true,cycle=members,if=config.ironbark_target=2&cycle.health.effective.pct<config.ironbark_threshold&cycle.buff.ironbark.down
+    - ironbark,name="Ironbark (Tank)",off_gcd=true,ignore_queue=true,cycle=tanks,if=config.ironbark_target=1&cycle.health.effective.pct<config.ironbark_threshold&cycle.buff.ironbark.down
+    - ironbark,name="Ironbark (Members)",off_gcd=true,ignore_queue=true,cycle=members,if=config.ironbark_target=2&cycle.health.effective.pct<config.ironbark_threshold&cycle.buff.ironbark.down
     - bear_form,name="Panic Bear",if=health.effective.pct<config.frenzied_regen_threshold&!buff.bear_form.up&(cooldown.frenzied_regeneration.ready|cooldown.heart_of_the_wild.ready)&!buff.incarnation_tree_of_life.up
     - heart_of_the_wild,name="HotW Bear (Panic)",if=buff.bear_form.up&health.effective.pct<config.frenzied_regen_threshold&cooldown.heart_of_the_wild.ready
     - frenzied_regeneration,name="Frenzied Regen",if=buff.bear_form.up&health.effective.pct<config.frenzied_regen_threshold
@@ -500,52 +482,46 @@ lists:
   cooldowns:
     - natures_swiftness,name="Nature Swiftness",off_gcd=true,delay=150,range_check=none,if=!config.disable_natures_swiftness&group.count(cycle.health.effective.pct<config.natures_swiftness_threshold)>=1
     - regrowth,name="Nature Swift Regrowth",cycle=members,if=buff.natures_swiftness.up&cycle.health.effective.pct<config.natures_swiftness_threshold
-    - 774,name="Reju Out Cat For Convoke",if=(group.count(cycle.health.effective.pct<config.convoke_threshold&!cycle.tank)>=config.convoke_members)&(buff.cat_form.up|buff.bear_form.up)
+    - rejuvenation,name="Reju Out Cat For Convoke",if=(group.count(cycle.health.effective.pct<config.convoke_threshold&!cycle.tank)>=config.convoke_members)&(buff.cat_form.up|buff.bear_form.up)
     - trinket_1,delay=150,name="Trinket 1",if=config.use_trinket_1&trinket_1.ready&(group.count(cycle.health.effective.pct<config.convoke_threshold&!cycle.tank)>=config.convoke_members)&!buff.cat_form.up&!buff.bear_form.up
     - trinket_2,delay=150,name="Trinket 2",if=config.use_trinket_2&trinket_2.ready&(group.count(cycle.health.effective.pct<config.convoke_threshold&!cycle.tank)>=config.convoke_members)&!buff.cat_form.up&!buff.bear_form.up
     - combat_potion,delay=150,name="Combat Potion",if=combat_potion.ready&config.use_potion&(group.count(cycle.health.effective.pct<config.convoke_threshold&!cycle.tank)>=config.convoke_members)&!buff.cat_form.up&!buff.bear_form.up
     - convoke_the_spirits,global_delay=1000,name="Convoke (Heal)",if=(group.count(cycle.health.effective.pct<config.convoke_threshold&!cycle.tank)>=config.convoke_members)&!buff.cat_form.up&!buff.bear_form.up&!buff.moonkin_form.up
     - tranquility,global_delay=1000,name="Tranquility",if=!config.manual_tranquility&group.count(cycle.health.effective.pct<config.tranquility_threshold&!cycle.tank)>=config.tranquility_members&!player.moving
-    - swiftmend.player,name="Self Swiftmend (Archdruid)",range_check=none,if=talent.power_of_the_archdruid&player.combat&cooldown.swiftmend.ready&!buff.abundance.up&(buff.rejuvenation.up|buff.regrowth.up|buff.wild_growth.up)
     - swiftmend,name="Swiftmend for SotF/Treants",cycle=members,if=cycle.health.effective.pct<config.swiftmend_threshold&(cycle.buff.rejuvenation.up|pred.cycle.buff.regrowth.up|pred.cycle.buff.wild_growth.up)
 
   active_healing:
-    - regrowth,name="Regrowth Emergency",cycle=members,if=cycle.health.effective.pct<config.regrowth_emergency_threshold
-    - regrowth,name="Precast (Incoming Cast)",cycle=members,if=(cycle.health.effective.pct-cycle.incoming.pct)<=config.precast_incoming_dmg_pct
+    - regrowth,name="Regrowth Emergency",cycle=members,if=cycle.health.effective.pct<50
+    - regrowth,name="Clearcasting Regrowth",cycle=members,cycle_order=health.pct,if=(player.combat&buff.clearcasting.up&cycle.health.effective.pct<99)&cycle.range<=40
 
-    - wild_growth,name="Wild Growth",range_check=none,if=group.count(cycle.health.effective.pct<config.wild_growth_threshold&!cycle.tank)>=config.wild_growth_members
-    - wild_growth,name="Wild Growth (Tank)",range_check=none,if=group.count(cycle.tank&cycle.health.effective.pct<config.wild_growth_threshold_tank)>=1
+    - rejuvenation.player,name="Self Rejuvenation Maintenance",range_check=none,if=player.combat&buff.rejuvenation.remains<1.5
+    - rejuvenation.player,name="Self Germination Maintenance",range_check=none,if=talent.germination&player.combat&buff.rejuvenation.up&(buff.rejuvenation_germination.down|buff.rejuvenation_germination.remains<1.5)
 
-    - regrowth,name="Clearcasting Regrowth",cycle=members,if=player.combat&buff.clearcasting.up&cycle.health.effective.pct<99
+    - regrowth,name="SotF Regrowth",cycle=members,cycle_order=health.pct,if=(var.has_soul&cycle.health.effective.pct<config.regrowth_threshold)&cycle.range<=40
 
-    - 774,name="SotF Rejuvenation",cycle=members,if=var.has_soul&cycle.buff.rejuvenation.refreshable
-    - 774,name="SotF Germination",cycle=members,if=var.has_soul&talent.germination&cycle.buff.rejuvenation.up&(cycle.buff.rejuvenation_germination.down|cycle.buff.rejuvenation_germination.refreshable)
-    - regrowth,name="SotF Regrowth",cycle=members,if=var.has_soul&cycle.health.effective.pct<config.regrowth_threshold
+    - rejuvenation,name="SotF Germination",cycle=members,cycle_order=buff.rejuvenation.remains,if=(var.has_soul&talent.germination&cycle.buff.rejuvenation.up&(cycle.buff.rejuvenation_germination.down|cycle.buff.rejuvenation_germination.remains<1.5))&cycle.range<=40
+    - rejuvenation,name="SotF Rejuvenation",cycle=members,cycle_order=buff.rejuvenation.remains,if=(var.has_soul&cycle.buff.rejuvenation.remains<1.5)&cycle.range<=40
 
-    - efflorescence,name="Efflorescence (no Lifetreading)",range_check=none,if=talent.efflorescence&!talent.lifetreading&!totem.efflorescence.up
+    - lifebloom.player,name="Self Lifebloom (Everbloom)",range_check=none,after=300,if=config.lifebloom_target&talent.everbloom&(buff.lifebloom.down|buff.lifebloom.remains<4.5)
+    - lifebloom,name="Lifebloom (Tank, Everbloom)",cycle=tanks,cycle_order=health.pct,if=config.lifebloom_target=2&talent.everbloom&(cycle.buff.lifebloom.down|cycle.buff.lifebloom.refreshable)&cycle.range<=40
+    
+    - wild_growth,name="Wild Growth",range_check=none,if=group.count(cycle.health.effective.pct<config.wild_growth_threshold&cycle.range<=40)>=config.wild_growth_members
+    
+    - regrowth,name="Abundance Regrowth",cycle=members,cycle_order=health.pct,if=(buff.abundance.up&cycle.health.effective.pct<config.regrowth_threshold)&cycle.range<=40
 
-    - lifebloom.player,name="Self Lifebloom (Everbloom)",range_check=none,after=300,if=config.lifebloom_target=1&talent.everbloom&(buff.lifebloom.down|buff.lifebloom.remains<4.5)
-    - lifebloom,name="Lifebloom (Tank)",cycle=tanks,if=config.lifebloom_target=2&(cycle.buff.lifebloom.down|cycle.buff.lifebloom.refreshable)
+    - rejuvenation,name="Rejuvenation",cycle=members,cycle_order=buff.rejuvenation.remains,if=(cycle.buff.rejuvenation.remains<1.5&cycle.health.effective.pct<config.rejuvenation_threshold&!(buff.abundance.up&buff.abundance.remains>3))&cycle.range<=40
+    - rejuvenation,name="Germination",cycle=members,cycle_order=health.pct,if=(talent.germination&cycle.buff.rejuvenation.up&(cycle.buff.rejuvenation_germination.down|cycle.buff.rejuvenation_germination.remains<1.5)&cycle.health.effective.pct<config.rejuvenation_threshold&!(buff.abundance.up&buff.abundance.remains>3))&cycle.range<=40
 
-    - 774.player,name="Self Rejuvenation (Photosynthesis)",range_check=none,if=talent.photosynthesis&player.combat&buff.rejuvenation.down
-
-    - regrowth,name="Abundance Regrowth",cycle=members,if=buff.abundance.up&cycle.health.effective.pct<config.regrowth_threshold
-
-    - 774,name="Rejuvenation",cycle=members,if=cycle.buff.rejuvenation.refreshable&(cycle.tank&cycle.health.effective.pct<config.rejuvenation_threshold_tank|!cycle.tank&cycle.health.effective.pct<config.rejuvenation_threshold)
-    - 774,name="Germination",cycle=members,if=talent.germination&cycle.buff.rejuvenation.up&(cycle.buff.rejuvenation_germination.down|cycle.buff.rejuvenation_germination.refreshable)&(cycle.tank&cycle.health.effective.pct<config.rejuvenation_threshold_tank|!cycle.tank&cycle.health.effective.pct<config.rejuvenation_threshold)
-    - regrowth,name="Regrowth",cycle=members,if=(cycle.tank&cycle.health.effective.pct<config.regrowth_threshold_tank|!cycle.tank&cycle.health.effective.pct<config.regrowth_threshold)
-    - thorn_bloom,name="Thorn Bloom",if=group.count(cycle.health.effective.pct<config.thorn_bloom_threshold&!cycle.tank)>=config.thorn_bloom_members
-
+    - regrowth,name="Regrowth",cycle=members,cycle_order=health.pct,if=(cycle.health.effective.pct<config.regrowth_threshold)&cycle.range<=40
   utility:
     - innervate.player,name="Innervate",off_gcd=true,delay=150,range_check=none,if=talent.innervate&mana.pct<config.innervate_threshold&fight_remains>15
-    - stampeding_roar,name="Stampeding Roar",if=var.use_stampeding_roar&config.stampeding_roar_usage!=0
 
   abundance_maintenance:
-    - 774,name="Abundance Filler (Rejuv - Missing)",cycle=members,if=!buff.abundance.up&cycle.buff.rejuvenation.down
-    - 774,name="Abundance Filler (Rejuv - Lowest Remains)",cycle=members,cycle_order=buff.rejuvenation.remains,if=!buff.abundance.up&cycle.buff.rejuvenation.refreshable
-    - 774,name="Abundance Filler (Germination)",cycle=members,if=!buff.abundance.up&talent.germination&cycle.buff.rejuvenation.up&(cycle.buff.rejuvenation_germination.down|cycle.buff.rejuvenation_germination.refreshable)
-    - 774,name="Abundance Filler (Rejuv Maintenance)",cycle=members,if=buff.abundance.up&buff.abundance.remains<5&cycle.buff.rejuvenation.remains<5
-    - 774,name="Abundance Filler (Germination Maintenance)",cycle=members,if=talent.germination&buff.abundance.up&buff.abundance.remains<5&cycle.buff.rejuvenation.up&cycle.buff.rejuvenation_germination.remains<5
+    - rejuvenation,name="Abundance Filler (Rejuv - Missing)",cycle=members,if=!buff.abundance.up&cycle.buff.rejuvenation.down
+    - rejuvenation,name="Abundance Filler (Rejuv - Lowest Remains)",cycle=members,cycle_order=buff.rejuvenation.remains,if=!buff.abundance.up&cycle.buff.rejuvenation.refreshable
+    - rejuvenation,name="Abundance Filler (Germination)",cycle=members,if=!buff.abundance.up&talent.germination&cycle.buff.rejuvenation.up&(cycle.buff.rejuvenation_germination.down|cycle.buff.rejuvenation_germination.refreshable)
+    - rejuvenation,name="Abundance Filler (Rejuv Maintenance)",cycle=members,if=buff.abundance.up&buff.abundance.remains<5&cycle.buff.rejuvenation.remains<5
+    - rejuvenation,name="Abundance Filler (Germination Maintenance)",cycle=members,if=talent.germination&buff.abundance.up&buff.abundance.remains<5&cycle.buff.rejuvenation.up&cycle.buff.rejuvenation_germination.remains<5
 
   ranged_dps:
     - heart_of_the_wild,name="HotW (Instant Cast)",if=config.use_heart_of_the_wild&talent.heart_of_the_wild&cooldown.heart_of_the_wild.ready
@@ -557,18 +533,18 @@ lists:
   moving:
     - lifebloom.player,name="Self Lifebloom (Everbloom, Moving)",range_check=none,if=config.lifebloom_target=1&talent.everbloom&(buff.lifebloom.down|buff.lifebloom.remains<4.5)
     - lifebloom,name="Lifebloom Tank (Moving)",cycle=tanks,if=config.lifebloom_target=2&(cycle.buff.lifebloom.down|cycle.buff.lifebloom.refreshable)
-    - 774,name="Rejuvenation (Moving)",cycle=members,if=cycle.buff.rejuvenation.refreshable&cycle.health.effective.pct<config.rejuvenation_threshold
-    - 774,name="Germination (Moving)",cycle=members,if=talent.germination&cycle.buff.rejuvenation.up&(cycle.buff.rejuvenation_germination.down|cycle.buff.rejuvenation_germination.refreshable)&cycle.health.effective.pct<config.rejuvenation_threshold
+    - rejuvenation,name="Rejuvenation (Moving)",cycle=members,if=cycle.buff.rejuvenation.refreshable&cycle.health.effective.pct<config.rejuvenation_threshold
+    - rejuvenation,name="Germination (Moving)",cycle=members,if=talent.germination&cycle.buff.rejuvenation.up&(cycle.buff.rejuvenation_germination.down|cycle.buff.rejuvenation_germination.refreshable)&cycle.health.effective.pct<config.rejuvenation_threshold
     - call_action_list,name=abundance_maintenance,if=!var.can_dps
 
   avatar_sethraliss:
-    - 774.mouseover,name="Avatar Rejuvenation",range_check=mouseover,if=mouseover.buff.rejuvenation.refreshable
+    - rejuvenation.mouseover,name="Avatar Rejuvenation",range_check=mouseover,if=mouseover.buff.rejuvenation.refreshable
     - swiftmend.mouseover,name="Avatar Swiftmend",range_check=mouseover,if=mouseover.buff.rejuvenation.up|mouseover.buff.regrowth.up
     - regrowth.mouseover,name="Avatar Regrowth",range_check=mouseover,if=!player.moving
 
   mouseover_healing_emergency:
     - swiftmend.mouseover,name="Swiftmend (MO)",if=mouseover.buff.rejuvenation.remains>1|mouseover.buff.regrowth.remains>1|mouseover.buff.wild_growth.remains>1
-    - 774.mouseover,name="Rejuvenation (MO)",if=mouseover.buff.rejuvenation.remains<=1.5
+    - rejuvenation.mouseover,name="Rejuvenation (MO)",if=mouseover.buff.rejuvenation.remains<=1.5
     - regrowth.mouseover,name="Regrowth (MO) Cast",if=!player.moving
 
   auto_rez:
@@ -624,7 +600,6 @@ lists:
     - call_action_list,name=abundance_maintenance,if=player.combat&!config.force_dps
     - call_action_list,name=active_healing,if=!var.group_healthy&!config.force_dps
 
-    - mark_of_the_wild,range_check=none,name="Mark of the Wild (low prio)",if=(buff.mark_of_the_wild.down.any|action.mark_of_the_wild.overlayed)&lastcast.mark_of_the_wild>=10
-
+    - mark_of_the_wild,range_check=none,name="Mark of the Wild (low prio)",if=(buff.mark_of_the_wild.down.any|action.mark_of_the_wild.overlayed)&lastcast.mark_of_the_wild>=15
 
     - call_action_list,name=ranged_dps,if=config.ranged_dps&var.can_dps&target.exists&target.alive&!target.friendly
