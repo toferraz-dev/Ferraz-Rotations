@@ -1,4 +1,4 @@
-version: "27.0.0"
+version: "27.1.0"
 author: Ferraz
 patch: "12.1"
 spec: 105
@@ -17,7 +17,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-10-21 | Patch: 12.1 | Version: 27.0.0"
+    text: "Last update: 2026-10-21 | Patch: 12.1 | Version: 27.1.0"
 
 
   recommended_talents:
@@ -468,8 +468,8 @@ lists:
 
     - regrowth,name="Abundance Regrowth",cycle=members,cycle_order=health.pct,if=(buff.abundance.up&cycle.health.effective.pct<config.regrowth_threshold)
 
-    - rejuvenation,name="Rejuvenation",cycle=members,cycle_order=buff.rejuvenation.remains,if=(cycle.buff.rejuvenation.remains<2&cycle.health.effective.pct<config.rejuvenation_threshold&!buff.abundance.remains>3)
-    - rejuvenation,name="Germination",cycle=members,cycle_order=health.pct,if=(talent.germination&cycle.buff.rejuvenation.up&(cycle.buff.rejuvenation_germination.down|cycle.buff.rejuvenation_germination.remains<2)&cycle.health.effective.pct<config.rejuvenation_threshold&!buff.abundance.remains>3)
+    - rejuvenation,name="Rejuvenation",cycle=members,cycle_order=buff.rejuvenation.remains,if=(cycle.buff.rejuvenation.remains<2&cycle.health.effective.pct<config.rejuvenation_threshold&!(buff.abundance.up&buff.abundance.remains>3))
+    - rejuvenation,name="Germination",cycle=members,cycle_order=health.pct,if=(talent.germination&cycle.buff.rejuvenation.up&(cycle.buff.rejuvenation_germination.down|cycle.buff.rejuvenation_germination.remains<2)&cycle.health.effective.pct<config.rejuvenation_threshold&!(buff.abundance.up&buff.abundance.remains>3))
 
     - regrowth,name="Regrowth",cycle=members,cycle_order=health.pct,if=(cycle.health.effective.pct<config.regrowth_threshold)
   utility:
