@@ -154,6 +154,7 @@ spec_profiles:
         auto_enabled: true
         values:
           auto_prowl: false
+          regrowth_emergency_threshold: 45
           ironbark_threshold: 70
           frenzied_regen_incoming_pct: 85
           frenzied_regen_threshold: 25
@@ -166,6 +167,10 @@ spec_profiles:
           raid_use_potion: true
           raid_lifebloom_target: 1
           raid_cancel_overheal_pct: 90
+          swiftmend_threshold: 85
+          precast_incoming_dmg_pct: 45
+          convoke_members: 2
+          convoke_threshold: 60
         shared_values:
           interrupt_all: true
           healthstone: 50

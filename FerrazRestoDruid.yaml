@@ -454,7 +454,7 @@ lists:
     - swiftmend,name="Swiftmend for SotF/Treants",cycle=members,if=cycle.health.effective.pct<config.swiftmend_threshold&(cycle.buff.rejuvenation.up|pred.cycle.buff.regrowth.up|pred.cycle.buff.wild_growth.up)
 
   active_healing:
-    - regrowth,name="Regrowth Emergency",cycle=members,cycle_order=health.pct,if=cycle.health.effective.pct<45
+    - regrowth,name="Regrowth Emergency",cycle=members,cycle_order=health.pct,if=cycle.health.effective.pct<config.regrowth_emergency_threshold
     - regrowth,name="Clearcasting Regrowth",cycle=members,cycle_order=health.pct,if=(buff.clearcasting.up&cycle.health.effective.pct<95)
     - regrowth,name="SotF Regrowth",cycle=members,cycle_order=health.pct,if=(var.has_soul&cycle.health.effective.pct<config.regrowth_threshold)
 
