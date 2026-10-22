@@ -1,5 +1,5 @@
 
-version: "11.3.0"
+version: "12.0.0"
 author: Ferraz
 patch: "12.1"
 spec: 102
@@ -17,7 +17,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-10-20 | Patch: 12.1 | Version: 11.3.0"
+    text: "Last update: 2026-10-21 | Patch: 12.1 | Version: 12.0.0"
 
   recommended_talents:
     section: "Talents"
@@ -378,7 +378,7 @@ lists:
     - target_enemy,name="Swap Off Storm Blessed",delay=500,off_gcd=true,if=target.buff.1289229.up&enemies.combat.40y>=2
 
   dispels:
-    - remove_corruption.player,delay=500,name="Remove Corruption (Self)",if=config.auto_dispel_self&player.dispelable.list
+    - remove_corruption,cycle=members,delay=500,name="Remove Corruption (Self)",if=cycle.is_player&config.auto_dispel_self&player.dispelable.list
     - remove_corruption,delay=500,cycle=party,name="Remove Corruption (Party)",if=config.auto_dispel_party&cycle.dispelable.list
     - soothe.mouseover,name="Soothe Enrage (Mouseover)",range_check=mouseover,if=config.soothe_mouseover&mouseover.exists&mouseover.enemy&mouseover.attackable&!mouseover.dead&mouseover.combat&mouseover.purgeable.enrage
     - soothe,name="Soothe (Enrage)",if=config.auto_purge_enrage&target.purgeable.enrage
