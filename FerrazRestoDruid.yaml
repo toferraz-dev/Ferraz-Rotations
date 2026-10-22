@@ -1,4 +1,4 @@
-version: "28.2.0"
+version: "29.0.0"
 author: Ferraz
 patch: "12.1"
 spec: 105
@@ -17,7 +17,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-10-21 | Patch: 12.1 | Version: 28.2.0"
+    text: "Last update: 2026-10-21 | Patch: 12.1 | Version: 29.0.0"
 
 
   recommended_talents:
@@ -387,7 +387,7 @@ lists:
   out_of_combat:
     - mark_of_the_wild,range_check=none,if=(buff.mark_of_the_wild.down.any|action.mark_of_the_wild.overlayed)&lastcast.mark_of_the_wild>=15
     - symbiotic_relationship,cycle=tanks,if=cycle.buff.symbiotic_relationship.down.any
-    - lifebloom.player,name="OOC Self Lifebloom (Everbloom)",range_check=none,if=config.lifebloom_target=1&talent.everbloom&(buff.lifebloom.down|buff.lifebloom.refreshable)
+    - lifebloom,cycle=members,name="OOC Self Lifebloom (Everbloom)",range_check=none,if=cycle.is_player&config.lifebloom_target=1&talent.everbloom&(cycle.buff.lifebloom.down|cycle.buff.lifebloom.refreshable)
     - lifebloom,name="OOC Lifebloom (Tank)",cycle=tanks,if=config.lifebloom_target=2&(cycle.buff.lifebloom.down|cycle.buff.lifebloom.refreshable)
     - rejuvenation,name="OOC Rejuvenation",cycle=members,if=cycle.health.effective.pct<config.ooc_heal_hp_pct&cycle.buff.rejuvenation.refreshable
     - regrowth,name="OOC Regrowth",cycle=members,if=cycle.health.effective.pct<config.ooc_heal_hp_pct&pred.cycle.buff.regrowth.refreshable
@@ -437,11 +437,11 @@ lists:
 
     - regrowth,name="Regrowth",cycle=members,cycle_order=health.pct,if=(cycle.health.effective.pct<config.regrowth_threshold)
   utility:
-    - innervate.player,name="Innervate",off_gcd=true,delay=150,range_check=none,if=talent.innervate&mana.pct<config.innervate_threshold
+    - innervate,cycle=members,name="Innervate",off_gcd=true,delay=150,range_check=none,if=cycle.is_player&talent.innervate&mana.pct<config.innervate_threshold
 
   abundance_maintenance:
-    - rejuvenation.player,name="Self Rejuvenation Maintenance",range_check=none,if=buff.rejuvenation.remains<2
-    - rejuvenation.player,name="Self Germination Maintenance",range_check=none,if=buff.rejuvenation_germination.remains<2
+    - rejuvenation,cycle=members,name="Self Rejuvenation Maintenance",range_check=none,if=cycle.is_player&cycle.buff.rejuvenation.remains<2
+    - rejuvenation,cycle=members,name="Self Germination Maintenance",range_check=none,if=cycle.is_player&cycle.buff.rejuvenation_germination.remains<2
     - rejuvenation,name="Abundance Filler (Rejuv Maintenance)",cycle=members,cycle_order=buff.rejuvenation.remains,if=buff.abundance.remains<5&cycle.buff.rejuvenation.remains<3
     - rejuvenation,name="Abundance Filler (Germination Maintenance)",cycle=members,cycle_order=buff.rejuvenation.remains,if=buff.abundance.remains<5&cycle.buff.rejuvenation.up&cycle.buff.rejuvenation_germination.remains<3
 
@@ -509,7 +509,7 @@ lists:
     - call_action_list,name=engine
     - call_action_list,name=out_of_combat,if=!player.combat
 
-    - lifebloom.player,name="Self Lifebloom (Everbloom, Top Priority)",range_check=none,after=300,if=player.combat&config.lifebloom_target=1&talent.everbloom&(buff.lifebloom.down|buff.lifebloom.remains<4.5)
+    - lifebloom,cycle=members,name="Self Lifebloom (Everbloom, Top Priority)",range_check=none,after=300,if=cycle.is_player&player.combat&config.lifebloom_target=1&talent.everbloom&(cycle.buff.lifebloom.down|cycle.buff.lifebloom.remains<4.5)
     - lifebloom,name="Lifebloom (Tank, Everbloom, Top Priority)",cycle=tanks,cycle_order=health.pct,if=player.combat&config.lifebloom_target=2&talent.everbloom&(cycle.buff.lifebloom.down|cycle.buff.lifebloom.refreshable)
 
     - call_action_list,name=defensives,if=!var.group_healthy&!config.force_dps
