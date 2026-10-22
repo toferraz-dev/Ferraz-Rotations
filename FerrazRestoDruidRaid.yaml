@@ -426,7 +426,7 @@ lists:
     - rejuvenation,cycle=members,name="Self Rejuvenation Maintenance",range_check=none,if=cycle.is_player&player.combat&cycle.buff.rejuvenation.remains<1.5
     - rejuvenation,cycle=members,name="Self Germination Maintenance",range_check=none,if=cycle.is_player&talent.germination&player.combat&cycle.buff.rejuvenation.up&(cycle.buff.rejuvenation_germination.down|cycle.buff.rejuvenation_germination.remains<1.5)
 
-    - wild_growth,name="Wild Growth (Tree of Life Proc)",range_check=none,if=buff.incarnation_tree_of_life.up&group.count(cycle.health.effective.pct<config.raid_wild_growth_threshold&cycle.range<=40)>=1
+    - wild_growth,name="Wild Growth (Tree of Life Proc)",range_check=none,if=buff.incarnation_tree_of_life.up
     - regrowth,name="Regrowth (Tree of Life, Instant)",cycle=members,cycle_order=health.pct,if=(buff.incarnation_tree_of_life.up&cycle.health.effective.pct<config.raid_regrowth_threshold)&cycle.range<=40
 
     - regrowth,name="SotF Regrowth",cycle=members,cycle_order=health.pct,if=(var.has_soul&cycle.health.effective.pct<config.raid_regrowth_threshold)&cycle.range<=40
