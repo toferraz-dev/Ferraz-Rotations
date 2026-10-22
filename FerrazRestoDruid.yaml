@@ -442,8 +442,6 @@ lists:
   abundance_maintenance:
     - rejuvenation.player,name="Self Rejuvenation Maintenance",range_check=none,if=buff.rejuvenation.remains<2
     - rejuvenation.player,name="Self Germination Maintenance",range_check=none,if=buff.rejuvenation_germination.remains<2
-    - lifebloom.player,name="Self Lifebloom (Everbloom, Top Priority)",range_check=none,after=300,if=player.combat&config.lifebloom_target=1&talent.everbloom&(buff.lifebloom.down|buff.lifebloom.remains<4.5)
-    - lifebloom,name="Lifebloom (Tank, Everbloom, Top Priority)",cycle=tanks,cycle_order=health.pct,if=player.combat&config.lifebloom_target=2&talent.everbloom&(cycle.buff.lifebloom.down|cycle.buff.lifebloom.refreshable)
     - rejuvenation,name="Abundance Filler (Rejuv Maintenance)",cycle=members,cycle_order=buff.rejuvenation.remains,if=buff.abundance.remains<5&cycle.buff.rejuvenation.remains<3
     - rejuvenation,name="Abundance Filler (Germination Maintenance)",cycle=members,cycle_order=buff.rejuvenation.remains,if=buff.abundance.remains<5&cycle.buff.rejuvenation.up&cycle.buff.rejuvenation_germination.remains<3
 
@@ -510,6 +508,9 @@ lists:
     - return,if=player.channeling|player.casting|var.protected_channel
     - call_action_list,name=engine
     - call_action_list,name=out_of_combat,if=!player.combat
+
+    - lifebloom.player,name="Self Lifebloom (Everbloom, Top Priority)",range_check=none,after=300,if=player.combat&config.lifebloom_target=1&talent.everbloom&(buff.lifebloom.down|buff.lifebloom.remains<4.5)
+    - lifebloom,name="Lifebloom (Tank, Everbloom, Top Priority)",cycle=tanks,cycle_order=health.pct,if=player.combat&config.lifebloom_target=2&talent.everbloom&(cycle.buff.lifebloom.down|cycle.buff.lifebloom.refreshable)
 
     - call_action_list,name=defensives,if=!var.group_healthy&!config.force_dps
     - call_action_list,name=utility
