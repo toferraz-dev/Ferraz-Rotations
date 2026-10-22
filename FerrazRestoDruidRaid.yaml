@@ -1,5 +1,5 @@
 
-version: "20.0.0"
+version: "21.0.0"
 author: Ferraz
 patch: "12.1"
 spec: 105
@@ -13,7 +13,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-10-21 | Patch: 12.1 | Version: 20.0.0"
+    text: "Last update: 2026-10-21 | Patch: 12.1 | Version: 21.0.0"
 
   recommended_talents:
     section: "Talents"
@@ -388,7 +388,7 @@ lists:
     - soothe,name="Soothe Enrage",if=target.purgeable.enrage
 
   out_of_combat:
-    - lifebloom.player,name="OOC Self Lifebloom (Everbloom)",range_check=none,if=config.raid_lifebloom_target=1&talent.everbloom&!player.combat&(buff.lifebloom.down|buff.lifebloom.remains<4.5)
+    - lifebloom,cycle=members,name="OOC Self Lifebloom (Everbloom)",range_check=none,if=cycle.is_player&config.raid_lifebloom_target=1&talent.everbloom&!player.combat&(cycle.buff.lifebloom.down|cycle.buff.lifebloom.remains<4.5)
     - lifebloom,name="OOC Lifebloom (Tank, Everbloom)",cycle=tanks,cycle_order=health.pct,if=config.raid_lifebloom_target=2&talent.everbloom&!player.combat&(cycle.buff.lifebloom.down|cycle.buff.lifebloom.refreshable)&cycle.range<=40
     - rejuvenation,name="OOC Rejuvenation",cycle=members,cycle_order=health.pct,if=(cycle.health.effective.pct<config.raid_rejuvenation_threshold&cycle.buff.rejuvenation.remains<1.5&!player.combat)&cycle.range<=40
     - regrowth,name="OOC Regrowth",cycle=members,cycle_order=health.pct,if=(cycle.health.effective.pct<config.raid_regrowth_threshold&cycle.buff.regrowth.remains<1.5&!player.combat)&cycle.range<=40
@@ -423,8 +423,8 @@ lists:
     - rejuvenation,name="Abundance Filler (Germination Maintenance)",cycle=members,cycle_order=health.pct,if=talent.germination&buff.abundance.up&buff.abundance.remains<5&cycle.buff.rejuvenation.up&cycle.buff.rejuvenation_germination.remains<5&cycle.range<=40
 
   active_healing:
-    - rejuvenation.player,name="Self Rejuvenation Maintenance",range_check=none,if=player.combat&buff.rejuvenation.remains<1.5
-    - rejuvenation.player,name="Self Germination Maintenance",range_check=none,if=talent.germination&player.combat&buff.rejuvenation.up&(buff.rejuvenation_germination.down|buff.rejuvenation_germination.remains<1.5)
+    - rejuvenation,cycle=members,name="Self Rejuvenation Maintenance",range_check=none,if=cycle.is_player&player.combat&cycle.buff.rejuvenation.remains<1.5
+    - rejuvenation,cycle=members,name="Self Germination Maintenance",range_check=none,if=cycle.is_player&talent.germination&player.combat&cycle.buff.rejuvenation.up&(cycle.buff.rejuvenation_germination.down|cycle.buff.rejuvenation_germination.remains<1.5)
 
     - wild_growth,name="Wild Growth (Tree of Life Proc)",range_check=none,if=buff.incarnation_tree_of_life.up&group.count(cycle.health.effective.pct<config.raid_wild_growth_threshold&cycle.range<=40)>=1
     - regrowth,name="Regrowth (Tree of Life, Instant)",cycle=members,cycle_order=health.pct,if=(buff.incarnation_tree_of_life.up&cycle.health.effective.pct<config.raid_regrowth_threshold)&cycle.range<=40
@@ -434,7 +434,7 @@ lists:
     - rejuvenation,name="SotF Germination",cycle=members,cycle_order=buff.rejuvenation.remains,if=(var.has_soul&talent.germination&cycle.buff.rejuvenation.up&(cycle.buff.rejuvenation_germination.down|cycle.buff.rejuvenation_germination.remains<1.5))&cycle.range<=40
     - rejuvenation,name="SotF Rejuvenation",cycle=members,cycle_order=buff.rejuvenation.remains,if=(var.has_soul&cycle.buff.rejuvenation.remains<1.5)&cycle.range<=40
 
-    - lifebloom.player,name="Self Lifebloom (Everbloom)",range_check=none,after=300,if=config.raid_lifebloom_target=1&talent.everbloom&(buff.lifebloom.down|buff.lifebloom.remains<4.5)
+    - lifebloom,cycle=members,name="Self Lifebloom (Everbloom)",range_check=none,after=300,if=cycle.is_player&config.raid_lifebloom_target=1&talent.everbloom&(cycle.buff.lifebloom.down|cycle.buff.lifebloom.remains<4.5)
     - lifebloom,name="Lifebloom (Tank, Everbloom)",cycle=tanks,cycle_order=health.pct,if=config.raid_lifebloom_target=2&talent.everbloom&(cycle.buff.lifebloom.down|cycle.buff.lifebloom.refreshable)&cycle.range<=40
 
     - regrowth,name="Abundance Regrowth",cycle=members,cycle_order=health.pct,if=(buff.abundance.up&cycle.health.effective.pct<config.raid_regrowth_threshold)&cycle.range<=40
@@ -456,7 +456,7 @@ lists:
   moving:
     - natures_swiftness,name="NS (Pre-Convoke Moving)",if=cooldown.convoke_the_spirits.ready&group.count(cycle.health.effective.pct<config.raid_convoke_threshold&cycle.range<=40)>=config.raid_convoke_members&!buff.bear_form.up&!buff.moonkin_form.up
     - convoke_the_spirits,global_delay=750,name="Convoke (Moving)",if=group.count(cycle.health.effective.pct<config.raid_convoke_threshold&cycle.range<=40)>=config.raid_convoke_members&!buff.bear_form.up&!buff.moonkin_form.up
-    - lifebloom.player,name="Self Lifebloom (Everbloom, Moving)",range_check=none,if=config.raid_lifebloom_target=1&talent.everbloom&(buff.lifebloom.down|buff.lifebloom.remains<4.5)
+    - lifebloom,cycle=members,name="Self Lifebloom (Everbloom, Moving)",range_check=none,if=cycle.is_player&config.raid_lifebloom_target=1&talent.everbloom&(cycle.buff.lifebloom.down|cycle.buff.lifebloom.remains<4.5)
     - lifebloom,name="Lifebloom (Tank, Everbloom, Moving)",cycle=tanks,cycle_order=health.pct,if=config.raid_lifebloom_target=2&talent.everbloom&(cycle.buff.lifebloom.down|cycle.buff.lifebloom.refreshable)&cycle.range<=40
     - rejuvenation,name="Rejuvenation (Moving)",cycle=members,cycle_order=health.pct,if=(cycle.buff.rejuvenation.down&cycle.health.effective.pct<config.raid_rejuvenation_threshold&!(buff.abundance.up&buff.abundance.remains>3))&cycle.range<=40
   mouseover_healing_emergency:

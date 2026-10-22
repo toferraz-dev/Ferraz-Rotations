@@ -1,5 +1,5 @@
 
-version: "2.2.0"
+version: "3.0.0"
 patch: "12.1"
 spec: 104
 name: Guardian Druid Ferraz M+
@@ -25,7 +25,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-09-13 | Patch: 12.1 | Version: 2.2.0"
+    text: "Last update: 2026-10-21 | Patch: 12.1 | Version: 3.0.0"
 
   recommended_talents:
     section: "Talents"
@@ -293,7 +293,7 @@ lists:
     - interact_mouseover,delay=350,if=config.engine_loot_nearby&mouseover.lootable&mouseover.range<=5
     - attack_target,off_gcd=true,delay=100,if=player.combat&target.exists&target.attackable&target.alive&target.in_melee&!player.auto_attacking
 
-    - remove_corruption.player,delay=500,name="Remove Corruption (Self)",if=config.auto_dispel_self&player.dispelable.list
+    - remove_corruption,cycle=members,delay=500,name="Remove Corruption (Self)",if=cycle.is_player&config.auto_dispel_self&player.dispelable.list
     - remove_corruption,delay=500,cycle=party,name="Remove Corruption (Party)",if=config.auto_dispel_party&cycle.dispelable.list
     - remove_corruption,delay=500,cycle=party,cycle_order=player_first,name="Devouring Rift (Affix)",if=config.engine_affix_devour&cycle.debuff.440313.up.any
     - soothe.mouseover,name="Soothe Enrage (Mouseover)",range_check=mouseover,if=config.soothe_mouseover&mouseover.exists&mouseover.enemy&mouseover.attackable&!mouseover.dead&mouseover.combat&mouseover.purgeable.enrage
