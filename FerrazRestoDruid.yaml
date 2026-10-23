@@ -1,4 +1,4 @@
-version: "30.0.0"
+version: "30.1.0"
 author: Ferraz
 patch: "12.1"
 spec: 105
@@ -12,35 +12,42 @@ predictions:
   48438: { name: "Wild Growth", buff: 48438 }
 
 config:
-
+  # ---- Info --------------------------------------------------------
   about:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-10-22 | Patch: 12.1 | Version: 30.0.0"
+    text: "Last update: 2026-10-22 | Patch: 12.1 | Version: 30.1.0"
 
+  hp_legend:
+    section: "Info"
+    type: note
+    label: "HP % (effective) vs (real HP)"
+    text: "effective = real HP + incoming heals - heal absorbs. Good for 'does this still need healing'. real HP = actual health only, used for emergencies, defensives and consumables."
 
+  # ---- Talents -----------------------------------------------------
   recommended_talents:
     section: "Talents"
     type: copy_text
     label: "Recommended Talent String"
     text: "CkGADBD3hSPCL9Y9gz68WcKvMMMmZZMjZmxsNmBmNmNbzAAAAAAAAAAgNDNbzw0MDwsYmZGLGeADAAAAgBAYGw22YBTzMLDAgZbmtmtZ2sxMzMDzMbgmBAzMzMAMA"
 
+  # ---- Toggles -----------------------------------------------------
+  force_dps:
+    label: "Force DPS Only (Panic Button)"
+    section: "Toggles"
+    type: toggle
+    spell: 197626
+    description: "Ephemeral, hotkeyable toggle. OFF (default) = normal healing. Hit the bound key to suppress ALL proactive healing (Wild Growth, Rejuvenation, Lifebloom, Regrowth, Abundance upkeep, healing cooldowns) and go pure ranged DPS. Defensives (Barkskin, Ironbark, Panic Bear) and consumables still fire underneath regardless. State resets to OFF on reload."
 
-  use_mouseover:
-    label: "MO Healing (Emergency)"
-    section: "Healing"
-    type: checkbox
-    default: true
+  disable_natures_swiftness:
+    label: "Disable Nature's Swiftness"
+    section: "Toggles"
+    type: toggle
+    spell: 132158
+    description: "Ephemeral, hotkeyable toggle. OFF (default) = Nature's Swiftness stays on. Hit the bound key to suppress it for the rest of the session/pull; state resets to OFF (enabled) on reload."
 
-  mouseover_emergency_hp:
-    label: "MO Emergency HP % (effective)"
-    section: "Healing"
-    type: slider
-    min: 10
-    max: 99
-    default: 75
-
+  # ---- Healing -----------------------------------------------------
   lifebloom_target:
     label: "Lifebloom Target"
     section: "Healing"
@@ -51,53 +58,7 @@ config:
       - label: "Self"
         value: 1
     default: 1
-
-  ooc_heal_hp_pct:
-    label: "OOC Heal Below HP% (effective)"
-    section: "Healing"
-    type: slider
-    min: 25
-    max: 100
-    default: 100
-    description: "Out of combat, only heal group members under this health. Set to 100 to go back to topping everyone off."
-
-  wild_growth_threshold:
-    label: "Wild Growth HP % (effective)"
-    section: "Healing"
-    type: slider
-    min: 25
-    max: 100
-    default: 90
-
-  wild_growth_members:
-    label: "Wild Growth - Min Members"
-    section: "Healing"
-    type: slider
-    min: 1
-    max: 4
-    default: 2
-
-  disable_natures_swiftness:
-    label: "Disable Nature's Swiftness"
-    section: "Healing"
-    type: toggle
-    spell: 132158
-    description: "Ephemeral, hotkeyable toggle. OFF (default) = Nature's Swiftness stays on. Hit the bound key to suppress it for the rest of the session/pull; state resets to OFF (enabled) on reload."
-
-  force_dps:
-    label: "Force DPS Only (Panic Button)"
-    section: "Healing"
-    type: toggle
-    spell: 197626
-    description: "Ephemeral, hotkeyable toggle. OFF (default) = normal healing. Hit the bound key to suppress ALL proactive healing (Wild Growth, Rejuvenation, Lifebloom, Regrowth, Abundance upkeep, healing cooldowns) and go pure ranged DPS. Defensives (Barkskin, Ironbark, Panic Bear) and consumables still fire underneath regardless. State resets to OFF on reload."
-
-  natures_swiftness_threshold:
-    label: "Nature's Swiftness HP % (effective)"
-    section: "Healing"
-    type: slider
-    min: 10
-    max: 99
-    default: 70
+    description: "Who keeps Lifebloom. Self is the Everbloom setup."
 
   regrowth_emergency_threshold:
     label: "Regrowth Emergency HP % (real HP)"
@@ -115,6 +76,7 @@ config:
     min: 25
     max: 99
     default: 90
+    description: "Regrowth on anyone below this effective health (Soul of the Forest, Abundance, filler)."
 
   rejuvenation_threshold:
     label: "Rejuvenation HP % (effective)"
@@ -123,7 +85,61 @@ config:
     min: 25
     max: 100
     default: 100
+    description: "Rejuvenation and Germination on anyone below this effective health, while Abundance is not already safe."
 
+  wild_growth_threshold:
+    label: "Wild Growth HP % (effective)"
+    section: "Healing"
+    type: slider
+    min: 25
+    max: 100
+    default: 90
+    description: "Group members counted for Wild Growth must be below this effective health."
+
+  wild_growth_members:
+    label: "Wild Growth - Min Members"
+    section: "Healing"
+    type: slider
+    min: 1
+    max: 4
+    default: 2
+    description: "Wild Growth once this many members are below the Wild Growth HP %."
+
+  natures_swiftness_threshold:
+    label: "Nature's Swiftness HP % (effective)"
+    section: "Healing"
+    type: slider
+    min: 10
+    max: 99
+    default: 70
+    description: "Nature's Swiftness + instant Regrowth when anyone is below this effective health."
+
+  ooc_heal_hp_pct:
+    label: "OOC Heal Below HP % (effective)"
+    section: "Healing"
+    type: slider
+    min: 25
+    max: 100
+    default: 100
+    description: "Out of combat, only heal group members under this health. Set to 100 to go back to topping everyone off."
+
+  use_mouseover:
+    label: "Mouseover Emergency Healing"
+    section: "Healing"
+    type: checkbox
+    default: true
+    description: "Heal the ally under your mouse first when they fall below the Mouseover Emergency HP %."
+
+  mouseover_emergency_hp:
+    label: "Mouseover Emergency HP % (effective)"
+    section: "Healing"
+    type: slider
+    min: 10
+    max: 99
+    default: 75
+    description: "Effective health under which the hovered ally gets priority healing."
+
+  # ---- Cooldowns ---------------------------------------------------
   convoke_threshold:
     label: "Convoke HP % (effective)"
     section: "Cooldowns"
@@ -131,6 +147,7 @@ config:
     min: 25
     max: 99
     default: 75
+    description: "Non-tank members counted for Convoke (and the trinkets, potion and Berserking synced to it) must be below this effective health."
 
   convoke_members:
     label: "Convoke - Min Members"
@@ -139,6 +156,7 @@ config:
     min: 1
     max: 4
     default: 3
+    description: "Convoke once this many non-tank members are below the Convoke HP %."
 
   tranquility_threshold:
     label: "Tranquility HP % (effective)"
@@ -147,6 +165,7 @@ config:
     min: 25
     max: 99
     default: 70
+    description: "Non-tank members counted for Tranquility must be below this effective health."
 
   tranquility_members:
     label: "Tranquility - Min Members"
@@ -155,23 +174,57 @@ config:
     min: 1
     max: 4
     default: 3
+    description: "Tranquility once this many non-tank members are below the Tranquility HP %. Never cast while moving."
 
   manual_tranquility:
     label: "Manual Tranquility"
     section: "Cooldowns"
     type: checkbox
     default: false
-    description: "Toggle to disable automatic Tranquility usage."
+    description: "Turn off automatic Tranquility and press it yourself."
 
+  use_trinket_1:
+    label: "Auto Trinket 1 (with Convoke)"
+    section: "Cooldowns"
+    type: checkbox
+    default: true
+    description: "Use trinket 1 when the Convoke group condition is met."
 
+  use_trinket_2:
+    label: "Auto Trinket 2 (with Convoke)"
+    section: "Cooldowns"
+    type: checkbox
+    default: true
+    description: "Use trinket 2 when the Convoke group condition is met."
+
+  use_potion:
+    label: "Auto Combat Potion (with Convoke)"
+    section: "Cooldowns"
+    type: checkbox
+    default: true
+    description: "Use the combat potion when the Convoke group condition is met."
+
+  # ---- Defensives --------------------------------------------------
   barkskin_incoming_pct:
-    label: "Barkskin - Predicted HP % Remaining"
+    label: "Barkskin - Predicted HP % Remaining (effective)"
     section: "Defensives"
     type: slider
     min: 10
     max: 100
     default: 40
     description: "Use Barkskin when your current effective health minus the biggest predicted incoming hit (health.effective.pct-incoming.pct) would put you at or below this HP%. Example: at 90% HP with a hit predicted to take 30%, that's 60% projected - set this to 40 and it won't fire yet; set it to 60+ and it will."
+
+  ironbark_target:
+    label: "Ironbark Target"
+    section: "Defensives"
+    type: dropdown
+    options:
+      - label: "Tanks Only"
+        value: 1
+      - label: "All Members"
+        value: 2
+    default: 1
+    description: "Tanks only, or anyone in the group."
 
   ironbark_threshold:
     label: "Ironbark HP % (real HP)"
@@ -189,18 +242,34 @@ config:
     min: 25
     max: 99
     default: 25
+    description: "Panic Bear + Frenzied Regeneration below this real health."
 
-
-  ironbark_target:
-    label: "Ironbark Target"
+  healthstone_pct:
+    label: "Healthstone HP % (real HP)"
     section: "Defensives"
-    type: dropdown
-    options:
-      - label: "Tanks Only"
-        value: 1
-      - label: "All Members"
-        value: 2
-    default: 1
+    type: slider
+    min: 0
+    max: 100
+    default: 40
+    description: "Healthstone below this real health. Also fires mid-cast when below the Emergency HP %."
+
+  health_potion_pct:
+    label: "Health Potion HP % (real HP)"
+    section: "Defensives"
+    type: slider
+    min: 0
+    max: 100
+    default: 35
+    description: "Health potion below this real health. Also fires mid-cast when below the Emergency HP %."
+
+  emergency_hp:
+    label: "Emergency HP % (mid-cast, real HP)"
+    section: "Defensives"
+    type: slider
+    min: 0
+    max: 100
+    default: 40
+    description: "Real health below which Barkskin, the healthstone and the health potion fire while you are casting or channelling. The rotation pauses during Tranquility and Convoke, so this is the only thing that can act then. Below it a hardcast may also be cut (see Cut the Cast in an Emergency). Set to 0 to turn it off."
 
   emergency_stop_casting:
     label: "Cut the Cast in an Emergency"
@@ -209,15 +278,6 @@ config:
     default: true
     description: "Below the emergency HP, end the current cast so the next global can go to a real defensive. Barkskin and the consumables above do not need this - they are off-GCD and fire without touching the cast - so this only matters for the ones that cost a global, like Bear Form into Frenzied Regeneration. Tranquility and Convoke are never cut."
 
-  emergency_hp:
-    label: "Emergency HP% (mid-cast, real HP)"
-    section: "Defensives"
-    type: slider
-    min: 0
-    max: 100
-    default: 40
-    description: "Real health below which Barkskin, the healthstone and the health potion fire while you are casting or channelling. The rotation pauses during Tranquility and Convoke, so this is the only thing that can act then. Below it a hardcast may also be cut (see Cut the Cast in an Emergency). Set to 0 to turn it off."
-
   root_cleanse:
     label: "Break Roots by Shapeshifting"
     section: "Defensives"
@@ -225,17 +285,20 @@ config:
     default: true
     description: "Shift form to break a root, using the real player.rooted self-state (not stun, not fear - there is no equivalent snare check). Never shifts while you are casting or channelling, so Tranquility, Convoke and hardcasts are not cancelled."
 
+  # ---- Dispels -----------------------------------------------------
   auto_dispel:
     label: "Nature's Cure (Group)"
     section: "Dispels"
     type: checkbox
     default: true
+    description: "Nature's Cure on any dispellable group member."
 
   affix_devour:
     label: "Dispel Devouring Rift (Affix)"
     section: "Dispels"
     type: checkbox
     default: true
+    description: "Nature's Cure on Devouring Rift (440313), you first."
 
   soothe_mouseover:
     label: "Soothe Mouseover"
@@ -243,6 +306,14 @@ config:
     type: checkbox
     default: true
     description: "Soothe whatever you are hovering, checked just before the current-target Soothe below. Simia cannot pick an enraged enemy by criteria — target_enemy is 'nearest enemy' with no filter and there is no .any(EXPR) for enemies — so hovering is the only way to Soothe a mob you are not targeting. Guarded on mouseover.combat, so hovering an unpulled mob never pulls it."
+
+  # ---- Damage ------------------------------------------------------
+  ranged_dps:
+    label: "Ranged DPS (Moonfire/Starsurge/Starfire)"
+    section: "Damage"
+    type: checkbox
+    default: true
+    description: "Spend free globals on damage while the group is healthy (see DPS - Group HP %)."
 
   dps_group_hp:
     label: "DPS - Group HP % (effective)"
@@ -253,12 +324,6 @@ config:
     default: 85
     description: "Ranged DPS only runs while the most hurt group member (group.lowest, effective health) is at or above this. Healing is never held back for it: every healing list runs first and DPS only takes the globals they leave free, so this decides whether those spare globals go to damage or stay idle."
 
-  ranged_dps:
-    label: "Ranged DPS (Sun/Moon/Wrath)"
-    section: "Damage"
-    type: checkbox
-    default: true
-
   use_heart_of_the_wild:
     label: "Auto Heart of the Wild"
     section: "Damage"
@@ -266,6 +331,7 @@ config:
     default: true
     description: "Instant-cast burst in Moonkin Form. No melee form left to weave through, so this is the DPS cooldown's only home now."
 
+  # ---- Utility -----------------------------------------------------
   innervate_threshold:
     label: "Innervate Mana %"
     section: "Utility"
@@ -273,38 +339,18 @@ config:
     min: 25
     max: 99
     default: 75
+    description: "Innervate yourself below this mana."
 
-  use_trinket_1:
-    label: "Auto Trinket 1 (Before Convoke)"
-    section: "Trinkets"
-    type: checkbox
-    default: true
+  mana_potion_pct:
+    label: "Mana Potion Mana %"
+    section: "Utility"
+    type: slider
+    min: 0
+    max: 100
+    default: 30
+    description: "Mana potion below this mana."
 
-  use_trinket_2:
-    label: "Auto Trinket 2 (Before Convoke)"
-    section: "Trinkets"
-    type: checkbox
-    default: true
-
-  use_potion:
-    label: "Auto Offensive Potion"
-    section: "Trinkets"
-    type: checkbox
-    default: true
-
-  loot_nearby:
-    label: "Loot Nearby Corpses"
-    section: "Engine"
-    type: checkbox
-    default: true
-
-  pause_travel_form:
-    label: "Pause in Travel Form"
-    section: "Engine"
-    type: checkbox
-    default: false
-    description: "Stop the whole rotation while you are in Travel Form. OFF by default: the rotation keeps running, and the first thing it suggests will shift you out. Turn ON if you use Travel Form to move between packs and want it left alone — nothing at all is suggested until you leave the form."
-
+  # ---- Engine ------------------------------------------------------
   auto_target:
     label: "Auto Target (Ranged)"
     section: "Engine"
@@ -317,6 +363,7 @@ config:
       - label: "Target too far"
         value: 2
     default: [0, 1]
+    description: "In combat, target the nearest enemy when you have none, it died, or it is out of 40 yd."
 
   auto_rez:
     label: "Auto Revitalize / Rebirth (Mouseover)"
@@ -325,31 +372,21 @@ config:
     default: true
     description: "Revitalize out of combat, Rebirth in combat, on the ally under your mouse."
 
-  healthstone_pct:
-    label: "Healthstone HP% (real HP)"
+  loot_nearby:
+    label: "Loot Nearby Corpses"
     section: "Engine"
-    type: slider
-    min: 0
-    max: 100
-    default: 40
+    type: checkbox
+    default: true
+    description: "Loot corpses in reach out of combat."
 
-  health_potion_pct:
-    label: "Health Potion HP% (real HP)"
+  pause_travel_form:
+    label: "Pause in Travel Form"
     section: "Engine"
-    type: slider
-    min: 0
-    max: 100
-    default: 35
+    type: checkbox
+    default: false
+    description: "Stop the whole rotation while you are in Travel Form. OFF by default: the rotation keeps running, and the first thing it suggests will shift you out. Turn ON if you use Travel Form to move between packs and want it left alone — nothing at all is suggested until you leave the form."
 
-  mana_potion_pct:
-    label: "Mana Potion Mana%"
-    section: "Engine"
-    type: slider
-    min: 0
-    max: 100
-    default: 30
-
-
+  # ---- Help --------------------------------------------------------
   discord_button:
     section: "Help"
     type: button
