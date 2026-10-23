@@ -13,48 +13,35 @@ predictions:
   48438: { name: "Wild Growth", buff: 48438 }
 
 config:
+  # ---- Info --------------------------------------------------------
   about:
     section: "Info"
     type: note
     label: "Rotation Info"
     text: "Last update: 2026-10-22 | Patch: 12.1 | Version: 23.0.0"
 
+  hp_legend:
+    section: "Info"
+    type: note
+    label: "HP % (effective) vs (real HP)"
+    text: "effective = real HP + incoming heals - heal absorbs. Good for 'does this still need healing'. real HP = actual health only, used for emergencies, defensives and consumables."
+
+  # ---- Talents -----------------------------------------------------
   recommended_talents:
     section: "Talents"
     type: copy_text
     label: "Recommended Talent String"
     text: "CkGAAAAAAAAAAAAAAAAAAAAAAYMmZZmZMzMmthZwsZsNmBAAAAAAAAAALGa2MjpZGgZZmZmZYYGAAAAAGAAAAAAAwsNzSz2Mb2YMzMYGY0MAAzMAMA"
 
-  raid_use_mouseover:
-    label: "MO Healing (Emergency)"
-    section: "Healing"
-    type: checkbox
-    default: true
+  # ---- Toggles -----------------------------------------------------
+  disable_natures_swiftness:
+    label: "Disable Nature's Swiftness"
+    section: "Toggles"
+    type: toggle
+    spell: 132158
+    description: "Ephemeral, hotkeyable toggle. OFF (default) = Nature's Swiftness stays on. Hit the bound key to suppress it for the rest of the session/pull; state resets to OFF (enabled) on reload."
 
-  raid_mouseover_emergency_hp:
-    label: "MO Emergency HP % (effective)"
-    section: "Healing"
-    type: slider
-    min: 10
-    max: 99
-    default: 80
-
-  raid_wild_growth_threshold:
-    label: "Wild Growth HP % (effective)"
-    section: "Healing"
-    type: slider
-    min: 25
-    max: 99
-    default: 90
-
-  raid_wild_growth_members:
-    label: "Wild Growth - Min Members"
-    section: "Healing"
-    type: slider
-    min: 1
-    max: 20
-    default: 2
-
+  # ---- Healing -----------------------------------------------------
   raid_lifebloom_target:
     label: "Lifebloom Target"
     section: "Healing"
@@ -65,21 +52,7 @@ config:
       - label: "Self"
         value: 1
     default: 1
-
-  disable_natures_swiftness:
-    label: "Disable Nature's Swiftness"
-    section: "Healing"
-    type: toggle
-    spell: 132158
-    description: "Ephemeral, hotkeyable toggle. OFF (default) = Nature's Swiftness stays on. Hit the bound key to suppress it for the rest of the session/pull; state resets to OFF (enabled) on reload."
-
-  raid_natures_swiftness_threshold:
-    label: "Nature's Swiftness HP % (effective)"
-    section: "Healing"
-    type: slider
-    min: 10
-    max: 99
-    default: 70
+    description: "Who keeps Lifebloom. Self is the Everbloom setup."
 
   raid_regrowth_emergency_threshold:
     label: "Regrowth Emergency HP % (real HP)"
@@ -97,6 +70,7 @@ config:
     min: 25
     max: 99
     default: 85
+    description: "Regrowth on anyone below this effective health (Tree of Life, Soul of the Forest, Abundance, filler)."
 
   raid_rejuvenation_threshold:
     label: "Rejuvenation HP % (effective)"
@@ -105,7 +79,52 @@ config:
     min: 25
     max: 99
     default: 80
+    description: "Rejuvenation and Germination on anyone below this effective health, while Abundance is not already safe."
 
+  raid_wild_growth_threshold:
+    label: "Wild Growth HP % (effective)"
+    section: "Healing"
+    type: slider
+    min: 25
+    max: 99
+    default: 90
+    description: "Members counted for Wild Growth must be below this effective health."
+
+  raid_wild_growth_members:
+    label: "Wild Growth - Min Members"
+    section: "Healing"
+    type: slider
+    min: 1
+    max: 20
+    default: 2
+    description: "Wild Growth once this many members are below the Wild Growth HP %."
+
+  raid_natures_swiftness_threshold:
+    label: "Nature's Swiftness HP % (effective)"
+    section: "Healing"
+    type: slider
+    min: 10
+    max: 99
+    default: 70
+    description: "Nature's Swiftness + instant Regrowth when anyone is below this effective health."
+
+  raid_use_mouseover:
+    label: "Mouseover Emergency Healing"
+    section: "Healing"
+    type: checkbox
+    default: true
+    description: "Heal the ally under your mouse first when they fall below the Mouseover Emergency HP %."
+
+  raid_mouseover_emergency_hp:
+    label: "Mouseover Emergency HP % (effective)"
+    section: "Healing"
+    type: slider
+    min: 10
+    max: 99
+    default: 80
+    description: "Effective health under which the hovered ally gets priority healing."
+
+  # ---- Cooldowns ---------------------------------------------------
   raid_convoke_threshold:
     label: "Convoke HP % (effective)"
     section: "Cooldowns"
@@ -113,6 +132,7 @@ config:
     min: 25
     max: 99
     default: 70
+    description: "Members counted for Convoke (and the trinkets and potion synced to it) must be below this effective health."
 
   raid_convoke_members:
     label: "Convoke - Min Members"
@@ -121,6 +141,7 @@ config:
     min: 1
     max: 20
     default: 4
+    description: "Convoke once this many members are below the Convoke HP %."
 
   raid_tranquility_threshold:
     label: "Tranquility HP % (effective)"
@@ -129,6 +150,7 @@ config:
     min: 25
     max: 99
     default: 65
+    description: "Members counted for Tranquility must be below this effective health."
 
   raid_tranquility_members:
     label: "Tranquility - Min Members"
@@ -137,12 +159,14 @@ config:
     min: 1
     max: 20
     default: 4
+    description: "Tranquility once this many members are below the Tranquility HP %. Never cast while moving."
 
   raid_manual_tranquility:
     label: "Manual Tranquility"
     section: "Cooldowns"
     type: checkbox
     default: false
+    description: "Turn off automatic Tranquility and press it yourself."
 
   raid_reforestation_prestack:
     label: "Pre-stack Reforestation (out of combat)"
@@ -151,6 +175,46 @@ config:
     default: true
     description: "Out of combat, Swiftmend a HoT target until Reforestation reaches 3 stacks, so the first Swiftmend of the next pull grants Tree of Life. Works on trash. The game wipes the Reforestation counter when a raid boss encounter starts, so on a boss cast the 4th Swiftmend yourself 1-2 sec before the pull: Tree of Life is only removed when the encounter ends."
 
+  raid_thorn_bloom_threshold:
+    label: "Thorn Bloom (Racial) HP % (effective)"
+    section: "Cooldowns"
+    type: slider
+    min: 25
+    max: 99
+    default: 75
+    description: "Members counted for Thorn Bloom must be below this effective health."
+
+  raid_thorn_bloom_members:
+    label: "Thorn Bloom (Racial) - Min Members"
+    section: "Cooldowns"
+    type: slider
+    min: 1
+    max: 20
+    default: 3
+    description: "Thorn Bloom once this many members are below the Thorn Bloom HP %."
+
+  raid_use_trinket_1:
+    label: "Auto Trinket 1 (with Convoke)"
+    section: "Cooldowns"
+    type: checkbox
+    default: true
+    description: "Use trinket 1 when the Convoke group condition is met."
+
+  raid_use_trinket_2:
+    label: "Auto Trinket 2 (with Convoke)"
+    section: "Cooldowns"
+    type: checkbox
+    default: true
+    description: "Use trinket 2 when the Convoke group condition is met."
+
+  raid_use_potion:
+    label: "Auto Combat Potion (with Convoke)"
+    section: "Cooldowns"
+    type: checkbox
+    default: true
+    description: "Use the combat potion when the Convoke group condition is met."
+
+  # ---- Defensives --------------------------------------------------
   raid_barkskin_threshold:
     label: "Barkskin - Predicted HP % Remaining (real HP)"
     section: "Defensives"
@@ -159,22 +223,6 @@ config:
     max: 100
     default: 40
     description: "Use Barkskin when your real health minus the biggest predicted incoming hit (health.pct-incoming.pct) would put you at or below this HP%. With no hit predicted it works as a plain real-HP threshold. Example: at 90% HP with a hit predicted to take 30%, that's 60% projected."
-
-  raid_frenzied_regen_threshold:
-    label: "Frenzied Regen HP % (real HP)"
-    section: "Defensives"
-    type: slider
-    min: 25
-    max: 99
-    default: 40
-
-  raid_ironbark_threshold:
-    label: "Ironbark HP % (real HP)"
-    section: "Defensives"
-    type: slider
-    min: 25
-    max: 99
-    default: 60
 
   raid_ironbark_target:
     label: "Ironbark Target"
@@ -186,6 +234,43 @@ config:
       - label: "All Members"
         value: 2
     default: 1
+    description: "Tanks only, or anyone in the raid."
+
+  raid_ironbark_threshold:
+    label: "Ironbark HP % (real HP)"
+    section: "Defensives"
+    type: slider
+    min: 25
+    max: 99
+    default: 60
+    description: "Ironbark when the target is below this real health."
+
+  raid_frenzied_regen_threshold:
+    label: "Frenzied Regen HP % (real HP)"
+    section: "Defensives"
+    type: slider
+    min: 25
+    max: 99
+    default: 40
+    description: "Panic Bear + Frenzied Regeneration below this real health. Skipped during Tree of Life."
+
+  engine_healthstone:
+    label: "Healthstone HP % (real HP)"
+    section: "Defensives"
+    type: slider
+    min: 0
+    max: 100
+    default: 40
+    description: "Healthstone below this real health, mid-cast included."
+
+  engine_health_potion:
+    label: "Health Potion HP % (real HP)"
+    section: "Defensives"
+    type: slider
+    min: 0
+    max: 100
+    default: 25
+    description: "Health potion below this real health, mid-cast included."
 
   root_cleanse:
     label: "Break Roots by Shapeshifting"
@@ -194,11 +279,13 @@ config:
     default: true
     description: "Shift form to break a root, using the real player.rooted self-state (not stun, not fear - there is no equivalent snare check). Never shifts while you are casting or channelling, so Tranquility, Convoke and hardcasts are not cancelled."
 
+  # ---- Dispels -----------------------------------------------------
   auto_dispel_group:
     label: "Nature's Cure (Group)"
     section: "Dispels"
     type: checkbox
     default: true
+    description: "Nature's Cure on any dispellable raid member in range."
 
   soothe_mouseover:
     label: "Soothe Mouseover"
@@ -207,6 +294,14 @@ config:
     default: true
     description: "Soothe whatever you are hovering, checked just before the current-target Soothe below. Simia cannot pick an enraged enemy by criteria — target_enemy is 'nearest enemy' with no filter and there is no .any(EXPR) for enemies — so hovering is the only way to Soothe a mob you are not targeting. Guarded on mouseover.combat, so hovering an unpulled mob never pulls it."
 
+  # ---- Damage ------------------------------------------------------
+  raid_ranged_dps:
+    label: "Ranged DPS (Moonfire/Starsurge/Starfire)"
+    section: "Damage"
+    type: checkbox
+    default: true
+    description: "Spend free globals on damage while the raid is healthy (see the two DPS sliders)."
+
   raid_dps_group_hp:
     label: "DPS - Group HP % (effective)"
     section: "Damage"
@@ -214,7 +309,7 @@ config:
     min: 25
     max: 99
     default: 70
-    description: "Stop ranged DPS and go back to pure healing when this many group members (below) drop under this health."
+    description: "Health line for the DPS check: members under this effective health count as injured."
 
   raid_dps_injured_max:
     label: "DPS - Max Injured"
@@ -223,13 +318,9 @@ config:
     min: 0
     max: 5
     default: 2
+    description: "DPS only while fewer than this many members are under the DPS - Group HP %."
 
-  raid_ranged_dps:
-    label: "Ranged DPS (Moonfire/Starsurge/Starfire)"
-    section: "Damage"
-    type: checkbox
-    default: true
-
+  # ---- Utility -----------------------------------------------------
   raid_innervate_threshold:
     label: "Innervate Mana %"
     section: "Utility"
@@ -237,60 +328,25 @@ config:
     min: 25
     max: 99
     default: 75
+    description: "Innervate yourself below this mana."
+
+  engine_mana_potion:
+    label: "Mana Potion Mana %"
+    section: "Utility"
+    type: slider
+    min: 0
+    max: 100
+    default: 40
+    description: "Mana potion below this mana."
 
   raid_use_mark_of_the_wild:
     label: "Auto Mark of the Wild"
     section: "Utility"
     type: checkbox
     default: true
+    description: "Rebuff Mark of the Wild out of combat, and in combat only when nothing else needs the global."
 
-  raid_thorn_bloom_threshold:
-    label: "Thorn Bloom HP % (effective)"
-    section: "Racials"
-    type: slider
-    min: 25
-    max: 99
-    default: 75
-
-  raid_thorn_bloom_members:
-    label: "Thorn Bloom - Min Members"
-    section: "Racials"
-    type: slider
-    min: 1
-    max: 20
-    default: 3
-
-  raid_use_trinket_1:
-    label: "Auto Trinket 1 (Before Convoke)"
-    section: "Trinkets"
-    type: checkbox
-    default: true
-
-  raid_use_trinket_2:
-    label: "Auto Trinket 2 (Before Convoke)"
-    section: "Trinkets"
-    type: checkbox
-    default: true
-
-  raid_use_potion:
-    label: "Auto Offensive Potion"
-    section: "Trinkets"
-    type: checkbox
-    default: true
-
-  engine_loot_nearby:
-    label: "Loot Nearby Corpses"
-    section: "Engine"
-    type: checkbox
-    default: true
-
-  engine_pause_travel_form:
-    label: "Pause in Travel Form"
-    section: "Engine"
-    type: checkbox
-    default: false
-    description: "Stop the whole rotation while you are in Travel Form. OFF by default: the rotation keeps running, and the first thing it suggests will shift you out. Turn ON if you use Travel Form to move between packs and want it left alone — nothing at all is suggested until you leave the form."
-
+  # ---- Engine ------------------------------------------------------
   engine_auto_target:
     label: "Auto Target (Ranged)"
     section: "Engine"
@@ -303,44 +359,37 @@ config:
       - label: "Target too far"
         value: 2
     default: [0, 1]
-
-  engine_healthstone:
-    label: "Healthstone HP% (real HP)"
-    section: "Engine"
-    type: slider
-    min: 0
-    max: 100
-    default: 40
-
-  engine_health_potion:
-    label: "Health Potion HP% (real HP)"
-    section: "Engine"
-    type: slider
-    min: 0
-    max: 100
-    default: 25
-
-  engine_mana_potion:
-    label: "Mana Potion Mana%"
-    section: "Engine"
-    type: slider
-    min: 0
-    max: 100
-    default: 40
-    description: "Healers are the one spec that actually runs dry — this line exists here and not in the DPS files."
+    description: "In combat, target the nearest enemy when you have none, it died, or it is out of 40 yd."
 
   engine_auto_brez:
-    label: "Rebirth on Mouseover"
+    label: "Rebirth on Mouseover (in combat)"
     section: "Engine"
     type: checkbox
     default: true
+    description: "Rebirth the dead ally under your mouse in combat."
 
   engine_auto_rez:
-    label: "Revitalize on Mouseover (OOC)"
+    label: "Revitalize on Mouseover (out of combat)"
     section: "Engine"
     type: checkbox
     default: true
+    description: "Revitalize the dead ally under your mouse out of combat."
 
+  engine_loot_nearby:
+    label: "Loot Nearby Corpses"
+    section: "Engine"
+    type: checkbox
+    default: true
+    description: "Loot corpses in reach."
+
+  engine_pause_travel_form:
+    label: "Pause in Travel Form"
+    section: "Engine"
+    type: checkbox
+    default: false
+    description: "Stop the whole rotation while you are in Travel Form. OFF by default: the rotation keeps running, and the first thing it suggests will shift you out. Turn ON if you use Travel Form to move between packs and want it left alone — nothing at all is suggested until you leave the form."
+
+  # ---- Help --------------------------------------------------------
   discord_button:
     section: "Help"
     type: button
