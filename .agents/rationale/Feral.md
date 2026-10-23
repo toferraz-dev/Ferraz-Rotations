@@ -883,3 +883,45 @@ spending a window on something that is about to die.
 SimC runs its own APL, not this YAML. The cooldown durations, cast counts and
 uptimes above are measured; the burst policy is reasoning plus what the
 maintained list does. Nothing in this section is tested in game.
+
+---
+
+## 9.0.0 (2026-10-23) — revisão completa, mesmo critério das outras rotações
+
+Todos os itens aplicados a pedido do Ferraz. Nada medido no SimC: são correções de
+estado de forma, de nome ambíguo e de plumbing que o SimC não modela.
+
+### Correções
+
+- **Root Cleanse não corta mais o Convoke.** As duas linhas ganharam
+  `!player.casting&!player.channeling`; ficam acima do `return` de canal, então antes
+  um root no meio do Convoke trocava de forma e matava o canal.
+- **Panic Bear sem pingue-pongue.** A entrada aceitava `buff.heart_of_the_wild.up`.
+  O morph de Bear (1261872) dura 20s, então depois do HotW e do FR a linha de Fluid
+  Form voltava para Cat e, com HP ainda baixo, a rotação entrava de novo em Bear sem
+  nada para lançar. Entrada agora só por HotW pronto ou FR pronto. Linha do morph
+  1261872 adicionada ao lado do HotW por nome, como no Guardian e no Balance Raid.
+  Isso também resolve a pendência de 2026-09-01 ("still gated on HotW being
+  available"): a entrada continua exigindo uma das duas recompensas.
+- **Procs por ID**, a lição do Tree of Life da Resto Raid:
+
+  | Proc | Problema do nome | ID |
+  |---|---|---|
+  | Predatory Swiftness | talento passivo 16974 | 69369 |
+  | Apex Predator's Craving | buff legado 339140 | 391882 |
+  | Clearcasting | Resto, Mage e outros | 135700 |
+  | Sudden Ambush | talento passivo 384667 | 1244483 |
+
+- **Tiger's Fury com `|var.holdBerserk`**, como na oficial: com o Berserk segurado
+  para o Convoke, o TF não espera mais por ele.
+- **Mark of the Wild só fora de combate.**
+- **Barkskin preditivo lê `incoming.mitigated.pct`**, igual ao Survival Instincts.
+
+### Limpeza
+
+- Removidos: Prowl do builder (o builder só roda em combate), o Regrowth do fim do
+  main e a `var.regrowth` fixa em 0, e o Mighty Bash (não talentado).
+- `cd_standing_time` não diz mais que segura o Tiger's Fury; isso foi revertido em
+  2026-09-10. A descrição do Root Cleanse não fala mais em line_cd.
+- Config reorganizado (seções, labels, descrições), chaves e defaults intocados;
+  `name=` em todas as linhas de ação.
