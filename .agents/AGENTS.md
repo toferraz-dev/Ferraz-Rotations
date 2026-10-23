@@ -92,19 +92,21 @@ Whenever you are tasked with creating, reviewing, or modifying a YAML rotation f
 
 10. **Every rotation change updates the public site and changelog.** The repo publishes a
     player-facing site (GitHub Pages from `docs/`, https://toferraz-dev.github.io/Ferraz-Rotations/)
-    and `README.md`, both generated from `site/posts.md` and `CHANGELOG.md`. Players read them to
-    learn what each rotation does and what changed. Every commit that touches a rotation file
-    MUST, in the same commit:
+    and `README.md`, generated from `site/guides.md`, `CHANGELOG.md` and the rotation files.
+    Players read them to learn what each rotation does and what changed. Every commit that
+    touches a rotation file MUST, in the same commit:
     - add a `CHANGELOG.md` entry under today's date, headed `### <Spec> · <Content> · v<new version>`
-      with the title exactly as in `site/posts.md` (e.g. `### Restoration · Mythic+ · v35.0.0`).
+      with the title exactly as in `site/guides.md` (e.g. `### Restoration · Mythic+ · v35.0.0`).
       Write player-facing bullets: what changes in game, in plain words, with no variable names,
       expressions or spell IDs;
-    - update that rotation's Discord message in `site/posts.md` whenever a feature, toggle, option
-      or talent build changed. The version and patch are filled from the YAML automatically;
+    - update that rotation's guide in `site/guides.md` whenever behavior, priority order, a
+      feature, a toggle or the talent build changed, so the guide never describes old behavior.
+      Version, patch, last-update date and the full settings reference (label, default,
+      description) are read from the YAML automatically, so keep the config descriptions
+      accurate too;
     - run `python site/build.py` and commit what it regenerates (`README.md`, `docs/index.html`,
-      `docs/assets/`). The build fails if a message exceeds Discord's 2000-character limit
-      (no Nitro) or a rotation's current version has no changelog entry; `--check` verifies
-      without writing.
+      `docs/assets/`). The build fails if a rotation's current version has no changelog entry;
+      `--check` verifies without writing.
 
-    The site is in English. `site/` (message sources, build script, logo source) stays local and
-    is not published; only the generated files are.
+    The site is in English, with no length limit. `site/` (guide sources, build script, logo
+    source) stays local and is not published; only the generated files are.
