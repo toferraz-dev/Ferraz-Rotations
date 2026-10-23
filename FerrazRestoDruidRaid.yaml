@@ -1,5 +1,5 @@
 
-version: "23.0.0"
+version: "24.0.0"
 author: Ferraz
 patch: "12.1"
 spec: 105
@@ -12,13 +12,19 @@ predictions:
   8936:  { name: "Regrowth", buff: 8936 }
   48438: { name: "Wild Growth", buff: 48438 }
 
+# Convoke pressed by hand only goes out in caster form: in Bear, Cat or Moonkin it favours
+# that form's spells instead of heals. 391528 = Convoke (the name also matches the old
+# covenant version, 323764). Same gate as the rotation's own Convoke line (var.caster_form).
+queue_logic:
+  391528: "!buff.bear_form.up&!buff.cat_form.up&!buff.moonkin_form.up"
+
 config:
   # ---- Info --------------------------------------------------------
   about:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-10-22 | Patch: 12.1 | Version: 23.0.0"
+    text: "Last update: 2026-10-23 | Patch: 12.1 | Version: 24.0.0"
 
   hp_legend:
     section: "Info"
@@ -409,6 +415,9 @@ variables:
   # the name maps to 5 rows in SpellName.csv (5420, 33891, 81097, 81098, 1301340), so the
   # name lookup is ambiguous. 33891 = the shapeshift aura (confirmed in game 2026-10-22).
   tol_up: buff.33891.up
+  # Convoke heals only from caster form (or Tree of Life); Bear, Cat and Moonkin change its spells.
+  caster_form: "!buff.bear_form.up&!buff.cat_form.up&!buff.moonkin_form.up"
+  animal_form: buff.bear_form.up|buff.cat_form.up|buff.moonkin_form.up
 
 lists:
   emergency:
@@ -474,11 +483,11 @@ lists:
   cooldowns:
     - natures_swiftness,name="Nature Swiftness",off_gcd=true,ignore_queue=true,delay=150,range_check=none,if=!config.disable_natures_swiftness&group.count(cycle.health.effective.pct<config.raid_natures_swiftness_threshold&cycle.range<=40)>=1
     - regrowth,name="Nature Swift Regrowth",cycle=members,cycle_order=health.pct,if=buff.natures_swiftness.up&cycle.health.effective.pct<config.raid_natures_swiftness_threshold&cycle.range<=40
-    - rejuvenation,name="Shift Out For Convoke",cycle=members,cycle_order=buff.rejuvenation.remains,if=cooldown.convoke_the_spirits.ready&group.count(cycle.health.effective.pct<config.raid_convoke_threshold&cycle.range<=40)>=config.raid_convoke_members&buff.bear_form.up&cycle.range<=40
+    - rejuvenation,name="Shift Out For Convoke",cycle=members,cycle_order=buff.rejuvenation.remains,if=cooldown.convoke_the_spirits.ready&group.count(cycle.health.effective.pct<config.raid_convoke_threshold&cycle.range<=40)>=config.raid_convoke_members&var.animal_form&cycle.range<=40
     - trinket_1,delay=150,name="Trinket 1",if=config.raid_use_trinket_1&trinket_1.ready&group.count(cycle.health.effective.pct<config.raid_convoke_threshold&cycle.range<=40)>=config.raid_convoke_members&!buff.bear_form.up
     - trinket_2,delay=150,name="Trinket 2",if=config.raid_use_trinket_2&trinket_2.ready&group.count(cycle.health.effective.pct<config.raid_convoke_threshold&cycle.range<=40)>=config.raid_convoke_members&!buff.bear_form.up
     - combat_potion,delay=150,name="Combat Potion",if=combat_potion.ready&config.raid_use_potion&group.count(cycle.health.effective.pct<config.raid_convoke_threshold&cycle.range<=40)>=config.raid_convoke_members&!buff.bear_form.up
-    - convoke_the_spirits,global_delay=750,name="Convoke (Heal)",if=group.count(cycle.health.effective.pct<config.raid_convoke_threshold&cycle.range<=40)>=config.raid_convoke_members&!buff.bear_form.up&!buff.moonkin_form.up
+    - convoke_the_spirits,global_delay=750,name="Convoke (Heal)",if=group.count(cycle.health.effective.pct<config.raid_convoke_threshold&cycle.range<=40)>=config.raid_convoke_members&var.caster_form
     - tranquility,global_delay=750,name="Tranquility",if=!config.raid_manual_tranquility&group.count(cycle.health.effective.pct<config.raid_tranquility_threshold&cycle.range<=40)>=config.raid_tranquility_members&!player.moving
     - swiftmend,name="Swiftmend (Proactive Spread)",cycle=members,cycle_order=health.pct,if=(cooldown.swiftmend.ready&(cycle.buff.rejuvenation.up|cycle.buff.regrowth.up|cycle.buff.wild_growth.up))&cycle.range<=40
 
