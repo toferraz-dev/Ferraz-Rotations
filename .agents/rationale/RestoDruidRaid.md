@@ -925,3 +925,24 @@ inside the `config:` block, belonging to neither a real section nor any
 entry, were dropped as noise.
 
 Version 4.2.0 -> 5.0.0. Lint clean across all 10 rotation files.
+
+---
+
+## Convoke só em forma de caster — 2026-10-23
+
+Pedido do Ferraz: o Convoke nunca pode sair fora da forma humana, nem quando ele mesmo
+coloca na fila. Em Bear, Cat ou Moonkin o Convoke favorece os spells daquela forma em vez
+de curas.
+
+- `var.caster_form` (sem Bear, Cat ou Moonkin) gateia a linha `Convoke (Heal)`. Antes ela
+  checava só Bear e Moonkin: em Cat o Convoke saía com spells de Feral.
+- `var.animal_form` gateia o `Shift Out For Convoke`, que antes não saía de Cat (e no Raid
+  só saía de Bear).
+- **Fila manual:** bloco `queue_logic:` na raiz com a mesma condição para 391528. O
+  `_queue_logic.yaml` do catálogo é global e vem do servidor (auth.simia.pro), então não é
+  editável nem serve, porque o Feral quer Convoke em Cat. O bloco na rotação segue o
+  padrão dos outros arquivos compartilhados (`_pred.yaml` ↔ `predictions:`,
+  `_morphs.yaml` ↔ `morphs:`), mas **nenhuma rotação oficial usa `queue_logic:` ainda —
+  confirmar em jogo**. Com a condição falsa, o Convoke fica na fila e sai assim que você
+  volta à forma de caster (o flush só recusa, não apaga a entrada).
+- Tree of Life conta como caster: o Convoke nele cura.
