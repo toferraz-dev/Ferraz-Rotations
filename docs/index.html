@@ -213,7 +213,7 @@
           <span class="spec-body">
             <span class="spec-top"><span class="spec-name">Restoration</span><span class="badge">Mythic+</span></span>
             <span class="spec-build">Wildstalker</span>
-            <span class="spec-meta">Healer · v34.0.0</span>
+            <span class="spec-meta">Healer · v35.0.0</span>
           </span>
         </a>
         <a class="spec-card leaf" href="#resto-raid">
@@ -310,7 +310,10 @@
 <h4>Defense</h4>
 <ul><li><strong>Barkskin</strong> before a big hit lands: it reads your health minus the biggest predicted incoming hit.</li><li><strong>Ironbark</strong> on the tank, or on anyone if you change <em>Ironbark Target</em>.</li><li><strong>Panic Bear</strong>: at very low health it shifts to Bear Form for Frenzied Regeneration.</li><li><strong>Healthstone</strong> and <strong>health potion</strong> at their thresholds.</li><li><strong>While casting</strong>, below <em>Emergency HP</em>, Barkskin and the consumables still fire, and a hardcast can be cut to free the global for a defensive. Channels are never cut: during Convoke only Barkskin fires, during Tranquility nothing does.</li></ul>
 <h4>Utility</h4>
-<ul><li><strong>Nature's Cure</strong> on any dispellable ally, plus the Devouring Rift affix.</li><li><strong>Soothe</strong> on an enraged target or whatever enraged enemy you hover.</li><li><strong>Mouseover emergency healing</strong>: hover an ally's frame below the mouseover threshold and it gets Swiftmend, Rejuvenation and Regrowth first.</li><li><strong>Rebirth</strong> in combat and <strong>Revitalize</strong> out of combat on the dead ally under your mouse.</li><li><strong>Temple of Sethraliss</strong>: hover the Avatar to heal it.</li><li><strong>Roots</strong> are broken by shapeshifting, never in the middle of a cast or channel.</li><li>Racials: Shadowmeld to drop aggro, Berserking with Convoke, Darkflight after 2 seconds of running.</li></ul>
+<ul><li><strong>Nature's Cure</strong> on any dispellable ally, plus the Devouring Rift affix.</li><li><strong>Soothe</strong> on an enraged target or whatever enraged enemy you hover.</li><li><strong>Mouseover emergency healing</strong>: hover an ally's frame below the mouseover threshold and it gets Swiftmend, Rejuvenation and Regrowth first.</li><li><strong>Rebirth</strong> in combat and <strong>Revitalize</strong> out of combat on the dead ally under your mouse.</li><li><strong>Roots</strong> are broken by shapeshifting, never in the middle of a cast or channel.</li><li>Racials: Shadowmeld to drop aggro, Berserking with Convoke, Darkflight after 2 seconds of running.</li></ul>
+<h4>Temple of Sethraliss: Avatar of Sethraliss</h4>
+<p>On the last boss you heal the Avatar instead of killing it.</p>
+<ul><li><strong>Hover or target the Avatar once.</strong> The rotation sets it as your focus by itself. If you prefer a button, this macro does the same: <code>/target Avatar of Sethraliss</code>, <code>/focus</code>, <code>/targetlasttarget</code>.</li><li>From then on, while the Avatar is friendly and can be healed, <strong>every heal goes to it</strong>: Nature's Swiftness with an instant Regrowth, Wild Growth, Rejuvenation, Germination, Swiftmend, and Regrowth as the filler. You do not need to keep the mouse on it.</li><li><strong>The party still comes first in an emergency.</strong> If anyone drops below <em>Avatar of Sethraliss - Party Safety HP %</em> (default 50%), the rotation heals the party, with Convoke and Tranquility available again, then goes back to the Avatar. Set it to 0 to never leave the Avatar.</li><li>While <strong>Defiling Taint</strong> blocks healing on the Avatar, the rotation heals the party instead.</li><li>Your Lifebloom stays where <em>Lifebloom Target</em> puts it, and interrupts and defensives still fire.</li></ul>
 <h4>Damage</h4>
 <p>When the most injured ally is above <em>DPS Group HP</em>, spare globals go to Starsurge, Sunfire, Moonfire and Starfire, with Heart of the Wild for the Moonkin burst.</p>
 <h4>Hotkey toggles</h4>
@@ -320,7 +323,7 @@
           </div>
           <aside class="glance">
             <dl>
-              <div><dt>Version</dt><dd>34.0.0</dd></div>
+              <div><dt>Version</dt><dd>35.0.0</dd></div>
               <div><dt>Updated</dt><dd>2026-10-23</dd></div>
               <div><dt>Patch</dt><dd>12.1</dd></div>
               <div><dt>File</dt><dd><a href="rotations/FerrazRestoDruid.yaml" download>FerrazRestoDruid.yaml</a></dd></div>
@@ -328,16 +331,16 @@
           <div class="recent">
             <h5>Recent changes</h5>
             <ul class="rc-list">
+            <li><span class="rc-ver">v35.0.0 · 2026-10-23</span><ul><li>Temple of Sethraliss, last boss: hover or target the Avatar of Sethraliss once and the rotation sets it as your focus. From then on every heal goes to the Avatar while it is friendly, with no need to keep the mouse on it.</li><li>On the Avatar it uses Nature's Swiftness with an instant Regrowth, Wild Growth, Rejuvenation, Germination, Swiftmend and Regrowth.</li><li>The party is not forgotten: if anyone drops below the new "Party Safety HP %" slider (default 50%), the rotation goes back to healing the party, cooldowns included, until they are safe.</li><li>No heals are wasted while Defiling Taint blocks healing on the Avatar.</li></ul></li>
             <li><span class="rc-ver">v34.0.0 · 2026-10-23</span><ul><li>The combat potion is pressed once, and nothing else is pressed for 0.4s after it, so it no longer lands on top of the Convoke channel.</li><li>Healthstone and health potion are never used during Convoke or Tranquility. Barkskin is never used during Tranquility, whose channel breaks on any action; it still fires during Convoke.</li></ul></li>
             <li><span class="rc-ver">v33.0.0 · 2026-10-23</span><ul><li>The combat potion now goes out before Convoke. Convoke waits for it while it is available.</li></ul></li>
-            <li><span class="rc-ver">v32.0.0 · 2026-10-23</span><ul><li>Convoke is only cast from caster form. Cat Form was missing from the check, so Convoke could go out with Feral spells.</li><li>"Shift Out For Convoke" now also leaves Cat Form.</li><li>A Convoke you queue by hand waits until you are out of Bear, Cat and Moonkin.</li></ul></li>
             </ul>
             <a class="rc-all" href="#changelog">Full changelog</a>
           </div>
           </aside>
         </div>
         <details class="settings">
-          <summary>All 41 settings, with defaults</summary>
+          <summary>All 42 settings, with defaults</summary>
           <div class="set-group">
             <h5>Toggles</h5>
             <div class="set-row"><span class="set-label">Force DPS Only (Panic Button)</span><span class="set-default">Hotkey toggle, starts off</span><span class="set-desc">Ephemeral, hotkeyable toggle. OFF (default) = normal healing. Hit the bound key to suppress ALL proactive healing (Wild Growth, Rejuvenation, Lifebloom, Regrowth, Abundance upkeep, healing cooldowns) and go pure ranged DPS. Defensives (Barkskin, Ironbark, Panic Bear) and consumables still fire underneath regardless. State resets to OFF on reload.</span></div>
@@ -355,6 +358,10 @@
             <div class="set-row"><span class="set-label">OOC Heal Below HP % (effective)</span><span class="set-default">100</span><span class="set-desc">Out of combat, only heal group members under this health. Set to 100 to go back to topping everyone off.</span></div>
             <div class="set-row"><span class="set-label">Mouseover Emergency Healing</span><span class="set-default">On</span><span class="set-desc">Heal the ally under your mouse first when they fall below the Mouseover Emergency HP %.</span></div>
             <div class="set-row"><span class="set-label">Mouseover Emergency HP % (effective)</span><span class="set-default">75</span><span class="set-desc">Effective health under which the hovered ally gets priority healing.</span></div>
+          </div>
+          <div class="set-group">
+            <h5>Dungeons</h5>
+            <div class="set-row"><span class="set-label">Avatar of Sethraliss - Party Safety HP % (effective)</span><span class="set-default">50</span><span class="set-desc">Temple of Sethraliss last boss. Hover or target the Avatar once and the rotation sets it as your focus, then spends every heal on it while it is friendly and can be healed. If anyone in the party falls below this effective health, the rotation heals the party until they are back above it. 0 = never leave the Avatar.</span></div>
           </div>
           <div class="set-group">
             <h5>Cooldowns</h5>
@@ -1075,6 +1082,10 @@
         <div class="entry void">
           <h4><span class="entry-title">Devourer · Mythic+</span> <span class="entry-ver">v1.0.0</span></h4>
           <ul><li>New rotation: Devourer Demon Hunter for Mythic+, on the meta Annihilator build.</li><li>Follows the current SimulationCraft priority: Void Metamorphosis as soon as it is ready, Collapsing Star and Void Ray inside it, Reap only on a full load of souls, Voidfall spent at 3 stacks.</li><li>Never cuts the Void Ray channel or the Collapsing Star cast, and never starts either while moving.</li><li>Predictive Blur, Darkness and Soul Immolation for defense; Disrupt on target, mouseover and focus; Consume Magic purge.</li></ul>
+        </div>
+        <div class="entry leaf">
+          <h4><span class="entry-title">Restoration · Mythic+</span> <span class="entry-ver">v35.0.0</span></h4>
+          <ul><li>Temple of Sethraliss, last boss: hover or target the Avatar of Sethraliss once and the rotation sets it as your focus. From then on every heal goes to the Avatar while it is friendly, with no need to keep the mouse on it.</li><li>On the Avatar it uses Nature's Swiftness with an instant Regrowth, Wild Growth, Rejuvenation, Germination, Swiftmend and Regrowth.</li><li>The party is not forgotten: if anyone drops below the new "Party Safety HP %" slider (default 50%), the rotation goes back to healing the party, cooldowns included, until they are safe.</li><li>No heals are wasted while Defiling Taint blocks healing on the Avatar.</li></ul>
         </div>
         <div class="entry leaf">
           <h4><span class="entry-title">Restoration · Mythic+</span> <span class="entry-ver">v34.0.0</span></h4>

@@ -10,6 +10,12 @@ Player-facing changes to the Ferraz rotations, newest first. Each entry names th
 - Never cuts the Void Ray channel or the Collapsing Star cast, and never starts either while moving.
 - Predictive Blur, Darkness and Soul Immolation for defense; Disrupt on target, mouseover and focus; Consume Magic purge.
 
+### Restoration · Mythic+ · v35.0.0
+- Temple of Sethraliss, last boss: hover or target the Avatar of Sethraliss once and the rotation sets it as your focus. From then on every heal goes to the Avatar while it is friendly, with no need to keep the mouse on it.
+- On the Avatar it uses Nature's Swiftness with an instant Regrowth, Wild Growth, Rejuvenation, Germination, Swiftmend and Regrowth.
+- The party is not forgotten: if anyone drops below the new "Party Safety HP %" slider (default 50%), the rotation goes back to healing the party, cooldowns included, until they are safe.
+- No heals are wasted while Defiling Taint blocks healing on the Avatar.
+
 ### Restoration · Mythic+ · v34.0.0
 - The combat potion is pressed once, and nothing else is pressed for 0.4s after it, so it no longer lands on top of the Convoke channel.
 - Healthstone and health potion are never used during Convoke or Tranquility. Barkskin is never used during Tranquility, whose channel breaks on any action; it still fires during Convoke.

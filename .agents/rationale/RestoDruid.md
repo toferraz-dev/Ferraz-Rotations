@@ -1125,34 +1125,33 @@ Third caller, same rule: in combat always, out of combat only on request.
 
 ## avatar_sethraliss:
 
-`FerrazRestoDruid.yaml` line 1015
+`FerrazRestoDruid.yaml` (lists)
 
 ```
-Emergency Mouseover Healing on unit frames
 Temple of Sethraliss, Avatar of Sethraliss. A Valithria-style fight: the
 party heals the boss to 100% instead of killing it.
 
-WHY MOUSEOVER AND NOT cycle=members. cycle=members walks the PARTY only —
-the Avatar is never in it, so no amount of work inside the normal healing
-lists could ever reach the boss.
+v35 (2026-10-23): FOCUS, NOT MOUSEOVER. The user asked for every heal to go
+to the Avatar while it is friendly, without holding the mouse on it. The
+Avatar is never in the party, so cycle=members cannot reach it; Simia has
+no cast suffix for an arbitrary NPC, only .target/.focus/.mouseover. main
+now presses focus_mouseover / focus_target (off-GCD, 1s apart) as soon as
+the Avatar is hovered or targeted and the focus is something else, and the
+whole list casts through .focus with range_check=focus. Precedent for heals
+on focus: penance.focus in the official rotation_256.
 
-WHY THIS DOES NOT REUSE mouseover_healing_emergency. That list is gated in
-main on var.mo_friendly_valid, which requires mouseover.unitframe, and the
-catalog is explicit: unitframe is "true if the mouseover came from a UI
-unit frame (party/raid frame), FALSE IF FROM THE 3D WORLD". The Avatar is a
-world unit, so that gate shuts before any line inside is read. Rollfacedk's
-Battle Nurse Paladin solves it by dropping the unitframe check entirely,
-which also heals every friendly NPC in the game; the npcid lock below gets
-the same reach without that.
+v35: DEFILING TAINT NOW ACTUALLY GATES. Wowhead: 1301199 is a channel by the
+Essence Defiler "preventing all external healing" on the Avatar. The old
+`mouseover.debuff.1301199.down` only counted debuffs applied by the player,
+so it never fired. `.up.any` reads any source. If the channel shows no aura
+on the Avatar the check stays false and the list heals anyway (same
+fail-safe direction as before).
 
-FAIL-SAFE DIRECTION. 1301199 (Defiling Taint) is a server-side dummy aura
-and it is NOT confirmed which unit carries it — the Avatar or the Essence
-Defiler channelling it. If it never resolves on the Avatar, `.down` reads
-true forever and this degrades into "heal whenever you point at it", which
-is exactly the behaviour that already works for Rollfacedk. The wrong guess
-costs nothing; it never fails closed into a dead line.
-
-Order is throughput: instant HoT, then Swiftmend eating it, then hardcast.
+Order is throughput on one target: Nature's Swiftness on cooldown and its
+instant Regrowth, Wild Growth on cooldown (the Avatar takes the HoT, the
+spare targets top the party), Rejuvenation, Germination, Swiftmend eating a
+HoT, hardcast Regrowth as the filler. Lifebloom stays on its own self/tank
+lines above: moving it to the Avatar would drop Everbloom.
 ```
 
 ---
@@ -1343,20 +1342,26 @@ had the strict half of that advice since 4929112.
 
 ---
 
-## - call_action_list,name=avatar_sethraliss,if=mouseover.npcid=133392&mouseover.friendly&mouseover.debuff.1301199.down&mouseover.health.pct<100
+## - call_action_list,name=avatar_sethraliss,if=var.avatar_mode
 
-`FerrazRestoDruid.yaml` line 1197
+`FerrazRestoDruid.yaml` (main)
 
 ```
 Temple of Sethraliss last boss.
 
-No config toggle: mouseover.npcid=133392 already locks this to one NPC in
-one dungeon, so a checkbox could only ever turn OFF something that never
-fires anywhere else.
+var.avatar_mode = focus is the Avatar, alive, friendly, below 100%, not under
+Defiling Taint, the party's lowest effective HP is at or above the
+"Party Safety HP %" slider (0 = never leave the Avatar), and Force DPS is off.
 
-Deliberately NOT gated on !var.in_dps_form|!var.group_healthy either.
-Healing the Avatar IS the objective of the fight, so it must not wait for
-the party to be hurt first.
+The party cooldowns list (Convoke, Tranquility, trinkets, potion, proactive
+Swiftmend) is skipped while avatar_mode is true, so Swiftmend charges and
+Nature's Swiftness go to the Avatar. Everything comes back the moment
+someone drops below the safety slider. Interrupts (Roar, Soothe) and the
+self/tank Lifebloom stay above the Avatar.
+
+The slider replaces the "no toggle" stance of 4.1: the npcid lock still
+keeps this to one encounter, but how far the party may drop before the
+rotation leaves the Avatar is a real choice.
 ```
 
 ---
