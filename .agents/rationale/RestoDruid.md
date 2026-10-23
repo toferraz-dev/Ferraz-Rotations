@@ -1732,3 +1732,25 @@ quando o canal acabava a janela de dano em grupo podia já ter passado.
 - **Convoke apertado à mão pela fila não passa por aqui**: o `queue_spell` no topo do
   engine lança direto, e a rotação não consegue ler a fila. Para a poção sair antes nesse
   caso, ela precisa entrar como passo do queue binding do Convoke no Simia.
+
+---
+
+## Poção atropelando o Convoke — 2026-10-23 (mesmo dia)
+
+Relato do Ferraz depois da mudança anterior: a poção saiu e "atropelou" o Convoke.
+
+Dado do SimC 1210-01: o canal do Convoke (391528) tem `Allow Defense While Channeling` e
+não tem `Action` nas interrupções; o da Tranquility (740) tem `Action` e não libera
+defensiva. Duas fontes possíveis de aperto em cima do canal, as duas tratadas:
+
+- **Combat potion reapertada.** A linha tinha `ignore_queue` com `delay=150`: até o
+  cooldown do item registrar, o Simia reapertava a cada 150ms, e um aperto atrasado podia
+  cair no começo do canal. Agora `delay=1500` (um aperto só) e `global_delay=400` (nada é
+  apertado por 400ms depois da poção, então o Convoke só sai com ela já registrada).
+- **Lista de emergência no meio do canal.** Ela roda durante Convoke e Tranquility e
+  lançava healthstone e health potion. Agora itens nunca saem com `var.protected_channel`,
+  e o Barkskin não sai durante a Tranquility (`var.in_tranquility`) — continua liberado no
+  Convoke, que aceita defensiva. No Raid o `protected_channel` ganhou as mesmas cláusulas
+  de `lastcast` do M+, porque `player.casting.spell_id` pode vir vazio no meio do canal.
+
+Não confirmado em jogo qual das duas cortou o canal.

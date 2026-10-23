@@ -1,4 +1,4 @@
-version: "33.0.0"
+version: "34.0.0"
 author: Ferraz
 patch: "12.1"
 spec: 105
@@ -23,7 +23,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-10-23 | Patch: 12.1 | Version: 33.0.0"
+    text: "Last update: 2026-10-23 | Patch: 12.1 | Version: 34.0.0"
 
   hp_legend:
     section: "Info"
@@ -257,7 +257,7 @@ config:
     min: 0
     max: 100
     default: 40
-    description: "Healthstone below this real health. Also fires mid-cast when below the Emergency HP %."
+    description: "Healthstone below this real health. Also fires mid-cast when below the Emergency HP %, but never during Convoke or Tranquility."
 
   health_potion_pct:
     label: "Health Potion HP % (real HP)"
@@ -266,7 +266,7 @@ config:
     min: 0
     max: 100
     default: 35
-    description: "Health potion below this real health. Also fires mid-cast when below the Emergency HP %."
+    description: "Health potion below this real health. Also fires mid-cast when below the Emergency HP %, but never during Convoke or Tranquility."
 
   emergency_hp:
     label: "Emergency HP % (mid-cast, real HP)"
@@ -275,7 +275,7 @@ config:
     min: 0
     max: 100
     default: 40
-    description: "Real health below which Barkskin, the healthstone and the health potion fire while you are casting or channelling. The rotation pauses during Tranquility and Convoke, so this is the only thing that can act then. Below it a hardcast may also be cut (see Cut the Cast in an Emergency). Set to 0 to turn it off."
+    description: "Real health below which Barkskin, the healthstone and the health potion fire while you are casting. Channels are never cut: during Convoke only Barkskin fires (Convoke allows defensives mid-channel), during Tranquility nothing does. Below it a hardcast may also be cut (see Cut the Cast in an Emergency). Set to 0 to turn it off."
 
   emergency_stop_casting:
     label: "Cut the Cast in an Emergency"
@@ -414,12 +414,15 @@ variables:
   # The combat potion is an off-GCD virtual action: offered in the same pass as Convoke it lost
   # the race, the channel started and the rotation went quiet. Convoke now waits for it.
   potion_done: "!config.use_potion|!combat_potion.ready"
+  # Tranquility's channel breaks on any action, Barkskin included; Convoke's allows defensives
+  # (Allow Defense While Channeling) but not items. The emergency list runs mid-channel.
+  in_tranquility: player.casting.spell_id=740|(player.channeling&lastcast.740<action.740.execute_time)
 
 lists:
   emergency:
-    - barkskin,name="Barkskin (Emergency)",range_check=none,off_gcd=true,ignore_queue=true,if=health.pct<=config.emergency_hp
-    - healthstone,name="Healthstone (Emergency)",off_gcd=true,ignore_queue=true,delay=250,if=healthstone.ready&health.pct<=config.healthstone_pct
-    - health_potion,name="Health Potion (Emergency)",off_gcd=true,ignore_queue=true,delay=250,if=health_potion.ready&health.pct<=config.health_potion_pct
+    - barkskin,name="Barkskin (Emergency)",range_check=none,off_gcd=true,ignore_queue=true,if=health.pct<=config.emergency_hp&!var.in_tranquility
+    - healthstone,name="Healthstone (Emergency)",off_gcd=true,ignore_queue=true,delay=250,if=healthstone.ready&health.pct<=config.healthstone_pct&!var.protected_channel
+    - health_potion,name="Health Potion (Emergency)",off_gcd=true,ignore_queue=true,delay=250,if=health_potion.ready&health.pct<=config.health_potion_pct&!var.protected_channel
     - stop_casting,name="Cut Cast (Emergency)",if=config.emergency_stop_casting&!var.protected_channel
 
   interrupts:
@@ -459,7 +462,7 @@ lists:
     - rejuvenation,name="Shift Out For Convoke",cycle=members,cycle_order=buff.rejuvenation.remains,if=cooldown.convoke_the_spirits.ready&(group.count(cycle.health.effective.pct<config.convoke_threshold&!cycle.tank)>=config.convoke_members)&var.animal_form
     - trinket_1,delay=150,name="Trinket 1",if=config.use_trinket_1&trinket_1.ready&(group.count(cycle.health.effective.pct<config.convoke_threshold&!cycle.tank)>=config.convoke_members)&!buff.bear_form.up
     - trinket_2,delay=150,name="Trinket 2",if=config.use_trinket_2&trinket_2.ready&(group.count(cycle.health.effective.pct<config.convoke_threshold&!cycle.tank)>=config.convoke_members)&!buff.bear_form.up
-    - combat_potion,off_gcd=true,ignore_queue=true,delay=150,name="Combat Potion (before Convoke)",if=combat_potion.ready&config.use_potion&(cooldown.convoke_the_spirits.ready|!talent.convoke_the_spirits)&(group.count(cycle.health.effective.pct<config.convoke_threshold&!cycle.tank)>=config.convoke_members)&!buff.bear_form.up
+    - combat_potion,off_gcd=true,ignore_queue=true,delay=1500,global_delay=400,name="Combat Potion (before Convoke)",if=combat_potion.ready&config.use_potion&(cooldown.convoke_the_spirits.ready|!talent.convoke_the_spirits)&(group.count(cycle.health.effective.pct<config.convoke_threshold&!cycle.tank)>=config.convoke_members)&!buff.bear_form.up
     - convoke_the_spirits,global_delay=1000,name="Convoke (Heal)",if=(group.count(cycle.health.effective.pct<config.convoke_threshold&!cycle.tank)>=config.convoke_members)&var.caster_form&var.potion_done
     - tranquility,global_delay=1000,name="Tranquility",if=!config.manual_tranquility&group.count(cycle.health.effective.pct<config.tranquility_threshold&!cycle.tank)>=config.tranquility_members&!player.moving
     - swiftmend,name="Swiftmend (Proactive - SotF/Everbloom/Treants)",cycle=members,cycle_order=health.pct,if=cycle.buff.rejuvenation.up|pred.cycle.buff.regrowth.up|pred.cycle.buff.wild_growth.up

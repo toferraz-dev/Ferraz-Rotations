@@ -1,5 +1,5 @@
 
-version: "25.0.0"
+version: "26.0.0"
 author: Ferraz
 patch: "12.1"
 spec: 105
@@ -24,7 +24,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-10-23 | Patch: 12.1 | Version: 25.0.0"
+    text: "Last update: 2026-10-23 | Patch: 12.1 | Version: 26.0.0"
 
   hp_legend:
     section: "Info"
@@ -267,7 +267,7 @@ config:
     min: 0
     max: 100
     default: 40
-    description: "Healthstone below this real health, mid-cast included."
+    description: "Healthstone below this real health, mid-cast included, but never during Convoke or Tranquility."
 
   engine_health_potion:
     label: "Health Potion HP % (real HP)"
@@ -276,7 +276,7 @@ config:
     min: 0
     max: 100
     default: 25
-    description: "Health potion below this real health, mid-cast included."
+    description: "Health potion below this real health, mid-cast included, but never during Convoke or Tranquility."
 
   root_cleanse:
     label: "Break Roots by Shapeshifting"
@@ -404,7 +404,7 @@ config:
     url: "https://discord.com/channels/857767821093634068/1467268534420766854"
 
 variables:
-  protected_channel: player.casting.spell_id=740|player.casting.spell_id=323764|player.casting.spell_id=391528
+  protected_channel: player.casting.spell_id=740|player.casting.spell_id=323764|player.casting.spell_id=391528|(player.channeling&(lastcast.740<action.740.execute_time|lastcast.391528<action.391528.execute_time|lastcast.323764<action.323764.execute_time))
   group_healthy: group.count(cycle.health.effective.pct<config.raid_dps_group_hp)<config.raid_dps_injured_max
   can_dps: var.group_healthy&player.combat
   mo_friendly_valid: mouseover.exists&mouseover.alive&mouseover.friendly&mouseover.unitframe
@@ -421,12 +421,15 @@ variables:
   # The combat potion is an off-GCD virtual action: offered in the same pass as Convoke it lost
   # the race, the channel started and the rotation went quiet. Convoke now waits for it.
   potion_done: "!config.raid_use_potion|!combat_potion.ready"
+  # Tranquility's channel breaks on any action, Barkskin included; Convoke's allows defensives
+  # (Allow Defense While Channeling) but not items. The emergency list runs mid-channel.
+  in_tranquility: player.casting.spell_id=740|(player.channeling&lastcast.740<action.740.execute_time)
 
 lists:
   emergency:
-    - barkskin,name="Barkskin (Emergency)",range_check=none,off_gcd=true,ignore_queue=true,if=(health.pct-incoming.pct)<=config.raid_barkskin_threshold
-    - healthstone,name="Healthstone (Emergency)",off_gcd=true,ignore_queue=true,delay=250,if=healthstone.ready&health.pct<=config.engine_healthstone
-    - health_potion,name="Health Potion (Emergency)",off_gcd=true,ignore_queue=true,delay=250,if=health_potion.ready&health.pct<=config.engine_health_potion
+    - barkskin,name="Barkskin (Emergency)",range_check=none,off_gcd=true,ignore_queue=true,if=(health.pct-incoming.pct)<=config.raid_barkskin_threshold&!var.in_tranquility
+    - healthstone,name="Healthstone (Emergency)",off_gcd=true,ignore_queue=true,delay=250,if=healthstone.ready&health.pct<=config.engine_healthstone&!var.protected_channel
+    - health_potion,name="Health Potion (Emergency)",off_gcd=true,ignore_queue=true,delay=250,if=health_potion.ready&health.pct<=config.engine_health_potion&!var.protected_channel
 
   engine:
     - queue_spell,if=!player.casting&!player.channeling
@@ -489,7 +492,7 @@ lists:
     - rejuvenation,name="Shift Out For Convoke",cycle=members,cycle_order=buff.rejuvenation.remains,if=cooldown.convoke_the_spirits.ready&group.count(cycle.health.effective.pct<config.raid_convoke_threshold&cycle.range<=40)>=config.raid_convoke_members&var.animal_form&cycle.range<=40
     - trinket_1,delay=150,name="Trinket 1",if=config.raid_use_trinket_1&trinket_1.ready&group.count(cycle.health.effective.pct<config.raid_convoke_threshold&cycle.range<=40)>=config.raid_convoke_members&!buff.bear_form.up
     - trinket_2,delay=150,name="Trinket 2",if=config.raid_use_trinket_2&trinket_2.ready&group.count(cycle.health.effective.pct<config.raid_convoke_threshold&cycle.range<=40)>=config.raid_convoke_members&!buff.bear_form.up
-    - combat_potion,off_gcd=true,ignore_queue=true,delay=150,name="Combat Potion (before Convoke)",if=combat_potion.ready&config.raid_use_potion&(cooldown.convoke_the_spirits.ready|!talent.convoke_the_spirits)&group.count(cycle.health.effective.pct<config.raid_convoke_threshold&cycle.range<=40)>=config.raid_convoke_members&!buff.bear_form.up
+    - combat_potion,off_gcd=true,ignore_queue=true,delay=1500,global_delay=400,name="Combat Potion (before Convoke)",if=combat_potion.ready&config.raid_use_potion&(cooldown.convoke_the_spirits.ready|!talent.convoke_the_spirits)&group.count(cycle.health.effective.pct<config.raid_convoke_threshold&cycle.range<=40)>=config.raid_convoke_members&!buff.bear_form.up
     - convoke_the_spirits,global_delay=750,name="Convoke (Heal)",if=group.count(cycle.health.effective.pct<config.raid_convoke_threshold&cycle.range<=40)>=config.raid_convoke_members&var.caster_form&var.potion_done
     - tranquility,global_delay=750,name="Tranquility",if=!config.raid_manual_tranquility&group.count(cycle.health.effective.pct<config.raid_tranquility_threshold&cycle.range<=40)>=config.raid_tranquility_members&!player.moving
     - swiftmend,name="Swiftmend (Proactive Spread)",cycle=members,cycle_order=health.pct,if=(cooldown.swiftmend.ready&(cycle.buff.rejuvenation.up|cycle.buff.regrowth.up|cycle.buff.wild_growth.up))&cycle.range<=40
