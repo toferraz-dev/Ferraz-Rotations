@@ -5,11 +5,11 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Ferraz Rotations</title>
-<meta name="description" content="Druid rotations for Simia Pro, patch 12.1: Restoration, Guardian, Balance and Feral for Mythic+ and Raid.">
+<meta name="description" content="Rotations for Simia Pro, patch 12.1: Restoration, Guardian, Balance and Feral Druid, and Devourer Demon Hunter.">
 <meta name="theme-color" content="#0a1024">
 <meta property="og:type" content="website">
 <meta property="og:title" content="Ferraz Rotations · Druid rotation specialist">
-<meta property="og:description" content="Restoration, Guardian, Balance and Feral rotations for Simia Pro, patch 12.1. Guides, settings and changelog.">
+<meta property="og:description" content="Druid and Devourer Demon Hunter rotations for Simia Pro, patch 12.1. Guides, settings and changelog.">
 <meta property="og:url" content="https://toferraz-dev.github.io/Ferraz-Rotations/">
 <meta property="og:image" content="https://toferraz-dev.github.io/Ferraz-Rotations/assets/logo-512.png">
 <link rel="icon" type="image/png" href="assets/favicon.png">
@@ -25,7 +25,7 @@
     --night: #0a1024; --panel: #131d3d; --panel-2: #18244a; --edge: #2a3a6e;
     --ink: #eaeefb; --muted: #a7b1d6;
     --gold: #f3c560; --gold-hi: #ffe7a6; --gold-deep: #b6812b;
-    --aurora: #3fd7d0; --arcane: #a97bff; --leaf: #7fd36e; --bark: #d9a066; --ember: #ff9a4d;
+    --aurora: #3fd7d0; --arcane: #a97bff; --leaf: #7fd36e; --bark: #d9a066; --ember: #ff9a4d; --void: #d16bff;
     --font-display: "Cinzel", "Trajan Pro", Georgia, serif;
     --font-body: "Alegreya Sans", "Segoe UI", system-ui, sans-serif;
     --font-mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
@@ -81,7 +81,7 @@
   .section-head p { margin: 0; color: var(--muted); max-width: 46rem; }
   .rule { height: 1px; background: linear-gradient(90deg, transparent, var(--edge) 20%, var(--gold-deep) 50%, var(--edge) 80%, transparent); }
 
-  .leaf { --spec: var(--leaf); } .bark { --spec: var(--bark); } .arcane { --spec: var(--arcane); } .ember { --spec: var(--ember); }
+  .leaf { --spec: var(--leaf); } .bark { --spec: var(--bark); } .arcane { --spec: var(--arcane); } .ember { --spec: var(--ember); } .void { --spec: var(--void); }
   .icon { flex: none; border-radius: 10px; border: 2px solid var(--gold-deep); box-shadow: 0 0 0 1px #000, 0 4px 14px rgba(0,0,0,.5); background: #000; }
   .badge { font-family: var(--font-body); font-size: .72rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--night); background: var(--spec, var(--gold)); border-radius: 999px; padding: .1rem .55rem; }
 
@@ -105,6 +105,7 @@
   .rot-sub { color: var(--muted); font-size: .95rem; }
   .top-link { font-size: .85rem; color: var(--muted); text-decoration: none; border: 1px solid var(--edge); border-radius: 999px; padding: .3rem .8rem; }
   .top-link:hover { color: var(--ink); border-color: var(--aurora); }
+  .dl-btn { font-family: var(--font-display); font-weight: 700; font-size: .8rem; letter-spacing: .05em; text-decoration: none; color: #1c1305; background: linear-gradient(180deg, var(--gold-hi), var(--gold) 55%, var(--gold-deep)); border-radius: 999px; padding: .35rem .9rem; }
   .rot-body { display: grid; grid-template-columns: minmax(0, 1fr) 17rem; gap: 2rem; padding: 1.25rem 1.25rem .5rem; }
   .guide { max-width: 44rem; }
   .guide > p:first-child { font-size: 1.1rem; color: var(--ink); margin-top: 0; }
@@ -182,15 +183,16 @@
       <div>
         <p class="eyebrow">Druid rotation specialist</p>
         <h1>Ferraz Rotations</h1>
-        <p class="lede">Hand-tuned <strong>Simia Pro</strong> rotations for every druid spec, built separately for <strong>Mythic+</strong> and <strong>Raid</strong>. Pick your spec to see what the rotation does on its own, what stays with you, and every setting it gives you.</p>
+        <p class="lede">Hand-tuned <strong>Simia Pro</strong> rotations for every druid spec, built separately for <strong>Mythic+</strong> and <strong>Raid</strong>, plus the <strong>Devourer Demon Hunter</strong>. Pick your spec to see what the rotation does on its own, what stays with you, and every setting it gives you.</p>
         <div class="actions">
           <a class="btn btn-gold" href="#rotations">Choose your spec</a>
+          <a class="btn btn-ghost" href="rotations/Ferraz-Rotations.zip" download>Download all</a>
           <a class="btn btn-ghost" href="#changelog">Changelog</a>
           <a class="btn btn-ghost" href="https://github.com/toferraz-dev/Ferraz-Rotations">GitHub</a>
         </div>
         <ul class="facts">
-          <li><b>7</b>rotations</li>
-          <li><b>4</b>specs</li>
+          <li><b>8</b>rotations</li>
+          <li><b>5</b>specs</li>
           <li><b>12.1</b>patch</li>
           <li><b>10/23</b>last update</li>
         </ul>
@@ -203,7 +205,7 @@
       <div class="inner">
         <div class="section-head">
           <h2>Choose your spec</h2>
-          <p>Seven rotations, one per spec and content type. In Simia, copy the talent string from the rotation panel under <em>Talents → Recommended Talent String</em>.</p>
+          <p>One rotation per spec and content type. Each guide has a <em>Download .yaml</em> button for its rotation file, or grab them all with <em>Download all</em> at the top. In Simia, copy the talent string from the rotation panel under <em>Talents → Recommended Talent String</em>.</p>
         </div>
         <div class="grid">
         <a class="spec-card leaf" href="#resto-mplus">
@@ -262,6 +264,14 @@
             <span class="spec-meta">DPS · v6.0.0</span>
           </span>
         </a>
+        <a class="spec-card void" href="#devourer-mplus">
+          <img class="icon" src="assets/icons/1221150.png" alt="" width="56" height="56">
+          <span class="spec-body">
+            <span class="spec-top"><span class="spec-name">Devourer</span><span class="badge">Mythic+</span></span>
+            <span class="spec-build">Annihilator with Collapsing Star</span>
+            <span class="spec-meta">DPS · v1.0.0</span>
+          </span>
+        </a>
         </div>
       </div>
     </section>
@@ -282,6 +292,7 @@
             <h3>Restoration <span class="badge">Mythic+</span></h3>
             <span class="rot-sub">Healer · Wildstalker</span>
           </div>
+          <a class="dl-btn" href="rotations/FerrazRestoDruid.yaml" download>Download .yaml</a>
           <a class="top-link" href="#rotations">All rotations</a>
         </header>
         <div class="rot-body">
@@ -401,6 +412,7 @@
             <h3>Restoration <span class="badge">Raid</span></h3>
             <span class="rot-sub">Healer · Wildstalker with Reforestation</span>
           </div>
+          <a class="dl-btn" href="rotations/FerrazRestoDruidRaid.yaml" download>Download .yaml</a>
           <a class="top-link" href="#rotations">All rotations</a>
         </header>
         <div class="rot-body">
@@ -520,6 +532,7 @@
             <h3>Guardian <span class="badge">Mythic+</span></h3>
             <span class="rot-sub">Tank · Elune&#x27;s Chosen with Lunar Calling</span>
           </div>
+          <a class="dl-btn" href="rotations/FerrazGuardianElune.yaml" download>Download .yaml</a>
           <a class="top-link" href="#rotations">All rotations</a>
         </header>
         <div class="rot-body">
@@ -618,6 +631,7 @@
             <h3>Balance <span class="badge">Mythic+</span></h3>
             <span class="rot-sub">DPS · Elune&#x27;s Chosen with Lunar Calling</span>
           </div>
+          <a class="dl-btn" href="rotations/FerrazBalance.yaml" download>Download .yaml</a>
           <a class="top-link" href="#rotations">All rotations</a>
         </header>
         <div class="rot-body">
@@ -711,6 +725,7 @@
             <h3>Balance <span class="badge">Raid</span></h3>
             <span class="rot-sub">DPS · Elune&#x27;s Chosen with Lunar Calling</span>
           </div>
+          <a class="dl-btn" href="rotations/FerrazBalanceRaid.yaml" download>Download .yaml</a>
           <a class="top-link" href="#rotations">All rotations</a>
         </header>
         <div class="rot-body">
@@ -799,6 +814,7 @@
             <h3>Feral <span class="badge">Mythic+</span></h3>
             <span class="rot-sub">DPS · Druid of the Claw with Convoke the Spirits</span>
           </div>
+          <a class="dl-btn" href="rotations/FerrazFeral.yaml" download>Download .yaml</a>
           <a class="top-link" href="#rotations">All rotations</a>
         </header>
         <div class="rot-body">
@@ -888,6 +904,7 @@
             <h3>Feral <span class="badge">Raid</span></h3>
             <span class="rot-sub">DPS · Wildstalker with Convoke the Spirits</span>
           </div>
+          <a class="dl-btn" href="rotations/FerrazFeralRaid.yaml" download>Download .yaml</a>
           <a class="top-link" href="#rotations">All rotations</a>
         </header>
         <div class="rot-body">
@@ -962,6 +979,83 @@
           </div>
         </details>
       </article>
+      <article class="rotation void" id="devourer-mplus">
+        <header class="rot-head">
+          <img class="icon" src="assets/icons/1221150.png" alt="" width="56" height="56">
+          <div class="rot-name">
+            <h3>Devourer <span class="badge">Mythic+</span></h3>
+            <span class="rot-sub">DPS · Annihilator with Collapsing Star</span>
+          </div>
+          <a class="dl-btn" href="rotations/FerrazDevourer.yaml" download>Download .yaml</a>
+          <a class="top-link" href="#rotations">All rotations</a>
+        </header>
+        <div class="rot-body">
+          <div class="guide">
+<p>A Mythic+ Devourer rotation on the meta <strong>Annihilator</strong> build. It gathers souls, enters <strong>Void Metamorphosis</strong> the moment it can, and fills the window with <strong>Collapsing Star</strong>, <strong>Void Ray</strong> and <strong>Cull</strong>, spending <strong>Voidfall</strong> at three stacks.</p>
+<p><strong>Build:</strong> Annihilator with Collapsing Star, Moment of Craving, Eradicate, Star Fragments, Entropy, Emptiness, Voidpurge and Soulshaper, the AoE build most top Mythic+ players run in 12.1.5. Copy the string from <em>Talents → Recommended Talent String</em> in the rotation panel.</p>
+<h4>How souls work</h4>
+<p>Consume and Soul Immolation shatter <strong>Soul Fragments</strong>. Reap collects them, 4 at a time or 10 with Moment of Craving, and every soul gathered fills Void Metamorphosis. The rotation only presses Reap when it will collect a full load, so no Reap is wasted on one or two souls.</p>
+<h4>Outside Void Metamorphosis</h4>
+<ol><li><strong>Void Metamorphosis</strong> as soon as enough souls are gathered and your target is in range.</li><li><strong>Consume</strong> when Soulburst is ready.</li><li><strong>Reap</strong> (or the empowered <strong>Eradicate</strong>) when it collects 4 or more souls on a single target, or whenever Eradicate is ready in AoE.</li><li><strong>Void Ray</strong> at 100 Fury.</li><li><strong>Reap</strong> to spend 3 Voidfall stacks.</li><li><strong>Soul Immolation</strong> on cooldown (optional, see Cooldowns).</li><li><strong>Consume</strong> as the filler.</li></ol>
+<h4>Inside Void Metamorphosis</h4>
+<ol><li><strong>Devour</strong> with Soulburst on a single target.</li><li><strong>Collapsing Star</strong> before the fight ends.</li><li>In AoE, <strong>Void Ray</strong> first to set up Eradicate, then <strong>Collapsing Star</strong>. On a single target, Collapsing Star while Void Ray is on cooldown.</li><li><strong>Cull</strong> or <strong>Eradicate</strong> on a full load of souls.</li><li><strong>Void Ray</strong>, then <strong>Cull</strong> to spend 3 Voidfall stacks.</li><li><strong>Soul Immolation</strong> as your Fury runs out, right before Void Metamorphosis ends.</li><li><strong>Devour</strong> as the filler.</li></ol>
+<p>When the target is about to die, Reap collects any souls left on the ground.</p>
+<h4>Casting rules</h4>
+<ul><li><strong>Void Ray</strong> and <strong>Collapsing Star</strong> are never started while you move. Consume and Devour are cast on the move.</li><li>The rotation never interrupts the <strong>Void Ray</strong> channel, because Eradicate and Moment of Craving need all of it, or the <strong>Collapsing Star</strong> cast, because cancelling it loses the stored souls. Only Blur can fire during Void Ray.</li></ul>
+<h4>Cooldowns</h4>
+<ul><li><strong>Trinkets</strong>, the <strong>combat potion</strong> and racials go out during Void Metamorphosis, or in the last 30 seconds of the fight.</li><li><strong>Soul Immolation on Cooldown</strong> (on by default) uses it for damage, Fury and souls. Turn it off to keep it as a heal and for the end of Void Metamorphosis.</li></ul>
+<h4>Defense</h4>
+<ul><li><strong>Blur</strong> before a predicted big hit, and at low health.</li><li><strong>Darkness</strong> at very low health. It also protects allies standing in it.</li><li><strong>Soul Immolation</strong> as a heal at low health, whatever the damage setting.</li><li><strong>Healthstone</strong> and <strong>health potion</strong> at their thresholds.</li></ul>
+<h4>Utility</h4>
+<ul><li><strong>Disrupt</strong> on target, mouseover and focus, <strong>Imprison</strong> for single stops, <strong>Void Nova</strong> and <strong>Sigil of Misery</strong> for packs, plus racial stops.</li><li><strong>Consume Magic</strong> removes a magic buff from your target.</li><li>With <strong>Soul Cleanse</strong> talented, Soul Immolation also removes a curse from you.</li></ul>
+<p class="note">This is the first version of the Devourer rotation. It follows the current SimulationCraft priority for Annihilator; tell us in Discord if something looks off in a key.</p>
+          </div>
+          <aside class="glance">
+            <dl>
+              <div><dt>Version</dt><dd>1.0.0</dd></div>
+              <div><dt>Updated</dt><dd>2026-10-23</dd></div>
+              <div><dt>Patch</dt><dd>12.1</dd></div>
+              <div><dt>File</dt><dd><a href="https://github.com/toferraz-dev/Ferraz-Rotations/blob/main/FerrazDevourer.yaml">FerrazDevourer.yaml</a></dd></div>
+            </dl>
+          <div class="recent">
+            <h5>Recent changes</h5>
+            <ul class="rc-list">
+            <li><span class="rc-ver">v1.0.0 · 2026-10-23</span><ul><li>New rotation: Devourer Demon Hunter for Mythic+, on the meta Annihilator build.</li><li>Follows the current SimulationCraft priority: Void Metamorphosis as soon as it is ready, Collapsing Star and Void Ray inside it, Reap only on a full load of souls, Voidfall spent at 3 stacks.</li><li>Never cuts the Void Ray channel or the Collapsing Star cast, and never starts either while moving.</li><li>Predictive Blur, Darkness and Soul Immolation for defense; Disrupt on target, mouseover and focus; Consume Magic purge.</li></ul></li>
+            </ul>
+            <a class="rc-all" href="#changelog">Full changelog</a>
+          </div>
+          </aside>
+        </div>
+        <details class="settings">
+          <summary>All 14 settings, with defaults</summary>
+          <div class="set-group">
+            <h5>Cooldowns</h5>
+            <div class="set-row"><span class="set-label">Auto Trinket 1 (with Void Metamorphosis)</span><span class="set-default">On</span><span class="set-desc">Use trinket 1 during Void Metamorphosis, or in the last 30 s of the fight.</span></div>
+            <div class="set-row"><span class="set-label">Auto Trinket 2 (with Void Metamorphosis)</span><span class="set-default">On</span><span class="set-desc">Use trinket 2 during Void Metamorphosis, or in the last 30 s of the fight.</span></div>
+            <div class="set-row"><span class="set-label">Auto Combat Potion (with Void Metamorphosis)</span><span class="set-default">On</span><span class="set-desc">Use the combat potion during Void Metamorphosis, or in the last 30 s of the fight.</span></div>
+            <div class="set-row"><span class="set-label">Soul Immolation on Cooldown</span><span class="set-default">On</span><span class="set-desc">ON: Soul Immolation is used for damage, Fury and souls whenever it is ready outside Void Metamorphosis and as Void Metamorphosis runs out (the SimulationCraft priority). OFF: it is kept for the low-health heal below and for the end of Void Metamorphosis only.</span></div>
+          </div>
+          <div class="set-group">
+            <h5>Defensives</h5>
+            <div class="set-row"><span class="set-label">Blur - Predicted HP % Remaining (effective)</span><span class="set-default">40</span><span class="set-desc">Use Blur when your effective health minus the biggest predicted incoming hit, after active defensives, would put you at or below this HP %.</span></div>
+            <div class="set-row"><span class="set-label">Blur HP % (real HP)</span><span class="set-default">35</span><span class="set-desc">Blur below this real health. Also fires while you channel Void Ray.</span></div>
+            <div class="set-row"><span class="set-label">Darkness HP % (real HP)</span><span class="set-default">30</span><span class="set-desc">Darkness below this real health. It also protects allies standing in it, so it is kept for real danger.</span></div>
+            <div class="set-row"><span class="set-label">Soul Immolation Heal HP % (real HP)</span><span class="set-default">45</span><span class="set-desc">Soul Immolation heals a large part of your health over 5 s. Below this real health it is used as a heal, whatever the damage setting above.</span></div>
+            <div class="set-row"><span class="set-label">Healthstone HP % (real HP)</span><span class="set-default">40</span><span class="set-desc">Healthstone below this real health.</span></div>
+            <div class="set-row"><span class="set-label">Health Potion HP % (real HP)</span><span class="set-default">30</span><span class="set-desc">Health potion below this real health.</span></div>
+          </div>
+          <div class="set-group">
+            <h5>Utility</h5>
+            <div class="set-row"><span class="set-label">Consume Magic (Purge Target)</span><span class="set-default">On</span><span class="set-desc">Remove a beneficial magic effect from your target with Consume Magic.</span></div>
+            <div class="set-row"><span class="set-label">Sigil of Misery for AoE Stops</span><span class="set-default">On</span><span class="set-desc">Use Sigil of Misery when several enemies are casting something that should be stopped. Its effect lands after a short delay.</span></div>
+          </div>
+          <div class="set-group">
+            <h5>Engine</h5>
+            <div class="set-row"><span class="set-label">Auto Target</span><span class="set-default">No target, Target is dead</span><span class="set-desc">In combat, target the nearest enemy when you have none, it died, or it is 25+ yd away.</span></div>
+            <div class="set-row"><span class="set-label">Loot Nearby Corpses</span><span class="set-default">On</span><span class="set-desc">Loot corpses in reach out of combat.</span></div>
+          </div>
+        </details>
+      </article>
         </div>
       </div>
     </section>
@@ -978,6 +1072,10 @@
     <div class="day">
       <div class="day-date"><span>2026-10-23</span></div>
       <div class="day-entries">
+        <div class="entry void">
+          <h4><span class="entry-title">Devourer · Mythic+</span> <span class="entry-ver">v1.0.0</span></h4>
+          <ul><li>New rotation: Devourer Demon Hunter for Mythic+, on the meta Annihilator build.</li><li>Follows the current SimulationCraft priority: Void Metamorphosis as soon as it is ready, Collapsing Star and Void Ray inside it, Reap only on a full load of souls, Voidfall spent at 3 stacks.</li><li>Never cuts the Void Ray channel or the Collapsing Star cast, and never starts either while moving.</li><li>Predictive Blur, Darkness and Soul Immolation for defense; Disrupt on target, mouseover and focus; Consume Magic purge.</li></ul>
+        </div>
         <div class="entry leaf">
           <h4><span class="entry-title">Restoration · Mythic+</span> <span class="entry-ver">v34.0.0</span></h4>
           <ul><li>The combat potion is pressed once, and nothing else is pressed for 0.4s after it, so it no longer lands on top of the Convoke channel.</li><li>Healthstone and health potion are never used during Convoke or Tranquility. Barkskin is never used during Tranquility, whose channel breaks on any action; it still fires during Convoke.</li></ul>
@@ -1055,7 +1153,7 @@
       <img src="assets/favicon.png" alt="" width="56" height="56">
       <div>
         <strong>Ferraz Rotations</strong>
-        Druid rotations for Simia Pro · <a href="https://github.com/toferraz-dev/Ferraz-Rotations">toferraz-dev/Ferraz-Rotations</a>
+        Rotations for Simia Pro · <a href="https://github.com/toferraz-dev/Ferraz-Rotations">toferraz-dev/Ferraz-Rotations</a>
       </div>
     </div>
   </footer>
