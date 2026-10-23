@@ -89,3 +89,22 @@ Whenever you are tasked with creating, reviewing, or modifying a YAML rotation f
    bug classes, the expressions that do not mean what they look like, the spell
    queue semantics and the house rules. Written to hand to a fresh agent. Read it
    before editing any rotation YAML.
+
+10. **Every rotation change updates the public site and changelog.** The repo publishes a
+    player-facing site (GitHub Pages from `docs/`, https://toferraz-dev.github.io/Ferraz-Rotations/)
+    and `README.md`, both generated from `site/posts.md` and `CHANGELOG.md`. Players read them to
+    learn what each rotation does and what changed. Every commit that touches a rotation file
+    MUST, in the same commit:
+    - add a `CHANGELOG.md` entry under today's date, headed `### <Spec> · <Content> · v<new version>`
+      with the title exactly as in `site/posts.md` (e.g. `### Restoration · Mythic+ · v35.0.0`).
+      Write player-facing bullets: what changes in game, in plain words, with no variable names,
+      expressions or spell IDs;
+    - update that rotation's Discord message in `site/posts.md` whenever a feature, toggle, option
+      or talent build changed. The version and patch are filled from the YAML automatically;
+    - run `python site/build.py` and commit what it regenerates (`README.md`, `docs/index.html`,
+      `docs/assets/`). The build fails if a message exceeds Discord's 2000-character limit
+      (no Nitro) or a rotation's current version has no changelog entry; `--check` verifies
+      without writing.
+
+    The site is in English. `site/` (message sources, build script, logo source) stays local and
+    is not published; only the generated files are.
