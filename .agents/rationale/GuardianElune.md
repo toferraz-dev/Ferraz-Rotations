@@ -1179,3 +1179,55 @@ variável ou override que comece com `!` vai entre aspas duplas, como os
 Patchwerk o alvo está sempre em melee. Um profileset não consegue nem reproduzir o
 problema que estes gates resolvem, muito menos medir a solução. Julgue em jogo, com
 `/simia snapshot` correndo entre pacotes.
+
+---
+
+## 4.0.0 (2026-10-23) — hold do Incarnation limitado, MotW só fora de combate, limpeza
+
+Revisão completa pedida pelo Ferraz, mesmo critério das rotações de healer. O que mudou:
+
+### Incarnation não fica mais preso pelo HotW
+
+Antes, Berserk/Incarnation esperavam enquanto `cooldown_bypass.heart_of_the_wild.ready`.
+O weave tem travas próprias (delay de 8s, 2s parado, HP mínimo, dano pesado previsto,
+buster em 6s, TTD do alvo, alvo em melee) que foram entrando **depois** da medição de
++0,95% que justificou o hold (1.11.0 e 1.17.0). Com HotW pronto e weave bloqueado,
+Incarnation esperava sem prazo, e trinkets e poção sincronizados esperavam junto.
+Incarnation dá vida máxima extra, então ficava segurado justamente sob pressão.
+
+```yaml
+burst_unblocked: "!config.auto_hotw|!talent.heart_of_the_wild|!cooldown_bypass.heart_of_the_wild.ready|(!var.hotw_weave&combat.time>=config.hotw_delay+config.hotw_max_hold)"
+```
+
+O hold continua no começo do pull, durante o `hotw_delay` mais `hotw_max_hold`
+(slider novo, default 4), então a ordem medida HotW primeiro, Incarnation depois,
+segue valendo no caso normal. Passado esse prazo, weave bloqueado libera o burst e o
+HotW espera o Incarnation acabar (a `var.hotw_weave` já exige Incarnation fora).
+Não medido: as travas que bloqueiam o weave são inertes no SimC.
+
+### Outras mudanças
+
+- `mark_of_the_wild` ganhou `!player.combat`. Ficava acima da trava de combate sem
+  checar combate, então aliado ressuscitado em combate custava GCD antes das defensivas.
+- `allow_pull_with_mo` agora vem desligado por padrão: ligado, passar o mouse em qualquer
+  nameplate fora de combate puxa o pack. Quem já salvou o valor mantém o seu.
+- Mangle: o ramo de 88 (e o de 108 com Fount) não excluía Soul of the Forest, então o
+  limite com SotF era 88, não 83 como a entrada do Mangle acima afirma. Agora é 83. A
+  linha antiga é idêntica à oficial e ao APL do SimC. Não medido.
+- `Ironfur (Gory Fur)`: Ironfur com o proc 201671, que reduz o custo do próximo Ironfur.
+  Paridade com a oficial.
+- Wild Guardian com `!buff.1308647.up` (Answered Calling, o espírito de 8s), como a oficial.
+- Moonfire do Galactic Guardian por ID 213708: o nome cobre também o talento passivo
+  203964, mesma armadilha do Tree of Life da Resto Raid.
+- Config reorganizado (seções, labels, descrições), chaves e defaults intocados exceto o
+  pull por mouseover. `rage_deficit_maul` dizia "Lower = more aggressive", é o contrário.
+- `name=` em todas as linhas de ação.
+
+### Apontado na revisão e não alterado
+
+- Override do Barkskin (hold de buster e de fim de luta) continua valendo para todas as
+  linhas de Barkskin, inclusive as de emergência. A descrição dos sliders agora diz isso.
+- Pool de rage do brez continua sem trava de alcance, combate ou rage: enquanto o mouse
+  está no frame de aliado morto com Rebirth pronto, ele bloqueia Ironfur e Maul.
+- Gate de 3 Ironfur no root cleanse: Ironfur empilha de verdade em jogo (confirmado pelo
+  Ferraz), apesar do SimC mostrar `Stacks: 1 maximum` no 192081.
