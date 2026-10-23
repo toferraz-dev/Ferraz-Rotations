@@ -1993,3 +1993,56 @@ re-engineering on a guess.
 `hero_tree.elunes_chosen` branching, `variable.Starfall_talents`, the Orbit
 Breaker stack id (`buff.1303480`), and auto Travel Form out of combat. All
 polish, none of it measured.
+
+---
+
+## 13.0.0 (2026-10-23) — revisão completa, mesmo critério das rotações de healer
+
+Todos os itens da revisão aplicados a pedido do Ferraz. Nada medido no SimC: os
+pontos de sobrevivência e de movimento são inertes lá.
+
+### Sobrevivência
+
+- **Defensivas antes das travas de alvo.** `defensives`, o `return` de Bear,
+  `interrupts` e `dispels` subiram para logo depois da trava de combate. Antes, sem
+  alvo válido (boss intargetável, alvo amigo, alvo morto) não saía Barkskin, Panic
+  Bear, HotW de cura nem dispel.
+- **Corte de cast só quando o Panic Bear vai sair.** `stop_casting` cortava todo
+  cast abaixo do Emergency HP. Entre o Emergency HP e o Frenzied Regen HP, ou com
+  Frenzied Regeneration em CD, cortava, recastava e cortava de novo, zerando o dano.
+  Agora exige `var.panic_bear_ready`, a mesma variável que a linha do Panic Bear usa.
+  **O FerrazRestoDruid.yaml tem o mesmo padrão e não foi tocado.**
+- Barkskin de emergência, Barkskin de HP baixo e a chamada da lista de emergência
+  leem HP real. O Barkskin preditivo continua em HP efetivo.
+- Root Cleanse espera o cast ou canal acabar, como no Resto.
+- Mark of the Wild só fora de combate.
+
+### Burst
+
+- **Incarnation segue o Fury of Elune mesmo andando.** `inc_ready_to_cast` trocou
+  `var.pull_engaged` por `player.combat`: o FoE só sai com o pull parqueado, então
+  exigir 2s parado de novo depois dele só perdia a janela. Linha de Incarnation
+  adicionada no topo das duas listas de movimento, que terminam em Moonfire/Sunfire
+  sem condição e nunca deixavam a ST/AoE rodar andando.
+- `dots_spread` volta para a versão medida em 4.18.0 (+3,78%): Moonfire no pull
+  inteiro, teto de 10 alvos. Em 2026-10-11 ela tinha virado "só o alvo"; antes disso,
+  uma versão exigia os dois DoTs em todo inimigo sem teto, que trava em pull grande.
+  Se o Incarnation passar a esperar demais por mob fora de alcance, essa é a linha.
+- Linha de Celestial Alignment ao lado do Incarnation, para builds sem Incarnation.
+
+### Dano
+
+- **Touch the Cosmos no ST vai para Starsurge**, como na oficial. A linha de Starfall
+  do ST pegava o proc antes do Starsurge.
+- Touch the Cosmos lido pelo ID do proc, `buff.450360.react`. O nome cobre também o
+  talento passivo 450356, mesma armadilha do Tree of Life e do Galactic Guardian.
+- Fluid Form andando: o Starfire de volta para Moonkin não sai em movimento, então
+  andando lança Moonkin Form direto.
+
+### Limpeza
+
+- `engine_auto_combat` removido com as duas linhas que o liam: o `return` de fora de
+  combate vem antes e o `return,if=!target.valid` derrubava tudo de qualquer jeito.
+- Labels "(Eclipse Down)" com condição de Eclipse ativo viraram "(In Eclipse)".
+- Config reorganizado (seções, labels, descrições), chaves e defaults intocados.
+- `name=` em todas as linhas de ação.
