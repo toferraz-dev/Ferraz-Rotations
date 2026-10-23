@@ -1,4 +1,4 @@
-version: "34.0.0"
+version: "35.0.0"
 author: Ferraz
 patch: "12.1"
 spec: 105
@@ -23,7 +23,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-10-23 | Patch: 12.1 | Version: 34.0.0"
+    text: "Last update: 2026-10-23 | Patch: 12.1 | Version: 35.0.0"
 
   hp_legend:
     section: "Info"
@@ -144,6 +144,16 @@ config:
     max: 99
     default: 75
     description: "Effective health under which the hovered ally gets priority healing."
+
+  # ---- Dungeons ----------------------------------------------------
+  avatar_party_hp:
+    label: "Avatar of Sethraliss - Party Safety HP % (effective)"
+    section: "Dungeons"
+    type: slider
+    min: 0
+    max: 90
+    default: 50
+    description: "Temple of Sethraliss last boss. Hover or target the Avatar once and the rotation sets it as your focus, then spends every heal on it while it is friendly and can be healed. If anyone in the party falls below this effective health, the rotation heals the party until they are back above it. 0 = never leave the Avatar."
 
   # ---- Cooldowns ---------------------------------------------------
   convoke_threshold:
@@ -417,6 +427,12 @@ variables:
   # Tranquility's channel breaks on any action, Barkskin included; Convoke's allows defensives
   # (Allow Defense While Channeling) but not items. The emergency list runs mid-channel.
   in_tranquility: player.casting.spell_id=740|(player.channeling&lastcast.740<action.740.execute_time)
+  # Temple of Sethraliss last boss. The Avatar (NPC 133392) is not in the party, so cycle=members
+  # never reaches it: the rotation focuses it and heals through .focus. Defiling Taint (1301199)
+  # is the Essence Defiler's channel that blocks all external healing on it; .any because the
+  # aura is not ours (without it the check only saw our own debuffs and never fired).
+  avatar_healable: focus.npcid=133392&focus.alive&focus.friendly&focus.health.pct<100&!focus.debuff.1301199.up.any
+  avatar_mode: var.avatar_healable&group.lowest.health.effective.pct>=config.avatar_party_hp&!config.force_dps
 
 lists:
   emergency:
@@ -505,9 +521,13 @@ lists:
     - call_action_list,name=abundance_maintenance,if=!var.can_dps
 
   avatar_sethraliss:
-    - rejuvenation.mouseover,name="Avatar Rejuvenation",range_check=mouseover,if=mouseover.buff.rejuvenation.refreshable
-    - swiftmend.mouseover,name="Avatar Swiftmend",range_check=mouseover,if=mouseover.buff.rejuvenation.up|mouseover.buff.regrowth.up
-    - regrowth.mouseover,name="Avatar Regrowth",range_check=mouseover,if=!player.moving
+    - natures_swiftness,name="Avatar Nature's Swiftness",off_gcd=true,delay=150,range_check=none,if=!config.disable_natures_swiftness&focus.range<=40&focus.los
+    - regrowth.focus,name="Avatar NS Regrowth",range_check=focus,if=buff.natures_swiftness.up&focus.los
+    - wild_growth.focus,name="Avatar Wild Growth",range_check=focus,if=focus.los&!player.moving
+    - rejuvenation.focus,name="Avatar Rejuvenation",range_check=focus,if=focus.los&focus.buff.rejuvenation.refreshable
+    - rejuvenation.focus,name="Avatar Germination",range_check=focus,if=focus.los&talent.germination&focus.buff.rejuvenation.up&(focus.buff.rejuvenation_germination.down|focus.buff.rejuvenation_germination.remains<2)
+    - swiftmend.focus,name="Avatar Swiftmend",range_check=focus,if=focus.los&(focus.buff.rejuvenation.up|focus.buff.regrowth.up|focus.buff.wild_growth.up)
+    - regrowth.focus,name="Avatar Regrowth",range_check=focus,if=focus.los&!player.moving
 
   mouseover_healing_emergency:
     - swiftmend.mouseover,name="Swiftmend (MO)",if=mouseover.buff.rejuvenation.remains>1|mouseover.buff.regrowth.remains>1|mouseover.buff.wild_growth.remains>1
@@ -564,9 +584,12 @@ lists:
 
     - call_action_list,name=utility
     - call_action_list,name=racials
-    - call_action_list,name=cooldowns,if=!config.force_dps
+    # Party cooldowns wait while every heal goes to the Avatar; they come back with the party.
+    - call_action_list,name=cooldowns,if=!config.force_dps&!var.avatar_mode
     - call_action_list,name=interrupts
-    - call_action_list,name=avatar_sethraliss,if=mouseover.npcid=133392&mouseover.friendly&mouseover.debuff.1301199.down&mouseover.health.pct<100
+    - focus_mouseover,name="Focus Avatar (Mouseover)",off_gcd=true,delay=1000,range_check=none,if=mouseover.npcid=133392&focus.npcid!=133392
+    - focus_target,name="Focus Avatar (Target)",off_gcd=true,delay=1000,range_check=none,if=target.npcid=133392&focus.npcid!=133392
+    - call_action_list,name=avatar_sethraliss,if=var.avatar_mode
     - call_action_list,name=mouseover_healing_emergency,if=config.use_mouseover&var.mo_friendly_valid&mouseover.health.effective.pct<config.mouseover_emergency_hp&!config.force_dps
     - call_action_list,name=moving,if=player.moving&!config.force_dps
     - call_action_list,name=abundance_maintenance,if=!config.force_dps
