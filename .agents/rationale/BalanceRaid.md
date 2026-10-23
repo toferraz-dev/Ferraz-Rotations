@@ -800,3 +800,53 @@ file after the first version of this guard was supposed to have fixed it.
 Dispels cancel the form the same way. Inside the Bear window survival
 outranks the kick; the window is short and health-gated.
 ```
+
+---
+
+## 9.0.0 (2026-10-23) — revisão completa, mesmo critério do M+
+
+Todos os itens da revisão aplicados a pedido do Ferraz. Nada medido no SimC: os pontos
+de sobrevivência, de nome ambíguo e do opener são diferenças só do Simia.
+
+### Sobrevivência
+
+- **Defensivas antes das travas de alvo**, como no M+ 13.0.0. Sem alvo válido (fase de
+  boss intargetável) não saía Barkskin, Panic Bear nem HotW defensivo.
+- **Preso em Bear, o defeito que o rationale do M+ já apontava aqui.** A saída lia só
+  `health.pct<=frenzied_regen_hp`; a entrada exigia FR ou HotW prontos. Root Cleanse em
+  Bear abaixo de 30% com FR em CD travava a rotação até curarem. Agora `panic_bear_ready`
+  (entrada) e `bear_defensive_active` (saída) leem os mesmos dois motivos, e o Back to
+  Moonkin lê só `!var.bear_defensive_active`.
+- **Corte de cast só quando o Panic Bear vai sair** (`var.panic_bear_ready`).
+- Frenzied Regeneration ganhou `buff.frenzied_regeneration.down`, como no M+ 4.16.0.
+- Barkskin de emergência e de HP baixo e a chamada da emergência em HP real.
+- Root Cleanse espera cast/canal; Mark of the Wild só fora de combate.
+
+### Opener
+
+`opener` lia `cooldown.celestial_alignment.remains=0`. Com Incarnation talentado o CA
+nunca é lançado, então o cooldown dele pode ler 0 o tempo todo e o opener, que termina em
+Starfire sem condição, substituiria a ST inteira fora do burst. Agora `var.burst_ready`
+lê as cargas do Incarnation quando talentado, ou o CA pronto sem ele. Linha de Celestial
+Alignment adicionada nos dois openers para builds sem Incarnation. O opener de ST não
+gasta mais AP nem Touch the Cosmos em Starfall: vai para Starsurge.
+
+O -1,6% medido ao remover o opener continua valendo: a lista ficou, só o gatilho mudou.
+
+### Nomes ambíguos, lidos por ID
+
+| Nome | Passivo do talento | ID usado |
+|---|---|---|
+| Touch the Cosmos | 450356 | 450360 (proc grátis) |
+| Starlord | 202345 | 279709 (buff) |
+| Atmospheric Exposure | 429532 | 430589 (debuff) |
+| Heart of the Wild | 8 IDs | 1261872 (morph de Bear, +vida máxima 20s) |
+
+### Limpeza
+
+- Linhas mortas do build Grove removidas: Wild Mushroom, Force of Nature, New/Half/Full
+  Moon e os procs de Starweaver. O header de 2.10.0 já dizia que remover mediu +0,01%.
+- `engine_auto_combat` removido com as duas linhas que o liam.
+- Fluid Form andando lança Moonkin Form direto.
+- Labels "(Eclipse Down)" com condição de Eclipse ativo viraram "(In Eclipse)".
+- Config reorganizado, chaves e defaults intocados; `name=` em todas as linhas de ação.
