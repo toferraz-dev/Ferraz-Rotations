@@ -1,0 +1,293 @@
+
+version: "1.0.0"
+author: Ferraz
+patch: "12.1"
+spec: 1480
+name: Devourer Demon Hunter Ferraz M+
+description: |
+  Devourer Demon Hunter Ferraz M+
+entry: main
+movement_allowed: true
+
+# Priority: SimulationCraft 1210-01 default APL, Annihilator branch (annihilator_meta /
+# annihilator_out), cross-checked against Method's 12.1.5 Mythic+ notes. Spell and buff ids
+# are pinned where the name maps to several SpellName.csv rows (see variables).
+spell_overrides:
+  # Void Metamorphosis is only pressed with a target in range, never while it is already up.
+  metamorphosis: "target.exists&target.range<=25&buff.1217607.down"
+  # 1221150 = Collapsing Star, the castable (the name matches 7+ rows). 3s cast that any other
+  # action cancels, losing the stored souls: never start it while moving.
+  1221150: "!player.moving"
+  # Full 3s channel needed for Eradicate and Moment of Craving.
+  void_ray: "!player.moving"
+
+config:
+  about:
+    section: "Info"
+    type: note
+    label: "Rotation Info"
+    text: "Last update: 2026-10-23 | Patch: 12.1 | Version: 1.0.0"
+
+  hp_legend:
+    section: "Info"
+    type: note
+    label: "HP % (effective) vs (real HP)"
+    text: "effective = real HP + incoming heals - heal absorbs. real HP = actual health only, used for emergencies, defensives and consumables."
+
+  recommended_talents:
+    section: "Talents"
+    type: copy_text
+    label: "Recommended Talent String"
+    text: "CgcBAAAAAAAAAAAAAAAAAAAAAAA2mxMzMzYmxwMAAAAAAALGz2gZAAAAAAAAYGzwMzMzMzMzMMziZMWkFmZmZ2abmZGADDABegxMMmB"
+
+  use_trinket_1:
+    label: "Auto Trinket 1 (with Void Metamorphosis)"
+    section: "Cooldowns"
+    type: checkbox
+    default: true
+    description: "Use trinket 1 during Void Metamorphosis, or in the last 30 s of the fight."
+
+  use_trinket_2:
+    label: "Auto Trinket 2 (with Void Metamorphosis)"
+    section: "Cooldowns"
+    type: checkbox
+    default: true
+    description: "Use trinket 2 during Void Metamorphosis, or in the last 30 s of the fight."
+
+  use_potion:
+    label: "Auto Combat Potion (with Void Metamorphosis)"
+    section: "Cooldowns"
+    type: checkbox
+    default: true
+    description: "Use the combat potion during Void Metamorphosis, or in the last 30 s of the fight."
+
+  soul_immolation_on_cd:
+    label: "Soul Immolation on Cooldown"
+    section: "Cooldowns"
+    type: checkbox
+    default: true
+    description: "ON: Soul Immolation is used for damage, Fury and souls whenever it is ready outside Void Metamorphosis and as Void Metamorphosis runs out (the SimulationCraft priority). OFF: it is kept for the low-health heal below and for the end of Void Metamorphosis only."
+
+  blur_dmg_pct:
+    label: "Blur - Predicted HP % Remaining (effective)"
+    section: "Defensives"
+    type: slider
+    min: 10
+    max: 100
+    default: 40
+    description: "Use Blur when your effective health minus the biggest predicted incoming hit, after active defensives, would put you at or below this HP %."
+
+  blur_hp_pct:
+    label: "Blur HP % (real HP)"
+    section: "Defensives"
+    type: slider
+    min: 0
+    max: 100
+    default: 35
+    description: "Blur below this real health. Also fires while you channel Void Ray."
+
+  darkness_hp_pct:
+    label: "Darkness HP % (real HP)"
+    section: "Defensives"
+    type: slider
+    min: 0
+    max: 100
+    default: 30
+    description: "Darkness below this real health. It also protects allies standing in it, so it is kept for real danger."
+
+  soul_immolation_hp_pct:
+    label: "Soul Immolation Heal HP % (real HP)"
+    section: "Defensives"
+    type: slider
+    min: 0
+    max: 100
+    default: 45
+    description: "Soul Immolation heals a large part of your health over 5 s. Below this real health it is used as a heal, whatever the damage setting above."
+
+  healthstone_pct:
+    label: "Healthstone HP % (real HP)"
+    section: "Defensives"
+    type: slider
+    min: 0
+    max: 100
+    default: 40
+    description: "Healthstone below this real health."
+
+  health_potion_pct:
+    label: "Health Potion HP % (real HP)"
+    section: "Defensives"
+    type: slider
+    min: 0
+    max: 100
+    default: 30
+    description: "Health potion below this real health."
+
+  auto_purge:
+    label: "Consume Magic (Purge Target)"
+    section: "Utility"
+    type: checkbox
+    default: true
+    description: "Remove a beneficial magic effect from your target with Consume Magic."
+
+  sigil_of_misery_aoe:
+    label: "Sigil of Misery for AoE Stops"
+    section: "Utility"
+    type: checkbox
+    default: true
+    description: "Use Sigil of Misery when several enemies are casting something that should be stopped. Its effect lands after a short delay."
+
+  auto_target:
+    label: "Auto Target"
+    section: "Engine"
+    type: multi_select
+    options:
+      - label: "No target"
+        value: 0
+      - label: "Target is dead"
+        value: 1
+      - label: "Target too far"
+        value: 2
+    default: [0, 1]
+    description: "In combat, target the nearest enemy when you have none, it died, or it is 25+ yd away."
+
+  loot_nearby:
+    label: "Loot Nearby Corpses"
+    section: "Engine"
+    type: checkbox
+    default: true
+    description: "Loot corpses in reach out of combat."
+
+  discord_button:
+    section: "Help"
+    type: button
+    label: "Discord - Ferraz"
+    text: "Join Discord - Ferraz"
+    url: "https://discord.com/channels/857767821093634068/1467268534420766854"
+
+# Pinned ids (names that match several SpellName.csv rows):
+#   1217607 Void Metamorphosis active aura      1225789 souls gathered toward Void Metamorphosis
+#   1245577 Soul Fragments nearby (stacks)       1238495 Moment of Craving (next Reap takes +6 souls)
+#   1239524 Eradicate (next Reap empowered)      1256302 Voidfall, ready to spend (3 max)
+#   1297433 Soulburst (next Consume/Devour)      1227702 souls stored for Collapsing Star
+#   1241937 Soul Immolation (self aura)          1245453 Cull (Reap's button inside Void Metamorphosis)
+variables:
+  # Enemies the next Reap / Eradicate can hit, counted around the target (official 1480 formula).
+  enemies: "range.reap.target*enemies_around_target"
+  in_meta: buff.1217607.up
+  # Souls the next Reap collects: nearby fragments, capped at 4 (10 with Moment of Craving). >? is MIN.
+  souls_consumed: "buff.1245577.stack>?(4+6*buff.1238495.up)"
+  eradicate_up: buff.1239524.up
+  # SimC voidfall_dump: 3 Voidfall stacks ready and no Eradicate pending.
+  voidfall_dump: "!buff.1239524.up&(buff.1256302.stack>=3&prev_gcd.1.void_ray|buff.1256302.react>=3)"
+  cstar_souls: buff.1227702.stack
+  burst_window: var.in_meta|fight_remains<=30
+  # Collapsing Star (3s cast) is cancelled by any action; Void Ray needs its full channel.
+  casting_star: player.casting.spell_id=1221150
+
+lists:
+  emergency:
+    - blur,name="Blur (Emergency)",range_check=none,off_gcd=true,ignore_queue=true,if=health.pct<=config.blur_hp_pct&!var.casting_star
+
+  engine:
+    - queue_spell,if=!player.casting&!player.channeling
+
+    - return,if=!state.rotation
+    - return,if=player.dead
+    - return,if=state.blocked_inputs
+    - return,if=mounted
+
+    - interact_target,delay=350,if=config.loot_nearby&target.lootable&target.range<=5&!player.combat
+    - interact_target,delay=350,if=config.loot_nearby&loot_nearby&!player.combat
+    - interact_mouseover,delay=350,if=config.loot_nearby&mouseover.lootable&mouseover.range<=5&!player.combat
+
+    - healthstone,name="Healthstone",delay=250,if=healthstone.ready&health.pct<=config.healthstone_pct
+    - health_potion,name="Health Potion",delay=250,if=health_potion.ready&health.pct<=config.health_potion_pct
+
+    - target_enemy,delay=200,off_gcd=true,if=player.combat&config.auto_target.has(0)&!target.exists&enemies.combat.40y>=1
+    - target_enemy,delay=200,off_gcd=true,if=player.combat&config.auto_target.has(1)&target.dead&enemies.combat.40y>=1
+    - target_enemy,delay=200,off_gcd=true,if=player.combat&config.auto_target.has(2)&target.range>=25&enemies.combat.40y>=1
+
+    - target_enemy,name="Swap Off Storm Blessed",delay=500,off_gcd=true,if=target.buff.1289229.up&enemies.combat.40y>=2
+
+  defensives:
+    - blur,name="Blur (Predicted)",range_check=none,off_gcd=true,ignore_queue=true,if=(health.effective.pct-incoming.mitigated.pct)<=config.blur_dmg_pct
+    - blur,name="Blur (HP)",range_check=none,off_gcd=true,ignore_queue=true,if=health.pct<=config.blur_hp_pct
+    - darkness,name="Darkness",range_check=none,if=health.pct<=config.darkness_hp_pct
+    - soul_immolation,name="Soul Immolation (Heal)",range_check=none,if=health.pct<=config.soul_immolation_hp_pct&buff.1241937.down
+
+  interrupts:
+    - disrupt,name="Disrupt",off_gcd=true,ignore_queue=true,if=interrupt.target.check
+    - disrupt.mouseover,name="Disrupt (Mouseover)",off_gcd=true,ignore_queue=true,if=interrupt.mouseover.check
+    - disrupt.focus,name="Disrupt (Focus)",off_gcd=true,ignore_queue=true,if=interrupt.focus.check
+    - imprison,name="Imprison",if=interrupt.cc.check
+    - void_nova,name="Void Nova",if=interrupt.stun.aoe.check
+    - sigil_of_misery,name="Sigil of Misery",if=config.sigil_of_misery_aoe&interrupt.stun.aoe.check
+    - quaking_palm,name="Quaking Palm",if=interrupt.cc.check
+    - haymaker,name="Haymaker",if=interrupt.cc.check
+    - war_stomp,name="War Stomp",if=interrupt.stun.aoe.check
+    - bull_rush,name="Bull Rush",if=interrupt.stun.aoe.check
+
+  utility:
+    - consume_magic,name="Consume Magic (Purge)",if=config.auto_purge&target.purgeable.magic
+
+  cooldowns:
+    - trinket_1,name="Trinket 1",off_gcd=true,ignore_queue=true,delay=150,if=config.use_trinket_1&trinket_1.ready&var.burst_window
+    - trinket_2,name="Trinket 2",off_gcd=true,ignore_queue=true,delay=150,if=config.use_trinket_2&trinket_2.ready&var.burst_window
+    - combat_potion,name="Combat Potion",off_gcd=true,ignore_queue=true,delay=1500,if=config.use_potion&combat_potion.ready&var.burst_window
+    - berserking,name="Berserking",if=var.in_meta
+    - blood_fury,name="Blood Fury",if=var.in_meta
+    - fireblood,name="Fireblood",if=var.in_meta
+    - ancestral_call,name="Ancestral Call",if=var.in_meta
+
+  # Reap's button: Eradicate when it is empowered, Cull inside Void Metamorphosis, Reap otherwise.
+  reaps:
+    - eradicate,name="Eradicate"
+    - cull,name="Cull"
+    - reap,name="Reap"
+
+  # SimC annihilator_meta: Collapsing Star and Void Ray on cooldown, Reap/Cull on full souls,
+  # Voidfall spent at 3 stacks, Devour as the filler.
+  meta:
+    - devour,name="Devour (Soulburst)",if=buff.1297433.up&var.enemies<=1
+    - 1221150,name="Collapsing Star (Fight Ending)",global_delay=200,if=fight_remains<10
+    - void_ray,name="Void Ray (for Eradicate)",global_delay=300,if=talent.eradicate&var.enemies>1&!var.eradicate_up
+    - 1221150,name="Collapsing Star",global_delay=200,if=var.enemies>1|cooldown.void_ray.remains
+    - call_action_list,name=reaps,if=(var.enemies<=1|var.eradicate_up)&var.souls_consumed>=4
+    - call_action_list,name=reaps,if=!talent.eradicate&var.cstar_souls+var.souls_consumed>=30&var.souls_consumed>=4
+    - void_ray,name="Void Ray",global_delay=300,if=var.enemies>1|talent.eradicate|fury>=100|fury<55
+    - call_action_list,name=reaps,if=var.voidfall_dump
+    - call_action_list,name=reaps,if=var.cstar_souls+var.souls_consumed>=30&var.souls_consumed>=4&fight_remains<45
+    - soul_immolation,name="Soul Immolation (Meta Ending)",range_check=none,if=buff.1241937.down&fury<20&(cooldown.1245453.remains|var.enemies<=1)
+    - devour,name="Devour"
+
+  # SimC annihilator_out: enter Void Metamorphosis as soon as the souls are there, Void Ray on
+  # 100 Fury, Reap on full souls or Eradicate, Consume as the filler.
+  out:
+    - metamorphosis,name="Void Metamorphosis",global_delay=100,range_check=none
+    - consume,name="Consume (Soulburst)",if=buff.1297433.up
+    - call_action_list,name=reaps,if=(var.enemies<=1|var.eradicate_up)&var.souls_consumed>=4
+    - call_action_list,name=reaps,if=!talent.eradicate&var.souls_consumed>=8
+    - void_ray,name="Void Ray",global_delay=300
+    - call_action_list,name=reaps,if=var.voidfall_dump
+    - soul_immolation,name="Soul Immolation",range_check=none,if=config.soul_immolation_on_cd&buff.1241937.down&(var.enemies>1|talent.eradicate)
+    - consume,name="Consume"
+
+  main:
+    - call_action_list,name=emergency,if=player.combat&player.channeling&health.pct<=config.blur_hp_pct
+    # Protect the Void Ray channel (Eradicate and Moment of Craving need all of it) and the
+    # Collapsing Star cast (any action cancels it and loses the stored souls).
+    - return,if=player.channeling|var.casting_star
+
+    - call_action_list,name=engine
+    - return,if=!player.combat
+
+    - call_action_list,name=defensives
+    - call_action_list,name=interrupts
+    - call_action_list,name=utility
+
+    - return,if=!target.valid|target.dead|!target.attackable
+
+    - call_action_list,name=cooldowns
+    - call_action_list,name=reaps,if=target.time_to_die<=4&var.souls_consumed>=1&!buff.1297433.up
+    - call_action_list,name=meta,if=var.in_meta
+    - call_action_list,name=out,if=!var.in_meta

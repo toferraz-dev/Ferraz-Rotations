@@ -1,0 +1,444 @@
+
+version: "9.0.0"
+author: Ferraz
+patch: "12.1"
+spec: 102
+name: Balance Druid Ferraz Raid
+description: |
+  Balance Druid Ferraz Raid
+entry: main
+
+config:
+  # ---- Info --------------------------------------------------------
+  about:
+    section: "Info"
+    type: note
+    label: "Rotation Info"
+    text: "Last update: 2026-10-23 | Patch: 12.1 | Version: 9.0.0"
+
+  hp_legend:
+    section: "Info"
+    type: note
+    label: "HP % (effective) vs (real HP)"
+    text: "effective = real HP + incoming heals - heal absorbs. Good for 'does this still need healing'. real HP = actual health only, used for emergencies, defensives and consumables."
+
+  # ---- Talents -----------------------------------------------------
+  recommended_talents:
+    section: "Talents"
+    type: copy_text
+    label: "Recommended Talent String"
+    text: "CYGAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWoMbNjxMDwsMzMzMYYGjZWmhxMWYZmlZGjZ2wAgx2yMDGz2IwEAAAgFzMzMD2MMGzAAYmBLDA"
+
+  # ---- Cooldowns ---------------------------------------------------
+  use_trinket_1:
+    label: "Auto Trinket 1"
+    section: "Cooldowns"
+    type: checkbox
+    default: true
+    description: "Use trinket 1 during Incarnation, or when Incarnation is more than 40 s away."
+
+  use_trinket_2:
+    label: "Auto Trinket 2"
+    section: "Cooldowns"
+    type: checkbox
+    default: true
+    description: "Use trinket 2 during Incarnation, or when Incarnation is more than 40 s away."
+
+  use_potion:
+    label: "Auto Combat Potion (with Incarnation)"
+    section: "Cooldowns"
+    type: checkbox
+    default: true
+    description: "Use the combat potion during Incarnation, or in the last 30 s of the fight."
+
+  # ---- Damage ------------------------------------------------------
+  enable_mouseover_dots:
+    label: "Spread DoTs on Mouseover"
+    section: "Damage"
+    type: checkbox
+    default: true
+    description: "Suggests Moonfire/Sunfire on the unit under your mouse while it is missing the DoT. Does nothing on single target."
+
+  # ---- Defensives --------------------------------------------------
+  barkskin_dmg_pct:
+    label: "Barkskin - Predicted HP % Remaining (effective)"
+    section: "Defensives"
+    type: slider
+    min: 10
+    max: 100
+    default: 40
+    description: "Use Barkskin when your current effective health minus the biggest predicted incoming hit (after active defensives) would put you at or below this HP%."
+
+  barkskin_hp:
+    label: "Barkskin HP % (real HP)"
+    section: "Defensives"
+    type: slider
+    min: 0
+    max: 100
+    default: 60
+    description: "Barkskin below this real health."
+
+  frenzied_regen_hp:
+    label: "Frenzied Regen HP % (real HP)"
+    section: "Defensives"
+    type: slider
+    min: 0
+    max: 100
+    default: 30
+    description: "Panic Bear + Frenzied Regeneration below this real health, when Frenzied Regeneration is ready. The rotation stays in Bear while the heal ticks, then goes back to Moonkin."
+
+  hotw_bear_defensive:
+    label: "HotW in Bear Form (Defensive)"
+    section: "Defensives"
+    type: checkbox
+    default: true
+    description: "In the emergency Bear Form window, press Heart of the Wild before Frenzied Regeneration. Stamina lands first, so the heal arrives on a bigger health pool."
+
+  hotw_bear_hp:
+    label: "HotW Bear Defensive HP % (effective)"
+    section: "Defensives"
+    type: slider
+    min: 0
+    max: 100
+    default: 35
+    description: "Effective health below which the rotation shifts to Bear for the Heart of the Wild max-health morph."
+
+  emergency_hp:
+    label: "Emergency HP % (mid-cast, real HP)"
+    section: "Defensives"
+    type: slider
+    min: 0
+    max: 100
+    default: 35
+    description: "Real health below which Barkskin, the healthstone and the health potion may fire while you are casting. The rotation normally does nothing mid-cast. Set to 0 to turn it off."
+
+  emergency_stop_casting:
+    label: "Cut the Cast in an Emergency"
+    section: "Defensives"
+    type: checkbox
+    default: true
+    description: "Below the Emergency HP, end the current cast only when Panic Bear is about to fire, for Frenzied Regeneration or the HotW morph. Barkskin and the consumables are off-GCD and never need it. Channels are never cut."
+
+  engine_healthstone:
+    label: "Healthstone HP % (real HP)"
+    section: "Defensives"
+    type: slider
+    min: 0
+    max: 100
+    default: 40
+    description: "Healthstone below this real health."
+
+  engine_health_potion:
+    label: "Health Potion HP % (real HP)"
+    section: "Defensives"
+    type: slider
+    min: 0
+    max: 100
+    default: 25
+    description: "Health potion below this real health."
+
+  root_cleanse:
+    label: "Break Roots by Shapeshifting"
+    section: "Defensives"
+    type: checkbox
+    default: true
+    description: "Shift to Bear and back to Moonkin to break a root, using the real player.rooted state (not stun or fear). Waits for the current cast or channel to finish."
+
+  # ---- Group Support -----------------------------------------------
+  thorn_bloom_threshold:
+    label: "Thorn Bloom (Racial) HP % (effective)"
+    section: "Group Support"
+    type: slider
+    min: 25
+    max: 99
+    default: 75
+    description: "Members counted for Thorn Bloom must be below this effective health."
+
+  thorn_bloom_members:
+    label: "Thorn Bloom (Racial) - Min Members"
+    section: "Group Support"
+    type: slider
+    min: 1
+    max: 4
+    default: 2
+    description: "Thorn Bloom once this many members are below the Thorn Bloom HP %."
+
+  # ---- Dispels -----------------------------------------------------
+  auto_dispel_self:
+    label: "Remove Corruption - Self (Poison/Curse)"
+    section: "Dispels"
+    type: checkbox
+    default: true
+    description: "Only fires when you actually have a dispelable debuff, so it costs nothing otherwise."
+
+  auto_dispel_party:
+    label: "Remove Corruption - Party"
+    section: "Dispels"
+    type: checkbox
+    default: false
+    description: "Remove Corruption on any dispellable party member."
+
+  engine_affix_devour:
+    label: "Dispel Devouring Rift (Affix)"
+    section: "Dispels"
+    type: checkbox
+    default: true
+    description: "Remove Corruption on Devouring Rift (440313), you first."
+
+  auto_purge_enrage:
+    label: "Soothe Enrage (Target)"
+    section: "Dispels"
+    type: checkbox
+    default: true
+    description: "Soothe the current target when it is enraged. Turn OFF where the enrage is not worth the global."
+
+  soothe_mouseover:
+    label: "Soothe Mouseover"
+    section: "Dispels"
+    type: checkbox
+    default: true
+    description: "Soothe whatever you are hovering, checked just before the current-target Soothe below. Simia cannot pick an enraged enemy by criteria — target_enemy is 'nearest enemy' with no filter and there is no .any(EXPR) for enemies — so hovering is the only way to Soothe a mob you are not targeting. This is an independent switch: turning Soothe Enrage off does not disable it. Guarded on mouseover.combat, so hovering an unpulled mob never pulls it."
+
+  # ---- Engine ------------------------------------------------------
+  engine_auto_target:
+    label: "Auto Target (Ranged)"
+    section: "Engine"
+    type: multi_select
+    options:
+      - label: "No target"
+        value: 0
+      - label: "Target is dead"
+        value: 1
+      - label: "Target too far"
+        value: 2
+    default: [0, 1]
+    description: "When to pick a new enemy automatically, within 40 yd."
+
+  engine_auto_brez:
+    label: "Rebirth on Mouseover (in combat)"
+    section: "Engine"
+    type: checkbox
+    default: true
+    description: "Battle rez the dead ally under your mouse in combat. Pools rage first if you are in Bear Form."
+
+  engine_auto_rez:
+    label: "Revive on Mouseover (out of combat)"
+    section: "Engine"
+    type: checkbox
+    default: true
+    description: "Revive the dead ally under your mouse out of combat."
+
+  engine_loot_nearby:
+    label: "Loot Nearby Corpses"
+    section: "Engine"
+    type: checkbox
+    default: true
+    description: "Loot corpses in reach."
+
+  engine_pause_travel_form:
+    label: "Pause in Travel Form"
+    section: "Engine"
+    type: checkbox
+    default: false
+    description: "Stop the whole rotation while you are in Travel Form. OFF by default: the rotation keeps running, and the first thing it suggests will shift you out. Turn ON if you use Travel Form to move between packs and want it left alone — nothing at all is suggested until you leave the form."
+
+  # ---- Help --------------------------------------------------------
+  discord_button:
+    section: "Help"
+    type: button
+    label: "Discord - Ferraz"
+    text: "Join Discord - Ferraz"
+    url: "https://discord.com/channels/857767821093634068/1467268534420766854"
+
+variables:
+  eclipse_down: buff.eclipse_solar.down&buff.eclipse_lunar.down
+  cd_active: buff.celestial_alignment.up|buff.incarnation_chosen_of_elune.up
+
+  # Incarnation replaces Celestial Alignment on this build, and CA's own cooldown is never
+  # used then, so "burst ready" reads the talented spell: Incarnation charges, or CA ready.
+  burst_ready: (talent.incarnation_chosen_of_elune&cooldown.incarnation_chosen_of_elune.charges>0)|(!talent.incarnation_chosen_of_elune&cooldown.celestial_alignment.ready)
+  opener: var.burst_ready&!var.cd_active
+
+  # Bear entry and exit read the same two reasons. 1261872 = HotW Bear morph (+max health, 20s);
+  # the name heart_of_the_wild covers 8 spell ids, so the buff is read by id.
+  panic_bear_ready: "!buff.bear_form.up&((health.pct<=config.frenzied_regen_hp&cooldown.frenzied_regeneration.ready&buff.frenzied_regeneration.down)|(config.hotw_bear_defensive&health.effective.pct<=config.hotw_bear_hp&(cooldown.heart_of_the_wild.ready|buff.1261872.up)))"
+  bear_defensive_active: (health.pct<=config.frenzied_regen_hp&(cooldown.frenzied_regeneration.ready|buff.frenzied_regeneration.up))|(config.hotw_bear_defensive&health.effective.pct<=config.hotw_bear_hp&(cooldown.heart_of_the_wild.ready|buff.1261872.up))
+
+# Numeric ids where the name also matches a talent passive:
+#   450360 Touch the Cosmos free proc (talent 450356), 279709 Starlord buff (talent 202345),
+#   430589 Atmospheric Exposure debuff (talent 429532).
+lists:
+  emergency:
+    - barkskin,name="Barkskin (Emergency)",range_check=none,off_gcd=true,ignore_queue=true,if=health.pct<=config.emergency_hp
+    - healthstone,name="Healthstone (Emergency)",off_gcd=true,ignore_queue=true,delay=250,if=healthstone.ready&health.pct<=config.engine_healthstone
+    - health_potion,name="Health Potion (Emergency)",off_gcd=true,ignore_queue=true,delay=250,if=health_potion.ready&health.pct<=config.engine_health_potion
+    - stop_casting,name="Cut Cast (Emergency)",if=config.emergency_stop_casting&!player.channeling&var.panic_bear_ready
+
+  engine:
+    - queue_spell,if=!player.casting&!player.channeling
+
+    - return,if=!state.rotation
+    - return,if=player.dead
+    - return,if=state.blocked_inputs
+    - return,if=mounted
+    - return,if=config.engine_pause_travel_form&buff.travel_form.up
+
+    - interact_target,delay=350,if=config.engine_loot_nearby&target.lootable&target.range<=5
+    - interact_target,delay=350,if=config.engine_loot_nearby&loot_nearby
+    - interact_mouseover,delay=350,if=config.engine_loot_nearby&mouseover.lootable&mouseover.range<=5
+
+    - remove_corruption,delay=500,cycle=party,cycle_order=player_first,name="Devouring Rift (Affix)",if=config.engine_affix_devour&cycle.debuff.440313.up.any
+
+    - pool_resource,resource=rage,for_next=1,if=config.engine_auto_brez&mouseover.dead&mouseover.friendly&mouseover.unitframe&buff.bear_form.up&cooldown.rebirth.ready
+    - rebirth.mouseover,name="Rebirth (Mouseover)",if=config.engine_auto_brez&mouseover.dead&mouseover.friendly&mouseover.unitframe&player.combat
+    - revive.mouseover,name="Revive (Mouseover)",if=config.engine_auto_rez&mouseover.dead&mouseover.friendly&mouseover.unitframe&!player.combat
+
+    - healthstone,name="Healthstone",delay=250,if=healthstone.ready&health.pct<=config.engine_healthstone
+    - health_potion,name="Health Potion",delay=250,if=health_potion.ready&health.pct<=config.engine_health_potion
+
+    - target_enemy,delay=200,off_gcd=true,if=config.engine_auto_target.has(0)&!target.exists&enemies.combat.40y>=1
+    - target_enemy,delay=200,off_gcd=true,if=config.engine_auto_target.has(1)&target.dead&enemies.combat.40y>=1
+    - target_enemy,delay=200,off_gcd=true,if=config.engine_auto_target.has(2)&target.range>=40&enemies.combat.40y>=1
+
+    - target_enemy,name="Swap Off Storm Blessed",delay=500,off_gcd=true,if=target.buff.1289229.up&enemies.combat.40y>=2
+
+  mouseover_dots:
+    - sunfire.mouseover,name="Sunfire Mouseover",if=config.enable_mouseover_dots&mouseover.exists&mouseover.enemy&mouseover.attackable&!mouseover.dead&mouseover.combat&mouseover.range<=40&mouseover.debuff.sunfire.down
+    - moonfire.mouseover,name="Moonfire Mouseover",if=config.enable_mouseover_dots&mouseover.exists&mouseover.enemy&mouseover.attackable&!mouseover.dead&mouseover.combat&mouseover.range<=40&mouseover.debuff.moonfire.down
+
+  dispels:
+    - remove_corruption,cycle=members,delay=500,name="Remove Corruption (Self)",if=cycle.is_player&config.auto_dispel_self&player.dispelable.list
+    - remove_corruption,delay=500,cycle=party,name="Remove Corruption (Party)",if=config.auto_dispel_party&cycle.dispelable.list
+    - soothe.mouseover,name="Soothe Enrage (Mouseover)",range_check=mouseover,if=config.soothe_mouseover&mouseover.exists&mouseover.enemy&mouseover.attackable&!mouseover.dead&mouseover.combat&mouseover.purgeable.enrage
+    - soothe,name="Soothe (Enrage)",if=config.auto_purge_enrage&target.purgeable.enrage
+
+  interrupts:
+    - solar_beam,name="Solar Beam",if=interrupt.target.check
+    - solar_beam.mouseover,name="Solar Beam (Mouseover)",if=interrupt.mouseover.check
+    - solar_beam.focus,name="Solar Beam (Focus)",if=interrupt.focus.check
+
+  trinkets:
+    - trinket_1,name="Trinket 1",off_gcd=true,ignore_queue=true,delay=150,if=config.use_trinket_1&player.combat&trinket_1.ready&(var.cd_active|cooldown.celestial_alignment.remains>40|cooldown.incarnation_chosen_of_elune.remains>40)
+    - trinket_2,name="Trinket 2",off_gcd=true,ignore_queue=true,delay=150,if=config.use_trinket_2&player.combat&trinket_2.ready&(var.cd_active|cooldown.celestial_alignment.remains>40|cooldown.incarnation_chosen_of_elune.remains>40)
+    - combat_potion,name="Combat Potion",off_gcd=true,ignore_queue=true,delay=150,if=config.use_potion&player.combat&combat_potion.ready&(var.cd_active|fight_remains<=30)
+
+  defensives:
+    - barkskin,range_check=none,name="Barkskin (predicted)",if=(health.effective.pct-incoming.mitigated.pct)<=config.barkskin_dmg_pct
+
+    - bear_form,name="Panic Bear Form",if=var.panic_bear_ready
+
+    - heart_of_the_wild,name="HotW (Bear defensive)",range_check=none,ignore_cds_toggle=true,if=config.hotw_bear_defensive&buff.bear_form.up&health.effective.pct<=config.hotw_bear_hp&!buff.1261872.up
+    - 1261872,name="HotW (Bear morph)",range_check=none,ignore_cds_toggle=true,if=config.hotw_bear_defensive&buff.bear_form.up&health.effective.pct<=config.hotw_bear_hp&!buff.1261872.up
+
+    - frenzied_regeneration,name="Frenzied Regeneration",if=buff.bear_form.up&health.pct<=config.frenzied_regen_hp&buff.frenzied_regeneration.down
+    - barkskin,range_check=none,name="Barkskin (low HP)",if=health.pct<=config.barkskin_hp
+
+  heal_support:
+    - mark_of_the_wild,name="OOC Mark of the Wild",range_check=none,if=!player.combat&(buff.mark_of_the_wild.down.any|action.mark_of_the_wild.overlayed)&lastcast.mark_of_the_wild>=10
+    - thorn_bloom,name="Thorn Bloom",if=group.count(cycle.health.effective.pct<config.thorn_bloom_threshold)>=config.thorn_bloom_members&target.valid&target.enemy&!target.dead&target.range<=40
+
+  moving_st:
+    - moonfire,name="Moonfire (Refresh)",if=debuff.moonfire.remains<2|debuff.moonfire.refreshable
+    - sunfire,name="Sunfire (Refresh)",if=debuff.sunfire.remains<2|debuff.sunfire.refreshable
+    - starsurge,name="Starsurge (Proc)",if=buff.450360.react
+    - starsurge,name="Starsurge (AP Dump)",if=astral_power>60
+    - fury_of_elune,name="Fury of Elune (Moving)"
+    - moonfire,name="Moonfire (Moving Filler)"
+    - sunfire,name="Sunfire (Moving Filler)"
+
+  moving_aoe:
+    - sunfire,name="Sunfire (Refresh)",if=debuff.sunfire.remains<2|debuff.sunfire.refreshable
+    - moonfire,name="Moonfire (Refresh)",if=debuff.moonfire.remains<2|debuff.moonfire.refreshable
+    - starfall,name="Starfall (Proc)",if=buff.450360.react
+    - starfall,name="Starfall (AP Dump)",if=astral_power>50
+    - starsurge,name="Starsurge (Proc under Starfall)",if=buff.starfall.up&buff.450360.react
+    - starsurge,name="Starsurge (AP Dump under Starfall)",if=buff.starfall.up&astral_power>60
+    - fury_of_elune,name="Fury of Elune (Moving)",if=!talent.sundered_firmament|debuff.430589.remains<2
+    - sunfire,name="Sunfire (Moving Filler)"
+    - moonfire,name="Moonfire (Moving Filler)"
+
+  st:
+    - moonfire,name="Moonfire (Refresh)",if=debuff.moonfire.remains<2|debuff.moonfire.refreshable&var.eclipse_down
+    - sunfire,name="Sunfire (Refresh)",if=debuff.sunfire.remains<2|debuff.sunfire.refreshable&var.eclipse_down
+
+    - lunar_eclipse,name="Lunar Eclipse",if=var.eclipse_down
+    - fury_of_elune,name="Fury of Elune"
+
+    - starsurge,name="Starsurge (Proc)",if=buff.450360.react
+
+    - starsurge,name="Starsurge (In Eclipse)",if=!var.eclipse_down&astral_power>=50
+    - starsurge,name="Starsurge (AP Capping)",if=var.eclipse_down&astral_power.deficit<20
+
+    - incarnation_chosen_of_elune,name="Incarnation",global_delay=500,if=!var.cd_active&buff.ascendant_stars.down&(!talent.elunes_guidance|cooldown.lunar_eclipse.charges_fractional<1.5)
+
+    - starfire,name="Starfire (Filler)"
+
+  aoe:
+    - sunfire,name="Sunfire (Refresh)",if=debuff.sunfire.remains<2|debuff.sunfire.refreshable&var.eclipse_down
+    - moonfire,name="Moonfire (Refresh)",if=debuff.moonfire.remains<2|debuff.moonfire.refreshable&var.eclipse_down
+    - call_action_list,name=mouseover_dots
+    - lunar_eclipse,name="Lunar Eclipse",if=var.eclipse_down
+    - fury_of_elune,name="Fury of Elune",if=!talent.sundered_firmament|debuff.430589.remains<2
+    - incarnation_chosen_of_elune,name="Incarnation",global_delay=500,if=!var.cd_active&(var.eclipse_down|fight_remains<20)
+    - starfall,name="Starfall (Proc)",if=buff.450360.react
+    - starfall,name="Starfall (AP Dump)",if=(astral_power>50)&target.time_to_die>5
+    - starsurge,name="Starsurge (Proc under Starfall)",if=buff.starfall.up&buff.450360.react
+    - starsurge,name="Starsurge (AP Dump under Starfall)",if=buff.starfall.up&astral_power>80&buff.279709.stack<3
+    - starfire,name="Starfire (Filler)"
+
+  opener_st:
+    - moonfire,name="Moonfire (Opener)",if=debuff.moonfire.remains<2|debuff.moonfire.refreshable&var.eclipse_down
+    - sunfire,name="Sunfire (Opener)",if=debuff.sunfire.remains<2|debuff.sunfire.refreshable&var.eclipse_down
+    - lunar_eclipse,name="Lunar Eclipse (Opener)",if=var.eclipse_down
+    - starsurge,name="Starsurge (Ascendant Stars or Proc)",if=buff.ascendant_stars.up|buff.450360.react
+    - fury_of_elune,name="Fury of Elune (Opener)"
+    - incarnation_chosen_of_elune,name="Incarnation (Opener)",global_delay=500,if=!var.cd_active
+    - celestial_alignment,name="Celestial Alignment (Opener)",global_delay=500,if=!talent.incarnation_chosen_of_elune&!var.cd_active
+    - starsurge,name="Starsurge (Opener AP Dump)",if=astral_power>80
+    - starfire,name="Starfire (Opener Filler)"
+
+  opener_aoe:
+    - sunfire,name="Sunfire (Opener)",if=debuff.sunfire.refreshable
+    - moonfire,name="Moonfire (Opener)",if=debuff.moonfire.refreshable
+    - fury_of_elune,name="Fury of Elune (Opener)"
+    - incarnation_chosen_of_elune,name="Incarnation (Opener)",global_delay=500,if=!var.cd_active
+    - celestial_alignment,name="Celestial Alignment (Opener)",global_delay=500,if=!talent.incarnation_chosen_of_elune&!var.cd_active
+    - lunar_eclipse,name="Lunar Eclipse (Opener)",if=var.eclipse_down
+    - starfall,name="Starfall (Opener)",if=astral_power>50|buff.ascendant_stars.up
+    - starsurge,name="Starsurge (Opener, Ascendant Stars)",if=buff.starfall.up&buff.ascendant_stars.up
+    - starfire,name="Starfire (Opener, Ascendant Stars)",if=buff.ascendant_stars.up
+
+  main:
+    - bear_form,name="Root Cleanse (to Bear)",if=config.root_cleanse&player.rooted&!player.casting&!player.channeling&!buff.bear_form.up
+    - moonkin_form,name="Root Cleanse (from Bear)",if=config.root_cleanse&player.rooted&!player.casting&!player.channeling&buff.bear_form.up
+
+    - call_action_list,name=emergency,if=player.combat&(player.casting|player.channeling)&health.pct<=config.emergency_hp
+
+    - call_action_list,name=trinkets,if=player.combat
+
+    - return,if=player.channeling|player.casting
+
+    - call_action_list,name=engine
+
+    - call_action_list,name=heal_support
+
+    - return,if=!player.combat
+
+    # Survival and utility run before the target guards: no valid target must not switch off Barkskin.
+    - call_action_list,name=defensives
+    - return,if=buff.bear_form.up&var.bear_defensive_active
+
+    - call_action_list,name=interrupts
+    - call_action_list,name=dispels
+
+    - return,if=!target.valid|target.dead|!target.attackable
+
+    - starfire,name="Back to Moonkin (Fluid Form)",if=talent.fluid_form&buff.moonkin_form.down&!var.bear_defensive_active&!player.moving
+    - moonkin_form,name="Back to Moonkin",if=buff.moonkin_form.down&!var.bear_defensive_active&(!talent.fluid_form|player.moving)
+
+    - call_action_list,name=opener_aoe,if=var.opener&enemies.combat.40y>1
+    - call_action_list,name=opener_st,if=var.opener&enemies.combat.40y<=1
+    - call_action_list,name=moving_aoe,if=player.moving&enemies.combat.40y>1
+    - call_action_list,name=moving_st,if=player.moving&enemies.combat.40y<=1
+    - call_action_list,name=st,if=enemies.combat.40y<=1
+    - call_action_list,name=aoe,if=enemies.combat.40y>1
