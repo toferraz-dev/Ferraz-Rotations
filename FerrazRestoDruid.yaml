@@ -1,4 +1,4 @@
-version: "32.0.0"
+version: "33.0.0"
 author: Ferraz
 patch: "12.1"
 spec: 105
@@ -23,7 +23,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-10-23 | Patch: 12.1 | Version: 32.0.0"
+    text: "Last update: 2026-10-23 | Patch: 12.1 | Version: 33.0.0"
 
   hp_legend:
     section: "Info"
@@ -411,6 +411,9 @@ variables:
   # Convoke heals only from caster form (or Tree of Life); Bear, Cat and Moonkin change its spells.
   caster_form: "!buff.bear_form.up&!buff.cat_form.up&!buff.moonkin_form.up"
   animal_form: buff.bear_form.up|buff.cat_form.up|buff.moonkin_form.up
+  # The combat potion is an off-GCD virtual action: offered in the same pass as Convoke it lost
+  # the race, the channel started and the rotation went quiet. Convoke now waits for it.
+  potion_done: "!config.use_potion|!combat_potion.ready"
 
 lists:
   emergency:
@@ -456,8 +459,8 @@ lists:
     - rejuvenation,name="Shift Out For Convoke",cycle=members,cycle_order=buff.rejuvenation.remains,if=cooldown.convoke_the_spirits.ready&(group.count(cycle.health.effective.pct<config.convoke_threshold&!cycle.tank)>=config.convoke_members)&var.animal_form
     - trinket_1,delay=150,name="Trinket 1",if=config.use_trinket_1&trinket_1.ready&(group.count(cycle.health.effective.pct<config.convoke_threshold&!cycle.tank)>=config.convoke_members)&!buff.bear_form.up
     - trinket_2,delay=150,name="Trinket 2",if=config.use_trinket_2&trinket_2.ready&(group.count(cycle.health.effective.pct<config.convoke_threshold&!cycle.tank)>=config.convoke_members)&!buff.bear_form.up
-    - combat_potion,delay=150,name="Combat Potion",if=combat_potion.ready&config.use_potion&(group.count(cycle.health.effective.pct<config.convoke_threshold&!cycle.tank)>=config.convoke_members)&!buff.bear_form.up
-    - convoke_the_spirits,global_delay=1000,name="Convoke (Heal)",if=(group.count(cycle.health.effective.pct<config.convoke_threshold&!cycle.tank)>=config.convoke_members)&var.caster_form
+    - combat_potion,off_gcd=true,ignore_queue=true,delay=150,name="Combat Potion (before Convoke)",if=combat_potion.ready&config.use_potion&(cooldown.convoke_the_spirits.ready|!talent.convoke_the_spirits)&(group.count(cycle.health.effective.pct<config.convoke_threshold&!cycle.tank)>=config.convoke_members)&!buff.bear_form.up
+    - convoke_the_spirits,global_delay=1000,name="Convoke (Heal)",if=(group.count(cycle.health.effective.pct<config.convoke_threshold&!cycle.tank)>=config.convoke_members)&var.caster_form&var.potion_done
     - tranquility,global_delay=1000,name="Tranquility",if=!config.manual_tranquility&group.count(cycle.health.effective.pct<config.tranquility_threshold&!cycle.tank)>=config.tranquility_members&!player.moving
     - swiftmend,name="Swiftmend (Proactive - SotF/Everbloom/Treants)",cycle=members,cycle_order=health.pct,if=cycle.buff.rejuvenation.up|pred.cycle.buff.regrowth.up|pred.cycle.buff.wild_growth.up
 

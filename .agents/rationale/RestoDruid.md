@@ -1710,3 +1710,25 @@ de curas.
   confirmar em jogo**. Com a condição falsa, o Convoke fica na fila e sai assim que você
   volta à forma de caster (o flush só recusa, não apaga a entrada).
 - Tree of Life conta como caster: o Convoke nele cura.
+
+---
+
+## Combat potion antes do Convoke — 2026-10-23
+
+Relato do Ferraz: uma key inteira sem combat potion, e ela deveria sair antes do Convoke.
+
+As linhas já eram poção e depois Convoke, com o mesmo gatilho de grupo. O problema é a
+corrida: a ação virtual `combat_potion` é off-GCD (o `_shared.yaml` oficial diz isso),
+então na mesma passada a poção virava ícone secundário e o Convoke a ação principal. O
+Convoke era apertado, o canal começava, o `return` de canal protegido calava a rotação, e
+quando o canal acabava a janela de dano em grupo podia já ter passado.
+
+- `var.potion_done` (`!use_potion|!combat_potion.ready`) agora é exigido pelo Convoke: ele
+  espera a poção sair. Poção desligada ou em cooldown não segura nada.
+- A poção ganhou `off_gcd=true,ignore_queue=true` e só sai com o Convoke pronto
+  (`cooldown.convoke_the_spirits.ready|!talent.convoke_the_spirits`), para casar com ele.
+- Trinkets ficaram como estavam: segurar o Convoke por trinket arrisca travar com trinket
+  que precisa de alvo.
+- **Convoke apertado à mão pela fila não passa por aqui**: o `queue_spell` no topo do
+  engine lança direto, e a rotação não consegue ler a fila. Para a poção sair antes nesse
+  caso, ela precisa entrar como passo do queue binding do Convoke no Simia.
