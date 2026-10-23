@@ -582,3 +582,33 @@ and throws the recharge away.
 The threshold is reused rather than given its own slider. It already means
 "health low enough that losing the Cat rotation is worth it", which is exactly
 the question both lines are asking.
+
+---
+
+## 6.0.0 (2026-10-23) — mesma revisão do FerrazFeral.yaml 9.0.0
+
+Pedido do Ferraz. Build atual: Wildstalker, Convoke + Berserk, sem Heart of the Wild,
+Fluid Form, Frantic Frenzy, Incapacitating Roar e Mighty Bash. Nada medido no SimC.
+
+### Correções
+
+- **Root Cleanse não corta mais o Convoke** (`!player.casting&!player.channeling`).
+- **Procs por ID**: Predatory Swiftness 69369, Apex Predator's Craving 391882,
+  Clearcasting 135700, Sudden Ambush 1244483 — os nomes também batem com talento
+  passivo ou com spell de outra classe.
+- **Panic Bear**: entrada sem `buff.heart_of_the_wild.up` e linha do morph 1261872,
+  iguais ao M+. Neste build o ramo do HotW já era travado por talento, então o
+  pingue-pongue Bear/Cat do M+ não acontecia aqui; ficou igual por consistência.
+- **Convoke**: `prev_gcd.1.ravage` e `combo_points<=1` adicionados, como o M+ fez em
+  2026-09-10. Sem efeito em Wildstalker (não tem Ravage), protege um build Druid of
+  the Claw.
+- Linha `incarnation` ao lado do `berserk`: o Simia lança os dois como spells
+  separados. Inerte neste build.
+- Mark of the Wild só fora de combate; Barkskin preditivo lê `incoming.mitigated.pct`.
+
+### Limpeza
+
+- Removidos: Prowl do builder (só roda em combate), o Regrowth com `var.regrowth`
+  fixa em 0, Mighty Bash e Incapacitating Roar (não talentados).
+- Config reorganizado (seção Self Healing para os Regrowths), chaves e defaults
+  intocados; `name=` em todas as linhas de ação.
