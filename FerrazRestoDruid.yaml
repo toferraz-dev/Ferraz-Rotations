@@ -1,4 +1,4 @@
-version: "30.1.0"
+version: "31.0.0"
 author: Ferraz
 patch: "12.1"
 spec: 105
@@ -17,7 +17,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-10-22 | Patch: 12.1 | Version: 30.1.0"
+    text: "Last update: 2026-10-23 | Patch: 12.1 | Version: 31.0.0"
 
   hp_legend:
     section: "Info"
@@ -417,7 +417,9 @@ lists:
 
   out_of_combat:
     - mark_of_the_wild,range_check=none,if=(buff.mark_of_the_wild.down.any|action.mark_of_the_wild.overlayed)&lastcast.mark_of_the_wild>=15
-    - symbiotic_relationship,cycle=tanks,if=cycle.buff.symbiotic_relationship.down.any
+    # lastcast.474750 (the cast id; the name covers 6 spells): the bond aura reaches the tank a
+    # moment after the 1.5s cast ends, and without this gap the line recast it right away.
+    - symbiotic_relationship,name="OOC Symbiotic Relationship (Tank)",cycle=tanks,if=cycle.buff.symbiotic_relationship.down.any&lastcast.474750>=10
     - lifebloom,cycle=members,name="OOC Self Lifebloom (Everbloom)",range_check=none,if=cycle.is_player&config.lifebloom_target=1&talent.everbloom&(cycle.buff.lifebloom.down|cycle.buff.lifebloom.refreshable)
     - lifebloom,name="OOC Lifebloom (Tank)",cycle=tanks,if=config.lifebloom_target=2&(cycle.buff.lifebloom.down|cycle.buff.lifebloom.refreshable)
     - rejuvenation,name="OOC Rejuvenation",cycle=members,cycle_order=health.pct,if=cycle.health.effective.pct<config.ooc_heal_hp_pct&cycle.buff.rejuvenation.refreshable
