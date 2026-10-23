@@ -1,5 +1,5 @@
 
-version: "21.0.0"
+version: "23.0.0"
 author: Ferraz
 patch: "12.1"
 spec: 105
@@ -8,12 +8,16 @@ description: |
   Restoration Druid Ferraz Raid
 entry: main
 
+predictions:
+  8936:  { name: "Regrowth", buff: 8936 }
+  48438: { name: "Wild Growth", buff: 48438 }
+
 config:
   about:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-10-21 | Patch: 12.1 | Version: 21.0.0"
+    text: "Last update: 2026-10-22 | Patch: 12.1 | Version: 23.0.0"
 
   recommended_talents:
     section: "Talents"
@@ -51,14 +55,6 @@ config:
     max: 20
     default: 2
 
-  raid_lifebloom_threshold:
-    label: "Lifebloom HP % (effective)"
-    section: "Healing"
-    type: slider
-    min: 25
-    max: 99
-    default: 70
-
   raid_lifebloom_target:
     label: "Lifebloom Target"
     section: "Healing"
@@ -84,6 +80,15 @@ config:
     min: 10
     max: 99
     default: 70
+
+  raid_regrowth_emergency_threshold:
+    label: "Regrowth Emergency HP % (real HP)"
+    section: "Healing"
+    type: slider
+    min: 25
+    max: 90
+    default: 60
+    description: "Emergency Regrowth on anyone below this real health. Sits above every other heal in the healing list, Tree of Life included."
 
   raid_regrowth_threshold:
     label: "Regrowth HP % (effective)"
@@ -139,17 +144,24 @@ config:
     type: checkbox
     default: false
 
+  raid_reforestation_prestack:
+    label: "Pre-stack Reforestation (out of combat)"
+    section: "Cooldowns"
+    type: checkbox
+    default: true
+    description: "Out of combat, Swiftmend a HoT target until Reforestation reaches 3 stacks, so the first Swiftmend of the next pull grants Tree of Life. Works on trash. The game wipes the Reforestation counter when a raid boss encounter starts, so on a boss cast the 4th Swiftmend yourself 1-2 sec before the pull: Tree of Life is only removed when the encounter ends."
+
   raid_barkskin_threshold:
-    label: "Barkskin - Predicted HP % Remaining"
+    label: "Barkskin - Predicted HP % Remaining (real HP)"
     section: "Defensives"
     type: slider
     min: 10
     max: 100
     default: 40
-    description: "Use Barkskin when your current effective health minus the biggest predicted incoming hit (health.effective.pct-incoming.pct) would put you at or below this HP%. Example: at 90% HP with a hit predicted to take 30%, that's 60% projected."
+    description: "Use Barkskin when your real health minus the biggest predicted incoming hit (health.pct-incoming.pct) would put you at or below this HP%. With no hit predicted it works as a plain real-HP threshold. Example: at 90% HP with a hit predicted to take 30%, that's 60% projected."
 
   raid_frenzied_regen_threshold:
-    label: "Frenzied Regen HP % (effective)"
+    label: "Frenzied Regen HP % (real HP)"
     section: "Defensives"
     type: slider
     min: 25
@@ -157,7 +169,7 @@ config:
     default: 40
 
   raid_ironbark_threshold:
-    label: "Ironbark HP % (effective)"
+    label: "Ironbark HP % (real HP)"
     section: "Defensives"
     type: slider
     min: 25
@@ -180,7 +192,7 @@ config:
     section: "Defensives"
     type: checkbox
     default: true
-    description: "Shift form to break a root, using the real player.rooted self-state (not stun, not fear - there is no equivalent snare check). line_cd caps it at one attempt every 8 seconds."
+    description: "Shift form to break a root, using the real player.rooted self-state (not stun, not fear - there is no equivalent snare check). Never shifts while you are casting or channelling, so Tranquility, Convoke and hardcasts are not cancelled."
 
   auto_dispel_group:
     label: "Nature's Cure (Group)"
@@ -193,7 +205,7 @@ config:
     section: "Dispels"
     type: checkbox
     default: true
-    description: "Soothe whatever you are hovering, checked just before the current-target Soothe below. Simia cannot pick an enraged enemy by criteria — target_enemy is 'nearest enemy' with no filter and there is no .any(EXPR) for enemies — so hovering is the only way to Soothe a mob you are not targeting. This is an independent switch: turning Soothe Enrage off does not disable it. Guarded on mouseover.combat, so hovering an unpulled mob never pulls it."
+    description: "Soothe whatever you are hovering, checked just before the current-target Soothe below. Simia cannot pick an enraged enemy by criteria — target_enemy is 'nearest enemy' with no filter and there is no .any(EXPR) for enemies — so hovering is the only way to Soothe a mob you are not targeting. Guarded on mouseover.combat, so hovering an unpulled mob never pulls it."
 
   raid_dps_group_hp:
     label: "DPS - Group HP % (effective)"
@@ -213,7 +225,7 @@ config:
     default: 2
 
   raid_ranged_dps:
-    label: "Ranged DPS (Sun/Moon/Wrath)"
+    label: "Ranged DPS (Moonfire/Starsurge/Starfire)"
     section: "Damage"
     type: checkbox
     default: true
@@ -329,12 +341,6 @@ config:
     type: checkbox
     default: true
 
-  engine_affix_devour:
-    label: "Dispel Devouring Rift (Affix)"
-    section: "Engine"
-    type: checkbox
-    default: true
-
   discord_button:
     section: "Help"
     type: button
@@ -348,10 +354,16 @@ variables:
   can_dps: var.group_healthy&player.combat
   mo_friendly_valid: mouseover.exists&mouseover.alive&mouseover.friendly&mouseover.unitframe
   has_soul: buff.soul_of_the_forest.up
+  rejuv_lasting: group.count(cycle.buff.rejuvenation.remains>3)+group.count(cycle.buff.rejuvenation_germination.remains>3)
+  abundance_safe: var.rejuv_lasting>=5
+  # Tree of Life (Reforestation proc). buff.incarnation_tree_of_life never matched in game:
+  # the name maps to 5 rows in SpellName.csv (5420, 33891, 81097, 81098, 1301340), so the
+  # name lookup is ambiguous. 33891 = the shapeshift aura (confirmed in game 2026-10-22).
+  tol_up: buff.33891.up
 
 lists:
   emergency:
-    - barkskin,name="Barkskin (Emergency)",range_check=none,off_gcd=true,ignore_queue=true,if=health.effective.pct<=config.raid_barkskin_threshold
+    - barkskin,name="Barkskin (Emergency)",range_check=none,off_gcd=true,ignore_queue=true,if=(health.pct-incoming.pct)<=config.raid_barkskin_threshold
     - healthstone,name="Healthstone (Emergency)",off_gcd=true,ignore_queue=true,delay=250,if=healthstone.ready&health.pct<=config.engine_healthstone
     - health_potion,name="Health Potion (Emergency)",off_gcd=true,ignore_queue=true,delay=250,if=health_potion.ready&health.pct<=config.engine_health_potion
 
@@ -373,6 +385,8 @@ lists:
     - rebirth.mouseover,name="Rebirth (Mouseover)",if=config.engine_auto_brez&mouseover.dead&mouseover.friendly&mouseover.unitframe&player.combat
     - revitalize,name="Revitalize (Mouseover)",if=config.engine_auto_rez&mouseover.dead&mouseover.friendly&mouseover.unitframe&!player.combat
 
+    - healthstone,name="Healthstone",delay=250,if=healthstone.ready&health.pct<=config.engine_healthstone
+    - health_potion,name="Health Potion",delay=250,if=health_potion.ready&health.pct<=config.engine_health_potion
     - mana_potion,delay=250,if=mana_potion.ready&mana.pct<=config.engine_mana_potion
 
     - target_enemy,delay=200,off_gcd=true,if=player.combat&config.engine_auto_target.has(0)&!target.exists&enemies.combat.40y>=1
@@ -382,23 +396,27 @@ lists:
     - target_enemy,name="Swap Off Storm Blessed",delay=500,off_gcd=true,if=target.buff.1289229.up&enemies.combat.40y>=2
 
   interrupts:
-    - target_enemy,delay=100,name="Search Interrupt",if=!interrupt.target.check&interrupt.8y.any
-    - incapacitating_roar,name="Roar (AoE CC)",if=interrupt.stun.aoe.check
+    - incapacitating_roar,name="Roar (AoE CC)",if=talent.incapacitating_roar&interrupt.stun.aoe.check
     - soothe.mouseover,name="Soothe Enrage (Mouseover)",range_check=mouseover,if=config.soothe_mouseover&mouseover.exists&mouseover.enemy&mouseover.attackable&!mouseover.dead&mouseover.combat&mouseover.purgeable.enrage
     - soothe,name="Soothe Enrage",if=target.purgeable.enrage
 
   out_of_combat:
+    - mark_of_the_wild,name="OOC Mark of the Wild",range_check=none,if=config.raid_use_mark_of_the_wild&(buff.mark_of_the_wild.down.any|action.mark_of_the_wild.overlayed)&lastcast.mark_of_the_wild>=15
     - lifebloom,cycle=members,name="OOC Self Lifebloom (Everbloom)",range_check=none,if=cycle.is_player&config.raid_lifebloom_target=1&talent.everbloom&!player.combat&(cycle.buff.lifebloom.down|cycle.buff.lifebloom.remains<4.5)
     - lifebloom,name="OOC Lifebloom (Tank, Everbloom)",cycle=tanks,cycle_order=health.pct,if=config.raid_lifebloom_target=2&talent.everbloom&!player.combat&(cycle.buff.lifebloom.down|cycle.buff.lifebloom.refreshable)&cycle.range<=40
     - rejuvenation,name="OOC Rejuvenation",cycle=members,cycle_order=health.pct,if=(cycle.health.effective.pct<config.raid_rejuvenation_threshold&cycle.buff.rejuvenation.remains<1.5&!player.combat)&cycle.range<=40
-    - regrowth,name="OOC Regrowth",cycle=members,cycle_order=health.pct,if=(cycle.health.effective.pct<config.raid_regrowth_threshold&cycle.buff.regrowth.remains<1.5&!player.combat)&cycle.range<=40
+    - regrowth,name="OOC Regrowth",cycle=members,cycle_order=health.pct,if=(cycle.health.effective.pct<config.raid_regrowth_threshold&pred.cycle.buff.regrowth.remains<1.5&!player.combat)&cycle.range<=40
+    # Reforestation: talent 392356, stack counter 392360 (numeric: the name maps to both IDs).
+    # Stops at 3 so the 4th Swiftmend (the Tree of Life proc) is spent in combat.
+    - swiftmend,name="OOC Reforestation Pre-Stack",cycle=members,cycle_order=buff.rejuvenation.remains,if=config.raid_reforestation_prestack&talent.392356&buff.392360.stack<3&(cycle.buff.rejuvenation.up|cycle.buff.regrowth.up|cycle.buff.wild_growth.up)&cycle.range<=40
     - call_action_list,name=abundance_maintenance
 
   defensives:
-    - ironbark,name="Ironbark (Tank)",cycle=tanks,cycle_order=health.pct,if=(config.raid_ironbark_target=1&cycle.health.effective.pct<config.raid_ironbark_threshold&cycle.buff.ironbark.down)&cycle.range<=40
-    - ironbark,name="Ironbark (Members)",cycle=members,cycle_order=health.pct,if=(config.raid_ironbark_target=2&cycle.health.effective.pct<config.raid_ironbark_threshold&cycle.buff.ironbark.down)&cycle.range<=40
-    - bear_form,name="Panic Bear",if=health.effective.pct<config.raid_frenzied_regen_threshold&!buff.bear_form.up&cooldown.frenzied_regeneration.ready&!buff.incarnation_tree_of_life.up
-    - frenzied_regeneration,name="Frenzied Regen",if=buff.bear_form.up&health.effective.pct<config.raid_frenzied_regen_threshold
+    - barkskin,name="Barkskin",range_check=none,off_gcd=true,ignore_queue=true,if=(health.pct-incoming.pct)<=config.raid_barkskin_threshold
+    - ironbark,name="Ironbark (Tank)",cycle=tanks,cycle_order=health.pct,if=(config.raid_ironbark_target=1&cycle.health.pct<config.raid_ironbark_threshold&cycle.buff.ironbark.down)&cycle.range<=40
+    - ironbark,name="Ironbark (Members)",cycle=members,cycle_order=health.pct,if=(config.raid_ironbark_target=2&cycle.health.pct<config.raid_ironbark_threshold&cycle.buff.ironbark.down)&cycle.range<=40
+    - bear_form,name="Panic Bear",if=health.pct<config.raid_frenzied_regen_threshold&!buff.bear_form.up&cooldown.frenzied_regeneration.ready&!var.tol_up
+    - frenzied_regeneration,name="Frenzied Regen",if=buff.bear_form.up&health.pct<config.raid_frenzied_regen_threshold
 
   racials:
     - shadowmeld,name="Shadowmeld (Aggro Drop)",if=target.threat>=3&!player.casting
@@ -406,28 +424,29 @@ lists:
 
   cooldowns:
     - natures_swiftness,name="Nature Swiftness",off_gcd=true,ignore_queue=true,delay=150,range_check=none,if=!config.disable_natures_swiftness&group.count(cycle.health.effective.pct<config.raid_natures_swiftness_threshold&cycle.range<=40)>=1
-    - rejuvenation,name="Shift Out For Convoke",cycle=members,cycle_order=health.pct,if=cooldown.convoke_the_spirits.ready&group.count(cycle.health.effective.pct<config.raid_convoke_threshold&cycle.range<=40)>=config.raid_convoke_members&buff.bear_form.up
-    - natures_swiftness,name="NS (Pre-Convoke)",range_check=none,if=cooldown.convoke_the_spirits.ready&group.count(cycle.health.effective.pct<config.raid_convoke_threshold&cycle.range<=40)>=config.raid_convoke_members&!buff.bear_form.up&!buff.moonkin_form.up
-    - trinket_1,name="Trinket 1",if=config.raid_use_trinket_1&trinket_1.ready&buff.natures_swiftness.up
-    - trinket_2,name="Trinket 2",if=config.raid_use_trinket_2&trinket_2.ready&buff.natures_swiftness.up
-    - combat_potion,name="Combat Potion",if=combat_potion.ready&config.raid_use_potion&buff.natures_swiftness.up
-    - convoke_the_spirits,global_delay=750,name="Convoke (Heal)",if=buff.natures_swiftness.up&!buff.bear_form.up&!buff.moonkin_form.up
-    - regrowth,name="Nature Swift Regrowth",cycle=members,cycle_order=health.pct,if=(buff.natures_swiftness.up)&cycle.range<=40
+    - regrowth,name="Nature Swift Regrowth",cycle=members,cycle_order=health.pct,if=buff.natures_swiftness.up&cycle.health.effective.pct<config.raid_natures_swiftness_threshold&cycle.range<=40
+    - rejuvenation,name="Shift Out For Convoke",cycle=members,cycle_order=buff.rejuvenation.remains,if=cooldown.convoke_the_spirits.ready&group.count(cycle.health.effective.pct<config.raid_convoke_threshold&cycle.range<=40)>=config.raid_convoke_members&buff.bear_form.up&cycle.range<=40
+    - trinket_1,delay=150,name="Trinket 1",if=config.raid_use_trinket_1&trinket_1.ready&group.count(cycle.health.effective.pct<config.raid_convoke_threshold&cycle.range<=40)>=config.raid_convoke_members&!buff.bear_form.up
+    - trinket_2,delay=150,name="Trinket 2",if=config.raid_use_trinket_2&trinket_2.ready&group.count(cycle.health.effective.pct<config.raid_convoke_threshold&cycle.range<=40)>=config.raid_convoke_members&!buff.bear_form.up
+    - combat_potion,delay=150,name="Combat Potion",if=combat_potion.ready&config.raid_use_potion&group.count(cycle.health.effective.pct<config.raid_convoke_threshold&cycle.range<=40)>=config.raid_convoke_members&!buff.bear_form.up
+    - convoke_the_spirits,global_delay=750,name="Convoke (Heal)",if=group.count(cycle.health.effective.pct<config.raid_convoke_threshold&cycle.range<=40)>=config.raid_convoke_members&!buff.bear_form.up&!buff.moonkin_form.up
     - tranquility,global_delay=750,name="Tranquility",if=!config.raid_manual_tranquility&group.count(cycle.health.effective.pct<config.raid_tranquility_threshold&cycle.range<=40)>=config.raid_tranquility_members&!player.moving
     - swiftmend,name="Swiftmend (Proactive Spread)",cycle=members,cycle_order=health.pct,if=(cooldown.swiftmend.ready&(cycle.buff.rejuvenation.up|cycle.buff.regrowth.up|cycle.buff.wild_growth.up))&cycle.range<=40
 
   abundance_maintenance:
     - rejuvenation,name="Abundance Filler (Rejuv)",cycle=members,cycle_order=health.pct,if=!buff.abundance.up&cycle.buff.rejuvenation.refreshable&cycle.range<=40
     - rejuvenation,name="Abundance Filler (Germination)",cycle=members,cycle_order=health.pct,if=!buff.abundance.up&talent.germination&cycle.buff.rejuvenation.up&(cycle.buff.rejuvenation_germination.down|cycle.buff.rejuvenation_germination.refreshable)&cycle.range<=40
-    - rejuvenation,name="Abundance Filler (Rejuv Maintenance)",cycle=members,cycle_order=health.pct,if=buff.abundance.up&buff.abundance.remains<5&cycle.buff.rejuvenation.remains<5&cycle.range<=40
-    - rejuvenation,name="Abundance Filler (Germination Maintenance)",cycle=members,cycle_order=health.pct,if=talent.germination&buff.abundance.up&buff.abundance.remains<5&cycle.buff.rejuvenation.up&cycle.buff.rejuvenation_germination.remains<5&cycle.range<=40
+    - rejuvenation,name="Abundance Filler (Rejuv Maintenance)",cycle=members,cycle_order=health.pct,if=!var.abundance_safe&cycle.buff.rejuvenation.remains<5&cycle.range<=40
+    - rejuvenation,name="Abundance Filler (Germination Maintenance)",cycle=members,cycle_order=health.pct,if=talent.germination&!var.abundance_safe&cycle.buff.rejuvenation.up&cycle.buff.rejuvenation_germination.remains<5&cycle.range<=40
 
   active_healing:
+    - regrowth,name="Regrowth Emergency",cycle=members,cycle_order=health.pct,if=cycle.health.pct<config.raid_regrowth_emergency_threshold&cycle.range<=40
+
+    - wild_growth,name="Wild Growth (Tree of Life Proc)",range_check=none,if=var.tol_up
+    - regrowth,name="Regrowth (Tree of Life, Instant)",cycle=members,cycle_order=health.pct,if=(var.tol_up&cycle.health.effective.pct<config.raid_regrowth_threshold)&cycle.range<=40
+
     - rejuvenation,cycle=members,name="Self Rejuvenation Maintenance",range_check=none,if=cycle.is_player&player.combat&cycle.buff.rejuvenation.remains<1.5
     - rejuvenation,cycle=members,name="Self Germination Maintenance",range_check=none,if=cycle.is_player&talent.germination&player.combat&cycle.buff.rejuvenation.up&(cycle.buff.rejuvenation_germination.down|cycle.buff.rejuvenation_germination.remains<1.5)
-
-    - wild_growth,name="Wild Growth (Tree of Life Proc)",range_check=none,if=buff.incarnation_tree_of_life.up
-    - regrowth,name="Regrowth (Tree of Life, Instant)",cycle=members,cycle_order=health.pct,if=(buff.incarnation_tree_of_life.up&cycle.health.effective.pct<config.raid_regrowth_threshold)&cycle.range<=40
 
     - regrowth,name="SotF Regrowth",cycle=members,cycle_order=health.pct,if=(var.has_soul&cycle.health.effective.pct<config.raid_regrowth_threshold)&cycle.range<=40
 
@@ -442,40 +461,37 @@ lists:
     - wild_growth,name="Wild Growth",range_check=none,if=group.count(cycle.health.effective.pct<config.raid_wild_growth_threshold&cycle.range<=40)>=config.raid_wild_growth_members
     - regrowth,name="Clearcasting Regrowth",cycle=members,cycle_order=health.pct,if=(player.combat&buff.clearcasting.up&cycle.health.effective.pct<99)&cycle.range<=40
 
-    - rejuvenation,name="Rejuvenation",cycle=members,cycle_order=buff.rejuvenation.remains,if=(cycle.buff.rejuvenation.remains<1.5&cycle.health.effective.pct<config.raid_rejuvenation_threshold&!(buff.abundance.up&buff.abundance.remains>3))&cycle.range<=40
-    - rejuvenation,name="Germination",cycle=members,cycle_order=health.pct,if=(talent.germination&cycle.buff.rejuvenation.up&(cycle.buff.rejuvenation_germination.down|cycle.buff.rejuvenation_germination.remains<1.5)&cycle.health.effective.pct<config.raid_rejuvenation_threshold&!(buff.abundance.up&buff.abundance.remains>3))&cycle.range<=40
+    - rejuvenation,name="Rejuvenation",cycle=members,cycle_order=buff.rejuvenation.remains,if=(cycle.buff.rejuvenation.remains<1.5&cycle.health.effective.pct<config.raid_rejuvenation_threshold&!var.abundance_safe)&cycle.range<=40
+    - rejuvenation,name="Germination",cycle=members,cycle_order=health.pct,if=(talent.germination&cycle.buff.rejuvenation.up&(cycle.buff.rejuvenation_germination.down|cycle.buff.rejuvenation_germination.remains<1.5)&cycle.health.effective.pct<config.raid_rejuvenation_threshold&!var.abundance_safe)&cycle.range<=40
 
     - regrowth,name="Regrowth",cycle=members,cycle_order=health.pct,if=(cycle.health.effective.pct<config.raid_regrowth_threshold)&cycle.range<=40
   utility:
-    - innervate,name="Innervate",off_gcd=true,ignore_queue=true,range_check=none,if=mana.pct<config.raid_innervate_threshold
+    - innervate,cycle=members,name="Innervate",off_gcd=true,delay=150,range_check=none,if=cycle.is_player&talent.innervate&mana.pct<config.raid_innervate_threshold
   ranged_dps:
     - starsurge,name="Starsurge",if=cooldown.starsurge.ready
     - sunfire,name="Sunfire Refresh",if=talent.sunfire&debuff.sunfire.refreshable
     - moonfire,name="Moonfire Refresh",if=debuff.moonfire.refreshable
     - starfire,name="Starfire Filler"
   moving:
-    - natures_swiftness,name="NS (Pre-Convoke Moving)",if=cooldown.convoke_the_spirits.ready&group.count(cycle.health.effective.pct<config.raid_convoke_threshold&cycle.range<=40)>=config.raid_convoke_members&!buff.bear_form.up&!buff.moonkin_form.up
-    - convoke_the_spirits,global_delay=750,name="Convoke (Moving)",if=group.count(cycle.health.effective.pct<config.raid_convoke_threshold&cycle.range<=40)>=config.raid_convoke_members&!buff.bear_form.up&!buff.moonkin_form.up
     - lifebloom,cycle=members,name="Self Lifebloom (Everbloom, Moving)",range_check=none,if=cycle.is_player&config.raid_lifebloom_target=1&talent.everbloom&(cycle.buff.lifebloom.down|cycle.buff.lifebloom.remains<4.5)
     - lifebloom,name="Lifebloom (Tank, Everbloom, Moving)",cycle=tanks,cycle_order=health.pct,if=config.raid_lifebloom_target=2&talent.everbloom&(cycle.buff.lifebloom.down|cycle.buff.lifebloom.refreshable)&cycle.range<=40
-    - rejuvenation,name="Rejuvenation (Moving)",cycle=members,cycle_order=health.pct,if=(cycle.buff.rejuvenation.down&cycle.health.effective.pct<config.raid_rejuvenation_threshold&!(buff.abundance.up&buff.abundance.remains>3))&cycle.range<=40
+    - rejuvenation,name="Rejuvenation (Moving)",cycle=members,cycle_order=health.pct,if=(cycle.buff.rejuvenation.down&cycle.health.effective.pct<config.raid_rejuvenation_threshold&!var.abundance_safe)&cycle.range<=40
   mouseover_healing_emergency:
     - regrowth.mouseover,name="Regrowth (MO) Instant",if=buff.natures_swiftness.up
-    - swiftmend.mouseover,name="Swiftmend (MO)"
-    - rejuvenation.mouseover,name="Rejuvenation (MO)"
+    - swiftmend.mouseover,name="Swiftmend (MO)",if=mouseover.buff.rejuvenation.remains>1|mouseover.buff.regrowth.remains>1|mouseover.buff.wild_growth.remains>1
+    - rejuvenation.mouseover,name="Rejuvenation (MO)",if=mouseover.buff.rejuvenation.remains<=1.5
     - regrowth.mouseover,name="Regrowth (MO) Cast",if=!player.moving
   main:
-    - bear_form,name="Root Cleanse (to Bear)",if=config.root_cleanse&player.rooted&!buff.bear_form.up&!buff.incarnation_tree_of_life.up
-    - cancel_form,name="Root Cleanse (from Bear)",if=config.root_cleanse&player.rooted&buff.bear_form.up&!buff.incarnation_tree_of_life.up
+    - bear_form,name="Root Cleanse (to Bear)",if=config.root_cleanse&player.rooted&!player.casting&!player.channeling&!buff.bear_form.up&!var.tol_up
+    - bear_form,name="Root Cleanse (from Bear)",ignore_queue=true,if=config.root_cleanse&player.rooted&!player.casting&!player.channeling&buff.bear_form.up&!var.tol_up
 
     - call_action_list,name=emergency,if=player.combat&(player.casting|player.channeling)
 
-    - return,if=player.channeling|player.casting|var.protected_channel
-
-    - mark_of_the_wild,name="Mark of the Wild (low prio)",range_check=none,if=config.raid_use_mark_of_the_wild&(buff.mark_of_the_wild.down.any|action.mark_of_the_wild.overlayed)&lastcast.mark_of_the_wild>=15
+    - return,if=player.channeling|var.protected_channel
 
     - call_action_list,name=engine
-    - call_action_list,name=out_of_combat
+    - call_action_list,name=out_of_combat,if=!player.combat
+    - return,if=!player.combat
 
     - call_action_list,name=interrupts,if=player.combat
     - call_action_list,name=defensives,if=player.combat
@@ -488,4 +504,6 @@ lists:
     - call_action_list,name=active_healing,if=player.combat
     - call_action_list,name=abundance_maintenance,if=player.combat
 
-    - call_action_list,name=ranged_dps,if=config.raid_ranged_dps&var.can_dps&target.exists&target.alive&!target.friendly
+    - mark_of_the_wild,name="Mark of the Wild (low prio)",range_check=none,if=config.raid_use_mark_of_the_wild&(buff.mark_of_the_wild.down.any|action.mark_of_the_wild.overlayed)&lastcast.mark_of_the_wild>=15
+
+    - call_action_list,name=ranged_dps,if=config.raid_ranged_dps&var.can_dps&target.exists&target.alive&!target.friendly&target.combat
