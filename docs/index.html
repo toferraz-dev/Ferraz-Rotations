@@ -221,7 +221,7 @@
           <span class="spec-body">
             <span class="spec-top"><span class="spec-name">Restoration</span><span class="badge">Raid</span></span>
             <span class="spec-build">Wildstalker with Reforestation</span>
-            <span class="spec-meta">Healer · v26.0.0</span>
+            <span class="spec-meta">Healer · v27.0.0</span>
           </span>
         </a>
         <a class="spec-card bark" href="#guardian">
@@ -424,47 +424,49 @@
         </header>
         <div class="rot-body">
           <div class="guide">
-<p>A raid healer that keeps Abundance and Everbloom rolling, spends <strong>Convoke</strong> and <strong>Tranquility</strong> on real group damage, and makes the most of the <strong>Tree of Life</strong> windows from Reforestation. Damage only when the raid is healthy.</p>
+<p>A raid healer that keeps a Rejuvenation blanket and Everbloom rolling, casts <strong>Wild Growth</strong> close to its cooldown, spends <strong>Convoke</strong> and <strong>Tranquility</strong> on real group damage, and makes the most of the <strong>Tree of Life</strong> windows from Reforestation. Damage only when the raid is healthy and the blanket is up. Tuned against the logs of the world's top raid Restoration Druid.</p>
 <p><strong>Build:</strong> Wildstalker with Reforestation, Flourish, Innervate, Everbloom, Soul of the Forest, Germination and Abundance. Copy the string from <em>Talents → Recommended Talent String</em> in the rotation panel.</p>
 <h4>Tree of Life (Reforestation)</h4>
 <p>Every fourth Swiftmend turns you into a tree for a few seconds. The rotation detects it and casts <strong>Wild Growth</strong> and <strong>instant Regrowths</strong> during the window. Panic Bear and root breaking never shift you out of it.</p>
 <p><strong>Pre-stacking:</strong> out of combat it Swiftmends a HoT target until Reforestation shows 3 stacks, so the first Swiftmend of the next pull makes you a tree. This works on trash. When a boss encounter starts the game resets the counter, so on bosses cast the 4th Swiftmend yourself 1 to 2 seconds before the pull: the tree carries into combat. Turn it off with <em>Pre-stack Reforestation</em>.</p>
 <h4>How it heals</h4>
 <p>Defensives and cooldowns are checked first. Then the healing list runs in this order:</p>
-<ol><li><strong>Emergency Regrowth</strong> on anyone below <em>Regrowth Emergency HP</em> (real health), above every other heal.</li><li><strong>Tree of Life</strong> Wild Growth and instant Regrowth while you are a tree.</li><li>Your own <strong>Rejuvenation</strong> and <strong>Germination</strong> kept up.</li><li><strong>Soul of the Forest</strong> Regrowth, Rejuvenation and Germination.</li><li><strong>Lifebloom</strong> with Everbloom on you or on the tank.</li><li><strong>Abundance</strong> Regrowth, <strong>Wild Growth</strong> by number of injured, <strong>Clearcasting</strong> Regrowth.</li><li><strong>Rejuvenation</strong> and <strong>Germination</strong> on injured allies, then <strong>Regrowth</strong> as the filler.</li></ol>
-<p>Abundance upkeep keeps at least 5 Rejuvenations lasting. While moving it only uses instants.</p>
+<ol><li><strong>Emergency Regrowth</strong> on anyone below <em>Regrowth Emergency HP</em> (real health), above every other heal.</li><li><strong>Tree of Life</strong> Wild Growth and instant Regrowth while you are a tree.</li><li>Your own <strong>Rejuvenation</strong> and <strong>Germination</strong> kept up.</li><li><strong>Soul of the Forest</strong> Regrowth, Rejuvenation and Germination.</li><li><strong>Wild Growth</strong> once enough allies are below the Wild Growth threshold (95% by default, so it goes out close to its cooldown; every cast also grows a Symbiotic Bloom).</li><li><strong>Lifebloom</strong> with Everbloom on you or on the tank.</li><li><strong>Abundance</strong> Regrowth and <strong>Clearcasting</strong> Regrowth.</li><li><strong>Rejuvenation</strong> and <strong>Germination</strong> on injured allies, then <strong>Regrowth</strong> as the filler.</li><li><strong>Rejuvenation blanket</strong>: any free global puts Rejuvenation on a raid member without one, lowest health first, until <em>Rejuvenation Blanket - Max Active</em> are up (10 by default). It pauses below <em>Min Mana %</em>. Nurturing Dormancy makes Rejuvenation on a full-health target last longer, so the blanket waits for the next damage instead of overhealing.</li></ol>
+<p>While moving, hardcasts are skipped and the instants (Rejuvenation, the blanket, Swiftmend, Lifebloom) fill the globals.</p>
 <h4>Cooldowns</h4>
-<ul><li><strong>Nature's Swiftness</strong> with an instant Regrowth on the lowest ally.</li><li><strong>Convoke the Spirits</strong> when enough allies in range are below the Convoke threshold. Trinkets and the combat potion go first, and it leaves any animal form before casting.</li><li><strong>Tranquility</strong> automatic when enough allies are low, or manual with <em>Manual Tranquility</em>.</li><li><strong>Swiftmend</strong> on cooldown, tree form included, since it also builds Reforestation.</li><li><strong>Thorn Bloom</strong> (racial) when enough allies are hurt, <strong>Innervate</strong> on yourself at your mana threshold.</li></ul>
+<ul><li><strong>Nature's Swiftness</strong> with an instant Regrowth on the lowest ally.</li><li><strong>Convoke the Spirits</strong> when enough allies in range are below the Convoke threshold. Trinkets and the combat potion go first, and it leaves any animal form before casting.</li><li><strong>Tranquility</strong> automatic when enough allies are low, or manual with <em>Manual Tranquility</em>.</li><li><strong>Swiftmend</strong> on cooldown, tree form included, since it also builds Reforestation. It goes <strong>on you</strong> first: Swiftmend eats a heal over time on its target, and Rampant Growth keeps a free copy of every Regrowth on your Lifebloom target, so self-Swiftmend eats that copy instead of an injured raider's Rejuvenation or Wild Growth. Soul of the Forest, Everbloom's bloom burst and the Symbiotic Bloom still trigger. It falls back to a raid member only when you have no heal over time on you.</li><li><strong>Thorn Bloom</strong> (racial) when enough allies are hurt, <strong>Innervate</strong> on yourself at your mana threshold.</li></ul>
 <h4>Defense</h4>
-<ul><li><strong>Barkskin</strong> before a predicted hit, <strong>Ironbark</strong> on the tank or anyone, <strong>Panic Bear</strong> with Frenzied Regeneration.</li><li><strong>Healthstone</strong> and <strong>health potion</strong>, also while casting, but never during Convoke or Tranquility.</li></ul>
+<ul><li><strong>Barkskin</strong> before a predicted hit, <strong>Ironbark</strong> on the tank (never on you with <em>Tanks Only</em>) or on anyone, <strong>Panic Bear</strong> with Frenzied Regeneration.</li><li><strong>Healthstone</strong> and <strong>health potion</strong>, also while casting, but never during Convoke or Tranquility.</li></ul>
 <h4>Utility</h4>
 <ul><li><strong>Nature's Cure</strong>, <strong>Soothe</strong> on target and mouseover, <strong>Mark of the Wild</strong> out of combat and at low priority in combat.</li><li><strong>Mouseover emergency healing</strong>, <strong>Rebirth</strong> and <strong>Revitalize</strong> on the dead ally under your mouse.</li><li><strong>Roots</strong> broken by shapeshifting, never mid-cast.</li></ul>
 <h4>Damage</h4>
-<p>Starsurge, Moonfire and Starfire while fewer than <em>DPS - Max Injured</em> allies are below <em>DPS Group HP</em>.</p>
+<p>Starsurge, Moonfire and Starfire while fewer than <em>DPS - Max Injured</em> allies are below <em>DPS Group HP</em>, and only once the Rejuvenation blanket has nothing left to cover.</p>
+<h4>Gear</h4>
+<p>The top raid Restoration Druids stack <strong>haste</strong> and skip critical strike almost entirely: more haste means more globals, which this rotation always has a use for.</p>
 <h4>Hotkey toggle</h4>
 <ul><li><strong>Disable Nature's Swiftness</strong>: holds Nature's Swiftness for when you want it.</li></ul>
 <p class="note"><strong>Symbiotic Relationship</strong> is not cast by the raid rotation: bond whoever you want by hand.</p>
           </div>
           <aside class="glance">
             <dl>
-              <div><dt>Version</dt><dd>26.0.0</dd></div>
-              <div><dt>Updated</dt><dd>2026-10-23</dd></div>
+              <div><dt>Version</dt><dd>27.0.0</dd></div>
+              <div><dt>Updated</dt><dd>2026-10-24</dd></div>
               <div><dt>Patch</dt><dd>12.1</dd></div>
               <div><dt>File</dt><dd><a href="rotations/FerrazRestoDruidRaid.yaml" download>FerrazRestoDruidRaid.yaml</a></dd></div>
             </dl>
           <div class="recent">
             <h5>Recent changes</h5>
             <ul class="rc-list">
+            <li><span class="rc-ver">v27.0.0 · 2026-10-24</span><ul><li>Free globals now go to a Rejuvenation blanket on raid members who do not have one, before any damage spell. New sliders: <em>Rejuvenation Blanket - Max Active</em> (default 10) and <em>Min Mana %</em> (default 25). The old cap stopped spreading Rejuvenation after 5, a number made for a 5-player party.</li><li>Swiftmend goes on yourself first. It eats the free Regrowth copy that Rampant Growth puts on your Lifebloom target, instead of eating an injured raider's Rejuvenation or Wild Growth. Soul of the Forest, Tree of Life stacks, Everbloom's bloom burst and Symbiotic Bloom still trigger.</li><li>Wild Growth goes out much closer to its cooldown: it now comes before Lifebloom upkeep and Abundance Regrowth, and its default health line is 95%.</li><li>Ironbark set to <em>Tanks Only</em> never lands on you.</li><li>Convoke's default health line is 75%, so it no longer sits ready for half a minute.</li></ul></li>
             <li><span class="rc-ver">v26.0.0 · 2026-10-23</span><ul><li>The combat potion is pressed once, and nothing else is pressed for 0.4s after it, so it no longer lands on top of the Convoke channel.</li><li>Healthstone and health potion are never used during Convoke or Tranquility. Barkskin is never used during Tranquility.</li></ul></li>
             <li><span class="rc-ver">v25.0.0 · 2026-10-23</span><ul><li>The combat potion now goes out before Convoke. Convoke waits for it while it is available.</li></ul></li>
-            <li><span class="rc-ver">v24.0.0 · 2026-10-23</span><ul><li>Convoke is only cast from caster form, and "Shift Out For Convoke" leaves any animal form.</li><li>A Convoke you queue by hand waits until you are out of Bear, Cat and Moonkin.</li></ul></li>
             </ul>
             <a class="rc-all" href="#changelog">Full changelog</a>
           </div>
           </aside>
         </div>
         <details class="settings">
-          <summary>All 41 settings, with defaults</summary>
+          <summary>All 43 settings, with defaults</summary>
           <div class="set-group">
             <h5>Toggles</h5>
             <div class="set-row"><span class="set-label">Disable Nature's Swiftness</span><span class="set-default">Hotkey toggle, starts off</span><span class="set-desc">Ephemeral, hotkeyable toggle. OFF (default) = Nature's Swiftness stays on. Hit the bound key to suppress it for the rest of the session/pull; state resets to OFF (enabled) on reload.</span></div>
@@ -475,15 +477,17 @@
             <div class="set-row"><span class="set-label">Regrowth Emergency HP % (real HP)</span><span class="set-default">60</span><span class="set-desc">Emergency Regrowth on anyone below this real health. Sits above every other heal in the healing list, Tree of Life included.</span></div>
             <div class="set-row"><span class="set-label">Regrowth HP % (effective)</span><span class="set-default">85</span><span class="set-desc">Regrowth on anyone below this effective health (Tree of Life, Soul of the Forest, Abundance, filler).</span></div>
             <div class="set-row"><span class="set-label">Rejuvenation HP % (effective)</span><span class="set-default">80</span><span class="set-desc">Rejuvenation and Germination on anyone below this effective health, while Abundance is not already safe.</span></div>
-            <div class="set-row"><span class="set-label">Wild Growth HP % (effective)</span><span class="set-default">90</span><span class="set-desc">Members counted for Wild Growth must be below this effective health.</span></div>
+            <div class="set-row"><span class="set-label">Wild Growth HP % (effective)</span><span class="set-default">95</span><span class="set-desc">Members counted for Wild Growth must be below this effective health. High on purpose: a 20-player raid almost always has 6 injured targets, and every Wild Growth also grows a Symbiotic Bloom (Implant).</span></div>
             <div class="set-row"><span class="set-label">Wild Growth - Min Members</span><span class="set-default">2</span><span class="set-desc">Wild Growth once this many members are below the Wild Growth HP %.</span></div>
+            <div class="set-row"><span class="set-label">Rejuvenation Blanket - Max Active</span><span class="set-default">10</span><span class="set-desc">When nothing else needs a heal, keep Rejuvenation rolling on raid members who do not have it, until this many of your Rejuvenations are active. Nurturing Dormancy extends Rejuvenation on full-health targets, so the blanket waits for the next damage instead of overhealing. Runs before any damage spell. 0 = off.</span></div>
+            <div class="set-row"><span class="set-label">Rejuvenation Blanket - Min Mana %</span><span class="set-default">25</span><span class="set-desc">The blanket stops below this mana, so it never eats the mana you need for real damage.</span></div>
             <div class="set-row"><span class="set-label">Nature's Swiftness HP % (effective)</span><span class="set-default">70</span><span class="set-desc">Nature's Swiftness + instant Regrowth when anyone is below this effective health.</span></div>
             <div class="set-row"><span class="set-label">Mouseover Emergency Healing</span><span class="set-default">On</span><span class="set-desc">Heal the ally under your mouse first when they fall below the Mouseover Emergency HP %.</span></div>
             <div class="set-row"><span class="set-label">Mouseover Emergency HP % (effective)</span><span class="set-default">80</span><span class="set-desc">Effective health under which the hovered ally gets priority healing.</span></div>
           </div>
           <div class="set-group">
             <h5>Cooldowns</h5>
-            <div class="set-row"><span class="set-label">Convoke HP % (effective)</span><span class="set-default">70</span><span class="set-desc">Members counted for Convoke (and the trinkets and potion synced to it) must be below this effective health.</span></div>
+            <div class="set-row"><span class="set-label">Convoke HP % (effective)</span><span class="set-default">75</span><span class="set-desc">Members counted for Convoke (and the trinkets and potion synced to it) must be below this effective health.</span></div>
             <div class="set-row"><span class="set-label">Convoke - Min Members</span><span class="set-default">4</span><span class="set-desc">Convoke once this many members are below the Convoke HP %.</span></div>
             <div class="set-row"><span class="set-label">Tranquility HP % (effective)</span><span class="set-default">65</span><span class="set-desc">Members counted for Tranquility must be below this effective health.</span></div>
             <div class="set-row"><span class="set-label">Tranquility - Min Members</span><span class="set-default">4</span><span class="set-desc">Tranquility once this many members are below the Tranquility HP %. Never cast while moving.</span></div>
@@ -1074,6 +1078,10 @@
     <div class="day">
       <div class="day-date"><span>2026-10-24</span></div>
       <div class="day-entries">
+        <div class="entry leaf">
+          <h4><span class="entry-title">Restoration · Raid</span> <span class="entry-ver">v27.0.0</span></h4>
+          <ul><li>Free globals now go to a Rejuvenation blanket on raid members who do not have one, before any damage spell. New sliders: <em>Rejuvenation Blanket - Max Active</em> (default 10) and <em>Min Mana %</em> (default 25). The old cap stopped spreading Rejuvenation after 5, a number made for a 5-player party.</li><li>Swiftmend goes on yourself first. It eats the free Regrowth copy that Rampant Growth puts on your Lifebloom target, instead of eating an injured raider's Rejuvenation or Wild Growth. Soul of the Forest, Tree of Life stacks, Everbloom's bloom burst and Symbiotic Bloom still trigger.</li><li>Wild Growth goes out much closer to its cooldown: it now comes before Lifebloom upkeep and Abundance Regrowth, and its default health line is 95%.</li><li>Ironbark set to <em>Tanks Only</em> never lands on you.</li><li>Convoke's default health line is 75%, so it no longer sits ready for half a minute.</li></ul>
+        </div>
         <div class="entry arcane">
           <h4><span class="entry-title">Balance · Mythic+</span> <span class="entry-ver">v14.0.0</span></h4>
           <ul><li>Remove Corruption now follows Simia's standard dispel: it cleanses the poisons and curses on Simia's dispel list from anyone in the party, you included, with no setting to turn on.</li><li>The "Remove Corruption - Self" and "Remove Corruption - Party" options were removed.</li></ul>
