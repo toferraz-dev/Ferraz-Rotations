@@ -4,6 +4,14 @@ Player-facing changes to the Ferraz rotations, newest first. Each entry names th
 
 ## 2026-10-24
 
+### Restoration · Mythic+ · v36.0.0
+- New recommended talents: the Mythic+ build of the world's top Restoration Druid, with Dream of Cenarius, Verdancy, Stonebark, Tranquil Mind and Astral Influence. Copy the new string from the rotation panel.
+- Damage now works like his: Sunfire and Moonfire kept up, then Starfire on packs and Wrath on a single target, which heal through Dream of Cenarius. Starsurge only while moving. Heart of the Wild is off by default.
+- Wild Growth goes out much more often: keeping Abundance up no longer comes before Wild Growth or the emergency Regrowth.
+- Swiftmend prefers allies with Regrowth or Wild Growth, so it stops eating Rejuvenations.
+- Convoke needs 2 injured allies instead of 3, so it comes back about once a minute.
+- Ironbark defaults to *All Members* (a healing cooldown with Stonebark), and *Tanks Only* never lands on you.
+
 ### Restoration · Raid · v27.0.0
 - Free globals now go to a Rejuvenation blanket on raid members who do not have one, before any damage spell. New sliders: *Rejuvenation Blanket - Max Active* (default 10) and *Min Mana %* (default 25). The old cap stopped spreading Rejuvenation after 5, a number made for a 5-player party.
 - Swiftmend goes on yourself first. It eats the free Regrowth copy that Rampant Growth puts on your Lifebloom target, instead of eating an injured raider's Rejuvenation or Wild Growth. Soul of the Forest, Tree of Life stacks, Everbloom's bloom burst and Symbiotic Bloom still trigger.

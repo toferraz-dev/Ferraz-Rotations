@@ -1,4 +1,4 @@
-version: "35.0.0"
+version: "36.0.0"
 author: Ferraz
 patch: "12.1"
 spec: 105
@@ -23,7 +23,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-10-23 | Patch: 12.1 | Version: 35.0.0"
+    text: "Last update: 2026-10-24 | Patch: 12.1 | Version: 36.0.0"
 
   hp_legend:
     section: "Info"
@@ -36,7 +36,7 @@ config:
     section: "Talents"
     type: copy_text
     label: "Recommended Talent String"
-    text: "CkGADBD3hSPCL9Y9gz68WcKvMMMmZZMjZmxsNmBmNmNbzAAAAAAAAAAgNDNbzw0MDwsYmZGLGeADAAAAgBAYGw22YBTzMLDAgZbmtmtZ2sxMzMDzMbgmBAzMzMAMA"
+    text: "CkGADBD3hSPCL9Y9gz68WcKvMMMmZZMjZmxsNzgxsxsZZGAAAAAAAAAAsZoZbmx0MDwsYmZGLGeADAAAAgBAMDw22YBTzMLDAgZbmlmtZ2sxMz8ADzMbgmBAzMzMAMA"
 
   # ---- Toggles -----------------------------------------------------
   force_dps:
@@ -171,8 +171,8 @@ config:
     type: slider
     min: 1
     max: 4
-    default: 3
-    description: "Convoke once this many non-tank members are below the Convoke HP %."
+    default: 2
+    description: "Convoke once this many non-tank members are below the Convoke HP %. Convoke is on a ~60s cooldown: at 3 of 4 non-tanks it sat ready for 2-4 minutes in a full key."
 
   tranquility_threshold:
     label: "Tranquility HP % (effective)"
@@ -239,8 +239,8 @@ config:
         value: 1
       - label: "All Members"
         value: 2
-    default: 1
-    description: "Tanks only, or anyone in the group."
+    default: 2
+    description: "Tanks only, or anyone in the group. All Members by default: with Stonebark, Ironbark also raises your heal-over-time healing on the target, so it is a healing cooldown for whoever is dropping, not just a tank defensive."
 
   ironbark_threshold:
     label: "Ironbark HP % (real HP)"
@@ -325,11 +325,11 @@ config:
 
   # ---- Damage ------------------------------------------------------
   ranged_dps:
-    label: "Ranged DPS (Moonfire/Starsurge/Starfire)"
+    label: "Ranged DPS (Sunfire/Moonfire/Wrath/Starfire)"
     section: "Damage"
     type: checkbox
     default: true
-    description: "Spend free globals on damage while the group is healthy (see DPS - Group HP %)."
+    description: "Spend free globals on damage while the group is healthy (see DPS - Group HP %). With Dream of Cenarius every Wrath and Starfire also heals a nearby ally."
 
   dps_group_hp:
     label: "DPS - Group HP % (effective)"
@@ -344,8 +344,8 @@ config:
     label: "Auto Heart of the Wild"
     section: "Damage"
     type: checkbox
-    default: true
-    description: "Instant-cast burst in Moonkin Form. No melee form left to weave through, so this is the DPS cooldown's only home now."
+    default: false
+    description: "Instant-cast burst in Moonkin Form. OFF by default: the top Mythic+ Restoration Druid never presses it, and its global is worth more as a Dream of Cenarius Wrath or Starfire."
 
   # ---- Utility -----------------------------------------------------
   innervate_threshold:
@@ -459,7 +459,8 @@ lists:
 
   defensives:
     - barkskin,name="Barkskin",off_gcd=true,ignore_queue=true,if=(health.effective.pct-incoming.pct)<=config.barkskin_incoming_pct
-    - ironbark,name="Ironbark (Tank)",off_gcd=true,ignore_queue=true,cycle=tanks,cycle_order=health.pct,if=config.ironbark_target=1&cycle.health.pct<config.ironbark_threshold&cycle.buff.ironbark.down
+    # !cycle.is_player: you are not a tank (logs showed the healer taking Ironbark with Tanks Only).
+    - ironbark,name="Ironbark (Tank)",off_gcd=true,ignore_queue=true,cycle=tanks,cycle_order=health.pct,if=config.ironbark_target=1&!cycle.is_player&cycle.health.pct<config.ironbark_threshold&cycle.buff.ironbark.down
     - ironbark,name="Ironbark (Members)",off_gcd=true,ignore_queue=true,cycle=members,cycle_order=health.pct,if=config.ironbark_target=2&cycle.health.pct<config.ironbark_threshold&cycle.buff.ironbark.down
     - bear_form,name="Panic Bear",if=health.pct<config.frenzied_regen_threshold&!buff.bear_form.up&cooldown.frenzied_regeneration.ready&!buff.incarnation_tree_of_life.up
     - frenzied_regeneration,name="Frenzied Regen",if=buff.bear_form.up&health.pct<config.frenzied_regen_threshold
@@ -481,7 +482,11 @@ lists:
     - combat_potion,off_gcd=true,ignore_queue=true,delay=1500,global_delay=400,name="Combat Potion (before Convoke)",if=combat_potion.ready&config.use_potion&(cooldown.convoke_the_spirits.ready|!talent.convoke_the_spirits)&(group.count(cycle.health.effective.pct<config.convoke_threshold&!cycle.tank)>=config.convoke_members)&!buff.bear_form.up
     - convoke_the_spirits,global_delay=1000,name="Convoke (Heal)",if=(group.count(cycle.health.effective.pct<config.convoke_threshold&!cycle.tank)>=config.convoke_members)&var.caster_form&var.potion_done
     - tranquility,global_delay=1000,name="Tranquility",if=!config.manual_tranquility&group.count(cycle.health.effective.pct<config.tranquility_threshold&!cycle.tank)>=config.tranquility_members&!player.moving
-    - swiftmend,name="Swiftmend (Proactive - SotF/Everbloom/Treants)",cycle=members,cycle_order=health.pct,if=cycle.buff.rejuvenation.up|pred.cycle.buff.regrowth.up|pred.cycle.buff.wild_growth.up
+    # Swiftmend consumes a heal over time on its target (no Verdant Infusion). Prefer a target whose
+    # Regrowth or Wild Growth it can eat: a consumed Rejuvenation is the longest HoT lost and also
+    # drops the Abundance count. The top M+ log ate Regrowth 62% of the time and Rejuvenation 16%.
+    - swiftmend,name="Swiftmend (Proactive - Regrowth/Wild Growth)",cycle=members,cycle_order=health.pct,if=pred.cycle.buff.regrowth.up|pred.cycle.buff.wild_growth.up
+    - swiftmend,name="Swiftmend (Proactive - Rejuvenation)",cycle=members,cycle_order=health.pct,if=cycle.buff.rejuvenation.up
 
   active_healing:
     - regrowth,name="Regrowth Emergency",cycle=members,cycle_order=health.pct,if=cycle.health.pct<config.regrowth_emergency_threshold
@@ -492,6 +497,12 @@ lists:
     - rejuvenation,name="SotF Rejuvenation",cycle=members,cycle_order=buff.rejuvenation.remains,if=(var.has_soul&cycle.buff.rejuvenation.remains<1.5)
 
     - wild_growth,name="Wild Growth",range_check=none,if=group.count(cycle.health.effective.pct<config.wild_growth_threshold)>=config.wild_growth_members
+
+    # Abundance upkeep sits here, under the emergency Regrowth, Clearcasting, Soul of the Forest and
+    # Wild Growth. Called from main ahead of this list it cast Rejuvenation fillers while someone
+    # waited for the emergency Regrowth, and kept Wild Growth waiting (430 Rejuvenations with Wild
+    # Growth ready in one key; the top M+ log lets Abundance drop instead).
+    - call_action_list,name=abundance_maintenance
 
     - regrowth,name="Abundance Regrowth",cycle=members,cycle_order=health.pct,if=(buff.abundance.up&cycle.health.effective.pct<config.regrowth_threshold)
 
@@ -508,12 +519,17 @@ lists:
     - rejuvenation,name="Abundance Filler (Rejuv Maintenance)",cycle=members,cycle_order=buff.rejuvenation.remains,if=!var.abundance_safe&cycle.buff.rejuvenation.remains<3
     - rejuvenation,name="Abundance Filler (Germination Maintenance)",cycle=members,cycle_order=buff.rejuvenation.remains,if=!var.abundance_safe&cycle.buff.rejuvenation.up&cycle.buff.rejuvenation_germination.remains<3
 
+  # Mirrors the top M+ Restoration Druid: DoTs kept up between heals, then Starfire on packs and
+  # Wrath on a single target. Dream of Cenarius turns 100% of Wrath and 50% of Starfire damage
+  # (per target hit) into healing on a nearby ally, so these globals heal too. Fluid Form puts you
+  # in Moonkin Form by casting them; no explicit shift. Starsurge only while moving (instant).
   ranged_dps:
     - heart_of_the_wild,name="HotW (Instant Cast)",if=config.use_heart_of_the_wild&talent.heart_of_the_wild&cooldown.heart_of_the_wild.ready
-    - starsurge,name="Starsurge",if=cooldown.starsurge.ready
     - sunfire,name="Sunfire Refresh",if=talent.sunfire&debuff.sunfire.refreshable
     - moonfire,name="Moonfire Refresh",if=debuff.moonfire.refreshable
-    - starfire,name="Starfire Filler"
+    - starsurge,name="Starsurge (Moving)",if=player.moving&cooldown.starsurge.ready
+    - starfire,name="Starfire (Pack)",if=enemies_around_target>=2&!player.moving
+    - wrath,name="Wrath (Single Target)",if=!player.moving
 
   moving:
     - rejuvenation,name="Rejuvenation (Moving)",cycle=members,cycle_order=health.pct,if=cycle.buff.rejuvenation.refreshable&cycle.health.effective.pct<config.rejuvenation_threshold
@@ -592,7 +608,6 @@ lists:
     - call_action_list,name=avatar_sethraliss,if=var.avatar_mode
     - call_action_list,name=mouseover_healing_emergency,if=config.use_mouseover&var.mo_friendly_valid&mouseover.health.effective.pct<config.mouseover_emergency_hp&!config.force_dps
     - call_action_list,name=moving,if=player.moving&!config.force_dps
-    - call_action_list,name=abundance_maintenance,if=!config.force_dps
     - call_action_list,name=active_healing,if=!config.force_dps
 
     - mark_of_the_wild,range_check=none,name="Mark of the Wild (low prio)",if=(buff.mark_of_the_wild.down.any|action.mark_of_the_wild.overlayed)&lastcast.mark_of_the_wild>=15
