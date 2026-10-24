@@ -1759,3 +1759,51 @@ defensiva. Duas fontes possíveis de aperto em cima do canal, as duas tratadas:
   de `lastcast` do M+, porque `player.casting.spell_id` pode vir vazio no meio do canal.
 
 Não confirmado em jogo qual das duas cortou o canal.
+
+
+---
+
+## v36.0.0 (2026-10-24): log comparison against the world #1 M+ Resto (Greenashen_f4 vs Tassiana_f1)
+
+`FerrazRestoDruid.yaml`
+
+```
+Same dungeon, different keys. Unlike raid, idle was similar (6.0% vs 8.3%);
+the gap was what the GCDs went to: Rejuv 19.6/min vs 14.5, WG 1.6/min
+(median 29.9s) vs 3.5 (15.9s, CD ~10.6s), DPS 9.1 vs 13.2/min. 430 Rejuv/Germ
+were cast with WG ready. He re-applied Abundance 70 times vs our 33: he lets
+it drop.
+
+Backup of v35.0.0 before these changes:
+backups/FerrazRestoDruid_v35.0.0_2026-10-24.yaml (local only, gitignored).
+
+1. abundance_maintenance moved from main (ahead of active_healing) into
+   active_healing right after Wild Growth. Before, its fillers outranked the
+   emergency Regrowth (<60% real) and Wild Growth.
+2. Swiftmend split: Regrowth/WG targets first, Rejuv-only targets second.
+   Swiftmend consumes a HoT (no Verdant Infusion): his ate Regrowth 62% /
+   Rejuv 16%, ours 49% / 34%. In M+ he does NOT self-Swiftmend (20 of 118),
+   unlike raid.
+3. convoke_members 3 -> 2: Convoke gaps of 149-244s on a ~60s CD (his 60-68s).
+4. Ironbark (Tank) gets !cycle.is_player; ironbark_target default All Members
+   because the new build has Stonebark (Ironbark boosts HoT healing on the
+   target) and his Ironbarks spread over the party.
+5. recommended_talents = his exact M+ tree (Dream of Cenarius, Verdancy,
+   Stonebark, Tranquil Mind, Astral Influence, Bond with Nature, Ursine Vigor;
+   drops Thriving Vegetation, Improved Ironbark, Wild Synthesis, Innervate,
+   Harmonious Constitution). Built from our game-exported string by flipping
+   only the differing nodes (keeps granted nodes and the inactive Keeper of
+   the Grove choices); validated by decoding back to his WCL tree exactly and
+   by SimC accepting it. The user had rejected a DoC build on 2026-09-22
+   (uncontrollable heal target); adopted now on request to mirror him.
+6. ranged_dps rewritten to his pattern: Sunfire/Moonfire, Starsurge only
+   while moving, Starfire at enemies_around_target>=2, Wrath on single target.
+   Measured: 95/102 Starfires and 55/65 Wraths in Moonkin (Fluid Form shifts
+   on cast), Starfire median 4 targets hit, Wrath 1. DoC = 100% Wrath / 50%
+   Starfire damage to healing; 7.3% of his healing. HotW default off: he
+   never cast it.
+
+Not changed: dps_group_hp default 85 (the user's saved value is 95).
+Gear (user, not rotation): his trinkets give 14% of his healing
+(Preternatural Antivenom 10.4%, Soulcoiler Ritual Vessel 3.4%).
+```
