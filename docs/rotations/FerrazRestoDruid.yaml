@@ -162,8 +162,8 @@ config:
     type: slider
     min: 25
     max: 99
-    default: 75
-    description: "Non-tank members counted for Convoke (and the trinkets, potion and Berserking synced to it) must be below this effective health."
+    default: 85
+    description: "Non-tank members counted for Convoke (and the trinkets, potion and Berserking synced to it) must be below this effective health. High on purpose: Convoke is on a ~60s cooldown and the top Mythic+ players send it about once a minute in pulls."
 
   convoke_members:
     label: "Convoke - Min Members"
@@ -227,7 +227,7 @@ config:
     type: slider
     min: 10
     max: 100
-    default: 40
+    default: 50
     description: "Use Barkskin when your current effective health minus the biggest predicted incoming hit (health.effective.pct-incoming.pct) would put you at or below this HP%. Example: at 90% HP with a hit predicted to take 30%, that's 60% projected - set this to 40 and it won't fire yet; set it to 60+ and it will."
 
   ironbark_target:

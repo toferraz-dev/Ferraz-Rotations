@@ -9,7 +9,8 @@ Player-facing changes to the Ferraz rotations, newest first. Each entry names th
 - Damage now works like his: Sunfire and Moonfire kept up, then Starfire on packs and Wrath on a single target, which heal through Dream of Cenarius. Starsurge only while moving. Heart of the Wild is off by default.
 - Wild Growth goes out much more often: keeping Abundance up no longer comes before Wild Growth or the emergency Regrowth.
 - Swiftmend prefers allies with Regrowth or Wild Growth, so it stops eating Rejuvenations.
-- Convoke needs 2 injured allies instead of 3, so it comes back about once a minute.
+- Convoke needs 2 injured allies instead of 3, and its default health line is 85% instead of 75%, so it comes back about once a minute.
+- Barkskin goes out a little earlier by default (50%): Flower Walk heals the group around you while it is up.
 - Ironbark defaults to *All Members* (a healing cooldown with Stonebark), and *Tanks Only* never lands on you.
 
 ### Restoration · Raid · v27.0.0
