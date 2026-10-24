@@ -1,5 +1,5 @@
 
-version: "13.0.0"
+version: "14.0.0"
 author: Ferraz
 patch: "12.1"
 spec: 102
@@ -18,7 +18,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-10-23 | Patch: 12.1 | Version: 13.0.0"
+    text: "Last update: 2026-10-24 | Patch: 12.1 | Version: 14.0.0"
 
   hp_legend:
     section: "Info"
@@ -225,20 +225,6 @@ config:
     description: "Thorn Bloom once this many members are below the Thorn Bloom HP %."
 
   # ---- Dispels -----------------------------------------------------
-  auto_dispel_self:
-    label: "Remove Corruption - Self (Poison/Curse)"
-    section: "Dispels"
-    type: checkbox
-    default: true
-    description: "Remove Corruption on yourself when you have a dispelable poison or curse. Only fires when you actually have one, so it costs nothing otherwise."
-
-  auto_dispel_party:
-    label: "Remove Corruption - Party"
-    section: "Dispels"
-    type: checkbox
-    default: false
-    description: "Also Remove Corruption on party members. OFF by default: each dispel costs a GCD, and in M+ the healer usually covers it. Turn ON if you are the only one who can."
-
   engine_affix_devour:
     label: "Dispel Devouring Rift (Affix)"
     section: "Dispels"
@@ -393,8 +379,7 @@ lists:
     - target_enemy,name="Swap Off Storm Blessed",delay=500,off_gcd=true,if=target.buff.1289229.up&enemies.combat.40y>=2
 
   dispels:
-    - remove_corruption,cycle=members,delay=500,name="Remove Corruption (Self)",if=cycle.is_player&config.auto_dispel_self&player.dispelable.list
-    - remove_corruption,delay=500,cycle=party,name="Remove Corruption (Party)",if=config.auto_dispel_party&cycle.dispelable.list
+    - remove_corruption,delay=500,cycle=party,name="Remove Corruption",if=cycle.dispelable.list
     - soothe.mouseover,name="Soothe Enrage (Mouseover)",range_check=mouseover,if=config.soothe_mouseover&mouseover.exists&mouseover.enemy&mouseover.attackable&!mouseover.dead&mouseover.combat&mouseover.purgeable.enrage
     - soothe,name="Soothe (Enrage)",if=config.auto_purge_enrage&target.purgeable.enrage
 

@@ -1,5 +1,5 @@
 
-version: "4.0.0"
+version: "5.0.0"
 patch: "12.1"
 spec: 104
 name: Guardian Druid Ferraz M+
@@ -26,7 +26,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-10-23 | Patch: 12.1 | Version: 4.0.0"
+    text: "Last update: 2026-10-24 | Patch: 12.1 | Version: 5.0.0"
 
   hp_legend:
     section: "Info"
@@ -238,20 +238,6 @@ config:
     description: "Growl your target and your mouseover when they are not on you. Never fires in a raid, where it would rip a boss off the other tank."
 
   # ---- Dispels -----------------------------------------------------
-  auto_dispel_self:
-    label: "Remove Corruption - Self (Poison/Curse)"
-    section: "Dispels"
-    type: checkbox
-    default: true
-    description: "Only fires when you actually have a dispelable debuff."
-
-  auto_dispel_party:
-    label: "Remove Corruption - Party"
-    section: "Dispels"
-    type: checkbox
-    default: false
-    description: "Remove Corruption on any dispellable party member."
-
   engine_affix_devour:
     label: "Dispel Devouring Rift (Affix)"
     section: "Dispels"
@@ -349,8 +335,7 @@ lists:
     - interact_mouseover,delay=350,if=config.engine_loot_nearby&mouseover.lootable&mouseover.range<=5
     - attack_target,off_gcd=true,delay=100,if=player.combat&target.exists&target.attackable&target.alive&target.in_melee&!player.auto_attacking
 
-    - remove_corruption,cycle=members,delay=500,name="Remove Corruption (Self)",if=cycle.is_player&config.auto_dispel_self&player.dispelable.list
-    - remove_corruption,delay=500,cycle=party,name="Remove Corruption (Party)",if=config.auto_dispel_party&cycle.dispelable.list
+    - remove_corruption,delay=500,cycle=party,name="Remove Corruption",if=cycle.dispelable.list
     - remove_corruption,delay=500,cycle=party,cycle_order=player_first,name="Devouring Rift (Affix)",if=config.engine_affix_devour&cycle.debuff.440313.up.any
     - soothe.mouseover,name="Soothe Enrage (Mouseover)",range_check=mouseover,if=config.soothe_mouseover&mouseover.exists&mouseover.enemy&mouseover.attackable&!mouseover.dead&mouseover.combat&mouseover.purgeable.enrage
     - soothe,name="Soothe (Enrage)",if=config.auto_purge_enrage&target.purgeable.enrage
