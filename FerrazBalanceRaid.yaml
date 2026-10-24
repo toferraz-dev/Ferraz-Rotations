@@ -1,5 +1,5 @@
 
-version: "9.0.0"
+version: "10.0.0"
 author: Ferraz
 patch: "12.1"
 spec: 102
@@ -14,7 +14,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-10-23 | Patch: 12.1 | Version: 9.0.0"
+    text: "Last update: 2026-10-24 | Patch: 12.1 | Version: 10.0.0"
 
   hp_legend:
     section: "Info"
@@ -164,20 +164,6 @@ config:
     description: "Thorn Bloom once this many members are below the Thorn Bloom HP %."
 
   # ---- Dispels -----------------------------------------------------
-  auto_dispel_self:
-    label: "Remove Corruption - Self (Poison/Curse)"
-    section: "Dispels"
-    type: checkbox
-    default: true
-    description: "Only fires when you actually have a dispelable debuff, so it costs nothing otherwise."
-
-  auto_dispel_party:
-    label: "Remove Corruption - Party"
-    section: "Dispels"
-    type: checkbox
-    default: false
-    description: "Remove Corruption on any dispellable party member."
-
   engine_affix_devour:
     label: "Dispel Devouring Rift (Affix)"
     section: "Dispels"
@@ -307,8 +293,7 @@ lists:
     - moonfire.mouseover,name="Moonfire Mouseover",if=config.enable_mouseover_dots&mouseover.exists&mouseover.enemy&mouseover.attackable&!mouseover.dead&mouseover.combat&mouseover.range<=40&mouseover.debuff.moonfire.down
 
   dispels:
-    - remove_corruption,cycle=members,delay=500,name="Remove Corruption (Self)",if=cycle.is_player&config.auto_dispel_self&player.dispelable.list
-    - remove_corruption,delay=500,cycle=party,name="Remove Corruption (Party)",if=config.auto_dispel_party&cycle.dispelable.list
+    - remove_corruption,delay=500,cycle=party,name="Remove Corruption",if=cycle.dispelable.list
     - soothe.mouseover,name="Soothe Enrage (Mouseover)",range_check=mouseover,if=config.soothe_mouseover&mouseover.exists&mouseover.enemy&mouseover.attackable&!mouseover.dead&mouseover.combat&mouseover.purgeable.enrage
     - soothe,name="Soothe (Enrage)",if=config.auto_purge_enrage&target.purgeable.enrage
 

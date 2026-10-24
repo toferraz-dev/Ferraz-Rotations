@@ -2,6 +2,28 @@
 
 Player-facing changes to the Ferraz rotations, newest first. Each entry names the rotation and the version that shipped it.
 
+## 2026-10-24
+
+### Balance · Mythic+ · v14.0.0
+- Remove Corruption now follows Simia's standard dispel: it cleanses the poisons and curses on Simia's dispel list from anyone in the party, you included, with no setting to turn on.
+- The "Remove Corruption - Self" and "Remove Corruption - Party" options were removed.
+
+### Balance · Raid · v10.0.0
+- Remove Corruption now follows Simia's standard dispel: it cleanses the poisons and curses on Simia's dispel list from anyone in the party, you included, with no setting to turn on.
+- The "Remove Corruption - Self" and "Remove Corruption - Party" options were removed.
+
+### Feral · Mythic+ · v10.0.0
+- Remove Corruption now follows Simia's standard dispel: it cleanses the poisons and curses on Simia's dispel list from anyone in the party, you included, with no setting to turn on.
+- The "Remove Corruption - Self" and "Remove Corruption - Party" options were removed.
+
+### Feral · Raid · v7.0.0
+- Remove Corruption now follows Simia's standard dispel: it cleanses the poisons and curses on Simia's dispel list from anyone in the party, you included, with no setting to turn on.
+- The "Remove Corruption - Self" and "Remove Corruption - Party" options were removed.
+
+### Guardian · Mythic+ · v5.0.0
+- Remove Corruption now follows Simia's standard dispel: it cleanses the poisons and curses on Simia's dispel list from anyone in the party, you included, with no setting to turn on.
+- The "Remove Corruption - Self" and "Remove Corruption - Party" options were removed.
+
 ## 2026-10-23
 
 ### Devourer · Mythic+ · v1.0.0

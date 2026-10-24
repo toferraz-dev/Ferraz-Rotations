@@ -194,7 +194,7 @@
           <li><b>8</b>rotations</li>
           <li><b>5</b>specs</li>
           <li><b>12.1</b>patch</li>
-          <li><b>10/23</b>last update</li>
+          <li><b>10/24</b>last update</li>
         </ul>
       </div>
     </div>
@@ -229,7 +229,7 @@
           <span class="spec-body">
             <span class="spec-top"><span class="spec-name">Guardian</span><span class="badge">Mythic+</span></span>
             <span class="spec-build">Elune&#x27;s Chosen with Lunar Calling</span>
-            <span class="spec-meta">Tank · v4.0.0</span>
+            <span class="spec-meta">Tank · v5.0.0</span>
           </span>
         </a>
         <a class="spec-card arcane" href="#balance-mplus">
@@ -237,7 +237,7 @@
           <span class="spec-body">
             <span class="spec-top"><span class="spec-name">Balance</span><span class="badge">Mythic+</span></span>
             <span class="spec-build">Elune&#x27;s Chosen with Lunar Calling</span>
-            <span class="spec-meta">DPS · v13.0.0</span>
+            <span class="spec-meta">DPS · v14.0.0</span>
           </span>
         </a>
         <a class="spec-card arcane" href="#balance-raid">
@@ -245,7 +245,7 @@
           <span class="spec-body">
             <span class="spec-top"><span class="spec-name">Balance</span><span class="badge">Raid</span></span>
             <span class="spec-build">Elune&#x27;s Chosen with Lunar Calling</span>
-            <span class="spec-meta">DPS · v9.0.0</span>
+            <span class="spec-meta">DPS · v10.0.0</span>
           </span>
         </a>
         <a class="spec-card ember" href="#feral-mplus">
@@ -253,7 +253,7 @@
           <span class="spec-body">
             <span class="spec-top"><span class="spec-name">Feral</span><span class="badge">Mythic+</span></span>
             <span class="spec-build">Druid of the Claw with Convoke the Spirits</span>
-            <span class="spec-meta">DPS · v9.0.0</span>
+            <span class="spec-meta">DPS · v10.0.0</span>
           </span>
         </a>
         <a class="spec-card ember" href="#feral-raid">
@@ -261,7 +261,7 @@
           <span class="spec-body">
             <span class="spec-top"><span class="spec-name">Feral</span><span class="badge">Raid</span></span>
             <span class="spec-build">Wildstalker with Convoke the Spirits</span>
-            <span class="spec-meta">DPS · v6.0.0</span>
+            <span class="spec-meta">DPS · v7.0.0</span>
           </span>
         </a>
         <a class="spec-card void" href="#devourer-mplus">
@@ -555,18 +555,19 @@
 <ul><li>you have been in combat for the <em>HotW delay</em> and standing still for a moment;</li><li>your health is above the HotW minimum and no heavy hit is predicted;</li><li>no tank buster is due within the <em>tank buster window</em>;</li><li>the target will live long enough.</li></ul>
 <p>Incarnation waits for the weave only through the delay at the pull plus <em>Max Wait</em>. After that it goes, and the weave waits for Incarnation to end.</p>
 <h4>Utility</h4>
-<ul><li><strong>Growl</strong> anything that is not attacking you (never in a raid, where it would steal a boss).</li><li><strong>Skull Bash</strong> on target, mouseover and focus, plus AoE stuns and incapacitates.</li><li><strong>Moonfire</strong> on mouseover enemies in combat. <em>Pull with Mouseover Moonfire</em> exists but ships off: with it on, hovering any enemy nameplate pulls it.</li><li><strong>Remove Corruption</strong> on yourself (and the party if enabled), <strong>Soothe</strong>, <strong>Rebirth</strong> on mouseover.</li><li><strong>Roots</strong> are broken by shifting to Cat and back, but only when it is safe: 3 or more Ironfur stacks, above 90% health and Barkskin or Survival Instincts up.</li></ul>
+<ul><li><strong>Growl</strong> anything that is not attacking you (never in a raid, where it would steal a boss).</li><li><strong>Skull Bash</strong> on target, mouseover and focus, plus AoE stuns and incapacitates.</li><li><strong>Moonfire</strong> on mouseover enemies in combat. <em>Pull with Mouseover Moonfire</em> exists but ships off: with it on, hovering any enemy nameplate pulls it.</li><li><strong>Remove Corruption</strong> on you and the party, <strong>Soothe</strong>, <strong>Rebirth</strong> on mouseover.</li><li><strong>Roots</strong> are broken by shifting to Cat and back, but only when it is safe: 3 or more Ironfur stacks, above 90% health and Barkskin or Survival Instincts up.</li></ul>
           </div>
           <aside class="glance">
             <dl>
-              <div><dt>Version</dt><dd>4.0.0</dd></div>
-              <div><dt>Updated</dt><dd>2026-10-23</dd></div>
+              <div><dt>Version</dt><dd>5.0.0</dd></div>
+              <div><dt>Updated</dt><dd>2026-10-24</dd></div>
               <div><dt>Patch</dt><dd>12.1</dd></div>
               <div><dt>File</dt><dd><a href="rotations/FerrazGuardianElune.yaml" download>FerrazGuardianElune.yaml</a></dd></div>
             </dl>
           <div class="recent">
             <h5>Recent changes</h5>
             <ul class="rc-list">
+            <li><span class="rc-ver">v5.0.0 · 2026-10-24</span><ul><li>Remove Corruption now follows Simia's standard dispel: it cleanses the poisons and curses on Simia's dispel list from anyone in the party, you included, with no setting to turn on.</li><li>The "Remove Corruption - Self" and "Remove Corruption - Party" options were removed.</li></ul></li>
             <li><span class="rc-ver">v4.0.0 · 2026-10-23</span><ul><li>Incarnation is no longer held back indefinitely while Heart of the Wild is ready. It waits through the HotW delay at the pull plus a few seconds (new "Max Wait" slider), then goes.</li><li>Mark of the Wild is only cast out of combat.</li><li>"Pull with Mouseover Moonfire" is now off by default.</li><li>Ironfur is spent on Gory Fur procs, and Wild Guardian is not recast while its spirit is active.</li><li>Mangle's rage threshold with Soul of the Forest is fixed.</li><li>Settings panel reorganized into clear sections, with descriptions on every option.</li></ul></li>
             </ul>
             <a class="rc-all" href="#changelog">Full changelog</a>
@@ -574,7 +575,7 @@
           </aside>
         </div>
         <details class="settings">
-          <summary>All 33 settings, with defaults</summary>
+          <summary>All 31 settings, with defaults</summary>
           <div class="set-group">
             <h5>Defensives</h5>
             <div class="set-row"><span class="set-label">Survival Instincts - Predicted HP % Remaining (effective)</span><span class="set-default">40</span><span class="set-desc">Use Survival Instincts when your effective health minus the biggest predicted incoming hit, after active defensives, would put you at or below this HP %.</span></div>
@@ -615,8 +616,6 @@
           </div>
           <div class="set-group">
             <h5>Dispels</h5>
-            <div class="set-row"><span class="set-label">Remove Corruption - Self (Poison/Curse)</span><span class="set-default">On</span><span class="set-desc">Only fires when you actually have a dispelable debuff.</span></div>
-            <div class="set-row"><span class="set-label">Remove Corruption - Party</span><span class="set-default">Off</span><span class="set-desc">Remove Corruption on any dispellable party member.</span></div>
             <div class="set-row"><span class="set-label">Dispel Devouring Rift (Affix)</span><span class="set-default">On</span><span class="set-desc">Remove Corruption on Devouring Rift (440313), you first.</span></div>
             <div class="set-row"><span class="set-label">Soothe Enrage (Target)</span><span class="set-default">On</span><span class="set-desc">Soothe the current target when it is enraged. Turn OFF on keys where the enrage is not worth the global.</span></div>
             <div class="set-row"><span class="set-label">Soothe Mouseover</span><span class="set-default">On</span><span class="set-desc">Soothe whatever you are hovering, checked just before the current-target Soothe below. Simia cannot pick an enraged enemy by criteria — target_enemy is 'nearest enemy' with no filter and there is no .any(EXPR) for enemies — so hovering is the only way to Soothe a mob you are not targeting. This is an independent switch: turning Soothe Enrage off does not disable it. Guarded on mouseover.combat, so hovering an unpulled mob never pulls it.</span></div>
@@ -656,14 +655,15 @@
           </div>
           <aside class="glance">
             <dl>
-              <div><dt>Version</dt><dd>13.0.0</dd></div>
-              <div><dt>Updated</dt><dd>2026-10-23</dd></div>
+              <div><dt>Version</dt><dd>14.0.0</dd></div>
+              <div><dt>Updated</dt><dd>2026-10-24</dd></div>
               <div><dt>Patch</dt><dd>12.1</dd></div>
               <div><dt>File</dt><dd><a href="rotations/FerrazBalance.yaml" download>FerrazBalance.yaml</a></dd></div>
             </dl>
           <div class="recent">
             <h5>Recent changes</h5>
             <ul class="rc-list">
+            <li><span class="rc-ver">v14.0.0 · 2026-10-24</span><ul><li>Remove Corruption now follows Simia's standard dispel: it cleanses the poisons and curses on Simia's dispel list from anyone in the party, you included, with no setting to turn on.</li><li>The "Remove Corruption - Self" and "Remove Corruption - Party" options were removed.</li></ul></li>
             <li><span class="rc-ver">v13.0.0 · 2026-10-23</span><ul><li>Barkskin, Panic Bear, interrupts and dispels now work without a valid target, for example while a boss is untargetable.</li><li>The emergency cast cut no longer loops: it only cuts a cast when Panic Bear is about to fire.</li><li>Incarnation follows Fury of Elune even if you start moving, and is also used from the movement list.</li><li>Touch the Cosmos procs go to Starsurge on single target instead of Starfall.</li><li>The burst waits for Moonfire on the whole pack again (capped at 10 targets).</li><li>Mark of the Wild only out of combat. Root breaking waits for your cast to finish.</li><li>With Fluid Form, moving puts you back in Moonkin Form directly.</li><li>Settings panel reorganized; the unused "Auto Combat" option was removed.</li></ul></li>
             </ul>
             <a class="rc-all" href="#changelog">Full changelog</a>
@@ -671,7 +671,7 @@
           </aside>
         </div>
         <details class="settings">
-          <summary>All 33 settings, with defaults</summary>
+          <summary>All 31 settings, with defaults</summary>
           <div class="set-group">
             <h5>Cooldowns</h5>
             <div class="set-row"><span class="set-label">Auto Burst</span><span class="set-default">On</span><span class="set-desc">Fires Incarnation, trinkets and potion by itself. The TTD sliders still hold them back on trash that is about to die. Turn OFF to press Incarnation yourself through Simia's own queue - trinkets/potion still ride whichever cooldown goes up (Celestial Alignment or Incarnation), manual or automatic.</span></div>
@@ -709,8 +709,6 @@
           </div>
           <div class="set-group">
             <h5>Dispels</h5>
-            <div class="set-row"><span class="set-label">Remove Corruption - Self (Poison/Curse)</span><span class="set-default">On</span><span class="set-desc">Remove Corruption on yourself when you have a dispelable poison or curse. Only fires when you actually have one, so it costs nothing otherwise.</span></div>
-            <div class="set-row"><span class="set-label">Remove Corruption - Party</span><span class="set-default">Off</span><span class="set-desc">Also Remove Corruption on party members. OFF by default: each dispel costs a GCD, and in M+ the healer usually covers it. Turn ON if you are the only one who can.</span></div>
             <div class="set-row"><span class="set-label">Dispel Devouring Rift (Affix)</span><span class="set-default">On</span><span class="set-desc">Remove Corruption on the Devour affix debuff (440313), self first. Bypasses the normal dispel-type matching — the affix is removable by any dispel.</span></div>
             <div class="set-row"><span class="set-label">Soothe Enrage (Target)</span><span class="set-default">On</span><span class="set-desc">Soothe the current target when it is enraged. Turn OFF on keys where the enrage is not worth the global.</span></div>
             <div class="set-row"><span class="set-label">Soothe Mouseover</span><span class="set-default">On</span><span class="set-desc">Soothe whatever you are hovering, checked just before the current-target Soothe below. Simia cannot pick an enraged enemy by criteria — target_enemy is 'nearest enemy' with no filter and there is no .any(EXPR) for enemies — so hovering is the only way to Soothe a mob you are not targeting. This is an independent switch: turning Soothe Enrage off does not disable it. Guarded on mouseover.combat, so hovering an unpulled mob never pulls it.</span></div>
@@ -752,14 +750,15 @@
           </div>
           <aside class="glance">
             <dl>
-              <div><dt>Version</dt><dd>9.0.0</dd></div>
-              <div><dt>Updated</dt><dd>2026-10-23</dd></div>
+              <div><dt>Version</dt><dd>10.0.0</dd></div>
+              <div><dt>Updated</dt><dd>2026-10-24</dd></div>
               <div><dt>Patch</dt><dd>12.1</dd></div>
               <div><dt>File</dt><dd><a href="rotations/FerrazBalanceRaid.yaml" download>FerrazBalanceRaid.yaml</a></dd></div>
             </dl>
           <div class="recent">
             <h5>Recent changes</h5>
             <ul class="rc-list">
+            <li><span class="rc-ver">v10.0.0 · 2026-10-24</span><ul><li>Remove Corruption now follows Simia's standard dispel: it cleanses the poisons and curses on Simia's dispel list from anyone in the party, you included, with no setting to turn on.</li><li>The "Remove Corruption - Self" and "Remove Corruption - Party" options were removed.</li></ul></li>
             <li><span class="rc-ver">v9.0.0 · 2026-10-23</span><ul><li>Barkskin, Panic Bear, interrupts and dispels now work without a valid target.</li><li>You no longer get stuck in Bear Form after a root break at low health.</li><li>The emergency cast cut only fires when Panic Bear is about to follow. Frenzied Regeneration is not recast over itself.</li><li>The opener now triggers on Incarnation charges, so the single-target priority runs between bursts.</li><li>Touch the Cosmos procs and Astral Power go to Starsurge on single target, opener included.</li><li>Starlord, Atmospheric Exposure and the Heart of the Wild bear morph are now detected reliably.</li><li>Unused talent lines from the old Grove build removed. Settings panel reorganized.</li></ul></li>
             </ul>
             <a class="rc-all" href="#changelog">Full changelog</a>
@@ -767,7 +766,7 @@
           </aside>
         </div>
         <details class="settings">
-          <summary>All 26 settings, with defaults</summary>
+          <summary>All 24 settings, with defaults</summary>
           <div class="set-group">
             <h5>Cooldowns</h5>
             <div class="set-row"><span class="set-label">Auto Trinket 1</span><span class="set-default">On</span><span class="set-desc">Use trinket 1 during Incarnation, or when Incarnation is more than 40 s away.</span></div>
@@ -798,8 +797,6 @@
           </div>
           <div class="set-group">
             <h5>Dispels</h5>
-            <div class="set-row"><span class="set-label">Remove Corruption - Self (Poison/Curse)</span><span class="set-default">On</span><span class="set-desc">Only fires when you actually have a dispelable debuff, so it costs nothing otherwise.</span></div>
-            <div class="set-row"><span class="set-label">Remove Corruption - Party</span><span class="set-default">Off</span><span class="set-desc">Remove Corruption on any dispellable party member.</span></div>
             <div class="set-row"><span class="set-label">Dispel Devouring Rift (Affix)</span><span class="set-default">On</span><span class="set-desc">Remove Corruption on Devouring Rift (440313), you first.</span></div>
             <div class="set-row"><span class="set-label">Soothe Enrage (Target)</span><span class="set-default">On</span><span class="set-desc">Soothe the current target when it is enraged. Turn OFF where the enrage is not worth the global.</span></div>
             <div class="set-row"><span class="set-label">Soothe Mouseover</span><span class="set-default">On</span><span class="set-desc">Soothe whatever you are hovering, checked just before the current-target Soothe below. Simia cannot pick an enraged enemy by criteria — target_enemy is 'nearest enemy' with no filter and there is no .any(EXPR) for enemies — so hovering is the only way to Soothe a mob you are not targeting. This is an independent switch: turning Soothe Enrage off does not disable it. Guarded on mouseover.combat, so hovering an unpulled mob never pulls it.</span></div>
@@ -839,14 +836,15 @@
           </div>
           <aside class="glance">
             <dl>
-              <div><dt>Version</dt><dd>9.0.0</dd></div>
-              <div><dt>Updated</dt><dd>2026-10-23</dd></div>
+              <div><dt>Version</dt><dd>10.0.0</dd></div>
+              <div><dt>Updated</dt><dd>2026-10-24</dd></div>
               <div><dt>Patch</dt><dd>12.1</dd></div>
               <div><dt>File</dt><dd><a href="rotations/FerrazFeral.yaml" download>FerrazFeral.yaml</a></dd></div>
             </dl>
           <div class="recent">
             <h5>Recent changes</h5>
             <ul class="rc-list">
+            <li><span class="rc-ver">v10.0.0 · 2026-10-24</span><ul><li>Remove Corruption now follows Simia's standard dispel: it cleanses the poisons and curses on Simia's dispel list from anyone in the party, you included, with no setting to turn on.</li><li>The "Remove Corruption - Self" and "Remove Corruption - Party" options were removed.</li></ul></li>
             <li><span class="rc-ver">v9.0.0 · 2026-10-23</span><ul><li>Root breaking never cuts Convoke.</li><li>Panic Bear no longer flips between Bear and Cat while your health is low.</li><li>Predatory Swiftness, Apex Predator's Craving, Clearcasting and Sudden Ambush procs are detected reliably.</li><li>Tiger's Fury no longer waits for a Berserk that is being held for Convoke.</li><li>Mark of the Wild only out of combat. Predictive Barkskin accounts for your active defensives.</li><li>Settings panel reorganized, with a Self Healing section for the Regrowth options.</li></ul></li>
             </ul>
             <a class="rc-all" href="#changelog">Full changelog</a>
@@ -854,7 +852,7 @@
           </aside>
         </div>
         <details class="settings">
-          <summary>All 32 settings, with defaults</summary>
+          <summary>All 30 settings, with defaults</summary>
           <div class="set-group">
             <h5>Cooldowns</h5>
             <div class="set-row"><span class="set-label">Cooldowns - Only Burst With Convoke Ready</span><span class="set-default">On</span><span class="set-desc">Hold Berserk, the trinkets and the combat potion until Convoke the Spirits is off cooldown, so the whole window opens on Convoke. Ignored when Convoke is not talented. Turn off if you ever cast Convoke by hand outside a burst window and do not want the rest held for it.</span></div>
@@ -888,8 +886,6 @@
           </div>
           <div class="set-group">
             <h5>Dispels</h5>
-            <div class="set-row"><span class="set-label">Remove Corruption - Self (Poison/Curse)</span><span class="set-default">On</span><span class="set-desc">Only fires when you actually have a dispelable debuff.</span></div>
-            <div class="set-row"><span class="set-label">Remove Corruption - Party</span><span class="set-default">Off</span><span class="set-desc">Remove Corruption on any dispellable party member.</span></div>
             <div class="set-row"><span class="set-label">Dispel Devouring Rift (Affix)</span><span class="set-default">On</span><span class="set-desc">Remove Corruption on Devouring Rift (440313), you first.</span></div>
             <div class="set-row"><span class="set-label">Soothe Enrage (Target)</span><span class="set-default">On</span><span class="set-desc">Soothe the current target when it is enraged. Turn OFF on keys where the enrage is not worth the global.</span></div>
             <div class="set-row"><span class="set-label">Soothe Mouseover</span><span class="set-default">On</span><span class="set-desc">Soothe whatever you are hovering, checked just before the current-target Soothe below. Simia cannot pick an enraged enemy by criteria — target_enemy is 'nearest enemy' with no filter and there is no .any(EXPR) for enemies — so hovering is the only way to Soothe a mob you are not targeting. This is an independent switch: turning Soothe Enrage off does not disable it. Guarded on mouseover.combat, so hovering an unpulled mob never pulls it.</span></div>
@@ -929,14 +925,15 @@
           </div>
           <aside class="glance">
             <dl>
-              <div><dt>Version</dt><dd>6.0.0</dd></div>
-              <div><dt>Updated</dt><dd>2026-10-23</dd></div>
+              <div><dt>Version</dt><dd>7.0.0</dd></div>
+              <div><dt>Updated</dt><dd>2026-10-24</dd></div>
               <div><dt>Patch</dt><dd>12.1</dd></div>
               <div><dt>File</dt><dd><a href="rotations/FerrazFeralRaid.yaml" download>FerrazFeralRaid.yaml</a></dd></div>
             </dl>
           <div class="recent">
             <h5>Recent changes</h5>
             <ul class="rc-list">
+            <li><span class="rc-ver">v7.0.0 · 2026-10-24</span><ul><li>Remove Corruption now follows Simia's standard dispel: it cleanses the poisons and curses on Simia's dispel list from anyone in the party, you included, with no setting to turn on.</li><li>The "Remove Corruption - Self" and "Remove Corruption - Party" options were removed.</li></ul></li>
             <li><span class="rc-ver">v6.0.0 · 2026-10-23</span><ul><li>Root breaking never cuts Convoke.</li><li>Predatory Swiftness, Apex Predator's Craving, Clearcasting and Sudden Ambush procs are detected reliably.</li><li>Mark of the Wild only out of combat. Predictive Barkskin accounts for your active defensives.</li><li>Settings panel reorganized, with a Self Healing section for the Regrowth options.</li></ul></li>
             </ul>
             <a class="rc-all" href="#changelog">Full changelog</a>
@@ -944,7 +941,7 @@
           </aside>
         </div>
         <details class="settings">
-          <summary>All 24 settings, with defaults</summary>
+          <summary>All 22 settings, with defaults</summary>
           <div class="set-group">
             <h5>Cooldowns</h5>
             <div class="set-row"><span class="set-label">Auto Trinket 1</span><span class="set-default">On</span><span class="set-desc">Use trinket 1. See Trinkets Only In Burst.</span></div>
@@ -970,8 +967,6 @@
           </div>
           <div class="set-group">
             <h5>Dispels</h5>
-            <div class="set-row"><span class="set-label">Remove Corruption - Self (Poison/Curse)</span><span class="set-default">On</span><span class="set-desc">Only fires when you actually have a dispelable debuff.</span></div>
-            <div class="set-row"><span class="set-label">Remove Corruption - Party</span><span class="set-default">Off</span><span class="set-desc">Remove Corruption on any dispellable party member.</span></div>
             <div class="set-row"><span class="set-label">Dispel Devouring Rift (Affix)</span><span class="set-default">On</span><span class="set-desc">Remove Corruption on Devouring Rift (440313), you first.</span></div>
             <div class="set-row"><span class="set-label">Soothe Enrage (Target)</span><span class="set-default">On</span><span class="set-desc">Soothe the current target when it is enraged. Turn OFF where the enrage is not worth the global.</span></div>
             <div class="set-row"><span class="set-label">Soothe Mouseover</span><span class="set-default">On</span><span class="set-desc">Soothe whatever you are hovering, checked just before the current-target Soothe below. Simia cannot pick an enraged enemy by criteria — target_enemy is 'nearest enemy' with no filter and there is no .any(EXPR) for enemies — so hovering is the only way to Soothe a mob you are not targeting. This is an independent switch: turning Soothe Enrage off does not disable it. Guarded on mouseover.combat, so hovering an unpulled mob never pulls it.</span></div>
@@ -1076,6 +1071,31 @@
           <p>Every player-facing change, newest first, with the version that shipped it.</p>
         </div>
         <div class="timeline">
+    <div class="day">
+      <div class="day-date"><span>2026-10-24</span></div>
+      <div class="day-entries">
+        <div class="entry arcane">
+          <h4><span class="entry-title">Balance · Mythic+</span> <span class="entry-ver">v14.0.0</span></h4>
+          <ul><li>Remove Corruption now follows Simia's standard dispel: it cleanses the poisons and curses on Simia's dispel list from anyone in the party, you included, with no setting to turn on.</li><li>The "Remove Corruption - Self" and "Remove Corruption - Party" options were removed.</li></ul>
+        </div>
+        <div class="entry arcane">
+          <h4><span class="entry-title">Balance · Raid</span> <span class="entry-ver">v10.0.0</span></h4>
+          <ul><li>Remove Corruption now follows Simia's standard dispel: it cleanses the poisons and curses on Simia's dispel list from anyone in the party, you included, with no setting to turn on.</li><li>The "Remove Corruption - Self" and "Remove Corruption - Party" options were removed.</li></ul>
+        </div>
+        <div class="entry ember">
+          <h4><span class="entry-title">Feral · Mythic+</span> <span class="entry-ver">v10.0.0</span></h4>
+          <ul><li>Remove Corruption now follows Simia's standard dispel: it cleanses the poisons and curses on Simia's dispel list from anyone in the party, you included, with no setting to turn on.</li><li>The "Remove Corruption - Self" and "Remove Corruption - Party" options were removed.</li></ul>
+        </div>
+        <div class="entry ember">
+          <h4><span class="entry-title">Feral · Raid</span> <span class="entry-ver">v7.0.0</span></h4>
+          <ul><li>Remove Corruption now follows Simia's standard dispel: it cleanses the poisons and curses on Simia's dispel list from anyone in the party, you included, with no setting to turn on.</li><li>The "Remove Corruption - Self" and "Remove Corruption - Party" options were removed.</li></ul>
+        </div>
+        <div class="entry bark">
+          <h4><span class="entry-title">Guardian · Mythic+</span> <span class="entry-ver">v5.0.0</span></h4>
+          <ul><li>Remove Corruption now follows Simia's standard dispel: it cleanses the poisons and curses on Simia's dispel list from anyone in the party, you included, with no setting to turn on.</li><li>The "Remove Corruption - Self" and "Remove Corruption - Party" options were removed.</li></ul>
+        </div>
+      </div>
+    </div>
     <div class="day">
       <div class="day-date"><span>2026-10-23</span></div>
       <div class="day-entries">
