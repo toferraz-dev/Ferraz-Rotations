@@ -245,7 +245,7 @@
           <span class="spec-body">
             <span class="spec-top"><span class="spec-name">Balance</span><span class="badge">Raid</span></span>
             <span class="spec-build">Elune&#x27;s Chosen with Lunar Calling</span>
-            <span class="spec-meta">DPS · v10.0.0</span>
+            <span class="spec-meta">DPS · v11.0.0</span>
           </span>
         </a>
         <a class="spec-card ember" href="#feral-mplus">
@@ -740,13 +740,15 @@
         <div class="rot-body">
           <div class="guide">
 <p>A raid Balance rotation with a short ramp before every Incarnation, a Starfire-filler single target priority for Lunar Calling, and Starfall for add phases.</p>
-<p><strong>Build:</strong> Elune's Chosen with Lunar Calling, Incarnation, Whirling Stars, Sundered Firmament, Fury of Elune and Touch the Cosmos. Copy the string from <em>Talents → Recommended Talent String</em> in the rotation panel.</p>
+<p><strong>Build:</strong> Elune's Chosen with Lunar Calling, Incarnation, Whirling Stars, Sundered Firmament, Fury of Elune, Touch the Cosmos, Starweaver, Meteorites, Meteor Storm, Radiant Moonlight and Lunation. Copy the string from <em>Talents → Recommended Talent String</em> in the rotation panel.</p>
+<h4>Which build</h4>
+<p>The recommended build wins as soon as there is a second target: about +16% with 2 targets and +12% with 3 in SimulationCraft. On pure single-target fights the previous build is about 2% better. If a whole tier is single target, you can use that one instead; the rotation works with both: <code>CYGAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWoMbNjxMDwsMzMzMYYGjZWmhxMWYZmlZGjZ2wAgx2yMDGz2IwEAAAgFzMzMD2MMGzAAYmBLDA</code></p>
 <h4>Burst</h4>
 <ul><li>Every time an Incarnation charge is ready, an <strong>opener</strong> ramp runs: DoTs, Lunar Eclipse, Fury of Elune, then Incarnation.</li><li>Charges are used as they come back (Whirling Stars), so none sits capped.</li><li><strong>Trinkets</strong> with Incarnation, or on cooldown when Incarnation is still more than 40 seconds away. <strong>Combat potion</strong> with Incarnation or in the last 30 seconds.</li></ul>
 <h4>Single target</h4>
-<ul><li>DoTs kept up, <strong>Lunar Eclipse</strong>, <strong>Fury of Elune</strong>.</li><li><strong>Starsurge</strong> in Eclipse and before Astral Power caps; Touch the Cosmos procs go to Starsurge.</li><li><strong>Starfire</strong> as the filler.</li></ul>
+<ul><li>DoTs kept up, <strong>Lunar Eclipse</strong>, <strong>Fury of Elune</strong>.</li><li><strong>Starsurge</strong> in Eclipse from 40 Astral Power and before Astral Power caps; Touch the Cosmos procs go to Starsurge.</li><li><strong>Starweaver</strong>: a free Starfall (from Starsurge) is cast as soon as it procs, and a free Starsurge (from Starfall) likewise. Without this the free casts expire unused.</li><li><strong>Starfire</strong> as the filler.</li></ul>
 <h4>AoE</h4>
-<ul><li><strong>Starfall</strong> on Astral Power and procs, <strong>Starsurge</strong> inside Starfall.</li><li><strong>Fury of Elune</strong> timed with Atmospheric Exposure (Sundered Firmament).</li><li><strong>Moonfire</strong> and <strong>Sunfire</strong> spread on your mouseover during add phases.</li></ul>
+<ul><li><strong>Starfall</strong> on Astral Power and procs (Touch the Cosmos and Starweaver), <strong>Starsurge</strong> inside Starfall, including the free Starsurge from Starweaver.</li><li><strong>Fury of Elune</strong> timed with Atmospheric Exposure (Sundered Firmament).</li><li><strong>Moonfire</strong> and <strong>Sunfire</strong> spread on your mouseover during add phases.</li></ul>
 <h4>Defense</h4>
 <ul><li><strong>Barkskin</strong> before a predicted hit and at low health.</li><li><strong>Panic Bear</strong> with Frenzied Regeneration, plus Heart of the Wild for the max-health bear morph.</li><li><strong>While casting</strong>, below <em>Emergency HP</em>, Barkskin and consumables still fire; a cast is only cut when Panic Bear follows.</li><li>Everything defensive keeps working while the boss is untargetable.</li></ul>
 <h4>Utility</h4>
@@ -754,7 +756,7 @@
           </div>
           <aside class="glance">
             <dl>
-              <div><dt>Version</dt><dd>10.0.0</dd></div>
+              <div><dt>Version</dt><dd>11.0.0</dd></div>
               <div><dt>Updated</dt><dd>2026-10-24</dd></div>
               <div><dt>Patch</dt><dd>12.1</dd></div>
               <div><dt>File</dt><dd><a href="rotations/FerrazBalanceRaid.yaml" download>FerrazBalanceRaid.yaml</a></dd></div>
@@ -762,6 +764,7 @@
           <div class="recent">
             <h5>Recent changes</h5>
             <ul class="rc-list">
+            <li><span class="rc-ver">v11.0.0 · 2026-10-24</span><ul><li>New recommended talents: a build with Starweaver, Meteorites, Meteor Storm, Radiant Moonlight and Lunation (still Elune's Chosen). Copy the new string from the rotation panel.</li><li>Starweaver is now used: a free Starfall is cast as soon as it procs, and so is a free Starsurge. Before, those free casts expired unused. Worth about +4.5% damage on a single target and +5.5% on 3 targets in SimulationCraft on the new build.</li><li>Also works while moving and in the opener.</li><li>Starsurge in Eclipse now goes out from 40 Astral Power instead of 50 (+0.4% on a single target).</li><li>Measured against the previous build on the same SimulationCraft: the new build is about +16% with 2 targets and +12% with 3, and 2% behind on pure single target. The previous build's string is in the Balance Raid guide for single-target-only fights.</li></ul></li>
             <li><span class="rc-ver">v10.0.0 · 2026-10-24</span><ul><li>Remove Corruption now follows Simia's standard dispel: it cleanses the poisons and curses on Simia's dispel list from anyone in the party, you included, with no setting to turn on.</li><li>The "Remove Corruption - Self" and "Remove Corruption - Party" options were removed.</li></ul></li>
             <li><span class="rc-ver">v9.0.0 · 2026-10-23</span><ul><li>Barkskin, Panic Bear, interrupts and dispels now work without a valid target.</li><li>You no longer get stuck in Bear Form after a root break at low health.</li><li>The emergency cast cut only fires when Panic Bear is about to follow. Frenzied Regeneration is not recast over itself.</li><li>The opener now triggers on Incarnation charges, so the single-target priority runs between bursts.</li><li>Touch the Cosmos procs and Astral Power go to Starsurge on single target, opener included.</li><li>Starlord, Atmospheric Exposure and the Heart of the Wild bear morph are now detected reliably.</li><li>Unused talent lines from the old Grove build removed. Settings panel reorganized.</li></ul></li>
             </ul>
@@ -1089,6 +1092,10 @@
         <div class="entry arcane">
           <h4><span class="entry-title">Balance · Mythic+</span> <span class="entry-ver">v14.0.0</span></h4>
           <ul><li>Remove Corruption now follows Simia's standard dispel: it cleanses the poisons and curses on Simia's dispel list from anyone in the party, you included, with no setting to turn on.</li><li>The "Remove Corruption - Self" and "Remove Corruption - Party" options were removed.</li></ul>
+        </div>
+        <div class="entry arcane">
+          <h4><span class="entry-title">Balance · Raid</span> <span class="entry-ver">v11.0.0</span></h4>
+          <ul><li>New recommended talents: a build with Starweaver, Meteorites, Meteor Storm, Radiant Moonlight and Lunation (still Elune's Chosen). Copy the new string from the rotation panel.</li><li>Starweaver is now used: a free Starfall is cast as soon as it procs, and so is a free Starsurge. Before, those free casts expired unused. Worth about +4.5% damage on a single target and +5.5% on 3 targets in SimulationCraft on the new build.</li><li>Also works while moving and in the opener.</li><li>Starsurge in Eclipse now goes out from 40 Astral Power instead of 50 (+0.4% on a single target).</li><li>Measured against the previous build on the same SimulationCraft: the new build is about +16% with 2 targets and +12% with 3, and 2% behind on pure single target. The previous build's string is in the Balance Raid guide for single-target-only fights.</li></ul>
         </div>
         <div class="entry arcane">
           <h4><span class="entry-title">Balance · Raid</span> <span class="entry-ver">v10.0.0</span></h4>

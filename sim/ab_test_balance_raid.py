@@ -24,10 +24,10 @@ import subprocess
 import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-SIMC = os.path.join(ROOT, 'sim', 'tools', 'simc-1210.01.7bc1071-win64', 'simc.exe')
-PROFILE = os.path.join(ROOT, 'sim', 'Ferraz_balance_raid.simc')
+SIMC = os.path.join(ROOT, 'sim', 'tools', 'simc-1210.01.73a372b-win64', 'simc.exe')
+PROFILE = os.path.join(ROOT, 'sim', 'Ferraz_balance_raid_sw.simc' if os.environ.get('BAL_BUILD') == 'sw' else 'Ferraz_balance_raid.simc')
 APL_DIR = os.path.join(ROOT, 'sim', 'apl_balance_raid')
-OUT_DIR = os.path.join(ROOT, 'sim', 'out_balance_raid')
+OUT_DIR = os.path.join(ROOT, 'sim', 'out_balance_raid' + ('_sw' if os.environ.get('BAL_BUILD') == 'sw' else ''))
 
 CD_ACTIVE = 'buff.ca_inc.up'
 ECLIPSE_DOWN = 'buff.eclipse.down'
@@ -38,6 +38,7 @@ OPENER = 'cooldown.ca_inc.up&!' + CD_ACTIVE
 FOE_GATE = ('!talent.sundered_firmament|(debuff.atmospheric_exposure.remains<2'
             '&buff.eclipse_lunar.remains>5)|fight_remains<20')
 FOE_GATE_AOE = '!talent.sundered_firmament|debuff.atmospheric_exposure.remains<2'
+FOE_LOOSE_AOE = 'fight_remains<10|cooldown.ca_inc.remains>10|talent.lunation'
 
 
 def a(action, *conds):
@@ -101,8 +102,10 @@ def build(v):
 
     # Spender. `floor` is the YAML's flat astral_power>60; `approx` is the
     # Eclipse-aware floor that won 0.79% in the M+ file.
-    ss_main = (a('starsurge', 'buff.eclipse.up&astral_power>=50|' + ECLIPSE_DOWN + '&astral_power.deficit<20')
+    ss_main = (a('starsurge', 'buff.eclipse.up&astral_power>=%s|' % v['ss_floor'] + ECLIPSE_DOWN + '&astral_power.deficit<20')
                if v['spender'] == 'approx'
+               else a('starsurge', 'buff.eclipse.up&action.starsurge.cost>1|' + ECLIPSE_DOWN + '&astral_power.deficit<20')
+               if v['spender'] == 'cost'
                else a('starsurge', 'astral_power>60&spell_targets=1'))
 
     # DoT maintenance. The YAML only allows the pandemic refresh while no
@@ -127,10 +130,12 @@ def build(v):
     emit('st', [
         mf, sf,
         a('eclipse', ECLIPSE_DOWN),
-        a('fury_of_elune', FOE_GATE),
+        a('fury_of_elune', FOE_GATE if v['foe_st_gate'] else ''),
         fon,
-        a('starfall', 'spell_targets>=2&buff.touch_the_cosmos.react'),
-        a('starsurge', 'buff.touch_the_cosmos.react'),
+        a('starfall', 'buff.starweavers_warp.react') if v['starweaver'] else '',
+        a('starfall', 'buff.touch_the_cosmos.react&!buff.starweavers_weft.react') if v['tc_starfall_st']
+        else a('starfall', 'spell_targets>=2&buff.touch_the_cosmos.react'),
+        a('starsurge', 'buff.touch_the_cosmos.react' + ('|buff.starweavers_weft.react' if v['starweaver'] else '')),
         ss_main,
         inc,
     ] + moons + [mush_st] + st_filler)
@@ -142,12 +147,12 @@ def build(v):
         a('moonfire', 'spell_targets<%d' % v['mf_cap'], 'dot.moonfire.remains<2|dot.moonfire.refreshable&' + ECLIPSE_DOWN)
         if v['dot_gate'] else a('moonfire', 'spell_targets<%d' % v['mf_cap'], 'dot.moonfire.remains<2|dot.moonfire.refreshable'),
         a('eclipse', ECLIPSE_DOWN),
-        a('fury_of_elune', FOE_GATE_AOE),
+        a('fury_of_elune', FOE_LOOSE_AOE if v['foe_loose'] else FOE_GATE_AOE),
         fon,
         a('celestial_alignment', '!' + CD_ACTIVE, ECLIPSE_DOWN + '|fight_remains<20'),
-        a('starfall', 'buff.touch_the_cosmos.react'),
-        a('starfall', 'astral_power>50&target.time_to_die>5'),
-        a('starsurge', 'buff.starfall.up&buff.touch_the_cosmos.react'),
+        a('starfall', 'buff.touch_the_cosmos.react' + ('|buff.starweavers_warp.react' if v['starweaver'] else '')),
+        a('starfall', 'astral_power>=%s&target.time_to_die>5' % v['sf_floor']),
+        a('starsurge', 'buff.starfall.up&(buff.touch_the_cosmos.react' + ('|buff.starweavers_weft.react' if v['starweaver'] else '') + ')'),
         a('starsurge', 'buff.starfall.up&astral_power>80&buff.starlord.stack<3'),
         mush_aoe,
     ] + aoe_filler)
@@ -181,7 +186,8 @@ def build(v):
 
 DEFAULTS = dict(filler='wrath', grove_lines=True, spender='floor', dot_gate=True,
                 inc_foe_align=False, inc_no_ascendant=False, opener=True,
-                potion='off', mf_cap=99)
+                potion='off', mf_cap=99, starweaver=False, tc_starfall_st=False, foe_loose=False, foe_st_gate=True,
+                ss_floor=50, sf_floor=50)
 
 VARIANTS = {
     'raid_ferraz':   ({}, 'Estado ANTIGO do arquivo (Wrath filler, Grove lines, piso fixo)'),
@@ -205,6 +211,38 @@ VARIANTS = {
                       'raid_v2 sem as listas de opener'),
     'v2_no_wrath':   (dict(filler='starfire_only', grove_lines=False, spender='approx'),
                       'raid_v2 sem Wrath nenhum, so Starfire'),
+    # --- build com Starweaver (2026-10-24), perfil Ferraz_balance_raid_sw.simc ---
+    # Corre com BAL_BUILD=sw. nb_base = o que o arquivo faz hoje (sem Starweaver).
+    'nb_base':   (dict(filler='starfire_only', grove_lines=False, spender='approx'),
+                  'Arquivo atual na build nova'),
+    'nb_sw':     (dict(filler='starfire_only', grove_lines=False, spender='approx', starweaver=True),
+                  '+ Warp->Starfall, Weft->Starsurge'),
+    'nb_sw_tc':  (dict(filler='starfire_only', grove_lines=False, spender='approx', starweaver=True,
+                       tc_starfall_st=True),
+                  '+ Touch the Cosmos vai para Starfall em alvo unico'),
+    'nb_sw_foe': (dict(filler='starfire_only', grove_lines=False, spender='approx', starweaver=True,
+                       foe_loose=True),
+                  '+ Fury of Elune solto em AoE'),
+    'nb_all':    (dict(filler='starfire_only', grove_lines=False, spender='approx', starweaver=True,
+                       tc_starfall_st=True, foe_loose=True),
+                  'Todas as mudancas da build nova'),
+    # --- rodada 2 (2026-10-24): harness igual ao arquivo v11 -------------------
+    # r2_base = v11: Starweaver, Fury de ST sem gate (o arquivo lanca solto), pocao no burst/fim.
+    'r2_base':   (dict(filler='starfire_only', grove_lines=False, spender='approx', starweaver=True,
+                       foe_st_gate=False, potion='burst_end'), 'v11 fiel ao arquivo'),
+    'r2_ss40':   (dict(filler='starfire_only', grove_lines=False, spender='approx', starweaver=True,
+                       foe_st_gate=False, potion='burst_end', ss_floor=40), 'Starsurge em Eclipse com AP>=40'),
+    'r2_ss30':   (dict(filler='starfire_only', grove_lines=False, spender='approx', starweaver=True,
+                       foe_st_gate=False, potion='burst_end', ss_floor=30), 'Starsurge em Eclipse com AP>=30'),
+    'r2_sscost': (dict(filler='starfire_only', grove_lines=False, spender='cost', starweaver=True,
+                       foe_st_gate=False, potion='burst_end'), 'Starsurge em Eclipse sempre que nao for gratis (como o SimC)'),
+    'r2_tc':     (dict(filler='starfire_only', grove_lines=False, spender='approx', starweaver=True,
+                       foe_st_gate=False, potion='burst_end', tc_starfall_st=True), 'Touch the Cosmos para Starfall em ST'),
+    'r2_sf45':   (dict(filler='starfire_only', grove_lines=False, spender='approx', starweaver=True,
+                       foe_st_gate=False, potion='burst_end', sf_floor=45), 'Starfall AoE com AP>=45'),
+    # build ANTIGA (perfil Ferraz_balance_raid.simc, sem BAL_BUILD) com o arquivo v10 fiel:
+    'r2_old':    (dict(filler='starfire_only', grove_lines=False, spender='approx', starweaver=False,
+                       foe_st_gate=False, potion='burst_end'), 'Build antiga + arquivo v10 (sem Starweaver)'),
     # --- pocao ---------------------------------------------------------------
     # NOTE: the YAML now carries the potion line WITH the fight_remains<=30
     # clause, so `v3_potion_end` — not `v3` — is what the file actually does.
@@ -271,7 +309,7 @@ def main(argv):
         results[n] = r
         print('%.0f DPS' % r[0] if r else 'failed')
 
-    ref = results.get('raid_ferraz')
+    ref = results.get('r2_base') or results.get('nb_base') or results.get('raid_ferraz')
     print('\n%-16s %10s %8s %10s  %s' % ('variant', 'DPS', '+/-', 'vs atual', 'what'))
     print('-' * 78)
     for n in names:

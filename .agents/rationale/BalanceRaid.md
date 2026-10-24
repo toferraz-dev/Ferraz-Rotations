@@ -850,3 +850,26 @@ O -1,6% medido ao remover o opener continua valendo: a lista ficou, só o gatilh
 - Fluid Form andando lança Moonkin Form direto.
 - Labels "(Eclipse Down)" com condição de Eclipse ativo viraram "(In Eclipse)".
 - Config reorganizado, chaves e defaults intocados; `name=` em todas as linhas de ação.
+
+
+---
+
+## v11.0.0 (2026-10-24): build com Starweaver
+
+`FerrazBalanceRaid.yaml`
+
+```
+O usuario trouxe uma build nova (Starweaver, Meteorites, Meteor Storm, Radiant Moonlight, Lunation;
+sem Rattle the Stars, Power of Goldrinn, Nature's Balance/Grace, Arcane Affinity). A hero continua
+Elune's Chosen: os 13 nos de Keeper of the Grove na string sao a arvore inativa que o jogo exporta.
+Todo talent.X lido pelo arquivo resolve; nada quebra.
+
+O arquivo nao tinha NENHUMA linha starweavers_* (saiu quando a build deixou de ter Starweaver, ver
+c0e87e5). Portadas as da M+: Warp (buff.starweavers_warp) -> Starfall gratis, Weft -> Starsurge
+gratis, nas listas st, aoe, opener_st, opener_aoe, moving_st, moving_aoe. Medido: +4.49% em 1 alvo,
++5.49% em 3 (sim/BALANCE_RAID_AB_RESULTS.md). Usa .react, igual ao SimC e ao resto do arquivo.
+
+Testado e NAO aplicado: Touch the Cosmos para Starfall em alvo unico (o starfall_cosmos do SimC da
+build avalia true; mas so +0.18%), e Fury of Elune solto em AoE (0). Radiant Moonlight tambem da
+-15s de cooldown e +50% de dano ao Fury of Elune, que a lista ja lanca no cooldown em ST.
+```

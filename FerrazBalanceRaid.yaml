@@ -1,5 +1,5 @@
 
-version: "10.0.0"
+version: "11.0.0"
 author: Ferraz
 patch: "12.1"
 spec: 102
@@ -14,7 +14,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-10-24 | Patch: 12.1 | Version: 10.0.0"
+    text: "Last update: 2026-10-24 | Patch: 12.1 | Version: 11.0.0"
 
   hp_legend:
     section: "Info"
@@ -27,7 +27,7 @@ config:
     section: "Talents"
     type: copy_text
     label: "Recommended Talent String"
-    text: "CYGAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWoMbNjxMDwsMzMzMYYGjZWmhxMWYZmlZGjZ2wAgx2yMDGz2IwEAAAgFzMzMD2MMGzAAYmBLDA"
+    text: "CYGADBD3hSPCL9Y9gz68WcKvMAAAAAAAAAAAAAAAAAWoMbNjxMDMmFzMzMYYGjZWmZzMzYhlZWGjZGLYYAGbbzMLbzsNbz0MzyMBAAAYhZmZGsZgxMAmZwMDMA"
 
   # ---- Cooldowns ---------------------------------------------------
   use_trinket_1:
@@ -253,6 +253,8 @@ variables:
 # Numeric ids where the name also matches a talent passive:
 #   450360 Touch the Cosmos free proc (talent 450356), 279709 Starlord buff (talent 202345),
 #   430589 Atmospheric Exposure debuff (talent 429532).
+# Starweaver: Starsurge can make Starfall free (buff.starweavers_warp), Starfall can make Starsurge
+# free (buff.starweavers_weft). Measured on this build: +4.5% single target, +5.5% at 3 targets.
 lists:
   emergency:
     - barkskin,name="Barkskin (Emergency)",range_check=none,off_gcd=true,ignore_queue=true,if=health.pct<=config.emergency_hp
@@ -325,7 +327,8 @@ lists:
   moving_st:
     - moonfire,name="Moonfire (Refresh)",if=debuff.moonfire.remains<2|debuff.moonfire.refreshable
     - sunfire,name="Sunfire (Refresh)",if=debuff.sunfire.remains<2|debuff.sunfire.refreshable
-    - starsurge,name="Starsurge (Proc)",if=buff.450360.react
+    - starfall,name="Starfall (Warp Proc)",if=buff.starweavers_warp.react
+    - starsurge,name="Starsurge (Proc)",if=buff.450360.react|buff.starweavers_weft.react
     - starsurge,name="Starsurge (AP Dump)",if=astral_power>60
     - fury_of_elune,name="Fury of Elune (Moving)"
     - moonfire,name="Moonfire (Moving Filler)"
@@ -334,9 +337,9 @@ lists:
   moving_aoe:
     - sunfire,name="Sunfire (Refresh)",if=debuff.sunfire.remains<2|debuff.sunfire.refreshable
     - moonfire,name="Moonfire (Refresh)",if=debuff.moonfire.remains<2|debuff.moonfire.refreshable
-    - starfall,name="Starfall (Proc)",if=buff.450360.react
+    - starfall,name="Starfall (Proc)",if=buff.450360.react|buff.starweavers_warp.react
     - starfall,name="Starfall (AP Dump)",if=astral_power>50
-    - starsurge,name="Starsurge (Proc under Starfall)",if=buff.starfall.up&buff.450360.react
+    - starsurge,name="Starsurge (Proc under Starfall)",if=buff.starfall.up&(buff.450360.react|buff.starweavers_weft.react)
     - starsurge,name="Starsurge (AP Dump under Starfall)",if=buff.starfall.up&astral_power>60
     - fury_of_elune,name="Fury of Elune (Moving)",if=!talent.sundered_firmament|debuff.430589.remains<2
     - sunfire,name="Sunfire (Moving Filler)"
@@ -349,9 +352,10 @@ lists:
     - lunar_eclipse,name="Lunar Eclipse",if=var.eclipse_down
     - fury_of_elune,name="Fury of Elune"
 
-    - starsurge,name="Starsurge (Proc)",if=buff.450360.react
+    - starfall,name="Starfall (Warp Proc)",if=buff.starweavers_warp.react
+    - starsurge,name="Starsurge (Proc)",if=buff.450360.react|buff.starweavers_weft.react
 
-    - starsurge,name="Starsurge (In Eclipse)",if=!var.eclipse_down&astral_power>=50
+    - starsurge,name="Starsurge (In Eclipse)",if=!var.eclipse_down&astral_power>=40
     - starsurge,name="Starsurge (AP Capping)",if=var.eclipse_down&astral_power.deficit<20
 
     - incarnation_chosen_of_elune,name="Incarnation",global_delay=500,if=!var.cd_active&buff.ascendant_stars.down&(!talent.elunes_guidance|cooldown.lunar_eclipse.charges_fractional<1.5)
@@ -365,9 +369,9 @@ lists:
     - lunar_eclipse,name="Lunar Eclipse",if=var.eclipse_down
     - fury_of_elune,name="Fury of Elune",if=!talent.sundered_firmament|debuff.430589.remains<2
     - incarnation_chosen_of_elune,name="Incarnation",global_delay=500,if=!var.cd_active&(var.eclipse_down|fight_remains<20)
-    - starfall,name="Starfall (Proc)",if=buff.450360.react
+    - starfall,name="Starfall (Proc)",if=buff.450360.react|buff.starweavers_warp.react
     - starfall,name="Starfall (AP Dump)",if=(astral_power>50)&target.time_to_die>5
-    - starsurge,name="Starsurge (Proc under Starfall)",if=buff.starfall.up&buff.450360.react
+    - starsurge,name="Starsurge (Proc under Starfall)",if=buff.starfall.up&(buff.450360.react|buff.starweavers_weft.react)
     - starsurge,name="Starsurge (AP Dump under Starfall)",if=buff.starfall.up&astral_power>80&buff.279709.stack<3
     - starfire,name="Starfire (Filler)"
 
@@ -375,7 +379,8 @@ lists:
     - moonfire,name="Moonfire (Opener)",if=debuff.moonfire.remains<2|debuff.moonfire.refreshable&var.eclipse_down
     - sunfire,name="Sunfire (Opener)",if=debuff.sunfire.remains<2|debuff.sunfire.refreshable&var.eclipse_down
     - lunar_eclipse,name="Lunar Eclipse (Opener)",if=var.eclipse_down
-    - starsurge,name="Starsurge (Ascendant Stars or Proc)",if=buff.ascendant_stars.up|buff.450360.react
+    - starfall,name="Starfall (Warp Proc)",if=buff.starweavers_warp.react
+    - starsurge,name="Starsurge (Ascendant Stars or Proc)",if=buff.ascendant_stars.up|buff.450360.react|buff.starweavers_weft.react
     - fury_of_elune,name="Fury of Elune (Opener)"
     - incarnation_chosen_of_elune,name="Incarnation (Opener)",global_delay=500,if=!var.cd_active
     - celestial_alignment,name="Celestial Alignment (Opener)",global_delay=500,if=!talent.incarnation_chosen_of_elune&!var.cd_active
@@ -389,7 +394,7 @@ lists:
     - incarnation_chosen_of_elune,name="Incarnation (Opener)",global_delay=500,if=!var.cd_active
     - celestial_alignment,name="Celestial Alignment (Opener)",global_delay=500,if=!talent.incarnation_chosen_of_elune&!var.cd_active
     - lunar_eclipse,name="Lunar Eclipse (Opener)",if=var.eclipse_down
-    - starfall,name="Starfall (Opener)",if=astral_power>50|buff.ascendant_stars.up
+    - starfall,name="Starfall (Opener)",if=astral_power>50|buff.ascendant_stars.up|buff.starweavers_warp.react
     - starsurge,name="Starsurge (Opener, Ascendant Stars)",if=buff.starfall.up&buff.ascendant_stars.up
     - starfire,name="Starfire (Opener, Ascendant Stars)",if=buff.ascendant_stars.up
 

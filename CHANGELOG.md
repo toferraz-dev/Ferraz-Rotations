@@ -24,6 +24,13 @@ Player-facing changes to the Ferraz rotations, newest first. Each entry names th
 - Remove Corruption now follows Simia's standard dispel: it cleanses the poisons and curses on Simia's dispel list from anyone in the party, you included, with no setting to turn on.
 - The "Remove Corruption - Self" and "Remove Corruption - Party" options were removed.
 
+### Balance · Raid · v11.0.0
+- New recommended talents: a build with Starweaver, Meteorites, Meteor Storm, Radiant Moonlight and Lunation (still Elune's Chosen). Copy the new string from the rotation panel.
+- Starweaver is now used: a free Starfall is cast as soon as it procs, and so is a free Starsurge. Before, those free casts expired unused. Worth about +4.5% damage on a single target and +5.5% on 3 targets in SimulationCraft on the new build.
+- Also works while moving and in the opener.
+- Starsurge in Eclipse now goes out from 40 Astral Power instead of 50 (+0.4% on a single target).
+- Measured against the previous build on the same SimulationCraft: the new build is about +16% with 2 targets and +12% with 3, and 2% behind on pure single target. The previous build's string is in the Balance Raid guide for single-target-only fights.
+
 ### Balance · Raid · v10.0.0
 - Remove Corruption now follows Simia's standard dispel: it cleanses the poisons and curses on Simia's dispel list from anyone in the party, you included, with no setting to turn on.
 - The "Remove Corruption - Self" and "Remove Corruption - Party" options were removed.
