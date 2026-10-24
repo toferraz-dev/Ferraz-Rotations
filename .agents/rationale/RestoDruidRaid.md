@@ -990,3 +990,59 @@ defensiva. Duas fontes possíveis de aperto em cima do canal, as duas tratadas:
   de `lastcast` do M+, porque `player.casting.spell_id` pode vir vazio no meio do canal.
 
 Não confirmado em jogo qual das duas cortou o canal.
+
+---
+
+## v27.0.0 (2026-10-24): log comparison against the world #1 raid Resto (Greenashen)
+
+`FerrazRestoDruidRaid.yaml`
+
+```
+Source: Greenashen_f31 vs Tassiana_f8 (this rotation), Ula'tek. Spec and hero
+trees are IDENTICAL (diffed node by node via SimC); class tree differs only
+in damage/utility. So the gap is GCD usage, not talents. Real GCDs (same-ms
+casts collapsed, Tranquility ticks collapsed):
+
+                 Greenashen  Tassiana
+  idle               7.4%     14.5%
+  Rejuv/min          23.1      14.8
+  WG/min              4.0       2.5   (median gap 12.6s vs 18.7s, CD ~10.7s)
+  DPS/min             4.4       6.6
+  avg active Rejuv    8.1       6.0
+
+1. Rejuvenation Blanket (end of active_healing, before damage). Every Rejuv
+   line was gated on HP<80% and !abundance_safe (5 Rejuv+Germ lasting), a
+   cap sized for a 5-player party. In a raid it stopped spreading at a
+   quarter of the raid and the GCD went idle or to damage. Nurturing
+   Dormancy (+2s per tick on a full-health target, up to +6s) makes a blanket
+   on full-health targets wait for damage instead of overhealing; the
+   reference's Rejuv overheal is LOWER than ours (37.9% vs 46.5%) with 56%
+   more casts. Capped by raid_rejuv_blanket_max (10; reference averages 8,
+   peaks 17) and raid_rejuv_blanket_mana (25%).
+
+2. Self Swiftmend. Without Verdant Infusion Swiftmend CONSUMES a HoT.
+   Reference: 51 of 53 Swiftmends consumed the Regrowth on himself. Rampant
+   Growth copies every Regrowth's HoT onto the Lifebloom target (self), so
+   that is a free copy. Ours went to the lowest raider with a HoT and ate
+   their Rejuv (22), Regrowth (15) or WG (7). Blooming Frenzy fires on any
+   Swiftmend target (3.5 blooms/cast in both logs). Implant grows Symbiotic
+   Bloom on the Swiftmend target: self uptime 57.6% vs 14.5%. The line
+   existed as "Self Swiftmend (Archdruid)" and was dropped in dd8f8cf.
+
+3. Wild Growth moved above Lifebloom upkeep and Abundance Regrowth.
+   buff.abundance.up is true ~99% of a raid fight, so "Abundance Regrowth" is
+   a plain Regrowth<85% and took 26 GCDs while WG was ready; 19 damage GCDs
+   also went out with WG ready (2-under-90% gate false). Default threshold
+   90 -> 95. Reference WG overheal 36.3% vs ours 37.7%: the extra casts are
+   not wasted.
+
+4. Ironbark (Tank) gets !cycle.is_player: 4 of 4 Ironbarks landed on the
+   healer with "Tanks Only" set.
+
+5. Convoke threshold 70 -> 75: it sat ready 43s and 31s past its ~60s CD.
+
+Not changed: Nature's Cure (23 dispels of Poisonous Bite on the tank is a
+raid assignment), DPS sliders (the blanket now runs before damage).
+Gear note for the user, not the rotation: reference 1835 haste / 139 crit vs
+1395 / 443, ilvl 336 vs 329.
+```

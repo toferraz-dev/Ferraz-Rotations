@@ -4,6 +4,13 @@ Player-facing changes to the Ferraz rotations, newest first. Each entry names th
 
 ## 2026-10-24
 
+### Restoration · Raid · v27.0.0
+- Free globals now go to a Rejuvenation blanket on raid members who do not have one, before any damage spell. New sliders: *Rejuvenation Blanket - Max Active* (default 10) and *Min Mana %* (default 25). The old cap stopped spreading Rejuvenation after 5, a number made for a 5-player party.
+- Swiftmend goes on yourself first. It eats the free Regrowth copy that Rampant Growth puts on your Lifebloom target, instead of eating an injured raider's Rejuvenation or Wild Growth. Soul of the Forest, Tree of Life stacks, Everbloom's bloom burst and Symbiotic Bloom still trigger.
+- Wild Growth goes out much closer to its cooldown: it now comes before Lifebloom upkeep and Abundance Regrowth, and its default health line is 95%.
+- Ironbark set to *Tanks Only* never lands on you.
+- Convoke's default health line is 75%, so it no longer sits ready for half a minute.
+
 ### Balance · Mythic+ · v14.0.0
 - Remove Corruption now follows Simia's standard dispel: it cleanses the poisons and curses on Simia's dispel list from anyone in the party, you included, with no setting to turn on.
 - The "Remove Corruption - Self" and "Remove Corruption - Party" options were removed.

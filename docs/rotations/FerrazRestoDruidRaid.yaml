@@ -1,5 +1,5 @@
 
-version: "26.0.0"
+version: "27.0.0"
 author: Ferraz
 patch: "12.1"
 spec: 105
@@ -24,7 +24,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-10-23 | Patch: 12.1 | Version: 26.0.0"
+    text: "Last update: 2026-10-24 | Patch: 12.1 | Version: 27.0.0"
 
   hp_legend:
     section: "Info"
@@ -93,8 +93,8 @@ config:
     type: slider
     min: 25
     max: 99
-    default: 90
-    description: "Members counted for Wild Growth must be below this effective health."
+    default: 95
+    description: "Members counted for Wild Growth must be below this effective health. High on purpose: a 20-player raid almost always has 6 injured targets, and every Wild Growth also grows a Symbiotic Bloom (Implant)."
 
   raid_wild_growth_members:
     label: "Wild Growth - Min Members"
@@ -104,6 +104,24 @@ config:
     max: 20
     default: 2
     description: "Wild Growth once this many members are below the Wild Growth HP %."
+
+  raid_rejuv_blanket_max:
+    label: "Rejuvenation Blanket - Max Active"
+    section: "Healing"
+    type: slider
+    min: 0
+    max: 20
+    default: 10
+    description: "When nothing else needs a heal, keep Rejuvenation rolling on raid members who do not have it, until this many of your Rejuvenations are active. Nurturing Dormancy extends Rejuvenation on full-health targets, so the blanket waits for the next damage instead of overhealing. Runs before any damage spell. 0 = off."
+
+  raid_rejuv_blanket_mana:
+    label: "Rejuvenation Blanket - Min Mana %"
+    section: "Healing"
+    type: slider
+    min: 0
+    max: 100
+    default: 25
+    description: "The blanket stops below this mana, so it never eats the mana you need for real damage."
 
   raid_natures_swiftness_threshold:
     label: "Nature's Swiftness HP % (effective)"
@@ -137,7 +155,7 @@ config:
     type: slider
     min: 25
     max: 99
-    default: 70
+    default: 75
     description: "Members counted for Convoke (and the trinkets and potion synced to it) must be below this effective health."
 
   raid_convoke_members:
@@ -477,7 +495,9 @@ lists:
 
   defensives:
     - barkskin,name="Barkskin",range_check=none,off_gcd=true,ignore_queue=true,if=(health.pct-incoming.pct)<=config.raid_barkskin_threshold
-    - ironbark,name="Ironbark (Tank)",cycle=tanks,cycle_order=health.pct,if=(config.raid_ironbark_target=1&cycle.health.pct<config.raid_ironbark_threshold&cycle.buff.ironbark.down)&cycle.range<=40
+    # !cycle.is_player: you are not a tank. A log showed 4 of 4 Ironbarks on the healer with
+    # "Tanks Only" set, which only happens if the tank list ever resolves to the player.
+    - ironbark,name="Ironbark (Tank)",cycle=tanks,cycle_order=health.pct,if=(config.raid_ironbark_target=1&!cycle.is_player&cycle.health.pct<config.raid_ironbark_threshold&cycle.buff.ironbark.down)&cycle.range<=40
     - ironbark,name="Ironbark (Members)",cycle=members,cycle_order=health.pct,if=(config.raid_ironbark_target=2&cycle.health.pct<config.raid_ironbark_threshold&cycle.buff.ironbark.down)&cycle.range<=40
     - bear_form,name="Panic Bear",if=health.pct<config.raid_frenzied_regen_threshold&!buff.bear_form.up&cooldown.frenzied_regeneration.ready&!var.tol_up
     - frenzied_regeneration,name="Frenzied Regen",if=buff.bear_form.up&health.pct<config.raid_frenzied_regen_threshold
@@ -495,6 +515,11 @@ lists:
     - combat_potion,off_gcd=true,ignore_queue=true,delay=1500,global_delay=400,name="Combat Potion (before Convoke)",if=combat_potion.ready&config.raid_use_potion&(cooldown.convoke_the_spirits.ready|!talent.convoke_the_spirits)&group.count(cycle.health.effective.pct<config.raid_convoke_threshold&cycle.range<=40)>=config.raid_convoke_members&!buff.bear_form.up
     - convoke_the_spirits,global_delay=750,name="Convoke (Heal)",if=group.count(cycle.health.effective.pct<config.raid_convoke_threshold&cycle.range<=40)>=config.raid_convoke_members&var.caster_form&var.potion_done
     - tranquility,global_delay=750,name="Tranquility",if=!config.raid_manual_tranquility&group.count(cycle.health.effective.pct<config.raid_tranquility_threshold&cycle.range<=40)>=config.raid_tranquility_members&!player.moving
+    # Swiftmend consumes a HoT on its target (no Verdant Infusion talented). Rampant Growth copies
+    # every Regrowth's HoT onto the Lifebloom target, so with Lifebloom on you Swiftmend eats that
+    # free copy instead of an injured raider's Rejuvenation or Wild Growth. Its procs (Soul of the
+    # Forest, Reforestation, Everbloom's Blooming Frenzy, Implant's Symbiotic Bloom) fire on any target.
+    - swiftmend.player,name="Self Swiftmend (Rampant Growth Regrowth)",range_check=none,if=cooldown.swiftmend.ready&(buff.regrowth.up|buff.rejuvenation.up|buff.wild_growth.up)
     - swiftmend,name="Swiftmend (Proactive Spread)",cycle=members,cycle_order=health.pct,if=(cooldown.swiftmend.ready&(cycle.buff.rejuvenation.up|cycle.buff.regrowth.up|cycle.buff.wild_growth.up))&cycle.range<=40
 
   abundance_maintenance:
@@ -517,18 +542,25 @@ lists:
     - rejuvenation,name="SotF Germination",cycle=members,cycle_order=buff.rejuvenation.remains,if=(var.has_soul&talent.germination&cycle.buff.rejuvenation.up&(cycle.buff.rejuvenation_germination.down|cycle.buff.rejuvenation_germination.remains<1.5))&cycle.range<=40
     - rejuvenation,name="SotF Rejuvenation",cycle=members,cycle_order=buff.rejuvenation.remains,if=(var.has_soul&cycle.buff.rejuvenation.remains<1.5)&cycle.range<=40
 
+    # Wild Growth near its cooldown: above Lifebloom upkeep and Abundance Regrowth, which in a raid
+    # (Abundance up almost all fight) is a plain Regrowth that kept a ready Wild Growth waiting.
+    - wild_growth,name="Wild Growth",range_check=none,if=group.count(cycle.health.effective.pct<config.raid_wild_growth_threshold&cycle.range<=40)>=config.raid_wild_growth_members
     - lifebloom,cycle=members,name="Self Lifebloom (Everbloom)",range_check=none,after=300,if=cycle.is_player&config.raid_lifebloom_target=1&talent.everbloom&(cycle.buff.lifebloom.down|cycle.buff.lifebloom.remains<4.5)
     - lifebloom,name="Lifebloom (Tank, Everbloom)",cycle=tanks,cycle_order=health.pct,if=config.raid_lifebloom_target=2&talent.everbloom&(cycle.buff.lifebloom.down|cycle.buff.lifebloom.refreshable)&cycle.range<=40
 
     - regrowth,name="Abundance Regrowth",cycle=members,cycle_order=health.pct,if=(buff.abundance.up&cycle.health.effective.pct<config.raid_regrowth_threshold)&cycle.range<=40
 
-    - wild_growth,name="Wild Growth",range_check=none,if=group.count(cycle.health.effective.pct<config.raid_wild_growth_threshold&cycle.range<=40)>=config.raid_wild_growth_members
     - regrowth,name="Clearcasting Regrowth",cycle=members,cycle_order=health.pct,if=(player.combat&buff.clearcasting.up&cycle.health.effective.pct<99)&cycle.range<=40
 
     - rejuvenation,name="Rejuvenation",cycle=members,cycle_order=buff.rejuvenation.remains,if=(cycle.buff.rejuvenation.remains<1.5&cycle.health.effective.pct<config.raid_rejuvenation_threshold&!var.abundance_safe)&cycle.range<=40
     - rejuvenation,name="Germination",cycle=members,cycle_order=health.pct,if=(talent.germination&cycle.buff.rejuvenation.up&(cycle.buff.rejuvenation_germination.down|cycle.buff.rejuvenation_germination.remains<1.5)&cycle.health.effective.pct<config.raid_rejuvenation_threshold&!var.abundance_safe)&cycle.range<=40
 
     - regrowth,name="Regrowth",cycle=members,cycle_order=health.pct,if=(cycle.health.effective.pct<config.raid_regrowth_threshold)&cycle.range<=40
+
+    # Free GCDs go to Rejuvenation on whoever lacks it, before damage. The 5-HoT Abundance cap
+    # above is sized for a 5-player party; in a raid it stopped spreading with a quarter of the
+    # raid covered. Instant, so it also fills GCDs while moving.
+    - rejuvenation,name="Rejuvenation Blanket",cycle=members,cycle_order=health.pct,if=group.count(cycle.buff.rejuvenation.up)<config.raid_rejuv_blanket_max&mana.pct>=config.raid_rejuv_blanket_mana&cycle.buff.rejuvenation.down&cycle.range<=40
   utility:
     - innervate,cycle=members,name="Innervate",off_gcd=true,delay=150,range_check=none,if=cycle.is_player&talent.innervate&mana.pct<config.raid_innervate_threshold
   ranged_dps:
