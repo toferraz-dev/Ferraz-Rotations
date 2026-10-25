@@ -2,6 +2,11 @@
 
 Player-facing changes to the Ferraz rotations, newest first. Each entry names the rotation and the version that shipped it.
 
+## 2026-10-25
+
+### Guardian · Mythic+ · v5.1.0
+- Heartstop Poison (Murder Row) is now dispelled from 2 stacks instead of 4, on you and on the party. Dispelling yourself with it is covered by its own line.
+
 ## 2026-10-24
 
 ### Restoration · Mythic+ · v36.0.0

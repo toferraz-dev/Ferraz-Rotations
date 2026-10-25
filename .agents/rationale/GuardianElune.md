@@ -1231,3 +1231,20 @@ Não medido: as travas que bloqueiam o weave são inertes no SimC.
   está no frame de aliado morto com Rebirth pronto, ele bloqueia Ironfur e Maul.
 - Gate de 3 Ironfur no root cleanse: Ironfur empilha de verdade em jogo (confirmado pelo
   Ferraz), apesar do SimC mostrar `Stacks: 1 maximum` no 192081.
+
+
+---
+
+## v5.1.0 (2026-10-25): Heartstop Poison from 2 stacks
+
+`FerrazGuardianElune.yaml`
+
+```
+The user reported the Guardian not dispelling Heartstop Poison. Two ids exist (simia_data_dump/_aura.yaml):
+474515 (not in dispel_list, so dispelled by default) and 1216590 (Murder Row, stacking), which
+_dispeldata.yaml gates at stacks.any>=4. Asked to dispel at 2 stacks in this rotation only, so the
+dump is NOT edited; two engine lines read cycle.debuff.1216590.stacks.any>=2 (.any: the aura is not
+ours) ahead of the generic "Remove Corruption" line. The self line (cycle=members, cycle.is_player)
+is there because v5.0.0 replaced the old self-dispel with a single cycle=party line, and it is not
+confirmed that cycle=party includes the player. Untested in game.
+```
