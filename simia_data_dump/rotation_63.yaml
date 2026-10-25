@@ -266,9 +266,9 @@ lists:
     # pyroblast,if=buff.pyroclasm.up
     - pyroblast,if=buff.pyroclasm.up
 
-    # scorch,if=talent.scald&scorch_execute.active|buff.heat_shimmer.react&(firestarter.active|prev_gcd.1.pyroblast|prev_gcd.1.flamestrike)
+    # scorch,if=talent.scald&scorch_execute.active|buff.heat_shimmer.react&(firestarter.active|prev_gcd.1.pyroblast|prev_gcd.1.flamestrike|active_enemies<variable.sf_filler_flamestrike)
     # firestarter.active -> talent.firestarter&target.health.pct>=90
-    - scorch,if=talent.scald&var.scorch_execute|buff.heat_shimmer.up&((talent.firestarter&target.health.pct>=90)|prev_gcd.1.pyroblast|prev_gcd.1.flamestrike)
+    - scorch,if=talent.scald&var.scorch_execute|buff.heat_shimmer.up&((talent.firestarter&target.health.pct>=90)|prev_gcd.1.pyroblast|prev_gcd.1.flamestrike|enemies_around_target<var.sf_filler_flamestrike)
     # fireball
     - fireball
     # call_action_list,name=fireblast

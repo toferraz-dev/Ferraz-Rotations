@@ -103,7 +103,7 @@ variables:
   bs_inc_remains: buff.berserk.remains+buff.incarnation_avatar_of_ashamane.remains
   # cooldown.bs_inc aliases (only one of berserk/incarnation is talented; the non-talented half
   # returns 0, so fold with <? = MAX. >? = MIN would pin every one of these to 0 forever -- the
-  # same trap CLAUDE.md 8.4 documents for rotation_102's ca_inc/eclipse aggregates.
+  # same trap docs/druid.md documents for rotation_102's ca_inc/eclipse aggregates.
   bs_inc_cd_remains: cooldown.berserk.remains<?cooldown.incarnation_avatar_of_ashamane.remains
   bs_inc_cd_duration: cooldown.berserk.duration<?cooldown.incarnation_avatar_of_ashamane.duration
   bs_inc_cd_charges_fractional: cooldown.berserk.charges_fractional<?cooldown.incarnation_avatar_of_ashamane.charges_fractional

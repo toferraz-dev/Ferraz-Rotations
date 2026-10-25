@@ -54,3 +54,14 @@ energize:
   686:    { name: "Shadow Bolt",   power: soul_shards, amount: 1, spec: [266] }
   264178: { name: "Demonbolt",    power: soul_shards, amount: 2, spec: [266] }
   434506: { name: "Infernal Bolt", power: soul_shards, amount: 3, spec: [266] }
+
+# Devourer (1480). Consume 473662 (2.0s) / Devour 1217610 (1.5s) are hasted casts; at
+# high haste the next pick lands before their grant does. Fury: execute_energize_action
+# 1261710 (+8) / 1288123 (+16), sc_demon_hunter.cpp:5778/5810. Fragment: consume_base_t
+# spawns shattered_souls effect#3 (1) with Predator's Thirst 1215617 (:5757).
+# Nested `buff:` = aura stacks the same cast grants, added to buff.<id>.stack/.react.
+# Measured (tools/wcl_devourer_grant_timing.py, 6 top keys, ~4400 casts): Fury lands
+# with the cast event; the fragment lands 200-290ms after it (med 256) on ~every cast.
+# delay: 0.3 covers that travel; the hold still drops the moment the stack rises.
+  473662:  { name: "Consume", power: fury, amount: 8,  spec: [1480], buff: { id: 1245577, stacks: 1, talent: 1215617, delay: 0.3 } }
+  1217610: { name: "Devour",  power: fury, amount: 16, spec: [1480], buff: { id: 1245577, stacks: 1, talent: 1215617, delay: 0.3 } }

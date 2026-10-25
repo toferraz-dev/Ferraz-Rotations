@@ -23,6 +23,7 @@ version: 1
 #   zephyr       - AoE spell mitigated by Zephyr & Feint
 #   stopcasting  - Marks a spell that locks a school on hit; use incoming_cast.stopcasting.up to trigger stop_casting
 #   blockable    - Physical hit that can be blocked; use incoming_cast.blockable.up to fire Shield Block / active-block cooldowns
+#   knockback    - Knocks back / pushes the player (tooltip). Death's Advance: incoming_cast.player.knockback (targeted) | incoming_cast.aoe.knockback
 #   reflectable  - Can be deflected with Spell Reflection; incoming_cast.reflectable filters for the reflection reactive window (<0.3s remaining)
 #   trash        - Applies the 1.20 trash-mob affix multiplier to damage prediction (bosses use 1.15)
 #   show_on_me   - Cast bar notification shown only when the player is the cast's target (single-target spells like Polymorph/Hex)
@@ -148,7 +149,7 @@ casts:
   1263775: { name: "Fixate", tags: [avoid] }
   1282724: { name: "Dusk Frights", tags: [avoid] }
   1252429: { name: "Nullwark Blast", tags: [tank, magical] }
-  1252406: { name: "Dreadbellow", tags: [aoe, important, zephyr, trash] }   # also Voidscar Arena (S2)
+  1252406: { name: "Dreadbellow", tags: [aoe, important, zephyr, trash, knockback] }   # also Voidscar Arena (S2)
   1282665: { name: "Void Lash", tags: [stunnable] }
   1252436: { name: "Void Lash", tags: [frontal, tank, magical] }
   1252622: { name: "Flailstorm", tags: [avoid] }
@@ -464,7 +465,7 @@ casts:
   1294557: { name: "Piercing Hiss", tags: [kickable, stunnable, important, trash], damage: 135775 }   # +stunnable: stopped with a stun in high-key logs
   1294567: { name: "Paralyzing Shots", tags: [aoe, important, freedom, trash, reflectable] }   # was 1294569 (the damage id) - cast id confirmed from WCL
   1294845: { name: "Corrosive Fangs", tags: [tank, mixed, trash, reflectable], damage: 242456 }
-  1294849: { name: "Rattle", tags: [channel, aoe, important, trash] }
+  1294849: { name: "Rattle", tags: [channel, aoe, important, trash], damage: 207740 } # WCL zone 55 key-1 p50 per player per cast (2026-10-16 sweep)
   1294934: { name: "Noxious Spray", tags: [channel, frontal, tank, magical, trash, reflectable] }
   1295055: { name: "Virulent Whirl", tags: [avoid, trash] }
   1303366: { name: "Venom Burst", tags: [aoe, trash] }
@@ -472,8 +473,8 @@ casts:
   1306338: { name: "Ravenous Claws", tags: [enrage, trash, blockable], damage: 126077 }   # passive melee modifier - not a cast; `tank` dropped
   1306385: { name: "Evolve", tags: [stunnable, channel, important, trash] }
   1306517: { name: "Blood Sacrifice", tags: [aoe, important, trash], damage: 87284 }   # was 1306641 (damage id, 0 casts in WCL) - live UnitCastingInfo returns 1306517 (snapshot 2026-09-13)
-  1306668: { name: "Toxic Breath", tags: [channel, frontal, trash] }
-  1306852: { name: "Toxic Surge", tags: [channel, aoe, frontal, trash] }
+  1306668: { name: "Toxic Breath", tags: [channel, frontal, trash, reflectable] }   # +reflectable: 1 warrior reflect 0.4s into the channel (Twinfang Harrower, S2 top keys 2026-10-24). No spell target (EXBossData targetAPIExists=false): caught via the caster's unit target (CastAimedAtMe)
+  1306852: { name: "Toxic Surge", tags: [channel, aoe, frontal, trash], damage: 251809 } # WCL zone 55 key-1 p50 per player per cast (2026-10-16 sweep)
   1306893: { name: "Unstable Totem", tags: [aoe, trash] }
   1306911: { name: "Dismember", tags: [tank, physical, trash, blockable], damage: 581894 }
   1307526: { name: "Bloodletting", tags: [avoid, trash] }
@@ -492,7 +493,7 @@ casts:
   1299130: { name: "Burrowing Charge", tags: [frontal] }
   1299154: { name: "Synchronized Venom", tags: [aoe, reflectable] }
   1300044: { name: "Venom Jet", tags: [frontal] }
-  1300876: { name: "Ritual of the Fang", tags: [channel, aoe] }
+  1300876: { name: "Ritual of the Fang", tags: [channel, aoe], damage: 229862 } # WCL zone 55 key-1 p50 per player per cast (2026-10-16 sweep)
   1301114: { name: "Axegrinder", tags: [avoid] }
   1301217: { name: "Bloodletting", tags: [avoid] }
   1301350: { name: "Chop Down", tags: [channel, tank, physical, reflectable], damage: 968707 } # was 484912 (one hit); whole-channel total per player, WCL key-1 p50 (wcl_dmg_audit.py 2026-10-05)
@@ -516,10 +517,10 @@ casts:
   1242135: { name: "Grievous Gash", tags: [tank, physical, trash, blockable] }
   1242138: { name: "Solar Breath", tags: [frontal, trash] }
   1242180: { name: "Lightwarden's Blight", tags: [avoid, trash] }
-  1250100: { name: "Tongue Toss", tags: [tank, physical, trash], damage: 290947 }
+  1250100: { name: "Tongue Toss", tags: [tank, physical, trash, knockback], damage: 290947 }
   1250829: { name: "Potad-Toss", tags: [stunnable, trash] }
   1250937: { name: "Toxic Spew", tags: [aoe, important, trash] }
-  1255205: { name: "Uproot", tags: [aoe, important, trash], damage: 116379 }
+  1255205: { name: "Uproot", tags: [aoe, important, trash, knockback], damage: 116379 }
   1263636: { name: "Belch Spores", tags: [channel, avoid, trash] }
   1271385: { name: "Spouting Floret", tags: [aoe, important, trash], damage: 166192 } # was 87284 (one hit); multi-hit total per player per cast, WCL key-1 p50 (wcl_dmg_audit.py 2026-10-05)
   1301834: { name: "Light Bolt Volley", tags: [kickable, stunnable, aoe, important, trash], damage: 174568 }   # +stunnable: stopped with a stun in high-key logs
@@ -530,14 +531,14 @@ casts:
   # Blinding Vale (Boss)
   1234753: { name: "Bedrock Slam", tags: [tank, mixed], damage: 484912 }   # -aoe/-avoid: WCL zone 55 keys 20-22 sweep 2026-09-13 (CLAUDE.md 2.12)
   1234850: { name: "Lightsower Dash", tags: [frontal] }
-  1235564: { name: "Lightblossom Beam", tags: [channel, aoe] }
+  1235564: { name: "Lightblossom Beam", tags: [channel, aoe, reflectable] }   # +reflectable: 2 warrior reflects ~0.1s into the channel (Kezkitt, S2 top keys 2026-10-24)
   1235616: { name: "Light Bolt", tags: [kickable, reflectable] }
   1235752: { name: "Lightbloom Overgrowth", tags: [channel, aoe] }   # was 1235751 - never appears in logs; id confirmed from WCL
   1235828: { name: "Light-Scorched Earth", tags: [avoid], damage: 96982 }   # was 1235814 - never appears in logs; id confirmed from WCL
   1236658: { name: "Bloodthorn Roots", tags: [avoid, freedom, reflectable] }
   1236709: { name: "Thorncaller Roar", tags: [channel, aoe, avoid] }
-  1236746: { name: "Verdant Stomp", tags: [aoe], damage: 145473 }
-  1237073: { name: "Lightcrazed Frenzy", tags: [aoe] }
+  1236746: { name: "Verdant Stomp", tags: [aoe, knockback], damage: 145473 }
+  1237073: { name: "Lightcrazed Frenzy", tags: [aoe], damage: 110892 } # WCL zone 55 key-1 p50 per player per cast (2026-10-16 sweep) (5 casts only)
   1253410: { name: "Bloodthirsty Gaze", tags: [aoe] }   # was 1237090 - never appears in logs; id confirmed from WCL
   1239821: { name: "Warden's Wrath", tags: [kickable, tank, magical, reflectable] }
   1239824: { name: "Lightfire", tags: [aoe, avoid] }
@@ -548,13 +549,13 @@ casts:
   1246858: { name: "Lightbloom's Essence", tags: [aoe] }
   1247377: { name: "Oozing Xylem", tags: [aoe] }
   1247669: { name: "Lightspore Shot", tags: [kickable, stunnable, reflectable] }   # +stunnable: stopped with a stun in high-key logs
-  1247685: { name: "Thornspike", tags: [tank, mixed, reflectable] }
+  1247685: { name: "Thornspike", tags: [tank, mixed, reflectable, knockback] }
   1261011: { name: "Fan Of Thorns", tags: [channel, avoid] }
 
   # Den of Nalorakk
   1297699: { name: "Rotten Supplies", tags: [avoid, trash, reflectable] }
   1238053: { name: "Mother's Wrath", tags: [enrage, trash] }   # passive melee modifier - not a cast; `tank` dropped
-  1238687: { name: "Feast of Misery", tags: [channel, aoe, important, trash] }
+  1238687: { name: "Feast of Misery", tags: [channel, aoe, important, trash], damage: 184612 } # WCL zone 55 key-1 p50 per player per cast (2026-10-16 sweep)
   1238760: { name: "Starvation Effigy", tags: [important, trash] }
   1239394: { name: "Scavenge", tags: [kickable, stunnable, trash] }   # +stunnable: 14 casts stopped by stuns in key-14/15 logs
   1239860: { name: "Cryo Surge", tags: [avoid, trash, reflectable] }
@@ -581,11 +582,12 @@ casts:
 
   # Den of Nalorakk (Boss)
   1234021: { name: "Earthshatter Slam", tags: [avoid, frontal] }
+  1235125: { name: "Hearty Bellow", tags: [aoe, knockback] }   # tooltip 'knocking them back'; WCL 3.0s cast, 5.0 players hit/cast, no spell target
   1234233: { name: "Spoiled Supplies", tags: [channel, aoe, reflectable], damage: 190991 } # was 96982 (one hit); whole-channel total per player, WCL key-1 p50 (wcl_dmg_audit.py 2026-10-05)
   1234681: { name: "Ravenous Bellow", tags: [aoe] }
   1235548: { name: "Glacial Torment", tags: [aoe, reflectable] }
   1235623: { name: "Raging Squall", tags: [avoid], damage: 339438 }
-  1235656: { name: "Frozen Tempest", tags: [channel, aoe] }
+  1235656: { name: "Frozen Tempest", tags: [channel, aoe, knockback], damage: 258597 } # WCL zone 55 key-1 p50 per player per cast (2026-10-16 sweep)
   1235783: { name: "Shattering Frostspike", tags: [avoid] }
   1235829: { name: "Winter's Shroud", tags: [kickable, stunnable, aoe], damage: 96982 }   # +stunnable: stopped with a stun in high-key logs
   1242860: { name: "Echoing Maul", tags: [aoe, avoid], damage: 193965 }
@@ -609,7 +611,7 @@ casts:
   270492: { name: "Hex", tags: [kickable, stunnable, important, trash, reflectable] }   # +stunnable: stopped with a stun in high-key logs
   270497: { name: "Healing Tide Totem", tags: [important, trash] }
   270502: { name: "Hunting Leap", tags: [stunnable, channel, frontal, trash], damage: 145473 }   # also cast by the CC-immune Skeletal Hunting Raptor: NoStun 137487 in _npcdata.yaml, not a tag change
-  270514: { name: "Seismic Upheaval", tags: [avoid, trash] }
+  270514: { name: "Seismic Upheaval", tags: [avoid, trash, aoe, knockback] }
   270889: { name: "Overload", tags: [channel, avoid, trash] }
   270901: { name: "Unholy Mending", tags: [kickable, purge, important, trash] }   # -stunnable: Seneschal M'bara (134251) took 0 CC in 1460 debuff events / 0 of 17 cast windows, WCL zone 55 keys 21, 2026-09-22
   270920: { name: "Bind Soul", tags: [kickable, channel, trash] }
@@ -667,7 +669,7 @@ casts:
   1214980: { name: "Health Funnel", tags: [kickable, stunnable, channel, trash] }
   1215985: { name: "Fel Beam", tags: [avoid, freedom, important, trash] }   # +freedom: its debuff 1218187 is dispelled by Freedom in key-15 logs
   1216529: { name: "Shield Bash", tags: [tank, physical, trash], damage: 533403 }
-  1216571: { name: "Fel Missiles", tags: [kickable, stunnable, channel, trash, reflectable] }
+  1216571: { name: "Fel Missiles", tags: [kickable, stunnable, channel, trash, reflectable], damage: 90803 } # WCL zone 55 key-1 p50 per player per cast (2026-10-16 sweep) (single target)
   1216954: { name: "Eye Beam", tags: [channel, frontal, trash] }
   1216970: { name: "Back to Work!", tags: [tank, physical, enrage, trash] }
   1217973: { name: "Curse of Doom", tags: [important, trash, reflectable] }
@@ -676,7 +678,7 @@ casts:
   1256276: { name: "Deep Corruption", tags: [important, trash] }
   1256299: { name: "Over-infused", tags: [aoe, avoid, trash] }
   1258420: { name: "Doom Bolt", tags: [kickable, trash], damage: 87284 }
-  1294770: { name: "Demonic Frenzy", tags: [aoe, tank, physical, important, trash] }
+  1294770: { name: "Demonic Frenzy", tags: [aoe, physical, important, trash], damage: 145478 } # WCL zone 55 key-1 p50 per player per cast (2026-10-16 sweep) -tank: 13/13 casts hit all 5 players
   1294824: { name: "Defiled Slam", tags: [channel, aoe, important, trash], damage: 436172 }   # -avoid: WCL zone 55 keys 20-22 sweep 2026-09-13 (CLAUDE.md 2.12)  was 145473 (one hit); whole-channel total per player, WCL key-1 p50 (wcl_dmg_audit.py 2026-10-05)
   1295035: { name: "Glaive Toss", tags: [aoe, tank, physical, trash, blockable] }
   1297676: { name: "Punishing Might", tags: [tank, physical, trash] }
@@ -688,9 +690,9 @@ casts:
   # Murder Row (Boss)
   473898: { name: "Legion Strike", tags: [frontal, tank, physical] }
   474197: { name: "Demonic Rage", tags: [aoe, physical], damage: 145473 }   # -avoid/-tank: WCL zone 55 keys 20-22 sweep 2026-09-13 (CLAUDE.md 2.12)
-  474375: { name: "Chaos Bolt", tags: [kickable], damage: 155172 }
+  474375: { name: "Chaos Bolt", tags: [kickable, reflectable], damage: 155172 }   # +reflectable: 9 warrior reflects in S2 top keys (Lithiel Cinderfury, 2026-10-24)
   474457: { name: "Fingers of Gul'dan", tags: [aoe, avoid] }
-  474478: { name: "Killing Spree", tags: [channel, aoe] }
+  474478: { name: "Killing Spree", tags: [channel, aoe], damage: 258717 } # WCL zone 55 key-1 p50 per player per cast (2026-10-16 sweep)
   474766: { name: "Same-Day Delivery", tags: [avoid] }   # was 474765 - never appears in logs; id confirmed from WCL
   1201553: { name: "Fel-Infused Freight", tags: [aoe] }
   1214357: { name: "Fire Bomb", tags: [aoe, avoid, reflectable] }
@@ -707,11 +709,12 @@ casts:
   1265412: { name: "Destabilized", tags: [channel, aoe] }
   1295455: { name: "Infernal Crush", tags: [aoe, avoid] }
   1264106: { name: "Felstorm", tags: [kickable, channel] }   # WCL: Kystia Manaheart; absent from sheet
-  1297682: { name: "Drain Life", tags: [meld, reflectable] } 
+  1297682: { name: "Drain Life", tags: [channel, meld, reflectable], damage: 385490 } # WCL zone 55 key-1 p50 per player per cast (2026-10-16 sweep) +channel: 7s channel (SpellChannel.csv)
 
   # Ruby Life Pools
+  1306366: { name: "Lightning Torrent", tags: [channel, trash], damage: 453385 }   # Tempest Channeler / High Channeler Ryvati: 7s channel on ONE player (applies debuff 1306366), 8 ticks of 1307488. Not kicked in logs; early ends = caster died. # WCL zone 55 key-1 p50 per player per cast (2026-10-16 sweep)
   371984: { name: "Frostbolt", tags: [kickable, stunnable, trash, reflectable], damage: 116379 }   # +stunnable: stopped with a stun in high-key logs
-  372047: { name: "Steel Barrage", tags: [channel, tank, physical, important, trash, blockable], damage: 242456 }   # -aoe/-avoid: WCL zone 55 keys 20-22 sweep 2026-09-13 (CLAUDE.md 2.12)
+  372047: { name: "Steel Barrage", tags: [channel, tank, physical, important, trash, blockable], damage: 1008430 } # WCL zone 55 key-1 p50 per player per cast (2026-10-16 sweep); TANK total 372794+1309705 (others take ~150-600k of 1309705 by position) was 242456  | -aoe/-avoid: WCL zone 55 keys 20-22 sweep 2026-09-13 (CLAUDE.md 2.12)
   372087: { name: "Blazing Rush", tags: [frontal, trash] }
   372730: { name: "Crushing Smash", tags: [tank, mixed, trash, blockable], damage: 533403 }
   372743: { name: "Ice Shield", tags: [kickable, stunnable, channel, trash] }
@@ -723,7 +726,7 @@ casts:
   385310: { name: "Storm Bolt", tags: [kickable, trash] }
   385311: { name: "Thunderstorm", tags: [aoe, trash] }
   385313: { name: "Lightning Rod", tags: [important, trash] }
-  385536: { name: "Flaming Barrage", tags: [stunnable, channel, tank, mixed, important, trash, blockable], damage: 242456 }
+  385536: { name: "Flaming Barrage", tags: [stunnable, channel, tank, mixed, important, trash, blockable], damage: 267561 } # WCL zone 55 key-1 p50 per player per cast (2026-10-16 sweep); tank total 1305865+385567 was 242456
   391031: { name: "Stormcloud Barrier", tags: [purge, trash] }
   391723: { name: "Flame Breath", tags: [channel, frontal, trash] }
   391726: { name: "Storm Breath", tags: [channel, frontal, trash] }
@@ -749,10 +752,10 @@ casts:
   372863: { name: "Ritual of Blazebinding", tags: [avoid] }
   373017: { name: "Blaze Volley", tags: [kickable, aoe] }
   373087: { name: "Burnout", tags: [avoid] }
-  373680: { name: "Frost Overload", tags: [channel, aoe] }
-  381512: { name: "Stormslam", tags: [tank, mixed, blockable], damage: 387929 }
+  373680: { name: "Frost Overload", tags: [channel, aoe], damage: 392755 } # WCL zone 55 key-1 p50 per player per cast (2026-10-16 sweep)
+  381512: { name: "Stormslam", tags: [tank, mixed, blockable], damage: 435643 } # WCL zone 55 key-1 p50 per player per cast (2026-10-16 sweep) was 387929
   381516: { name: "Interrupting Cloudburst", tags: [aoe], damage: 96982 }
-  381517: { name: "Winds of Change", tags: [aoe] }
+  381517: { name: "Winds of Change", tags: [aoe, knockback] }
   381525: { name: "Roaring Firebreath", tags: [channel, frontal] }
   381602: { name: "Inferno Spit", tags: [aoe, avoid] }
   384823: { name: "Inferno", tags: [aoe, meld] }
@@ -761,7 +764,7 @@ casts:
   # Temple
   1303443: { name: "Venomous Slash", tags: [tank, physical, blockable, trash] }   # WCL: Orb Guardian cast id; 1308546 is the magic component
   264763: { name: "Spark Step", tags: [avoid, trash] }
-  265966: { name: "Ground Pound", tags: [aoe, important, trash], damage: 156626 }
+  265966: { name: "Ground Pound", tags: [aoe, important, trash, knockback], damage: 156626 }
   267483: { name: "Loose Sparks", tags: [avoid, trash], damage: 290947 }   # damage-only id (Loose Spark / Spark Channeler) - NO cast events in any sampled report, so incoming_cast never sees it. Player debuff is 1225638. method.gg calls this id "Spark Vortex"; no spell by that name exists in DB2 or in any log - DB2 and WCL both say "Loose Sparks". Real cast id (if any) still unresolved
   268013: { name: "Flame Shock", tags: [kickable, reflectable] }
   272654: { name: "Head Butt", tags: [tank, physical, trash], damage: 727367 }
@@ -789,6 +792,7 @@ casts:
   1302158: { name: "Flame Shock", tags: [kickable, trash, reflectable] }   # WCL: Twisted Hexxer Flame Shock variant
 
   # Temple (Boss)
+  1288087: { name: "Thunder and Lightning", tags: [aoe], damage: 92357 }   # Adderis; damage id 1288092, 5/5 players hit. # WCL zone 55 key-1 p50 per player per cast (2026-10-16 sweep)
   1288457: { name: "Gust", tags: [reflectable] }   # WCL: Aspix; absent from sheet
   264172: { name: "Burrow", tags: [aoe, avoid] }
   1291598: { name: "Lightning Spire", tags: [channel, aoe, avoid], damage: 290947 }   # was 265986 - never appears in logs; id confirmed from WCL
@@ -796,18 +800,19 @@ casts:
   267027: { name: "Poison Spit", tags: [kickable, stunnable, reflectable] }   # +stunnable: 15 casts stopped by stuns in key-15 logs
   1288235: { name: "Thunder and Lightning", tags: [aoe, avoid] }
   1288864: { name: "Tempest Winds", tags: [aoe, avoid] }
-  1289062: { name: "Gale Force", tags: [aoe, frontal] }
+  1289062: { name: "Gale Force", tags: [aoe, frontal, knockback], damage: 77568 } # WCL zone 55 key-1 p50 per player per cast (2026-10-16 sweep)
   1289602: { name: "Thunder Spit", tags: [aoe, avoid] }
   1290031: { name: "A Knot of Snakes", tags: [aoe] }
   1290531: { name: "Induction", tags: [aoe, reflectable], damage: 145473 }   # -avoid: WCL zone 55 keys 20-22 sweep 2026-09-13 (CLAUDE.md 2.12)
   1290797: { name: "Lightning Bite", tags: [tank, mixed, reflectable] }
   1291622: { name: "Storm Catalyst", tags: [avoid] }
-  1293048: { name: "Serpentstorm", tags: [aoe, avoid] }
+  1293048: { name: "Serpentstorm", tags: [aoe, avoid, knockback] }
   1300871: { name: "Corrupted Lifeforce", tags: [aoe, avoid] }
   1301253: { name: "Agony of Sethraliss", tags: [avoid] }
   1300803: { name: "Tainted Strike", tags: [tank, mixed, blockable], damage: 464172 }   # damage: WCL median key-1 hit, 12 ToS keys. was 1303446 (the magic component) - cast id confirmed from WCL
 
   # Voidscar Arena
+  1300138: { name: "Void Beam", tags: [channel, trash], damage: 339540 }   # Watchful Harrower: 4s channel on one player, damage id 1300156, not kicked in logs. # WCL zone 55 key-1 p50 per player per cast (2026-10-16 sweep)
   1228126: { name: "Macestorm", tags: [avoid, meld, trash] }
   1228176: { name: "Lava Bolt", tags: [kickable, stunnable, trash, reflectable], damage: 116379 }   # +stunnable: stopped with a stun in high-key logs
   1233264: { name: "Blisterburst", tags: [avoid, trash] }
@@ -815,8 +820,8 @@ casts:
   1233535: { name: "Shred Defense", tags: [tank, physical, trash, blockable], damage: 145473 }
   1234855: { name: "Insidious Aura", tags: [channel, aoe, trash], damage: 386787 } # was 87284 (one hit); whole-channel total per player, WCL key-1 p50 (wcl_dmg_audit.py 2026-10-05)
   1234890: { name: "Smashing Charge", tags: [frontal, trash] }
-  1239856: { name: "Sky Strike", tags: [aoe, trash, reflectable], damage: 145362 }   # -avoid: WCL zone 55 keys 20-22 sweep 2026-09-13 (CLAUDE.md 2.12)
-  1245186: { name: "Head Bash", tags: [tank, magical, trash, reflectable], damage: 339438 }
+  1239856: { name: "Sky Strike", tags: [aoe, trash, reflectable, knockback], damage: 145362 }   # -avoid: WCL zone 55 keys 20-22 sweep 2026-09-13 (CLAUDE.md 2.12)
+  1245186: { name: "Head Bash", tags: [tank, magical, trash, reflectable, knockback], damage: 339438 }
   1249238: { name: "Fire Spit", tags: [avoid, trash] }
   1249621: { name: "Violent Sand", tags: [kickable, stunnable, aoe, important, freedom, trash] }   # +kickable: interrupted in high-key logs +stunnable: WCL key-14/15
   1249661: { name: "Feral Rage", tags: [tank, physical, enrage, trash] }
@@ -849,12 +854,12 @@ casts:
   1222724: { name: "Noxious Breath", tags: [frontal] }
   1223298: { name: "Gravitic Orbs", tags: [aoe, freedom] }
   1226120: { name: "Poison Splash", tags: [channel, aoe, avoid] }
-  1227197: { name: "Cosmic Crash", tags: [aoe, avoid, reflectable] }
+  1227197: { name: "Cosmic Crash", tags: [aoe, avoid, reflectable, knockback] }
   1227247: { name: "Void Cascade", tags: [channel, frontal, meld] }
   1262497: { name: "Monstrous Roar", tags: [aoe], damage: 126077 }
   1248112: { name: "Unstable Singularity", tags: [aoe] }   # was 1264191 - never appears in logs; id confirmed from WCL
   1296963: { name: "Umbral Rupture", tags: [avoid] }
-  1297017: { name: "Void Blast", tags: [tank, magical, reflectable], damage: 271550 }
+  1297017: { name: "Void Blast", tags: [tank, magical, reflectable, knockback], damage: 271550 }
   1300259: { name: "Dark Bloom", tags: [aoe], damage: 242456 }   # -avoid: WCL zone 55 keys 20-22 sweep 2026-09-13 (CLAUDE.md 2.12)
   1311923: { name: "Dark Waves", tags: [frontal, tank, magical] }
 
@@ -926,6 +931,12 @@ casts:
   1277002: { name: "Ravage", tags: [tank, reflectable] }           # maxroll; Sszorak. No spell target (WCL cast target none); hit 1277101 lands on the 2 tanks
   1299684: { name: "Sever", tags: [tank, frontal, reflectable] }   # maxroll; The Coiled Altar. No spell target (cone); hits the 2 tanks
   1301117: { name: "Grasping Fangs", tags: [tank, reflectable] }   # maxroll; Ula'tek. No spell target; hit 1311612 lands on tanks
+
+  # Raid - The Venomous Abyss (Knockback) - tooltip says knock back; WCL begincast, players hit/cast, spell target
+  1315341: { name: "Circling Prey", tags: [aoe, knockback] }      # Ula'tek. 8.0s cast, 18.7 hit/cast, no spell target
+  1296301: { name: "Mephitic Thrash", tags: [aoe, knockback] }    # Ula'tek. 4.0s cast, 19.4 hit/cast, no spell target
+  1296094: { name: "Mighty Thud", tags: [aoe, knockback] }        # The Lost Explorers. 10.0s cast, 3 leaps 1296133 (instant) do the knock
+  1302884: { name: "Venom Roar", tags: [tank, frontal, knockback] }  # Kith'ix (Venomous Hulk). 3.0s cast, cast -> player 100%, 1.0 hit/cast
 
   # --- Auto-added from not_even_close (verify tags/placement) ---
   244579: { name: "Decimate", tags: [aoe, avoid], damage: 81352, dr_type: magic }

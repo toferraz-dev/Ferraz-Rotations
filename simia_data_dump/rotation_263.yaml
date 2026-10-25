@@ -170,8 +170,6 @@ lists:
     - voltaic_blaze,if=dot.flame_shock.remains=0&combat.time<5
     # flame_shock,if=!ticking
     - flame_shock,if=dot.flame_shock.remains=0
-    # lava_lash,if=!debuff.lashing_flames.up&time<5
-    - lava_lash,if=!debuff.lashing_flames.up&combat.time<5
     # stormstrike,if=time<1
     - stormstrike,if=combat.time<1
     # call_action_list,name=cooldowns,if=raid_event.adds.in>=60|fight_remains<=20
@@ -180,16 +178,18 @@ lists:
     - sundering,if=talent.surging_elements.enabled|talent.feral_spirit.enabled
     # doom_winds,if=raid_event.adds.in>=30|fight_remains<=10
     - doom_winds
-    # voltaic_blaze,if=set_bonus.midnight_season_2_2pc
-    - voltaic_blaze,if=set_bonus.midnight_season_2_2pc
+    # voltaic_blaze,if=set_bonus.midnight_season_2_2pc&buff.maelstrom_weapon.stack<9
+    - voltaic_blaze,if=set_bonus.midnight_season_2_2pc&buff.maelstrom_weapon.stack<9
     # crash_lightning,if=!buff.crash_lightning.up|talent.storm_unleashed.enabled
     - crash_lightning,if=!buff.crash_lightning.up|talent.storm_unleashed.enabled
     # voltaic_blaze,if=(buff.doom_winds.up&buff.maelstrom_weapon.stack>=10-(1+2*talent.fire_nova.enabled)&!buff.maelstrom_weapon.stack=10)&talent.thorims_invocation.enabled
     - voltaic_blaze,if=(buff.doom_winds.up&buff.maelstrom_weapon.stack>=10-(1+2*talent.fire_nova.enabled)&buff.maelstrom_weapon.stack!=10)&talent.thorims_invocation.enabled
+    # lava_lash,if=!debuff.lashing_flames.up&time<5
+    - lava_lash,if=!debuff.lashing_flames.up&combat.time<5
     # windstrike,if=buff.maelstrom_weapon.stack>0&talent.thorims_invocation.enabled
     - windstrike,if=buff.maelstrom_weapon.stack>0&talent.thorims_invocation.enabled
-    # ascendance,if=raid_event.adds.in>=60|fight_remains<=20
-    - ascendance
+    # ascendance,if=(raid_event.adds.in>=60|fight_remains<=20)&!buff.doom_winds.up
+    - ascendance,if=!buff.doom_winds.up
     # stormstrike,if=buff.doom_winds.up&talent.thorims_invocation.enabled
     - stormstrike,if=buff.doom_winds.up&talent.thorims_invocation.enabled
     # crash_lightning,if=buff.doom_winds.up&talent.thorims_invocation.enabled
@@ -198,6 +198,10 @@ lists:
     - tempest,if=buff.maelstrom_weapon.stack=10
     # lightning_bolt,if=buff.maelstrom_weapon.stack=10
     - lightning_bolt,if=buff.maelstrom_weapon.stack=10
+    # tempest,if=buff.maelstrom_weapon.stack>=8&(cooldown.voltaic_blaze.remains<=gcd.max|cooldown.crash_lightning.remains<=gcd.max)
+    - tempest,if=buff.maelstrom_weapon.stack>=8&(cooldown.voltaic_blaze.remains<=gcd.max|cooldown.crash_lightning.remains<=gcd.max)
+    # lightning_bolt,if=buff.maelstrom_weapon.stack>=8&(cooldown.voltaic_blaze.remains<=gcd.max|cooldown.crash_lightning.remains<=gcd.max)
+    - lightning_bolt,if=buff.maelstrom_weapon.stack>=8&(cooldown.voltaic_blaze.remains<=gcd.max|cooldown.crash_lightning.remains<=gcd.max)
     # stormstrike,if=charges_fractional>=1.8
     - stormstrike,if=cooldown.stormstrike.charges_fractional>=1.8
     # lava_lash,if=talent.lashing_flames.enabled

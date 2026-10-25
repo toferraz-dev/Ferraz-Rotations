@@ -165,6 +165,9 @@ lists:
     # actions+=/immolation_aura,if=talent.a_fire_inside&talent.burning_wound&(charges=2|full_recharge_time<gcd.max*2)
     - immolation_aura,if=talent.a_fire_inside&talent.burning_wound&(cooldown.immolation_aura.charges=2|cooldown.immolation_aura.full_recharge_time<gcd.max*2)
 
+    # actions+=/abyssal_gaze,if=!action.death_sweep.demonsurge_available&!action.annihilation.demonsurge_available
+    - abyssal_gaze,if=!action.death_sweep.demonsurge_available&!action.annihilation.demonsurge_available
+
     # actions+=/eye_beam
     # local addition: global_delay holds other presses until the channel registers — a press in that gap clipped Eye Beam and lost Furious Gaze.
     - eye_beam

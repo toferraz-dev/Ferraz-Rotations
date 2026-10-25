@@ -162,6 +162,12 @@ lists:
     # Pool some Shadow Technique Stacks as Trickster before entering Shadow Dance by not finishing right before.
     # eviscerate,if=cooldown.secret_technique.remains>=3&talent.unseen_blade|buff.shadow_dance.up|buff.shadow_blades.up|debuff.deathstalkers_mark.stack>1|debuff.deathstalkers_mark.stack=1&buff.shadow_techniques.stack>=5
     - eviscerate,if=cooldown.secret_technique.remains>=3&talent.unseen_blade|buff.shadow_dance.up|buff.shadow_blades.up|debuff.deathstalkers_mark.stack>1|debuff.deathstalkers_mark.stack=1&buff.shadow_techniques.stack>=5
+    # local addition: Shadow Dance blocked in the UI (holding CDs) reads as a permanent cooldown, and every
+    # finisher above pools for Dance — without these the rotation only builds. Secret Technique stays
+    # held for the Dance window.
+    - coup_de_grace,if=cooldown.shadow_dance.blocked
+    - black_powder,if=cooldown.shadow_dance.blocked&var.targets>=2
+    - eviscerate,if=cooldown.shadow_dance.blocked
 
   # Filler racials
   fill:

@@ -104,7 +104,7 @@ config:
 
 # local addition: Divine Toll goes out once the bar has been spent — holy_power<=2 — or, failing that,
 # 2 GCDs after Wake of Ashes, so the two never land back to back; and never while a FREE spender is
-# banked (user 2026-09-11). CLAUDE.md §8.3.
+# banked (user 2026-09-11). docs/paladin.md.
 #   408458 Divine Purpose (Ret's id; 223819 is the other row) — next spender costs 0.
 #   433732 Light's Deliverance — free Hammer of Light (Templar).
 # Deliberately NOT in the list: the MID2 4pc Divine Arbiter buffs (1306161/1306162) and Empyrean
@@ -157,7 +157,7 @@ lists:
   cooldowns:
     # local addition: Execution Sentence immediately after wings (user 2026-09-11). First in
     # cooldowns, so it beats the WoA line at the foot of this list and all of generators.
-    # CLAUDE.md §8.3.
+    # docs/paladin.md.
     - execution_sentence,if=lastcast.avenging_wrath<=5
     # use_item,name=algethar_puzzle_box / use_item,slot=trinket1|2 live in main, just above the
     # call_action_list,name=cooldowns that runs this list — same position as upstream.
@@ -173,7 +173,7 @@ lists:
     - avenging_wrath,if=(!talent.holy_flames|dot.expurgation.ticking)
     # local addition: Execution Sentence is ticking — Wake of Ashes goes into that window no matter
     # what the bar reads. Last in cooldowns so AW and ES still outrank it; ahead of every generators
-    # line, including the holy_power=5 finishers call. CLAUDE.md §8.3.
+    # line, including the holy_power=5 finishers call. docs/paladin.md.
     - wake_of_ashes,if=active_dot.execution_sentence>0
 
   finishers:

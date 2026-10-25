@@ -16,7 +16,7 @@
 #
 # SimC → YAML conversion notes:
 # - `combo_strike` (per-spell) → `buff.combo_strikes_SPELL.down` where SPELL is the action
-# - `prev.X` → `prev_gcd.1.X` (our system only supports prev_gcd.N form)
+# - `prev.X` is the same slot as `prev_gcd.1.X` (last cast, on or off the GCD). Lines below keep `prev_gcd.1`.
 # - `time` → `combat.time`
 # - `fight_style.patchwerk|fight_style.castingpatchwerk` → `var.patchwerk` (player.inraid)
 # - `fight_style.dungeonroute` → `(player.indungeon|player.inmythicplus)`

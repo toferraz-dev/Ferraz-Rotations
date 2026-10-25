@@ -15,6 +15,11 @@
 #
 # RULES
 #   * EVERY key below is REQUIRED. A missing one is rejected like a malformed file.
+#     Optional (absent = 0): DESC_CHAN_SPELL, AURA_LAYOUT, GUID_KEYS, GUID_SRV_MAP.
+#     GUID_KEYS / GUID_SRV_MAP are module RVAs for the forever Lua GUID scrambling
+#     (Wow_Research/object_manager_reader/guid_scramble.md); retail leaves them out.
+#   * UNKNOWN keys are rejected too: a client older than a key refuses the whole file,
+#     so ship the client that knows a new key before uploading a file that uses it.
 #   * Duplicate keys are rejected — a file that disagrees with itself is a bad re-pin.
 #   * ALL-OR-NOTHING: any error and nothing is applied. Check the log for `[offsets]`.
 #

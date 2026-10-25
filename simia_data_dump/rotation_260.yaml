@@ -109,14 +109,13 @@ lists:
     # keep_it_rolling,if=rtb_buffs>=3
     - keep_it_rolling,if=var.rtb_buffs>=3
 
-    # roll_the_bones,if=!buff.roll_the_bones.up|rtb_buffs=1+(buff.loaded_dice.up&cooldown.between_the_eyes.ready)
+    # roll_the_bones,if=!buff.roll_the_bones.up|rtb_buffs=1+buff.loaded_dice.up&talent.keep_it_rolling
     # buff.roll_the_bones.up → var.rtb_buffs=0 (container buff); rtb_buffs → var.rtb_buffs
-    - roll_the_bones,if=var.rtb_buffs=0|var.rtb_buffs=1+(buff.loaded_dice.up&cooldown.between_the_eyes.ready)
+    - roll_the_bones,if=var.rtb_buffs=0|var.rtb_buffs=1+buff.loaded_dice.up&talent.keep_it_rolling
 
-    # blade_rush,if=set_bonus.mid1_2pc|spell_targets=1&energy.base_time_to_max>2|spell_targets>=2
-    # energy.base_time_to_max not supported — use energy.time_to_max
+    # blade_rush,if=set_bonus.mid1_2pc|spell_targets>=3|!buff.adrenaline_rush.up&talent.menacing_rush
     # config.bladerush_melee_only gates the cast to target.range<=5 (avoids dashing in from far)
-    - blade_rush,if=(!config.bladerush_melee_only|target.range<=5)&(set_bonus.mid1_2pc|active_enemies=1&energy.time_to_max>2|active_enemies>=2)
+    - blade_rush,if=(!config.bladerush_melee_only|target.range<=5)&(set_bonus.mid1_2pc|active_enemies>=3|!buff.adrenaline_rush.up&talent.menacing_rush)
 
     # vanish,if=!variable.finish_condition&talent.hidden_opportunity&!buff.audacity.up&!buff.opportunity.up
     - vanish,if=config.vanish_enabled&!var.finish_condition&talent.hidden_opportunity&!buff.audacity.up&!buff.opportunity.up
@@ -164,8 +163,8 @@ lists:
     # ambush,if=talent.hidden_opportunity&buff.audacity.up
     - ambush,if=talent.hidden_opportunity&buff.audacity.up
 
-    # blade_flurry,if=talent.deft_maneuvers&spell_targets>=3
-    - blade_flurry,if=talent.deft_maneuvers&active_enemies>=3
+    # blade_flurry,if=talent.deft_maneuvers&spell_targets>=3-(combo_points.deficit=2)
+    - blade_flurry,if=talent.deft_maneuvers&active_enemies>=3-(combo_points.deficit=2)
 
     # pistol_shot,if=talent.audacity&talent.hidden_opportunity&buff.opportunity.up&!buff.audacity.up
     - pistol_shot,if=talent.audacity&talent.hidden_opportunity&buff.opportunity.up&!buff.audacity.up

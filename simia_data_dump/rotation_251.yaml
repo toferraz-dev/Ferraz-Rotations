@@ -278,6 +278,11 @@ lists:
     # --- Prediction Damage: pre-fire on a predicted incoming hit (% of effective HP) ---
     - icebound_fortitude,range_check=none,if=incoming.mitigated.pct>=config.icebound_fortitude_dmg_pct
 
+    # local addition: not in SimC. Death's Advance makes us immune to knockbacks - fire it as a
+    # `knockback`-tagged cast (_casts.yaml) is about to land: targeted at us, or AoE.
+    # --- Knockback: Death's Advance ---
+    - deaths_advance,range_check=none,if=buff.deaths_advance.down&(incoming_cast.player.knockback.up&incoming_cast.player.knockback.remains<=3|incoming_cast.aoe.knockback.up&incoming_cast.aoe.knockback.remains<=3)
+
     # --- HP Percentage: react when already low ---
     - death_strike,if=player.solo&buff.dark_succor.up&health.pct<=config.darksuccor_solo_hp_pct
     - death_strike,if=player.group&buff.dark_succor.up&health.pct<=config.darksuccor_group_hp_pct

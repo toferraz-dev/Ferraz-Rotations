@@ -361,6 +361,7 @@ debuffs:
 
   # ========== Blinding Vale ==========
   1238076: { name: "Thornblade", tags: [bleed, dwarf], damage: 154149 } # was 290945 (1.89x, nec incl. impact); WCL per-stack total (wcl_dmg_audit.py 2026-10-05)
+  1235865: { name: "Thornblade", tags: [bleed] }   # second Thornblade id on players: removed by Cauterizing Flame in Blinding Vale (2026-10-16)
   1238084: { name: "Spore Spines", tags: [freedom, magic], damage: 77584 }
   1238294: { name: "Disorienting Screech", tags: [non_phys] }
   1238368: { name: "Lightmaw Beams", tags: [non_phys] }
@@ -466,14 +467,14 @@ debuffs:
   # ========== Ruby Life Pools ==========
   372796: { name: "Blazing Rush", tags: [bleed, dwarf] }   # was 372087; WCL: this id lands on players
   373692: { name: "Inferno", tags: [non_phys], damage: 184658 } # was 290947 (1.58x, nec incl. impact); WCL per-stack total (wcl_dmg_audit.py 2026-10-05)
-  373693: { name: "Living Bomb", tags: [non_phys], damage: 349134 }
+  373693: { name: "Living Bomb", tags: [non_phys, magic], damage: 349134 }   # +magic: dispelled 80x by Purify Spirit/Purify in 4 keys (2026-10-16)
   385313: { name: "Lightning Rod", tags: [non_phys] }
   395292: { name: "Fire Maw", tags: [non_phys], damage: 331499 } # was 562498 (1.70x, nec incl. impact); WCL per-stack total (wcl_dmg_audit.py 2026-10-05)
   392641: { name: "Rolling Thunder", tags: [dwarf, magic] }
   1305201: { name: "Excavating Blast", tags: [non_phys], damage: 271239 } # was 378233 (1.39x, nec incl. impact); WCL per-stack total (wcl_dmg_audit.py 2026-10-05)
   1305225: { name: "Tectonic Strike", tags: [physical] }
   1305234: { name: "Cold Claws", tags: [freedom, magic] }
-  1306366: { name: "Lightning Torrent", tags: [non_phys] }
+  1306366: { name: "Lightning Torrent", tags: [non_phys], damage: 453385 } # whole 7s channel on the debuffed player (cast entry 1306366 in _casts.yaml); WCL key-1 p50 (2026-10-16 sweep)
   1307205: { name: "Earthbound's Imprint", tags: [non_phys], damage: 339440 }
 
   # ========== Ruby Life Pools (Boss) ==========
@@ -577,14 +578,14 @@ debuffs:
   1214650: { name: "Fel Lightning", tags: [trash], damage: 44975, dr_type: magic } # was 58188 (1.29x, nec incl. impact); WCL per-stack total (wcl_dmg_audit.py 2026-10-05)
   1222692: { name: "Toxic Aura", tags: [trash], damage: 376420, dr_type: magic } # was 654630 (1.74x, nec incl. impact); WCL per-stack total (wcl_dmg_audit.py 2026-10-05)
   1234802: { name: "Fertile Loam", tags: [avoid], damage: 232758, dr_type: magic }
-  1234846: { name: "Toxic Spores", tags: [avoid], damage: 135772, dr_type: magic }
+  1234846: { name: "Toxic Spores", tags: [avoid, poison], damage: 135772, dr_type: magic }   # +poison: dispelled 56x by Poison Cleansing/Remove Corruption/Expunge/Detox (2026-10-16)
   1235405: { name: "Bonespiked", tags: [avoid], damage: 116376, dr_type: physical }
   1235574: { name: "Lightblossom Beam", tags: [avoid], damage: 310344, dr_type: magic }
   1237267: { name: "Incise", tags: [], damage: 581895, dr_type: physical }
   1237858: { name: "Ruptured Earth", tags: [avoid, trash], damage: 96982, dr_type: magic }
   1239919: { name: "Lightfire Beams", tags: [aoe, avoid], damage: 407323, dr_type: magic }
   1246751: { name: "Concentrated Lightbeam", tags: [avoid], damage: 145473, dr_type: magic }
-  1263971: { name: "Mind-Numbing Poison", tags: [], dr_type: magic } # -damage: haste debuff, no damage effect (tooltip, 0 ticks in logs) (WCL wcl_dmg_audit.py 2026-10-05)
+  1263971: { name: "Mind-Numbing Poison", tags: [poison], dr_type: magic } # -damage: haste debuff, no damage effect (tooltip, 0 ticks in logs) (WCL wcl_dmg_audit.py 2026-10-05)   # +poison: dispelled 21x by Cleanse/Nature's Cure/Expunge/Remove Corruption (2026-10-16)
   1276586: { name: "Bedrock Surge", tags: [aoe], damage: 310344, dr_type: magic }
   1291815: { name: "Induction Field", tags: [avoid], damage: 193964, dr_type: magic }
   1293133: { name: "Lingering Storm", tags: [avoid], damage: 193964, dr_type: magic }

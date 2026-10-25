@@ -31,7 +31,7 @@ spell_overrides:
   # projected along their smoothed velocity (enemies.staying.8y). D&D stays where it lands:
   # jitter/small steps stay in, a pack dragged by the tank (or running with us) projects out.
   # WCL top keys: 88% of casts land on a still pack; a moving-pack cast keeps 75% of mobs in
-  # the circle at +3s vs 91% (tools/wcl_dnd_timing.py, CLAUDE.md 8.11).
+  # the circle at +3s vs 91% (tools/wcl_dnd_timing.py, docs/death_knight.md).
   # Running into a parked pack passes the rule above (its edge mobs "stay"), so also require:
   #  - the patch holds >=60% of the target's pack (enemies.around_target.range.10; no target = 0)
   #  - we stand within 10yd of the tank, who holds the pack (no tank = 0 passes; raid, dead tank or
@@ -170,7 +170,7 @@ lists:
     # local addition: upstream's debuff.soul_reaper.remains is target-scoped and dies with its host,
     # so it strands Blightfall on a target swap or an early death (and a held Blightfall also blocks
     # the next DT). nameplates.debuff.1241521.lowest is target-swap proof; the lastcast gates anchor
-    # the window to THIS DT and >=17 is the release valve (top parses 2026-09-25: no-SR dumps at median 17s), gated on plagues out so a Blightfall carried into the next pack waits for Outbreak. Rationale and WCL data: CLAUDE.md 8.11.
+    # the window to THIS DT and >=17 is the release valve (top parses 2026-09-25: no-SR dumps at median 17s), gated on plagues out so a Blightfall carried into the next pack waits for Outbreak. Rationale and WCL data: docs/death_knight.md.
     # local addition: split into the two mutually exclusive top-level branches so only the second
     # one carries ignore_cds_toggle. Branch 1 is the real Dark Transformation cooldown and keeps
     # respecting the user's CDs toggle. Branch 2 fires the button while it is MORPHED to Blightfall
@@ -180,11 +180,20 @@ lists:
     # ignore_cds_toggle only skips the "marked as CD + CDs toggle off" block reason; a user-disabled
     # or TTD-gated spell still blocks.
     - dark_transformation,if=(var.st_planning|var.adds_remain)&!buff.blightfall.up&(pet.army_ghoul.active|cooldown.army_of_the_dead.remains>30|!talent.army_of_the_dead)
-    - dark_transformation,ignore_cds_toggle=true,if=buff.blightfall.up&(active_enemies<=3&talent.377514&talent.soul_reaper&(lastcast.343294>=0.5&lastcast.343294<lastcast.1233448&nameplates.debuff.1241521.lowest<gcd.max*2|lastcast.1233448>=17&nameplates.debuff.virulent_plague.count>0)|fight_remains<3|buff.dark_transformation.up&buff.dark_transformation.remains<gcd.max*2|trinket_1.buff.up&trinket_1.buff.remains<gcd.max*2|trinket_2.buff.up&trinket_2.buff.remains<gcd.max*2|cooldown.dark_transformation.remains<3)
+    # local addition: the SR-window / 17s-valve group is NOT scoped to active_enemies<=3. Top San'layn M+ logs
+    # (2026-10-14, 32 runs / 1139 presses, tools/wcl_blightfall.py) press inside the Soul Reaper window at every
+    # pack size: SR debuff live at 89% ST / 82% 2-4 / 88% 5+ presses, median 2.2-2.9s left. With the <=3 scope a
+    # 4+ pack waited for the DT-buff tail (~24s) instead of the ~15-17s top players use. docs/death_knight.md.
+    - dark_transformation,ignore_cds_toggle=true,if=buff.blightfall.up&(talent.377514&talent.soul_reaper&(lastcast.343294>=0.5&lastcast.343294<lastcast.1233448&nameplates.debuff.1241521.lowest<gcd.max*2|lastcast.1233448>=17&nameplates.debuff.virulent_plague.count>0)|fight_remains<3|buff.dark_transformation.up&buff.dark_transformation.remains<gcd.max*2|trinket_1.buff.up&trinket_1.buff.remains<gcd.max*2|trinket_2.buff.up&trinket_2.buff.remains<gcd.max*2|cooldown.dark_transformation.remains<3)
 
   defensives:
     # --- Prediction Damage: pre-fire on a predicted incoming hit (% of effective HP) ---
     - icebound_fortitude,range_check=none,if=incoming.mitigated.pct>=config.icebound_fortitude_dmg_pct
+
+    # local addition: not in SimC. Death's Advance makes us immune to knockbacks - fire it as a
+    # `knockback`-tagged cast (_casts.yaml) is about to land: targeted at us, or AoE.
+    # --- Knockback: Death's Advance ---
+    - deaths_advance,range_check=none,if=buff.deaths_advance.down&(incoming_cast.player.knockback.up&incoming_cast.player.knockback.remains<=3|incoming_cast.aoe.knockback.up&incoming_cast.aoe.knockback.remains<=3)
 
     # --- HP Percentage: react when already low ---
     - death_strike,if=player.solo&buff.dark_succor.up&health.pct<=config.darksuccor_solo_hp_pct

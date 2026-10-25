@@ -64,7 +64,7 @@ variables:
   use_tts: talent.legacy_of_the_lifebinder&(cooldown.eternity_surge.remains<=cooldown.fire_breath.remains)
 
   # variable,name=r1_cast_time,value=1.0*spell_haste
-  # spell_haste not supported — not used in rotation conditions, omitting
+  # spell_haste is supported (1/(1+haste)). Nothing in this rotation reads r1_cast_time, so the line stays omitted.
 
   # variable,name=has_external_pi,value=cooldown.invoke_power_infusion_0.duration>0
   # cooldown.invoke_power_infusion_0 not supported — omitting

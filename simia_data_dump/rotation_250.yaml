@@ -10,7 +10,7 @@ spell_overrides:
   reapers_mark: "cooldown_bypass.dancing_rune_weapon.remains>=25"
   # Don't cast Blood Boil until all mobs around the target are pulled into my 8y radius
   blood_boil: "enemies.8y>=1&enemies.8y>=enemies_around_target|enemies_around_target>=3"
-  # local addition: drop D&D only where the pack will stay in it (same rule as 252, §8.11) — sidesteps / walking out of a puddle are fine, a moving pack is not
+  # local addition: drop D&D only where the pack will stay in it (same rule as 252, docs/death_knight.md) — sidesteps / walking out of a puddle are fine, a moving pack is not
   death_and_decay: "enemies.staying.8y*4>=enemies.8y*3"
 
 config:
@@ -165,6 +165,11 @@ lists:
     # --- Prediction Damage: pre-fire on a predicted incoming hit (% of effective HP) ---
     - vampiric_blood,range_check=none,if=incoming.mitigated.pct>=config.vampiric_blood_dmg_pct
     - icebound_fortitude,range_check=none,if=incoming.mitigated.pct>=config.icebound_fortitude_dmg_pct
+
+    # local addition: not in SimC. Death's Advance makes us immune to knockbacks - fire it as a
+    # `knockback`-tagged cast (_casts.yaml) is about to land: targeted at us, or AoE.
+    # --- Knockback: Death's Advance ---
+    - deaths_advance,range_check=none,if=buff.deaths_advance.down&(incoming_cast.player.knockback.up&incoming_cast.player.knockback.remains<=3|incoming_cast.aoe.knockback.up&incoming_cast.aoe.knockback.remains<=3)
 
     # --- HP Percentage: react when already low ---
     - vampiric_blood,if=health.effective.pct<=config.vampiric_blood_hp_pct
