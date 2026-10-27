@@ -2,6 +2,14 @@
 
 Player-facing changes to the Ferraz rotations, newest first. Each entry names the rotation and the version that shipped it.
 
+## 2026-10-27
+
+### Restoration · Mythic+ · v37.0.0
+- Soulcoiler Ritual Vessel is now used as the group defensive it is: its five barriers (-50% damage taken) go out about 3 seconds before an enemy AoE lands, or when the group is already taking heavy damage, instead of waiting for Convoke. Your other trinkets are unchanged.
+
+### Restoration · Raid · v28.0.0
+- Soulcoiler Ritual Vessel is now used as the group defensive it is: its five barriers (-50% damage taken) go out about 3 seconds before an enemy AoE lands, or when the group is already taking heavy damage, instead of waiting for Convoke. Your other trinkets are unchanged.
+
 ## 2026-10-25
 
 ### Guardian · Mythic+ · v5.1.0

@@ -1807,3 +1807,23 @@ Not changed: dps_group_hp default 85 (the user's saved value is 95).
 Gear (user, not rotation): his trinkets give 14% of his healing
 (Preternatural Antivenom 10.4%, Soulcoiler Ritual Vessel 3.4%).
 ```
+
+
+---
+
+## Soulcoiler Ritual Vessel (2026-10-27)
+
+```
+Item 270162. On use: 5 spirits over 2s, each giving an ally a barrier that reduces damage taken by
+50% for 20s or until a fixed amount is prevented. 2 min CD; allied deaths take 30s off. In the world
+#1 M+ log it was 3.4% of his healing (Soulcoil Barrier). No Simia rotation handled it; _trinkets.yaml
+lists it only in a comment ("window <5s, not a buff"), so it rode the Convoke condition like any
+trinket.
+
+Now its own lines (trinket_N.id=270162), before the generic trinket lines, which skip it by id:
+  incoming_cast.aoe.up&incoming_cast.aoe.remains<=3   proactive: an enemy AoE cast (_casts.yaml
+                                                       `aoe` tag, 276 entries) is about to land
+  | the same group-damage condition as Convoke         reactive fallback
+Respects use_trinket_N and never fires in Bear. Untested in game; the aoe tag covers dungeon casts
+well and only some raid bosses, so in raid the reactive half carries most of it.
+```

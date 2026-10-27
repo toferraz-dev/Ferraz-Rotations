@@ -1,4 +1,4 @@
-version: "36.0.0"
+version: "37.0.0"
 author: Ferraz
 patch: "12.1"
 spec: 105
@@ -23,7 +23,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-10-24 | Patch: 12.1 | Version: 36.0.0"
+    text: "Last update: 2026-10-27 | Patch: 12.1 | Version: 37.0.0"
 
   hp_legend:
     section: "Info"
@@ -204,14 +204,14 @@ config:
     section: "Cooldowns"
     type: checkbox
     default: true
-    description: "Use trinket 1 when the Convoke group condition is met."
+    description: "Use trinket 1 when the Convoke group condition is met. Soulcoiler Ritual Vessel is the exception: it goes out before an enemy AoE lands, or when the group is already taking damage."
 
   use_trinket_2:
     label: "Auto Trinket 2 (with Convoke)"
     section: "Cooldowns"
     type: checkbox
     default: true
-    description: "Use trinket 2 when the Convoke group condition is met."
+    description: "Use trinket 2 when the Convoke group condition is met. Soulcoiler Ritual Vessel is the exception: it goes out before an enemy AoE lands, or when the group is already taking damage."
 
   use_potion:
     label: "Auto Combat Potion (with Convoke)"
@@ -477,8 +477,14 @@ lists:
     - natures_swiftness,name="Nature Swiftness",off_gcd=true,delay=150,range_check=none,if=!config.disable_natures_swiftness&group.count(cycle.health.effective.pct<config.natures_swiftness_threshold)>=1
     - regrowth,name="Nature Swift Regrowth",cycle=members,cycle_order=health.pct,if=buff.natures_swiftness.up&cycle.health.effective.pct<config.natures_swiftness_threshold
     - rejuvenation,name="Shift Out For Convoke",cycle=members,cycle_order=buff.rejuvenation.remains,if=cooldown.convoke_the_spirits.ready&(group.count(cycle.health.effective.pct<config.convoke_threshold&!cycle.tank)>=config.convoke_members)&var.animal_form
-    - trinket_1,delay=150,name="Trinket 1",if=config.use_trinket_1&trinket_1.ready&(group.count(cycle.health.effective.pct<config.convoke_threshold&!cycle.tank)>=config.convoke_members)&!buff.bear_form.up
-    - trinket_2,delay=150,name="Trinket 2",if=config.use_trinket_2&trinket_2.ready&(group.count(cycle.health.effective.pct<config.convoke_threshold&!cycle.tank)>=config.convoke_members)&!buff.bear_form.up
+    # Soulcoiler Ritual Vessel (270162): 5 barriers on allies, -50% damage taken for 20s (2 min CD,
+    # each allied death takes 30s off). A group defensive, not a throughput window, so it does not
+    # wait for Convoke: it goes ~3s before an enemy AoE cast lands (_casts.yaml `aoe` tag), or once
+    # the group is already taking the damage that calls Convoke. The generic lines skip it by id.
+    - trinket_1,delay=150,name="Soulcoiler Ritual Vessel (Trinket 1)",if=config.use_trinket_1&trinket_1.ready&trinket_1.id=270162&!buff.bear_form.up&(incoming_cast.aoe.up&incoming_cast.aoe.remains<=3|(group.count(cycle.health.effective.pct<config.convoke_threshold&!cycle.tank)>=config.convoke_members))
+    - trinket_2,delay=150,name="Soulcoiler Ritual Vessel (Trinket 2)",if=config.use_trinket_2&trinket_2.ready&trinket_2.id=270162&!buff.bear_form.up&(incoming_cast.aoe.up&incoming_cast.aoe.remains<=3|(group.count(cycle.health.effective.pct<config.convoke_threshold&!cycle.tank)>=config.convoke_members))
+    - trinket_1,delay=150,name="Trinket 1",if=config.use_trinket_1&trinket_1.ready&trinket_1.id!=270162&(group.count(cycle.health.effective.pct<config.convoke_threshold&!cycle.tank)>=config.convoke_members)&!buff.bear_form.up
+    - trinket_2,delay=150,name="Trinket 2",if=config.use_trinket_2&trinket_2.ready&trinket_2.id!=270162&(group.count(cycle.health.effective.pct<config.convoke_threshold&!cycle.tank)>=config.convoke_members)&!buff.bear_form.up
     - combat_potion,off_gcd=true,ignore_queue=true,delay=1500,global_delay=400,name="Combat Potion (before Convoke)",if=combat_potion.ready&config.use_potion&(cooldown.convoke_the_spirits.ready|!talent.convoke_the_spirits)&(group.count(cycle.health.effective.pct<config.convoke_threshold&!cycle.tank)>=config.convoke_members)&!buff.bear_form.up
     - convoke_the_spirits,global_delay=1000,name="Convoke (Heal)",if=(group.count(cycle.health.effective.pct<config.convoke_threshold&!cycle.tank)>=config.convoke_members)&var.caster_form&var.potion_done
     - tranquility,global_delay=1000,name="Tranquility",if=!config.manual_tranquility&group.count(cycle.health.effective.pct<config.tranquility_threshold&!cycle.tank)>=config.tranquility_members&!player.moving

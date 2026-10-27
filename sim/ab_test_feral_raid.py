@@ -26,9 +26,10 @@ import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SIMC = os.path.join(ROOT, 'sim', 'tools', 'simc-1210.01.73a372b-win64', 'simc.exe')
-PROFILE = os.path.join(ROOT, 'sim', 'Ferraz_feral_raid.simc')
+_FB = os.environ.get('FERAL_BUILD', '')
+PROFILE = os.path.join(ROOT, 'sim', 'Ferraz_feral_raid%s.simc' % ('_' + _FB if _FB else ''))
 APL_DIR = os.path.join(ROOT, 'sim', 'apl_feral_raid')
-OUT_DIR = os.path.join(ROOT, 'sim', 'out_feral_raid')
+OUT_DIR = os.path.join(ROOT, 'sim', 'out_feral_raid' + ('_' + _FB if _FB else ''))
 
 
 def a(action, *conds):
@@ -66,8 +67,10 @@ def build(v):
     add('actions+=/ferocious_bite,if=buff.apex_predators_craving.up')
     add('actions+=/call_action_list,name=finisher,if=spell_targets=1')
     add('actions+=/call_action_list,name=aoe_finisher,if=spell_targets>=2')
-    add('actions+=/call_action_list,name=builder,if=spell_targets=1&combo_points<=4')
-    add('actions+=/call_action_list,name=aoe_builder,if=spell_targets>1&combo_points<=4')
+    # st_builder2: at 2 targets use the single-target builder (Shred/Rake/Moonfire) instead of aoe_builder.
+    st_max = 2 if v['st_builder2'] else 1
+    add('actions+=/call_action_list,name=builder,if=spell_targets<=%d&combo_points<=4' % st_max)
+    add('actions+=/call_action_list,name=aoe_builder,if=spell_targets>%d&combo_points<=4' % st_max)
 
     add('actions.cd_variable=variable,name=convokeCountRemaining,'
         'value=floor(cooldown.convoke_the_spirits.charges_fractional'
@@ -180,7 +183,7 @@ def build(v):
 
 DEFAULTS = dict(cds=True, convoke_ag=False, bite_max_energy=False,
                 sudden_ambush_shred=False, simple_rip=False, rip_tf_true=False,
-                li_full=False)
+                li_full=False, st_builder2=False)
 
 VARIANTS = {
     'ferraz':        ({}, 'Porte direto da rotacao de M+ para a build de raid'),
@@ -208,6 +211,11 @@ VARIANTS = {
                       'BASE + a linha completa de Lunar Inspiration do YAML'),
     'rt_no_cds':     (dict(rip_tf_true=True, cds=False),
                       'CONTROLE: BASE sem Berserk/Convoke/trinkets/pocao'),
+    # --- 2026-10-26: comparacao com o top 1 (FERAL_BUILD=H sua build, K a do top 1) ---
+    'cur':     (dict(rip_tf_true=True, convoke_ag=True, li_full=True),
+                'Arquivo v7 fiel (rip_tf=1, Convoke AG, LI completo)'),
+    'cur_st2': (dict(rip_tf_true=True, convoke_ag=True, li_full=True, st_builder2=True),
+                'v7 + builder de alvo unico com 2 alvos (sem Swipe)'),
     'rip_and_pool':  (dict(simple_rip=True, bite_max_energy=True),
                       'simple_rip + bite_pool'),
     'sa_shred':      (dict(sudden_ambush_shred=True),
@@ -226,12 +234,15 @@ def run(name, error, enemies, style):
     os.makedirs(OUT_DIR, exist_ok=True)
     apl = os.path.join(APL_DIR, '%s.simc' % name)
     js = os.path.join(OUT_DIR, '%s_%dt_%s.json' % (name, enemies, style or 'patchwerk'))
-    v = dict(DEFAULTS)
-    v.update(VARIANTS[name][0])
-    with open(apl, 'w', encoding='utf-8') as fh:
-        fh.write(build(v))
-    cmd = [SIMC, PROFILE, apl, 'target_error=%s' % error, 'threads=8',
-           'json2=' + js, 'output=' + os.path.join(OUT_DIR, 'nul.txt')]
+    cmd = [SIMC, PROFILE]
+    if name != 'simc_default':  # simc_default = the profile's own (SimC default) APL
+        v = dict(DEFAULTS)
+        v.update(VARIANTS[name][0])
+        with open(apl, 'w', encoding='utf-8') as fh:
+            fh.write(build(v))
+        cmd.append(apl)
+    cmd += ['target_error=%s' % error, 'threads=8',
+            'json2=' + js, 'output=' + os.path.join(OUT_DIR, 'nul.txt')]
     if enemies > 1:
         cmd += ['desired_targets=%d' % enemies]
     if style:
@@ -267,7 +278,7 @@ def main(argv):
         results[n] = r
         print('%.0f DPS' % r[0] if r else 'failed')
 
-    ref = results.get('ferraz')
+    ref = results.get('cur') or results.get('ferraz')
     print('\n%-14s %10s %7s %11s  %s' % ('variant', 'DPS', '+/-', 'vs ferraz', 'what'))
     print('-' * 88)
     for n in names:
@@ -280,7 +291,7 @@ def main(argv):
             d = mean - ref[0]
             comb = 2 * (err ** 2 + ref[1] ** 2) ** 0.5
             delta = '%+.2f%%%s' % (100 * d / ref[0], '' if abs(d) > comb else ' ~')
-        print('%-14s %10.0f %7.0f %11s  %s' % (n, mean, err, delta, VARIANTS[n][1]))
+        print('%-14s %10.0f %7.0f %11s  %s' % (n, mean, err, delta, ('APL padrao do SimC' if n == 'simc_default' else VARIANTS[n][1])))
     print('\n"~" = dentro da margem de erro, nao e diferenca real.')
     return 0
 

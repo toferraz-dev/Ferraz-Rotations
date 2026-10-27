@@ -194,7 +194,7 @@
           <li><b>8</b>rotations</li>
           <li><b>5</b>specs</li>
           <li><b>12.1</b>patch</li>
-          <li><b>10/25</b>last update</li>
+          <li><b>10/27</b>last update</li>
         </ul>
       </div>
     </div>
@@ -213,7 +213,7 @@
           <span class="spec-body">
             <span class="spec-top"><span class="spec-name">Restoration</span><span class="badge">Mythic+</span></span>
             <span class="spec-build">Wildstalker</span>
-            <span class="spec-meta">Healer · v36.0.0</span>
+            <span class="spec-meta">Healer · v37.0.0</span>
           </span>
         </a>
         <a class="spec-card leaf" href="#resto-raid">
@@ -221,7 +221,7 @@
           <span class="spec-body">
             <span class="spec-top"><span class="spec-name">Restoration</span><span class="badge">Raid</span></span>
             <span class="spec-build">Wildstalker with Reforestation</span>
-            <span class="spec-meta">Healer · v27.0.0</span>
+            <span class="spec-meta">Healer · v28.0.0</span>
           </span>
         </a>
         <a class="spec-card bark" href="#guardian">
@@ -306,7 +306,7 @@
 <ol><li><strong>Lifebloom</strong> upkeep with Everbloom. While anyone is below <em>Regrowth Emergency HP</em>, Lifebloom waits until it has 2 seconds left so the emergency heals go first.</li><li><strong>Nature's Swiftness</strong> followed by an instant, empowered Regrowth on the lowest ally under the Nature's Swiftness threshold.</li><li><strong>Convoke the Spirits</strong>, <strong>Tranquility</strong> and <strong>Swiftmend</strong> (see Cooldowns).</li><li><strong>Mouseover emergency healing</strong> when you hover a low ally's frame (see Utility).</li><li><strong>Emergency Regrowth</strong> on anyone below <em>Regrowth Emergency HP</em> (real health).</li><li><strong>Clearcasting</strong> and <strong>Soul of the Forest</strong> Regrowth, Soul of the Forest Rejuvenation and Germination.</li><li><strong>Wild Growth</strong> once enough allies are below the Wild Growth threshold.</li><li><strong>Abundance upkeep</strong>: your own Rejuvenation and Germination, and enough Rejuvenations around the group to keep 5 lasting. It sits under the emergency heals and Wild Growth, so it never delays them; Abundance may drop for a moment, as it does for the top players.</li><li><strong>Abundance</strong> Regrowth, then Rejuvenation and Germination on anyone who needs them, and plain <strong>Regrowth</strong> as the filler.</li></ol>
 <p>While moving it only uses instants: Rejuvenation, Germination and the Abundance upkeep.</p>
 <h4>Cooldowns</h4>
-<ul><li><strong>Convoke the Spirits</strong> goes out when enough allies (the tank does not count, 2 by default) are below the Convoke threshold, so it comes back about once a minute. Trinkets, Berserking and the combat potion fire right before it. If you are in Bear, Cat or Moonkin Form it casts a Rejuvenation first to leave the form: Convoke is never cast in an animal form, because there it rolls that form's spells instead of heals.</li><li><strong>Tranquility</strong> when enough allies (tank excluded) are low and you are standing still. Tick <em>Manual Tranquility</em> to press it yourself.</li><li><strong>Swiftmend</strong> on cooldown, feeding Soul of the Forest and Everbloom. Swiftmend eats a heal over time on its target, so it prefers someone with Regrowth or Wild Growth and only eats a Rejuvenation when nobody else has one.</li></ul>
+<ul><li><strong>Convoke the Spirits</strong> goes out when enough allies (the tank does not count, 2 by default) are below the Convoke threshold, so it comes back about once a minute. Trinkets, Berserking and the combat potion fire right before it. If you are in Bear, Cat or Moonkin Form it casts a Rejuvenation first to leave the form: Convoke is never cast in an animal form, because there it rolls that form's spells instead of heals.</li><li><strong>Soulcoiler Ritual Vessel</strong> (trinket): its five damage-reduction barriers go out about 3 seconds before an enemy AoE lands, or when the group is already taking heavy damage, instead of waiting for Convoke.</li><li><strong>Tranquility</strong> when enough allies (tank excluded) are low and you are standing still. Tick <em>Manual Tranquility</em> to press it yourself.</li><li><strong>Swiftmend</strong> on cooldown, feeding Soul of the Forest and Everbloom. Swiftmend eats a heal over time on its target, so it prefers someone with Regrowth or Wild Growth and only eats a Rejuvenation when nobody else has one.</li></ul>
 <h4>Defense</h4>
 <ul><li><strong>Barkskin</strong> before a big hit lands: it reads your health minus the biggest predicted incoming hit.</li><li><strong>Ironbark</strong> on whoever is dropping (<em>All Members</em> by default): with Stonebark it also boosts your heals over time on them. Set <em>Ironbark Target</em> to <em>Tanks Only</em> to keep it for the tank; it never lands on you then.</li><li><strong>Panic Bear</strong>: at very low health it shifts to Bear Form for Frenzied Regeneration.</li><li><strong>Healthstone</strong> and <strong>health potion</strong> at their thresholds.</li><li><strong>While casting</strong>, below <em>Emergency HP</em>, Barkskin and the consumables still fire, and a hardcast can be cut to free the global for a defensive. Channels are never cut: during Convoke only Barkskin fires, during Tranquility nothing does.</li></ul>
 <h4>Utility</h4>
@@ -323,17 +323,17 @@
           </div>
           <aside class="glance">
             <dl>
-              <div><dt>Version</dt><dd>36.0.0</dd></div>
-              <div><dt>Updated</dt><dd>2026-10-24</dd></div>
+              <div><dt>Version</dt><dd>37.0.0</dd></div>
+              <div><dt>Updated</dt><dd>2026-10-27</dd></div>
               <div><dt>Patch</dt><dd>12.1</dd></div>
               <div><dt>File</dt><dd><a href="rotations/FerrazRestoDruid.yaml" download>FerrazRestoDruid.yaml</a></dd></div>
             </dl>
           <div class="recent">
             <h5>Recent changes</h5>
             <ul class="rc-list">
+            <li><span class="rc-ver">v37.0.0 · 2026-10-27</span><ul><li>Soulcoiler Ritual Vessel is now used as the group defensive it is: its five barriers (-50% damage taken) go out about 3 seconds before an enemy AoE lands, or when the group is already taking heavy damage, instead of waiting for Convoke. Your other trinkets are unchanged.</li></ul></li>
             <li><span class="rc-ver">v36.0.0 · 2026-10-24</span><ul><li>New recommended talents: the Mythic+ build of the world's top Restoration Druid, with Dream of Cenarius, Verdancy, Stonebark, Tranquil Mind and Astral Influence. Copy the new string from the rotation panel.</li><li>Damage now works like his: Sunfire and Moonfire kept up, then Starfire on packs and Wrath on a single target, which heal through Dream of Cenarius. Starsurge only while moving. Heart of the Wild is off by default.</li><li>Wild Growth goes out much more often: keeping Abundance up no longer comes before Wild Growth or the emergency Regrowth.</li><li>Swiftmend prefers allies with Regrowth or Wild Growth, so it stops eating Rejuvenations.</li><li>Convoke needs 2 injured allies instead of 3, and its default health line is 85% instead of 75%, so it comes back about once a minute.</li><li>Barkskin goes out a little earlier by default (50%): Flower Walk heals the group around you while it is up.</li><li>Ironbark defaults to <em>All Members</em> (a healing cooldown with Stonebark), and <em>Tanks Only</em> never lands on you.</li></ul></li>
             <li><span class="rc-ver">v35.0.0 · 2026-10-23</span><ul><li>Temple of Sethraliss, last boss: hover or target the Avatar of Sethraliss once and the rotation sets it as your focus. From then on every heal goes to the Avatar while it is friendly, with no need to keep the mouse on it.</li><li>On the Avatar it uses Nature's Swiftness with an instant Regrowth, Wild Growth, Rejuvenation, Germination, Swiftmend and Regrowth.</li><li>The party is not forgotten: if anyone drops below the new "Party Safety HP %" slider (default 50%), the rotation goes back to healing the party, cooldowns included, until they are safe.</li><li>No heals are wasted while Defiling Taint blocks healing on the Avatar.</li></ul></li>
-            <li><span class="rc-ver">v34.0.0 · 2026-10-23</span><ul><li>The combat potion is pressed once, and nothing else is pressed for 0.4s after it, so it no longer lands on top of the Convoke channel.</li><li>Healthstone and health potion are never used during Convoke or Tranquility. Barkskin is never used during Tranquility, whose channel breaks on any action; it still fires during Convoke.</li></ul></li>
             </ul>
             <a class="rc-all" href="#changelog">Full changelog</a>
           </div>
@@ -370,8 +370,8 @@
             <div class="set-row"><span class="set-label">Tranquility HP % (effective)</span><span class="set-default">70</span><span class="set-desc">Non-tank members counted for Tranquility must be below this effective health.</span></div>
             <div class="set-row"><span class="set-label">Tranquility - Min Members</span><span class="set-default">3</span><span class="set-desc">Tranquility once this many non-tank members are below the Tranquility HP %. Never cast while moving.</span></div>
             <div class="set-row"><span class="set-label">Manual Tranquility</span><span class="set-default">Off</span><span class="set-desc">Turn off automatic Tranquility and press it yourself.</span></div>
-            <div class="set-row"><span class="set-label">Auto Trinket 1 (with Convoke)</span><span class="set-default">On</span><span class="set-desc">Use trinket 1 when the Convoke group condition is met.</span></div>
-            <div class="set-row"><span class="set-label">Auto Trinket 2 (with Convoke)</span><span class="set-default">On</span><span class="set-desc">Use trinket 2 when the Convoke group condition is met.</span></div>
+            <div class="set-row"><span class="set-label">Auto Trinket 1 (with Convoke)</span><span class="set-default">On</span><span class="set-desc">Use trinket 1 when the Convoke group condition is met. Soulcoiler Ritual Vessel is the exception: it goes out before an enemy AoE lands, or when the group is already taking damage.</span></div>
+            <div class="set-row"><span class="set-label">Auto Trinket 2 (with Convoke)</span><span class="set-default">On</span><span class="set-desc">Use trinket 2 when the Convoke group condition is met. Soulcoiler Ritual Vessel is the exception: it goes out before an enemy AoE lands, or when the group is already taking damage.</span></div>
             <div class="set-row"><span class="set-label">Auto Combat Potion (with Convoke)</span><span class="set-default">On</span><span class="set-desc">Use the combat potion when the Convoke group condition is met.</span></div>
           </div>
           <div class="set-group">
@@ -434,7 +434,7 @@
 <ol><li><strong>Emergency Regrowth</strong> on anyone below <em>Regrowth Emergency HP</em> (real health), above every other heal.</li><li><strong>Tree of Life</strong> Wild Growth and instant Regrowth while you are a tree.</li><li>Your own <strong>Rejuvenation</strong> and <strong>Germination</strong> kept up.</li><li><strong>Soul of the Forest</strong> Regrowth, Rejuvenation and Germination.</li><li><strong>Wild Growth</strong> once enough allies are below the Wild Growth threshold (95% by default, so it goes out close to its cooldown; every cast also grows a Symbiotic Bloom).</li><li><strong>Lifebloom</strong> with Everbloom on you or on the tank.</li><li><strong>Abundance</strong> Regrowth and <strong>Clearcasting</strong> Regrowth.</li><li><strong>Rejuvenation</strong> and <strong>Germination</strong> on injured allies, then <strong>Regrowth</strong> as the filler.</li><li><strong>Rejuvenation blanket</strong>: any free global puts Rejuvenation on a raid member without one, lowest health first, until <em>Rejuvenation Blanket - Max Active</em> are up (10 by default). It pauses below <em>Min Mana %</em>. Nurturing Dormancy makes Rejuvenation on a full-health target last longer, so the blanket waits for the next damage instead of overhealing.</li></ol>
 <p>While moving, hardcasts are skipped and the instants (Rejuvenation, the blanket, Swiftmend, Lifebloom) fill the globals.</p>
 <h4>Cooldowns</h4>
-<ul><li><strong>Nature's Swiftness</strong> with an instant Regrowth on the lowest ally.</li><li><strong>Convoke the Spirits</strong> when enough allies in range are below the Convoke threshold. Trinkets and the combat potion go first, and it leaves any animal form before casting.</li><li><strong>Tranquility</strong> automatic when enough allies are low, or manual with <em>Manual Tranquility</em>.</li><li><strong>Swiftmend</strong> on cooldown, tree form included, since it also builds Reforestation. It goes <strong>on you</strong> first: Swiftmend eats a heal over time on its target, and Rampant Growth keeps a free copy of every Regrowth on your Lifebloom target, so self-Swiftmend eats that copy instead of an injured raider's Rejuvenation or Wild Growth. Soul of the Forest, Everbloom's bloom burst and the Symbiotic Bloom still trigger. It falls back to a raid member only when you have no heal over time on you.</li><li><strong>Thorn Bloom</strong> (racial) when enough allies are hurt, <strong>Innervate</strong> on yourself at your mana threshold.</li></ul>
+<ul><li><strong>Nature's Swiftness</strong> with an instant Regrowth on the lowest ally.</li><li><strong>Convoke the Spirits</strong> when enough allies in range are below the Convoke threshold. Trinkets and the combat potion go first, and it leaves any animal form before casting.</li><li><strong>Soulcoiler Ritual Vessel</strong> (trinket): its five damage-reduction barriers go out about 3 seconds before an enemy AoE lands, or when the group is already taking heavy damage, instead of waiting for Convoke.</li><li><strong>Tranquility</strong> automatic when enough allies are low, or manual with <em>Manual Tranquility</em>.</li><li><strong>Swiftmend</strong> on cooldown, tree form included, since it also builds Reforestation. It goes <strong>on you</strong> first: Swiftmend eats a heal over time on its target, and Rampant Growth keeps a free copy of every Regrowth on your Lifebloom target, so self-Swiftmend eats that copy instead of an injured raider's Rejuvenation or Wild Growth. Soul of the Forest, Everbloom's bloom burst and the Symbiotic Bloom still trigger. It falls back to a raid member only when you have no heal over time on you.</li><li><strong>Thorn Bloom</strong> (racial) when enough allies are hurt, <strong>Innervate</strong> on yourself at your mana threshold.</li></ul>
 <h4>Defense</h4>
 <ul><li><strong>Barkskin</strong> before a predicted hit, <strong>Ironbark</strong> on the tank (never on you with <em>Tanks Only</em>) or on anyone, <strong>Panic Bear</strong> with Frenzied Regeneration.</li><li><strong>Healthstone</strong> and <strong>health potion</strong>, also while casting, but never during Convoke or Tranquility.</li></ul>
 <h4>Utility</h4>
@@ -449,17 +449,17 @@
           </div>
           <aside class="glance">
             <dl>
-              <div><dt>Version</dt><dd>27.0.0</dd></div>
-              <div><dt>Updated</dt><dd>2026-10-24</dd></div>
+              <div><dt>Version</dt><dd>28.0.0</dd></div>
+              <div><dt>Updated</dt><dd>2026-10-27</dd></div>
               <div><dt>Patch</dt><dd>12.1</dd></div>
               <div><dt>File</dt><dd><a href="rotations/FerrazRestoDruidRaid.yaml" download>FerrazRestoDruidRaid.yaml</a></dd></div>
             </dl>
           <div class="recent">
             <h5>Recent changes</h5>
             <ul class="rc-list">
+            <li><span class="rc-ver">v28.0.0 · 2026-10-27</span><ul><li>Soulcoiler Ritual Vessel is now used as the group defensive it is: its five barriers (-50% damage taken) go out about 3 seconds before an enemy AoE lands, or when the group is already taking heavy damage, instead of waiting for Convoke. Your other trinkets are unchanged.</li></ul></li>
             <li><span class="rc-ver">v27.0.0 · 2026-10-24</span><ul><li>Free globals now go to a Rejuvenation blanket on raid members who do not have one, before any damage spell. New sliders: <em>Rejuvenation Blanket - Max Active</em> (default 10) and <em>Min Mana %</em> (default 25). The old cap stopped spreading Rejuvenation after 5, a number made for a 5-player party.</li><li>Swiftmend goes on yourself first. It eats the free Regrowth copy that Rampant Growth puts on your Lifebloom target, instead of eating an injured raider's Rejuvenation or Wild Growth. Soul of the Forest, Tree of Life stacks, Everbloom's bloom burst and Symbiotic Bloom still trigger.</li><li>Wild Growth goes out much closer to its cooldown: it now comes before Lifebloom upkeep and Abundance Regrowth, and its default health line is 95%.</li><li>Ironbark set to <em>Tanks Only</em> never lands on you.</li><li>Convoke's default health line is 75%, so it no longer sits ready for half a minute.</li></ul></li>
             <li><span class="rc-ver">v26.0.0 · 2026-10-23</span><ul><li>The combat potion is pressed once, and nothing else is pressed for 0.4s after it, so it no longer lands on top of the Convoke channel.</li><li>Healthstone and health potion are never used during Convoke or Tranquility. Barkskin is never used during Tranquility.</li></ul></li>
-            <li><span class="rc-ver">v25.0.0 · 2026-10-23</span><ul><li>The combat potion now goes out before Convoke. Convoke waits for it while it is available.</li></ul></li>
             </ul>
             <a class="rc-all" href="#changelog">Full changelog</a>
           </div>
@@ -495,8 +495,8 @@
             <div class="set-row"><span class="set-label">Pre-stack Reforestation (out of combat)</span><span class="set-default">On</span><span class="set-desc">Out of combat, Swiftmend a HoT target until Reforestation reaches 3 stacks, so the first Swiftmend of the next pull grants Tree of Life. Works on trash. The game wipes the Reforestation counter when a raid boss encounter starts, so on a boss cast the 4th Swiftmend yourself 1-2 sec before the pull: Tree of Life is only removed when the encounter ends.</span></div>
             <div class="set-row"><span class="set-label">Thorn Bloom (Racial) HP % (effective)</span><span class="set-default">75</span><span class="set-desc">Members counted for Thorn Bloom must be below this effective health.</span></div>
             <div class="set-row"><span class="set-label">Thorn Bloom (Racial) - Min Members</span><span class="set-default">3</span><span class="set-desc">Thorn Bloom once this many members are below the Thorn Bloom HP %.</span></div>
-            <div class="set-row"><span class="set-label">Auto Trinket 1 (with Convoke)</span><span class="set-default">On</span><span class="set-desc">Use trinket 1 when the Convoke group condition is met.</span></div>
-            <div class="set-row"><span class="set-label">Auto Trinket 2 (with Convoke)</span><span class="set-default">On</span><span class="set-desc">Use trinket 2 when the Convoke group condition is met.</span></div>
+            <div class="set-row"><span class="set-label">Auto Trinket 1 (with Convoke)</span><span class="set-default">On</span><span class="set-desc">Use trinket 1 when the Convoke group condition is met. Soulcoiler Ritual Vessel is the exception: it goes out before an enemy AoE lands, or when the group is already taking damage.</span></div>
+            <div class="set-row"><span class="set-label">Auto Trinket 2 (with Convoke)</span><span class="set-default">On</span><span class="set-desc">Use trinket 2 when the Convoke group condition is met. Soulcoiler Ritual Vessel is the exception: it goes out before an enemy AoE lands, or when the group is already taking damage.</span></div>
             <div class="set-row"><span class="set-label">Auto Combat Potion (with Convoke)</span><span class="set-default">On</span><span class="set-desc">Use the combat potion when the Convoke group condition is met.</span></div>
           </div>
           <div class="set-group">
@@ -1079,6 +1079,19 @@
           <p>Every player-facing change, newest first, with the version that shipped it.</p>
         </div>
         <div class="timeline">
+    <div class="day">
+      <div class="day-date"><span>2026-10-27</span></div>
+      <div class="day-entries">
+        <div class="entry leaf">
+          <h4><span class="entry-title">Restoration · Mythic+</span> <span class="entry-ver">v37.0.0</span></h4>
+          <ul><li>Soulcoiler Ritual Vessel is now used as the group defensive it is: its five barriers (-50% damage taken) go out about 3 seconds before an enemy AoE lands, or when the group is already taking heavy damage, instead of waiting for Convoke. Your other trinkets are unchanged.</li></ul>
+        </div>
+        <div class="entry leaf">
+          <h4><span class="entry-title">Restoration · Raid</span> <span class="entry-ver">v28.0.0</span></h4>
+          <ul><li>Soulcoiler Ritual Vessel is now used as the group defensive it is: its five barriers (-50% damage taken) go out about 3 seconds before an enemy AoE lands, or when the group is already taking heavy damage, instead of waiting for Convoke. Your other trinkets are unchanged.</li></ul>
+        </div>
+      </div>
+    </div>
     <div class="day">
       <div class="day-date"><span>2026-10-25</span></div>
       <div class="day-entries">
