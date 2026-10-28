@@ -2,6 +2,14 @@
 
 Player-facing changes to the Ferraz rotations, newest first. Each entry names the rotation and the version that shipped it.
 
+## 2026-10-28
+
+### Balance · Mythic+ · v15.0.0
+- Moonfire and Sunfire on your mouseover now work while moving and during the burst opener, not only while standing still in AoE. *Spread DoTs on Mouseover* behaves as described again.
+
+### Balance · Raid · v12.0.0
+- Moonfire and Sunfire on your mouseover now work while moving and during the burst opener, not only while standing still in AoE. *Spread DoTs on Mouseover* behaves as described again.
+
 ## 2026-10-27
 
 ### Restoration · Mythic+ · v37.0.0

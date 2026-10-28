@@ -2046,3 +2046,17 @@ pontos de sobrevivência e de movimento são inertes lá.
 - Labels "(Eclipse Down)" com condição de Eclipse ativo viraram "(In Eclipse)".
 - Config reorganizado (seções, labels, descrições), chaves e defaults intocados.
 - `name=` em todas as linhas de ação.
+
+
+---
+
+## Mouseover DoTs reachable everywhere (2026-10-28)
+
+```
+Users reported Moonfire/Sunfire on mouseover not working. The two lines were fine (same
+mouseover.debuff.X.down pattern as the official rotation_104 and rotation_256) but the list was only
+called from inside `aoe`. main dispatches moving_aoe (and, in Raid, opener_aoe) first, and moving_aoe
+ends on unconditional Sunfire/Moonfire fillers, so while moving the aoe list (and the mouseover lines)
+was never reached. Now called from main above every damage list when enemies.combat.40y>1, and the
+lines carry range_check=mouseover (the default range check is the target). Untested in game.
+```

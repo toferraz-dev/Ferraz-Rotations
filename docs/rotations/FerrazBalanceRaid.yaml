@@ -1,5 +1,5 @@
 
-version: "11.0.0"
+version: "12.0.0"
 author: Ferraz
 patch: "12.1"
 spec: 102
@@ -14,7 +14,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-10-24 | Patch: 12.1 | Version: 11.0.0"
+    text: "Last update: 2026-10-28 | Patch: 12.1 | Version: 12.0.0"
 
   hp_legend:
     section: "Info"
@@ -291,8 +291,8 @@ lists:
     - target_enemy,name="Swap Off Storm Blessed",delay=500,off_gcd=true,if=target.buff.1289229.up&enemies.combat.40y>=2
 
   mouseover_dots:
-    - sunfire.mouseover,name="Sunfire Mouseover",if=config.enable_mouseover_dots&mouseover.exists&mouseover.enemy&mouseover.attackable&!mouseover.dead&mouseover.combat&mouseover.range<=40&mouseover.debuff.sunfire.down
-    - moonfire.mouseover,name="Moonfire Mouseover",if=config.enable_mouseover_dots&mouseover.exists&mouseover.enemy&mouseover.attackable&!mouseover.dead&mouseover.combat&mouseover.range<=40&mouseover.debuff.moonfire.down
+    - sunfire.mouseover,name="Sunfire Mouseover",range_check=mouseover,if=config.enable_mouseover_dots&mouseover.exists&mouseover.enemy&mouseover.attackable&!mouseover.dead&mouseover.combat&mouseover.range<=40&mouseover.debuff.sunfire.down
+    - moonfire.mouseover,name="Moonfire Mouseover",range_check=mouseover,if=config.enable_mouseover_dots&mouseover.exists&mouseover.enemy&mouseover.attackable&!mouseover.dead&mouseover.combat&mouseover.range<=40&mouseover.debuff.moonfire.down
 
   dispels:
     - remove_corruption,delay=500,cycle=party,name="Remove Corruption",if=cycle.dispelable.list
@@ -365,7 +365,6 @@ lists:
   aoe:
     - sunfire,name="Sunfire (Refresh)",if=debuff.sunfire.remains<2|debuff.sunfire.refreshable&var.eclipse_down
     - moonfire,name="Moonfire (Refresh)",if=debuff.moonfire.remains<2|debuff.moonfire.refreshable&var.eclipse_down
-    - call_action_list,name=mouseover_dots
     - lunar_eclipse,name="Lunar Eclipse",if=var.eclipse_down
     - fury_of_elune,name="Fury of Elune",if=!talent.sundered_firmament|debuff.430589.remains<2
     - incarnation_chosen_of_elune,name="Incarnation",global_delay=500,if=!var.cd_active&(var.eclipse_down|fight_remains<20)
@@ -426,6 +425,9 @@ lists:
     - starfire,name="Back to Moonkin (Fluid Form)",if=talent.fluid_form&buff.moonkin_form.down&!var.bear_defensive_active&!player.moving
     - moonkin_form,name="Back to Moonkin",if=buff.moonkin_form.down&!var.bear_defensive_active&(!talent.fluid_form|player.moving)
 
+    # Mouseover DoT spreading sits above every damage list. Called only from `aoe` before, it was never
+    # reached while moving (moving_aoe ends on unconditional DoT fillers) or during the opener.
+    - call_action_list,name=mouseover_dots,if=enemies.combat.40y>1
     - call_action_list,name=opener_aoe,if=var.opener&enemies.combat.40y>1
     - call_action_list,name=opener_st,if=var.opener&enemies.combat.40y<=1
     - call_action_list,name=moving_aoe,if=player.moving&enemies.combat.40y>1

@@ -873,3 +873,17 @@ Testado e NAO aplicado: Touch the Cosmos para Starfall em alvo unico (o starfall
 build avalia true; mas so +0.18%), e Fury of Elune solto em AoE (0). Radiant Moonlight tambem da
 -15s de cooldown e +50% de dano ao Fury of Elune, que a lista ja lanca no cooldown em ST.
 ```
+
+
+---
+
+## Mouseover DoTs reachable everywhere (2026-10-28)
+
+```
+Users reported Moonfire/Sunfire on mouseover not working. The two lines were fine (same
+mouseover.debuff.X.down pattern as the official rotation_104 and rotation_256) but the list was only
+called from inside `aoe`. main dispatches moving_aoe (and, in Raid, opener_aoe) first, and moving_aoe
+ends on unconditional Sunfire/Moonfire fillers, so while moving the aoe list (and the mouseover lines)
+was never reached. Now called from main above every damage list when enemies.combat.40y>1, and the
+lines carry range_check=mouseover (the default range check is the target). Untested in game.
+```

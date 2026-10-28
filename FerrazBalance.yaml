@@ -1,5 +1,5 @@
 
-version: "14.0.0"
+version: "15.0.0"
 author: Ferraz
 patch: "12.1"
 spec: 102
@@ -18,7 +18,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-10-24 | Patch: 12.1 | Version: 14.0.0"
+    text: "Last update: 2026-10-28 | Patch: 12.1 | Version: 15.0.0"
 
   hp_legend:
     section: "Info"
@@ -400,8 +400,8 @@ lists:
     - thorn_bloom,name="Thorn Bloom",if=group.count(cycle.health.effective.pct<config.thorn_bloom_threshold)>=config.thorn_bloom_members&target.valid&target.enemy&!target.dead&target.range<=40
 
   mouseover_dots:
-    - sunfire.mouseover,name="Sunfire Mouseover",if=config.enable_mouseover_dots&mouseover.exists&mouseover.enemy&mouseover.attackable&!mouseover.dead&!mouseover.boss&mouseover.combat&mouseover.range<=40&mouseover.debuff.sunfire.down
-    - moonfire.mouseover,name="Moonfire Mouseover",if=config.enable_mouseover_dots&mouseover.exists&mouseover.enemy&mouseover.attackable&!mouseover.dead&!mouseover.boss&mouseover.combat&mouseover.range<=40&mouseover.debuff.moonfire.down
+    - sunfire.mouseover,name="Sunfire Mouseover",range_check=mouseover,if=config.enable_mouseover_dots&mouseover.exists&mouseover.enemy&mouseover.attackable&!mouseover.dead&!mouseover.boss&mouseover.combat&mouseover.range<=40&mouseover.debuff.sunfire.down
+    - moonfire.mouseover,name="Moonfire Mouseover",range_check=mouseover,if=config.enable_mouseover_dots&mouseover.exists&mouseover.enemy&mouseover.attackable&!mouseover.dead&!mouseover.boss&mouseover.combat&mouseover.range<=40&mouseover.debuff.moonfire.down
 
   # Touch the Cosmos: talent 450356 is a passive with the same name, so the free-cast proc is read by id (450360).
   moving_st:
@@ -452,7 +452,6 @@ lists:
 
     - moonfire,name="Moonfire (Refresh)",if=debuff.moonfire.refreshable
     - sunfire,name="Sunfire (Refresh)",if=debuff.sunfire.refreshable
-    - call_action_list,name=mouseover_dots
 
     - solar_eclipse,name="Solar Eclipse",if=var.eclipse_down&cooldown.solar_eclipse.ready&!var.inc_ready_to_cast
     - lunar_eclipse,name="Lunar Eclipse",if=var.eclipse_down&cooldown.lunar_eclipse.ready&!var.inc_ready_to_cast
@@ -498,6 +497,9 @@ lists:
 
     - call_action_list,name=trinkets
 
+    # Mouseover DoT spreading sits above every damage list. Called only from `aoe` before, it was never
+    # reached while moving (moving_aoe ends on unconditional DoT fillers) or during the opener.
+    - call_action_list,name=mouseover_dots,if=enemies.combat.40y>1
     - call_action_list,name=moving_aoe,if=player.moving&enemies.combat.40y>1
     - call_action_list,name=moving_st,if=player.moving&enemies.combat.40y<=1
     - call_action_list,name=ec_st,if=enemies.combat.40y<=1
