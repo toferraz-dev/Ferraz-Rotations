@@ -1,4 +1,4 @@
-version: "37.0.0"
+version: "37.1.0"
 author: Ferraz
 patch: "12.1"
 spec: 105
@@ -23,7 +23,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-10-27 | Patch: 12.1 | Version: 37.0.0"
+    text: "Last update: 2026-10-28 | Patch: 12.1 | Version: 37.1.0"
 
   hp_legend:
     section: "Info"
@@ -72,7 +72,7 @@ config:
     type: slider
     min: 25
     max: 90
-    default: 60
+    default: 35
     description: "Emergency Regrowth on anyone below this real health. While someone is below it, Lifebloom waits until 2s are left so the emergency heals go first."
 
   regrowth_threshold:
@@ -81,7 +81,7 @@ config:
     type: slider
     min: 25
     max: 99
-    default: 90
+    default: 83
     description: "Regrowth on anyone below this effective health (Soul of the Forest, Abundance, filler)."
 
   rejuvenation_threshold:
@@ -117,7 +117,7 @@ config:
     type: slider
     min: 10
     max: 99
-    default: 70
+    default: 65
     description: "Nature's Swiftness + instant Regrowth when anyone is below this effective health."
 
   ooc_heal_hp_pct:
@@ -142,7 +142,7 @@ config:
     type: slider
     min: 10
     max: 99
-    default: 75
+    default: 60
     description: "Effective health under which the hovered ally gets priority healing."
 
   # ---- Dungeons ----------------------------------------------------
@@ -227,7 +227,7 @@ config:
     type: slider
     min: 10
     max: 100
-    default: 50
+    default: 60
     description: "Use Barkskin when your current effective health minus the biggest predicted incoming hit (health.effective.pct-incoming.pct) would put you at or below this HP%. Example: at 90% HP with a hit predicted to take 30%, that's 60% projected - set this to 40 and it won't fire yet; set it to 60+ and it will."
 
   ironbark_target:
@@ -337,7 +337,7 @@ config:
     type: slider
     min: 25
     max: 99
-    default: 85
+    default: 80
     description: "Ranged DPS only runs while the most hurt group member (group.lowest, effective health) is at or above this. Healing is never held back for it: every healing list runs first and DPS only takes the globals they leave free, so this decides whether those spare globals go to damage or stay idle."
 
   use_heart_of_the_wild:
@@ -354,7 +354,7 @@ config:
     type: slider
     min: 25
     max: 99
-    default: 75
+    default: 70
     description: "Innervate yourself below this mana."
 
   mana_potion_pct:

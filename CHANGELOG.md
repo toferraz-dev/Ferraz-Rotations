@@ -4,6 +4,16 @@ Player-facing changes to the Ferraz rotations, newest first. Each entry names th
 
 ## 2026-10-28
 
+### Restoration · Mythic+ · v37.1.0
+- New defaults, taken from the author's own tuned settings:
+  - *Mouseover Emergency HP % (effective)*: 75 → 60
+  - *Regrowth Emergency HP % (real HP)*: 60 → 35
+  - *Regrowth HP % (effective)*: 90 → 83
+  - *Nature's Swiftness HP % (effective)*: 70 → 65
+  - *Innervate Mana %*: 75 → 70
+  - *DPS - Group HP % (effective)*: 85 → 80
+  - *Barkskin - Predicted HP % Remaining (effective)*: 50 → 60
+
 ### Balance · Mythic+ · v15.0.0
 - Moonfire and Sunfire on your mouseover now work while moving and during the burst opener, not only while standing still in AoE. *Spread DoTs on Mouseover* behaves as described again.
 
