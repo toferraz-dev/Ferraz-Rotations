@@ -213,7 +213,7 @@
           <span class="spec-body">
             <span class="spec-top"><span class="spec-name">Restoration</span><span class="badge">Mythic+</span></span>
             <span class="spec-build">Wildstalker</span>
-            <span class="spec-meta">Healer · v37.0.0</span>
+            <span class="spec-meta">Healer · v37.1.0</span>
           </span>
         </a>
         <a class="spec-card leaf" href="#resto-raid">
@@ -323,17 +323,17 @@
           </div>
           <aside class="glance">
             <dl>
-              <div><dt>Version</dt><dd>37.0.0</dd></div>
-              <div><dt>Updated</dt><dd>2026-10-27</dd></div>
+              <div><dt>Version</dt><dd>37.1.0</dd></div>
+              <div><dt>Updated</dt><dd>2026-10-28</dd></div>
               <div><dt>Patch</dt><dd>12.1</dd></div>
               <div><dt>File</dt><dd><a href="rotations/FerrazRestoDruid.yaml" download>FerrazRestoDruid.yaml</a></dd></div>
             </dl>
           <div class="recent">
             <h5>Recent changes</h5>
             <ul class="rc-list">
+            <li><span class="rc-ver">v37.1.0 · 2026-10-28</span><ul><li>New defaults, taken from the author's own tuned settings:</li></ul></li>
             <li><span class="rc-ver">v37.0.0 · 2026-10-27</span><ul><li>Soulcoiler Ritual Vessel is now used as the group defensive it is: its five barriers (-50% damage taken) go out about 3 seconds before an enemy AoE lands, or when the group is already taking heavy damage, instead of waiting for Convoke. Your other trinkets are unchanged.</li></ul></li>
             <li><span class="rc-ver">v36.0.0 · 2026-10-24</span><ul><li>New recommended talents: the Mythic+ build of the world's top Restoration Druid, with Dream of Cenarius, Verdancy, Stonebark, Tranquil Mind and Astral Influence. Copy the new string from the rotation panel.</li><li>Damage now works like his: Sunfire and Moonfire kept up, then Starfire on packs and Wrath on a single target, which heal through Dream of Cenarius. Starsurge only while moving. Heart of the Wild is off by default.</li><li>Wild Growth goes out much more often: keeping Abundance up no longer comes before Wild Growth or the emergency Regrowth.</li><li>Swiftmend prefers allies with Regrowth or Wild Growth, so it stops eating Rejuvenations.</li><li>Convoke needs 2 injured allies instead of 3, and its default health line is 85% instead of 75%, so it comes back about once a minute.</li><li>Barkskin goes out a little earlier by default (50%): Flower Walk heals the group around you while it is up.</li><li>Ironbark defaults to <em>All Members</em> (a healing cooldown with Stonebark), and <em>Tanks Only</em> never lands on you.</li></ul></li>
-            <li><span class="rc-ver">v35.0.0 · 2026-10-23</span><ul><li>Temple of Sethraliss, last boss: hover or target the Avatar of Sethraliss once and the rotation sets it as your focus. From then on every heal goes to the Avatar while it is friendly, with no need to keep the mouse on it.</li><li>On the Avatar it uses Nature's Swiftness with an instant Regrowth, Wild Growth, Rejuvenation, Germination, Swiftmend and Regrowth.</li><li>The party is not forgotten: if anyone drops below the new "Party Safety HP %" slider (default 50%), the rotation goes back to healing the party, cooldowns included, until they are safe.</li><li>No heals are wasted while Defiling Taint blocks healing on the Avatar.</li></ul></li>
             </ul>
             <a class="rc-all" href="#changelog">Full changelog</a>
           </div>
@@ -349,15 +349,15 @@
           <div class="set-group">
             <h5>Healing</h5>
             <div class="set-row"><span class="set-label">Lifebloom Target</span><span class="set-default">Self</span><span class="set-desc">Who keeps Lifebloom. Self is the Everbloom setup.</span></div>
-            <div class="set-row"><span class="set-label">Regrowth Emergency HP % (real HP)</span><span class="set-default">60</span><span class="set-desc">Emergency Regrowth on anyone below this real health. While someone is below it, Lifebloom waits until 2s are left so the emergency heals go first.</span></div>
-            <div class="set-row"><span class="set-label">Regrowth HP % (effective)</span><span class="set-default">90</span><span class="set-desc">Regrowth on anyone below this effective health (Soul of the Forest, Abundance, filler).</span></div>
+            <div class="set-row"><span class="set-label">Regrowth Emergency HP % (real HP)</span><span class="set-default">35</span><span class="set-desc">Emergency Regrowth on anyone below this real health. While someone is below it, Lifebloom waits until 2s are left so the emergency heals go first.</span></div>
+            <div class="set-row"><span class="set-label">Regrowth HP % (effective)</span><span class="set-default">83</span><span class="set-desc">Regrowth on anyone below this effective health (Soul of the Forest, Abundance, filler).</span></div>
             <div class="set-row"><span class="set-label">Rejuvenation HP % (effective)</span><span class="set-default">100</span><span class="set-desc">Rejuvenation and Germination on anyone below this effective health, while Abundance is not already safe.</span></div>
             <div class="set-row"><span class="set-label">Wild Growth HP % (effective)</span><span class="set-default">90</span><span class="set-desc">Group members counted for Wild Growth must be below this effective health.</span></div>
             <div class="set-row"><span class="set-label">Wild Growth - Min Members</span><span class="set-default">2</span><span class="set-desc">Wild Growth once this many members are below the Wild Growth HP %.</span></div>
-            <div class="set-row"><span class="set-label">Nature's Swiftness HP % (effective)</span><span class="set-default">70</span><span class="set-desc">Nature's Swiftness + instant Regrowth when anyone is below this effective health.</span></div>
+            <div class="set-row"><span class="set-label">Nature's Swiftness HP % (effective)</span><span class="set-default">65</span><span class="set-desc">Nature's Swiftness + instant Regrowth when anyone is below this effective health.</span></div>
             <div class="set-row"><span class="set-label">OOC Heal Below HP % (effective)</span><span class="set-default">100</span><span class="set-desc">Out of combat, only heal group members under this health. Set to 100 to go back to topping everyone off.</span></div>
             <div class="set-row"><span class="set-label">Mouseover Emergency Healing</span><span class="set-default">On</span><span class="set-desc">Heal the ally under your mouse first when they fall below the Mouseover Emergency HP %.</span></div>
-            <div class="set-row"><span class="set-label">Mouseover Emergency HP % (effective)</span><span class="set-default">75</span><span class="set-desc">Effective health under which the hovered ally gets priority healing.</span></div>
+            <div class="set-row"><span class="set-label">Mouseover Emergency HP % (effective)</span><span class="set-default">60</span><span class="set-desc">Effective health under which the hovered ally gets priority healing.</span></div>
           </div>
           <div class="set-group">
             <h5>Dungeons</h5>
@@ -376,7 +376,7 @@
           </div>
           <div class="set-group">
             <h5>Defensives</h5>
-            <div class="set-row"><span class="set-label">Barkskin - Predicted HP % Remaining (effective)</span><span class="set-default">50</span><span class="set-desc">Use Barkskin when your current effective health minus the biggest predicted incoming hit (health.effective.pct-incoming.pct) would put you at or below this HP%. Example: at 90% HP with a hit predicted to take 30%, that's 60% projected - set this to 40 and it won't fire yet; set it to 60+ and it will.</span></div>
+            <div class="set-row"><span class="set-label">Barkskin - Predicted HP % Remaining (effective)</span><span class="set-default">60</span><span class="set-desc">Use Barkskin when your current effective health minus the biggest predicted incoming hit (health.effective.pct-incoming.pct) would put you at or below this HP%. Example: at 90% HP with a hit predicted to take 30%, that's 60% projected - set this to 40 and it won't fire yet; set it to 60+ and it will.</span></div>
             <div class="set-row"><span class="set-label">Ironbark Target</span><span class="set-default">All Members</span><span class="set-desc">Tanks only, or anyone in the group. All Members by default: with Stonebark, Ironbark also raises your heal-over-time healing on the target, so it is a healing cooldown for whoever is dropping, not just a tank defensive.</span></div>
             <div class="set-row"><span class="set-label">Ironbark HP % (real HP)</span><span class="set-default">70</span><span class="set-desc">Use Ironbark when the target is below this health. HP% only - no incoming-damage form exists for a unit other than the player, so unlike Barkskin, Ironbark cannot react before the hit lands.</span></div>
             <div class="set-row"><span class="set-label">Frenzied Regen HP % (real HP)</span><span class="set-default">25</span><span class="set-desc">Panic Bear + Frenzied Regeneration below this real health.</span></div>
@@ -395,12 +395,12 @@
           <div class="set-group">
             <h5>Damage</h5>
             <div class="set-row"><span class="set-label">Ranged DPS (Sunfire/Moonfire/Wrath/Starfire)</span><span class="set-default">On</span><span class="set-desc">Spend free globals on damage while the group is healthy (see DPS - Group HP %). With Dream of Cenarius every Wrath and Starfire also heals a nearby ally.</span></div>
-            <div class="set-row"><span class="set-label">DPS - Group HP % (effective)</span><span class="set-default">85</span><span class="set-desc">Ranged DPS only runs while the most hurt group member (group.lowest, effective health) is at or above this. Healing is never held back for it: every healing list runs first and DPS only takes the globals they leave free, so this decides whether those spare globals go to damage or stay idle.</span></div>
+            <div class="set-row"><span class="set-label">DPS - Group HP % (effective)</span><span class="set-default">80</span><span class="set-desc">Ranged DPS only runs while the most hurt group member (group.lowest, effective health) is at or above this. Healing is never held back for it: every healing list runs first and DPS only takes the globals they leave free, so this decides whether those spare globals go to damage or stay idle.</span></div>
             <div class="set-row"><span class="set-label">Auto Heart of the Wild</span><span class="set-default">Off</span><span class="set-desc">Instant-cast burst in Moonkin Form. OFF by default: the top Mythic+ Restoration Druid never presses it, and its global is worth more as a Dream of Cenarius Wrath or Starfire.</span></div>
           </div>
           <div class="set-group">
             <h5>Utility</h5>
-            <div class="set-row"><span class="set-label">Innervate Mana %</span><span class="set-default">75</span><span class="set-desc">Innervate yourself below this mana.</span></div>
+            <div class="set-row"><span class="set-label">Innervate Mana %</span><span class="set-default">70</span><span class="set-desc">Innervate yourself below this mana.</span></div>
             <div class="set-row"><span class="set-label">Mana Potion Mana %</span><span class="set-default">30</span><span class="set-desc">Mana potion below this mana.</span></div>
           </div>
           <div class="set-group">
@@ -1083,6 +1083,10 @@
     <div class="day">
       <div class="day-date"><span>2026-10-28</span></div>
       <div class="day-entries">
+        <div class="entry leaf">
+          <h4><span class="entry-title">Restoration · Mythic+</span> <span class="entry-ver">v37.1.0</span></h4>
+          <ul><li>New defaults, taken from the author's own tuned settings:</li></ul>
+        </div>
         <div class="entry arcane">
           <h4><span class="entry-title">Balance · Mythic+</span> <span class="entry-ver">v15.0.0</span></h4>
           <ul><li>Moonfire and Sunfire on your mouseover now work while moving and during the burst opener, not only while standing still in AoE. <em>Spread DoTs on Mouseover</em> behaves as described again.</li></ul>

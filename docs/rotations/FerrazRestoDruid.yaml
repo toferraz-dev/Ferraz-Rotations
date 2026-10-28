@@ -1,4 +1,4 @@
-version: "37.0.0"
+version: "37.1.0"
 author: Ferraz
 patch: "12.1"
 spec: 105
@@ -23,7 +23,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-10-27 | Patch: 12.1 | Version: 37.0.0"
+    text: "Last update: 2026-10-28 | Patch: 12.1 | Version: 37.1.0"
 
   hp_legend:
     section: "Info"
@@ -72,7 +72,7 @@ config:
     type: slider
     min: 25
     max: 90
-    default: 60
+    default: 35
     description: "Emergency Regrowth on anyone below this real health. While someone is below it, Lifebloom waits until 2s are left so the emergency heals go first."
 
   regrowth_threshold:
@@ -81,7 +81,7 @@ config:
     type: slider
     min: 25
     max: 99
-    default: 90
+    default: 83
     description: "Regrowth on anyone below this effective health (Soul of the Forest, Abundance, filler)."
 
   rejuvenation_threshold:
@@ -117,7 +117,7 @@ config:
     type: slider
     min: 10
     max: 99
-    default: 70
+    default: 65
     description: "Nature's Swiftness + instant Regrowth when anyone is below this effective health."
 
   ooc_heal_hp_pct:
@@ -142,7 +142,7 @@ config:
     type: slider
     min: 10
     max: 99
-    default: 75
+    default: 60
     description: "Effective health under which the hovered ally gets priority healing."
 
   # ---- Dungeons ----------------------------------------------------
@@ -227,7 +227,7 @@ config:
     type: slider
     min: 10
     max: 100
-    default: 50
+    default: 60
     description: "Use Barkskin when your current effective health minus the biggest predicted incoming hit (health.effective.pct-incoming.pct) would put you at or below this HP%. Example: at 90% HP with a hit predicted to take 30%, that's 60% projected - set this to 40 and it won't fire yet; set it to 60+ and it will."
 
   ironbark_target:
@@ -337,7 +337,7 @@ config:
     type: slider
     min: 25
     max: 99
-    default: 85
+    default: 80
     description: "Ranged DPS only runs while the most hurt group member (group.lowest, effective health) is at or above this. Healing is never held back for it: every healing list runs first and DPS only takes the globals they leave free, so this decides whether those spare globals go to damage or stay idle."
 
   use_heart_of_the_wild:
@@ -354,7 +354,7 @@ config:
     type: slider
     min: 25
     max: 99
-    default: 75
+    default: 70
     description: "Innervate yourself below this mana."
 
   mana_potion_pct:
@@ -502,7 +502,7 @@ lists:
     - rejuvenation,name="SotF Germination",cycle=members,cycle_order=buff.rejuvenation.remains,if=(var.has_soul&talent.germination&cycle.buff.rejuvenation.up&(cycle.buff.rejuvenation_germination.down|cycle.buff.rejuvenation_germination.remains<1.5))&cycle.range<=40
     - rejuvenation,name="SotF Rejuvenation",cycle=members,cycle_order=buff.rejuvenation.remains,if=(var.has_soul&cycle.buff.rejuvenation.remains<1.5)
 
-    - wild_growth,name="Wild Growth",range_check=none,if=group.count(cycle.health.effective.pct<config.wild_growth_threshold)>=config.wild_growth_members
+    - wild_growth,name="Wild Growth",if=group.count(cycle.health.effective.pct<config.wild_growth_threshold)>=config.wild_growth_members
 
     # Abundance upkeep sits here, under the emergency Regrowth, Clearcasting, Soul of the Forest and
     # Wild Growth. Called from main ahead of this list it cast Rejuvenation fillers while someone
@@ -517,7 +517,7 @@ lists:
 
     - regrowth,name="Regrowth",cycle=members,cycle_order=health.pct,if=(cycle.health.effective.pct<config.regrowth_threshold)
   utility:
-    - innervate,cycle=members,name="Innervate",off_gcd=true,delay=150,range_check=none,if=cycle.is_player&talent.innervate&mana.pct<config.innervate_threshold
+    - innervate,name="Innervate",off_gcd=true,if=talent.innervate&mana.pct<config.innervate_threshold
 
   abundance_maintenance:
     - rejuvenation,cycle=members,name="Self Rejuvenation Maintenance",range_check=none,if=cycle.is_player&cycle.buff.rejuvenation.remains<2
@@ -589,18 +589,17 @@ lists:
     - target_enemy,name="Swap Off Storm Blessed",delay=500,off_gcd=true,if=target.buff.1289229.up&enemies.combat.40y>=2
 
   main:
-    - bear_form,name="Root Cleanse (to Bear)",if=config.root_cleanse&player.rooted&!player.casting&!player.channeling&!buff.bear_form.up
-    - moonkin_form,name="Root Cleanse (from Bear)",if=config.root_cleanse&player.rooted&!player.casting&!player.channeling&buff.bear_form.up
-
-    - call_action_list,name=emergency,if=player.combat&(player.casting|player.channeling)&health.pct<=config.emergency_hp
-
     - return,if=player.channeling|var.protected_channel
     - call_action_list,name=engine
     - call_action_list,name=out_of_combat,if=!player.combat
     - return,if=!player.combat
 
-    - call_action_list,name=defensives
+    - bear_form,name="Root Cleanse (to Bear)",if=config.root_cleanse&player.rooted&!player.casting&!player.channeling&!buff.bear_form.up
+    - moonkin_form,name="Root Cleanse (from Bear)",if=config.root_cleanse&player.rooted&!player.casting&!player.channeling&buff.bear_form.up
 
+    - call_action_list,name=emergency,if=player.combat&health.pct<=config.emergency_hp
+
+    - call_action_list,name=defensives
     - lifebloom,cycle=members,name="Self Lifebloom (Everbloom, Top Priority)",range_check=none,after=300,if=cycle.is_player&!config.force_dps&config.lifebloom_target=1&talent.everbloom&(cycle.buff.lifebloom.down|cycle.buff.lifebloom.remains<2|(cycle.buff.lifebloom.remains<4.5&group.lowest.health.pct>=config.regrowth_emergency_threshold))
     - lifebloom,name="Lifebloom (Tank, Everbloom, Top Priority)",cycle=tanks,cycle_order=health.pct,if=!config.force_dps&config.lifebloom_target=2&talent.everbloom&(cycle.buff.lifebloom.down|cycle.buff.lifebloom.remains<2|(cycle.buff.lifebloom.refreshable&group.lowest.health.pct>=config.regrowth_emergency_threshold))
 
