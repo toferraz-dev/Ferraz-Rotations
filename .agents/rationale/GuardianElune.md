@@ -1248,3 +1248,45 @@ ours) ahead of the generic "Remove Corruption" line. The self line (cycle=member
 is there because v5.0.0 replaced the old self-dispel with a single cycle=party line, and it is not
 confirmed that cycle=party includes the player. Untested in game.
 ```
+
+
+---
+
+## v6.0.0 (2026-10-29): log comparison against the world #1 Guardian (Kirabearr_f1 vs Tassiana_f1)
+
+`FerrazGuardianElune.yaml`
+
+```
+Same M+ dungeon, ~27 min each. Talents nearly identical (Elune's Chosen). He out-damaged the file by
+53% (gear explains part: his trinkets 341 vs 321) and self-healed 39% more. The rotation-side causes:
+
+                          Kirabearr   this file
+  rage wasted at cap        0.6%       10.3%
+  avg Ironfur stacks        3.88       3.02
+  Thrash / Mangle per min   18.0/14.3  14.7/9.7
+  Moonfire per min          13.4       19.9
+  Frenzied Regen per min    4.1        1.8
+  Dream Conduit spent       13/13      3/14 (11 expired, 60 s buff)
+  Wild Guardian after Inc   0.1-0.2 s  0.2-26.4 s (35 s window)
+
+1. Ironfur from 40 rage (>=80 while Answered Calling 1308647 is up; held while Dream Conduit 1308176
+   is up), from the SimC 73a372b default APL. The old overflow line at rage>=80 kept rage at the cap,
+   and Mangle's own gate (rage<83 with Soul of the Forest) then skipped Mangle, so the GCD went to the
+   Lunation Moonfire filler.
+2. Maul/Raze on Dream Conduit (SimC: maul,if=buff.dream_conduit.up&!fount&!answered_calling), after
+   Thrash in st and aoe. The Maul awakens a guardian spirit: Thrash+Mangle reset, +30%, rage.
+3. Wild Guardian on var.burst_active instead of buff.lunar_beam.up. It only goes out inside Incarnation
+   (27/28 casts across both logs; one Kirabearr cast matched no window, likely a parse artifact); he presses it 0.1-0.2 s after Incarnation.
+4. frenzied_regeneration_hp_pct 75 -> 85. FR is 10 rage with a 1 s CD in 12.1 (SimC spell data). He
+   casts it 2.4x as often at the same ~50% overheal, so the extra casts heal real damage. No HP data in
+   the logs; the threshold is a judgement, not a measurement.
+5. aoe filler: Moonfire (Lunation) on GG proc / <3 targets / refreshable before Swipe (SimC default APL).
+   Swipe stays unconditional as the last line: SimC gates it to >3 targets and idles at exactly 3, which
+   in Simia would show no suggestion on a 3-mob pack (caught in review).
+6. recommended_talents = his exact tree (Perfectly-Honed Instincts over Fluid Form; Astral Insight and
+   Elune's Grace over Moondust and The Light of Elune), built from the exported string by flipping only
+   differing nodes, validated by decoding back to his WCL tree and by SimC accepting it.
+
+Note: Guardian Lunation is a FLAT Lunar Beam cooldown reduction; Moonfire spam does not speed it up.
+Backup of v5.1.0: backups/FerrazGuardianElune_v5.1.0_2026-10-29.yaml (local). Untested in game.
+```

@@ -1,5 +1,5 @@
 
-version: "5.1.0"
+version: "6.0.0"
 patch: "12.1"
 spec: 104
 name: Guardian Druid Ferraz M+
@@ -7,9 +7,9 @@ author: Ferraz
 description: |
   Guardian Druid 104 engine for 12.1, tuned for Mythic+.
   Elunes Chosen: Lunar Calling turns Thrash into Moonfire, while Lunation
-  plus Galactic Guardian add further Moonfire slots. Rage splits between
-  Ironfur, Raze, Maul on predicted incoming damage. Heart of the Wild weaves
-  through Cat Form. ST/AoE split at 2 enemies within 8 yards.
+  plus Galactic Guardian add further Moonfire slots. Rage goes into Ironfur
+  from 40; Maul is spent on Dream Conduit procs, which awaken a guardian spirit.
+  Heart of the Wild weaves through Cat Form. ST/AoE split at 2 enemies within 8 yards.
 entry: main
 
 spell_overrides:
@@ -26,7 +26,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-10-25 | Patch: 12.1 | Version: 5.1.0"
+    text: "Last update: 2026-10-29 | Patch: 12.1 | Version: 6.0.0"
 
   hp_legend:
     section: "Info"
@@ -39,7 +39,7 @@ config:
     section: "Talents"
     type: copy_text
     label: "Recommended Talent String"
-    text: "CgGADBD3hSPCL9Y9gz68WcKvMAAAAAAAAAAAAgZmxsYmZMziZxMmZZZgZzwoJamZWmZmZmlxMMAAAAAgZsZALbzMYMLDgpAAAAbYmBYxADYxCAzMAG"
+    text: "CgGADBD3hSPCL9Y9gz68WcKvMAAAAAAAAAAAAgZmxsYmZMziZxMmZZZgZzwoJamZWmZmZmlxMAAAAAAMjNDYbbmBjZbAMFAAAYDzMALGDDYxCAzMAG"
 
   # ---- Defensives --------------------------------------------------
   survival_instincts_dmg_pct:
@@ -84,8 +84,8 @@ config:
     type: slider
     min: 0
     max: 100
-    default: 75
-    description: "Frenzied Regeneration below this effective health: real HP minus heal absorbs plus heals already flying at you. A tank is being healed, so a dip that an inbound heal already covers does not spend the charge, while a heal absorb makes it fire earlier."
+    default: 85
+    description: "Frenzied Regeneration below this effective health: real HP minus heal absorbs plus heals already flying at you. In 12.1 it costs only 10 rage with a 1 s cooldown, so it is a cheap heal rather than an emergency button; the world's top Guardian presses it more than twice as often as this used to, at the same overheal."
 
   engine_healthstone:
     label: "Healthstone HP % (real HP)"
@@ -120,7 +120,7 @@ config:
     min: 0
     max: 100
     default: 20
-    description: "When the biggest predicted incoming hit, after active defensives, is at least this % of your health, rage goes to Ironfur and Maul waits. The same check also blocks the HotW weave."
+    description: "When the biggest predicted incoming hit, after active defensives, is at least this % of your health, rage goes to Ironfur right away, even while it would otherwise be pooled (a guardian spirit out, or a Dream Conduit Maul waiting), and Maul waits. The same check also blocks the HotW weave."
 
   rage_deficit_maul:
     section: "Rage"
@@ -129,7 +129,7 @@ config:
     min: 1
     max: 100
     default: 20
-    description: "Maul fires once rage is within this much of the cap, while Ironfur is up and no heavy hit is predicted. Higher = Maul sooner."
+    description: "Maul once rage is within this much of the cap, while Ironfur is up and no heavy hit is predicted. Since rage now goes into Ironfur from 40, this rarely triggers; Dream Conduit procs are Mauled on their own line regardless of this slider."
 
   # ---- Cooldowns ---------------------------------------------------
   auto_hotw:
@@ -383,7 +383,10 @@ lists:
 
     - combat_potion,name="Combat Potion",off_gcd=true,ignore_queue=true,if=config.use_potion&combat_potion.ready&player.combat&var.melee_engaged&(var.burst_active|fight_remains<=30)
 
-    - wild_guardian,name="Wild Guardian",if=buff.lunar_beam.up&!buff.1308647.up
+    # Wild Guardian only goes out inside Incarnation. Waiting for Lunar Beam (SimC default) left it 0-26 s
+    # into the 35 s window; the world #1 Guardian presses it right after Incarnation, so the reset
+    # Thrash/Mangle and their +30% cover the whole window.
+    - wild_guardian,name="Wild Guardian",if=var.burst_active&!buff.1308647.up
 
     - blood_fury,name="Blood Fury"
     - berserking,name="Berserking"
@@ -396,6 +399,13 @@ lists:
     - ironfur,use_off_gcd=1,name="Ironfur (uptime)",if=buff.ironfur.remains<2&player.combat
     - ironfur,use_off_gcd=1,name="Ironfur (Gory Fur)",if=buff.201671.up&player.combat
     - ironfur,use_off_gcd=1,name="Ironfur (predicted dmg)",if=var.heavy_incoming
+    # Rage goes to Ironfur from 40 (SimC default APL). Spending only past 80 left rage at the cap (10% of
+    # all rage wasted in a key, against 0.6% for the world #1 Guardian), lowered the average stacks (3.0
+    # vs 3.9) and kept Mangle behind its own rage gate (rage<83 with Soul of the Forest). With a spirit
+    # out (Answered Calling, 1308647) it pools to 80, as SimC does; with Dream Conduit (1308176) up it
+    # waits, so the rage is there for the Maul that awakens the spirit.
+    - ironfur,use_off_gcd=1,name="Ironfur (rage)",if=player.combat&rage>=40&!buff.1308647.up&!buff.1308176.up
+    - ironfur,use_off_gcd=1,name="Ironfur (rage, spirit out)",if=player.combat&rage>=80&buff.1308647.up
     - ironfur,use_off_gcd=1,name="Ironfur (overcap)",if=rage>=80
 
     - maul,name="Maul (Gory Fur)",if=buff.1307881.up&!talent.raze.enabled&enemies.combat.8y<3&buff.ironfur.up&!var.heavy_incoming
@@ -408,6 +418,11 @@ lists:
     - 77758,name="Thrash (Lunar Calling)",range_check=mob_count_8y,if=cooldown.77758.ready&talent.lunar_calling.enabled
 
     - 77758,name="Thrash (stacks)",range_check=mob_count_8y,if=cooldown.77758.ready&(dot.thrash.refreshable|dot.thrash.stack<5&talent.flashing_claws.rank=2|dot.thrash.stack<4&talent.flashing_claws.rank=1|dot.thrash.stack<3&!talent.flashing_claws.enabled)
+    # Dream Conduit (1308176, 60 s): the next Maul/Raze awakens a guardian spirit, which resets Thrash and
+    # Mangle, gives them +30% and generates rage. The rotation never spent it: 11 of 14 expired in a key,
+    # while the world #1 Guardian Mauled all of his. After Thrash, as in SimC; not while a spirit is out.
+    - maul,name="Maul (Dream Conduit)",if=buff.1308176.up&!buff.1308647.up&!talent.raze.enabled
+    - raze,name="Raze (Dream Conduit)",if=buff.1308176.up&!buff.1308647.up&talent.raze.enabled
 
     - mangle,name="Mangle (burst)",if=(buff.incarnation_guardian_of_ursoc.up|buff.berserk.up)&buff.ursine_potential.stack<6&talent.wildpower_surge.enabled
 
@@ -421,11 +436,20 @@ lists:
   aoe:
     - 77758,name="Thrash (Lunar Calling)",range_check=mob_count_8y,if=cooldown.77758.ready&talent.lunar_calling.enabled
     - 77758,name="Thrash (stacks)",range_check=mob_count_8y,if=cooldown.77758.ready&(dot.thrash.refreshable|dot.thrash.stack<5&talent.flashing_claws.rank=2|dot.thrash.stack<4&talent.flashing_claws.rank=1|dot.thrash.stack<3&!talent.flashing_claws.enabled)
+    # Dream Conduit (1308176, 60 s): the next Maul/Raze awakens a guardian spirit, which resets Thrash and
+    # Mangle, gives them +30% and generates rage. The rotation never spent it: 11 of 14 expired in a key,
+    # while the world #1 Guardian Mauled all of his. After Thrash, as in SimC; not while a spirit is out.
+    - maul,name="Maul (Dream Conduit)",if=buff.1308176.up&!buff.1308647.up&!talent.raze.enabled
+    - raze,name="Raze (Dream Conduit)",if=buff.1308176.up&!buff.1308647.up&talent.raze.enabled
     - moonfire,name="Moonfire (maintain)",if=target.valid&dot.moonfire.refreshable
     - mangle,name="Mangle (burst)",if=(buff.incarnation_guardian_of_ursoc.up|buff.berserk.up)&buff.ursine_potential.stack<6&talent.wildpower_surge.enabled
     - mangle,name="Mangle",if=(buff.incarnation_guardian_of_ursoc.up|buff.berserk.up)|((rage<88)&!talent.fount_of_strength.enabled&!talent.soul_of_the_forest.enabled)|((rage<83)&!talent.fount_of_strength.enabled&talent.soul_of_the_forest.enabled)|((rage<108)&talent.fount_of_strength.enabled&!talent.soul_of_the_forest.enabled)|((rage<103)&talent.fount_of_strength.enabled&talent.soul_of_the_forest.enabled)
     - moonfire,name="Moonfire (GG proc)",if=buff.213708.up&target.valid
     - 77758,name="Thrash (CD)",range_check=mob_count_8y,if=cooldown.77758.ready
+    # Lunation build (SimC default APL): below 3 targets, or on a Galactic Guardian proc, Moonfire beats
+    # Swipe. Swipe stays unconditional as the last line: SimC gates it to >3 targets and idles at exactly 3,
+    # which in Simia would leave a 3-mob pack with no suggestion at all.
+    - moonfire,name="Moonfire (Lunation)",if=talent.lunation.enabled&buff.bear_form.up&target.valid&(buff.213708.up|enemies.combat.8y<3|dot.moonfire.refreshable)
     - 213764,name="Swipe (filler)"
 
   main:

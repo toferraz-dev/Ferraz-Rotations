@@ -2,6 +2,16 @@
 
 Player-facing changes to the Ferraz rotations, newest first. Each entry names the rotation and the version that shipped it.
 
+## 2026-10-29
+
+### Guardian · Mythic+ · v6.0.0
+- New recommended talents: the Mythic+ build of the world's top Guardian. Copy the new string from the rotation panel.
+- Rage goes into Ironfur from 40 rage instead of only near the cap. Rage no longer sits at 100 (about 10% of it was being wasted), you keep more Ironfur stacks, and Mangle is no longer held back by a full rage bar.
+- Dream Conduit procs are now spent on Maul. That Maul awakens a guardian spirit: Thrash and Mangle reset and hit 30% harder. Before, most of those procs expired unused.
+- Wild Guardian goes out right after Incarnation instead of waiting for Lunar Beam, so its bonus covers the whole window.
+- Frenzied Regeneration fires below 85% effective health (was 75%): in 12.1 it costs only 10 rage.
+- In AoE below 3 targets, Moonfire replaces Swipe as the filler.
+
 ## 2026-10-28
 
 ### Restoration · Mythic+ · v37.1.0
