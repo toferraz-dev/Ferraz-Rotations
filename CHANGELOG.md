@@ -2,6 +2,29 @@
 
 Player-facing changes to the Ferraz rotations, newest first. Each entry names the rotation and the version that shipped it.
 
+## 2026-10-30
+
+### Balance · Mythic+ · v16.0.0
+- Mark of the Wild is recast when anyone in the group is missing it, not only when you are. Before, if you already had the buff, a party member who died, joined late or was out of range stayed without it.
+
+### Balance · Raid · v13.0.0
+- Mark of the Wild is recast when anyone in the group is missing it, not only when you are. Before, if you already had the buff, a party member who died, joined late or was out of range stayed without it.
+
+### Feral · Mythic+ · v11.0.0
+- Mark of the Wild is recast when anyone in the group is missing it, not only when you are. Before, if you already had the buff, a party member who died, joined late or was out of range stayed without it.
+
+### Feral · Raid · v8.0.0
+- Mark of the Wild is recast when anyone in the group is missing it, not only when you are. Before, if you already had the buff, a party member who died, joined late or was out of range stayed without it.
+
+### Guardian · Mythic+ · v7.0.0
+- Mark of the Wild is recast when anyone in the group is missing it, not only when you are. Before, if you already had the buff, a party member who died, joined late or was out of range stayed without it.
+
+### Restoration · Mythic+ · v39.0.0
+- Mark of the Wild is recast when anyone in the group is missing it, not only when you are. Before, if you already had the buff, a party member who died, joined late or was out of range stayed without it.
+
+### Restoration · Raid · v30.0.0
+- Mark of the Wild is recast when anyone in the group is missing it, not only when you are. Before, if you already had the buff, a party member who died, joined late or was out of range stayed without it.
+
 ## 2026-10-29
 
 ### Restoration · Mythic+ · v38.0.0

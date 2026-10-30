@@ -1,5 +1,5 @@
 
-version: "29.0.0"
+version: "30.0.0"
 author: Ferraz
 patch: "12.1"
 spec: 105
@@ -24,7 +24,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-10-29 | Patch: 12.1 | Version: 29.0.0"
+    text: "Last update: 2026-10-30 | Patch: 12.1 | Version: 30.0.0"
 
   hp_legend:
     section: "Info"
@@ -488,7 +488,7 @@ lists:
     - soothe,name="Soothe Enrage",if=target.purgeable.enrage
 
   out_of_combat:
-    - mark_of_the_wild,name="OOC Mark of the Wild",range_check=none,if=config.raid_use_mark_of_the_wild&(buff.mark_of_the_wild.down.any|action.mark_of_the_wild.overlayed)&lastcast.mark_of_the_wild>=15
+    - mark_of_the_wild,name="OOC Mark of the Wild",range_check=none,if=config.raid_use_mark_of_the_wild&(group.count(cycle.buff.mark_of_the_wild.down.any)>0|buff.mark_of_the_wild.down.any|action.mark_of_the_wild.overlayed)&lastcast.mark_of_the_wild>=15
     - lifebloom,cycle=members,name="OOC Self Lifebloom (Everbloom)",range_check=none,if=cycle.is_player&config.raid_lifebloom_target=1&talent.everbloom&!player.combat&(cycle.buff.lifebloom.down|cycle.buff.lifebloom.remains<4.5)
     - lifebloom,name="OOC Lifebloom (Tank, Everbloom)",cycle=tanks,cycle_order=health.pct,if=config.raid_lifebloom_target=2&talent.everbloom&!player.combat&(cycle.buff.lifebloom.down|cycle.buff.lifebloom.refreshable)&cycle.range<=40
     - rejuvenation,name="OOC Rejuvenation",cycle=members,cycle_order=health.pct,if=(cycle.health.effective.pct<config.raid_rejuvenation_threshold&cycle.buff.rejuvenation.remains<1.5&!player.combat)&cycle.range<=40
@@ -613,6 +613,6 @@ lists:
     - call_action_list,name=active_healing,if=player.combat
     - call_action_list,name=abundance_maintenance,if=player.combat
 
-    - mark_of_the_wild,name="Mark of the Wild (low prio)",range_check=none,if=config.raid_use_mark_of_the_wild&(buff.mark_of_the_wild.down.any|action.mark_of_the_wild.overlayed)&lastcast.mark_of_the_wild>=15
+    - mark_of_the_wild,name="Mark of the Wild (low prio)",range_check=none,if=config.raid_use_mark_of_the_wild&(group.count(cycle.buff.mark_of_the_wild.down.any)>0|buff.mark_of_the_wild.down.any|action.mark_of_the_wild.overlayed)&lastcast.mark_of_the_wild>=15
 
     - call_action_list,name=ranged_dps,if=config.raid_ranged_dps&var.can_dps&target.exists&target.alive&!target.friendly&target.combat

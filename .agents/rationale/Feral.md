@@ -925,3 +925,15 @@ estado de forma, de nome ambíguo e de plumbing que o SimC não modela.
   2026-09-10. A descrição do Root Cleanse não fala mais em line_cd.
 - Config reorganizado (seções, labels, descrições), chaves e defaults intocados;
   `name=` em todas as linhas de ação.
+
+
+---
+
+## Mark of the Wild checks the whole group (2026-10-30)
+
+```
+Reported on Guardian: Mark of the Wild was not being cast. Every MotW line read only the player
+(buff.mark_of_the_wild.down.any) or the action-bar glow, so with the buff on you nobody else got it.
+Now also group.count(cycle.buff.mark_of_the_wild.down.any)>0, the check the official Simia
+rotations (rotation_102..105) use. Same lastcast>=10 throttle.
+```

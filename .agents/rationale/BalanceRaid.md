@@ -887,3 +887,15 @@ ends on unconditional Sunfire/Moonfire fillers, so while moving the aoe list (an
 was never reached. Now called from main above every damage list when enemies.combat.40y>1, and the
 lines carry range_check=mouseover (the default range check is the target). Untested in game.
 ```
+
+
+---
+
+## Mark of the Wild checks the whole group (2026-10-30)
+
+```
+Reported on Guardian: Mark of the Wild was not being cast. Every MotW line read only the player
+(buff.mark_of_the_wild.down.any) or the action-bar glow, so with the buff on you nobody else got it.
+Now also group.count(cycle.buff.mark_of_the_wild.down.any)>0, the check the official Simia
+rotations (rotation_102..105) use. Same lastcast>=10 throttle.
+```

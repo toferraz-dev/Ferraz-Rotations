@@ -612,3 +612,15 @@ Fluid Form, Frantic Frenzy, Incapacitating Roar e Mighty Bash. Nada medido no Si
   fixa em 0, Mighty Bash e Incapacitating Roar (não talentados).
 - Config reorganizado (seção Self Healing para os Regrowths), chaves e defaults
   intocados; `name=` em todas as linhas de ação.
+
+
+---
+
+## Mark of the Wild checks the whole group (2026-10-30)
+
+```
+Reported on Guardian: Mark of the Wild was not being cast. Every MotW line read only the player
+(buff.mark_of_the_wild.down.any) or the action-bar glow, so with the buff on you nobody else got it.
+Now also group.count(cycle.buff.mark_of_the_wild.down.any)>0, the check the official Simia
+rotations (rotation_102..105) use. Same lastcast>=10 throttle.
+```

@@ -10,11 +10,11 @@ Restoration, Guardian, Balance and Feral Druid, each tuned separately for Mythic
 
 | Rotation | Role | Version | Updated | Download |
 |---|---|---|---|---|
-| [Restoration · Mythic+](https://toferraz-dev.github.io/Ferraz-Rotations/#resto-mplus) | Healer | 38.0.0 | 2026-10-29 | [FerrazRestoDruid.yaml](https://toferraz-dev.github.io/Ferraz-Rotations/rotations/FerrazRestoDruid.yaml) |
-| [Restoration · Raid](https://toferraz-dev.github.io/Ferraz-Rotations/#resto-raid) | Healer | 29.0.0 | 2026-10-29 | [FerrazRestoDruidRaid.yaml](https://toferraz-dev.github.io/Ferraz-Rotations/rotations/FerrazRestoDruidRaid.yaml) |
-| [Guardian · Mythic+](https://toferraz-dev.github.io/Ferraz-Rotations/#guardian) | Tank | 6.0.0 | 2026-10-29 | [FerrazGuardianElune.yaml](https://toferraz-dev.github.io/Ferraz-Rotations/rotations/FerrazGuardianElune.yaml) |
-| [Balance · Mythic+](https://toferraz-dev.github.io/Ferraz-Rotations/#balance-mplus) | DPS | 15.0.0 | 2026-10-28 | [FerrazBalance.yaml](https://toferraz-dev.github.io/Ferraz-Rotations/rotations/FerrazBalance.yaml) |
-| [Balance · Raid](https://toferraz-dev.github.io/Ferraz-Rotations/#balance-raid) | DPS | 12.0.0 | 2026-10-28 | [FerrazBalanceRaid.yaml](https://toferraz-dev.github.io/Ferraz-Rotations/rotations/FerrazBalanceRaid.yaml) |
-| [Feral · Mythic+](https://toferraz-dev.github.io/Ferraz-Rotations/#feral-mplus) | DPS | 10.0.0 | 2026-10-24 | [FerrazFeral.yaml](https://toferraz-dev.github.io/Ferraz-Rotations/rotations/FerrazFeral.yaml) |
-| [Feral · Raid](https://toferraz-dev.github.io/Ferraz-Rotations/#feral-raid) | DPS | 7.0.0 | 2026-10-24 | [FerrazFeralRaid.yaml](https://toferraz-dev.github.io/Ferraz-Rotations/rotations/FerrazFeralRaid.yaml) |
+| [Restoration · Mythic+](https://toferraz-dev.github.io/Ferraz-Rotations/#resto-mplus) | Healer | 39.0.0 | 2026-10-30 | [FerrazRestoDruid.yaml](https://toferraz-dev.github.io/Ferraz-Rotations/rotations/FerrazRestoDruid.yaml) |
+| [Restoration · Raid](https://toferraz-dev.github.io/Ferraz-Rotations/#resto-raid) | Healer | 30.0.0 | 2026-10-30 | [FerrazRestoDruidRaid.yaml](https://toferraz-dev.github.io/Ferraz-Rotations/rotations/FerrazRestoDruidRaid.yaml) |
+| [Guardian · Mythic+](https://toferraz-dev.github.io/Ferraz-Rotations/#guardian) | Tank | 7.0.0 | 2026-10-30 | [FerrazGuardianElune.yaml](https://toferraz-dev.github.io/Ferraz-Rotations/rotations/FerrazGuardianElune.yaml) |
+| [Balance · Mythic+](https://toferraz-dev.github.io/Ferraz-Rotations/#balance-mplus) | DPS | 16.0.0 | 2026-10-30 | [FerrazBalance.yaml](https://toferraz-dev.github.io/Ferraz-Rotations/rotations/FerrazBalance.yaml) |
+| [Balance · Raid](https://toferraz-dev.github.io/Ferraz-Rotations/#balance-raid) | DPS | 13.0.0 | 2026-10-30 | [FerrazBalanceRaid.yaml](https://toferraz-dev.github.io/Ferraz-Rotations/rotations/FerrazBalanceRaid.yaml) |
+| [Feral · Mythic+](https://toferraz-dev.github.io/Ferraz-Rotations/#feral-mplus) | DPS | 11.0.0 | 2026-10-30 | [FerrazFeral.yaml](https://toferraz-dev.github.io/Ferraz-Rotations/rotations/FerrazFeral.yaml) |
+| [Feral · Raid](https://toferraz-dev.github.io/Ferraz-Rotations/#feral-raid) | DPS | 8.0.0 | 2026-10-30 | [FerrazFeralRaid.yaml](https://toferraz-dev.github.io/Ferraz-Rotations/rotations/FerrazFeralRaid.yaml) |
 | [Devourer · Mythic+](https://toferraz-dev.github.io/Ferraz-Rotations/#devourer-mplus) | DPS | 1.0.0 | 2026-10-23 | [FerrazDevourer.yaml](https://toferraz-dev.github.io/Ferraz-Rotations/rotations/FerrazDevourer.yaml) |

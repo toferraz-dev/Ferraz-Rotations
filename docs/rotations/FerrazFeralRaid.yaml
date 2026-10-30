@@ -1,5 +1,5 @@
 
-version: "7.0.0"
+version: "8.0.0"
 author: Ferraz
 patch: "12.1"
 spec: 103
@@ -14,7 +14,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-10-24 | Patch: 12.1 | Version: 7.0.0"
+    text: "Last update: 2026-10-30 | Patch: 12.1 | Version: 8.0.0"
 
   hp_legend:
     section: "Info"
@@ -331,7 +331,7 @@ lists:
     - 106785,name="Swipe (Filler)",if=combo_points>1|enemies.combat.8y>2|!talent.panthers_guile
 
   heal_support:
-    - mark_of_the_wild,name="OOC Mark of the Wild",range_check=none,if=!player.combat&(buff.mark_of_the_wild.down.any|action.mark_of_the_wild.overlayed)&lastcast.mark_of_the_wild>=10
+    - mark_of_the_wild,name="OOC Mark of the Wild",range_check=none,if=!player.combat&(group.count(cycle.buff.mark_of_the_wild.down.any)>0|buff.mark_of_the_wild.down.any|action.mark_of_the_wild.overlayed)&lastcast.mark_of_the_wild>=10
     - regrowth,name="OOC Regrowth",range_check=none,if=health.pct<=config.regrowth_ooc_hp_pct&!player.combat
 
   form:

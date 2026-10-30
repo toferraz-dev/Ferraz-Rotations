@@ -1,5 +1,5 @@
 
-version: "6.0.0"
+version: "7.0.0"
 patch: "12.1"
 spec: 104
 name: Guardian Druid Ferraz M+
@@ -26,7 +26,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-10-29 | Patch: 12.1 | Version: 6.0.0"
+    text: "Last update: 2026-10-30 | Patch: 12.1 | Version: 7.0.0"
 
   hp_legend:
     section: "Info"
@@ -461,7 +461,7 @@ lists:
     - call_action_list,name=set_tank_var
     - call_action_list,name=engine
 
-    - mark_of_the_wild,name="OOC Mark of the Wild",range_check=none,if=!player.combat&(buff.mark_of_the_wild.down.any|action.mark_of_the_wild.overlayed)&lastcast.mark_of_the_wild>=10
+    - mark_of_the_wild,name="OOC Mark of the Wild",range_check=none,if=!player.combat&(group.count(cycle.buff.mark_of_the_wild.down.any)>0|buff.mark_of_the_wild.down.any|action.mark_of_the_wild.overlayed)&lastcast.mark_of_the_wild>=10
     - bear_form,name="Bear Form",range_check=none,if=buff.bear_form.down&!buff.cat_form.up&(target.attackable|enemies.40y)
 
     - cat_form,name="Cat Form (HotW)",range_check=none,if=var.hotw_weave&buff.cat_form.down

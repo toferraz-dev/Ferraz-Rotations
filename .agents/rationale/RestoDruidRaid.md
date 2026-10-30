@@ -1081,3 +1081,15 @@ right after `return,if=!player.combat`, off_gcd/ignore_queue (items are off the 
 var.soulcoiler_now = aoe cast <=8 s away | Convoke group condition | group.lowest below the Nature's
 Swiftness threshold. The barrier lasts 20 s, so firing early wastes nothing. Untested in game.
 ```
+
+
+---
+
+## Mark of the Wild checks the whole group (2026-10-30)
+
+```
+Reported on Guardian: Mark of the Wild was not being cast. Every MotW line read only the player
+(buff.mark_of_the_wild.down.any) or the action-bar glow, so with the buff on you nobody else got it.
+Now also group.count(cycle.buff.mark_of_the_wild.down.any)>0, the check the official Simia
+rotations (rotation_102..105) use. Same lastcast>=10 throttle.
+```
