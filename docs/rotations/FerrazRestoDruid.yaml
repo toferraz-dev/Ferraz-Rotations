@@ -1,4 +1,4 @@
-version: "37.1.0"
+version: "38.0.0"
 author: Ferraz
 patch: "12.1"
 spec: 105
@@ -23,7 +23,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-10-28 | Patch: 12.1 | Version: 37.1.0"
+    text: "Last update: 2026-10-29 | Patch: 12.1 | Version: 38.0.0"
 
   hp_legend:
     section: "Info"
@@ -204,14 +204,14 @@ config:
     section: "Cooldowns"
     type: checkbox
     default: true
-    description: "Use trinket 1 when the Convoke group condition is met. Soulcoiler Ritual Vessel is the exception: it goes out before an enemy AoE lands, or when the group is already taking damage."
+    description: "Use trinket 1 when the Convoke group condition is met. Soulcoiler Ritual Vessel is the exception: off the global cooldown, up to 8 s before an enemy AoE lands, or as soon as the group starts taking damage."
 
   use_trinket_2:
     label: "Auto Trinket 2 (with Convoke)"
     section: "Cooldowns"
     type: checkbox
     default: true
-    description: "Use trinket 2 when the Convoke group condition is met. Soulcoiler Ritual Vessel is the exception: it goes out before an enemy AoE lands, or when the group is already taking damage."
+    description: "Use trinket 2 when the Convoke group condition is met. Soulcoiler Ritual Vessel is the exception: off the global cooldown, up to 8 s before an enemy AoE lands, or as soon as the group starts taking damage."
 
   use_potion:
     label: "Auto Combat Potion (with Convoke)"
@@ -286,13 +286,6 @@ config:
     max: 100
     default: 40
     description: "Real health below which Barkskin, the healthstone and the health potion fire while you are casting. Channels are never cut: during Convoke only Barkskin fires (Convoke allows defensives mid-channel), during Tranquility nothing does. Below it a hardcast may also be cut (see Cut the Cast in an Emergency). Set to 0 to turn it off."
-
-  emergency_stop_casting:
-    label: "Cut the Cast in an Emergency"
-    section: "Defensives"
-    type: checkbox
-    default: true
-    description: "Below the emergency HP, end the current cast so the next global can go to a real defensive. Barkskin and the consumables above do not need this - they are off-GCD and fire without touching the cast - so this only matters for the ones that cost a global, like Bear Form into Frenzied Regeneration. Tranquility and Convoke are never cut."
 
   root_cleanse:
     label: "Break Roots by Shapeshifting"
@@ -434,12 +427,16 @@ variables:
   avatar_healable: focus.npcid=133392&focus.alive&focus.friendly&focus.health.pct<100&!focus.debuff.1301199.up.any
   avatar_mode: var.avatar_healable&group.lowest.health.effective.pct>=config.avatar_party_hp&!config.force_dps
 
+  # Soulcoiler Ritual Vessel (270162): 5 barriers, -50% damage taken for 20 s, 2 s to summon. Goes out
+  # up to 8 s before an enemy AoE (_casts.yaml `aoe` tag) lands, when the group is already taking the
+  # damage that calls Convoke, or when anyone drops below the Nature's Swiftness line.
+  soulcoiler_now: incoming_cast.aoe.up&incoming_cast.aoe.remains<=8|(group.count(cycle.health.effective.pct<config.convoke_threshold&!cycle.tank)>=config.convoke_members)|group.lowest.health.effective.pct<config.natures_swiftness_threshold
+
 lists:
   emergency:
     - barkskin,name="Barkskin (Emergency)",range_check=none,off_gcd=true,ignore_queue=true,if=health.pct<=config.emergency_hp&!var.in_tranquility
     - healthstone,name="Healthstone (Emergency)",off_gcd=true,ignore_queue=true,delay=250,if=healthstone.ready&health.pct<=config.healthstone_pct&!var.protected_channel
     - health_potion,name="Health Potion (Emergency)",off_gcd=true,ignore_queue=true,delay=250,if=health_potion.ready&health.pct<=config.health_potion_pct&!var.protected_channel
-    - stop_casting,name="Cut Cast (Emergency)",if=config.emergency_stop_casting&!var.protected_channel
 
   interrupts:
     - incapacitating_roar,name="Roar (AoE CC)",if=interrupt.stun.aoe.check
@@ -477,12 +474,6 @@ lists:
     - natures_swiftness,name="Nature Swiftness",off_gcd=true,delay=150,range_check=none,if=!config.disable_natures_swiftness&group.count(cycle.health.effective.pct<config.natures_swiftness_threshold)>=1
     - regrowth,name="Nature Swift Regrowth",cycle=members,cycle_order=health.pct,if=buff.natures_swiftness.up&cycle.health.effective.pct<config.natures_swiftness_threshold
     - rejuvenation,name="Shift Out For Convoke",cycle=members,cycle_order=buff.rejuvenation.remains,if=cooldown.convoke_the_spirits.ready&(group.count(cycle.health.effective.pct<config.convoke_threshold&!cycle.tank)>=config.convoke_members)&var.animal_form
-    # Soulcoiler Ritual Vessel (270162): 5 barriers on allies, -50% damage taken for 20s (2 min CD,
-    # each allied death takes 30s off). A group defensive, not a throughput window, so it does not
-    # wait for Convoke: it goes ~3s before an enemy AoE cast lands (_casts.yaml `aoe` tag), or once
-    # the group is already taking the damage that calls Convoke. The generic lines skip it by id.
-    - trinket_1,delay=150,name="Soulcoiler Ritual Vessel (Trinket 1)",if=config.use_trinket_1&trinket_1.ready&trinket_1.id=270162&!buff.bear_form.up&(incoming_cast.aoe.up&incoming_cast.aoe.remains<=3|(group.count(cycle.health.effective.pct<config.convoke_threshold&!cycle.tank)>=config.convoke_members))
-    - trinket_2,delay=150,name="Soulcoiler Ritual Vessel (Trinket 2)",if=config.use_trinket_2&trinket_2.ready&trinket_2.id=270162&!buff.bear_form.up&(incoming_cast.aoe.up&incoming_cast.aoe.remains<=3|(group.count(cycle.health.effective.pct<config.convoke_threshold&!cycle.tank)>=config.convoke_members))
     - trinket_1,delay=150,name="Trinket 1",if=config.use_trinket_1&trinket_1.ready&trinket_1.id!=270162&(group.count(cycle.health.effective.pct<config.convoke_threshold&!cycle.tank)>=config.convoke_members)&!buff.bear_form.up
     - trinket_2,delay=150,name="Trinket 2",if=config.use_trinket_2&trinket_2.ready&trinket_2.id!=270162&(group.count(cycle.health.effective.pct<config.convoke_threshold&!cycle.tank)>=config.convoke_members)&!buff.bear_form.up
     - combat_potion,off_gcd=true,ignore_queue=true,delay=1500,global_delay=400,name="Combat Potion (before Convoke)",if=combat_potion.ready&config.use_potion&(cooldown.convoke_the_spirits.ready|!talent.convoke_the_spirits)&(group.count(cycle.health.effective.pct<config.convoke_threshold&!cycle.tank)>=config.convoke_members)&!buff.bear_form.up
@@ -588,12 +579,20 @@ lists:
 
     - target_enemy,name="Swap Off Storm Blessed",delay=500,off_gcd=true,if=target.buff.1289229.up&enemies.combat.40y>=2
 
+  # Off the global cooldown and checked right after the combat guard, so it never waits for a hardcast
+  # or a global. Inside the cooldowns list, on the GCD and only 3 s before impact, the 2 s summon
+  # landed the barriers after the hit. The barrier lasts 20 s, so going early costs nothing.
+  soulcoiler:
+    - trinket_1,off_gcd=true,ignore_queue=true,delay=500,name="Soulcoiler Ritual Vessel (Trinket 1)",if=config.use_trinket_1&trinket_1.ready&trinket_1.id=270162&var.soulcoiler_now
+    - trinket_2,off_gcd=true,ignore_queue=true,delay=500,name="Soulcoiler Ritual Vessel (Trinket 2)",if=config.use_trinket_2&trinket_2.ready&trinket_2.id=270162&var.soulcoiler_now
+
   main:
     - return,if=player.channeling|var.protected_channel
     - call_action_list,name=engine
     - call_action_list,name=out_of_combat,if=!player.combat
     - return,if=!player.combat
 
+    - call_action_list,name=soulcoiler
     - bear_form,name="Root Cleanse (to Bear)",if=config.root_cleanse&player.rooted&!player.casting&!player.channeling&!buff.bear_form.up
     - moonkin_form,name="Root Cleanse (from Bear)",if=config.root_cleanse&player.rooted&!player.casting&!player.channeling&buff.bear_form.up
 

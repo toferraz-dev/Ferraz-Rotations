@@ -1066,3 +1066,18 @@ Now its own lines (trinket_N.id=270162), before the generic trinket lines, which
 Respects use_trinket_N and never fires in Bear. Untested in game; the aoe tag covers dungeon casts
 well and only some raid bosses, so in raid the reactive half carries most of it.
 ```
+
+
+---
+
+## Soulcoiler Ritual Vessel, earlier (2026-10-29)
+
+```
+Reported in game: with the Vessel the party was still dying, it went out too late. Three causes in the
+first version: the lines were on the GCD (no off_gcd), so a Regrowth hardcast or a global held them;
+they sat in the cooldowns list behind defensives, Lifebloom and utility; and they waited for the AoE to
+be <=3 s from landing although the Vessel takes 2 s to summon its five spirits. Now its own list, called
+right after `return,if=!player.combat`, off_gcd/ignore_queue (items are off the GCD in game), with
+var.soulcoiler_now = aoe cast <=8 s away | Convoke group condition | group.lowest below the Nature's
+Swiftness threshold. The barrier lasts 20 s, so firing early wastes nothing. Untested in game.
+```

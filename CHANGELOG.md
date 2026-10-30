@@ -4,6 +4,13 @@ Player-facing changes to the Ferraz rotations, newest first. Each entry names th
 
 ## 2026-10-29
 
+### Restoration · Mythic+ · v38.0.0
+- Soulcoiler Ritual Vessel goes out much earlier: off the global cooldown (even mid-cast), up to 8 seconds before an enemy AoE lands instead of 3, and as soon as the group starts dropping. Its 2-second summon used to land the barriers after the hit.
+- The emergency cast cut was removed: a hardcast is no longer interrupted at low health.
+
+### Restoration · Raid · v29.0.0
+- Soulcoiler Ritual Vessel goes out much earlier: off the global cooldown (even mid-cast), up to 8 seconds before an enemy AoE lands instead of 3, and as soon as the group starts dropping. Its 2-second summon used to land the barriers after the hit.
+
 ### Guardian · Mythic+ · v6.0.0
 - New recommended talents: the Mythic+ build of the world's top Guardian. Copy the new string from the rotation panel.
 - Rage goes into Ironfur from 40 rage instead of only near the cap. Rage no longer sits at 100 (about 10% of it was being wasted), you keep more Ironfur stacks, and Mangle is no longer held back by a full rage bar.
