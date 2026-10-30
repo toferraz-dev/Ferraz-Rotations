@@ -430,7 +430,7 @@ variables:
   # Soulcoiler Ritual Vessel (270162): 5 barriers, -50% damage taken for 20 s, 2 s to summon. Goes out
   # up to 8 s before an enemy AoE (_casts.yaml `aoe` tag) lands, when the group is already taking the
   # damage that calls Convoke, or when anyone drops below the Nature's Swiftness line.
-  soulcoiler_now: incoming_cast.aoe.up&incoming_cast.aoe.remains<=8|(group.count(cycle.health.effective.pct<config.convoke_threshold&!cycle.tank)>=config.convoke_members)|group.lowest.health.effective.pct<config.natures_swiftness_threshold
+  soulcoiler_now: incoming_cast.aoe.up&incoming_cast.aoe.remains<=6|(group.count(cycle.health.effective.pct<config.convoke_threshold&!cycle.tank)>=config.convoke_members)|group.lowest.health.effective.pct<config.natures_swiftness_threshold
 
 lists:
   emergency:
