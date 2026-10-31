@@ -2,6 +2,25 @@
 
 Player-facing changes to the Ferraz rotations, newest first. Each entry names the rotation and the version that shipped it.
 
+## 2026-10-31
+
+### Feral · Mythic+ · v12.0.0
+- New recommended talents: the Mythic+ build of the world's top Feral, Tigerccat (Convoke the Spirits and Berserk, with Merciless Claws). Copy the new string from the rotation panel.
+- Night Elves: Shadowmeld is now spent on a stealth Rake inside Berserk or Incarnation, as the top Ferals play it (+0.3% to +1% damage in SimulationCraft). New *Shadowmeld - Stealth Rake* option to turn it off.
+- Auto-attack is no longer restarted while you are stealthed. It broke the stealth before the Rake landed.
+- Fixed: the rotation read the Berserk / Incarnation cooldown as always ready. Trinkets and the combat potion went out on cooldown instead of in the burst window, and Tiger's Fury never lined up with the next burst. Trinkets now wait for the window again, as *Trinkets - Only In Burst* says (up to about 1% damage in SimulationCraft dungeon sims).
+- On the Incarnation build, Incarnation, trinkets and the potion no longer wait for you to stand still: being in melee range is enough. Strafing on a boss used to hold Incarnation about 5 seconds and a trinket over 8. The Convoke build is unchanged: its window still waits for you to stand still, so Berserk and the Convoke channel go out together.
+- With Incarnation, the one Prowl it allows in combat is now spent on a stealth Rake, once per window and without clipping a stealth opener Rake (up to +0.5% damage in SimulationCraft).
+- During Incarnation, Ferocious Bite no longer waits for more energy than it can spend, so finishers go out sooner (+0.2% to +0.5%).
+- Tiger's Fury is no longer held back for Frantic Frenzy on packs. In dungeon sims that hold cost about 0.6%.
+- Panic Bear no longer flips between Bear and Cat on a build without Heart of the Wild.
+- Settings: trinkets and potion have their own *Trinkets & Potion* section, and the Convoke-only options say so.
+
+### Feral · Raid · v9.0.0
+- Fixed: the rotation read the Berserk cooldown as always ready, so trinkets and the combat potion went out on cooldown instead of in the Berserk window. They wait for the window again.
+- The hold that lines Berserk up with Convoke now reads the real cooldown (before, it could not work). Not yet checked in game.
+- Auto-attack is no longer restarted while you are in Prowl or Shadowmeld, which broke the stealth before your Rake.
+
 ## 2026-10-30
 
 ### Balance · Mythic+ · v16.0.0

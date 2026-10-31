@@ -1,5 +1,5 @@
 
-version: "11.0.0"
+version: "12.0.0"
 author: Ferraz
 patch: "12.1"
 spec: 103
@@ -14,7 +14,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-10-30 | Patch: 12.1 | Version: 11.0.0"
+    text: "Last update: 2026-10-31 | Patch: 12.1 | Version: 12.0.0"
 
   hp_legend:
     section: "Info"
@@ -27,25 +27,9 @@ config:
     section: "Talents"
     type: copy_text
     label: "Recommended Talent String"
-    text: "CcGADBD3hSPCL9Y9gz68WcKvMAAAAAAgZmZ2MzMzMGzmx2YbGzMmZAAAAYJY2M8AmZUzYWMzMzsMmhBAAAAAwADAAAgmZZWmZmBEYBMzAswMMAAAmZDD"
+    text: "CcGAAAAAAAAAAAAAAAAAAAAAAAAAAAAgZmZ2MzMzMzwmx2YbGzMmZAAAAYLY2MYmZmaGzyMzMzsMmhBAAAAAAYAAAA0MLzyMzMgALwMzDAswgBAAwMbYA"
 
   # ---- Cooldowns ---------------------------------------------------
-  require_convoke_ready:
-    label: "Cooldowns - Only Burst With Convoke Ready"
-    section: "Cooldowns"
-    type: checkbox
-    default: true
-    description: "Hold Berserk, the trinkets and the combat potion until Convoke the Spirits is off cooldown, so the whole window opens on Convoke. Ignored when Convoke is not talented. Turn off if you ever cast Convoke by hand outside a burst window and do not want the rest held for it."
-
-  cd_standing_time:
-    label: "Cooldowns - Min Seconds Standing Still"
-    section: "Cooldowns"
-    type: slider
-    min: 0
-    max: 10
-    default: 1
-    description: "Hold trinkets, the combat potion, Berserk and Convoke until you have stood still this long, and only in combat. Tiger's Fury is not held: it is off-GCD and the whole window depends on it. Set to 0 to fire them the moment their own condition is met."
-
   ttd_berserk:
     label: "Berserk / Incarnation - Min Fight Time (s)"
     section: "Cooldowns"
@@ -53,7 +37,23 @@ config:
     min: 5
     max: 30
     default: 20
-    description: "Minimum fight time remaining to use Berserk or Incarnation: Avatar of Ashamane. Bosses ignore it."
+    description: "Minimum fight time remaining to use Berserk or Incarnation: Avatar of Ashamane. Bosses ignore it. On an Incarnation build it goes out as soon as Tiger's Fury is up and you are in melee range of your target, moving or not."
+
+  require_convoke_ready:
+    label: "Convoke - Hold Burst For Convoke"
+    section: "Cooldowns"
+    type: checkbox
+    default: true
+    description: "Convoke builds only. Hold Berserk, the trinkets and the combat potion until Convoke the Spirits is off cooldown, so the whole window opens on Convoke. Does nothing on an Incarnation build. Turn off if you ever cast Convoke by hand outside a burst window and do not want the rest held for it."
+
+  cd_standing_time:
+    label: "Convoke - Min Seconds Standing Still"
+    section: "Cooldowns"
+    type: slider
+    min: 0
+    max: 10
+    default: 1
+    description: "Convoke builds only. Hold Berserk, Convoke, the trinkets and the combat potion until you have stood still this long, so the window opens together and moving does not cut the Convoke channel. Tiger's Fury is never held. On an Incarnation build nothing waits for this: Incarnation, the trinkets and the potion only need you in melee range. Set to 0 to fire them the moment their own condition is met."
 
   ttd_convoke:
     label: "Convoke - Min Fight Time (s)"
@@ -62,32 +62,40 @@ config:
     min: 3
     max: 20
     default: 15
-    description: "Minimum fight time remaining to use Convoke the Spirits. Lower than Berserk's: Convoke pays out over ~4s, so it is worth firing on a shorter pull. Bosses ignore it."
+    description: "Convoke builds only. Minimum fight time remaining to use Convoke the Spirits. Lower than Berserk's: Convoke pays out over ~4s, so it is worth firing on a shorter pull. Bosses ignore it."
 
-  use_trinket_1:
-    label: "Auto Trinket 1"
+  use_shadowmeld:
+    label: "Shadowmeld - Stealth Rake (Night Elf)"
     section: "Cooldowns"
     type: checkbox
     default: true
-    description: "Use trinket 1. See Trinkets Only In Burst."
+    description: "Night Elf only. Inside Berserk or Incarnation, spend Shadowmeld on a stealthed Rake when your Rake can be refreshed or upgraded, the way the top Ferals play it. Only while standing still in melee, since moving breaks it. Turn off to keep Shadowmeld for mechanics or for dropping aggro."
+
+  # ---- Trinkets & Potion -------------------------------------------
+  use_trinket_1:
+    label: "Trinket 1 - Auto Use"
+    section: "Trinkets & Potion"
+    type: checkbox
+    default: true
+    description: "Use trinket 1. See Trinkets - Only In Burst."
 
   use_trinket_2:
-    label: "Auto Trinket 2"
-    section: "Cooldowns"
+    label: "Trinket 2 - Auto Use"
+    section: "Trinkets & Potion"
     type: checkbox
     default: true
-    description: "Use trinket 2. See Trinkets Only In Burst."
+    description: "Use trinket 2. See Trinkets - Only In Burst."
 
   trinkets_burst_only:
-    label: "Trinkets Only In Burst"
-    section: "Cooldowns"
+    label: "Trinkets - Only In Burst"
+    section: "Trinkets & Potion"
     type: checkbox
     default: true
-    description: "Hold on-use trinkets for the Berserk window (they also fire 5s before it opens, and at the end of a fight). Turn it off to spend them on cooldown."
+    description: "Hold on-use trinkets for the Berserk or Incarnation window: they go out while it is up, in the 5 s before it opens, and at the end of a fight. Turn it off to spend them on cooldown."
 
   ttd_trinkets:
     label: "Trinkets - Min Fight Time (s)"
-    section: "Cooldowns"
+    section: "Trinkets & Potion"
     type: slider
     min: 5
     max: 30
@@ -95,24 +103,24 @@ config:
     description: "Minimum fight time remaining to use trinkets. Bosses ignore it."
 
   use_potion:
-    label: "Auto Combat Potion"
-    section: "Cooldowns"
+    label: "Potion - Auto Use"
+    section: "Trinkets & Potion"
     type: checkbox
     default: true
     description: "Use the combat potion in the burst window, or in the last 32 s of the fight."
 
   potion_min_targets:
     label: "Potion - Min Targets"
-    section: "Cooldowns"
+    section: "Trinkets & Potion"
     type: slider
     min: 1
     max: 8
     default: 3
-    description: "The combat potion is on 5 minutes against the 2-minute trio, so only about two windows in five can carry one. This keeps it for a window that is worth it. A boss ignores it, and so does any pull that will live 25s or more, so the potion can never sit unused on a real fight. Set to 1 to spend it on the first window available."
+    description: "The combat potion is on a 5-minute cooldown and a burst window comes every 1.5 to 2 minutes, so only some windows can carry one. This keeps it for a window that is worth it. A boss ignores it, and so does any pull that will live 25s or more, so the potion can never sit unused on a real fight. Set to 1 to spend it on the first window available."
 
   ttd_potion:
     label: "Potion - Min Fight Time (s)"
-    section: "Cooldowns"
+    section: "Trinkets & Potion"
     type: slider
     min: 5
     max: 30
@@ -285,9 +293,14 @@ config:
 
 variables:
   protected_channel: player.casting.spell_id=323764|player.casting.spell_id=391528
-  bs_inc: buff.berserk.up|buff.incarnation_avatar_of_ashamane.up
-  bs_inc_cd_remains: cooldown.berserk.remains>?cooldown.incarnation_avatar_of_ashamane.remains
-  bs_inc_cd_duration: cooldown.berserk.duration>?cooldown.incarnation_avatar_of_ashamane.duration
+  # Berserk 106951 / Incarnation 102543 by id as well as by name: both names have several rows in the
+  # spell table, and an extra OR / MAX term can only turn a missed lookup into the real value.
+  incarn_up: buff.incarnation_avatar_of_ashamane.up|buff.102543.up
+  bs_inc: buff.berserk.up|buff.106951.up|var.incarn_up
+  # <? is MAX. Only one of the two is talented and the other reads 0, so the old >? (MIN) pinned
+  # both to 0: Tiger's Fury never lined up with the burst and the trinkets and potion lost their sync.
+  bs_inc_cd_remains: cooldown.berserk.remains<?cooldown.106951.remains<?cooldown.incarnation_avatar_of_ashamane.remains<?cooldown.102543.remains
+  bs_inc_cd_duration: cooldown.berserk.duration<?cooldown.incarnation_avatar_of_ashamane.duration
   dotc_rake_threshold: 99-94*(talent.wild_slashes&talent.merciless_claws)-91*(talent.wild_slashes&!talent.merciless_claws)
   bs_inc_cd: var.bs_inc_cd_remains+10
   convoke_cd: cooldown.convoke_the_spirits.remains+10
@@ -305,7 +318,23 @@ variables:
   trinkets_ttd_ok: (target.boss|target.time_to_die>=config.ttd_trinkets|fight_remains>=config.ttd_trinkets)
   potion_ttd_ok: (target.boss|target.time_to_die>=config.ttd_potion|fight_remains>=config.ttd_potion)
 
+  # Convoke builds hold the whole window until you stand still, so Berserk and the Convoke channel go
+  # out together. Incarnation builds only need melee range: standing.time resets while you strafe in
+  # melee, and on bosses it held Incarnation ~5s and a trinket 8.5s while every GCD still landed.
   cd_ready_to_stand: player.combat&player.standing.time>=config.cd_standing_time
+  cd_in_melee: player.combat&target.in_melee
+  cd_ready: (talent.convoke_the_spirits&var.cd_ready_to_stand)|(!talent.convoke_the_spirits&var.cd_in_melee)
+
+  # Incarnation allows one Prowl in combat: spend it on a stealth Rake. Prowl 5215 not cast since this
+  # Incarnation (102543) began keeps it to one per window. Within 15s of the pre-pull Prowl the opener
+  # Rake is still a stealth one, so wait until it is refreshable instead of clipping it.
+  incarn_prowl: var.incarn_up&target.in_melee&lastcast.5215>lastcast.102543&(lastcast.5215>=15|dot.rake.refreshable)
+
+  # Night Elf Shadowmeld for a stealth Rake (SimC's builder line), inside Berserk / Incarnation as
+  # Tigerccat plays it: +0.29% over SimC's use-anywhere on one target, equal on five. Other races do
+  # not know the spell, so the line skips itself. Moving breaks Shadowmeld, so standing only.
+  shadowmeld_rake: config.use_shadowmeld&var.bs_inc&target.in_melee&player.standing&(!var.rake_tf|dot.rake.refreshable)
+  stealthed: buff.prowl.up|buff.shadowmeld.up
 
   convoke_ready: "!config.require_convoke_ready|!talent.convoke_the_spirits|cooldown.convoke_the_spirits.ready"
 
@@ -332,7 +361,8 @@ lists:
     - interact_target,delay=350,if=config.engine_loot_nearby&target.lootable&target.range<=5
     - interact_target,delay=350,if=config.engine_loot_nearby&loot_nearby
     - interact_mouseover,delay=350,if=config.engine_loot_nearby&mouseover.lootable&mouseover.range<=5
-    - attack_target,off_gcd=true,delay=100,if=player.combat&target.exists&target.attackable&target.alive&target.in_melee&!player.auto_attacking
+    # Never while stealthed (SimC's auto_attack has the same guard): a swing breaks Prowl/Shadowmeld before the stealth Rake.
+    - attack_target,off_gcd=true,delay=100,if=player.combat&target.exists&target.attackable&target.alive&target.in_melee&!player.auto_attacking&buff.prowl.down&buff.shadowmeld.down
 
     - remove_corruption,delay=500,cycle=party,name="Remove Corruption",if=cycle.dispelable.list
     - remove_corruption,delay=500,cycle=party,cycle_order=player_first,name="Devouring Rift (Affix)",if=config.engine_affix_devour&cycle.debuff.440313.up.any
@@ -359,22 +389,23 @@ lists:
     - barkskin,name="Barkskin (HP)",off_gcd=true,ignore_queue=true,range_check=none,if=health.pct<=config.barkskin_hp_pct
 
   cooldown:
-    - trinket_1,name="Trinket 1 (Burst Sync)",if=var.cd_ready_to_stand&config.use_trinket_1&trinket_1.ready&var.trinkets_ttd_ok&var.trinket_sync_ok
-    - trinket_2,name="Trinket 2 (Burst Sync)",if=var.cd_ready_to_stand&config.use_trinket_2&trinket_2.ready&var.trinkets_ttd_ok&var.trinket_sync_ok
+    - trinket_1,name="Trinket 1 (Burst Sync)",if=var.cd_ready&config.use_trinket_1&trinket_1.ready&var.trinkets_ttd_ok&var.trinket_sync_ok
+    - trinket_2,name="Trinket 2 (Burst Sync)",if=var.cd_ready&config.use_trinket_2&trinket_2.ready&var.trinkets_ttd_ok&var.trinket_sync_ok
     - berserking,name="Berserking",if=var.bs_inc
     - blood_fury,name="Blood Fury",if=var.bs_inc
     - fireblood,name="Fireblood",if=var.bs_inc
     - ancestral_call,name="Ancestral Call",if=var.bs_inc
-    - combat_potion,name="Combat Potion",if=var.cd_ready_to_stand&config.use_potion&combat_potion.ready&(var.burst_now&var.potion_ttd_ok&var.potion_worth_it|fight_remains<32)
-    - berserk,name="Berserk",if=var.cd_ready_to_stand&buff.tigers_fury.up&!var.holdBerserk&var.convoke_ready&var.berserk_ttd_ok
-    - incarnation,name="Incarnation",if=var.cd_ready_to_stand&buff.tigers_fury.up&!var.holdBerserk&var.convoke_ready&var.berserk_ttd_ok
+    - combat_potion,name="Combat Potion",if=var.cd_ready&config.use_potion&combat_potion.ready&(var.burst_now&var.potion_ttd_ok&var.potion_worth_it|fight_remains<32)
+    - berserk,name="Berserk",if=var.cd_ready&buff.tigers_fury.up&!var.holdBerserk&var.convoke_ready&var.berserk_ttd_ok
+    - incarnation,name="Incarnation",if=var.cd_ready&buff.tigers_fury.up&!var.holdBerserk&var.convoke_ready&var.berserk_ttd_ok
     - feral_frenzy,name="Feral Frenzy",if=!talent.frantic_frenzy&combo_points<=2+(2*var.bs_inc)
     - frantic_frenzy,name="Frantic Frenzy",if=buff.tigers_fury.up|combo_points<=2+(2*var.bs_inc)
     - convoke_the_spirits,name="Convoke the Spirits",if=var.cd_ready_to_stand&talent.convoke_the_spirits&var.bs_inc&var.convoke_ttd_ok&buff.tigers_fury.up&(prev_gcd.1.rip|prev_gcd.1.ferocious_bite|prev_gcd.1.ravage|prev_gcd.1.primal_wrath|combo_points<=1|buff.tigers_fury.remains<=1+action.convoke_the_spirits.execute_time)
 
   finisher:
     - rip,name="Rip",if=combo_points>=5&(dot.rip.refreshable&(buff.tigers_fury.up|dot.rip.remains<cooldown.tigers_fury.remains)|buff.tigers_fury.up&!var.rip_tf&dot.rip.up|buff.tigers_fury.up&buff.tigers_fury.remains<2&dot.rip.up)
-    - return,if=combo_points>=5&energy<50
+    # Pool for the most energy Bite can spend: 25 + 25, or 18.75 + 18.75 with Incarnation's -25% cost.
+    - return,if=combo_points>=5&energy<50-12.5*var.incarn_up
     - ferocious_bite,name="Ferocious Bite (Fallback)",if=combo_points>=5
     - ravage,name="Ravage (Fallback)",if=combo_points>=5
 
@@ -390,11 +421,15 @@ lists:
     - thorn_bloom,name="Thorn Bloom"
 
   builder:
+    - prowl,name="Prowl (Incarnation Rake)",range_check=none,if=var.incarn_prowl
+    - shadowmeld,name="Shadowmeld (Stealth Rake)",off_gcd=true,range_check=none,if=var.shadowmeld_rake&buff.prowl.down
     - rake,name="Rake",if=(buff.tigers_fury.up|dot.rake.remains<cooldown.tigers_fury.remains)&(dot.rake.refreshable&(buff.tigers_fury.up|!var.rake_tf)|dot.rake.remains<2|buff.tigers_fury.up&!var.rake_tf)
     - moonfire,name="Moonfire (Lunar Inspiration)",if=talent.lunar_inspiration&(buff.tigers_fury.up|dot.moonfire.remains<cooldown.tigers_fury.remains)&(dot.moonfire.refreshable&(buff.tigers_fury.up|!var.moonfire_tf)|dot.moonfire.remains<2|buff.tigers_fury.up&!var.moonfire_tf)
     - shred,name="Shred"
 
   aoe_builder:
+    - prowl,name="Prowl (Incarnation Rake AoE)",range_check=none,if=var.incarn_prowl
+    - shadowmeld,name="Shadowmeld (Stealth Rake AoE)",off_gcd=true,range_check=none,if=var.shadowmeld_rake&buff.prowl.down&dot.rake.refreshable
     - rake,name="Rake (Doubleclawed)",if=dot.rake.refreshable&((talent.doubleclawed_rake&(!talent.lunar_inspiration|!talent.panthers_guile|active_dot.rake<5))|hero_tree.wildstalker&(active_dot.rake<2+!talent.panthers_guile+talent.lunar_inspiration))
     - moonfire,name="Moonfire (Lunar Inspiration)",if=talent.lunar_inspiration&dot.moonfire.refreshable
     - 106785,name="Swipe (Proc)",if=hero_tree.druid_of_the_claw&var.bs_inc|buff.135700.react&enemies.combat.8y>2&(hero_tree.druid_of_the_claw|enemies.combat.8y<7)
@@ -409,9 +444,11 @@ lists:
     - regrowth,name="OOC Regrowth",range_check=none,if=health.pct<=config.regrowth_ooc_hp_pct&!player.combat
 
   form:
-    - bear_form,name="Panic Bear Form",range_check=none,if=health.pct<=config.panic_bear_hp_pct&!buff.bear_form.up&player.combat&(cooldown.heart_of_the_wild.ready|cooldown.frenzied_regeneration.ready&buff.frenzied_regeneration.down)
-    - heart_of_the_wild,name="HotW (Bear defensive)",range_check=none,ignore_cds_toggle=true,if=buff.bear_form.up&player.combat&health.pct<=config.panic_bear_hp_pct&!buff.1261872.up
-    - 1261872,name="HotW (Bear morph)",range_check=none,ignore_cds_toggle=true,if=buff.bear_form.up&player.combat&health.pct<=config.panic_bear_hp_pct&!buff.1261872.up
+    # talent.heart_of_the_wild as in the Raid twin: an untalented HotW reads ready, so without it the
+    # shift had nothing to cast and flipped back to Cat (rotation_sim LOOP, seed 279).
+    - bear_form,name="Panic Bear Form",range_check=none,if=health.pct<=config.panic_bear_hp_pct&!buff.bear_form.up&player.combat&(talent.heart_of_the_wild&cooldown.heart_of_the_wild.ready|cooldown.frenzied_regeneration.ready&buff.frenzied_regeneration.down)
+    - heart_of_the_wild,name="HotW (Bear defensive)",range_check=none,ignore_cds_toggle=true,if=talent.heart_of_the_wild&buff.bear_form.up&player.combat&health.pct<=config.panic_bear_hp_pct&!buff.1261872.up
+    - 1261872,name="HotW (Bear morph)",range_check=none,ignore_cds_toggle=true,if=talent.heart_of_the_wild&buff.bear_form.up&player.combat&health.pct<=config.panic_bear_hp_pct&!buff.1261872.up
     - frenzied_regeneration,name="Frenzied Regeneration",range_check=none,if=buff.bear_form.up&player.combat&health.pct<=config.panic_bear_hp_pct&buff.frenzied_regeneration.down
 
     - shred,name="Back to Cat (Fluid Form Shred)",if=player.combat&target.attackable&target.in_melee&buff.cat_form.down&talent.fluid_form.enabled
@@ -449,10 +486,11 @@ lists:
 
     - return,if=!target.valid|target.dead|!target.attackable
 
-    - rake,name="Rake (from Prowl)",range_check=none,if=buff.prowl.up&target.in_melee
-    - return,if=buff.prowl.up
+    - rake,name="Rake (from Stealth)",range_check=none,if=var.stealthed&target.in_melee
+    - return,if=var.stealthed
 
-    - tigers_fury,name="Tigers Fury (Refresh)",off_gcd=true,ignore_queue=true,if=(var.bs_inc_cd_remains<=1|var.bs_inc_cd_remains>10|var.holdBerserk)&(cooldown.frantic_frenzy.remains<buff.tigers_fury.duration-1.5|cooldown.frantic_frenzy.remains>22|!talent.frantic_frenzy|enemies.combat.8y=1)
+    # No hold for Frantic Frenzy here: SimC drops that hold in dungeon fight styles (-0.6% with it).
+    - tigers_fury,name="Tigers Fury (Refresh)",off_gcd=true,ignore_queue=true,if=var.bs_inc_cd_remains<=1|var.bs_inc_cd_remains>10|var.holdBerserk
 
     - chomp,name="Chomp",if=buff.chomp_enabler.up
 

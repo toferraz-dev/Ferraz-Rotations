@@ -1,5 +1,5 @@
 
-version: "8.0.0"
+version: "9.0.0"
 author: Ferraz
 patch: "12.1"
 spec: 103
@@ -14,7 +14,7 @@ config:
     section: "Info"
     type: note
     label: "Rotation Info"
-    text: "Last update: 2026-10-30 | Patch: 12.1 | Version: 8.0.0"
+    text: "Last update: 2026-10-31 | Patch: 12.1 | Version: 9.0.0"
 
   hp_legend:
     section: "Info"
@@ -223,9 +223,14 @@ config:
 
 variables:
   protected_channel: player.casting.spell_id=323764|player.casting.spell_id=391528
-  bs_inc: buff.berserk.up|buff.incarnation_avatar_of_ashamane.up
-  bs_inc_cd_remains: cooldown.berserk.remains>?cooldown.incarnation_avatar_of_ashamane.remains
-  bs_inc_cd_duration: cooldown.berserk.duration>?cooldown.incarnation_avatar_of_ashamane.duration
+  # Berserk 106951 / Incarnation 102543 by id as well as by name: both names have several rows in the
+  # spell table, and an extra OR / MAX term can only turn a missed lookup into the real value.
+  incarn_up: buff.incarnation_avatar_of_ashamane.up|buff.102543.up
+  bs_inc: buff.berserk.up|buff.106951.up|var.incarn_up
+  # <? is MAX. Only one of the two is talented and the other reads 0, so the old >? (MIN) pinned
+  # both to 0: the trinkets and potion lost their Berserk sync and the Convoke hold math divided by 0.
+  bs_inc_cd_remains: cooldown.berserk.remains<?cooldown.106951.remains<?cooldown.incarnation_avatar_of_ashamane.remains<?cooldown.102543.remains
+  bs_inc_cd_duration: cooldown.berserk.duration<?cooldown.incarnation_avatar_of_ashamane.duration
   dotc_rake_threshold: 99-94*(talent.wild_slashes&talent.merciless_claws)-91*(talent.wild_slashes&!talent.merciless_claws)
   bs_inc_cd: var.bs_inc_cd_remains+10
   convoke_cd: cooldown.convoke_the_spirits.remains+10
@@ -257,7 +262,8 @@ lists:
     - interact_target,delay=350,if=config.engine_loot_nearby&target.lootable&target.range<=5
     - interact_target,delay=350,if=config.engine_loot_nearby&loot_nearby
     - interact_mouseover,delay=350,if=config.engine_loot_nearby&mouseover.lootable&mouseover.range<=5
-    - attack_target,off_gcd=true,delay=100,if=player.combat&target.exists&target.attackable&target.alive&target.in_melee&!player.auto_attacking
+    # Never while stealthed (SimC's auto_attack has the same guard): a swing breaks Prowl/Shadowmeld before the stealth Rake.
+    - attack_target,off_gcd=true,delay=100,if=player.combat&target.exists&target.attackable&target.alive&target.in_melee&!player.auto_attacking&buff.prowl.down&buff.shadowmeld.down
 
     - remove_corruption,delay=500,cycle=party,name="Remove Corruption",if=cycle.dispelable.list
     - remove_corruption,delay=500,cycle=party,cycle_order=player_first,name="Devouring Rift (Affix)",if=config.engine_affix_devour&cycle.debuff.440313.up.any

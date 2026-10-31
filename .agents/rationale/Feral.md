@@ -937,3 +937,191 @@ Reported on Guardian: Mark of the Wild was not being cast. Every MotW line read 
 Now also group.count(cycle.buff.mark_of_the_wild.down.any)>0, the check the official Simia
 rotations (rotation_102..105) use. Same lastcast>=10 throttle.
 ```
+
+---
+
+## 12.0.0 (2026-10-30) — Hellspont log audit: cooldown variable bug, Incarnation fixes
+
+Asked: why does Hellspont (a player running this file) do less damage than Tigerccat
+("world #1 Feral")? **The Tigerccat export is not a Feral log.**
+`Tigerccat_f15_log_CrZHk3FY2pDm1dt9.json` is specID 104 (Guardian) on all four
+combatantinfo events, casts Ironfur/Thrash/Mangle, and is a different dungeon
+(Zul'jan, The Writhing Coil) from Hellspont's (Ikuzz, Lightwarden Ruia, Ziekket council).
+No Feral comparison was possible. What follows is a self-audit of
+`Hellspont_f5_log_zNDPBkRQhdHTn6ft.json` against this file and SimC.
+
+Outside the rotation, visible in the logs: Hellspont's key had **no Bloodlust at all**
+(no Exhaustion/Sated anywhere; Tigerccat's had three), average item level 325.8 vs
+338.7, and only Fortitude + Mark of the Wild as group buffs.
+
+Talents: Hellspont plays **Incarnation + Ashamane's Guidance + Ursine Vigor**, i.e. the
+2026-09-25 string with Wild Charge instead of Tiger Dash, not the recommended Convoke
+string. Incarnation cooldown 180 - 60 (Heart of the Lion) - 30 (Ashamane's Guidance) =
+90 s; 30 s duration with the 12.1 4pc (log average 28.9 s).
+
+### Bug: `bs_inc_cd_remains` / `bs_inc_cd_duration` used `>?` (MIN)
+
+`>?` is MIN (SIMIA_DOCUMENTATION 743). Only one of Berserk / Incarnation is talented
+and the other half reads 0 — `simia_data_dump/rotation_103.yaml` lines 104-106 document
+this exact trap and use `<?`. So both variables were pinned to 0 on every build:
+
+- `var.burst_now` was always true (no Convoke to hold for): trinkets and potion lost the
+  burst sync that *Trinkets Only In Burst* promises.
+- The Tiger's Fury Refresh hold for an imminent burst could never hold.
+- Convoke build: `zerkCountRemaining` divided by `bs_inc_cd_duration` = 0.
+
+Log evidence: 8 of 11 Empowering Venom (Vile Vial on-use) casts went out with
+Incarnation 13-46 s away and not up; three of them mid-boss (567 s Ikuzz, 912 s Ruia,
+1322 s Ziekket), where `fight_remains<25` cannot explain it. Unless Hellspont had turned
+*Trinkets Only In Burst* off, only a pinned `bs_inc_cd_remains` makes `burst_now` true
+there. Fixed to `<?` in both Feral files.
+
+### The standing-still gate held the instant cooldowns on bosses
+
+- Ziekket: trinket ready 1442.2 s, cast 1450.7; Incarnation ready 1445.6, cast 1451.2;
+  Tiger's Fury up from 1445.3; a melee ability on Ziekket every GCD in between.
+- Ikuzz: Incarnation ready 611.1, cast 616.2 with Tiger's Fury up the whole time, so the
+  window opened with 1.6 s of Tiger's Fury left.
+
+On a boss the TTD gate is bypassed and Convoke is not talented, which leaves
+`cd_ready_to_stand` as the only blocker. `player.standing.time` resets while you strafe
+in melee, so it is the wrong proxy for "the window would be wasted" on a melee spec.
+On an Incarnation build, Berserk/Incarnation, trinkets and potion now read
+`var.cd_in_melee` (`player.combat&target.in_melee`) through `var.cd_ready`. A Convoke
+build keeps `cd_ready_to_stand` for the whole window, exactly as before: the log has no
+Convoke evidence, and splitting Berserk (instant) from the Convoke channel (standing)
+would break the "they go out together" promise. This reverses part of 4.1.0 /
+2026-09-10 for the Incarnation build only; reverting is one variable.
+Not measurable in SimC (no movement).
+
+### Measured — SimC 1210-01 73a372b, `sim/ab_test_feral_simc_apl.py`
+
+Baseline = SimC's own default APL; each variant adds ONE deviation this file had.
+Profile `sim/Hellspont_feral.simc` (Hellspont's real gear, tier 4pc, Incarnation +
+Ashamane's Guidance). `target_error=0.1`, error bar = 2*sqrt(e1²+e2²).
+
+| deviation (what the file did) | DungeonSlice | Patchwerk 1t | Patchwerk 5t |
+| --- | ---: | ---: | ---: |
+| no in-combat Prowl during Incarnation | **-0.55%** | **-0.66%** | **-0.46%** |
+| Tiger's Fury held for Frantic Frenzy (M+) | **-0.60%** | n/a | 0.00% ~ |
+| Bite pools to 50 energy during Incarnation | **-0.20%** | **-0.48%** | n/a |
+| trinkets on cooldown (the `>?` bug) | **-1.04%** | +0.04% ~ | — |
+| potion on cooldown (the `>?` bug) | **-0.16%** | +0.09% ~ | — |
+| Tiger's Fury never held for the burst (the `>?` bug) | +0.01% ~ | -0.06% ~ | -0.08% ~ |
+| extra Rip clauses (TF convert + TF-ending clip) | +0.02% ~ | **+0.31%** | n/a |
+| Tiger's Fury Fallback line | -0.08% ~ | +0.00% ~ | -0.09% ~ |
+| no Sudden Ambush Shred | +0.10% ~ | -0.11% ~ | — |
+| Frantic Frenzy in TF on any target count | +0.04% ~ | — | -0.02% ~ |
+| all of the file's damage-list deviations at once | **-1.18%** | **-0.80%** | **-0.42%** |
+
+Error bars ±0.14-0.15%. Bold = real.
+
+### Applied
+
+1. `<?` in `bs_inc_cd_remains` / `bs_inc_cd_duration` (both files). Hedged with the ids
+   as extra terms — `var.incarn_up` (`buff.incarnation_avatar_of_ashamane.up|buff.102543.up`),
+   `buff.106951.up` in `bs_inc`, `cooldown.106951` / `cooldown.102543` in the MAX. While
+   the MIN pinned everything to 0 the log could not show whether the names resolve; an
+   extra OR / MAX term can only turn a missed lookup into the real value (102543 is the
+   aura the log applies; numeric cooldown ids work, see rotation_104). Duration is left
+   name-only: an untalented spell's base duration might read nonzero and poison a MAX.
+2. `var.cd_ready` on Berserk, Incarnation, trinkets and potion (melee on Incarnation
+   builds, standing still on Convoke builds as before).
+3. `Prowl (Incarnation Rake)` at the top of `builder` and `aoe_builder`, on
+   `var.incarn_prowl`: gated on the Incarnation buff explicitly (the 2026-08 note about a
+   Prowl line trapping priority when Prowl is not castable in combat); on
+   `target.in_melee` (the main-list `return,if=buff.prowl.up` would otherwise freeze the
+   rotation until you reach melee); on `lastcast.5215>lastcast.102543` (no Prowl since
+   this Incarnation began: one per window); and on `lastcast.5215>=15|dot.rake.refreshable`
+   (a window that opens right after the pre-pull Prowl waits until the stealth opener Rake
+   is refreshable instead of clipping it — SimC's `pmultiplier<1.6` test, approximated).
+   In the log 4 of 15 windows opened within 30 s of a pre-pull Prowl, and only ~3 of 10
+   pre-pull Prowls became a stealth Rake, so the in-game gain will sit below SimC's.
+4. Bite pool `energy<50-12.5*var.incarn_up`: Incarnation's -25%
+   cost applies to the base 25 and the extra 25 (spell 102543 effect #3, Bite's
+   description); the log's Bite/Ravage drains read 19 during Incarnation. Berserk (106951)
+   has no cost modifier.
+5. Frantic Frenzy clause removed from `Tigers Fury (Refresh)` in this M+ file only:
+   SimC's own APL turns that hold off for `fight_style.dungeonroute|dungeonslice`.
+   `FerrazFeralRaid.yaml` keeps it.
+
+### Measured and left as they are
+
+- The extra Rip clauses: +0.31% single target, neutral in DungeonSlice. Keep.
+- Tiger's Fury Fallback: noise everywhere. Kept. In the log Tiger's Fury landed exactly
+  every 30.0 s; whatever the reason (`return` stopping only the current list per the
+  docs, or the off-GCD fallback reached during every GCD), Tiger's Fury on cooldown
+  measures the same as SimC here.
+- Sudden Ambush Shred: noise again; still not added.
+
+### Open, not changed
+
+- Incarnation still waited 2.7-6.6 s at the start of some pulls (24.4, 734.8,
+  1049.6 s). The TTD gate is the remaining suspect: nothing documents what
+  `target.time_to_die` / `fight_remains` read before Simia has an estimate. A
+  `/simia snapshot` in the first seconds of a pull would show it.
+- Apex Predator's Craving refreshed while already up 31 times, Ravage 17, Sudden Ambush
+  14: median wait to spend about one GCD, so GCD-limited, not priority-limited.
+- Combo points wasted inside Incarnation in AoE (Berserk ticks 106, Primal Fury 82):
+  the finisher went out on the next GCD at cap (median 1.0 s). Inherent.
+- Tiger's Fury energy waste 495 of 2400 (20.6%): SimC has no energy check on TF either.
+- `holdBerserk` (Convoke build) is the old SimC count formula. Upstream now holds only
+  to line the last Berserk up with the last potion and rotation_103 pins it to 0. With
+  real inputs it is live again on the Convoke build; worth re-checking.
+
+### Same 12.0.0 — Tigerccat's real Feral log, his build, Shadowmeld
+
+The right export arrived: `Tigerccat_f4_log_BmYMwJPZpNX3xdA4.json`, specID 103, Ruby Life
+Pools (Hellspont's key was a different dungeon). Convoke + Berserk (11 each), Night Elf,
+item level 338.7 average, Skyfury / Battle Shout / Windwalking in the group.
+
+**Talent string.** No tool here turned a WCL `talentTree` into a loadout string, so
+`sim/talent_string.py` was written: serialization v2, node order and entries from SimC's
+`spell_query=talent.class=druid`, granted nodes copied from a same-spec reference string
+(WCL lists granted entries like bought ones). Checks: three known Feral strings decode to
+exactly SimC's talent table, and the string built from Tigerccat's log decodes back to his
+talents. Then the user imported it on Tassiana and her in-game export came back
+byte-identical (with the game's own tree hash). The YAML ships it with a zero hash, which
+the game accepts without the tree-version check.
+
+His build against the old recommendation: Merciless Claws instead of Moment of Clarity,
+Ursine Vigor instead of Perfectly-Honed Instincts, Matted Fur 1 point, and utility (Maim,
+Rejuvenation, Tiger Dash, Improved Stampeding Roar instead of Lycara's Inspiration,
+Nurturing Instinct, Wild Charge). Same Druid of the Claw hero tree.
+
+**What his log shows, and what was done with it.** Same harness, profile
+`sim/Tigerccat_feral.simc` (his gear and string), `target_error=0.15`:
+
+| his play | measured | done |
+| --- | --- | --- |
+| Shred as the AoE builder (5+ targets: Shred 220, Swipe 49) | Shred filler -2.86% 3t, -2.55% 5t, -1.27% 8t, -1.27% DS; every Swipe -> Shred -2.9% to -5.3% | **not copied**. Swipe hits 2.1x harder per cast in his own log and costs 35 to Shred's 40; his Shreds are most likely priority-target play, which a total-damage sim cannot see |
+| Shadowmeld -> stealth Rake, 4 times, always inside Berserk | no Shadowmeld -1.02% 1t, -0.43% 5t; Berserk-only +0.29% over SimC's anywhere on 1t, equal on 5t | **added** (`Shadowmeld (Stealth Rake)` in both builders, `config.use_shadowmeld`, default on) |
+| trinket and potion at the same instant as Berserk, 11/11 and 5/5 | trinket on cooldown -1.04% DS (earlier table) | already fixed by the `<?` change |
+| Convoke 2.5-10 s into Berserk, after a finisher, always in Tiger's Fury | matches the existing Convoke line | nothing |
+| Berserk held 12-48 s past ready for the next big pack or boss | not modelled (needs the route) | left to the player |
+| Primal Wrath on 2 targets, Rip 9 casts all key | matches `aoe_finisher` | nothing |
+
+Found while adding Shadowmeld: `engine`'s `attack_target` restarted auto-attack while
+stealthed, which breaks Prowl/Shadowmeld before the stealth Rake (SimC's
+`auto_attack,if=!buff.prowl.up&!buff.shadowmeld.up`). Guarded in both Feral files; it
+also protects the Incarnation in-combat Prowl added above.
+
+**Gear versus talents, same APL** (DungeonSlice / Patchwerk 1t / 5t):
+
+| profile | DS | 1t | 5t |
+| --- | ---: | ---: | ---: |
+| Hellspont gear, Hellspont talents (Incarnation) | 208 286 | 168 974 | 553 215 |
+| Hellspont gear, Tigerccat talents (Convoke) | 197 667 | 164 188 | 529 741 |
+| Tigerccat gear, Hellspont talents | 264 098 | 207 768 | 687 220 |
+| Tigerccat gear, Tigerccat talents | 241 124 | 200 517 | 652 351 |
+
+His gear is worth +23-27%. His Convoke build sims 3-10% **below** the Incarnation +
+Ashamane's Guidance build on both gear sets — the same direction as the 2026-09-10 table.
+Recommended string follows his build anyway, by request; the Incarnation build stays
+fully supported.
+
+**Panic Bear talent guard.** `sim/rotation_sim.py` found a Panic Bear <-> Cat Form LOOP (seed 279, a
+build without Heart of the Wild): an untalented HotW reads `cooldown.heart_of_the_wild.ready`, so the
+shift had nothing to cast. The Raid twin already carried `talent.heart_of_the_wild&` on all three lines;
+the M+ file now matches it. The remaining fuzz LOOPs are the old Root Cleanse ones, where the fuzzer
+keeps the root frozen after the shift that would break it in game.

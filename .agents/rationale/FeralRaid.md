@@ -624,3 +624,21 @@ Reported on Guardian: Mark of the Wild was not being cast. Every MotW line read 
 Now also group.count(cycle.buff.mark_of_the_wild.down.any)>0, the check the official Simia
 rotations (rotation_102..105) use. Same lastcast>=10 throttle.
 ```
+
+---
+
+## 9.0.0 (2026-10-30) — `bs_inc_cd_remains` / `bs_inc_cd_duration` were pinned to 0
+
+Same bug as `FerrazFeral.yaml` 12.0.0, found while auditing a Hellspont M+ log (see
+rationale/Feral.md). Both variables folded Berserk and Incarnation with `>?`, which is
+MIN; the untalented half reads 0 (rotation_103.yaml documents this and uses `<?`), so
+both read 0 on every build:
+
+- `var.burst_now` was always true, so trinkets and the potion went out on cooldown
+  instead of in the Berserk window — *Trinkets Only In Burst* did nothing.
+- `zerkCountRemaining` divided by `bs_inc_cd_duration` = 0, so `holdBerserk`, the
+  Convoke alignment the raid guide describes, could not compute.
+
+Fixed to `<?` (MAX). On the M+ profile, trinkets on cooldown instead of synced measured
+-1.04% in DungeonSlice and noise on Patchwerk single target; not re-measured on the raid
+build.
